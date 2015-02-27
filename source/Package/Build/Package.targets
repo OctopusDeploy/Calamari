@@ -1,0 +1,22 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Hook into the AfterBuild activity -->
+  <PropertyGroup>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      CreatePackageForOctopus
+    </BuildDependsOn>
+
+    <NuGetExePath>$(ProjectDir)..\packages\NuGet.CommandLine.2.8.3\tools\NuGet.exe</NuGetExePath>
+    <OctopusPackageVersion Condition="'$(OctopusPackageVersion)' == ''">1.0.0.0</OctopusPackageVersion>
+  </PropertyGroup>
+
+  <!-- 
+  Create Octopus Deploy package
+  -->
+  <Target Name="CreatePackageForOctopus">
+    <Message Text="Creating package for Octopus" Importance="high" />
+    <Message Text="NuGet path: $(NuGetExePath)" Importance="high" />
+
+    <Exec Command='"$(NuGetExePath)" pack "$(ProjectDir)Tentacle\Octopus.Deploy.Tentacle.nuspec" -BasePath "$(ProjectDir.TrimEnd("\"))" -Version $(OctopusPackageVersion) -NoPackageAnalysis -NonInteractive -OutputDirectory "$(ProjectDir)..\.."' />
+  </Target>
+</Project>
