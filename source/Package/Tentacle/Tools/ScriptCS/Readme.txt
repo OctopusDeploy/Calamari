@@ -1,0 +1,1 @@
+﻿ScriptCS files are copied here using a path in the .nuspec file

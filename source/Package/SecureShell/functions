@@ -1,0 +1,127 @@
+#! /bin/bash
+# Octopus Linux helper function script
+# Version: 1.0.0
+# -----------------------------------------------------------------------------
+PROGNAME=$(basename $0)
+
+export E_NO_ARGS=75
+export E_KEY_NOT_FOUND=76
+export E_FILE_NOT_FOUND=77
+
+# -----------------------------------------------------------------------------
+#	Function for exit due to fatal program error
+#		Accepts 4 arguments:
+#     string: containing the program name that threw the error
+#     integer: containing the line number where the error occurred
+#			string: containing descriptive error message
+#     integer: containing the exit code
+#	---------------------------------------------------------------------------
+function error_exit
+{
+	echo "${1} [${2}]: ${3:-"Unknown Error"}" 1>&2
+	exit ${4:-1}
+}
+
+# -----------------------------------------------------------------------------
+# Function to base64 encode a service message value
+#		Accepts 1 argument:
+#			string: the value to encode
+# -----------------------------------------------------------------------------
+function encode_servicemessagevalue
+{
+	echo -n "$1" | openssl enc -base64 -A
+	exit $?
+}
+
+#	---------------------------------------------------------------------------
+# Function for getting an octopus variable
+#   Accepts 1 argument:
+#     string: value of the name of the octopus variable
+#	---------------------------------------------------------------------------
+function get_octopusvariable
+{
+	INPUT=$(encode_servicemessagevalue "$1")
+
+	OUTPUT=$(echo $(awk -v FS=":" -v input=$INPUT '
+	{
+	  if ( $1 == input ) print $2;
+	}' $TEMPFILESPATH/octopusvariables) | openssl enc -base64 -A -d)
+
+	if [ -z "$OUTPUT" ]
+	then
+	  error_exit $PROGNAME $LINENO "\"$(echo $INPUT | openssl enc -base64 -A -d)\" has not been specified." $E_KEY_NOT_FOUND
+	  exit $?
+	fi
+
+	eval echo $OUTPUT
+	exit $?
+}
+
+#	---------------------------------------------------------------------------
+# Function for setting an octopus variable
+#   Accepts 2 arguments:
+#     string: value of the name of the octopus variable
+#     string: value of the value of the octopus variable
+#	---------------------------------------------------------------------------
+function set_octopusvariable
+{
+	MESSAGE="##octopus[setVariable"
+
+	if [ -n "$1" ]
+	then
+		MESSAGE="$MESSAGE name='$(encode_servicemessagevalue $1)'"
+	fi
+
+	if [ -n "$2" ]
+	then
+		MESSAGE="$MESSAGE value='$(encode_servicemessagevalue $2)'"
+	fi
+
+	MESSAGE="$MESSAGE]"
+
+	echo $MESSAGE
+	exit $?
+}
+
+# -----------------------------------------------------------------------------
+# Function to create a new octopus artifact
+#	Accepts 2 arguments:
+#	  string: value of the path to the artifact
+#	  string: value of the original file name of the artifact
+# -----------------------------------------------------------------------------
+function new_octopusartifact
+{
+	echo "Collecting $1 as an artifact..."
+
+	if [ ! -e "$1" ]
+	then
+		error_exit $PROGNAME $LINENO "\"$(1)\" does not exist." $E_FILE_NOT_FOUND
+	    exit $?
+	fi
+
+	pth=$1
+	ofn=$2
+
+	if [ -z "$ofn" ]
+	then
+	    ofn=`basename "$pth"`
+	fi
+
+	echo "##octopus[createArtifact path='$(encode_servicemessagevalue $pth)' originalFilename='$(encode_servicemessagevalue $ofn)']"
+
+	exit $?
+}
+
+# -----------------------------------------------------------------------------
+# Function to substitute Octopus variables in stdin or a file, and write to
+# stdout or a file.
+#	Accepts flags:
+#	  -d NAME=VALUE
+#     -i FILE
+#     -o FILE
+# -----------------------------------------------------------------------------
+function substitute_octopusvariables
+{
+	DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    mono "$DIR/tentacle-subst.exe" -v "$TEMPFILESPATH/octopusvariables" "$@"
+}
