@@ -28,7 +28,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Modules\" />
-    <Folder Include="Tools\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Modules\ConfigurationLoader.csx" />
