@@ -1,5 +1,5 @@
 ﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-Import-Module "$here\..\Modules\Tentacle.Common.psm1" -Force
+Import-Module "$here\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Common.psm1" -Force
 
 Describe "Tentacle.Common" {
 

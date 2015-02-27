@@ -1,5 +1,9 @@
 ﻿# Open this file in PowerShell ISE, then run it. 
 
+$ErrorActionPreference = "Stop"
+
+try { Clear } catch { }
+
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 cd $here

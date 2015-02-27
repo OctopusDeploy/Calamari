@@ -1,6 +1,6 @@
 ﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-Import-Module "$here\..\Modules\Tentacle.Common.psm1" -Force
-Import-Module "$here\..\Modules\Tentacle.Scripting.psm1" -Force
+Import-Module "$here\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Common.psm1" -Force
+Import-Module "$here\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Scripting.psm1" -Force
 
 $global:OctopusParameters = @{}
 
@@ -23,7 +23,7 @@ Describe "Tentacle.Scripting" {
 
         It "Should invoke script" {
             $out = (Invoke-OctopusScriptCSScript "TestScript.csx" | Out-String)
-            $out | Should Be "Hello world!`r`n"
+            $out | Should Match "world!"
         }
 
 	    Remove-Item "TestScript.csx"
@@ -34,7 +34,7 @@ Describe "Tentacle.Scripting" {
 
         It "Should invoke script" {
             $out = (Invoke-OctopusScriptCSScript "TestScript.csx" | Out-String)
-            $out | Should Be "Hello, variables rule!`r`n"
+            $out | Should Match "Hello, variables rule!"
         }
 
 	    Remove-Item "TestScript.csx"
