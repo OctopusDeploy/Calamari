@@ -1,6 +1,4 @@
-﻿Write-Host "This is the main Octopus Deploy package deployer"
-
-# Ensure temporary install directory exists
+﻿# Ensure temporary install directory exists
 # Extract NuGet package to above directory
 # Run pre-deploy scripts
 # Run configuration file conventions etc.

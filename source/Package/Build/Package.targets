@@ -7,7 +7,7 @@
     </BuildDependsOn>
 
     <NuGetExePath>$(ProjectDir)..\packages\NuGet.CommandLine.2.8.3\tools\NuGet.exe</NuGetExePath>
-    <OctopusPackageVersion Condition="'$(OctopusPackageVersion)' == ''">1.0.0.0</OctopusPackageVersion>
+    <OctopusPackageVersion Condition="'$(OctopusPackageVersion)' == ''">1.0.$([System.DateTime]::Now.ToString(yyyyMMdd)).$([System.DateTime]::Now.ToString(HHmmss))</OctopusPackageVersion>
   </PropertyGroup>
 
   <!-- 
@@ -17,6 +17,6 @@
     <Message Text="Creating package for Octopus" Importance="high" />
     <Message Text="NuGet path: $(NuGetExePath)" Importance="high" />
 
-    <Exec Command='"$(NuGetExePath)" pack "$(ProjectDir)Tentacle\Octopus.Deploy.Tentacle.nuspec" -BasePath "$(ProjectDir.TrimEnd("\"))" -Version $(OctopusPackageVersion) -NoPackageAnalysis -NonInteractive -OutputDirectory "$(ProjectDir)..\.."' />
+    <Exec Command='"$(NuGetExePath)" pack "$(ProjectDir)Tentacle\Tentacle.nuspec" -BasePath "$(ProjectDir.TrimEnd("\"))" -Version $(OctopusPackageVersion) -NoPackageAnalysis -NonInteractive -OutputDirectory "$(ProjectDir)..\.."' />
   </Target>
 </Project>
