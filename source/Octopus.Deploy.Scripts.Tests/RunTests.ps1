@@ -4,6 +4,13 @@ $ErrorActionPreference = "Stop"
 
 try { Clear } catch { }
 
+function global:Write-Host(  
+    [parameter(Mandatory=$true, ValueFromRemainingArguments =$true)]
+    [String[]]$x)
+{
+    write-output ([String]::Join(" ", $x))
+}
+
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 cd $here

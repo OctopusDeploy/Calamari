@@ -9,7 +9,7 @@ function Set-OctopusVariable([string]$name, [string]$value)
     $name = Convert-ServiceMessageValue($name)
     $value = Convert-ServiceMessageValue($value)
 
-	Write-Output "##octopus[setVariable name='$($name)' value='$($value)']"
+	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
 }
 
 function New-OctopusArtifact([string]$path, [string]$name="""") 
@@ -24,21 +24,21 @@ function New-OctopusArtifact([string]$path, [string]$name="""")
     $path = [System.IO.Path]::GetFullPath($path)
     $path = Convert-ServiceMessageValue($path)
 
-	Write-Output "##octopus[createArtifact path='$($path)' name='$($name)']"
+	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)']"
 }
 
 function Write-Warning([string]$message)
 {
-	Write-Output "##octopus[stdout-warning]"
-	Write-Output $message
-	Write-Output "##octopus[stdout-default]"
+	Write-Host "##octopus[stdout-warning]"
+	Write-Host $message
+	Write-Host "##octopus[stdout-default]"
 }
 
 function Write-Verbose([string]$message)
 {
-	Write-Output "##octopus[stdout-verbose]"
-	Write-Output $message
-	Write-Output "##octopus[stdout-default]"
+	Write-Host "##octopus[stdout-verbose]"
+	Write-Host $message
+	Write-Host "##octopus[stdout-default]"
 }
 
 function Write-Debug([string]$message)
