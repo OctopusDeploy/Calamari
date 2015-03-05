@@ -9,7 +9,7 @@ function Set-OctopusVariable([string]$name, [string]$value)
     $name = Convert-ServiceMessageValue($name)
     $value = Convert-ServiceMessageValue($value)
 
-	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
+	Write-Output "##octopus[setVariable name='$($name)' value='$($value)']"
 }
 
 function New-OctopusArtifact([string]$path, [string]$name="""") 
@@ -24,21 +24,21 @@ function New-OctopusArtifact([string]$path, [string]$name="""")
     $path = [System.IO.Path]::GetFullPath($path)
     $path = Convert-ServiceMessageValue($path)
 
-	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)']"
+	Write-Output "##octopus[createArtifact path='$($path)' name='$($name)']"
 }
 
 function Write-Warning([string]$message)
 {
-	Write-Host "##octopus[stdout-warning]"
-	Write-Host $message
-	Write-Host "##octopus[stdout-default]"
+	Write-Output "##octopus[stdout-warning]"
+	Write-Output $message
+	Write-Output "##octopus[stdout-default]"
 }
 
 function Write-Verbose([string]$message)
 {
-	Write-Host "##octopus[stdout-verbose]"
-	Write-Host $message
-	Write-Host "##octopus[stdout-default]"
+	Write-Output "##octopus[stdout-verbose]"
+	Write-Output $message
+	Write-Output "##octopus[stdout-default]"
 }
 
 function Write-Debug([string]$message)
@@ -62,6 +62,45 @@ function Get-FileSizeString([long]$bytes)
 
 function Read-OctopusVariables([string]$variablesFile)
 {
+	function MakeLegacyKey($key) {
+		$result = New-Object System.Text.StringBuilder
+
+		for ($i = 0; $i -lt $key.Length; $i++)
+		{
+			if ([System.Char]::IsLetterOrDigit($key[$i]))
+			{
+				$c = $key[$i]
+				$null = $result.Append($c)
+			}
+		}
+
+		return $result.ToString()
+	}
+
+	function MakeSmartKey($key){
+		$result = New-Object System.Text.StringBuilder
+
+		for ($i = 0; $i -lt $key.Length; $i++)
+		{
+			$c = $key[$i]
+			if (([System.Char]::IsLetterOrDigit($key[$i])) -or ($c -eq '_'))
+			{
+				$null = $result.Append($c)
+			}
+		}
+
+		return $result.ToString()
+	}
+
+	function AssignVariable($k, $v) 
+	{
+		$fullVariablePath = "variable:global:$k"
+		if (-Not (Test-Path $fullVariablePath)) 
+		{
+			Set-Item -Path $fullVariablePath -Value $v
+		}
+	}
+
 	$targetStream = New-Object System.IO.FileStream -ArgumentList @($variablesFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
 	$reader = New-Object System.IO.StreamReader -ArgumentList @($targetStream)
 	$result = New-Object 'System.Collections.Generic.Dictionary[String,String]' (,[System.StringComparer]::OrdinalIgnoreCase)
@@ -76,7 +115,19 @@ function Read-OctopusVariables([string]$variablesFile)
 		$parts = $line.Split(',')
 		$name = $parts[0]
 		$value = $parts[1]
-		$result[[System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($name))] = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($value))
+	
+		$name = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($name))
+		$value = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($value))
+
+		$result[$name] = $value
+
+		$legacyKey = MakeLegacyKey($name)
+		$smartKey = MakeSmartKey($name)
+		if ($legacyKey -ne $smartKey)
+		{
+			AssignVariable -k $legacyKey -v $value
+		}
+	    AssignVariable -k $smartKey -v $value
 	}
 
 	$reader.Dispose()

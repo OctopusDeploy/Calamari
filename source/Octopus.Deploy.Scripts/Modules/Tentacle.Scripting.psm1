@@ -7,7 +7,12 @@
 		[string]$scriptName
 	)
 
-    . .\$scriptName
+	if ([System.IO.Path]::IsPathRooted($scriptName) -eq $false) 
+	{
+		$scriptName = ".\$scriptName"
+	}
+
+    . $scriptName
 }
 
 function Invoke-OctopusScriptCSScript
