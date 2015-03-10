@@ -6,7 +6,7 @@
 		[Parameter(Mandatory=$True, ValueFromPipeline=$True)]
 		[string]$scriptName
 	)
-	Write-Verbose "Executing script $scriptName"
+
 	if ([System.IO.Path]::IsPathRooted($scriptName) -eq $false) 
 	{
 		$scriptName = ".\$scriptName"
