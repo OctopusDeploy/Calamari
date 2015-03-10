@@ -1,7 +1,7 @@
 ﻿function Invoke-HealthCheck()
 {
 	$hostname = Get-WMIObject Win32_ComputerSystem | Select-Object -ExpandProperty name
-	Write-Debug "Host Name: $hostname"
+	Write-Verbose "Host Name: $hostname"
 
 	$domainName = [Environment]::UserDomainName
 	$userName = [Environment]::UserName
