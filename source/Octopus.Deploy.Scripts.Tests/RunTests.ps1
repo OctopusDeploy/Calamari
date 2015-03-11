@@ -9,6 +9,7 @@ function global:Write-Host(
     [String[]]$x)
 {
     write-output ([String]::Join(" ", $x))
+    [System.Console]::WriteLine([String]::Join(" ", $x))
 }
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
