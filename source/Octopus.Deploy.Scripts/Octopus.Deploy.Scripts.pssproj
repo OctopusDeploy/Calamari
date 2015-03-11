@@ -35,6 +35,7 @@
     <Content Include="Modules\Tentacle.DeployPackage.psm1" />
     <Content Include="Modules\Tentacle.Health.psm1" />
     <Content Include="Modules\Tentacle.Scripting.psm1" />
+    <Content Include="Modules\Tentacle.Tools.psm1" />
     <Content Include="Tentacle.psm1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
