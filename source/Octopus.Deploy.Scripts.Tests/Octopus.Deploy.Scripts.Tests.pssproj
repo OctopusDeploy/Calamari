@@ -28,9 +28,22 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Tests\" />
+    <Folder Include="Tests\Scripts\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="RunTests.ps1" />
+    <Content Include="Tests\Scripts\CanCreateArtifact.csx" />
+    <Content Include="Tests\Scripts\CanCreateArtifact.ps1" />
+    <Content Include="Tests\Scripts\CanDotSource.ps1" />
+    <Content Include="Tests\Scripts\CanSetVariable.csx" />
+    <Content Include="Tests\Scripts\CanSetVariable.ps1" />
+    <Content Include="Tests\Scripts\Hello.csx" />
+    <Content Include="Tests\Scripts\Invalid.ps1" />
+    <Content Include="Tests\Scripts\InvalidSyntax.ps1" />
+    <Content Include="Tests\Scripts\MyFunctions.ps1" />
+    <Content Include="Tests\Scripts\MyModule.psm1" />
+    <Content Include="Tests\Scripts\Ping.ps1" />
+    <Content Include="Tests\Scripts\PrintVariables.ps1" />
     <Content Include="Tests\Tentacle.Common.Tests.ps1" />
     <Content Include="Tests\Tentacle.Scripting.Tests.ps1" />
   </ItemGroup>
