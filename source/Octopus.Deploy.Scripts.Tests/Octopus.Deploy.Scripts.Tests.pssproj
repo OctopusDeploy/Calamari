@@ -36,6 +36,9 @@
   <ItemGroup>
     <Content Include="RunTests.ps1" />
     <Content Include="Tests\ConfigurationVariables\Samples\App.config" />
+    <Content Include="Tests\ConfigurationVariables\Samples\CrazyNamespace.config" />
+    <Content Include="Tests\ConfigurationVariables\Samples\NoHeader.config" />
+    <Content Include="Tests\ConfigurationVariables\Samples\StrongTyped.config" />
     <Content Include="Tests\Scripts\CanCreateArtifact.csx" />
     <Content Include="Tests\Scripts\CanCreateArtifact.ps1" />
     <Content Include="Tests\Scripts\CanDotSource.ps1" />
@@ -49,7 +52,7 @@
     <Content Include="Tests\Scripts\Ping.ps1" />
     <Content Include="Tests\Scripts\PrintVariables.ps1" />
     <Content Include="Tests\Tentacle.Common.Tests.ps1" />
-    <Content Include="Tests\ConfigurationVariables\Tentacle.Deployment.ConfigurationVariables.Tests.ps1" />
+    <Content Include="Tests\ConfigurationVariables\Tentacle.ConfigurationVariables.Tests.ps1" />
     <Content Include="Tests\Tentacle.Scripting.Tests.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
