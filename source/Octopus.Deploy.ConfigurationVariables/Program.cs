@@ -78,9 +78,7 @@ namespace Octopus.Deploy.ConfigurationVariables
 
             foreach (var change in changes)
             {
-                Console.WriteLine("##octopus[stdout-verbose]");
-                Console.WriteLine(change);
-                Console.WriteLine("##octopus[stdout-default]");
+                OctopusLogger.Verbose(change);
             }
 
             var xws = new XmlWriterSettings { OmitXmlDeclaration = doc.Declaration == null, Indent = true };

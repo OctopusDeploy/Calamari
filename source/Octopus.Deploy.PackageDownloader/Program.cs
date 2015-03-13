@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Threading;
 using NuGet;
 using Octopus.Deploy.Startup;
 
@@ -12,48 +12,72 @@ namespace Octopus.Deploy.PackageDownloader
 {
     class Program
     {
+        readonly static PackageDownloader packageDownloader = new PackageDownloader();
+
         static int Main(string[] args)
         {
+            string packageId = null;
+            string packageVersion = null;
+            bool forcePackageDownload = false;
+            string feedUri = null;
+            string feedUsername = null;
+            string feedPassword = null;
+            
             try
             {
-                string packageId = null;
-                string packageVersion = null;
-                string feedUri = null;
-                string feedUsername = null;
-                string feedPassword = null;
-
                 var options = new OptionSet();
                 options.Add("packageId=", "Package ID to download", v => packageId = v);
                 options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
                 options.Add("feedUri=", "URL to NuGet feed", v => feedUri = v);
                 options.Add("feedUsername=", "[Optional] Username to use for an authenticated NuGet feed", v => feedUsername = v);
                 options.Add("feedPassword=", "[Optional] Password to use for an authenticated NuGet feed", v => feedPassword = v);
+                options.Add("forcePackageDownload", "[Optional, Flag] if specified, the package will be downloaded even if it is already in the package cache", v => forcePackageDownload = true);
+
+                options.Parse(args);
 
                 SemanticVersion version;
                 Uri uri;
-                CheckArguments(
+                CheckArguments(packageId, packageVersion, feedUri, feedUsername, feedPassword, out version, out uri);
+
+                SetFeedCredentials(feedUsername, feedPassword, uri);
+
+                string downloadedTo = null;
+                string hash = null;
+                long size = 0;
+                packageDownloader.DownloadPackage(
                     packageId, 
-                    packageVersion, 
-                    feedUri, 
-                    feedUsername, 
-                    feedPassword, 
-                    out version, 
-                    out uri);
+                    version, 
+                    uri, 
+                    forcePackageDownload, 
+                    out downloadedTo, 
+                    out hash, 
+                    out size);
 
-                var credentials = GetFeedCredentials(feedUsername, feedPassword);
-                FeedCredentialsProvider.Instance.SetCredentials(uri, credentials);
-                HttpClient.DefaultCredentialProvider = FeedCredentialsProvider.Instance;
-
-
+                OctopusLogger.SetOctopusVariable("Package.Hash", hash);
+                OctopusLogger.SetOctopusVariable("Package.Size", size);
+                OctopusLogger.SetOctopusVariable("Package.InstallationDirectoryPath", downloadedTo);
             }
             catch (Exception ex)
             {
+                Console.WriteLine("Failed to download package {0} {1} from feed: {2}", packageId, packageVersion,
+                    feedUri);
                 return ConsoleFormatter.PrintError(ex);
             }
+
+            Console.WriteLine("Package {0} {1} successfully downloaded from feed: {2}", packageId, packageVersion,
+                feedUri);
+
             return 0;
         }
 
-        private static ICredentials GetFeedCredentials(string feedUsername, string feedPassword)
+        static void SetFeedCredentials(string feedUsername, string feedPassword, Uri uri)
+        {
+            var credentials = GetFeedCredentials(feedUsername, feedPassword);
+            FeedCredentialsProvider.Instance.SetCredentials(uri, credentials);
+            HttpClient.DefaultCredentialProvider = FeedCredentialsProvider.Instance;
+        }
+
+        static ICredentials GetFeedCredentials(string feedUsername, string feedPassword)
         {
             ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
             if (!String.IsNullOrWhiteSpace(feedUsername))
@@ -64,8 +88,7 @@ namespace Octopus.Deploy.PackageDownloader
         }
 
         // ReSharper disable UnusedParameter.Local
-        private static void CheckArguments(string packageId, string packageVersion, string feedUri, string feedUsername,
-            // ReSharper restore UnusedParameter.Local
+        static void CheckArguments(string packageId, string packageVersion, string feedUri, string feedUsername,
             string feedPassword, out SemanticVersion version, out Uri uri)
         {
             if (String.IsNullOrWhiteSpace(packageId))
@@ -98,90 +121,6 @@ namespace Octopus.Deploy.PackageDownloader
                 throw new ArgumentException("A username was specified but no password was provided");
             }
         }
-    }
-    public class FeedCredentialsProvider : ICredentialProvider
-    {
-        FeedCredentialsProvider()
-        {
-        }
-
-        public static FeedCredentialsProvider Instance = new FeedCredentialsProvider();
-        static readonly ConcurrentDictionary<string, ICredentials> Credentials = new ConcurrentDictionary<string, ICredentials>();
-        static readonly ConcurrentDictionary<string, RetryTracker> Retries = new ConcurrentDictionary<string, RetryTracker>();
-
-        public void SetCredentials(Uri uri, ICredentials credential)
-        {
-            Credentials[Canonicalize(uri)] = credential;
-        }
-
-        public ICredentials GetCredentials(Uri uri, IWebProxy proxy, CredentialType credentialType, bool retrying)
-        {
-            var url = Canonicalize(uri);
-            var retry = Retries.GetOrAdd(url, _ => new RetryTracker());
-
-            if (!retrying)
-            {
-                retry.Reset();
-            }
-            else
-            {
-                var retryAllowed = retry.AttemptRetry();
-                if (!retryAllowed)
-                    return null;
-            }
-
-            return new DynamicCachedCredential(url);
-        }
-
-        ICredentials GetCurrentCredentials(string url)
-        {
-            ICredentials credential;
-            if (!Credentials.TryGetValue(url, out credential))
-            {
-                credential = CredentialCache.DefaultNetworkCredentials;
-            }
-
-            return credential;
-        }
-
-        string Canonicalize(Uri uri)
-        {
-            return uri.Authority.ToLowerInvariant().Trim();
-        }
-
-        public class RetryTracker
-        {
-            const int MaxAttempts = 3;
-            int currentCount;
-
-            public bool AttemptRetry()
-            {
-                if (currentCount > MaxAttempts) return false;
-
-                currentCount++;
-                return true;
-            }
-
-            public void Reset()
-            {
-                currentCount = 0;
-            }
-        }
-
-        class DynamicCachedCredential : ICredentials
-        {
-            readonly string url;
-
-            public DynamicCachedCredential(string url)
-            {
-                this.url = url;
-            }
-
-            public NetworkCredential GetCredential(Uri uri, string authType)
-            {
-                var credential = Instance.GetCurrentCredentials(url);
-                return credential.GetCredential(uri, authType);
-            }
-        }
+        // ReSharper restore UnusedParameter.Local
     }
 }
