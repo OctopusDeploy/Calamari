@@ -29,20 +29,16 @@ namespace Octopus.Deploy.ConfigurationVariables
                 }
 
                 if (string.IsNullOrWhiteSpace(variablesFilePath))
-                {
                     throw new ArgumentException("No variables file was specified");
-                }
 
                 if (!File.Exists(variablesFilePath))
-                {
                     throw new ArgumentException(string.Format("Couldn't find variables file at '{0}'", variablesFilePath));
-                }
 
                 var variables = VariablesFileFormat.ReadFrom(variablesFilePath);
 
                 foreach (var file in files)
                 {
-                    ReplaceConfigurationValues(file, variables);
+                    ModifyConfigurationFile(file, variables);
                 }
 
                 return 0;
@@ -53,7 +49,7 @@ namespace Octopus.Deploy.ConfigurationVariables
             }
         }
 
-        static void ReplaceConfigurationValues(string configurationFilePath, Dictionary<string, string> variables)
+        static void ModifyConfigurationFile(string configurationFilePath, Dictionary<string, string> variables)
         {
             XDocument doc;
 
@@ -67,9 +63,9 @@ namespace Octopus.Deploy.ConfigurationVariables
             foreach (var variable in variables)
             {
                 changes.AddRange(
-                    ReplaceAttributeValues(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable.Key, "value", variable.Value).Concat(
-                    ReplaceAttributeValues(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable.Key, "connectionString", variable.Value).Concat(
-                    ReplaceAppSettingsValues(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable.Key, variable.Value))));
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable.Key, "value", variable.Value).Concat(
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable.Key, "connectionString", variable.Value).Concat(
+                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable.Key, variable.Value))));
             }
 
             if (!changes.Any())
@@ -94,9 +90,9 @@ namespace Octopus.Deploy.ConfigurationVariables
             }
         }
 
-        static IEnumerable<string> ReplaceAttributeValues(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, string value)
+        static IEnumerable<string> ReplaceAppSettingOrConnectionString(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, string value)
         {
-            var result = new List<string>();
+            var changes = new List<string>();
             var settings =
                 from element in document.XPathSelectElements(xpath)
                 let keyAttribute = element.Attribute(keyAttributeName)
@@ -108,7 +104,7 @@ namespace Octopus.Deploy.ConfigurationVariables
 
             foreach (var setting in settings)
             {
-                result.Add(string.Format("Setting '{0}' = '{1}'", keyAttributeValue, value));
+                changes.Add(string.Format("Setting '{0}' = '{1}'", keyAttributeValue, value));
 
                 var valueAttribute = setting.Attribute(valueAttributeName);
                 if (valueAttribute == null)
@@ -121,12 +117,12 @@ namespace Octopus.Deploy.ConfigurationVariables
                 }
             }
 
-            return result;
+            return changes;
         }
 
-        static IEnumerable<string> ReplaceAppSettingsValues(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string value)
+        static IEnumerable<string> ReplaceStonglyTypeApplicationSetting(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string value)
         {
-            var result = new List<string>();
+            var changes = new List<string>();
 
             var settings =
                 from element in document.XPathSelectElements(xpath)
@@ -139,7 +135,7 @@ namespace Octopus.Deploy.ConfigurationVariables
 
             foreach (var setting in settings)
             {
-                result.Add(string.Format("Setting '{0}' = '{1}'", keyAttributeValue, value));
+                changes.Add(string.Format("Setting '{0}' = '{1}'", keyAttributeValue, value));
 
                 var valueElement = setting.Elements().FirstOrDefault(e => e.Name.LocalName == "value");
                 if (valueElement == null)
@@ -152,7 +148,7 @@ namespace Octopus.Deploy.ConfigurationVariables
                 }
             }
 
-            return result;
+            return changes;
         }
     }
 }
