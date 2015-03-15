@@ -17,6 +17,6 @@ $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 cd $here
 
 Import-Module "..\packages\Pester.3.3.5\tools\pester.psm1"
-Invoke-Pester
+Invoke-Pester -test "Tentacle.ConfigurationTransforms"
 
 Write-Host "Done"

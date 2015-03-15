@@ -28,13 +28,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Tests\" />
+    <Folder Include="Tests\ConfigurationTransforms\Samples\" />
     <Folder Include="Tests\ConfigurationVariables\" />
     <Folder Include="Tests\ConfigurationVariables\Samples\" />
+    <Folder Include="Tests\ConfigurationTransforms\" />
     <Folder Include="Tests\Tools\" />
     <Folder Include="Tests\Scripts\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="RunTests.ps1" />
+    <Content Include="Tests\ConfigurationTransforms\Tentacle.ConfigurationTransforms.Tests.ps1" />
     <Content Include="Tests\ConfigurationVariables\Samples\App.config" />
     <Content Include="Tests\ConfigurationVariables\Samples\CrazyNamespace.config" />
     <Content Include="Tests\ConfigurationVariables\Samples\NoHeader.config" />
@@ -54,6 +57,10 @@
     <Content Include="Tests\Tentacle.Common.Tests.ps1" />
     <Content Include="Tests\ConfigurationVariables\Tentacle.ConfigurationVariables.Tests.ps1" />
     <Content Include="Tests\Tentacle.Scripting.Tests.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.config" />
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.Release.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />

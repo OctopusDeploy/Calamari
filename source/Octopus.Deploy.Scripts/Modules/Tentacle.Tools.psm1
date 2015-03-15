@@ -9,20 +9,20 @@ function Find-OctopusTool
 		[string]$name
 	)
 	
-	$exe = [System.IO.Path]::GetFullPath("$parent\..\Tools\$name")
-	if (Test-Path $exe) 
+	$attemptOne = [System.IO.Path]::GetFullPath("$parent\..\Tools\$name")
+	if (Test-Path $attemptOne) 
 	{
-		return $exe
+		return $attemptOne
 	}
 
 	$folder = [System.IO.Path]::GetFileNameWithoutExtension($name) 
-	$exe = [System.IO.Path]::GetFullPath("$parent\..\..\$folder\bin\$name")
-	if (Test-Path $exe) 
+	$attemptTwo = [System.IO.Path]::GetFullPath("$parent\..\..\$folder\bin\$name")
+	if (Test-Path $attemptTwo) 
 	{
-		return $exe
+		return $attemptTwo
 	}
 
-	throw "Cannot find a tool named $name"
+	throw "Cannot find a tool named $name. Search paths: `r`n$attemptOne`r`n$attemptTwo"
 }
 
 function Update-OctopusApplicationConfigurationFile
@@ -60,3 +60,26 @@ function Update-OctopusApplicationConfigurationFile
     }
 	end { }
 }
+
+function Invoke-OctopusConfigurationTransform
+{
+    [CmdletBinding()]
+	param
+    (
+		[Parameter(Mandatory=$True)]
+		[string]$config,
+	
+		[Parameter(Mandatory=$True)]
+		[string]$transform
+	)
+
+	$exe = Find-OctopusTool -name "Octopus.Deploy.ConfigurationTransforms.exe"
+	
+	& "$exe" "$config" "$transform" "$config"
+
+    if ($LASTEXITCODE -ne 0) 
+    {
+        throw "Exit code $LASTEXITCODE returned"
+    }
+}
+
