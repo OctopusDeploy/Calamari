@@ -28,15 +28,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Tests\" />
+    <Folder Include="Tests\Substitutions\Samples\" />
     <Folder Include="Tests\ConfigurationTransforms\Samples\" />
     <Folder Include="Tests\ConfigurationVariables\" />
     <Folder Include="Tests\ConfigurationVariables\Samples\" />
     <Folder Include="Tests\ConfigurationTransforms\" />
+    <Folder Include="Tests\Substitutions\" />
     <Folder Include="Tests\Tools\" />
     <Folder Include="Tests\Scripts\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="RunTests.ps1" />
+    <Content Include="Tests\Substitutions\Samples\Servers.json" />
+    <Content Include="Tests\Substitutions\Tentacle.Substitutions.Tests.ps1" />
     <Content Include="Tests\ConfigurationTransforms\Tentacle.ConfigurationTransforms.Tests.ps1" />
     <Content Include="Tests\ConfigurationVariables\Samples\App.config" />
     <Content Include="Tests\ConfigurationVariables\Samples\CrazyNamespace.config" />
@@ -59,6 +63,8 @@
     <Content Include="Tests\Tentacle.Scripting.Tests.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.Broken.config" />
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.Buggy.config" />
     <Compile Include="Tests\ConfigurationTransforms\Samples\Web.config" />
     <Compile Include="Tests\ConfigurationTransforms\Samples\Web.Release.config" />
   </ItemGroup>

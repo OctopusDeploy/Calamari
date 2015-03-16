@@ -83,3 +83,30 @@ function Invoke-OctopusConfigurationTransform
     }
 }
 
+function Invoke-OctopusVariableSubsitution
+{
+    [CmdletBinding()]
+	param
+    (
+		[Parameter(Mandatory=$True)]
+		[string]$file
+	)
+
+	$exe = Find-OctopusTool -name "Octopus.Deploy.Substitutions.exe"
+    $varsFile = [System.IO.Path]::GetFullPath("Variables.vars.tmp")
+    Write-OctopusVariables $OctopusParameters -variablesFile $varsFile	
+	
+	try 
+	{
+		& "$exe" "$file" "$varsFile" "$file"
+
+		if ($LASTEXITCODE -ne 0) 
+		{
+			throw "Exit code $LASTEXITCODE returned"
+		}
+	}
+    finally 
+    {
+        Remove-Item $varsFile -Force
+    }
+}

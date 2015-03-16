@@ -43,7 +43,6 @@
     <Compile Include="Startup\CommandException.cs" />
     <Compile Include="Startup\ConsoleFormatter.cs" />
     <Compile Include="Startup\Options.cs" />
-    <Compile Include="Variables\VariablesFileFormat.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

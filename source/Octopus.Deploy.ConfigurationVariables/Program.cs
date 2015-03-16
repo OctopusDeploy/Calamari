@@ -6,7 +6,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using Octopus.Deploy.Startup;
-using Octopus.Deploy.Variables;
+using Octostache;
 
 namespace Octopus.Deploy.ConfigurationVariables
 {
@@ -34,7 +34,7 @@ namespace Octopus.Deploy.ConfigurationVariables
                 if (!File.Exists(variablesFilePath))
                     throw new ArgumentException(string.Format("Couldn't find variables file at '{0}'", variablesFilePath));
 
-                var variables = VariablesFileFormat.ReadFrom(variablesFilePath);
+                var variables = VariablesFileFormatter.ReadFrom(variablesFilePath);
 
                 foreach (var file in files)
                 {
