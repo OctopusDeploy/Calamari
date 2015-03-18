@@ -56,19 +56,19 @@ namespace Octopus.Deploy.PackageDownloader
                     out hash, 
                     out size);
 
+                OctopusLogger.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
+                    feedUri);
+
                 OctopusLogger.SetOctopusVariable("Package.Hash", hash);
                 OctopusLogger.SetOctopusVariable("Package.Size", size);
                 OctopusLogger.SetOctopusVariable("Package.InstallationDirectoryPath", downloadedTo);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Failed to download package {0} {1} from feed: {2}", packageId, packageVersion,
+                OctopusLogger.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion,
                     feedUri);
                 return ConsoleFormatter.PrintError(ex);
             }
-
-            Console.WriteLine("Package {0} {1} successfully downloaded from feed: {2}", packageId, packageVersion,
-                feedUri);
 
             return 0;
         }
