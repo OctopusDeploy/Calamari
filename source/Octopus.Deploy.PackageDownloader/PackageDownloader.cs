@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Packaging;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using NuGet;
 using Octopus.Deploy.Startup;
+using ZipPackage = NuGet.ZipPackage;
 
 namespace Octopus.Deploy.PackageDownloader
 {
@@ -14,31 +18,120 @@ namespace Octopus.Deploy.PackageDownloader
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly PackageRepositoryFactory packageRepositoryFactory = new PackageRepositoryFactory();
 
-        public void DownloadPackage(string packageId, SemanticVersion version, Uri feedUri, bool forcePackageDownload, out string downloadedTo, out string hash, out long size)
+        public void DownloadPackage(string packageId, SemanticVersion version, string feedId, Uri feedUri, bool forcePackageDownload, out string downloadedTo, out string hash, out long size)
+        {
+            var cacheDirectory = GetPackageRoot(feedId, Path.GetFullPath(".\\Work\\"));
+            
+            IPackage downloaded = null;
+            downloadedTo = null;
+            if(!forcePackageDownload)
+            {
+                AttemptToGetPackageFromCache(packageId, version, feedId, cacheDirectory, out downloaded, out downloadedTo);
+            }
+
+            if (downloaded == null)
+            {
+                AttemptToDownload(packageId, version, feedUri, cacheDirectory, out downloadedTo, out downloaded);
+            }
+            else
+            {
+                OctopusLogger.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'",
+                    downloadedTo);
+            }
+
+            size = GetFileSize(downloadedTo);
+            hash = HashCalculator.Hash(downloaded.GetStream());
+        }
+
+        private void AttemptToGetPackageFromCache(string packageId, SemanticVersion version, string feedId, string cacheDirectory, out IPackage downloaded, out string downloadedTo)
+        {
+            downloaded = null;
+            downloadedTo = null;
+
+            OctopusLogger.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
+
+            var name = GetNameOfPackage(packageId, version.ToString());
+            EnsureDirectoryExists(cacheDirectory);
+
+            var files = EnumerateFilesRecursively(cacheDirectory, name + "*.nupkg");
+
+            foreach (var file in files)
+            {
+                var package = ReadPackageFile(file);
+                if (package == null)
+                    continue;
+
+                if (!string.Equals(package.Id, packageId, StringComparison.OrdinalIgnoreCase) || !string.Equals(package.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                downloaded = package;
+                downloadedTo = file;
+            }
+        }
+
+        private IPackage ReadPackageFile(string filePath)
+        {
+            try
+            {
+                return new ZipPackage(filePath);
+            }
+            catch (FileNotFoundException)
+            {
+                return null;
+            }
+            catch (IOException)
+            {
+                return null;
+            }
+            catch (FileFormatException)
+            {
+                return null;
+            }
+        }
+
+        private IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
+        {
+            return searchPatterns.Length == 0
+                ? Directory.EnumerateFiles(parentDirectoryPath, "*", SearchOption.AllDirectories)
+                : searchPatterns.SelectMany(
+                    pattern => Directory.EnumerateFiles(parentDirectoryPath, pattern, SearchOption.AllDirectories));
+        }
+
+        private string GetPackageRoot(string prefix, string rootDirectory)
+        {
+            return string.IsNullOrWhiteSpace(prefix) ? rootDirectory : Path.Combine(rootDirectory, prefix);
+        }
+
+        private string GetNameOfPackage(string packageId, string version)
+        {
+            return String.Format("{0}.{1}_", packageId, version);
+        }
+
+        private void AttemptToDownload(string packageId, SemanticVersion version, Uri feedUri, string cacheDirectory, out string downloadedTo, out IPackage downloaded)
         {
             Console.WriteLine("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
 
-            var cacheDirectory = Path.GetFullPath(".\\Work\\");
-            OctopusLogger.VerboseFormat("Downloaded package will be stored in: {0}", cacheDirectory);
+            OctopusLogger.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             EnsureDirectoryExists(cacheDirectory);
             //TODO: confirm enough space
 
-            IPackage downloaded = null;
+            downloaded = null;
             downloadedTo = null;
-
             Exception downloadException = null;
             for (var i = 1; i <= NumberOfTimesToAttemptToDownloadPackage; i++)
             {
                 try
                 {
-                    AttemptToFindAndDownloadPackage(i, packageId, version.ToString(), feedUri.ToString(), cacheDirectory, out downloaded, out downloadedTo);
+                    AttemptToFindAndDownloadPackage(i, packageId, version.ToString(), feedUri.ToString(), cacheDirectory,
+                        out downloaded, out downloadedTo);
                     break;
                 }
                 catch (Exception dataException)
                 {
-                    OctopusLogger.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", i, NumberOfTimesToAttemptToDownloadPackage, dataException.Message);
+                    OctopusLogger.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", i,
+                        NumberOfTimesToAttemptToDownloadPackage, dataException.Message);
                     downloadException = dataException;
-                    Thread.Sleep(i * 1000);
+                    Thread.Sleep(i*1000);
                 }
             }
 
@@ -60,9 +153,6 @@ namespace Octopus.Deploy.PackageDownloader
             }
 
             CheckWhetherThePackageHasDependencies(downloaded);
-
-            size = GetFileSize(downloadedTo);
-            hash = HashCalculator.Hash(downloaded.GetStream());
         }
 
         void AttemptToFindAndDownloadPackage(int attempt, string packageId, string packageVersion, string feed, string cacheDirectory, out IPackage downloadedPackage, out string path)

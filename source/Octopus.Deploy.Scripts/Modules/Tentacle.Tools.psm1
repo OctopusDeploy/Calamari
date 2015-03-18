@@ -120,6 +120,8 @@ function Invoke-PackageDownload
         [string]$packageId,
         [Parameter(Mandatory=$True, ValueFromPipeline=$True)]
         [string]$packageVersion,
+		[Parameter(Mandatory=$True, ValueFromPipeline=$True)]
+		[string]$feedId,
         [Parameter(Mandatory=$True, ValueFromPipeline=$True)]
         [string]$feedUri,
         [Parameter(Mandatory=$False, ValueFromPipeline=$True)]
@@ -151,7 +153,7 @@ function Invoke-PackageDownload
 
         try
         {
-            & $exe -packageId "$packageId" -packageVersion "$packageVersion" -feedUri "$feedUri" ($optionalArguments)
+            & $exe -packageId "$packageId" -packageVersion "$packageVersion" -feedId "$feedId" -feedUri "$feedUri" ($optionalArguments)
             if($LASTEXITCODE -ne 0)
             {
                 throw "Exit code $LASTEXITCODE returned" 

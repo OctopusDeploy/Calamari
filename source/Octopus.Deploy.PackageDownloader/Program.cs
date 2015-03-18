@@ -19,6 +19,7 @@ namespace Octopus.Deploy.PackageDownloader
             string packageId = null;
             string packageVersion = null;
             bool forcePackageDownload = false;
+            string feedId = null;
             string feedUri = null;
             string feedUsername = null;
             string feedPassword = null;
@@ -28,6 +29,7 @@ namespace Octopus.Deploy.PackageDownloader
                 var options = new OptionSet();
                 options.Add("packageId=", "Package ID to download", v => packageId = v);
                 options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
+                options.Add("feedId=", "Id of the NuGet feed", v => feedId = v);
                 options.Add("feedUri=", "URL to NuGet feed", v => feedUri = v);
                 options.Add("feedUsername=", "[Optional] Username to use for an authenticated NuGet feed", v => feedUsername = v);
                 options.Add("feedPassword=", "[Optional] Password to use for an authenticated NuGet feed", v => feedPassword = v);
@@ -37,7 +39,7 @@ namespace Octopus.Deploy.PackageDownloader
 
                 SemanticVersion version;
                 Uri uri;
-                CheckArguments(packageId, packageVersion, feedUri, feedUsername, feedPassword, out version, out uri);
+                CheckArguments(packageId, packageVersion, feedId, feedUri, feedUsername, feedPassword, out version, out uri);
 
                 SetFeedCredentials(feedUsername, feedPassword, uri);
 
@@ -47,6 +49,7 @@ namespace Octopus.Deploy.PackageDownloader
                 packageDownloader.DownloadPackage(
                     packageId, 
                     version, 
+                    feedId,
                     uri, 
                     forcePackageDownload, 
                     out downloadedTo, 
@@ -88,8 +91,7 @@ namespace Octopus.Deploy.PackageDownloader
         }
 
         // ReSharper disable UnusedParameter.Local
-        static void CheckArguments(string packageId, string packageVersion, string feedUri, string feedUsername,
-            string feedPassword, out SemanticVersion version, out Uri uri)
+        static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, out SemanticVersion version, out Uri uri)
         {
             if (String.IsNullOrWhiteSpace(packageId))
             {
@@ -104,6 +106,11 @@ namespace Octopus.Deploy.PackageDownloader
             if (!SemanticVersion.TryParse(packageVersion, out version))
             {
                 throw new ArgumentException("Package version specified is not a valid semantic version");
+            }
+
+            if (String.IsNullOrWhiteSpace(feedId))
+            {
+                throw new ArgumentException("No feed ID was specified.");
             }
 
             if (String.IsNullOrWhiteSpace(feedUri))
