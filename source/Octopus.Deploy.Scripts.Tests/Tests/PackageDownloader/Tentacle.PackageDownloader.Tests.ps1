@@ -15,23 +15,32 @@ function Invoke-Test([string]$packageId, [string]$packageVersion, [string]$feedI
         Throw $_
     }
 }
+
+# Package details
 $packageId = "OctoConsole"
 $invalidPackageId = "OctConsole"
 $packageVersion = "1.0.0.0"
 $invalidPackageVersion = "1.0.0.x"
+$expectedPackageHash = "40d78a00090ba7f17920a27cc05d5279bd9a4856"
+$expectedPackageSize = "6346"
+
+# Public NuGet feed details
 $feedId = "feeds-myget"
-$authFeedId = "feeds-authmyget"
-$localFeedId = "feeds-local"
 $feedUri = "https://www.myget.org/F/octopusdeploy-tests"
-$authFeedUri = "https://www.myget.org/F/octopusdeploy-testsauthd"
 $invalidFeedUri = "www.myget.org/F/octopusdeploy-tests"
+
+# Authenticated NuGet feed details
+$authFeedId = "feeds-authmyget"
+$authFeedUri = "https://www.myget.org/F/octopusdeploy-authtests"
+$feedUsername = $env:ODPESTER_MYGETUSERNAME
+$feedPassword = $env:ODPESTER_MYGETPASSWORD
+$invalidFeedPassword = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# Local fileshare details
+$localFeedId = "feeds-local"
 $localFileShare = "C:\Packages"
 $invalidLocalFileShare = "X:\Packages"
 $localFileShareUri = "file:///C:/Packages"
-$feedUsername = ""
-$feedPassword = ""
-$invalidFeedUsername = ""
-$invalidFeedPassword = ""
 
 Describe "Tentacle.PackageDownloader" {
     Context "Public NuGet Feed" {
@@ -39,112 +48,119 @@ Describe "Tentacle.PackageDownloader" {
             $out = Invoke-Test $packageId $packageVersion $feedId $feedUri
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$feedUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$feedId"
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"40d78a00090ba7f17920a27cc05d5279bd9a4856`"]"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"6346`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
             $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$feedUri'"))
         }
-
         It "should use package from cache" {
             $out = Invoke-Test $packageId $packageVersion $feedId $feedUri
             $out | Should Match ([regex]::Escape("Checking package cache for package $packageId $packageVersion"))
             $out | Should Match "Package was found in cache. No need to download. Using file: .*\\Work\\$feedId\\.*$packageId`.${packageVersion}_.*`.nupkg"
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"40d78a00090ba7f17920a27cc05d5279bd9a4856`"]"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"6346`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-
         It "should download package from feed even though it is in cache" {
             $out = Invoke-Test $packageId $packageVersion $feedId $feedUri -forcePackageDownload
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$feedUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$feedId"
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"40d78a00090ba7f17920a27cc05d5279bd9a4856`"]"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"6346`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
             $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$feedUri'"))
         }
     }
 
     Context "Authenticated NuGet Feed" {
-        It "should download package from feed" {
-            #$out = Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $feedPassword
+        It "should download package from feed" -Skip:$($feedUsername -eq "") {
+            $out = Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $feedPassword
+            $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$authFeedUri'"))
+            $out | Should Match "Downloaded package will be stored in: .*\\Work\\$authFeedId"
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
+            $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
+            $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$authFeedUri'"))
         }
-
-        It "should fail when invalid credentials" {
-            #{ Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $invalidFeedUsername $invalidFeedPassword } | Should Throw
+        It "should use package from cache" -Skip:$($feedUsername -eq "") {
+            $out = Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $feedPassword
+            $out | Should Match ([regex]::Escape("Checking package cache for package $packageId $packageVersion"))
+            $out | Should Match "Package was found in cache. No need to download. Using file: .*\\Work\\$authFeedId\\.*$packageId`.${packageVersion}_.*`.nupkg"
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
+            $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-
-        It "should use package from cache" {
+        It "should download package from feed even though package is in cache" -Skip:$($feedUsername -eq "") {
+            $out = Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $feedPassword -forcePackageDownload
+            $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$authFeedUri'"))
+            $out | Should Match "Downloaded package will be stored in: .*\\Work\\$authFeedId"
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
+            $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
+            $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$authFeedUri'"))
         }
-
-        It "should download package from feed even though package is in cache" {
+        It "should fail when invalid credentials" -Skip:$($feedUsername -eq "") {
+            { Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $invalidFeedPassword -forcePackageDownload } | Should Throw
         }
     }
 
     Context "Local fileshare" {
-        It "should fail when invalid fileshare" {
-            { Invoke-Test $packageId $packageVersion $localFeedId $invalidLocalFileShare } | Should Throw
-        }
-
         It "should download package from local fileshare" {
             $out = Invoke-Test $packageId $packageVersion $localFeedId $localFileShare
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$localFileShareUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$localFeedId"
             $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$localFileShare'"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"40d78a00090ba7f17920a27cc05d5279bd9a4856`"]"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"6346`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-
-        It "should fail when no permissions to fileshare" {
-        }
-
         It "should use package from cache" {
             $out = Invoke-Test $packageId $packageVersion $localFeedId $localFileShare
             $out | Should Match ([regex]::Escape("Checking package cache for package $packageId $packageVersion"))
             $out | Should Match "Package was found in cache. No need to download. Using file: .*\\Work\\$localFeedId\\.*$packageId`.${packageVersion}_.*`.nupkg"
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"40d78a00090ba7f17920a27cc05d5279bd9a4856`"]"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"6346`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-
         It "should download package from fileshare when package is in cache" {
             $out = Invoke-Test $packageId $packageVersion $localFeedId $localFileShare -forcePackageDownload
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$localFileShareUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$localFeedId"
             $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$localFileShare'"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"40d78a00090ba7f17920a27cc05d5279bd9a4856`"]"))
-            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"6346`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Hash`" value=`"$expectedPackageHash`"]"))
+            $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
+        }
+        It "should fail when invalid fileshare" {
+            { Invoke-Test $packageId $packageVersion $localFeedId $invalidLocalFileShare -forcePackageDownload } | Should Throw
+        }
+        It "should fail when no permissions to fileshare" -Skip {
+            { Invoke-Test $packageId $packageVersion $localFeedId "" -forcePackageDownload } | Should Throw
         }
     }
 
-    Context "NuGet package details" {
+    Context "Invalid NuGet package details" {
         It "should fail when no package ID" {
             { Invoke-Test "" $packageVersion $feedId $feedUri } | Should Throw
         }
-
         It "should fail when invalid package ID" {
             { Invoke-Test $invalidPackageId $packageVersion $feedId $feedUri } | Should Throw
         }
         It "should fail when package version" {
             { Invoke-Test $packageId "" $feedId $feedUri } | Should Throw
         }
-
         It "should fail when invalid package version" {
             { Invoke-Test $packageId $invalidPackageVersion $feedId $feedUri } | Should Throw
         }
     }
     
-    Context "NuGet feed details" {
+    Context "Invalid NuGet feed details" {
         It "should fail when no feed ID" {
             { Invoke-Test $packageId $packageVersion "" $feedUri } | Should Throw
         }
-
         It "should fail when no no feed URI" {
             { Invoke-Test $packageId $packageVersion $feedId "" } | Should Throw
         }
-
         It "should fail when invalid feed URI" {
             { Invoke-Test $packageId $packageVersion $feedId $invalidFeedUri } | Should Throw
         }
