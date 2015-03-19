@@ -110,3 +110,56 @@ function Invoke-OctopusVariableSubsitution
         Remove-Item $varsFile -Force
     }
 }
+
+function Invoke-PackageDownload
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory=$True, ValueFromPipeline=$True)]
+        [string]$packageId,
+        [Parameter(Mandatory=$True, ValueFromPipeline=$True)]
+        [string]$packageVersion,
+		[Parameter(Mandatory=$True, ValueFromPipeline=$True)]
+		[string]$feedId,
+        [Parameter(Mandatory=$True, ValueFromPipeline=$True)]
+        [string]$feedUri,
+        [Parameter(Mandatory=$False, ValueFromPipeline=$True)]
+        [string]$feedUsername,
+        [Parameter(Mandatory=$False, ValueFromPipeline=$True)]
+        [string]$feedPassword,
+        [Parameter(Mandatory=$False, ValueFromPipeline=$True)]
+        [switch]$forcePackageDownload
+    )
+
+    begin { }
+    process
+    {
+        $exe = Find-OctopusTool -name "Octopus.Deploy.PackageDownloader.exe"
+        
+        $optionalArguments = @()
+        if($feedUsername)
+        {
+            $optionalArguments += @("-feedUsername", "$feedUsername")
+        }
+        if($feedPassword)
+        {
+            $optionalArguments += @("-feedPassword", "$feedPassword")
+        }
+        if($forcePackageDownload)
+        {
+            $optionalArguments += @("-forcePackageDownload")
+        }
+
+        try
+        {
+            & $exe -packageId "$packageId" -packageVersion "$packageVersion" -feedId "$feedId" -feedUri "$feedUri" ($optionalArguments)
+            if($LASTEXITCODE -ne 0)
+            {
+                throw "Exit code $LASTEXITCODE returned" 
+            }
+        }
+        finally { }
+    }
+    end { }
+}

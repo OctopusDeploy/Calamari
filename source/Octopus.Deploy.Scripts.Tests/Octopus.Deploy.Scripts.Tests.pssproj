@@ -34,6 +34,7 @@
     <Folder Include="Tests\ConfigurationVariables\Samples\" />
     <Folder Include="Tests\ConfigurationTransforms\" />
     <Folder Include="Tests\Substitutions\" />
+    <Folder Include="Tests\PackageDownloader\" />
     <Folder Include="Tests\Tools\" />
     <Folder Include="Tests\Scripts\" />
   </ItemGroup>
@@ -46,6 +47,7 @@
     <Content Include="Tests\ConfigurationVariables\Samples\CrazyNamespace.config" />
     <Content Include="Tests\ConfigurationVariables\Samples\NoHeader.config" />
     <Content Include="Tests\ConfigurationVariables\Samples\StrongTyped.config" />
+    <Content Include="Tests\PackageDownloader\Tentacle.PackageDownloader.Tests.ps1" />
     <Content Include="Tests\Scripts\CanCreateArtifact.csx" />
     <Content Include="Tests\Scripts\CanCreateArtifact.ps1" />
     <Content Include="Tests\Scripts\CanDotSource.ps1" />
