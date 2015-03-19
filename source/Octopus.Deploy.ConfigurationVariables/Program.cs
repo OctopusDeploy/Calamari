@@ -16,17 +16,14 @@ namespace Octopus.Deploy.ConfigurationVariables
         {
             try
             {
-                string variablesFilePath = null;
-
-                var options = new OptionSet();
-                options.Add("variablesFile=", "Path to a variables file", v => variablesFilePath = Path.GetFullPath(v));
-
-                var files = options.Parse(args);
-                if (files.Count == 0)
+                if (args.Length < 2)
                 {
-                    Console.WriteLine("No input files specified");
-                    return 0;
+                    Console.WriteLine("Usage: Octopus.Deploy.ConfigurationVariables.exe <variables-file> [<config-file>...]");
+                    return 1;
                 }
+
+                var variablesFilePath = Path.GetFullPath(args[0]);
+                var files = args.Skip(1).ToList();
 
                 if (string.IsNullOrWhiteSpace(variablesFilePath))
                     throw new ArgumentException("No variables file was specified");
@@ -34,11 +31,11 @@ namespace Octopus.Deploy.ConfigurationVariables
                 if (!File.Exists(variablesFilePath))
                     throw new ArgumentException(string.Format("Couldn't find variables file at '{0}'", variablesFilePath));
 
-                var variables = VariablesFileFormatter.ReadFrom(variablesFilePath);
+                var variables = new VariableDictionary(variablesFilePath);
 
                 foreach (var file in files)
                 {
-                    ModifyConfigurationFile(file, variables);
+                    ModifyConfigurationFile(Path.GetFullPath(file), variables);
                 }
 
                 return 0;
@@ -49,7 +46,7 @@ namespace Octopus.Deploy.ConfigurationVariables
             }
         }
 
-        static void ModifyConfigurationFile(string configurationFilePath, Dictionary<string, string> variables)
+        static void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
             XDocument doc;
 
@@ -60,12 +57,12 @@ namespace Octopus.Deploy.ConfigurationVariables
 
             var changes = new List<string>();
 
-            foreach (var variable in variables)
+            foreach (var variable in variables.GetNames())
             {
                 changes.AddRange(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable.Key, "value", variable.Value).Concat(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable.Key, "connectionString", variable.Value).Concat(
-                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable.Key, variable.Value))));
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable, "value", variables.Get(variable)).Concat(
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables.Get(variable)).Concat(
+                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables.Get(variable)))));
             }
 
             if (!changes.Any())

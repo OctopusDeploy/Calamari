@@ -22,11 +22,10 @@ namespace Octopus.Deploy.Substitutions
                 var variablesFile = EnsureExists(MapPath(args[1]));
                 var targetFile = MapPath(args[2]);
 
-                var variables = VariablesFileFormatter.ReadFrom(variablesFile);
+                var variables = new VariableDictionary(variablesFile);
                 var source = File.ReadAllText(sourceFile);
 
-                var variableDictionary = new VariableDictionary(variables);
-                var result = variableDictionary.Evaluate(source);
+                var result = variables.Evaluate(source);
                 File.WriteAllText(targetFile, result);
 
                 return 0;

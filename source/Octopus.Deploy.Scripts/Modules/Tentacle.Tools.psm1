@@ -45,7 +45,7 @@ function Update-OctopusApplicationConfigurationFile
         {
 		    foreach ($config in $configurationFiles)
             {
-                & $exe $config -variablesFile "$varsFile"
+                & $exe "$varsFile" "$config"
                 if ($LASTEXITCODE -ne 0) 
                 {
                     throw "Exit code $LASTEXITCODE returned"

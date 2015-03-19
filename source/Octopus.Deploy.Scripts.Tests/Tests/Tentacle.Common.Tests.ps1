@@ -3,7 +3,7 @@ Import-Module "$here\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Common.psm1" 
 
 Describe "Tentacle.Common" {
     It "Should write and read variables" {
-        $created = New-Object 'System.Collections.Generic.Dictionary[String,String]' (,[System.StringComparer]::OrdinalIgnoreCase)
+        $created = New-Object Octostache.VariableDictionary
         $created["Foo.Foo"] = "bar"
         $created["Foo.Baz"] = "Hello worldæ!"
         $created["Foo.Empty"] = ""

@@ -1,4 +1,26 @@
-﻿function Convert-ServiceMessageValue([string]$value)
+﻿$parent = split-path -parent $MyInvocation.MyCommand.Definition
+
+$originalLocation = Get-Location
+
+$attemptOne = [System.IO.Path]::GetFullPath("$parent\..\Tools\")
+if (Test-Path $attemptOne) 
+{
+	Set-Location $attemptOne
+	[Reflection.Assembly]::LoadFrom("$attemptOne\Octostache.dll") | Out-Null
+}
+else 
+{
+	$attemptTwo = [System.IO.Path]::GetFullPath("$parent\..\..\Octopus.Deploy.Substitutions\bin\")
+	if (Test-Path $attemptTwo) 
+	{
+		Set-Location $attemptTwo
+		[Reflection.Assembly]::LoadFrom("$attemptTwo\Octostache.dll") | Out-Null
+	}
+}
+
+Set-Location $originalLocation
+
+function Convert-ServiceMessageValue([string]$value)
 {
 	$valueBytes = [System.Text.Encoding]::UTF8.GetBytes($value)
 	return [Convert]::ToBase64String($valueBytes)
@@ -7,7 +29,7 @@
 function Get-FileDetails([string]$fileName)
 {
 	[Reflection.Assembly]::LoadWithPartialName("System.Security") | out-null
-	$sha1 = new-Object System.Security.Cryptography.SHA1Managed
+	$sha1 = New-Object System.Security.Cryptography.SHA1Managed
 
 	$file = [System.IO.File]::Open($filename, "open", "read")
 	$fileHash = ""
@@ -132,7 +154,8 @@ function Write-Warning([string]$message)
 
 function Read-OctopusVariables([string]$variablesFile)
 {
-	function MakeLegacyKey($key) {
+	function MakeLegacyKey($key) 
+	{
 		$result = New-Object System.Text.StringBuilder
 
 		for ($i = 0; $i -lt $key.Length; $i++)
@@ -147,7 +170,8 @@ function Read-OctopusVariables([string]$variablesFile)
 		return $result.ToString()
 	}
 
-	function MakeSmartKey($key){
+	function MakeSmartKey($key)
+	{
 		$result = New-Object System.Text.StringBuilder
 
 		for ($i = 0; $i -lt $key.Length; $i++)
@@ -171,26 +195,11 @@ function Read-OctopusVariables([string]$variablesFile)
 		}
 	}
 
-	$targetStream = New-Object System.IO.FileStream -ArgumentList @($variablesFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
-	$reader = New-Object System.IO.StreamReader -ArgumentList @($targetStream)
-	$result = New-Object 'System.Collections.Generic.Dictionary[String,String]' (,[System.StringComparer]::OrdinalIgnoreCase)
+	$result = New-Object Octostache.VariableDictionary -ArgumentList @($variablesFile)
 
-	while (($line = $reader.ReadLine()))
-	{
-		if ([String]::IsNullOrEmpty($line)) 
-		{
-			continue;
-		}
-
-		$parts = $line.Split(',')
-		$name = $parts[0]
-		$value = $parts[1]
-	
-		$name = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($name))
-		$value = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($value))
-
-		$result[$name] = $value
-
+	$result.GetNames() | ForEach-Object {
+		$name = $_
+		$value = $result.Get($_)
 		$legacyKey = MakeLegacyKey($name)
 		$smartKey = MakeSmartKey($name)
 		if ($legacyKey -ne $smartKey)
@@ -200,31 +209,10 @@ function Read-OctopusVariables([string]$variablesFile)
 	    AssignVariable -k $smartKey -v $value
 	}
 
-	$reader.Dispose()
-	$targetStream.Dispose()
 	return $result
 }
 
 function Write-OctopusVariables($variables, [string]$variablesFile) 
 {
-	$targetStream = New-Object System.IO.FileStream -ArgumentList @($variablesFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
-	$writer = New-Object System.IO.StreamWriter -ArgumentList @($targetStream)
-	foreach ($pair in $variables.GetEnumerator())
-	{
-        $name = $pair.Key
-        $value = $pair.Value
-        
-        if ([string]::IsNullOrEmpty($name)) { continue; }
-        if ([string]::IsNullOrEmpty($value)) { $value = "" }
-
-		$name = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($name))
-		$value = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($value))
-		$writer.Write($name)
-		$writer.Write(",")
-		$writer.Write($value)
-		$writer.WriteLine()
-	}
-    $writer.Flush()
-	$writer.Dispose()
-	$targetStream.Dispose()
+	$variables.Save($variablesFile)
 }

@@ -2,7 +2,7 @@
 Import-Module "$here\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Common.psm1" -Force
 Import-Module "$here\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Scripting.psm1" -Force
 
-$global:OctopusParameters = @{}
+$global:OctopusParameters = New-Object Octostache.VariableDictionary
 $OctopusParameters["Octopus.Scripting.PathToScriptCS"] = Resolve-Path "$here\..\..\packages\Octopus.Dependencies.ScriptCS.3.0.1\runtime\scriptcs.exe"
 
 function Invoke-TestScript([string]$name) {

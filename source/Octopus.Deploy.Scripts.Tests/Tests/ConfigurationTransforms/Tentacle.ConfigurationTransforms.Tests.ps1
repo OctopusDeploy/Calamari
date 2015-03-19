@@ -2,7 +2,7 @@
 Import-Module "$here\..\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Common.psm1" -Force
 Import-Module "$here\..\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Tools.psm1" -Force
 
-$global:OctopusParameters = @{}
+$global:OctopusParameters = New-Object Octostache.VariableDictionary
 
 function Invoke-Test([string]$config, [string]$transform) {
     $config = "$here\Samples\$config"

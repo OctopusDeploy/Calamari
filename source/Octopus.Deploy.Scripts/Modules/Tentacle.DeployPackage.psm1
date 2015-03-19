@@ -6,8 +6,12 @@
 # Run IIS etc.
 # Run post-deploy scripts
 # Cleanup
+# Update deployment journal
 
-# A few notes:
-# - PowerShell scripts need to be invoked in their own PowerShell.exe instances so that they get fresh variable snapshots
-# - Output variables from each PS script should be passed into the next PS script and subsequent steps
-# - Need to clean up files etc.
+
+function Invoke-OctopusPackageDeployment([string]$packageFile)
+{
+
+	
+}
+

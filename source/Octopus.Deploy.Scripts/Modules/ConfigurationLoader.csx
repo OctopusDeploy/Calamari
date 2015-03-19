@@ -4,49 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Octostache;
 
 public static class Octopus
 {
-    public static readonly OctopusParametersDictionary Parameters = new OctopusParametersDictionary();
-
-	public class OctopusParametersDictionary : Dictionary<string, string>
-	{
-		public OctopusParametersDictionary() : base(StringComparer.OrdinalIgnoreCase) {}
-
-		public new string this[string key] 
-		{
-			get { return base.ContainsKey(key) ? base[key] : ""; }
-			set { base[key] = value; }
-		}
-	}
+    public static readonly VariableDictionary Parameters;
 
 	static Octopus() 
 	{
 		var variablesFile = System.Environment.GetEnvironmentVariable("OctopusVariablesFile");
-		LoadVariables(variablesFile);
+		Parameters = new VariableDictionary(variablesFile);
 	}
-
-    public static void LoadVariables(string variablesFilePath)
-    {
-        using (var targetStream = new FileStream(variablesFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-        using (var reader = new StreamReader(targetStream))
-        {
-            string line;
-            while ((line = reader.ReadLine()) != null)
-			{
-				if (String.IsNullOrEmpty(line)) 
-				{
-					continue;
-				}
-
-
-			    var parts = line.Split(',');
-			    var name = Encoding.UTF8.GetString(Convert.FromBase64String(parts[0]));
-			    var value = Encoding.UTF8.GetString(Convert.FromBase64String(parts[1]));
-			    Parameters[name] = value;
-			}
-        }
-    }
 
 	static string EncodeServiceMessageValue(string value)
 	{

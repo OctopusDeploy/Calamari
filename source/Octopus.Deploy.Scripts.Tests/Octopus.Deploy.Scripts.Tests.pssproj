@@ -28,6 +28,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Tests\" />
+    <Folder Include="Tests\Scripts\Samples\" />
     <Folder Include="Tests\Substitutions\Samples\" />
     <Folder Include="Tests\ConfigurationTransforms\Samples\" />
     <Folder Include="Tests\ConfigurationVariables\" />

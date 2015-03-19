@@ -31,6 +31,8 @@ Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "Octopus.Deploy.Scripts.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Octopus.Deploy.PackageDownloader", "Octopus.Deploy.PackageDownloader\Octopus.Deploy.PackageDownloader.csproj", "{AF876E70-C955-418F-9A11-54BAA567AA97}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Octopus.Deploy.PackageInstaller", "Octopus.Deploy.PackageInstaller\Octopus.Deploy.PackageInstaller.csproj", "{9CD5FB52-203C-47F0-B847-62461C836AB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,10 @@ Global
 		{AF876E70-C955-418F-9A11-54BAA567AA97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AF876E70-C955-418F-9A11-54BAA567AA97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AF876E70-C955-418F-9A11-54BAA567AA97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CD5FB52-203C-47F0-B847-62461C836AB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CD5FB52-203C-47F0-B847-62461C836AB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CD5FB52-203C-47F0-B847-62461C836AB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CD5FB52-203C-47F0-B847-62461C836AB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
