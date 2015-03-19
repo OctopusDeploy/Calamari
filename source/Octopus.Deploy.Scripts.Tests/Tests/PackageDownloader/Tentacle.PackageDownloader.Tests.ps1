@@ -73,7 +73,7 @@ Describe "Tentacle.PackageDownloader" {
     }
 
     Context "Authenticated NuGet Feed" {
-        It "should download package from feed" -Skip:$($feedUsername -eq "") {
+        It "should download package from feed" -Skip {
             $out = Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $feedPassword
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$authFeedUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$authFeedId"
@@ -82,7 +82,7 @@ Describe "Tentacle.PackageDownloader" {
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
             $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$authFeedUri'"))
         }
-        It "should use package from cache" -Skip:$($feedUsername -eq "") {
+        It "should use package from cache" -Skip {
             $out = Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $feedPassword
             $out | Should Match ([regex]::Escape("Checking package cache for package $packageId $packageVersion"))
             $out | Should Match "Package was found in cache. No need to download. Using file: .*\\Work\\$authFeedId\\.*$packageId`.${packageVersion}_.*`.nupkg"
@@ -90,7 +90,7 @@ Describe "Tentacle.PackageDownloader" {
             $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-        It "should download package from feed even though package is in cache" -Skip:$($feedUsername -eq "") {
+        It "should download package from feed even though package is in cache" -Skip {
             $out = Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $feedPassword -forcePackageDownload
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$authFeedUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$authFeedId"
@@ -99,13 +99,13 @@ Describe "Tentacle.PackageDownloader" {
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
             $out | Should Match ([regex]::Escape("Package $packageId $packageVersion successfully downloaded from feed: '$authFeedUri'"))
         }
-        It "should fail when invalid credentials" -Skip:$($feedUsername -eq "") {
+        It "should fail when invalid credentials" -Skip {
             { Invoke-Test $packageId $packageVersion $authFeedId $authFeedUri $feedUsername $invalidFeedPassword -forcePackageDownload } | Should Throw
         }
     }
 
     Context "Local fileshare" {
-        It "should download package from local fileshare" {
+        It "should download package from local fileshare" -Skip {
             $out = Invoke-Test $packageId $packageVersion $localFeedId $localFileShare
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$localFileShareUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$localFeedId"
@@ -114,7 +114,7 @@ Describe "Tentacle.PackageDownloader" {
             $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-        It "should use package from cache" {
+        It "should use package from cache" -Skip {
             $out = Invoke-Test $packageId $packageVersion $localFeedId $localFileShare
             $out | Should Match ([regex]::Escape("Checking package cache for package $packageId $packageVersion"))
             $out | Should Match "Package was found in cache. No need to download. Using file: .*\\Work\\$localFeedId\\.*$packageId`.${packageVersion}_.*`.nupkg"
@@ -122,7 +122,7 @@ Describe "Tentacle.PackageDownloader" {
             $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-        It "should download package from fileshare when package is in cache" {
+        It "should download package from fileshare when package is in cache" -Skip {
             $out = Invoke-Test $packageId $packageVersion $localFeedId $localFileShare -forcePackageDownload
             $out | Should Match ([regex]::Escape("Downloading NuGet package $packageId $packageVersion from feed: '$localFileShareUri'"))
             $out | Should Match "Downloaded package will be stored in: .*\\Work\\$localFeedId"
@@ -131,7 +131,7 @@ Describe "Tentacle.PackageDownloader" {
             $out | Should Match ([regex]::Escape("##octopus[setVariable name=`"Package.Size`" value=`"$expectedPackageSize`"]"))
             $out | Should Match "##octopus[setVariable name=`"Package.InstallationDirectoryPath`" value=`".*\Work\.*\.*$packageId`.${packageVersion}_.*`.nupkg`"]"
         }
-        It "should fail when invalid fileshare" {
+        It "should fail when invalid fileshare" -Skip {
             { Invoke-Test $packageId $packageVersion $localFeedId $invalidLocalFileShare -forcePackageDownload } | Should Throw
         }
         It "should fail when no permissions to fileshare" -Skip {
