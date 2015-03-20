@@ -23,10 +23,7 @@ namespace Octopus.Deploy.Substitutions
                 var targetFile = MapPath(args[2]);
 
                 var variables = new VariableDictionary(variablesFile);
-                var source = File.ReadAllText(sourceFile);
-
-                var result = variables.Evaluate(source);
-                File.WriteAllText(targetFile, result);
+                
 
                 return 0;
             }

@@ -99,6 +99,7 @@
     <Compile Include="Integration\Processes\ConsoleCommandOutput.cs" />
     <Compile Include="Integration\Processes\ICommandOutput.cs" />
     <Compile Include="Integration\Processes\SilentProcessRunner.cs" />
+    <Compile Include="Integration\Substitutions\FileSubstituter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\Support\Command.cs" />
@@ -120,7 +121,6 @@
   <ItemGroup>
     <Folder Include="Integration\ConfigurationTransforms\" />
     <Folder Include="Integration\ConfigurationVariables\" />
-    <Folder Include="Integration\Substitutions\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

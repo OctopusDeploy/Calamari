@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />
+    <Compile Include="Fixtures\Substitutions\SubstitutionsFixture.cs" />
     <Compile Include="Helpers\CalamariFixture.cs" />
     <Compile Include="Helpers\CalamariResult.cs" />
     <Compile Include="Fixtures\HelpFixture.cs" />
@@ -98,6 +99,9 @@
     </None>
     <None Include="Fixtures\ScriptCS\Scripts\Hello.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Substitutions\Samples\Servers.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
     <None Include="Fixtures\PowerShell\Scripts\Output.ps1">
