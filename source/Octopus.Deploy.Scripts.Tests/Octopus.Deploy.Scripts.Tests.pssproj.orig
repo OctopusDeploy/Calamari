@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{114c37e0-31a1-44cd-bad1-7248595fea32}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>
+    <Name>Octopus.Deploy.Scripts.Tests</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Tests\" />
+    <Folder Include="Tests\Scripts\Samples\" />
+    <Folder Include="Tests\Substitutions\Samples\" />
+    <Folder Include="Tests\ConfigurationTransforms\Samples\" />
+    <Folder Include="Tests\ConfigurationVariables\" />
+    <Folder Include="Tests\ConfigurationVariables\Samples\" />
+    <Folder Include="Tests\ConfigurationTransforms\" />
+    <Folder Include="Tests\Substitutions\" />
+    <Folder Include="Tests\PackageDownloader\" />
+    <Folder Include="Tests\Tools\" />
+    <Folder Include="Tests\Scripts\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="RunTests.ps1" />
+    <Content Include="Tests\Substitutions\Samples\Servers.json" />
+    <Content Include="Tests\Substitutions\Tentacle.Substitutions.Tests.ps1" />
+    <Content Include="Tests\ConfigurationTransforms\Tentacle.ConfigurationTransforms.Tests.ps1" />
+    <Content Include="Tests\ConfigurationVariables\Samples\App.config" />
+    <Content Include="Tests\ConfigurationVariables\Samples\CrazyNamespace.config" />
+    <Content Include="Tests\ConfigurationVariables\Samples\NoHeader.config" />
+    <Content Include="Tests\ConfigurationVariables\Samples\StrongTyped.config" />
+<<<<<<< HEAD
+    <Content Include="Tests\PackageDownloader\Tentacle.PackageDownloader.Tests.ps1" />
+    <Content Include="Tests\Scripts\CanCreateArtifact.csx" />
+    <Content Include="Tests\Scripts\CanCreateArtifact.ps1" />
+    <Content Include="Tests\Scripts\CanDotSource.ps1" />
+    <Content Include="Tests\Scripts\CanSetVariable.csx" />
+    <Content Include="Tests\Scripts\CanSetVariable.ps1" />
+    <Content Include="Tests\Scripts\Hello.csx" />
+    <Content Include="Tests\Scripts\Invalid.ps1" />
+    <Content Include="Tests\Scripts\InvalidSyntax.ps1" />
+    <Content Include="Tests\Scripts\MyFunctions.ps1" />
+    <Content Include="Tests\Scripts\MyModule.psm1" />
+    <Content Include="Tests\Scripts\Ping.ps1" />
+    <Content Include="Tests\Scripts\PrintVariables.ps1" />
+    <Content Include="Tests\Tentacle.Common.Tests.ps1" />
+=======
+>>>>>>> Implementing Calamari
+    <Content Include="Tests\ConfigurationVariables\Tentacle.ConfigurationVariables.Tests.ps1" />
+    <Content Include="Tests\Scripts\Tentacle.Scripting.Tests.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.Broken.config" />
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.Buggy.config" />
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.config" />
+    <Compile Include="Tests\ConfigurationTransforms\Samples\Web.Release.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Target Name="Build" />
+</Project>

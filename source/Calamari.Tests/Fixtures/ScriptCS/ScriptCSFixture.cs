@@ -6,7 +6,7 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
-    public class ScriptCsFixture : CalamariFixture
+    public class ScriptCSFixture : CalamariFixture
     {
         [Test]
         public void ShouldCreateArtifacts()
