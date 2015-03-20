@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using Calamari.Conventions;
+﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
