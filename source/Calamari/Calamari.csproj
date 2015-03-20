@@ -79,6 +79,8 @@
     <Compile Include="Conventions\RunningDeployment.cs" />
     <Compile Include="Conventions\SpecialVariables.cs" />
     <Compile Include="Conventions\SubstituteInFilesConvention.cs" />
+    <Compile Include="CalamariLogger.cs" />
+    <Compile Include="Integration\ConfigurationVariables\ConfigurationVariablesReplacer.cs" />
     <Compile Include="Integration\FileSystem\TemporaryFile.cs" />
     <Compile Include="Integration\Processes\AssemblyExtensions.cs" />
     <Compile Include="Integration\Processes\CommandLine.cs" />
@@ -120,7 +122,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Integration\ConfigurationTransforms\" />
-    <Folder Include="Integration\ConfigurationVariables\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

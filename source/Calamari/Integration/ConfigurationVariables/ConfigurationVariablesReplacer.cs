@@ -5,48 +5,13 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using Octopus.Deploy.Startup;
 using Octostache;
 
-namespace Octopus.Deploy.ConfigurationVariables
+namespace Calamari.Integration.ConfigurationVariables
 {
-    class Program
+    public class ConfigurationVariablesReplacer
     {
-        static int Main(string[] args)
-        {
-            try
-            {
-                if (args.Length < 2)
-                {
-                    Console.WriteLine("Usage: Octopus.Deploy.ConfigurationVariables.exe <variables-file> [<config-file>...]");
-                    return 1;
-                }
-
-                var variablesFilePath = Path.GetFullPath(args[0]);
-                var files = args.Skip(1).ToList();
-
-                if (string.IsNullOrWhiteSpace(variablesFilePath))
-                    throw new ArgumentException("No variables file was specified");
-
-                if (!File.Exists(variablesFilePath))
-                    throw new ArgumentException(string.Format("Couldn't find variables file at '{0}'", variablesFilePath));
-
-                var variables = new VariableDictionary(variablesFilePath);
-
-                foreach (var file in files)
-                {
-                    ModifyConfigurationFile(Path.GetFullPath(file), variables);
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                return ConsoleFormatter.PrintError(ex);
-            }
-        }
-
-        static void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
+        public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
             XDocument doc;
 
@@ -75,7 +40,7 @@ namespace Octopus.Deploy.ConfigurationVariables
 
             foreach (var change in changes)
             {
-                OctopusLogger.Verbose(change);
+                CalamariLogger.Verbose(change);
             }
 
             var xws = new XmlWriterSettings { OmitXmlDeclaration = doc.Declaration == null, Indent = true };
