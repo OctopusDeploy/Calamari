@@ -58,7 +58,7 @@
     <None Include="SecureShell\tentacle">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Tentacle\Tentacle.nuspec">
+    <None Include="Windows\Calamari.nuspec">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

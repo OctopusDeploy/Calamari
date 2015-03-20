@@ -10,13 +10,10 @@
     <OctopusPackageVersion Condition="'$(OctopusPackageVersion)' == ''">1.0.$([System.DateTime]::Now.ToString(yyyyMMdd)).$([System.DateTime]::Now.ToString(HHmmss))</OctopusPackageVersion>
   </PropertyGroup>
 
-  <!-- 
-  Create Octopus Deploy package
-  -->
   <Target Name="CreatePackageForOctopus">
-    <Message Text="Creating package for Octopus" Importance="high" />
     <Message Text="NuGet path: $(NuGetExePath)" Importance="high" />
 
-    <Exec Command='"$(NuGetExePath)" pack "$(ProjectDir)Tentacle\Tentacle.nuspec" -BasePath "$(ProjectDir.TrimEnd("\"))" -Version $(OctopusPackageVersion) -NoPackageAnalysis -NonInteractive -OutputDirectory "$(ProjectDir)..\.."' />
+    <MakeDir Directories="$(ProjectDir)..\..\built-packages"/>
+    <Exec Command='"$(NuGetExePath)" pack "$(ProjectDir)Windows\Calamari.nuspec" -BasePath "$(ProjectDir.TrimEnd("\"))" -Version $(OctopusPackageVersion) -NoPackageAnalysis -NonInteractive -OutputDirectory "$(ProjectDir)..\..\built-packages"' />
   </Target>
 </Project>
