@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using Calamari.Commands.Support;
-using Octopus.Deploy.PackageInstaller;
+using Calamari.Conventions;
+using Calamari.Integration.Packages;
 using Octostache;
 
 namespace Calamari.Commands
@@ -13,39 +16,49 @@ namespace Calamari.Commands
 
         public DeployPackageCommand()
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = v);
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = v);
+            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
 
-            //var packageFilePath = EnsureExists(MapPath(args[0]));
-            //var variablesFilePath = EnsureExists(MapPath(args[1]));
+            if (string.IsNullOrWhiteSpace(packageFile))
+                throw new CommandException("No package file was specified. Please pass --package YourPackage.nupkg");
 
-            //var variables = new VariableDictionary(variablesFilePath);
+            if (!File.Exists(packageFile))
+                throw new CommandException("Could not find package file: " + packageFile);    
 
-            //var conventions = new List<IConvention>
-            //    {
-            //        new ExtractPackageToTemporaryDirectoryConvention(),
-            //        new DeployScriptConvention("PreDeploy"),
-            //        new DeletePackageFileConvention(),
-            //        new SubstituteInFilesConvention(),
-            //        new ConfigurationTransformsConvention(),
-            //        new ConfigurationVariablesConvention(),
-            //        new AzureConfigurationConvention(),
-            //        new CopyPackageToCustomInstallationDirectoryConvention(),
-            //        new DeployScriptConvention("Deploy"),
-            //        new LegacyIisWebSiteConvention(),
-            //        new AzureUploadConvention(),
-            //        new AzureDeploymentConvention(),
-            //        new DeployScriptConvention("PostDeploy")
-            //    };
+            if (variablesFile != null && !File.Exists(variablesFile))
+                throw new CommandException("Could not find variables file: " + variablesFile);
 
-            //var deployment = new RunningDeployment(packageFilePath, variables);
-            //var conventionRunner = new ConventionProcessor(deployment, conventions);
-            //conventionRunner.RunConventions();
+            Console.WriteLine("Deploying package:    " + packageFile);
+            if (variablesFile != null) 
+                Console.WriteLine("Using variables from: " + variablesFile);
+
+            var variables = new VariableDictionary(variablesFile);
+            var conventions = new List<IConvention>
+            {
+                new ContributeEnvironmentVariablesConvention(),
+                new ExtractPackageToTemporaryDirectoryConvention(new LightweightPackageExtractor()),
+                new DeployScriptConvention("PreDeploy"),
+                new DeletePackageFileConvention(),
+                new SubstituteInFilesConvention(),
+                new ConfigurationTransformsConvention(),
+                new ConfigurationVariablesConvention(),
+                new AzureConfigurationConvention(),
+                new CopyPackageToCustomInstallationDirectoryConvention(),
+                new DeployScriptConvention("Deploy"),
+                new LegacyIisWebSiteConvention(),
+                new AzureUploadConvention(),
+                new AzureDeploymentConvention(),
+                new DeployScriptConvention("PostDeploy")
+            };
+
+            var deployment = new RunningDeployment(packageFile, variables);
+            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            conventionRunner.RunConventions();
 
             return 0;
         }

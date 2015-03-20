@@ -43,7 +43,7 @@ namespace Calamari.Integration.Processes
 
         string MakeFlag(string flagName)
         {
-            return "--" + Normalize(flagName);
+            return "-" + Normalize(flagName);
         }
 
         public CommandLine Argument(string argName, object argValue)
@@ -61,7 +61,7 @@ namespace Calamari.Integration.Processes
             else if (argValue != null)
                 sval = argValue.ToString();
 
-            return string.Format("--{0} {1}", Normalize(argName), Escape(sval));
+            return string.Format("-{0} {1}", Normalize(argName), Escape(sval));
         }
 
         public static string Escape(string argValue)

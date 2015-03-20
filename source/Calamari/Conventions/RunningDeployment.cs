@@ -1,8 +1,7 @@
 ﻿using System;
-using Calamari.Conventions;
 using Octostache;
 
-namespace Octopus.Deploy.PackageInstaller
+namespace Calamari.Conventions
 {
     public class RunningDeployment
     {
@@ -13,6 +12,16 @@ namespace Octopus.Deploy.PackageInstaller
         {
             this.packageFilePath = packageFilePath;
             this.variables = variables;
+        }
+
+        public string PackageFilePath
+        {
+            get { return packageFilePath; }
+        }
+
+        public VariableDictionary Variables
+        {
+            get {  return variables; }
         }
 
         public void Error(Exception ex)

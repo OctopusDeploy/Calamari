@@ -41,6 +41,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NuGet.Core, Version=2.8.50926.602, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\NuGet.Core.2.8.3\lib\net40-Client\NuGet.Core.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -63,6 +67,9 @@
   <ItemGroup>
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ContributeEnvironmentVariablesFixture.cs" />
+    <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
+    <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />
     <Compile Include="Fixtures\Substitutions\SubstitutionsFixture.cs" />
     <Compile Include="Helpers\CalamariFixture.cs" />
@@ -89,6 +96,12 @@
     </None>
     <None Include="Fixtures\ConfigurationVariables\Samples\StrongTyped.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\PreDeploy.ps1" />
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\PostDeploy.ps1" />
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\Deploy.ps1" />
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\Acme.Web.nuspec">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -141,6 +154,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

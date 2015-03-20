@@ -1,4 +1,4 @@
-﻿namespace Octopus.Deploy.PackageInstaller
+﻿namespace Calamari.Conventions
 {
     public class CopyPackageToCustomInstallationDirectoryConvention : IConvention
     {

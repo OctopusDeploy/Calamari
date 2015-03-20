@@ -23,6 +23,7 @@ namespace Calamari.Commands
             Options.Parse(commandLineArguments);
 
             var variables = LoadVariables();
+            variables.EnrichWithEnvironmentVariables();
 
             return InvokeScript(variables);
         }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Octopus.Deploy.PackageInstaller
+namespace Calamari.Conventions
 {
     public class ConventionProcessor
     {

@@ -21,6 +21,18 @@ namespace Calamari
             Verbose(String.Format(messageFormat, args));
         }
 
+        public static void Warn(string message)
+        {
+            Console.WriteLine("##octopus[stdout-warning]");
+            Console.WriteLine(message);
+            Console.WriteLine("##octopus[stdout-default]");
+        }
+
+        public static void WarnFormat(string messageFormat, params object[] args)
+        {
+            Warn(String.Format(messageFormat, args));
+        }
+
         public static void Error(string message)
         {
             Console.WriteLine("##octopus[stdout-error]");
