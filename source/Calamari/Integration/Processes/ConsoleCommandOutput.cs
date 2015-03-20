@@ -6,12 +6,12 @@ namespace Calamari.Integration.Processes
     {
         public void WriteInfo(string line)
         {
-            Console.WriteLine(line);
+            Log.Info(line);
         }
 
         public void WriteError(string line)
         {
-            Console.Error.WriteLine(line);
+            Log.Error(line);
         }
     }
 }

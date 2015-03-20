@@ -102,7 +102,7 @@ namespace Calamari.Integration.Packages
             {
                 if (!string.IsNullOrWhiteSpace(directoryName))
                 {
-                    CalamariLogger.WarnFormat("The script file \"{0}\" contained within the package will not be executed because it is contained within a child folder. As of Octopus Deploy 2.4, scripts in sub folders will not be executed.", path);
+                    Log.WarnFormat("The script file \"{0}\" contained within the package will not be executed because it is contained within a child folder. As of Octopus Deploy 2.4, scripts in sub folders will not be executed.", path);
                 }
             }
         }

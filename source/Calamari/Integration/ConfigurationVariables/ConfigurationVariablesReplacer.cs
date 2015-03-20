@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
@@ -25,22 +24,22 @@ namespace Calamari.Integration.ConfigurationVariables
             foreach (var variable in variables.GetNames())
             {
                 changes.AddRange(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable, "value", variables.Get(variable)).Concat(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables.Get(variable)).Concat(
-                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables.Get(variable)))));
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable, "value", variables).Concat(
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables).Concat(
+                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables))));
             }
 
             if (!changes.Any())
             {
-                Console.WriteLine("No matching setting or connection string names were found in: {0}", configurationFilePath);
+                Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
                 return;
             }
 
-            Console.WriteLine("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
+            Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
 
             foreach (var change in changes)
             {
-                CalamariLogger.Verbose(change);
+                Log.Verbose(change);
             }
 
             var xws = new XmlWriterSettings { OmitXmlDeclaration = doc.Declaration == null, Indent = true };
@@ -50,17 +49,20 @@ namespace Calamari.Integration.ConfigurationVariables
             }
         }
 
-        static IEnumerable<string> ReplaceAppSettingOrConnectionString(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, string value)
+        static IEnumerable<string> ReplaceAppSettingOrConnectionString(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, VariableDictionary variables)
         {
             var changes = new List<string>();
-            var settings =
+            var settings = (
                 from element in document.XPathSelectElements(xpath)
                 let keyAttribute = element.Attribute(keyAttributeName)
                 where keyAttribute != null
                 where string.Equals(keyAttribute.Value, keyAttributeValue, StringComparison.InvariantCultureIgnoreCase)
-                select element;
+                select element).ToList();
 
-            value = value ?? string.Empty;
+            if (settings.Count == 0)
+                return changes;
+
+            var value = variables.Get(keyAttributeValue) ?? string.Empty;
 
             foreach (var setting in settings)
             {
@@ -80,18 +82,21 @@ namespace Calamari.Integration.ConfigurationVariables
             return changes;
         }
 
-        static IEnumerable<string> ReplaceStonglyTypeApplicationSetting(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string value)
+        static IEnumerable<string> ReplaceStonglyTypeApplicationSetting(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, VariableDictionary variables)
         {
             var changes = new List<string>();
 
-            var settings =
+            var settings = (
                 from element in document.XPathSelectElements(xpath)
                 let keyAttribute = element.Attribute(keyAttributeName)
                 where keyAttribute != null
                 where string.Equals(keyAttribute.Value, keyAttributeValue, StringComparison.InvariantCultureIgnoreCase)
-                select element;
+                select element).ToList();
 
-            value = value ?? string.Empty;
+            if (settings.Count == 0)
+                return changes;
+
+            var value = variables.Get(keyAttributeValue) ?? string.Empty;
 
             foreach (var setting in settings)
             {

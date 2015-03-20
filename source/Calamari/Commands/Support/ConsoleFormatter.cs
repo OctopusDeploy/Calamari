@@ -10,22 +10,16 @@ namespace Calamari.Commands.Support
         {
             if (ex is CommandException)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine(ex.Message);
-                Console.ResetColor();
+                Log.Error(ex.Message);
                 return 1;
             }
             if (ex is ReflectionTypeLoadException)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine(ex.ToString());
-                Console.ResetColor();
+                Log.Error(ex.ToString());
 
                 foreach (var loaderException in ((ReflectionTypeLoadException)ex).LoaderExceptions)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Error.WriteLine(loaderException.ToString());
-                    Console.ResetColor();
+                    Log.Error(loaderException.ToString());
 
                     if (!(loaderException is FileNotFoundException))
                         continue;
@@ -33,19 +27,15 @@ namespace Calamari.Commands.Support
                     var exFileNotFound = loaderException as FileNotFoundException;
                     if (!string.IsNullOrEmpty(exFileNotFound.FusionLog))
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Error.WriteLine(exFileNotFound.FusionLog);
-                        Console.ResetColor();
+                        Log.Error(exFileNotFound.FusionLog);
                     }
                 }
 
                 return 43;
             }
 
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine(ex.Message);
-            Console.ResetColor();
-            Console.WriteLine(ex.ToString());
+            Log.Error(ex.Message);
+            Log.Info(ex.ToString());
             return 100;
         }
     }

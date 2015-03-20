@@ -34,27 +34,29 @@ namespace Calamari.Commands
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
-            Console.WriteLine("Deploying package:    " + packageFile);
-            if (variablesFile != null) 
-                Console.WriteLine("Using variables from: " + variablesFile);
+            Log.Info("Deploying package:    " + packageFile);
+            if (variablesFile != null)
+                Log.Info("Using variables from: " + variablesFile);
+
+            var fileSystem = new CalamariPhysicalFileSystem();
 
             var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
-                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), new CalamariPhysicalFileSystem()),
-                new DeployScriptConvention("PreDeploy"),
+                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
+                new DeployScriptConvention("PreDeploy", fileSystem),
                 new DeletePackageFileConvention(),
                 new SubstituteInFilesConvention(),
                 new ConfigurationTransformsConvention(),
-                new ConfigurationVariablesConvention(),
+                new ConfigurationVariablesConvention(fileSystem),
                 new AzureConfigurationConvention(),
                 new CopyPackageToCustomInstallationDirectoryConvention(),
-                new DeployScriptConvention("Deploy"),
+                new DeployScriptConvention("Deploy", fileSystem),
                 new LegacyIisWebSiteConvention(),
                 new AzureUploadConvention(),
                 new AzureDeploymentConvention(),
-                new DeployScriptConvention("PostDeploy")
+                new DeployScriptConvention("PostDeploy", fileSystem)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
