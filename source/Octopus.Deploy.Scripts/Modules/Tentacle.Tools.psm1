@@ -38,13 +38,12 @@ function Update-OctopusApplicationConfigurationFile
 	process 
     {
 		$exe = Find-OctopusTool -name "Octopus.Deploy.ConfigurationVariables.exe"
-        $varsFile = [System.IO.Path]::GetFullPath("Variables.vars.tmp")
-        Write-OctopusVariables $OctopusParameters -variablesFile $varsFile	
-
+        
         try
         {
 		    foreach ($config in $configurationFiles)
             {
+				$varsFile = $env:OctopusVariables
                 & $exe "$varsFile" "$config"
                 if ($LASTEXITCODE -ne 0) 
                 {
@@ -93,9 +92,7 @@ function Invoke-OctopusVariableSubsitution
 	)
 
 	$exe = Find-OctopusTool -name "Octopus.Deploy.Substitutions.exe"
-    $varsFile = [System.IO.Path]::GetFullPath("Variables.vars.tmp")
-    Write-OctopusVariables $OctopusParameters -variablesFile $varsFile	
-	
+    
 	try 
 	{
 		& "$exe" "$file" "$varsFile" "$file"
@@ -107,7 +104,6 @@ function Invoke-OctopusVariableSubsitution
 	}
     finally 
     {
-        Remove-Item $varsFile -Force
     }
 }
 

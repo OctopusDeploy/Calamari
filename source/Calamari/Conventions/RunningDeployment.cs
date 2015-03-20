@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Conventions;
 using Octostache;
 
 namespace Octopus.Deploy.PackageInstaller

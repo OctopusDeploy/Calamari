@@ -1,8 +1,4 @@
 ﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-Import-Module "$here\..\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Common.psm1" -Force
-Import-Module "$here\..\..\..\Octopus.Deploy.Scripts\Modules\Tentacle.Tools.psm1" -Force
-
-$global:OctopusParameters = New-Object Octostache.VariableDictionary
 
 function Invoke-Test([string]$name) {    
     $file = "$here\Samples\$name"
@@ -17,7 +13,7 @@ Describe "Tentacle.ConfigurationVariables" {
     It "App.config" {
         $OctopusParameters["WelcomeMessage"] = "I for one welcome our new PowerShell overlords" 
         $OctopusParameters["MyDb1"] = "Server=(local);Database=foo" 
-
+	
 		$x = Invoke-Test "App.config"
 
         (Select-XML $x -xpath "//*[local-name()='appSettings']/*[@key='WelcomeMessage']/@value") | Should Be "I for one welcome our new PowerShell overlords"
@@ -26,7 +22,7 @@ Describe "Tentacle.ConfigurationVariables" {
 	
     It "NoHeader.config" {
         $OctopusParameters["WelcomeMessage"] = "I for one welcome our new PowerShell overlords" 
-        
+		        
 		$x = Invoke-Test "NoHeader.config"
 
         (Select-XML $x -xpath "//*[local-name()='appSettings']/*[@key='WelcomeMessage']/@value") | Should Be "I for one welcome our new PowerShell overlords"
@@ -36,7 +32,7 @@ Describe "Tentacle.ConfigurationVariables" {
     It "CrazyNamespace.config" {
         $OctopusParameters["WelcomeMessage"] = "I for one welcome our new PowerShell overlords" 
         $OctopusParameters["MyDb1"] = "Server=(local);Database=foo" 
-
+	
 		$x = Invoke-Test "CrazyNamespace.config"
 
         (Select-XML $x -xpath "//*[local-name()='appSettings']/*[@key='WelcomeMessage']/@value") | Should Be "I for one welcome our new PowerShell overlords"
@@ -45,7 +41,7 @@ Describe "Tentacle.ConfigurationVariables" {
 	
     It "StrongTyped.config" {
         $OctopusParameters["WelcomeMessage"] = "I for one welcome our new PowerShell overlords" 
-        
+		
 		$x = Invoke-Test "StrongTyped.config"
 
         (Select-XML $x -xpath "//AppSettings.Properties.Settings/setting[@name='WelcomeMessage']/value") | Should Be "I for one welcome our new PowerShell overlords"

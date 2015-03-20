@@ -15,6 +15,7 @@ function Invoke-OctopusPowerShellScript
 	}
 
     . "$scriptName"
+	$global:OctopusParameters.Reload()
 }
 
 function Find-OctostacheDll
@@ -56,11 +57,16 @@ function Invoke-OctopusScriptCSScript
 	$octostachedll = Find-OctostacheDll
 
     $script = "#r ""${octostachedll}""`r`n#load ""${configPath}""`r`n#load ""${scriptPath}""`r`n"
-	Write-Host $script
-
+	
 	$script | Out-File $tempScriptFile
-    & "$scriptCSexe" $tempScriptFile 2>&1
-    Remove-Item $tempScriptFile
+
+	try {
+		& "$scriptCSexe" $tempScriptFile 2>&1
+	}
+	finally {
+		Remove-Item $tempScriptFile
+		$OctopusParameters.Reload()
+	}
 }
 
 function Invoke-OctopusScript

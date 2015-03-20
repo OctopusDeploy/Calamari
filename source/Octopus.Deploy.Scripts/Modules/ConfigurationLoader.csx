@@ -8,7 +8,7 @@ using Octostache;
 
 public static class Octopus
 {
-    public static readonly VariableDictionary Parameters;
+    public static readonly OctopusParametersDictionary Parameters = new OctopusParametersDictionary();
 
 	static Octopus() 
 	{
@@ -26,6 +26,8 @@ public static class Octopus
 	{ 	
 		name = EncodeServiceMessageValue(name);
 		value = EncodeServiceMessageValue(value);
+
+		Parameters[name] = value;
 
 		Console.WriteLine("##octopus[setVariable name='{0}' value='{1}']", name, value);
 	}

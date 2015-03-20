@@ -1,0 +1,5 @@
+﻿Write-Host "Hello, write-host!"
+Write-Verbose "Hello, write-verbose!"
+Write-Output "Hello, write-output!"
+Write-Warning "Hello, write-warning!"
+Write-Error "Hello, write-error!"

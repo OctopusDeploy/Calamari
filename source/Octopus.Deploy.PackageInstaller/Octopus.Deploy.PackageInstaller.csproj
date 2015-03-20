@@ -55,14 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConventionProcessor.cs" />
-    <Compile Include="IConvention.cs" />
-    <Compile Include="IInstallConvention.cs" />
-    <Compile Include="IRollbackConvention.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RunningDeployment.cs" />
-    <Compile Include="SpecialVariables.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

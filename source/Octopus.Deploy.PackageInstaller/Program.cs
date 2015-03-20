@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Octopus.Deploy.Startup;
 using Octostache;
 
@@ -66,70 +65,6 @@ namespace Octopus.Deploy.PackageInstaller
             }
 
             return path;
-        }
-    }
-
-    public class AzureDeploymentConvention : IConvention
-    {
-    }
-
-    public class AzureUploadConvention : IConvention
-    {
-    }
-
-    public class LegacyIisWebSiteConvention : IConvention
-    {
-    }
-
-    public class CopyPackageToCustomInstallationDirectoryConvention : IConvention
-    {
-    }
-
-    public class AzureConfigurationConvention : IConvention
-    {
-    }
-
-    public class ConfigurationVariablesConvention : IConvention
-    {
-    }
-
-    public class ConfigurationTransformsConvention : IConvention
-    {
-    }
-
-    public class SubstituteInFilesConvention : IConvention
-    {
-    }
-
-    public class DeletePackageFileConvention : IConvention
-    {
-
-    }
-
-    public class DeployScriptConvention : IInstallConvention
-    {
-        readonly string scriptFilePrefix;
-
-        public DeployScriptConvention(string scriptFilePrefix)
-        {
-            this.scriptFilePrefix = scriptFilePrefix;
-        }
-
-        public void Install(RunningDeployment deployment)
-        {
-            // Find the scripts by name, 
-            // Based on the extension, call the appropriate script runner?
-        }
-    }
-
-    public class ExtractPackageToTemporaryDirectoryConvention : IInstallConvention
-    {
-        public void Install(RunningDeployment deployment)
-        {
-            // Get the package file
-            // Decide where to extract it (a variable for the root drive must be passed in)
-            // Extract it using System.IO.Packaging
-            // Store the result as a variable
         }
     }
 }

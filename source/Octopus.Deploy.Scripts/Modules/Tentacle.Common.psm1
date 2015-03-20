@@ -1,24 +1,6 @@
 ﻿$parent = split-path -parent $MyInvocation.MyCommand.Definition
 
-$originalLocation = Get-Location
 
-$attemptOne = [System.IO.Path]::GetFullPath("$parent\..\Tools\")
-if (Test-Path $attemptOne) 
-{
-	Set-Location $attemptOne
-	[Reflection.Assembly]::LoadFrom("$attemptOne\Octostache.dll") | Out-Null
-}
-else 
-{
-	$attemptTwo = [System.IO.Path]::GetFullPath("$parent\..\..\Octopus.Deploy.Substitutions\bin\")
-	if (Test-Path $attemptTwo) 
-	{
-		Set-Location $attemptTwo
-		[Reflection.Assembly]::LoadFrom("$attemptTwo\Octostache.dll") | Out-Null
-	}
-}
-
-Set-Location $originalLocation
 
 function Convert-ServiceMessageValue([string]$value)
 {
@@ -152,7 +134,7 @@ function Write-Warning([string]$message)
 	Write-Host "##octopus[stdout-default]"
 }
 
-function Read-OctopusVariables([string]$variablesFile)
+function Reload-OctopusVariables([string]$variablesFile)
 {
 	function MakeLegacyKey($key) 
 	{
@@ -194,10 +176,8 @@ function Read-OctopusVariables([string]$variablesFile)
 			Set-Item -Path $fullVariablePath -Value $v
 		}
 	}
-
-	$result = New-Object Octostache.VariableDictionary -ArgumentList @($variablesFile)
-
-	$result.GetNames() | ForEach-Object {
+	
+	$global:OctopusParameters.GetNames() | ForEach-Object {
 		$name = $_
 		$value = $result.Get($_)
 		$legacyKey = MakeLegacyKey($name)
@@ -208,11 +188,4 @@ function Read-OctopusVariables([string]$variablesFile)
 		}
 	    AssignVariable -k $smartKey -v $value
 	}
-
-	return $result
-}
-
-function Write-OctopusVariables($variables, [string]$variablesFile) 
-{
-	$variables.Save($variablesFile)
 }
