@@ -1,25 +1,23 @@
-using System;
 using System.IO;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Octostache;
 
 namespace Calamari.Conventions
 {
-    public class ExtractPackageToTemporaryDirectoryConvention : IInstallConvention
+    public class ExtractPackageToApplicationDirectoryConvention : IInstallConvention
     {
         readonly IPackageExtractor extractor;
+        readonly ICalamariFileSystem fileSystem;
 
-        public ExtractPackageToTemporaryDirectoryConvention(IPackageExtractor extractor)
+        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem)
         {
             this.extractor = extractor;
+            this.fileSystem = fileSystem;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            // Get the package file
-            // Extract it using System.IO.Packaging
-            // Store the result as a variable
-
             var metadata = extractor.GetMetadata(deployment.PackageFilePath);
             var root = GetInitialExtractionDirectory(deployment.Variables);
             var targetPath = Path.Combine(root, metadata.Id, metadata.Version);
@@ -30,14 +28,17 @@ namespace Calamari.Conventions
 
             int filesExtracted;
             extractor.Install(deployment.PackageFilePath, targetPath, false, out filesExtracted);
+
             CalamariLogger.Verbose("Extracted " + filesExtracted + " files");
+
+            deployment.Variables.Set("OctopusOriginalPackageDirectoryPath", targetPath);
         }
 
-        static string EnsureTargetPathIsEmpty(string desiredTargetPath)
+        string EnsureTargetPathIsEmpty(string desiredTargetPath)
         {
             var target = desiredTargetPath;
 
-            for (var i = 1; Directory.Exists(target); i++)
+            for (var i = 1; fileSystem.DirectoryExists(target) || fileSystem.FileExists(target); i++)
             {
                 target = desiredTargetPath + "_" + i;
             }
@@ -45,7 +46,7 @@ namespace Calamari.Conventions
             return target;
         }
 
-        static string GetInitialExtractionDirectory(VariableDictionary variables)
+        string GetInitialExtractionDirectory(VariableDictionary variables)
         {
             var root = variables.Get("Octopus.Tentacle.Agent.ApplicationDirectoryPath")
                 ?? variables.Get("env:Octopus.Tentacle.Agent.ApplicationDirectoryPath")
@@ -57,8 +58,7 @@ namespace Calamari.Conventions
                 root = Path.Combine(root, environment);
             }
 
-            if (!Directory.Exists(root))
-                Directory.CreateDirectory(root);
+            fileSystem.EnsureDirectoryExists(root);
 
             return root;
         }

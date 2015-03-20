@@ -81,7 +81,7 @@
     <Compile Include="Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
     <Compile Include="Conventions\DeletePackageFileConvention.cs" />
     <Compile Include="Conventions\DeployScriptConvention.cs" />
-    <Compile Include="Conventions\ExtractPackageToTemporaryDirectoryConvention.cs" />
+    <Compile Include="Conventions\ExtractPackageToApplicationDirectoryConvention.cs" />
     <Compile Include="Conventions\IConvention.cs" />
     <Compile Include="Conventions\IInstallConvention.cs" />
     <Compile Include="Conventions\IRollbackConvention.cs" />
@@ -90,6 +90,12 @@
     <Compile Include="Conventions\SpecialVariables.cs" />
     <Compile Include="Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="CalamariLogger.cs" />
+    <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
+    <Compile Include="Integration\FileSystem\DeletionOptions.cs" />
+    <Compile Include="Integration\FileSystem\FileInfoAdapter.cs" />
+    <Compile Include="Integration\FileSystem\FileSizeExtensions.cs" />
+    <Compile Include="Integration\FileSystem\IFileInfo.cs" />
+    <Compile Include="Integration\FileSystem\ICalamariFileSystem.cs" />
     <Compile Include="Integration\Packages\IPackageExtractor.cs" />
     <Compile Include="Integration\Packages\LightweightPackageExtractor.cs" />
     <Compile Include="Integration\Packages\PackageMetadata.cs" />

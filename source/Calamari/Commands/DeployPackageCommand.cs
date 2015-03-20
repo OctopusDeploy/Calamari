@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Conventions;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Octostache;
 
@@ -41,7 +42,7 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
-                new ExtractPackageToTemporaryDirectoryConvention(new LightweightPackageExtractor()),
+                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), new CalamariPhysicalFileSystem()),
                 new DeployScriptConvention("PreDeploy"),
                 new DeletePackageFileConvention(),
                 new SubstituteInFilesConvention(),

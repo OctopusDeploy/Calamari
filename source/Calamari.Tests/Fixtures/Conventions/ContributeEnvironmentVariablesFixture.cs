@@ -5,7 +5,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    public class ContributeEnvironmentVariablesFixture
+    public class ContributeEnvironmentVariablesConventionFixture
     {
         [Test]
         public void ShouldAddEnvironmentVariables()
@@ -18,6 +18,4 @@ namespace Calamari.Tests.Fixtures.Conventions
             Assert.That(variables.Evaluate("My OS is #{env:OS}"), Is.StringStarting("My OS is Windows"));
         }
     }
-
-
 }
