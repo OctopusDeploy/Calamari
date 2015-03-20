@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Octopus.Deploy", "Octopus.Deploy\Octopus.Deploy.csproj", "{D23A6302-AED6-47EF-BC28-C758ADDCCE11}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Package", "Package\Package.csproj", "{D44DC6C3-1192-48AB-AF34-96D918742EF3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{79CE5CFA-E3FF-4376-8B49-AC1005C3E189} = {79CE5CFA-E3FF-4376-8B49-AC1005C3E189}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{7E20695C-37DE-4E44-B924-2067FA5AD454}"
 	ProjectSection(SolutionItems) = preProject
