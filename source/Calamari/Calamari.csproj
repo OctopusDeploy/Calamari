@@ -35,6 +35,9 @@
     <Reference Include="MarkdownSharp">
       <HintPath>..\packages\MarkdownSharp.1.13.0.0\lib\35\MarkdownSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Web.XmlTransform">
+      <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
@@ -80,6 +83,8 @@
     <Compile Include="Conventions\SpecialVariables.cs" />
     <Compile Include="Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="CalamariLogger.cs" />
+    <Compile Include="Integration\ConfigurationTransforms\ConfigurationTransformer.cs" />
+    <Compile Include="Integration\ConfigurationTransforms\VerboseTransformLogger.cs" />
     <Compile Include="Integration\ConfigurationVariables\ConfigurationVariablesReplacer.cs" />
     <Compile Include="Integration\FileSystem\TemporaryFile.cs" />
     <Compile Include="Integration\Processes\AssemblyExtensions.cs" />
@@ -120,9 +125,7 @@
     <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Integration\ConfigurationTransforms\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

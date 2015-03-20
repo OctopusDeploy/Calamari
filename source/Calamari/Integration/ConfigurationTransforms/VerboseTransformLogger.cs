@@ -2,7 +2,7 @@
 using System.CodeDom.Compiler;
 using Microsoft.Web.XmlTransform;
 
-namespace Octopus.Deploy.ConfigurationTransforms
+namespace Calamari.Integration.ConfigurationTransforms
 {
     public class VerboseTransformLogger : IXmlTransformationLogger
     {

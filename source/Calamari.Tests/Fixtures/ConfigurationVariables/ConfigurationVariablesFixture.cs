@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
