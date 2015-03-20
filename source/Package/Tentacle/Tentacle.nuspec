@@ -11,8 +11,7 @@
     <licenseUrl>https://github.com/OctopusDeploy/Tentacle/blob/master/LICENSE</licenseUrl>
   </metadata>
   <files>
-    <file src="Tentacle\**\*.*" target="" exclude="**.Tests.*;**\Tests.ps1;**\*.pssproj;**\TestResults.xml;**\Readme.txt" />
-    <file src="..\Octopus.Deploy.Scripts\**\*.*" target="" exclude="**.Tests.*;**\Tests.ps1;**\*.pssproj;**\TestResults.xml;**\Readme.txt" />
-    <file src="..\packages\Octopus.Dependencies.ScriptCS.3.0.1\runtime\**\*.*" target="Tools\ScriptCS" />
+    <file src="..\Calamari\bin\**\*.*" target="" exclude="*.vshost*" />
+    <file src="..\packages\Octopus.Dependencies.ScriptCS.3.0.1\runtime\**\*.*" target="ScriptCS" />
   </files>
 </package>

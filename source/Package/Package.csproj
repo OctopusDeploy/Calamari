@@ -63,11 +63,6 @@
     </None>
   </ItemGroup>
   <ItemGroup />
-  <ItemGroup>
-    <Content Include="Tentacle\Modules\Readme.txt" />
-    <Content Include="Tentacle\Tools\Readme.txt" />
-    <Content Include="Tentacle\Tools\ScriptCS\Readme.txt" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="Build\Package.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

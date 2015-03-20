@@ -1,1 +1,0 @@
-﻿Output from the Octopus.Deploy.*.exe projects will be copied here
