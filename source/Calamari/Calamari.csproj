@@ -90,6 +90,7 @@
     <Compile Include="Conventions\RunningDeployment.cs" />
     <Compile Include="Conventions\SpecialVariables.cs" />
     <Compile Include="Conventions\SubstituteInFilesConvention.cs" />
+    <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
     <Compile Include="Integration\FileSystem\DeletionOptions.cs" />

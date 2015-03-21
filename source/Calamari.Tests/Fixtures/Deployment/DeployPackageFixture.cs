@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [SetUp]
         public void SetUp()
         {
-            installDirectory = Path.Combine(Path.GetTempPath(), "TestInstalls");
+            installDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestInstalls");
             new CalamariPhysicalFileSystem().EnsureDirectoryExists(installDirectory);
 
             variables = new VariableDictionary();

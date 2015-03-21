@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using Calamari.Integration.ConfigurationVariables;
+﻿using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Conventions

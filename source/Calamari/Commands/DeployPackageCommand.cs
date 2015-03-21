@@ -5,6 +5,8 @@ using Calamari.Commands.Support;
 using Calamari.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Octostache;
 
 namespace Calamari.Commands
@@ -39,24 +41,26 @@ namespace Calamari.Commands
                 Log.Info("Using variables from: " + variablesFile);
 
             var fileSystem = new CalamariPhysicalFileSystem();
+            var scriptEngine = new ScriptEngineSelector();
+            var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
 
             var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
-                new DeployScriptConvention("PreDeploy", fileSystem),
+                new DeployScriptConvention("PreDeploy", fileSystem, scriptEngine, commandLineRunner),
                 new DeletePackageFileConvention(),
                 new SubstituteInFilesConvention(),
                 new ConfigurationTransformsConvention(),
                 new ConfigurationVariablesConvention(fileSystem),
                 new AzureConfigurationConvention(),
                 new CopyPackageToCustomInstallationDirectoryConvention(),
-                new DeployScriptConvention("Deploy", fileSystem),
+                new DeployScriptConvention("Deploy", fileSystem, scriptEngine, commandLineRunner),
                 new LegacyIisWebSiteConvention(),
                 new AzureUploadConvention(),
                 new AzureDeploymentConvention(),
-                new DeployScriptConvention("PostDeploy", fileSystem)
+                new DeployScriptConvention("PostDeploy", fileSystem, scriptEngine, commandLineRunner)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

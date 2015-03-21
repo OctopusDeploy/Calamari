@@ -6,6 +6,10 @@
         private readonly int exitCode;
         private readonly string additionalErrors;
 
+        public CommandResult(string command, int exitCode) : this(command, exitCode, null)
+        {
+        }
+
         public CommandResult(string command, int exitCode, string additionalErrors)
         {
             this.command = command;

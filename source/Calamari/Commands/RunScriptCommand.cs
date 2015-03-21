@@ -41,9 +41,10 @@ namespace Calamari.Commands
             if (!File.Exists(scriptFile))
                 throw new CommandException("Could not find script file: " + scriptFile);
 
-            var engine = ScriptEngineSelector.SelectEngine(scriptFile);
+            var engine = new ScriptEngineSelector().SelectEngine(scriptFile);
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
-            return engine.Execute(scriptFile, variables, runner).ExitCode;
+            var result = engine.Execute(scriptFile, variables, runner);
+            return result.ExitCode;
         }
     }
 }
