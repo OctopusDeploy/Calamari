@@ -8,7 +8,7 @@ using Octostache;
 
 namespace Calamari.Integration.ConfigurationVariables
 {
-    public class ConfigurationVariablesReplacer
+    public class ConfigurationVariablesReplacer : IConfigurationVariablesReplacer
     {
         public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Conventions;
+using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -43,6 +44,8 @@ namespace Calamari.Commands
             var fileSystem = new CalamariPhysicalFileSystem();
             var scriptEngine = new ScriptEngineSelector();
             var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
+            var replacer = new ConfigurationVariablesReplacer();
+            var transformer = new ConfigurationTransformsConvention();
 
             var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
@@ -53,7 +56,7 @@ namespace Calamari.Commands
                 new DeletePackageFileConvention(),
                 new SubstituteInFilesConvention(),
                 new ConfigurationTransformsConvention(),
-                new ConfigurationVariablesConvention(fileSystem),
+                new ConfigurationVariablesConvention(fileSystem, replacer),
                 new AzureConfigurationConvention(),
                 new CopyPackageToCustomInstallationDirectoryConvention(),
                 new DeployScriptConvention("Deploy", fileSystem, scriptEngine, commandLineRunner),
