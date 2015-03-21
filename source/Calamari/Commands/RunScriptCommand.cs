@@ -15,7 +15,7 @@ namespace Calamari.Commands
         public RunScriptCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("script=", "Path to the script (PowerShell or ScriptCS) script to execute.", v => Path.GetFullPath(scriptFile = v));
+            Options.Add("script=", "Path to the script (PowerShell or ScriptCS) script to execute.", v => scriptFile = Path.GetFullPath(v));
         }
 
         public override int Execute(string[] commandLineArguments)
