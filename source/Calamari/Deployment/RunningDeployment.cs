@@ -1,7 +1,7 @@
 ﻿using System;
 using Octostache;
 
-namespace Calamari.Conventions
+namespace Calamari.Deployment
 {
     public class RunningDeployment
     {

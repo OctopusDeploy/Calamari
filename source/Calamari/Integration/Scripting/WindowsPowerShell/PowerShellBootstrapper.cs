@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Conventions;
+using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Octostache;
 

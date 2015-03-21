@@ -1,7 +1,7 @@
 ﻿using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 
-namespace Calamari.Conventions
+namespace Calamari.Deployment.Conventions
 {
     public class ConfigurationVariablesConvention : IInstallConvention
     {

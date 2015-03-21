@@ -1,4 +1,4 @@
-﻿namespace Calamari.Conventions
+﻿namespace Calamari.Deployment
 {
     public static class SpecialVariables
     {

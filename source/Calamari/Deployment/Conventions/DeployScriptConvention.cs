@@ -7,7 +7,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 
-namespace Calamari.Conventions
+namespace Calamari.Deployment.Conventions
 {
     /// <summary>
     /// This convention is used to detect PreDeploy.ps1, Deploy.ps1 and PostDeploy.ps1 scripts.

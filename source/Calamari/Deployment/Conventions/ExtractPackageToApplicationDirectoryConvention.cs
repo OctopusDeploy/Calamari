@@ -3,7 +3,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Octostache;
 
-namespace Calamari.Conventions
+namespace Calamari.Deployment.Conventions
 {
     public class ExtractPackageToApplicationDirectoryConvention : IInstallConvention
     {

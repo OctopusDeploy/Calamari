@@ -1,4 +1,4 @@
-﻿using Calamari.Conventions;
+﻿using Calamari.Deployment;
 using NUnit.Framework;
 using Octostache;
 

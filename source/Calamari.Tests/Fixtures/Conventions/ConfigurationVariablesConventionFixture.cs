@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Calamari.Conventions;
+﻿using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 using NSubstitute;

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Deployment.Conventions;
 
-namespace Calamari.Conventions
+namespace Calamari.Deployment
 {
     public class ConventionProcessor
     {
