@@ -21,6 +21,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             variables = new VariableDictionary();
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", installDirectory);
+            variables.Set("PreDeployGreeting", "Bonjour");
         }
 
         [Test]
@@ -32,6 +33,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertOutput("Extracting package to: " + installDirectory + "\\Acme.Web\\1.0.0");
             result.AssertOutput("Extracted 4 files");
+
+            result.AssertOutput("Bonjour from PreDeploy.ps1");
         }
 
         CalamariResult DeployPackage(string packageName)
