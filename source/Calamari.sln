@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30110.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Octopus.Deploy", "Octopus.Deploy\Octopus.Deploy.csproj", "{D23A6302-AED6-47EF-BC28-C758ADDCCE11}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Package", "Package\Package.csproj", "{D44DC6C3-1192-48AB-AF34-96D918742EF3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{79CE5CFA-E3FF-4376-8B49-AC1005C3E189} = {79CE5CFA-E3FF-4376-8B49-AC1005C3E189}
@@ -16,15 +14,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{7E2069
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Obsolete, Henrik to delete when ported to Calamari", "Obsolete, Henrik to delete when ported to Calamari", "{56FCC7CC-208F-4ADF-A0F0-1D90290B2374}"
-EndProject
-Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "Octopus.Deploy.Scripts.Tests", "Octopus.Deploy.Scripts.Tests\Octopus.Deploy.Scripts.Tests.pssproj", "{114C37E0-31A1-44CD-BAD1-7248595FEA32}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari", "Calamari\Calamari.csproj", "{79CE5CFA-E3FF-4376-8B49-AC1005C3E189}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{5F1E9F19-2FE4-40DE-AA15-12E2C77634BF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Octopus.Deploy.PackageDownloader", "Octopus.Deploy.PackageDownloader\Octopus.Deploy.PackageDownloader.csproj", "{AF876E70-C955-418F-9A11-54BAA567AA97}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,18 +24,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D23A6302-AED6-47EF-BC28-C758ADDCCE11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D23A6302-AED6-47EF-BC28-C758ADDCCE11}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D23A6302-AED6-47EF-BC28-C758ADDCCE11}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D23A6302-AED6-47EF-BC28-C758ADDCCE11}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D44DC6C3-1192-48AB-AF34-96D918742EF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D44DC6C3-1192-48AB-AF34-96D918742EF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D44DC6C3-1192-48AB-AF34-96D918742EF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D44DC6C3-1192-48AB-AF34-96D918742EF3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{114C37E0-31A1-44CD-BAD1-7248595FEA32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{114C37E0-31A1-44CD-BAD1-7248595FEA32}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{114C37E0-31A1-44CD-BAD1-7248595FEA32}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{114C37E0-31A1-44CD-BAD1-7248595FEA32}.Release|Any CPU.Build.0 = Release|Any CPU
 		{79CE5CFA-E3FF-4376-8B49-AC1005C3E189}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{79CE5CFA-E3FF-4376-8B49-AC1005C3E189}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79CE5CFA-E3FF-4376-8B49-AC1005C3E189}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -52,17 +36,8 @@ Global
 		{5F1E9F19-2FE4-40DE-AA15-12E2C77634BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F1E9F19-2FE4-40DE-AA15-12E2C77634BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F1E9F19-2FE4-40DE-AA15-12E2C77634BF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AF876E70-C955-418F-9A11-54BAA567AA97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AF876E70-C955-418F-9A11-54BAA567AA97}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AF876E70-C955-418F-9A11-54BAA567AA97}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AF876E70-C955-418F-9A11-54BAA567AA97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{114C37E0-31A1-44CD-BAD1-7248595FEA32} = {56FCC7CC-208F-4ADF-A0F0-1D90290B2374}
-		{AF876E70-C955-418F-9A11-54BAA567AA97} = {56FCC7CC-208F-4ADF-A0F0-1D90290B2374}
-		{D23A6302-AED6-47EF-BC28-C758ADDCCE11} = {56FCC7CC-208F-4ADF-A0F0-1D90290B2374}
 	EndGlobalSection
 EndGlobal
