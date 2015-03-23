@@ -1,1 +1,1 @@
-﻿Write-Host "Hello from PreDeploy.ps1"
+﻿Write-Host "$PreDeployGreeting from PreDeploy.ps1"
