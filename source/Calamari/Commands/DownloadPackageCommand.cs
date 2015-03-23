@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.PackageDownload;
 using NuGet;
 using PackageDownloader = Calamari.Integration.PackageDownload.PackageDownloader;
@@ -55,16 +56,16 @@ namespace Calamari.Commands
                     out hash,
                     out size);
 
-                CalamariLogger.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
+                Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
                     feedUri);
 
-                CalamariLogger.SetOctopusVariable("Package.Hash", hash);
-                CalamariLogger.SetOctopusVariable("Package.Size", size);
-                CalamariLogger.SetOctopusVariable("Package.InstallationDirectoryPath", downloadedTo);
+                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", hash));
+                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", size));
+                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.InstallationDirectoryPath", downloadedTo));
             }
             catch (Exception ex)
             {
-                CalamariLogger.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion,
+                Log.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion,
                     feedUri);
                 return ConsoleFormatter.PrintError(ex);
             }
@@ -116,7 +117,7 @@ namespace Calamari.Commands
                 throw new ArgumentException("No feed URI was specified");
             }
 
-            if (!Uri.TryCreate(feedUri, UriKind.RelativeOrAbsolute, out uri))
+            if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
             {
                 throw new ArgumentException("URI specified is not a valid URI");
             }

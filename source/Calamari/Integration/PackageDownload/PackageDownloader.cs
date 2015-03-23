@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using Calamari.Commands.Support;
+using Calamari.Integration.FileSystem;
 using NuGet;
 
 namespace Calamari.Integration.PackageDownload
@@ -14,6 +14,7 @@ namespace Calamari.Integration.PackageDownload
         const int NumberOfTimesToAttemptToDownloadPackage = 5;
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly PackageRepositoryFactory packageRepositoryFactory = new PackageRepositoryFactory();
+        readonly CalamariPhysicalFileSystem fileSystem = new CalamariPhysicalFileSystem();
 
         public void DownloadPackage(string packageId, SemanticVersion version, string feedId, Uri feedUri, bool forcePackageDownload, out string downloadedTo, out string hash, out long size)
         {
@@ -32,11 +33,11 @@ namespace Calamari.Integration.PackageDownload
             }
             else
             {
-                CalamariLogger.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'",
+                Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'",
                     downloadedTo);
             }
 
-            size = GetFileSize(downloadedTo);
+            size = fileSystem.GetFileSize(downloadedTo);
             hash = HashCalculator.Hash(downloaded.GetStream());
         }
 
@@ -45,12 +46,12 @@ namespace Calamari.Integration.PackageDownload
             downloaded = null;
             downloadedTo = null;
 
-            CalamariLogger.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
+            Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
 
             var name = GetNameOfPackage(packageId, version.ToString());
-            EnsureDirectoryExists(cacheDirectory);
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-            var files = EnumerateFilesRecursively(cacheDirectory, name + "*.nupkg");
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, name + "*.nupkg");
 
             foreach (var file in files)
             {
@@ -86,14 +87,6 @@ namespace Calamari.Integration.PackageDownload
             }
         }
 
-        private IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
-        {
-            return searchPatterns.Length == 0
-                ? Directory.EnumerateFiles(parentDirectoryPath, "*", SearchOption.AllDirectories)
-                : searchPatterns.SelectMany(
-                    pattern => Directory.EnumerateFiles(parentDirectoryPath, pattern, SearchOption.AllDirectories));
-        }
-
         private string GetPackageRoot(string prefix, string rootDirectory)
         {
             return string.IsNullOrWhiteSpace(prefix) ? rootDirectory : Path.Combine(rootDirectory, prefix);
@@ -108,9 +101,9 @@ namespace Calamari.Integration.PackageDownload
         {
             Console.WriteLine("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
 
-            CalamariLogger.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
-            EnsureDirectoryExists(cacheDirectory);
-            //TODO: confirm enough space
+            Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
+            fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
             downloaded = null;
             downloadedTo = null;
@@ -125,7 +118,7 @@ namespace Calamari.Integration.PackageDownload
                 }
                 catch (Exception dataException)
                 {
-                    CalamariLogger.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", i,
+                    Log.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", i,
                         NumberOfTimesToAttemptToDownloadPackage, dataException.Message);
                     downloadException = dataException;
                     Thread.Sleep(i*1000);
@@ -136,7 +129,7 @@ namespace Calamari.Integration.PackageDownload
             {
                 if (downloadException != null)
                 {
-                    CalamariLogger.ErrorFormat("Unable to download package: {0}", downloadException.Message);
+                    Log.ErrorFormat("Unable to download package: {0}", downloadException.Message);
                 }
                 throw new Exception(
                     "The package could not be downloaded from NuGet. If you are getting a package verification error, try switching to a Windows File Share package repository to see if that helps.");
@@ -167,7 +160,7 @@ namespace Calamari.Integration.PackageDownload
 
         IPackage FindPackage(int attempt, string packageId, string packageVersion, string feed, out NuGet.PackageDownloader downloader)
         {
-            CalamariLogger.VerboseFormat("Finding package (attempt {0} of {1})", attempt, NumberOfTimesToAttemptToDownloadPackage);
+            Log.VerboseFormat("Finding package (attempt {0} of {1})", attempt, NumberOfTimesToAttemptToDownloadPackage);
 
             var remoteRepository = packageRepositoryFactory.CreateRepository(feed);
 
@@ -197,13 +190,13 @@ namespace Calamari.Integration.PackageDownload
 
         void DownloadPackage(IPackage package, string fullPathToDownloadTo, NuGet.PackageDownloader directDownloader)
         {
-            CalamariLogger.VerboseFormat("Found package {0} version {1}", package.Id, package.Version);
-            CalamariLogger.Verbose("Downloading to: " + fullPathToDownloadTo);
+            Log.VerboseFormat("Found package {0} version {1}", package.Id, package.Version);
+            Log.Verbose("Downloading to: " + fullPathToDownloadTo);
 
             var dsp = package as DataServicePackage;
             if (dsp != null && directDownloader != null)
             {
-                CalamariLogger.Verbose("A direct download is possible; bypassing the NuGet machine cache");
+                Log.Verbose("A direct download is possible; bypassing the NuGet machine cache");
                 using (var targetFile = new FileStream(fullPathToDownloadTo, FileMode.CreateNew))
                     directDownloader.DownloadPackage(dsp.DownloadUrl, dsp, targetFile);
                 return;
@@ -212,17 +205,6 @@ namespace Calamari.Integration.PackageDownload
             var physical = new PhysicalFileSystem(Path.GetDirectoryName(fullPathToDownloadTo));
             var local = new LocalPackageRepository(new FixedFilePathResolver(package.Id, fullPathToDownloadTo), physical);
             local.AddPackage(package);
-        }
-
-        long GetFileSize(string path)
-        {
-            return new FileInfo(path).Length;
-        }
-
-        void EnsureDirectoryExists(string cacheDirectory)
-        {
-            if (!Directory.Exists(cacheDirectory))
-                Directory.CreateDirectory(cacheDirectory);
         }
 
         void CheckWhetherThePackageHasDependencies(IPackageMetadata downloaded)
