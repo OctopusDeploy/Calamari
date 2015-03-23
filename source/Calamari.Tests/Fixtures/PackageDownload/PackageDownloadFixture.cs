@@ -323,9 +323,10 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [Ignore("Need to get this setup and running somehow...need to think of a way to do it so it works across borders (aka TC or other members of the team)")]
         public void FileShareFeedShouldFailDownloadPackageWhenNoPermissions()
         {
-
+            //TODO: Yeah
         }
 
         [Test]
