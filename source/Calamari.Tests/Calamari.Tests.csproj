@@ -112,9 +112,6 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web\Acme.Web.nuspec">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Content Include="Fixtures\PackageDownload\Packages\Acme.Web.3.2.4.nupkg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

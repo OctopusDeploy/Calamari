@@ -4,9 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+using Microsoft.SqlServer.Server;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.PackageDownload
@@ -21,7 +23,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         string PublicFeedId = "feeds-myget";
         string PublicFeedUri = "https://www.myget.org/F/octopusdeploy-tests";
         string AuthFeedId = "feeds-authmyget";
-        string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable) ?? "https://www.myget.org/F/octopusdeploy-authtests";
+        string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
         string FeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
         string FeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
         string InvalidFeedPassword = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
@@ -33,18 +35,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         string InvalidPackageVersion = "1.0.0.x";
         string ExpectedPackageHash = "40d78a00090ba7f17920a27cc05d5279bd9a4856";
         string ExpectedPackageSize = "6346";
-
-        string GetFileShareFolder()
-        {
-            string currentDirectory = typeof(PackageDownloadFixture).Assembly.FullLocalPath();
-            string targetFolder = "source\\";
-            int index = currentDirectory.LastIndexOf(targetFolder, StringComparison.OrdinalIgnoreCase);
-            string solutionRoot = currentDirectory.Substring(0, index + targetFolder.Length);
-
-            var fileshareFolder = Path.Combine(solutionRoot, "Calamari.Tests\\bin\\Fixtures\\PackageDownload\\Packages");
-
-            return fileshareFolder;
-        }
+        string FileSharePackageId = "Acme.Web";
+        string FileSharePackageVersion = "1.0.0";
+        string FileSharePackageExpectedSize = "3341";
 
         string GetPackageDownloadFolder()
         {
@@ -111,15 +104,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertZero();
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
-                PackageVersion, PublicFeedUri));
-            result.AssertOutput(String.Format("Downloaded package will be stored in: '{0}\\Work\\{1}'",
-                GetPackageDownloadFolder(), PublicFeedId));
-            result.AssertOutput(String.Format("Found package {0} version {1}", PackageId, PackageVersion));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion));
-            result.AssertOutput(String.Format("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, PublicFeedUri));
+            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
+                PackageVersion, PublicFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}\\Work\\{1}'",
+                GetPackageDownloadFolder(), PublicFeedId);
+            result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize);
+            result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion);
+            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, PublicFeedUri);
         }
 
         [Test]
@@ -131,14 +124,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertZero();
 
-            result.AssertOutput(String.Format("Checking package cache for package {0} {1}", PackageId,
-                PackageVersion));
-            result.AssertOutput(
-                String.Format("Package was found in cache. No need to download. Using file: '{0}\\Work\\{1}\\{2}.{3}",
-                    GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion));
+            result.AssertOutput("Checking package cache for package {0} {1}", PackageId,
+                PackageVersion);
+            result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}\\Work\\{1}\\{2}.{3}",
+                    GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize);
+            result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion);
         }
 
         [Test]
@@ -150,40 +142,38 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertZero();
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
-                PackageVersion, PublicFeedUri));
-            result.AssertOutput(String.Format("Downloaded package will be stored in: '{0}\\Work\\{1}'",
-                GetPackageDownloadFolder(), PublicFeedId));
-            result.AssertOutput(String.Format("Found package {0} version {1}", PackageId, PackageVersion));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion));
-            result.AssertOutput(String.Format("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, PublicFeedUri));
+            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
+                PackageVersion, PublicFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}\\Work\\{1}'",
+                GetPackageDownloadFolder(), PublicFeedId);
+            result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize);
+            result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion);
+            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, PublicFeedUri);
         }
 
         [Test]
-        [Ignore]
-        [AuthenticatedTest(FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
+        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldDownloadPackage()
         {
             var result = DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword);
 
             result.AssertZero();
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
-                PackageVersion, PublicFeedUri));
-            result.AssertOutput(String.Format("Downloaded package will be stored in: '{0}\\Work\\{1}'",
-                GetPackageDownloadFolder(), AuthFeedId));
-            result.AssertOutput(String.Format("Found package {0} version {1}", PackageId, PackageVersion));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion));
-            result.AssertOutput(String.Format("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, AuthFeedUri));
+            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
+                PackageVersion, PublicFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}\\Work\\{1}'",
+                GetPackageDownloadFolder(), AuthFeedId);
+            result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize);
+            result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion);
+            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, AuthFeedUri);
         }
 
         [Test]
-        [Ignore]
-        [AuthenticatedTest(FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
+        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldUsePackageFromCache()
         {
             DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword);
@@ -191,19 +181,17 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertZero();
 
-            result.AssertOutput(String.Format("Checking package cache for package {0} {1}", PackageId,
-                PackageVersion));
-            result.AssertOutput(
-                String.Format("Package was found in cache. No need to download. Using file: '{0}\\Work\\{1}\\{2}.{3}",
-                    GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion));
+            result.AssertOutput("Checking package cache for package {0} {1}", PackageId,
+                PackageVersion);
+            result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}\\Work\\{1}\\{2}.{3}",
+                    GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize);
+            result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion);
         }
 
         [Test]
-        [Ignore]
-        [AuthenticatedTest(FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
+        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldByPassCacheAndDownloadPackage()
         {
             DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword);
@@ -211,105 +199,127 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertZero();
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
-                PackageVersion, AuthFeedUri));
-            result.AssertOutput(String.Format("Downloaded package will be stored in: '{0}\\Work\\{1}'",
-                GetPackageDownloadFolder(), AuthFeedId));
-            result.AssertOutput(String.Format("Found package {0} version {1}", PackageId, PackageVersion));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion));
-            result.AssertOutput(String.Format("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, AuthFeedUri));
+            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
+                PackageVersion, AuthFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}\\Work\\{1}'",
+                GetPackageDownloadFolder(), AuthFeedId);
+            result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", ExpectedPackageHash);
+            result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", ExpectedPackageSize);
+            result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion);
+            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, AuthFeedUri);
         }
 
         [Test]
-        [Ignore]
-        [AuthenticatedTest(FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
+        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldFailDownloadPackageWhenInvalidCredentials()
         {
             var result = DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, InvalidFeedPassword);
 
             result.AssertNonZero();
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
-                PackageVersion, AuthFeedUri));
-            result.AssertOutput(String.Format("Downloaded package will be stored in: '{0}\\Work\\{1}'",
-                GetPackageDownloadFolder(), AuthFeedId));
+            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
+                PackageVersion, AuthFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}\\Work\\{1}'",
+                GetPackageDownloadFolder(), AuthFeedId);
             result.AssertErrorOutput("Unable to download package: The remote server returned an error: (403) Forbidden.");
         }
 
         [Test]
         public void FileShareFeedShouldDownloadPackage()
         {
-            var fileshareUri = GetFileShareFolder();
-            var result = DownloadPackage("Acme.Web", "3.2.4", FileShareFeedId, fileshareUri);
+            using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(FileSharePackageId, FileSharePackageVersion)))
+            {
+                var result = DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath);
 
-            result.AssertZero();
+                result.AssertZero();
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", "Acme.Web",
-                "3.2.4", new Uri(fileshareUri)));
-            result.AssertOutput(String.Format("Downloaded package will be stored in: '{0}\\Work\\{1}'",
-                GetPackageDownloadFolder(), FileShareFeedId));
-            result.AssertOutput(String.Format("Found package {0} version {1}", "Acme.Web", "3.2.4"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", "95f5105fcbd5e698853fa11b021a02a077213baf"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", "390614"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), FileShareFeedId, "Acme.Web", "3.2.4"));
-            result.AssertOutput(String.Format("Package {0} {1} successfully downloaded from feed: '{2}'", "Acme.Web", "3.2.4", fileshareUri));
+                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileSharePackageId,
+                    FileSharePackageVersion, new Uri(acmeWeb.DirectoryPath));
+                result.AssertOutput("Downloaded package will be stored in: '{0}\\Work\\{1}'",
+                    GetPackageDownloadFolder(), FileShareFeedId);
+                result.AssertOutput("Found package {0} version {1}", FileSharePackageId, FileSharePackageVersion);
+                result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash",
+                    acmeWeb.Hash);
+                result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size",
+                    FileSharePackageExpectedSize);
+                result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}",
+                        GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
+                result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileSharePackageId,
+                    FileSharePackageVersion, acmeWeb.DirectoryPath);
+            }
         }
 
         [Test]
         public void FileShareFeedShouldUsePackageFromCache()
         {
-            var fileshareUri = GetFileShareFolder();
-            DownloadPackage("Acme.Web", "3.2.4", FileShareFeedId, fileshareUri);
+            using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(FileSharePackageId, FileSharePackageVersion)))
+            {
+                DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath);
 
-            var result = DownloadPackage("Acme.Web", "3.2.4", FileShareFeedId, fileshareUri);
-            result.AssertZero();
+                var result = DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath);
+                result.AssertZero();
 
-            result.AssertOutput(String.Format("Checking package cache for package {0} {1}", "Acme.Web",
-                "3.2.4"));
-            result.AssertOutput(
-                String.Format("Package was found in cache. No need to download. Using file: '{0}\\Work\\{1}\\{2}.{3}",
-                    GetPackageDownloadFolder(), FileShareFeedId, "Acme.Web", "3.2.4"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", "95f5105fcbd5e698853fa11b021a02a077213baf"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", "390614"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), FileShareFeedId, "Acme.Web", "3.2.4"));
+                result.AssertOutput("Checking package cache for package {0} {1}", FileSharePackageId, FileSharePackageVersion);
+                result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}\\Work\\{1}\\{2}.{3}",
+                        GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
+                result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash",
+                    acmeWeb.Hash);
+                result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size",
+                    FileSharePackageExpectedSize);
+                result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}",
+                        GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
+            }
         }
 
         [Test]
         public void FileShareFeedShouldByPassCacheAndDownloadPackage()
         {
-            var fileshareUri = GetFileShareFolder();
-            DownloadPackage("Acme.Web", "3.2.4", FileShareFeedId, fileshareUri);
-            var result = DownloadPackage("Acme.Web", "3.2.4", FileShareFeedId, fileshareUri, forcePackageDownload: true);
+            using (
+                var acmeWeb =
+                    new TemporaryFile(PackageBuilder.BuildSamplePackage(FileSharePackageId, FileSharePackageVersion)))
+            {
+                DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath);
+                var result = DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath,
+                    forcePackageDownload: true);
 
-            result.AssertZero();
+                result.AssertZero();
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", "Acme.Web",
-                "3.2.4", new Uri(fileshareUri).ToString()));
-            result.AssertOutput(String.Format("Downloaded package will be stored in: '{0}\\Work\\{1}'",
-                GetPackageDownloadFolder(), FileShareFeedId));
-            result.AssertOutput(String.Format("Found package {0} version {1}", "Acme.Web", "3.2.4"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", "95f5105fcbd5e698853fa11b021a02a077213baf"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", "390614"));
-            result.AssertOutput(String.Format("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}", GetPackageDownloadFolder(), FileShareFeedId, "Acme.Web", "3.2.4"));
-            result.AssertOutput(String.Format("Package {0} {1} successfully downloaded from feed: '{2}'", "Acme.Web", "3.2.4", fileshareUri));
+                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileSharePackageId, 
+                    FileSharePackageVersion, new Uri(acmeWeb.DirectoryPath));
+                result.AssertOutput("Downloaded package will be stored in: '{0}\\Work\\{1}'",
+                    GetPackageDownloadFolder(), FileShareFeedId);
+                result.AssertOutput("Found package {0} version {1}", FileSharePackageId, FileSharePackageVersion);
+                result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash",
+                    acmeWeb.Hash);
+                result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size",
+                    FileSharePackageExpectedSize);
+                result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}",
+                        GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
+                result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileSharePackageId,
+                    FileSharePackageVersion, acmeWeb.DirectoryPath);
+            }
         }
 
         [Test]
         public void FileShareFeedShouldFailDownloadPackageWhenInvalidFileShare()
         {
-            var fileshareUri = GetFileShareFolder() + "\\InvalidPath";
-            
-            var result = DownloadPackage("Acme.Web", "3.2.4", FileShareFeedId, fileshareUri);
-            result.AssertNonZero();
+            using (
+                var acmeWeb =
+                    new TemporaryFile(PackageBuilder.BuildSamplePackage(FileSharePackageId, FileSharePackageVersion)))
+            {
+                var invalidFileShareUri = acmeWeb.DirectoryPath + "\\InvalidPath";
 
-            result.AssertOutput(String.Format("Downloading NuGet package {0} {1} from feed: '{2}'", "Acme.Web",
-                "3.2.4", new Uri(fileshareUri)));
-            result.AssertErrorOutput(String.Format("Unable to download package: Could not find package {0} {1} in feed: '{2}'",
-                "Acme.Web", "3.2.4", new Uri(fileshareUri)));
-            result.AssertErrorOutput(String.Format("Failed to download package {0} {1} from feed: '{2}'",
-                "Acme.Web", "3.2.4", fileshareUri));
+                var result = DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, invalidFileShareUri);
+                result.AssertNonZero();
+
+                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileSharePackageId,
+                    FileSharePackageVersion, new Uri(invalidFileShareUri));
+                result.AssertErrorOutput("Unable to download package: Could not find package {0} {1} in feed: '{2}'",
+                    FileSharePackageId, FileSharePackageVersion, new Uri(invalidFileShareUri));
+                result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'",
+                    FileSharePackageId, FileSharePackageVersion, invalidFileShareUri);
+            }
         }
 
         [Test]
@@ -333,7 +343,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = DownloadPackage(InvalidPackageId, PackageVersion, PublicFeedId, PublicFeedUri);
             result.AssertNonZero();
 
-            result.AssertErrorOutput(String.Format("Failed to download package {0} {1} from feed: '{2}'", InvalidPackageId, PackageVersion, PublicFeedUri));
+            result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'", InvalidPackageId, PackageVersion, PublicFeedUri);
         }
 
         [Test]
@@ -384,7 +394,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         public void ShouldFailWhenUsernameIsSpecifiedButNoPassword()
         {
-            var result = DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername);
+            var result = DownloadPackage(PackageId, PackageVersion, PublicFeedId, PublicFeedUri, FeedUsername);
             result.AssertNonZero();
 
             result.AssertErrorOutput("A username was specified but no password was provided");
