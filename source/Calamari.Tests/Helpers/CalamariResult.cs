@@ -31,10 +31,20 @@ namespace Calamari.Tests.Helpers
             Assert.That(ExitCode, Is.Not.EqualTo(0), "Expected a non-zero exit code");
         }
 
+        public void AssertOutput(string expectedOutputFormat, params object[] args)
+        {
+            AssertOutput(String.Format(expectedOutputFormat, args));
+        }
+
         public void AssertOutput(string expectedOutput)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
             Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+        }
+
+        public void AssertErrorOutput(string expectedOutputFormat, params object[] args)
+        {
+            AssertErrorOutput(String.Format(expectedOutputFormat, args));
         }
 
         public void AssertErrorOutput(string expectedOutput)

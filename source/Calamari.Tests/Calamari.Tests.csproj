@@ -77,6 +77,8 @@
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
+    <Compile Include="Fixtures\PackageDownload\AuthenticatedTest.cs" />
+    <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />
     <Compile Include="Fixtures\Substitutions\SubstitutionsFixture.cs" />
     <Compile Include="Helpers\CalamariFixture.cs" />
@@ -163,6 +165,9 @@
   <ItemGroup />
   <ItemGroup>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

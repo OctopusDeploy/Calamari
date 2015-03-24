@@ -1,9 +1,8 @@
 ﻿using System;
 using System.IO;
 using NuGet;
-using Octopus.Deploy.Startup;
 
-namespace Octopus.Deploy.PackageDownloader
+namespace Calamari.Integration.PackageDownload
 {
     public class FixedFilePathResolver : IPackagePathResolver
     {
@@ -12,8 +11,11 @@ namespace Octopus.Deploy.PackageDownloader
 
         public FixedFilePathResolver(string packageName, string filePathNameToReturn)
         {
-            Guard.ArgumentNotNull(packageName, "packageName");
-            Guard.ArgumentNotNull(filePathNameToReturn, "filePathNameToReturn");
+            if (packageName == null)
+                throw new ArgumentNullException("packageName");
+            if (filePathNameToReturn == null)
+                throw new ArgumentNullException("filePathNameToReturn");
+
             this.packageName = packageName;
             this.filePathNameToReturn = filePathNameToReturn;
         }

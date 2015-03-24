@@ -63,6 +63,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\DownloadPackageCommand.cs" />
     <Compile Include="Commands\RunScriptCommand.cs" />
     <Compile Include="Commands\DeployPackageCommand.cs" />
     <Compile Include="Commands\Support\Option.cs" />
@@ -107,6 +108,9 @@
     <Compile Include="Integration\ConfigurationTransforms\VerboseTransformLogger.cs" />
     <Compile Include="Integration\ConfigurationVariables\ConfigurationVariablesReplacer.cs" />
     <Compile Include="Integration\FileSystem\TemporaryFile.cs" />
+    <Compile Include="Integration\PackageDownload\FeedCredentialsProvider.cs" />
+    <Compile Include="Integration\PackageDownload\FixedFilePathResolver.cs" />
+    <Compile Include="Integration\PackageDownload\PackageDownloader.cs" />
     <Compile Include="Integration\Processes\AssemblyExtensions.cs" />
     <Compile Include="Integration\Processes\CommandLine.cs" />
     <Compile Include="Integration\Processes\EmbeddedResource.cs" />

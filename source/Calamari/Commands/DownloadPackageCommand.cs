@@ -1,42 +1,42 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
-using System.Threading;
+using Calamari.Commands.Support;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.PackageDownload;
 using NuGet;
-using Octopus.Deploy.Startup;
+using PackageDownloader = Calamari.Integration.PackageDownload.PackageDownloader;
 
-namespace Octopus.Deploy.PackageDownloader
+namespace Calamari.Commands
 {
-    class Program
+    [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
+    public class DownloadPackageCommand : Command
     {
         readonly static PackageDownloader packageDownloader = new PackageDownloader();
-
-        static int Main(string[] args)
+        string packageId;
+        string packageVersion;
+        bool forcePackageDownload;
+        string feedId;
+        string feedUri;
+        string feedUsername;
+        string feedPassword;
+        
+        public DownloadPackageCommand()
         {
-            string packageId = null;
-            string packageVersion = null;
-            bool forcePackageDownload = false;
-            string feedId = null;
-            string feedUri = null;
-            string feedUsername = null;
-            string feedPassword = null;
-            
+            Options.Add("packageId=", "Package ID to download", v => packageId = v);
+            Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
+            Options.Add("feedId=", "Id of the NuGet feed", v => feedId = v);
+            Options.Add("feedUri=", "URL to NuGet feed", v => feedUri = v);
+            Options.Add("feedUsername=", "[Optional] Username to use for an authenticated NuGet feed", v => feedUsername = v);
+            Options.Add("feedPassword=", "[Optional] Password to use for an authenticated NuGet feed", v => feedPassword = v);
+            Options.Add("forcePackageDownload", "[Optional, Flag] if specified, the package will be downloaded even if it is already in the package cache", v => forcePackageDownload = true);
+        }
+
+        public override int Execute(string[] commandLineArguments)
+        {
+            Options.Parse(commandLineArguments);
+
             try
             {
-                var options = new OptionSet();
-                options.Add("packageId=", "Package ID to download", v => packageId = v);
-                options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
-                options.Add("feedId=", "Id of the NuGet feed", v => feedId = v);
-                options.Add("feedUri=", "URL to NuGet feed", v => feedUri = v);
-                options.Add("feedUsername=", "[Optional] Username to use for an authenticated NuGet feed", v => feedUsername = v);
-                options.Add("feedPassword=", "[Optional] Password to use for an authenticated NuGet feed", v => feedPassword = v);
-                options.Add("forcePackageDownload", "[Optional, Flag] if specified, the package will be downloaded even if it is already in the package cache", v => forcePackageDownload = true);
-
-                options.Parse(args);
-
                 SemanticVersion version;
                 Uri uri;
                 CheckArguments(packageId, packageVersion, feedId, feedUri, feedUsername, feedPassword, out version, out uri);
@@ -47,32 +47,31 @@ namespace Octopus.Deploy.PackageDownloader
                 string hash = null;
                 long size = 0;
                 packageDownloader.DownloadPackage(
-                    packageId, 
-                    version, 
+                    packageId,
+                    version,
                     feedId,
-                    uri, 
-                    forcePackageDownload, 
-                    out downloadedTo, 
-                    out hash, 
+                    uri,
+                    forcePackageDownload,
+                    out downloadedTo,
+                    out hash,
                     out size);
 
-                OctopusLogger.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
+                Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
                     feedUri);
 
-                OctopusLogger.SetOctopusVariable("Package.Hash", hash);
-                OctopusLogger.SetOctopusVariable("Package.Size", size);
-                OctopusLogger.SetOctopusVariable("Package.InstallationDirectoryPath", downloadedTo);
+                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash", hash));
+                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size", size));
+                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.InstallationDirectoryPath", downloadedTo));
             }
             catch (Exception ex)
             {
-                OctopusLogger.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion,
+                Log.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion,
                     feedUri);
                 return ConsoleFormatter.PrintError(ex);
             }
 
             return 0;
         }
-
         static void SetFeedCredentials(string feedUsername, string feedPassword, Uri uri)
         {
             var credentials = GetFeedCredentials(feedUsername, feedPassword);
@@ -118,7 +117,7 @@ namespace Octopus.Deploy.PackageDownloader
                 throw new ArgumentException("No feed URI was specified");
             }
 
-            if (!Uri.TryCreate(feedUri, UriKind.RelativeOrAbsolute, out uri))
+            if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
             {
                 throw new ArgumentException("URI specified is not a valid URI");
             }

@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using NuGet;
 
-namespace Octopus.Deploy.PackageDownloader
+namespace Calamari.Integration.PackageDownload
 {
     public class FeedCredentialsProvider : ICredentialProvider
     {
