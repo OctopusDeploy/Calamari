@@ -1,4 +1,7 @@
 ﻿using System.IO;
+using System.Runtime;
+using System.Xml;
+using System.Xml.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
@@ -39,9 +42,27 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertZero();
 
             result.AssertOutput("Extracting package to: " + stagingDirectory + "\\Acme.Web\\1.0.0");
-            result.AssertOutput("Extracted 4 files");
+            result.AssertOutput("Extracted 6 files");
 
             result.AssertOutput("Bonjour from PreDeploy.ps1");
+        }
+
+        [Test]
+        public void ShouldTransformConfig()
+        {
+            // Set the environment, and the flag to automatically run config transforms
+            variables.Set(SpecialVariables.Environment.Name, "Production");
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            var workingDirectory = Path.Combine(stagingDirectory, "Production\\Acme.Web\\1.0.0");
+
+            result = DeployPackage("Acme.Web");
+
+            // The environment-specific config transform should have been run, setting the 'isProduction' appSetting to 'true'
+            var configXml = new XmlDocument(); 
+            configXml.LoadXml( fileSystem.ReadFile(Path.Combine(workingDirectory, "web.config")));
+            var valueAttribute = configXml.SelectSingleNode("configuration/appSettings/add[@key='isProduction']/@value");
+
+            Assert.AreEqual("true", valueAttribute.Value);
         }
 
         [Test]

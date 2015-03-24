@@ -21,11 +21,19 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
+            var appliedAsTransforms = deployment.Variables.GetStrings(SpecialVariables.AppliedXmlConfigTransforms, '|');
+
             Log.Verbose("Looking for appSettings and connectionStrings in any .config files");
             
             var configurationFiles = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
             foreach (var configurationFile in configurationFiles)
             {
+                if (appliedAsTransforms.Contains(configurationFile))
+                {
+                   Log.VerboseFormat("File '{0}' was interpreted as an XML configuration transform; variable substitution won't be attempted.", configurationFile); 
+                    continue;
+                }
+
                 replacer.ModifyConfigurationFile(configurationFile, deployment.Variables);
             }
         }
