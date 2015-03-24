@@ -59,7 +59,7 @@ namespace Calamari.Commands
                 new ConfigurationTransformsConvention(),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new AzureConfigurationConvention(),
-                new CopyPackageToCustomInstallationDirectoryConvention(),
+                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new DeployScriptConvention("Deploy", fileSystem, scriptEngine, commandLineRunner),
                 new LegacyIisWebSiteConvention(),
                 new AzureUploadConvention(),

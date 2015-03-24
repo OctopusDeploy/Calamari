@@ -1,40 +1,63 @@
 ﻿using System.IO;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+using NuGet;
 using NUnit.Framework;
 using Octostache;
+using PackageBuilder = Calamari.Tests.Fixtures.Deployment.Packages.PackageBuilder;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
     public class DeployPackageFixture : CalamariFixture
     {
-        string installDirectory;
+        string stagingDirectory;
+        ICalamariFileSystem fileSystem;
         VariableDictionary variables;
+        CalamariResult result;
 
         [SetUp]
         public void SetUp()
         {
-            installDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestInstalls");
-            new CalamariPhysicalFileSystem().EnsureDirectoryExists(installDirectory);
+            fileSystem = new CalamariPhysicalFileSystem();
+
+            // Ensure staging directory exists and is empty 
+            stagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
+            fileSystem.EnsureDirectoryExists(stagingDirectory);
+            fileSystem.PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimes);
 
             variables = new VariableDictionary();
-            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", installDirectory);
+            variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, stagingDirectory);
             variables.Set("PreDeployGreeting", "Bonjour");
         }
 
         [Test]
         public void ShouldDeployPackage()
         {
-            var result = DeployPackage("Acme.Web");
-            
+            result = DeployPackage("Acme.Web");
             result.AssertZero();
 
-            result.AssertOutput("Extracting package to: " + installDirectory + "\\Acme.Web\\1.0.0");
+            result.AssertOutput("Extracting package to: " + stagingDirectory + "\\Acme.Web\\1.0.0");
             result.AssertOutput("Extracted 4 files");
 
             result.AssertOutput("Bonjour from PreDeploy.ps1");
+        }
+
+        [Test]
+        public void ShouldCopyFilesToCustomInstallationDirectory()
+        {
+            // Set-up a custom installation directory
+            string customInstallDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestInstall");
+            fileSystem.EnsureDirectoryExists(customInstallDirectory);
+            // Ensure the directory is empty before we start
+            fileSystem.PurgeDirectory(customInstallDirectory, DeletionOptions.TryThreeTimes); 
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallDirectory );
+
+            result = DeployPackage("Acme.Web");
+
+            // Assert content was copied to custom-installation directory
+            Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets\\styles.css")));
         }
 
         CalamariResult DeployPackage(string packageName)
@@ -54,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TearDown]
         public void CleanUp()
         {
-            new CalamariPhysicalFileSystem().PurgeDirectory(installDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+            new CalamariPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
         }
     }
 }
