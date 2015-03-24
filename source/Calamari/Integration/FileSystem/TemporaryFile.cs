@@ -28,10 +28,21 @@ namespace Calamari.Integration.FileSystem
         {
             get
             {
-                using (var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var file = File.OpenRead(FilePath))
                 {
-                    var hash = new SHA1CryptoServiceProvider().ComputeHash(stream);
+                    var hash = new SHA1CryptoServiceProvider().ComputeHash(file);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
+        }
+
+        public long Size
+        {
+            get
+            {
+                using (var file = File.OpenRead(FilePath))
+                {
+                    return file.Length;
                 }
             }
         }

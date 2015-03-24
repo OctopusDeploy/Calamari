@@ -37,7 +37,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         string ExpectedPackageSize = "6346";
         string FileSharePackageId = "Acme.Web";
         string FileSharePackageVersion = "1.0.0";
-        string FileSharePackageExpectedSize = "3341";
 
         string GetPackageDownloadFolder()
         {
@@ -70,7 +69,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 calamari.Argument("feedUsername", feedUsername);
 
             if (!String.IsNullOrWhiteSpace(feedPassword))
-                calamari.Argument("feedPassword", feedUsername);
+                calamari.Argument("feedPassword", feedPassword);
 
             if (forcePackageDownload)
                 calamari.Flag("forcePackageDownload");
@@ -118,7 +117,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         public void ShouldUsePackageFromCache()
         {
-            DownloadPackage(PackageId, PackageVersion, PublicFeedId, PublicFeedUri);
+            DownloadPackage(PackageId, PackageVersion, PublicFeedId, PublicFeedUri)
+                .AssertZero();
 
             var result = DownloadPackage(PackageId, PackageVersion, PublicFeedId, PublicFeedUri);
 
@@ -136,8 +136,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         public void ShouldByPassCacheAndDownloadPackage()
         {
-            DownloadPackage(PackageId, PackageVersion, PublicFeedId, PublicFeedUri);
-            
+            DownloadPackage(PackageId, PackageVersion, PublicFeedId, PublicFeedUri)
+                .AssertZero();
+
             var result = DownloadPackage(PackageId, PackageVersion, PublicFeedId, PublicFeedUri, forcePackageDownload: true);
 
             result.AssertZero();
@@ -176,7 +177,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldUsePackageFromCache()
         {
-            DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword);
+            DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword)
+                .AssertZero();
+
             var result = DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword);
 
             result.AssertZero();
@@ -194,7 +197,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldByPassCacheAndDownloadPackage()
         {
-            DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword);
+            DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword)
+                .AssertZero();
+
             var result = DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, FeedPassword, true);
 
             result.AssertZero();
@@ -242,7 +247,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash",
                     acmeWeb.Hash);
                 result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size",
-                    FileSharePackageExpectedSize);
+                    acmeWeb.Size);
                 result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}",
                         GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
                 result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileSharePackageId,
@@ -255,7 +260,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(FileSharePackageId, FileSharePackageVersion)))
             {
-                DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath);
+                DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath)
+                    .AssertZero();
 
                 var result = DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath);
                 result.AssertZero();
@@ -266,7 +272,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash",
                     acmeWeb.Hash);
                 result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size",
-                    FileSharePackageExpectedSize);
+                    acmeWeb.Size);
                 result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}",
                         GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
             }
@@ -279,7 +285,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 var acmeWeb =
                     new TemporaryFile(PackageBuilder.BuildSamplePackage(FileSharePackageId, FileSharePackageVersion)))
             {
-                DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath);
+                DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath)
+                    .AssertZero();
+
                 var result = DownloadPackage(FileSharePackageId, FileSharePackageVersion, FileShareFeedId, acmeWeb.DirectoryPath,
                     forcePackageDownload: true);
 
@@ -293,7 +301,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Hash",
                     acmeWeb.Hash);
                 result.AssertOutput("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", "Package.Size",
-                    FileSharePackageExpectedSize);
+                    acmeWeb.Size);
                 result.AssertOutput("##octopus[setVariable name=\"Package.InstallationDirectoryPath\" value=\"{0}\\Work\\{1}\\{2}.{3}",
                         GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
                 result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileSharePackageId,
