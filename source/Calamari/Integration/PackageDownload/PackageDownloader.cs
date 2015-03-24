@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
-using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using NuGet;
 
@@ -22,7 +21,7 @@ namespace Calamari.Integration.PackageDownload
             
             IPackage downloaded = null;
             downloadedTo = null;
-            if(!forcePackageDownload)
+            if (!forcePackageDownload)
             {
                 AttemptToGetPackageFromCache(packageId, version, feedId, cacheDirectory, out downloaded, out downloadedTo);
             }
@@ -33,8 +32,7 @@ namespace Calamari.Integration.PackageDownload
             }
             else
             {
-                Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'",
-                    downloadedTo);
+                Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloadedTo);
             }
 
             size = fileSystem.GetFileSize(downloadedTo);

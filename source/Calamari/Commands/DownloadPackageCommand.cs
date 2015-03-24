@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using Calamari.Commands.Support;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.PackageDownload;
 using NuGet;
 using PackageDownloader = Calamari.Integration.PackageDownload.PackageDownloader;
@@ -11,7 +10,7 @@ namespace Calamari.Commands
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
     public class DownloadPackageCommand : Command
     {
-        readonly static PackageDownloader packageDownloader = new PackageDownloader();
+        readonly static PackageDownloader PackageDownloader = new PackageDownloader();
         string packageId;
         string packageVersion;
         bool forcePackageDownload;
@@ -43,10 +42,10 @@ namespace Calamari.Commands
 
                 SetFeedCredentials(feedUsername, feedPassword, uri);
 
-                string downloadedTo = null;
-                string hash = null;
-                long size = 0;
-                packageDownloader.DownloadPackage(
+                string downloadedTo;
+                string hash;
+                long size;
+                PackageDownloader.DownloadPackage(
                     packageId,
                     version,
                     feedId,
@@ -65,8 +64,7 @@ namespace Calamari.Commands
             }
             catch (Exception ex)
             {
-                Log.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion,
-                    feedUri);
+                Log.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion, feedUri);
                 return ConsoleFormatter.PrintError(ex);
             }
 
@@ -93,39 +91,25 @@ namespace Calamari.Commands
         static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, out SemanticVersion version, out Uri uri)
         {
             if (String.IsNullOrWhiteSpace(packageId))
-            {
                 throw new ArgumentException("No package ID was specified");
-            }
 
             if (String.IsNullOrWhiteSpace(packageVersion))
-            {
                 throw new ArgumentException("No package version was specified");
-            }
 
             if (!SemanticVersion.TryParse(packageVersion, out version))
-            {
                 throw new ArgumentException("Package version specified is not a valid semantic version");
-            }
 
             if (String.IsNullOrWhiteSpace(feedId))
-            {
                 throw new ArgumentException("No feed ID was specified.");
-            }
 
             if (String.IsNullOrWhiteSpace(feedUri))
-            {
                 throw new ArgumentException("No feed URI was specified");
-            }
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
-            {
                 throw new ArgumentException("URI specified is not a valid URI");
-            }
 
             if (!String.IsNullOrWhiteSpace(feedUsername) && String.IsNullOrWhiteSpace(feedPassword))
-            {
                 throw new ArgumentException("A username was specified but no password was provided");
-            }
         }
         // ReSharper restore UnusedParameter.Local
     }
