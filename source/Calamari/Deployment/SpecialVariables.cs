@@ -63,7 +63,7 @@
             public static readonly string IgnoreConfigTranformationErrors = "Octopus.Action.Package.IgnoreConfigTranformationErrors";
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string SubstituteInFilesEnabled = "Octopus.Action.SubstituteInFiles.Enabled";
-            public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.Enabled";
+            public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
         }
 
         public static class Environment

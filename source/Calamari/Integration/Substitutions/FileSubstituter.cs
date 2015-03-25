@@ -3,7 +3,7 @@ using Octostache;
 
 namespace Calamari.Integration.Substitutions
 {
-    public class FileSubstituter
+    public class FileSubstituter : IFileSubstituter
     {
         public void PerformSubstitution(string sourceFile, VariableDictionary variables)
         {

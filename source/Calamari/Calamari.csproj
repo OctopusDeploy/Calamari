@@ -93,6 +93,7 @@
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\ConfigurationVariables\IConfigurationVariablesReplacer.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
+    <Compile Include="Integration\Substitutions\IFileSubstituter.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
     <Compile Include="Integration\FileSystem\DeletionOptions.cs" />
