@@ -14,10 +14,11 @@ namespace Calamari.Integration.PackageDownload
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly PackageRepositoryFactory packageRepositoryFactory = new PackageRepositoryFactory();
         readonly CalamariPhysicalFileSystem fileSystem = new CalamariPhysicalFileSystem();
+        readonly string rootDirectory = Path.Combine(Environment.GetEnvironmentVariable("TentacleHome"), "Files");
 
         public void DownloadPackage(string packageId, SemanticVersion version, string feedId, Uri feedUri, bool forcePackageDownload, out string downloadedTo, out string hash, out long size)
         {
-            var cacheDirectory = GetPackageRoot(feedId, Path.GetFullPath(".\\Work\\"));
+            var cacheDirectory = GetPackageRoot(feedId);
             
             IPackage downloaded = null;
             downloadedTo = null;
@@ -85,7 +86,7 @@ namespace Calamari.Integration.PackageDownload
             }
         }
 
-        private string GetPackageRoot(string prefix, string rootDirectory)
+        private string GetPackageRoot(string prefix)
         {
             return string.IsNullOrWhiteSpace(prefix) ? rootDirectory : Path.Combine(rootDirectory, prefix);
         }
