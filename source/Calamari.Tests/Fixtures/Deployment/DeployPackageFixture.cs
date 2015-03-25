@@ -45,6 +45,14 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        public void ShouldSubstituteVariablesInFiles()
+        {
+            result = DeployPackage("Acme.Web");
+
+            Assert.Fail("Not implemented");
+        }
+
+        [Test]
         public void ShouldCopyFilesToCustomInstallationDirectory()
         {
             // Set-up a custom installation directory
