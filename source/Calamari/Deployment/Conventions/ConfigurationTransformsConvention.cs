@@ -20,9 +20,15 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var sourceExtensions = new HashSet<string>();
 
             var transformDefinitions = GetTransformDefinitions(deployment.Variables.Get(SpecialVariables.Package.AdditionalXmlConfigurationTransforms));
+
+            var sourceExtensions = new HashSet<string>(
+                  transformDefinitions
+                    .Where(transform => transform.Advanced)
+                    .Select(transform => "*" + Path.GetExtension(transform.SourcePattern))
+                    .Distinct()
+                );
 
             foreach (var sourceExt in transformDefinitions
                 .Where(transform => transform.Advanced)
