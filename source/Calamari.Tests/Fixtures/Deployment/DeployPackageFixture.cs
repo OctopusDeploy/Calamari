@@ -1,10 +1,13 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime;
 using System.Xml;
 using System.Xml.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Iis;
 using Calamari.Tests.Helpers;
+using NSubstitute;
 using NuGet;
 using NUnit.Framework;
 using Octostache;
@@ -79,6 +82,32 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Assert content was copied to custom-installation directory
             Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets\\styles.css")));
+        }
+
+        [Test]
+        public void ShouldModifyIisWebsiteRoot()
+        {
+            // If the 'UpdateIisWebsite' variable is set, the website root will be updated
+
+            // Create the website
+            var originalWebRootPath = Path.Combine(Path.GetTempPath(), "CalamariTestIisSite");
+            fileSystem.EnsureDirectoryExists(originalWebRootPath);
+            var webServer = WebServerSupport.AutoDetect();
+            var siteName = "CalamariTest-" + Guid.NewGuid();
+            webServer.CreateWebSiteOrVirtualDirectory(siteName, "/", originalWebRootPath, 1081);
+
+            variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
+            variables.Set(SpecialVariables.Package.UpdateIisWebsiteName, siteName);
+
+            result = DeployPackage("Acme.Web");
+
+            Assert.AreEqual(
+                Path.Combine(stagingDirectory, "Acme.Web\\1.0.0"), 
+                webServer.GetHomeDirectory(siteName, "/"));
+
+            // And remove the website
+            webServer.DeleteWebSite(siteName);
+            fileSystem.DeleteDirectory(originalWebRootPath);
         }
 
         CalamariResult DeployPackage(string packageName)

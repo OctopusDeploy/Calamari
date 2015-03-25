@@ -23,6 +23,7 @@
         }
 
         public const string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
+        public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
 
         public static class Tentacle
         {

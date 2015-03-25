@@ -76,9 +76,11 @@
     <Compile Include="Fixtures\Conventions\CopyPackageToCustomInstallationDirectoryConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\DeployScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ExtractPackageToApplicationDirectoryConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\LegacyIisWebSiteConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
+    <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTest.cs" />
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />

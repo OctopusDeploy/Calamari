@@ -35,6 +35,10 @@
     <Reference Include="MarkdownSharp">
       <HintPath>..\packages\MarkdownSharp.1.13.0.0\lib\35\MarkdownSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Web.Administration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Web.Administration.7.0.0.0\lib\net20\Microsoft.Web.Administration.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
@@ -56,6 +60,7 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -95,6 +100,11 @@
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
     <Compile Include="Integration\ConfigurationVariables\IConfigurationVariablesReplacer.cs" />
+    <Compile Include="Integration\Iis\IInternetInformationServer.cs" />
+    <Compile Include="Integration\Iis\InternetInformationServer.cs" />
+    <Compile Include="Integration\Iis\WebServerSevenSupport.cs" />
+    <Compile Include="Integration\Iis\WebServerSixSupport.cs" />
+    <Compile Include="Integration\Iis\WebServerSupport.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
