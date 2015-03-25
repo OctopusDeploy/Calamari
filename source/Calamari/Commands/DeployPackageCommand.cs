@@ -56,7 +56,6 @@ namespace Calamari.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
                 new DeployScriptConvention("PreDeploy", fileSystem, scriptEngine, commandLineRunner),
-                new DeletePackageFileConvention(),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(),
                 new ConfigurationVariablesConvention(fileSystem, replacer),

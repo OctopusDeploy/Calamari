@@ -81,7 +81,6 @@
     <Compile Include="Deployment\Conventions\ContributeEnvironmentVariablesConvention.cs" />
     <Compile Include="Deployment\ConventionProcessor.cs" />
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
-    <Compile Include="Deployment\Conventions\DeletePackageFileConvention.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
     <Compile Include="Deployment\Conventions\DeployScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToApplicationDirectoryConvention.cs" />
