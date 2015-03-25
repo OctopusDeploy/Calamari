@@ -30,14 +30,6 @@ namespace Calamari.Deployment.Conventions
                     .Distinct()
                 );
 
-            foreach (var sourceExt in transformDefinitions
-                .Where(transform => transform.Advanced)
-                .Select(transform => Path.GetExtension(transform.SourcePattern))
-                .Where(sourceExt => !sourceExtensions.Contains(sourceExt)))
-            {
-                sourceExtensions.Add("*" + sourceExt);
-            }
-
             if (deployment.Variables.GetFlag(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
             {
                 sourceExtensions.Add("*.config");
