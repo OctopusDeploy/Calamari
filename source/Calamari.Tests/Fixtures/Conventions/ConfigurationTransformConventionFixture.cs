@@ -40,10 +40,10 @@ namespace Calamari.Tests.Fixtures.Conventions
             var webConfig = Path.Combine(stagingDirectory, "web.config");
             var webConfigReleaseTransform = Path.Combine(stagingDirectory, "web.Release.config");
 
-            MockSearchableFiles(fileSystem, stagingDirectory, new []{webConfig, webConfigReleaseTransform}, "*.config");
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] { webConfig, webConfigReleaseTransform }, "*.config");
 
-           variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-           CreateConvention().Install(deployment); 
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(webConfig, webConfigReleaseTransform, webConfig);
         }
@@ -54,10 +54,10 @@ namespace Calamari.Tests.Fixtures.Conventions
             var webConfig = Path.Combine(stagingDirectory, "web.config");
             var webConfigReleaseTransform = Path.Combine(stagingDirectory, "web.Release.config");
 
-            MockSearchableFiles(fileSystem, stagingDirectory, new []{webConfig, webConfigReleaseTransform}, "*.config");
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] { webConfig, webConfigReleaseTransform }, "*.config");
 
-           variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
-           CreateConvention().Install(deployment); 
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+            CreateConvention().Install(deployment);
 
             configurationTransformer.DidNotReceive().PerformTransform(webConfig, webConfigReleaseTransform, webConfig);
         }
@@ -69,11 +69,11 @@ namespace Calamari.Tests.Fixtures.Conventions
             var webConfig = Path.Combine(stagingDirectory, "web.config");
             var environmentTransform = Path.Combine(stagingDirectory, "web.Production.config");
 
-            MockSearchableFiles(fileSystem, stagingDirectory, new []{webConfig, environmentTransform}, "*.config");
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] { webConfig, environmentTransform }, "*.config");
 
-           variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             variables.Set(SpecialVariables.Environment.Name, environment);
-           CreateConvention().Install(deployment); 
+            CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(webConfig, environmentTransform, webConfig);
         }
@@ -84,12 +84,12 @@ namespace Calamari.Tests.Fixtures.Conventions
             var webConfig = Path.Combine(stagingDirectory, "web.config");
             var specificTransform = Path.Combine(stagingDirectory, "web.Foo.config");
 
-            MockSearchableFiles(fileSystem, stagingDirectory, new []{webConfig, specificTransform}, "*.config");
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] { webConfig, specificTransform }, "*.config");
 
-           variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "web.Foo.config => web.config");
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "web.Foo.config => web.config");
             // This will be applied even if the automatically run flag is set to false
-           variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
-           CreateConvention().Install(deployment); 
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+            CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(webConfig, specificTransform, webConfig);
         }
@@ -110,12 +110,12 @@ namespace Calamari.Tests.Fixtures.Conventions
             var sourceConfig = Path.Combine(stagingDirectory, "xyz.Bar.config");
             var transform = Path.Combine(stagingDirectory, "xyz.Foo.config");
 
-            MockSearchableFiles(fileSystem, stagingDirectory, new []{sourceConfig, transform}, "*.config");
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] { sourceConfig, transform }, "*.config");
 
-           variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition);
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition);
             // This will be applied even if the automatically run flag is set to false
-           variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
-           CreateConvention().Install(deployment); 
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+            CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(sourceConfig, transform, sourceConfig);
         }
@@ -161,7 +161,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.EnumerateFilesRecursively(parentDirectory,
                 Arg.Is<string[]>(x => new List<string>(x).Contains(searchPattern))).Returns(files);
 
-            foreach(var file in files)
+            foreach (var file in files)
                 fileSystem.FileExists(file).Returns(true);
         }
     }
