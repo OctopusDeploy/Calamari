@@ -4,7 +4,7 @@ using Microsoft.Web.XmlTransform;
 
 namespace Calamari.Integration.ConfigurationTransforms
 {
-    public class ConfigurationTransformer
+    public class ConfigurationTransformer : IConfigurationTransformer
     {
         public void PerformTransform(string configFile, string transformFile, string destinationFile)
         {
