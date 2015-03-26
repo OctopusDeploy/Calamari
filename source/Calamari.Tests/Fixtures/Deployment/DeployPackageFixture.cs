@@ -1,4 +1,7 @@
 ﻿using System.IO;
+using System.Runtime;
+using System.Xml;
+using System.Xml.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
@@ -39,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertZero();
 
             result.AssertOutput("Extracting package to: " + stagingDirectory + "\\Acme.Web\\1.0.0");
-            result.AssertOutput("Extracted 4 files");
+            result.AssertOutput("Extracted 6 files");
 
             result.AssertOutput("Bonjour from PreDeploy.ps1");
         }
@@ -47,9 +50,28 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldSubstituteVariablesInFiles()
         {
+            variables.Set("foo", "bar");
+            // Enable file substitution and configure the target
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
+
             result = DeployPackage("Acme.Web");
 
-            Assert.Fail("Not implemented");
+            // The #{foo} variable in web.config should have been replaced by 'bar'
+            AssertXmlNodeValue(stagingDirectory + "\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='foo']/@value", "bar");
+        }
+
+        [Test]
+        public void ShouldTransformConfig()
+        {
+            // Set the environment, and the flag to automatically run config transforms
+            variables.Set(SpecialVariables.Environment.Name, "Production");
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+
+            result = DeployPackage("Acme.Web");
+
+            // The environment app-setting value should have been transformed to 'Production'
+            AssertXmlNodeValue(stagingDirectory + "\\Production\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
 
         [Test]
@@ -86,6 +108,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void CleanUp()
         {
             new CalamariPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+        }
+
+        private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
+        {
+            var configXml = new XmlDocument(); 
+            configXml.LoadXml( fileSystem.ReadFile(xmlFile));
+            var node = configXml.SelectSingleNode(nodeXPath);
+
+            Assert.AreEqual(value, node.Value);
         }
     }
 }

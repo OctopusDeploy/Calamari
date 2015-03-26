@@ -5,6 +5,8 @@
         public const string LastErrorMessage = "OctopusLastErrorMessage";
         public const string LastError = "OctopusLastError";
 
+        public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
+
         public static string GetLibraryScriptModuleName(string variableName)
         {
             return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');

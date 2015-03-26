@@ -70,6 +70,7 @@
   <ItemGroup>
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ConfigurationTransformConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationVariablesConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributeEnvironmentVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\CopyPackageToCustomInstallationDirectoryConventionFixture.cs" />
@@ -114,6 +115,8 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web\Acme.Web.nuspec">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\web.config" />
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\web.Production.config" />
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

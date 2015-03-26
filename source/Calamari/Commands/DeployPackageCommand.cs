@@ -4,6 +4,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -47,8 +48,8 @@ namespace Calamari.Commands
             var scriptEngine = new ScriptEngineSelector();
             var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
             var replacer = new ConfigurationVariablesReplacer();
-            var transformer = new ConfigurationTransformsConvention();
             var substituter = new FileSubstituter();
+            var configurationTransformer = new ConfigurationTransformer();
 
             var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
@@ -57,7 +58,7 @@ namespace Calamari.Commands
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
                 new DeployScriptConvention("PreDeploy", fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
-                new ConfigurationTransformsConvention(),
+                new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new AzureConfigurationConvention(),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
