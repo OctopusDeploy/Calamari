@@ -82,6 +82,7 @@
     <Compile Include="Deployment\ConventionProcessor.cs" />
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\DeletePackageFileConvention.cs" />
+    <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
     <Compile Include="Deployment\Conventions\DeployScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToApplicationDirectoryConvention.cs" />
@@ -95,6 +96,8 @@
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
     <Compile Include="Integration\ConfigurationVariables\IConfigurationVariablesReplacer.cs" />
+    <Compile Include="Integration\EmbeddedResources\ExecutingAssemblyEmbeddedResources.cs" />
+    <Compile Include="Integration\EmbeddedResources\ICalamariEmbeddedResources.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
@@ -151,8 +154,14 @@
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Scripts\Octopus.Features.IISWebSite_BeforePostDeploy.ps1" />
+    <EmbeddedResource Include="Scripts\Octopus.Features.RedGateDatabase_BeforePostDeploy.ps1" />
+    <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_AfterPreDeploy.ps1" />
+    <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_BeforePostDeploy.ps1" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
