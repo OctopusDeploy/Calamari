@@ -10,6 +10,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Substitutions;
 using Octostache;
 
 namespace Calamari.Commands
@@ -47,6 +48,7 @@ namespace Calamari.Commands
             var scriptEngine = new ScriptEngineSelector();
             var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
             var replacer = new ConfigurationVariablesReplacer();
+            var substituter = new FileSubstituter();
             var configurationTransformer = new ConfigurationTransformer();
 
             var variables = new VariableDictionary(variablesFile);
@@ -55,8 +57,7 @@ namespace Calamari.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
                 new DeployScriptConvention("PreDeploy", fileSystem, scriptEngine, commandLineRunner),
-                new DeletePackageFileConvention(),
-                new SubstituteInFilesConvention(),
+                new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new AzureConfigurationConvention(),

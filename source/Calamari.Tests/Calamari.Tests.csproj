@@ -77,6 +77,7 @@
     <Compile Include="Fixtures\Conventions\DeployScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ExtractPackageToApplicationDirectoryConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />
+    <Compile Include="Fixtures\Conventions\SubstituteInFilesConventionFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTest.cs" />

@@ -81,7 +81,6 @@
     <Compile Include="Deployment\Conventions\ContributeEnvironmentVariablesConvention.cs" />
     <Compile Include="Deployment\ConventionProcessor.cs" />
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
-    <Compile Include="Deployment\Conventions\DeletePackageFileConvention.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
     <Compile Include="Deployment\Conventions\DeployScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToApplicationDirectoryConvention.cs" />
@@ -96,6 +95,7 @@
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
     <Compile Include="Integration\ConfigurationVariables\IConfigurationVariablesReplacer.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
+    <Compile Include="Integration\Substitutions\IFileSubstituter.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
     <Compile Include="Integration\FileSystem\DeletionOptions.cs" />
