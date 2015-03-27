@@ -7,6 +7,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Iis;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -50,6 +51,7 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter();
             var configurationTransformer = new ConfigurationTransformer();
+            var iis = new InternetInformationServer();
 
             var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
@@ -63,7 +65,7 @@ namespace Calamari.Commands
                 new AzureConfigurationConvention(),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new DeployScriptConvention("Deploy", fileSystem, scriptEngine, commandLineRunner),
-                new LegacyIisWebSiteConvention(),
+                new LegacyIisWebSiteConvention(fileSystem, iis),
                 new AzureUploadConvention(),
                 new AzureDeploymentConvention(),
                 new DeployScriptConvention("PostDeploy", fileSystem, scriptEngine, commandLineRunner)
