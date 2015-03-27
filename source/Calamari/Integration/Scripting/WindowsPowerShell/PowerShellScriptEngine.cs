@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.FileSystem;
+﻿using System.IO;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Octostache;
 
@@ -8,15 +9,18 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     {
         public CommandResult Execute(string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
+            var workingDirectory = Path.GetDirectoryName(scriptFile);
+
             var executable = PowerShellBootstrapper.PathToPowerShellExecutable();
             var boostrapFile = PowerShellBootstrapper.PrepareBootstrapFile(scriptFile, variables);
             var arguments = PowerShellBootstrapper.FormatCommandArguments(boostrapFile);
 
             using (new TemporaryFile(boostrapFile))
             {
-                var invocation = new CommandLineInvocation(executable, arguments);
+                var invocation = new CommandLineInvocation(executable, arguments, workingDirectory);
                 return commandLineRunner.Execute(invocation);
             }
         }
+
     }
 }
