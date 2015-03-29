@@ -48,7 +48,7 @@ namespace Calamari
 
         public static void Info(string messageFormat, params object[] args)
         {
-            Verbose(String.Format(messageFormat, args));
+            Info(String.Format(messageFormat, args));
         }
 
         public static void Warn(string message)

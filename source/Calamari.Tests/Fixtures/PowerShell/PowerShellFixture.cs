@@ -119,6 +119,27 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        public void ShouldSupportModulesInVariables()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Octopus.Script.Module[Foo]", "function SayHello() { Write-Host \"Hello from module!\" }");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                   .Action("run-script")
+                   .Argument("script", MapSamplePath("Scripts\\UseModule.ps1"))
+                   .Argument("variables", variablesFile));
+
+                output.AssertZero();
+                output.AssertOutput("Hello from module!");
+            }
+        }
+
+        [Test]
         public void ShouldPing()
         {
             var output = Invoke(Calamari()

@@ -92,8 +92,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
                 var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
-                output.AppendLine("New-Module -Name ").Append(name).Append(" -ScriptBlock {");
-                output.AppendLine(variables.Get(name));
+                output.Append("New-Module -Name ").Append(name).Append(" -ScriptBlock {");
+                output.AppendLine(variables.Get(variableName));
                 output.AppendLine("} | Import-Module");
                 output.AppendLine();
             }

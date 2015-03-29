@@ -8,9 +8,11 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Iis;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Substitutions;
 using Octostache;
 
 namespace Calamari.Commands
@@ -48,8 +50,10 @@ namespace Calamari.Commands
             var scriptEngine = new ScriptEngineSelector();
             var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
             var replacer = new ConfigurationVariablesReplacer();
+            var substituter = new FileSubstituter();
             var configurationTransformer = new ConfigurationTransformer();
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
+            var iis = new InternetInformationServer();
 
             var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
@@ -59,8 +63,7 @@ namespace Calamari.Commands
                 new FeatureScriptConvention("BeforePreDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new DeployScriptConvention("PreDeploy", fileSystem, scriptEngine, commandLineRunner),
                 new FeatureScriptConvention("AfterPreDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
-                new DeletePackageFileConvention(),
-                new SubstituteInFilesConvention(),
+                new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new AzureConfigurationConvention(),
@@ -68,7 +71,7 @@ namespace Calamari.Commands
                 new FeatureScriptConvention("BeforeDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new DeployScriptConvention("Deploy", fileSystem, scriptEngine, commandLineRunner),
                 new FeatureScriptConvention("AfterDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
-                new LegacyIisWebSiteConvention(),
+                new LegacyIisWebSiteConvention(fileSystem, iis),
                 new AzureUploadConvention(),
                 new AzureDeploymentConvention(),
                 new FeatureScriptConvention("BeforePostDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),

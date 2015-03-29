@@ -1,9 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Xml;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
+using Calamari.Integration.Iis;
 using Calamari.Tests.Helpers;
+using NSubstitute;
 using NUnit.Framework;
 using Octostache;
 
@@ -45,21 +48,30 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        public void ShouldSubstituteVariablesInFiles()
+        {
+            variables.Set("foo", "bar");
+            // Enable file substitution and configure the target
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
+
+            result = DeployPackage("Acme.Web");
+
+            // The #{foo} variable in web.config should have been replaced by 'bar'
+            AssertXmlNodeValue(stagingDirectory + "\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='foo']/@value", "bar");
+        }
+
+        [Test]
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
             variables.Set(SpecialVariables.Environment.Name, "Production");
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            var workingDirectory = Path.Combine(stagingDirectory, "Production\\Acme.Web\\1.0.0");
 
             result = DeployPackage("Acme.Web");
 
-            // The environment-specific config transform should have been run, setting the 'isProduction' appSetting to 'true'
-            var configXml = new XmlDocument(); 
-            configXml.LoadXml( fileSystem.ReadFile(Path.Combine(workingDirectory, "web.config")));
-            var valueAttribute = configXml.SelectSingleNode("configuration/appSettings/add[@key='isProduction']/@value");
-
-            Assert.AreEqual("true", valueAttribute.Value);
+            // The environment app-setting value should have been transformed to 'Production'
+            AssertXmlNodeValue(stagingDirectory + "\\Production\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
 
         [Test]
@@ -86,6 +98,32 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("Hello World!");
         }
 
+        [Test]
+        public void ShouldModifyIisWebsiteRoot()
+        {
+            // If the 'UpdateIisWebsite' variable is set, the website root will be updated
+
+            // Create the website
+            var originalWebRootPath = Path.Combine(Path.GetTempPath(), "CalamariTestIisSite");
+            fileSystem.EnsureDirectoryExists(originalWebRootPath);
+            var webServer = WebServerSupport.AutoDetect();
+            var siteName = "CalamariTest-" + Guid.NewGuid();
+            webServer.CreateWebSiteOrVirtualDirectory(siteName, "/", originalWebRootPath, 1081);
+
+            variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
+            variables.Set(SpecialVariables.Package.UpdateIisWebsiteName, siteName);
+
+            result = DeployPackage("Acme.Web");
+
+            Assert.AreEqual(
+                Path.Combine(stagingDirectory, "Acme.Web\\1.0.0"), 
+                webServer.GetHomeDirectory(siteName, "/"));
+
+            // And remove the website
+            webServer.DeleteWebSite(siteName);
+            fileSystem.DeleteDirectory(originalWebRootPath);
+        }
+
         CalamariResult DeployPackage(string packageName)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
@@ -104,6 +142,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void CleanUp()
         {
             new CalamariPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+        }
+
+        private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
+        {
+            var configXml = new XmlDocument(); 
+            configXml.LoadXml( fileSystem.ReadFile(xmlFile));
+            var node = configXml.SelectSingleNode(nodeXPath);
+
+            Assert.AreEqual(value, node.Value);
         }
     }
 }

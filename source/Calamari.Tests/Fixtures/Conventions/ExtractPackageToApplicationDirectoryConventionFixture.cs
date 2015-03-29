@@ -23,6 +23,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             extractor.GetMetadata("C:\\Package.nupkg").Returns(new PackageMetadata { Id = "Acme.Web", Version = "1.0.0" });
 
             fileSystem = Substitute.For<ICalamariFileSystem>();
+            fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => new CalamariPhysicalFileSystem().RemoveInvalidFileNameChars(c.Arg<string>()));
 
             variables = new VariableDictionary();
             variables.Set("env:SystemDrive", "C:");
@@ -57,6 +58,16 @@ namespace Calamari.Tests.Fixtures.Conventions
             convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\Applications\\Production\\Acme.Web\\1.0.0"));
+        }
+
+        [Test]
+        public void ShouldRemoveInvalidPathCharsFromEnvironmentName()
+        {
+            variables.Set("Octopus.Environment.Name", "Production: Tokyo");
+
+            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
+
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\Applications\\Production Tokyo\\Acme.Web\\1.0.0"));
         }
 
         [Test]

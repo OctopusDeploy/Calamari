@@ -56,8 +56,10 @@ namespace Calamari.Deployment.Conventions
             var environment = variables.Get(SpecialVariables.Environment.Name);
             if (!string.IsNullOrWhiteSpace(environment))
             {
+                environment = fileSystem.RemoveInvalidFileNameChars(environment);
                 root = Path.Combine(root, environment);
             }
+
             return root;
         }
 
