@@ -1,4 +1,5 @@
 using System;
+using Calamari.Deployment;
 using Octostache;
 
 namespace Calamari.Integration.Processes
@@ -13,6 +14,8 @@ namespace Calamari.Integration.Processes
             {
                 variables["env:" + name] = (environmentVariables[name] ?? string.Empty).ToString();
             }
+
+            variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
         }
     }
 }
