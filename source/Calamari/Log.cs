@@ -24,6 +24,11 @@ namespace Calamari
             stdOutMode = mode;
         }
 
+        public static string ConvertServiceMessageValue(string value)
+        {
+            return Convert.ToBase64String(Encoding.Default.GetBytes(value));
+        }
+
         public static void Verbose(string message)
         {
             lock (Sync)

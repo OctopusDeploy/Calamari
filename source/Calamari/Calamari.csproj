@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="Commands\CleanCommand.cs" />
     <Compile Include="Commands\DownloadPackageCommand.cs" />
+    <Compile Include="Commands\FindPackageCommand.cs" />
     <Compile Include="Commands\RunScriptCommand.cs" />
     <Compile Include="Commands\DeployPackageCommand.cs" />
     <Compile Include="Commands\Support\Option.cs" />
@@ -123,6 +124,8 @@
     <Compile Include="Deployment\Journal\JournalEntry.cs" />
     <Compile Include="Integration\Processes\ISemaphore.cs" />
     <Compile Include="Integration\Processes\SystemSemaphore.cs" />
+    <Compile Include="Integration\FileSystem\PackageStore.cs" />
+    <Compile Include="Integration\Packages\StoredPackage.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessageNames.cs" />

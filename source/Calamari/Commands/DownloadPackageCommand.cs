@@ -94,25 +94,25 @@ namespace Calamari.Commands
         static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, out SemanticVersion version, out Uri uri)
         {
             if (String.IsNullOrWhiteSpace(packageId))
-                throw new ArgumentException("No package ID was specified");
+                throw new CommandException("No package ID was specified. Please pass --packageId YourPackage");
 
             if (String.IsNullOrWhiteSpace(packageVersion))
-                throw new ArgumentException("No package version was specified");
+                throw new CommandException("No package version was specified. Please pass --packageVersion 1.0.0.0");
 
             if (!SemanticVersion.TryParse(packageVersion, out version))
-                throw new ArgumentException("Package version specified is not a valid semantic version");
+                throw new CommandException(String.Format("Package version '{0}' specified is not a valid semantic version", packageVersion));
 
             if (String.IsNullOrWhiteSpace(feedId))
-                throw new ArgumentException("No feed ID was specified.");
+                throw new CommandException("No feed ID was specified. Please pass --feedId feed-id");
 
             if (String.IsNullOrWhiteSpace(feedUri))
-                throw new ArgumentException("No feed URI was specified");
+                throw new CommandException("No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
-                throw new ArgumentException("URI specified is not a valid URI");
+                throw new CommandException(String.Format("URI specified '{0}' is not a valid URI", feedUri));
 
             if (!String.IsNullOrWhiteSpace(feedUsername) && String.IsNullOrWhiteSpace(feedPassword))
-                throw new ArgumentException("A username was specified but no password was provided");
+                throw new CommandException("A username was specified but no password was provided. Please pass --feedPassword \"FeedPassword\"");
         }
         // ReSharper restore UnusedParameter.Local
     }
