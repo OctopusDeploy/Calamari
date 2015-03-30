@@ -15,6 +15,8 @@ namespace Calamari.Integration.Processes
             {
                 variables["env:" + name] = (environmentVariables[name] ?? string.Empty).ToString();
             }
+
+            variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
         }
 
         /// <summary>
