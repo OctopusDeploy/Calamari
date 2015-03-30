@@ -57,6 +57,7 @@
             public static readonly string NuGetPackageVersion = "Octopus.Action.Package.NuGetPackageVersion";
             public static readonly string ShouldDownloadOnTentacle = "Octopus.Action.Package.DownloadOnTentacle";
             public static readonly string NuGetFeedId = "Octopus.Action.Package.NuGetFeedId";
+            public static readonly string EnabledFeatures = "Octopus.Action.EnabledFeatures";
             public static readonly string UpdateIisWebsite = "Octopus.Action.Package.UpdateIisWebsite";
             public static readonly string UpdateIisWebsiteName = "Octopus.Action.Package.UpdateIisWebsiteName";
             public static readonly string CustomInstallationDirectory = "Octopus.Action.Package.CustomInstallationDirectory";

@@ -6,6 +6,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
+using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Packages;
@@ -51,6 +52,7 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter();
             var configurationTransformer = new ConfigurationTransformer();
+            var embeddedResources = new ExecutingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
 
             var variables = new VariableDictionary(variablesFile);
@@ -58,17 +60,23 @@ namespace Calamari.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
+                new FeatureScriptConvention("BeforePreDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new DeployScriptConvention("PreDeploy", fileSystem, scriptEngine, commandLineRunner),
+                new FeatureScriptConvention("AfterPreDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new AzureConfigurationConvention(),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
+                new FeatureScriptConvention("BeforeDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new DeployScriptConvention("Deploy", fileSystem, scriptEngine, commandLineRunner),
+                new FeatureScriptConvention("AfterDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new LegacyIisWebSiteConvention(fileSystem, iis),
                 new AzureUploadConvention(),
                 new AzureDeploymentConvention(),
-                new DeployScriptConvention("PostDeploy", fileSystem, scriptEngine, commandLineRunner)
+                new FeatureScriptConvention("BeforePostDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
+                new DeployScriptConvention("PostDeploy", fileSystem, scriptEngine, commandLineRunner),
+                new FeatureScriptConvention("AfterPostDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
