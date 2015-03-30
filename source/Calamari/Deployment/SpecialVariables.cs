@@ -24,6 +24,8 @@
 
         public const string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
+        public static readonly string PrintVariables = "OctopusPrintVariables";
+        public static readonly string PrintEvaluatedVariables = "OctopusPrintEvaluatedVariables";
 
         public static class Tentacle
         {
