@@ -3,6 +3,9 @@ using Octostache;
 
 namespace Calamari.Integration.ServiceMessages
 {
+    /// <summary>
+    /// Parses command-output for service-messages
+    /// </summary>
     public class ServiceMessageCommandOutput : ICommandOutput
     {
         private readonly VariableDictionary variables;

@@ -18,10 +18,8 @@ namespace Calamari.Integration.ServiceMessages
 
         public void Parse(string line)
         {
-            for (var i = 0; i < line.Length; i++)
+            foreach (var c in line)
             {
-                var c = line[i];
-
                 switch (state)
                 {
                     case State.Default:
