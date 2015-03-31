@@ -19,9 +19,6 @@ namespace Calamari.Integration.Processes
             variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
         }
 
-        /// <summary>
-        /// Logs raw and evaluated variables, if the corresponding flags are set
-        /// </summary>
         public static void LogVariables(this VariableDictionary variables)
         {
             if (variables.GetFlag(SpecialVariables.PrintVariables))
@@ -37,16 +34,16 @@ namespace Calamari.Integration.Processes
 
         private static string ToString(this VariableDictionary variables, Func<string, bool> nameFilter, bool useRawValue)
         {
-                var text = new StringBuilder();
+            var text = new StringBuilder();
 
-                foreach (var name in variables.GetNames())
-                {
-                    if (!nameFilter(name))
-                        continue;
+            foreach (var name in variables.GetNames())
+            {
+                if (!nameFilter(name))
+                    continue;
 
-                    text.AppendFormat("[{0}] = '{1}'", name, useRawValue ? variables.GetRaw(name) : variables.Get(name));
-                    text.AppendLine();
-                }
+                text.AppendFormat("[{0}] = '{1}'", name, useRawValue ? variables.GetRaw(name) : variables.Get(name));
+                text.AppendLine();
+            }
 
             return text.ToString();
         }
