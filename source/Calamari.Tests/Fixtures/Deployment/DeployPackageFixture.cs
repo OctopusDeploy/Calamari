@@ -1,17 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Runtime;
 using System.Xml;
-using System.Xml.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Integration.Iis;
 using Calamari.Tests.Helpers;
 using NSubstitute;
-using NuGet;
 using NUnit.Framework;
 using Octostache;
-using PackageBuilder = Calamari.Tests.Fixtures.Deployment.Packages.PackageBuilder;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -91,6 +88,14 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Assert content was copied to custom-installation directory
             Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets\\styles.css")));
+        }
+
+        [Test]
+        public void ShouldExecuteFeatureScripts()
+        {
+            variables.Set(SpecialVariables.Package.EnabledFeatures, "HelloWorld");
+            result = DeployPackage("Acme.Web");
+            result.AssertOutput("Hello World!");
         }
 
         [Test]
