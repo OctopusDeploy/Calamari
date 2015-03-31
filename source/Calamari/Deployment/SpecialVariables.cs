@@ -75,5 +75,10 @@
             public static readonly string Id = "Octopus.Environment.Id";
             public static readonly string Name = "Octopus.Environment.Name";
         }
+
+        public static class Features
+        {
+            public const string CustomScripts = "Octopus.Features.CustomScripts";
+        }
     }
 }

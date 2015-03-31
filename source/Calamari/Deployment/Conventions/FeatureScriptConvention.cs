@@ -11,7 +11,7 @@ namespace Calamari.Deployment.Conventions
 {
     public class FeatureScriptConvention : IInstallConvention
     {
-        readonly string scriptSuffix;
+        readonly string deploymentStage;
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptEngineSelector scriptEngineSelector;
@@ -19,10 +19,10 @@ namespace Calamari.Deployment.Conventions
         const string featureScriptNamePrefix = "Octopus.Features."; 
         const string scriptResourcePrefix = "Calamari.Scripts.";
 
-        public FeatureScriptConvention(string scriptSuffix, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
+        public FeatureScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
             IScriptEngineSelector scriptEngineSelector, ICommandLineRunner commandLineRunner)
         {
-            this.scriptSuffix = scriptSuffix;
+            this.deploymentStage = deploymentStage;
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
             this.scriptEngineSelector = scriptEngineSelector;
@@ -89,7 +89,7 @@ namespace Calamari.Deployment.Conventions
         private IEnumerable<string> GetScriptNames(string feature)
         {
             return scriptEngineSelector.GetSupportedExtensions()
-                .Select(extension => GetScriptName(feature, scriptSuffix, extension ));
+                .Select(extension => GetScriptName(feature, deploymentStage, extension ));
         }
 
     }
