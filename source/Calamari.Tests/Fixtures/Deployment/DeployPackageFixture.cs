@@ -124,6 +124,12 @@ namespace Calamari.Tests.Fixtures.Deployment
             fileSystem.DeleteDirectory(originalWebRootPath);
         }
 
+        [Test]
+        public void ShouldRunConfiguredScripts()
+        {
+            Assert.Fail();
+        }
+
         CalamariResult DeployPackage(string packageName)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))

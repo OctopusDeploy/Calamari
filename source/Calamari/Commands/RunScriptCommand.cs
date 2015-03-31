@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -42,7 +43,8 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find script file: " + scriptFile);
 
             var engine = new ScriptEngineSelector().SelectEngine(scriptFile);
-            var runner = new CommandLineRunner(new ConsoleCommandOutput());
+            var runner = new CommandLineRunner(
+                new SplitCommandOutput(new ConsoleCommandOutput(), new CalamariCommandOutput(variables)));
             var result = engine.Execute(scriptFile, variables, runner);
             return result.ExitCode;
         }

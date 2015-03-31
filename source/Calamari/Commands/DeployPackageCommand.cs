@@ -46,21 +46,23 @@ namespace Calamari.Commands
             if (variablesFile != null)
                 Log.Info("Using variables from: " + variablesFile);
 
+            var variables = new VariableDictionary(variablesFile);
+
             var fileSystem = new CalamariPhysicalFileSystem();
             var scriptEngine = new ScriptEngineSelector();
-            var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter();
             var configurationTransformer = new ConfigurationTransformer();
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
+            var commandLineRunner = new CommandLineRunner( new SplitCommandOutput( new ConsoleCommandOutput(), new CalamariCommandOutput(variables)));
 
-            var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
+                new PackageScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new DeployScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterPreDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
@@ -70,12 +72,14 @@ namespace Calamari.Commands
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new DeployScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackageScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new LegacyIisWebSiteConvention(fileSystem, iis),
                 new AzureUploadConvention(),
                 new AzureDeploymentConvention(),
                 new FeatureScriptConvention(DeploymentStages.BeforePostDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new DeployScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackageScriptConvention(DeploymentStages.PostDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
             };
 
