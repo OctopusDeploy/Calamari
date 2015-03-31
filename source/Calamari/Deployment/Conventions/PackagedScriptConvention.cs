@@ -12,14 +12,14 @@ namespace Calamari.Deployment.Conventions
     /// <summary>
     /// This convention is used to detect PreDeploy.ps1, Deploy.ps1 and PostDeploy.ps1 scripts.
     /// </summary>
-    public class DeployScriptConvention : IInstallConvention
+    public class PackagedScriptConvention : IInstallConvention
     {
         readonly string scriptFilePrefix;
         readonly ICalamariFileSystem fileSystem;
         readonly IScriptEngineSelector scriptEngineSelector;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployScriptConvention(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngineSelector scriptEngineSelector, ICommandLineRunner commandLineRunner)
+        public PackagedScriptConvention(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngineSelector scriptEngineSelector, ICommandLineRunner commandLineRunner)
         {
             this.scriptFilePrefix = scriptFilePrefix;
             this.fileSystem = fileSystem;

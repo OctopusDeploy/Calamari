@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
@@ -8,15 +7,14 @@ using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class PackageScriptConvention : IInstallConvention
+    public class ConfiguredScriptConvention : IInstallConvention
     {
         readonly string deploymentStage;
         readonly IScriptEngineSelector scriptEngineSelector;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-
-        public PackageScriptConvention(string deploymentStage, IScriptEngineSelector scriptEngineSelector, 
+        public ConfiguredScriptConvention(string deploymentStage, IScriptEngineSelector scriptEngineSelector,
             ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.deploymentStage = deploymentStage;
@@ -33,9 +31,9 @@ namespace Calamari.Deployment.Conventions
                 return;
 
             foreach (var scriptName in scriptEngineSelector.GetSupportedExtensions()
-                .Select(extension => GetScriptName(deploymentStage, extension )))
+                .Select(extension => GetScriptName(deploymentStage, extension)))
             {
-                var scriptBody = deployment.Variables.Get(scriptName); 
+                var scriptBody = deployment.Variables.Get(scriptName);
 
                 if (string.IsNullOrWhiteSpace(scriptBody))
                     continue;
@@ -61,7 +59,7 @@ namespace Calamari.Deployment.Conventions
 
         public static string GetScriptName(string deploymentStage, string extension)
         {
-            return "Octopus.Action.CustomScripts."  + deploymentStage + "." + extension;
+            return "Octopus.Action.CustomScripts." + deploymentStage + "." + extension;
         }
 
 

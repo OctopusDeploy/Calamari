@@ -87,10 +87,10 @@
     <Compile Include="Deployment\ConventionProcessor.cs" />
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
-    <Compile Include="Deployment\Conventions\PackageScriptConvention.cs" />
+    <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
     <Compile Include="Deployment\DeploymentStages.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
-    <Compile Include="Deployment\Conventions\DeployScriptConvention.cs" />
+    <Compile Include="Deployment\Conventions\PackagedScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToApplicationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\IConvention.cs" />
     <Compile Include="Deployment\Conventions\IInstallConvention.cs" />
@@ -148,7 +148,7 @@
     <Compile Include="Integration\Processes\CommandLineInvocation.cs" />
     <Compile Include="Integration\Processes\CommandLineRunner.cs" />
     <Compile Include="Integration\Processes\CommandResult.cs" />
-    <Compile Include="Integration\Processes\CalamariCommandOutput.cs" />
+    <Compile Include="Integration\ServiceMessages\ServiceMessageCommandOutput.cs" />
     <Compile Include="Integration\Processes\ICommandOutput.cs" />
     <Compile Include="Integration\Processes\SilentProcessRunner.cs" />
     <Compile Include="Integration\Substitutions\FileSubstituter.cs" />

@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.ServiceMessages;
 using Octostache;
 
 namespace Calamari.Commands
@@ -44,7 +45,7 @@ namespace Calamari.Commands
 
             var engine = new ScriptEngineSelector().SelectEngine(scriptFile);
             var runner = new CommandLineRunner(
-                new SplitCommandOutput(new ConsoleCommandOutput(), new CalamariCommandOutput(variables)));
+                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var result = engine.Execute(scriptFile, variables, runner);
             return result.ExitCode;
         }

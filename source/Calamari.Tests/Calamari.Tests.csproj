@@ -72,9 +72,10 @@
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationTransformConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationVariablesConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ConfiguredScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributeEnvironmentVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\CopyPackageToCustomInstallationDirectoryConventionFixture.cs" />
-    <Compile Include="Fixtures\Conventions\DeployScriptConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\PackagedScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ExtractPackageToApplicationDirectoryConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\FeatureScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\LegacyIisWebSiteConventionFixture.cs" />

@@ -1,13 +1,13 @@
-﻿using Calamari.Integration.ServiceMessages;
+﻿using Calamari.Integration.Processes;
 using Octostache;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Integration.ServiceMessages
 {
-    public class CalamariCommandOutput : ICommandOutput
+    public class ServiceMessageCommandOutput : ICommandOutput
     {
         private readonly VariableDictionary variables;
 
-        public CalamariCommandOutput(VariableDictionary variables)
+        public ServiceMessageCommandOutput(VariableDictionary variables)
         {
             this.variables = variables;
         }

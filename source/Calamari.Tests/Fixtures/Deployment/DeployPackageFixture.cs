@@ -2,6 +2,7 @@
 using System.IO;
 using System.Xml;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Integration.Iis;
@@ -127,7 +128,12 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldRunConfiguredScripts()
         {
-            Assert.Fail();
+            variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "ps1"), "Write-Host 'The wheels on the bus go round...'");
+
+            result = DeployPackage("Acme.Web");
+
+            result.AssertOutput("The wheels on the bus go round...");
         }
 
         CalamariResult DeployPackage(string packageName)
