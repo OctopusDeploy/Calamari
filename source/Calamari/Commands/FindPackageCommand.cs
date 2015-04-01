@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -45,15 +46,18 @@ namespace Calamari.Commands
             var package = packageStore.GetPackage(packageMetadata);
             if (package == null)
             {
-                Log.VerboseFormat("Package {0} {1} hash {2} has not been uploaded.");
+                Log.VerboseFormat("Package {0} {1} hash {2} has not been uploaded.", packageMetadata.Id,
+                    packageMetadata.Version, packageMetadata.Hash);
                 Log.Verbose("Finding earlier packages that have been uploaded.");
-                foreach(var nearestPackage in packageStore.GetNearestPackages(packageId, version))
+                var nearestPackages = packageStore.GetNearestPackages(packageId, version).ToList();
+                if (!nearestPackages.Any()) Log.VerboseFormat("No earlier packages for {0} has been uploaded", packageId);
+
+                Log.VerboseFormat("Found {0} earlier packages for {1} on this Tentacle", nearestPackages.Count, packageId);
+                foreach(var nearestPackage in nearestPackages)
                 {
-                    Log.Info("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"]",
-                        Log.ConvertServiceMessageValue(nearestPackage.Metadata.Id),
-                        Log.ConvertServiceMessageValue(nearestPackage.Metadata.Version),
-                        Log.ConvertServiceMessageValue(nearestPackage.Metadata.Hash),
-                        Log.ConvertServiceMessageValue(nearestPackage.FullPath));
+                    Log.VerboseFormat("Found package {0} {1} {2}", nearestPackage.Metadata.Id,
+                        nearestPackage.Metadata.Version, nearestPackage.FullPath);
+                    Log.PackageFound(nearestPackage.Metadata.Id, nearestPackage.Metadata.Version, nearestPackage.Metadata.Hash, nearestPackage.FullPath);
                 }
 
                 return 0;
@@ -61,11 +65,7 @@ namespace Calamari.Commands
 
             Log.Info("##octopus[calamari-found-package]");
             Log.Info("Package {0} {1} hash {2} has already been uploaded", package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash);
-            Log.Info("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"",
-                package.Metadata.Id,
-                package.Metadata.Version,
-                package.Metadata.Hash,
-                package.FullPath);
+            Log.PackageFound(package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash, package.FullPath);
             return 0;
         }
     }

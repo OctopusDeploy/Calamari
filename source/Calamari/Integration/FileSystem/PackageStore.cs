@@ -26,6 +26,15 @@ namespace Calamari.Integration.FileSystem
             return package != null;
         }
 
+        public string GetFileNameForPackage(string name, string prefix = null)
+        {
+            var fullPath = Path.Combine(GetPackageRoot(prefix), name + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg");
+
+            fileSystem.EnsureDirectoryExists(rootDirectory);
+
+            return fullPath;
+        }
+
         public string GetFilenameForPackage(PackageMetadata metadata, string prefix = null)
         {
             var name = GetNameOfPackage(metadata);
@@ -62,7 +71,7 @@ namespace Calamari.Integration.FileSystem
             var root = GetPackageRoot(prefix);
             fileSystem.EnsureDirectoryExists(root);
 
-            var files = fileSystem.EnumerateFilesRecursively(root, name + "*.nupkg");
+            var files = fileSystem.EnumerateFilesRecursively(root, name + "*.nupkg-*");
 
             foreach (var file in files)
             {
@@ -89,18 +98,22 @@ namespace Calamari.Integration.FileSystem
             fileSystem.EnsureDirectoryExists(root);
 
             var taken = 0;
-            while (taken <= take)
-            {
-                foreach (var file in fileSystem.EnumerateFilesRecursively(root, packageId + "*.nupkg")
-                    .OrderByDescending(Path.GetFileName))
-                {
-                    var package = GetPackage(file);
-                    if (package == null)
-                        continue;
+            var files = fileSystem.EnumerateFilesRecursively(root, packageId + "*.nupkg-*")
+                .OrderByDescending(Path.GetFileName);
 
-                    taken++;
-                    yield return package;
-                }
+            if (!files.Any()) yield break;
+            if (files.Count() < take) take = files.Count();
+
+            foreach (var file in files)
+            {
+                if (taken == take) yield break;
+
+                var package = GetPackage(file);
+                if (package == null)
+                    continue;
+
+                taken++;
+                yield return package;
             }
         }
 

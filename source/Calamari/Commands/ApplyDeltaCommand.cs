@@ -30,7 +30,6 @@ namespace Calamari.Commands
             Options.Add("fileHash=", "", v => fileHash = v);
             Options.Add("deltaFileName=", "", v => deltaFileName = v);
             Options.Add("newFileName=", "", v => newFileName = v);
-            Options.Add("feedId=", v => feedId = v);
             Options.Add("progress", "", v => progressReporter = new ConsoleProgressReporter());
         }
         public override int Execute(string[] commandLineArguments)
@@ -41,12 +40,22 @@ namespace Calamari.Commands
             string basisFilePath;
             ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
 
-            var deltaApplier = new DeltaApplier();
+            var deltaApplier = new DeltaApplier
+            {
+                SkipHashCheck = true
+            };
             using(var basisStream = new FileStream(basisFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             using(var deltaStream = new FileStream(deltaFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             using(var newFileStream = new FileStream(newFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
             {
                 deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, progressReporter), newFileStream);
+            }
+
+            var package = packageStore.GetPackage(newFilePath);
+            if (package != null)
+            {
+                var size = new FileStream(package.FullPath, FileMode.Open, FileAccess.Read, FileShare.Read).Length;
+                Log.DeltaVerification(package.FullPath, package.Metadata.Hash, size);
             }
 
             return 0;
@@ -67,10 +76,6 @@ namespace Calamari.Commands
                 throw new CommandException(
                     "No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
             }
-            if (String.IsNullOrWhiteSpace(feedId))
-            {
-                throw new CommandException("No feed ID was specified. Please pass --feedId MyFeedId");
-            }
             if (String.IsNullOrWhiteSpace(newFileName))
             {
                 throw new CommandException(
@@ -79,12 +84,11 @@ namespace Calamari.Commands
 
             basisFilePath = Path.GetFullPath(basisFileName);
             deltaFilePath = Path.GetFullPath(deltaFileName);
-            var packagesDirectory = packageStore.GetPackagesDirectory(feedId);
-            newFilePath = Path.GetFullPath(Path.Combine(packagesDirectory, newFileName));
+            newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), newFileName + "-" + Guid.NewGuid());
             if (!File.Exists(basisFilePath)) throw new CommandException("Could not find basis file: " + basisFileName);
             if (!File.Exists(deltaFilePath)) throw new CommandException("Could not find delta file: " + deltaFileName);
             if (File.Exists(newFilePath))
-                throw new CommandException("New file " + newFileName + " already exists in " + packagesDirectory);
+                throw new CommandException("File " + newFileName + " already exists in " + newFilePath);
 
             var previousPackage = packageStore.GetPackage(basisFilePath);
             if (previousPackage.Metadata.Hash != fileHash)
