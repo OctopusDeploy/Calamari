@@ -20,6 +20,9 @@ namespace Calamari.Integration.Processes
 
         public static void SetOutputVariable(this VariableDictionary variables, string name, string value)
         {
+            variables.Set(name, value);
+
+            // And set the output-variables.
             // Assuming we are running in a step named 'DeployWeb' and are setting a variable named 'Foo'
             // then we will set Octopus.Action[DeployWeb].Output.Foo
             var actionName = variables.Get(SpecialVariables.Action.Name);

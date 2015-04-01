@@ -87,6 +87,7 @@
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTest.cs" />
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />
+    <Compile Include="Fixtures\ServiceMessages\ServiceMessageParserFixture.cs" />
     <Compile Include="Fixtures\Substitutions\SubstitutionsFixture.cs" />
     <Compile Include="Helpers\CalamariFixture.cs" />
     <Compile Include="Helpers\CalamariResult.cs" />

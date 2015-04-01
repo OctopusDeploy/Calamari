@@ -23,17 +23,9 @@ namespace Calamari.Integration.ServiceMessages
                 switch (state)
                 {
                     case State.Default:
-                        if (c == '\r' || c=='\n')
-                        {
-                            //ignore
-                        }
-                        else if (c == '#')
+                        if (c == '#')
                         {
                             state = State.PossibleMessage;
-                            buffer.Append(c);
-                        }
-                        else
-                        {
                             buffer.Append(c);
                         }
                         break;
@@ -49,6 +41,7 @@ namespace Calamari.Integration.ServiceMessages
                         else if (!"##octopus".StartsWith(progress))
                         {
                             state = State.Default;
+                            buffer.Clear();
                         }
                         break;
                     
@@ -57,6 +50,7 @@ namespace Calamari.Integration.ServiceMessages
                         {
                             ProcessMessage(buffer.ToString());
                             state = State.Default;
+                            buffer.Clear();
                         }
                         else
                         {
@@ -68,8 +62,6 @@ namespace Calamari.Integration.ServiceMessages
                         throw new ArgumentOutOfRangeException();
                 }
             }
-
-            buffer.Clear();
         }
 
         void ProcessMessage(string message)

@@ -9,15 +9,16 @@ namespace Calamari.Integration.ServiceMessages
     public class ServiceMessageCommandOutput : ICommandOutput
     {
         private readonly VariableDictionary variables;
+        readonly ServiceMessageParser serviceMessageParser;
 
         public ServiceMessageCommandOutput(VariableDictionary variables)
         {
             this.variables = variables;
+            this.serviceMessageParser = new ServiceMessageParser(ProcessServiceMessage);
         }
 
         public void WriteInfo(string line)
         {
-            var serviceMessageParser = new ServiceMessageParser(ProcessServiceMessage);
             serviceMessageParser.Parse(line);
         }
 
