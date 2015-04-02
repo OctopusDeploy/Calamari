@@ -46,6 +46,7 @@ namespace Calamari.Commands
             if (variablesFile != null)
                 Log.Info("Using variables from: " + variablesFile);
 
+            var variables = new VariableDictionary(variablesFile);
             var fileSystem = new CalamariPhysicalFileSystem();
             var scriptEngine = new ScriptEngineSelector();
             var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
@@ -55,10 +56,10 @@ namespace Calamari.Commands
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
 
-            var variables = new VariableDictionary(variablesFile);
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
+                new LogVariablesConvention(),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
                 new FeatureScriptConvention("BeforePreDeploy", fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new DeployScriptConvention("PreDeploy", fileSystem, scriptEngine, commandLineRunner),

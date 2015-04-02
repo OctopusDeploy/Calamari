@@ -24,6 +24,7 @@ namespace Calamari.Commands
 
             var variables = LoadVariables();
             variables.EnrichWithEnvironmentVariables();
+            variables.LogVariables();
 
             return InvokeScript(variables);
         }
