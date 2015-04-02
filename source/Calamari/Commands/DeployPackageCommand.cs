@@ -4,6 +4,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Deployment.Journal;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
@@ -57,6 +58,7 @@ namespace Calamari.Commands
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
             var commandLineRunner = new CommandLineRunner( new SplitCommandOutput( new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+            var journal = new DeploymentJournal(fileSystem, variables);
 
             var conventions = new List<IConvention>
             {
@@ -87,7 +89,17 @@ namespace Calamari.Commands
 
             var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
-            conventionRunner.RunConventions();
+
+            try
+            {
+                conventionRunner.RunConventions();
+                journal.AddJournalEntry(new JournalEntry(deployment, true));
+            }
+            catch (Exception)
+            {
+                journal.AddJournalEntry(new JournalEntry(deployment, false));
+                throw;
+            }
 
             return 0;
         }

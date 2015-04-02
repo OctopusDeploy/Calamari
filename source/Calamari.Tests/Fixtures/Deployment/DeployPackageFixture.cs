@@ -4,10 +4,10 @@ using System.Xml;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Integration.Iis;
+using Calamari.Integration.Processes;
+using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
-using NSubstitute;
 using NUnit.Framework;
 using Octostache;
 
@@ -31,7 +31,10 @@ namespace Calamari.Tests.Fixtures.Deployment
             fileSystem.EnsureDirectoryExists(stagingDirectory);
             fileSystem.PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimes);
 
+            Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(stagingDirectory, "DeploymentJournal.xml" ));
+
             variables = new VariableDictionary();
+            variables.EnrichWithEnvironmentVariables();
             variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, stagingDirectory);
             variables.Set("PreDeployGreeting", "Bonjour");
         }
@@ -134,6 +137,14 @@ namespace Calamari.Tests.Fixtures.Deployment
             result = DeployPackage("Acme.Web");
 
             result.AssertOutput("The wheels on the bus go round...");
+        }
+
+        [Test]
+        public void ShouldAddJournalEntry()
+        {
+            result = DeployPackage("Acme.Web");
+
+            result.AssertOutput("Adding journal entry");
         }
 
         [Test]

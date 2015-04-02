@@ -69,6 +69,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CleanCommand.cs" />
     <Compile Include="Commands\DownloadPackageCommand.cs" />
     <Compile Include="Commands\RunScriptCommand.cs" />
     <Compile Include="Commands\DeployPackageCommand.cs" />
@@ -97,9 +98,13 @@
     <Compile Include="Deployment\Conventions\IInstallConvention.cs" />
     <Compile Include="Deployment\Conventions\IRollbackConvention.cs" />
     <Compile Include="Deployment\Conventions\LegacyIisWebSiteConvention.cs" />
+    <Compile Include="Deployment\Journal\DeploymentJournal.cs" />
+    <Compile Include="Deployment\Retention\IRetentionPolicy.cs" />
+    <Compile Include="Deployment\Retention\RetentionPolicy.cs" />
     <Compile Include="Deployment\RunningDeployment.cs" />
     <Compile Include="Deployment\SpecialVariables.cs" />
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
+    <Compile Include="Integration\Time\IClock.cs" />
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
     <Compile Include="Integration\ConfigurationVariables\IConfigurationVariablesReplacer.cs" />
@@ -111,10 +116,13 @@
     <Compile Include="Integration\Iis\WebServerSixSupport.cs" />
     <Compile Include="Integration\Iis\WebServerSupport.cs" />
     <Compile Include="Integration\Processes\ConsoleCommandOutput.cs" />
+    <Compile Include="Deployment\Journal\IDeploymentJournal.cs" />
+    <Compile Include="Deployment\Journal\JournalEntry.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessageNames.cs" />
     <Compile Include="Integration\Substitutions\IFileSubstituter.cs" />
+    <Compile Include="Integration\Time\SystemClock.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
     <Compile Include="Integration\FileSystem\DeletionOptions.cs" />

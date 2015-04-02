@@ -77,13 +77,5 @@ namespace Calamari.Tests.Fixtures.Conventions
             convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\MyApps\\Acme.Web\\1.0.0"));
         }
-
-        [Test]
-        public void ShouldPreferAppDirEnvironmentVariablePathIfSet()
-        {
-            variables.Set("env:Octopus.Tentacle.Agent.ApplicationDirectoryPath", "C:\\MyApps");
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
-            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\MyApps\\Acme.Web\\1.0.0"));
-        }
     }
 }
