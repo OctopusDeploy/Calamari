@@ -24,6 +24,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
         string FeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
         string FeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
+        string InvalidFeedUsername = "totally-fake-user";
         string InvalidFeedPassword = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
         string FileShareFeedId = "feeds-local";
 
@@ -219,7 +220,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldFailDownloadPackageWhenInvalidCredentials()
         {
-            var result = DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, FeedUsername, InvalidFeedPassword);
+            var result = DownloadPackage(PackageId, PackageVersion, AuthFeedId, AuthFeedUri, InvalidFeedUsername, InvalidFeedPassword);
 
             result.AssertNonZero();
 
