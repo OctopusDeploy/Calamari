@@ -22,6 +22,16 @@
             return variableName.StartsWith("Octopus.Script.Module[");
         }
 
+        public static string GetOutputVariableName(string actionName, string variableName)
+        {
+            return string.Format("Octopus.Action[{0}].Output.{1}", actionName, variableName);
+        }
+
+        public static string GetMachineIndexedOutputVariableName(string actionName, string machineName, string variableName)
+        {
+            return string.Format("Octopus.Action[{0}].Output[{1}].{2}", actionName, machineName, variableName);
+        }
+
         public const string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
         public static readonly string PrintVariables = "OctopusPrintVariables";
@@ -77,5 +87,22 @@
             public static readonly string Id = "Octopus.Environment.Id";
             public static readonly string Name = "Octopus.Environment.Name";
         }
+
+        public static class Features
+        {
+            public const string CustomScripts = "Octopus.Features.CustomScripts";
+        }
+
+        public static class Action
+        {
+            public const string Name = "Octopus.Action.Name";
+        }
+
+        public static class Machine
+        {
+            public const string Name = "Octopus.Machine.Name";
+        }
+
+
     }
 }

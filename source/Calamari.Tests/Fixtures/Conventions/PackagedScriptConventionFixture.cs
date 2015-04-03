@@ -10,7 +10,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    public class DeployScriptConventionFixture
+    public class PackagedScriptConventionFixture
     {
         ICalamariFileSystem fileSystem;
         IScriptEngineSelector selector;
@@ -42,9 +42,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
-        public void ShouldFindAndCallDeployScripts()
+        public void ShouldFindAndCallPackagedScripts()
         {
-            var convention = CreateDeployScriptConvention("Deploy");
+            var convention = CreateConvention("Deploy");
             convention.Install(deployment);
             engine.Received().Execute("C:\\App\\MyApp\\Deploy.ps1", deployment.Variables, runner);
             engine.Received().Execute("C:\\App\\MyApp\\Deploy.csx", deployment.Variables, runner);
@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldFindAndCallPreDeployScripts()
         {
-            var convention = CreateDeployScriptConvention("PreDeploy");
+            var convention = CreateConvention("PreDeploy");
             convention.Install(deployment);
             engine.Received().Execute("C:\\App\\MyApp\\PreDeploy.ps1", deployment.Variables, runner);
         }
@@ -61,15 +61,15 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldDeleteScriptAfterExecution()
         {
-            var convention = CreateDeployScriptConvention("PreDeploy");
+            var convention = CreateConvention("PreDeploy");
             convention.Install(deployment);
             engine.Received().Execute("C:\\App\\MyApp\\PreDeploy.ps1", deployment.Variables, runner);
             fileSystem.Received().DeleteFile("C:\\App\\MyApp\\PreDeploy.ps1", Arg.Any<DeletionOptions>());
         }
 
-        DeployScriptConvention CreateDeployScriptConvention(string scriptName)
+        PackagedScriptConvention CreateConvention(string scriptName)
         {
-            return new DeployScriptConvention(scriptName, fileSystem, selector, runner);
+            return new PackagedScriptConvention(scriptName, fileSystem, selector, runner);
         }
     }
 }

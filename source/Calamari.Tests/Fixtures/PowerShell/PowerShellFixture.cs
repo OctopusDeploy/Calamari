@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -59,12 +60,44 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetVariables()
         {
+            var variables = new VariableDictionary();
+
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")));
+                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), variables);
 
             output.AssertZero();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
+            Assert.AreEqual("World!", variables.Get("TestA"));
+        }
+
+        [Test]
+        public void ShouldSetActionIndexedOutputVariables()
+        {
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Name, "run-script");
+
+            var output = Invoke(Calamari() 
+                .Action("run-script")
+                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), 
+                variables);
+
+            Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
+        }
+
+        [Test]
+        public void ShouldSetMachineIndexedOutputVariables()
+        {
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Name, "run-script");
+            variables.Set(SpecialVariables.Machine.Name, "App01");
+
+            var output = Invoke(Calamari() 
+                .Action("run-script")
+                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), 
+                variables);
+
+            Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
         }
 
         [Test]

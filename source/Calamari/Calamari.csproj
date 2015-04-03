@@ -88,8 +88,10 @@
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
+    <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
+    <Compile Include="Deployment\DeploymentStages.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
-    <Compile Include="Deployment\Conventions\DeployScriptConvention.cs" />
+    <Compile Include="Deployment\Conventions\PackagedScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToApplicationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\IConvention.cs" />
     <Compile Include="Deployment\Conventions\IInstallConvention.cs" />
@@ -108,7 +110,10 @@
     <Compile Include="Integration\Iis\WebServerSevenSupport.cs" />
     <Compile Include="Integration\Iis\WebServerSixSupport.cs" />
     <Compile Include="Integration\Iis\WebServerSupport.cs" />
+    <Compile Include="Integration\Processes\ConsoleCommandOutput.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
+    <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />
+    <Compile Include="Integration\ServiceMessages\ServiceMessageNames.cs" />
     <Compile Include="Integration\Substitutions\IFileSubstituter.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
@@ -144,7 +149,7 @@
     <Compile Include="Integration\Processes\CommandLineInvocation.cs" />
     <Compile Include="Integration\Processes\CommandLineRunner.cs" />
     <Compile Include="Integration\Processes\CommandResult.cs" />
-    <Compile Include="Integration\Processes\ConsoleCommandOutput.cs" />
+    <Compile Include="Integration\ServiceMessages\ServiceMessageCommandOutput.cs" />
     <Compile Include="Integration\Processes\ICommandOutput.cs" />
     <Compile Include="Integration\Processes\SilentProcessRunner.cs" />
     <Compile Include="Integration\Substitutions\FileSubstituter.cs" />
@@ -160,6 +165,7 @@
     <Compile Include="Commands\Support\ICommandLocator.cs" />
     <Compile Include="Commands\Support\ICommandMetadata.cs" />
     <Compile Include="Commands\Support\OptionValueCollection.cs" />
+    <Compile Include="Integration\ServiceMessages\ServiceMessageParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
@@ -172,6 +178,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Shared\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
