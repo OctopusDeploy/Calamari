@@ -136,6 +136,28 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("The wheels on the bus go round...");
         }
 
+        [Test]
+        public void ShouldLogVariables()
+        {
+            variables.Set(SpecialVariables.PrintVariables, true.ToString());
+            variables.Set(SpecialVariables.PrintEvaluatedVariables, true.ToString());
+            variables.Set(SpecialVariables.Environment.Name, "Production");
+            const string variableName = "foo";
+            const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
+            variables.Set(variableName, rawVariableValue) ;
+
+            result = DeployPackage("Acme.Web");
+
+            //Assert raw variables were output
+            result.AssertOutput("The following variables are available:");
+            result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, rawVariableValue));
+
+            //Assert evaluated variables were output
+            result.AssertOutput("The following evaluated variables are available:");
+            result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, "The environment is Production"));
+            
+        }
+
         CalamariResult DeployPackage(string packageName)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
