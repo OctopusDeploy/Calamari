@@ -55,9 +55,11 @@ namespace Calamari.Commands
             }
 
             var package = packageStore.GetPackage(newFilePath);
-            if (package != null)
+            if (package == null) return 0;
+
+            using (var file = new FileStream(package.FullPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                var size = new FileStream(package.FullPath, FileMode.Open, FileAccess.Read, FileShare.Read).Length;
+                var size = file.Length;
                 Log.DeltaVerification(package.FullPath, package.Metadata.Hash, size);
             }
 
@@ -82,7 +84,7 @@ namespace Calamari.Commands
             if (String.IsNullOrWhiteSpace(newFileName))
             {
                 throw new CommandException(
-                    "No new file name was specified. Please --newFileName MyPackage.1.0.0.1.nupkg");
+                    "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
             }
 
             basisFilePath = Path.GetFullPath(basisFileName);
@@ -90,8 +92,6 @@ namespace Calamari.Commands
             newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), newFileName + "-" + Guid.NewGuid());
             if (!File.Exists(basisFilePath)) throw new CommandException("Could not find basis file: " + basisFileName);
             if (!File.Exists(deltaFilePath)) throw new CommandException("Could not find delta file: " + deltaFileName);
-            if (File.Exists(newFilePath))
-                throw new CommandException("File " + newFileName + " already exists in " + newFilePath);
 
             var previousPackage = packageStore.GetPackage(basisFilePath);
             if (previousPackage.Metadata.Hash != fileHash)

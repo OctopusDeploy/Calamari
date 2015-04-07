@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
@@ -182,9 +183,7 @@
       <Name>Calamari</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Fixtures\ApplyDelta\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\Blob.jpg" />
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css" />
