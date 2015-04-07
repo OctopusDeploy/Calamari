@@ -164,7 +164,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertZero();
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PackageId,
-                PackageVersion, PublicFeedUri);
+                PackageVersion, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                 GetPackageDownloadFolder(), AuthFeedId);
             result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
@@ -228,7 +228,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 PackageVersion, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                 GetPackageDownloadFolder(), AuthFeedId);
-            result.AssertErrorOutput("Unable to download package: The remote server returned an error: (403) Forbidden.");
+            result.AssertErrorOutput("Unable to download package: The remote server returned an error: (401) Unauthorized.");
         }
 
         [Test]
@@ -362,7 +362,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = DownloadPackage(PackageId, InvalidPackageVersion, PublicFeedId, PublicFeedUri);
             result.AssertNonZero();
 
-            result.AssertErrorOutput("Package version specified is not a valid semantic version");
+            result.AssertErrorOutput("Package version '{0}' specified is not a valid semantic version", InvalidPackageVersion);
         }
 
         [Test]
@@ -389,7 +389,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = DownloadPackage(PackageId, PackageVersion, PublicFeedId, "www.myget.org/F/octopusdeploy-tests");
             result.AssertNonZero();
 
-            result.AssertOutput("URI specified is not a valid URI");
+            result.AssertErrorOutput("URI specified 'www.myget.org/F/octopusdeploy-tests' is not a valid URI");
         }
 
         [Test]
