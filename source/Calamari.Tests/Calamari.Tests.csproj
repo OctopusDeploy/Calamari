@@ -86,6 +86,7 @@
     <Compile Include="Fixtures\Deployment\CleanFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
+    <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTest.cs" />
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
@@ -181,7 +182,9 @@
       <Name>Calamari</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Fixtures\ApplyDelta\" />
+  </ItemGroup>
   <ItemGroup>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\Blob.jpg" />
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css" />
