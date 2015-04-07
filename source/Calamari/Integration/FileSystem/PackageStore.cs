@@ -71,7 +71,7 @@ namespace Calamari.Integration.FileSystem
             var root = GetPackageRoot(prefix);
             fileSystem.EnsureDirectoryExists(root);
 
-            var files = fileSystem.EnumerateFilesRecursively(root, name + "*.nupkg-*");
+            var files = fileSystem.EnumerateFilesRecursively(root, name + ".nupkg-*");
 
             foreach (var file in files)
             {
@@ -154,7 +154,7 @@ namespace Calamari.Integration.FileSystem
 
         static string GetNameOfPackage(PackageMetadata metadata)
         {
-            return metadata.Id + "." + metadata.Version + "_";
+            return metadata.Id + "." + metadata.Version;
         }
     }
 }
