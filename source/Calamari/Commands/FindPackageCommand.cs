@@ -39,7 +39,7 @@ namespace Calamari.Commands
                 throw new CommandException(String.Format("Package version '{0}' is not a valid Semantic Version", packageVersion));
 
             if(String.IsNullOrWhiteSpace(packageHash))
-                throw new CommandException("No package hash var specified. Please pass --packageHash YourPackageHash");
+                throw new CommandException("No package hash was specified. Please pass --packageHash YourPackageHash");
 
             var packageStore = new PackageStore();
             var packageMetadata = new PackageMetadata {Id = packageId, Version = packageVersion, Hash = packageHash};
