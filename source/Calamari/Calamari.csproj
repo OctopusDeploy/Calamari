@@ -111,6 +111,8 @@
     <Compile Include="Integration\Iis\WebServerSixSupport.cs" />
     <Compile Include="Integration\Iis\WebServerSupport.cs" />
     <Compile Include="Integration\Processes\ConsoleCommandOutput.cs" />
+    <Compile Include="Integration\Processes\ISemaphore.cs" />
+    <Compile Include="Integration\Processes\SystemSemaphore.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessageNames.cs" />
