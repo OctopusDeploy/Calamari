@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 
 namespace Calamari.Integration.FileSystem
@@ -276,9 +277,20 @@ namespace Calamari.Integration.FileSystem
 
         public string RemoveInvalidFileNameChars(string path)
         {
-            var invalidChars = Path.GetInvalidPathChars();
-            path = new string(path.Where(c => !invalidChars.Contains(c)).ToArray());
-            return path;
+            if (string.IsNullOrEmpty(path)) return null;
+            var invalidPathChars = Path.GetInvalidPathChars();
+            var invalidFileChars = Path.GetInvalidFileNameChars();
+
+            var result = new StringBuilder(path.Length);
+            for (var i = 0; i < path.Length; i++)
+            {
+                var c = path[i];
+                if (!invalidPathChars.Contains(c) && !invalidFileChars.Contains(c))
+                {
+                    result.Append(c);
+                }
+            }
+            return result.ToString();
         }
 
         public void MoveFile(string sourceFile, string destinationFile)

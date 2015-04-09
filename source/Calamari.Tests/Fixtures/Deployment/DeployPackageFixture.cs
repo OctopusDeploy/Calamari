@@ -1,14 +1,15 @@
-﻿using System.IO;
-using System.Runtime;
+﻿using System;
+using System.IO;
 using System.Xml;
-using System.Xml.Linq;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Fixtures.Deployment.Packages;
+using Calamari.Integration.Iis;
 using Calamari.Tests.Helpers;
-using NuGet;
+using NSubstitute;
 using NUnit.Framework;
 using Octostache;
-using PackageBuilder = Calamari.Tests.Fixtures.Deployment.Packages.PackageBuilder;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -48,21 +49,30 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        public void ShouldSubstituteVariablesInFiles()
+        {
+            variables.Set("foo", "bar");
+            // Enable file substitution and configure the target
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
+
+            result = DeployPackage("Acme.Web");
+
+            // The #{foo} variable in web.config should have been replaced by 'bar'
+            AssertXmlNodeValue(stagingDirectory + "\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='foo']/@value", "bar");
+        }
+
+        [Test]
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
             variables.Set(SpecialVariables.Environment.Name, "Production");
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            var workingDirectory = Path.Combine(stagingDirectory, "Production\\Acme.Web\\1.0.0");
 
             result = DeployPackage("Acme.Web");
 
-            // The environment-specific config transform should have been run, setting the 'isProduction' appSetting to 'true'
-            var configXml = new XmlDocument(); 
-            configXml.LoadXml( fileSystem.ReadFile(Path.Combine(workingDirectory, "web.config")));
-            var valueAttribute = configXml.SelectSingleNode("configuration/appSettings/add[@key='isProduction']/@value");
-
-            Assert.AreEqual("true", valueAttribute.Value);
+            // The environment app-setting value should have been transformed to 'Production'
+            AssertXmlNodeValue(stagingDirectory + "\\Production\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
 
         [Test]
@@ -79,6 +89,73 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Assert content was copied to custom-installation directory
             Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets\\styles.css")));
+        }
+
+        [Test]
+        public void ShouldExecuteFeatureScripts()
+        {
+            variables.Set(SpecialVariables.Package.EnabledFeatures, "HelloWorld");
+            result = DeployPackage("Acme.Web");
+            result.AssertOutput("Hello World!");
+        }
+
+        [Test]
+        public void ShouldModifyIisWebsiteRoot()
+        {
+            // If the 'UpdateIisWebsite' variable is set, the website root will be updated
+
+            // Create the website
+            var originalWebRootPath = Path.Combine(Path.GetTempPath(), "CalamariTestIisSite");
+            fileSystem.EnsureDirectoryExists(originalWebRootPath);
+            var webServer = WebServerSupport.AutoDetect();
+            var siteName = "CalamariTest-" + Guid.NewGuid();
+            webServer.CreateWebSiteOrVirtualDirectory(siteName, "/", originalWebRootPath, 1081);
+
+            variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
+            variables.Set(SpecialVariables.Package.UpdateIisWebsiteName, siteName);
+
+            result = DeployPackage("Acme.Web");
+
+            Assert.AreEqual(
+                Path.Combine(stagingDirectory, "Acme.Web\\1.0.0"), 
+                webServer.GetHomeDirectory(siteName, "/"));
+
+            // And remove the website
+            webServer.DeleteWebSite(siteName);
+            fileSystem.DeleteDirectory(originalWebRootPath);
+        }
+
+        [Test]
+        public void ShouldRunConfiguredScripts()
+        {
+            variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "ps1"), "Write-Host 'The wheels on the bus go round...'");
+
+            result = DeployPackage("Acme.Web");
+
+            result.AssertOutput("The wheels on the bus go round...");
+        }
+
+        [Test]
+        public void ShouldLogVariables()
+        {
+            variables.Set(SpecialVariables.PrintVariables, true.ToString());
+            variables.Set(SpecialVariables.PrintEvaluatedVariables, true.ToString());
+            variables.Set(SpecialVariables.Environment.Name, "Production");
+            const string variableName = "foo";
+            const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
+            variables.Set(variableName, rawVariableValue) ;
+
+            result = DeployPackage("Acme.Web");
+
+            //Assert raw variables were output
+            result.AssertOutput("The following variables are available:");
+            result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, rawVariableValue));
+
+            //Assert evaluated variables were output
+            result.AssertOutput("The following evaluated variables are available:");
+            result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, "The environment is Production"));
+            
         }
 
         CalamariResult DeployPackage(string packageName)
@@ -99,6 +176,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void CleanUp()
         {
             new CalamariPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+        }
+
+        private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
+        {
+            var configXml = new XmlDocument(); 
+            configXml.LoadXml( fileSystem.ReadFile(xmlFile));
+            var node = configXml.SelectSingleNode(nodeXPath);
+
+            Assert.AreEqual(value, node.Value);
         }
     }
 }

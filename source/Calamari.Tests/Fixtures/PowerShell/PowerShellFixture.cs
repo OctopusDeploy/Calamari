@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -59,12 +60,44 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetVariables()
         {
+            var variables = new VariableDictionary();
+
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")));
+                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), variables);
 
             output.AssertZero();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
+            Assert.AreEqual("World!", variables.Get("TestA"));
+        }
+
+        [Test]
+        public void ShouldSetActionIndexedOutputVariables()
+        {
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Name, "run-script");
+
+            var output = Invoke(Calamari() 
+                .Action("run-script")
+                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), 
+                variables);
+
+            Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
+        }
+
+        [Test]
+        public void ShouldSetMachineIndexedOutputVariables()
+        {
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Name, "run-script");
+            variables.Set(SpecialVariables.Machine.Name, "App01");
+
+            var output = Invoke(Calamari() 
+                .Action("run-script")
+                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), 
+                variables);
+
+            Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
         }
 
         [Test]
@@ -115,6 +148,27 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutput("V3= GHI");
                 output.AssertOutput("FooBar= Hello");     // Legacy - '_' used to be removed
                 output.AssertOutput("Foo_Bar= Hello");    // Current - '_' is valid in PowerShell
+            }
+        }
+
+        [Test]
+        public void ShouldSupportModulesInVariables()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Octopus.Script.Module[Foo]", "function SayHello() { Write-Host \"Hello from module!\" }");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                   .Action("run-script")
+                   .Argument("script", MapSamplePath("Scripts\\UseModule.ps1"))
+                   .Argument("variables", variablesFile));
+
+                output.AssertZero();
+                output.AssertOutput("Hello from module!");
             }
         }
 

@@ -17,7 +17,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             using (new TemporaryFile(configurationFile))
             using (new TemporaryFile(boostrapFile))
             {
-                return commandLineRunner.Execute(new CommandLineInvocation(ScriptCSBootstrapper.FindScriptCSExecutable(), ScriptCSBootstrapper.FormatCommandArguments(boostrapFile)));
+                return commandLineRunner.Execute(new CommandLineInvocation(ScriptCSBootstrapper.FindScriptCSExecutable(), ScriptCSBootstrapper.FormatCommandArguments(boostrapFile), workingDirectory));
             }
         }
     }

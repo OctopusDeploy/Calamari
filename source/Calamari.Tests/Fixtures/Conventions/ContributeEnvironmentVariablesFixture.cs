@@ -17,6 +17,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             Assert.That(variables.GetNames().Count, Is.GreaterThan(3));
             Assert.That(variables.Evaluate("My OS is #{env:OS}"), Is.StringStarting("My OS is Windows"));
+            Assert.That(variables.GetRaw(SpecialVariables.Tentacle.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));
         }
     }
 }
