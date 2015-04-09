@@ -81,9 +81,9 @@ namespace Calamari.Deployment.Conventions
                 for (var i = 1; fileSystem.DirectoryExists(target) || fileSystem.FileExists(target); i++)
                 {
                     target = desiredTargetPath + "_" + i;
-                }                
+                }
 
-                fileSystem.EnsureDirectoryExists(desiredTargetPath);
+                fileSystem.EnsureDirectoryExists(target);
             }
 
             return target;
