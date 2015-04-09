@@ -47,9 +47,9 @@ namespace Calamari.Commands
             var scriptEngine = new ScriptEngineSelector();
             var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
             var replacer = new ConfigurationVariablesReplacer();
-            var configurationTransformer = new ConfigurationTransformer();
-
             var variables = new VariableDictionary(variablesFile);
+            var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors));
+
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
