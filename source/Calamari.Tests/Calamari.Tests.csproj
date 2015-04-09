@@ -178,6 +178,7 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\Blob.jpg" />
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css" />
   </ItemGroup>
   <ItemGroup>
