@@ -46,7 +46,6 @@ namespace Calamari.Deployment.Conventions
         string GetInitialExtractionDirectory(VariableDictionary variables)
         {
             var root = variables.Get(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath)
-                ?? variables.Get(SpecialVariables.Tentacle.Agent.EnvironmentApplicationDirectoryPath)
                 ?? variables.Evaluate("#{env:SystemDrive}\\Applications");
 
             root = AppendEnvironmentNameIfProvided(variables, root);

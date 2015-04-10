@@ -34,7 +34,11 @@
 
         public const string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
+
+        public static readonly string RetentionPolicySet = "OctopusRetentionPolicySet";
+        public static readonly string RetentionPolicyItemsToKeep = "OctopusRetentionPolicyItemsToKeep";
         public static readonly string PrintVariables = "OctopusPrintVariables";
+        public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";
         public static readonly string PrintEvaluatedVariables = "OctopusPrintEvaluatedVariables";
 
         public static class Tentacle
@@ -57,9 +61,9 @@
             public static class Agent
             {
                 public static readonly string ApplicationDirectoryPath = "Octopus.Tentacle.Agent.ApplicationDirectoryPath";
-                public static readonly string EnvironmentApplicationDirectoryPath = "env:Octopus.Tentacle.Agent.ApplicationDirectoryPath";
                 public static readonly string InstanceName = "Octopus.Tentacle.Agent.InstanceName";
                 public static readonly string ProgramDirectoryPath = "Octopus.Tentacle.Agent.ProgramDirectoryPath";
+                public static readonly string JournalPath = "env:TentacleJournal";
             }
         }
 
@@ -88,6 +92,12 @@
             public static readonly string Name = "Octopus.Environment.Name";
         }
 
+        public static class Project
+        {
+            public static readonly string Id = "Octopus.Project.Id";
+            public static readonly string Name = "Octopus.Project.Name";
+        }
+
         public static class Features
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";
@@ -102,7 +112,5 @@
         {
             public const string Name = "Octopus.Machine.Name";
         }
-
-
     }
 }
