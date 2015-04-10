@@ -2,6 +2,7 @@
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
 using NSubstitute;
 using NUnit.Framework;
 using Octostache;
@@ -28,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables = new VariableDictionary();
             variables.Set("env:SystemDrive", "C:");
 
-            convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem);
+            convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem, new SystemSemaphore());
         }
 
         [Test]

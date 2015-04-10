@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Xml;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Iis;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Iis;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -46,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertZero();
 
             result.AssertOutput("Extracting package to: " + stagingDirectory + "\\Acme.Web\\1.0.0");
-            result.AssertOutput("Extracted 6 files");
+            result.AssertOutput("Extracted 7 files");
 
             result.AssertOutput("Bonjour from PreDeploy.ps1");
         }
@@ -166,7 +169,55 @@ namespace Calamari.Tests.Fixtures.Deployment
             //Assert evaluated variables were output
             result.AssertOutput("The following evaluated variables are available:");
             result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, "The environment is Production"));
-            
+        }
+
+        [Test]
+        public void ShouldDeployInParallel()
+        {
+            var extractionDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var errors = new List<Exception>();
+
+            using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0")))
+            {
+                var threads = Enumerable.Range(0, 4).Select(i => new Thread(new ThreadStart(delegate
+                {
+                    try
+                    {
+                        using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+                        {
+                            variables.Save(variablesFile.FilePath);
+
+                            result = Invoke(Calamari()
+                                .Action("deploy-package")
+                                .Argument("package", acmeWeb.FilePath)
+                                .Argument("variables", variablesFile.FilePath));
+                        }
+
+                        result.AssertZero();
+                        var extracted = result.GetOutputForLineContaining("Extracting package to: ");
+                        result.AssertOutput("Extracted 7 files");
+                        if (!extractionDirectories.Contains(extracted))
+                        {
+                            extractionDirectories.Add(extracted);
+                        }
+                        else
+                        {
+                            Assert.Fail("The same installation directory was used twice: " + extracted);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add(ex);
+                    }
+                }))).ToList();
+
+                foreach (var thread in threads) thread.Start();
+                foreach (var thread in threads) thread.Join();
+            }
+
+            var allErrors = string.Join(Environment.NewLine, errors.Select(e => e.ToString()));
+            Assert.That(allErrors, Is.EqualTo(""), allErrors);
         }
 
         CalamariResult DeployPackage(string packageName)
@@ -179,7 +230,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 return Invoke(Calamari()
                     .Action("deploy-package")
                     .Argument("package", acmeWeb.FilePath)
-                    .Argument("variables", variablesFile.FilePath));
+                    .Argument("variables", variablesFile.FilePath));       
             }
         }
 

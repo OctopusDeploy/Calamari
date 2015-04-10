@@ -42,6 +42,13 @@ namespace Calamari.Tests.Helpers
             Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
         }
 
+        public string GetOutputForLineContaining(string expectedOutput)
+        {
+            var found = captured.Infos.SingleOrDefault(i => i.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0);
+            Assert.IsNotNull(found);
+            return found;
+        }
+
         public void AssertErrorOutput(string expectedOutputFormat, params object[] args)
         {
             AssertErrorOutput(String.Format(expectedOutputFormat, args));

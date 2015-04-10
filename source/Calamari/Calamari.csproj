@@ -118,6 +118,8 @@
     <Compile Include="Integration\Processes\ConsoleCommandOutput.cs" />
     <Compile Include="Deployment\Journal\IDeploymentJournal.cs" />
     <Compile Include="Deployment\Journal\JournalEntry.cs" />
+    <Compile Include="Integration\Processes\ISemaphore.cs" />
+    <Compile Include="Integration\Processes\SystemSemaphore.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessageNames.cs" />

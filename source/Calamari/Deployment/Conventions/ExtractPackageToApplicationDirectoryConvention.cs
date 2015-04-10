@@ -1,19 +1,23 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
 using Octostache;
 
 namespace Calamari.Deployment.Conventions
 {
+
     public class ExtractPackageToApplicationDirectoryConvention : IInstallConvention
     {
         readonly IPackageExtractor extractor;
         readonly ICalamariFileSystem fileSystem;
+        readonly ISemaphore semaphore;
 
-        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem)
+        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ISemaphore semaphore)
         {
             this.extractor = extractor;
             this.fileSystem = fileSystem;
+            this.semaphore = semaphore;
         }
 
         public void Install(RunningDeployment deployment)
@@ -71,9 +75,14 @@ namespace Calamari.Deployment.Conventions
         {
             var target = desiredTargetPath;
 
-            for (var i = 1; fileSystem.DirectoryExists(target) || fileSystem.FileExists(target); i++)
+            using (semaphore.Acquire("Octopus.Calamari.ExtractionDirectory", "Another process is finding an extraction directory, please wait..."))
             {
-                target = desiredTargetPath + "_" + i;
+                for (var i = 1; fileSystem.DirectoryExists(target) || fileSystem.FileExists(target); i++)
+                {
+                    target = desiredTargetPath + "_" + i;
+                }
+
+                fileSystem.EnsureDirectoryExists(target);
             }
 
             return target;
