@@ -96,11 +96,13 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                journal.AddJournalEntry(new JournalEntry(deployment, true));
+                if (!deployment.SkipJournal) 
+                    journal.AddJournalEntry(new JournalEntry(deployment, true));
             }
             catch (Exception)
             {
-                journal.AddJournalEntry(new JournalEntry(deployment, false));
+                if (!deployment.SkipJournal) 
+                    journal.AddJournalEntry(new JournalEntry(deployment, false));
                 throw;
             }
 

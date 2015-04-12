@@ -113,6 +113,7 @@
         {
             public const string Name = "Octopus.Action.Name";
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
+            public const string SkipJournal = "Octopus.Action.SkipJournal";
         }
 
         public static class Machine

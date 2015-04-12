@@ -35,6 +35,7 @@ namespace Calamari.Deployment.Conventions
                 Log.Info("The package has already been installed on this machine, so installation will be skipped.");
                 Log.SetVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, previous.ExtractedTo);
                 deployment.Variables.Set(SpecialVariables.Action.SkipRemainingConventions, "true");
+                deployment.Variables.Set(SpecialVariables.Action.SkipJournal, "true");
             }
         }
     }
