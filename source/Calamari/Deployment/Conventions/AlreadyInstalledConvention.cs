@@ -1,5 +1,4 @@
-﻿using System;
-using Calamari.Deployment.Journal;
+﻿using Calamari.Deployment.Journal;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -24,7 +23,6 @@ namespace Calamari.Deployment.Conventions
             var policySet = deployment.Variables.Get(SpecialVariables.RetentionPolicySet);
 
             var previous = journal.GetLatestInstallation(policySet, id, version);
-            Console.WriteLine("Prev: {0}", previous);
             if (previous == null) 
                 return;
 

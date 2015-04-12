@@ -96,6 +96,7 @@
     <Compile Include="Helpers\CalamariResult.cs" />
     <Compile Include="Fixtures\HelpFixture.cs" />
     <Compile Include="Fixtures\PowerShell\PowerShellFixture.cs" />
+    <Compile Include="Helpers\CaptureCommandOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -54,6 +54,14 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        public void ShouldSetExtractionVariable()
+        {
+            var result = DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(stagingDirectory + "\\Acme.Web\\1.0.0"));
+        }
+
+        [Test]
         public void ShouldSubstituteVariablesInFiles()
         {
             variables.Set("foo", "bar");

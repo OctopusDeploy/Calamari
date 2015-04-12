@@ -155,7 +155,6 @@
     <Compile Include="Integration\Scripting\ScriptCS\ScriptCSScriptEngine.cs" />
     <Compile Include="Integration\Scripting\ScriptEngineSelector.cs" />
     <Compile Include="Integration\Scripting\WindowsPowerShell\PowerShellBootstrapper.cs" />
-    <Compile Include="Integration\Processes\CaptureCommandOutput.cs" />
     <Compile Include="Integration\Processes\ICommandLineRunner.cs" />
     <Compile Include="Integration\Processes\CommandLineException.cs" />
     <Compile Include="Integration\Processes\CommandLineInvocation.cs" />

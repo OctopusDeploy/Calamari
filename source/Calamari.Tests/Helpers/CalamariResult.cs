@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using Calamari.Integration.Processes;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 
 namespace Calamari.Tests.Helpers
 {
@@ -34,6 +34,12 @@ namespace Calamari.Tests.Helpers
         public void AssertOutput(string expectedOutputFormat, params object[] args)
         {
             AssertOutput(String.Format(expectedOutputFormat, args));
+        }
+
+        public void AssertOutputVariable(string name, IResolveConstraint resolveConstraint)
+        {
+            var variable = captured.OutputVariables.Get(name);
+            Assert.That(variable, resolveConstraint);
         }
 
         public void AssertOutput(string expectedOutput)
