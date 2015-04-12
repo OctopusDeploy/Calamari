@@ -1,5 +1,6 @@
 ﻿using System;
 using System.CodeDom.Compiler;
+using System.Text;
 
 namespace Calamari
 {
@@ -30,6 +31,18 @@ namespace Calamari
                 SetMode("verbose");
                 StdOut.WriteLine(message);                
             }
+        }
+
+        public static void SetVariable(string name, string value)
+        {
+            Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]",
+                ConvertServiceMessageValue(name),
+                ConvertServiceMessageValue(value)));
+        }
+
+        static string ConvertServiceMessageValue(string value)
+        {
+            return Convert.ToBase64String(Encoding.Default.GetBytes(value));
         }
 
         public static void VerboseFormat(string messageFormat, params object[] args)

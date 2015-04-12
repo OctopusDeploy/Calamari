@@ -30,7 +30,7 @@ namespace Calamari.Deployment.Journal
 
         public void AddJournalEntry(JournalEntry entry)
         {
-            using (semaphore.Acquire(SemaphoreName, "Another process is updating the deployment journal"))
+            using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
             {
                 var xElement = entry.ToXmlElement();
                 Log.VerboseFormat("Adding journal entry:\n{0}", xElement.ToString());
@@ -40,7 +40,7 @@ namespace Calamari.Deployment.Journal
 
         public IEnumerable<JournalEntry> GetAllJournalEntries()
         {
-            using (semaphore.Acquire(SemaphoreName, "Another process is updating the deployment journal"))
+            using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
             {
                 return Read().Select(element => new JournalEntry(element));
             }
@@ -48,7 +48,7 @@ namespace Calamari.Deployment.Journal
 
         public void RemoveJournalEntries(IEnumerable<string> ids)
         {
-            using (semaphore.Acquire(SemaphoreName, "Another process is updating the deployment journal"))
+            using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
             {
                 var elements = Read();
 
@@ -58,6 +58,21 @@ namespace Calamari.Deployment.Journal
                     return id == null || !ids.Contains(id.Value);
                 }));
             }
+        }
+
+        public JournalEntry GetLatestInstallation(string retentionPolicySubset)
+        {
+            return GetLatestInstallation(retentionPolicySubset, null, null);
+        }
+
+        public JournalEntry GetLatestInstallation(string retentionPolicySubset, string packageId, string packageVersion)
+        {
+            return GetAllJournalEntries().Where(e =>
+                string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
+                && (packageId == null || string.Equals(packageId, e.PackageId, StringComparison.OrdinalIgnoreCase))
+                && (packageVersion == null || string.Equals(packageVersion, e.PackageVersion, StringComparison.OrdinalIgnoreCase))
+                ).OrderByDescending(o => o.InstalledOn)
+                .FirstOrDefault();
         }
 
         private IEnumerable<XElement> Read()

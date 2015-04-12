@@ -64,7 +64,9 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
+                new ContributePreviousInstallationConvention(journal),
                 new LogVariablesConvention(),
+                new AlreadyInstalledConvention(journal),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem, semaphore),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),

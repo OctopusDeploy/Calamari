@@ -60,12 +60,9 @@ namespace Calamari.Commands
                 Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
                     feedUri);
 
-                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", 
-                    ConvertServiceMessageValue("StagedPackage.Hash"), ConvertServiceMessageValue(hash)));
-                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]",
-                    ConvertServiceMessageValue("StagedPackage.Size"), ConvertServiceMessageValue(size.ToString(CultureInfo.InvariantCulture))));
-                Log.Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]", 
-                    ConvertServiceMessageValue("StagedPackage.FullPathOnRemoteMachine"), ConvertServiceMessageValue(downloadedTo)));
+                Log.SetVariable("StagedPackage.Hash", hash);
+                Log.SetVariable("StagedPackage.Size", size.ToString(CultureInfo.InvariantCulture));
+                Log.SetVariable("StagedPackage.FullPathOnRemoteMachine", downloadedTo);
             }
             catch (Exception ex)
             {
@@ -74,11 +71,6 @@ namespace Calamari.Commands
             }
 
             return 0;
-        }
-
-        static string ConvertServiceMessageValue(string value)
-        {
-            return Convert.ToBase64String(Encoding.Default.GetBytes(value));
         }
 
         static void SetFeedCredentials(string feedUsername, string feedPassword, Uri uri)

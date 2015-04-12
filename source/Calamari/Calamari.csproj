@@ -79,6 +79,7 @@
     <Compile Include="Commands\Support\OptionException.cs" />
     <Compile Include="Commands\Support\OptionSet.cs" />
     <Compile Include="Commands\Support\OptionValueType.cs" />
+    <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureConfigurationConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureDeploymentConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureUploadConvention.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Deployment\Conventions\ConfigurationVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\ContributeEnvironmentVariablesConvention.cs" />
     <Compile Include="Deployment\ConventionProcessor.cs" />
+    <Compile Include="Deployment\Conventions\ContributePreviousInstallationConvention.cs" />
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
@@ -189,9 +191,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Shared\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
