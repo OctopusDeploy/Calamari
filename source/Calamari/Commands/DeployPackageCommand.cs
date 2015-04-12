@@ -57,14 +57,15 @@ namespace Calamari.Commands
             var configurationTransformer = new ConfigurationTransformer();
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
+            var semaphore = new SystemSemaphore();
             var commandLineRunner = new CommandLineRunner( new SplitCommandOutput( new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var journal = new DeploymentJournal(fileSystem, variables);
+            var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem, new SystemSemaphore()),
+                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem, semaphore),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),

@@ -39,7 +39,7 @@ namespace Calamari.Commands
             variables.EnrichWithEnvironmentVariables();
 
             var fileSystem = new CalamariPhysicalFileSystem();
-            var deploymentJournal = new DeploymentJournal(fileSystem, variables );
+            var deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphore(), variables);
             var clock = new SystemClock();
 
             var retentionPolicy = new RetentionPolicy(fileSystem, deploymentJournal, clock);

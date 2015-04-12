@@ -39,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables = new VariableDictionary();
             variables.EnrichWithEnvironmentVariables();
 
-            deploymentJournal = new DeploymentJournal(fileSystem, variables);
+            deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphore(), variables);
 
             packagesDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
             fileSystem.EnsureDirectoryExists(packagesDirectory);

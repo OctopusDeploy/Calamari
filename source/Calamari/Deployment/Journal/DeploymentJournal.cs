@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Octostache;
 
 namespace Calamari.Deployment.Journal
@@ -11,12 +12,14 @@ namespace Calamari.Deployment.Journal
     public class DeploymentJournal : IDeploymentJournal
     {
         readonly ICalamariFileSystem fileSystem;
+        readonly ISemaphore semaphore;
         readonly VariableDictionary variables;
-        readonly static object Sync = new object();
+        const string SemaphoreName = "Calamari:DeploymentJournal";
 
-        public DeploymentJournal(ICalamariFileSystem fileSystem, VariableDictionary variables)
+        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphore semaphore, VariableDictionary variables)
         {
             this.fileSystem = fileSystem;
+            this.semaphore = semaphore;
             this.variables = variables;
         }
 
@@ -27,7 +30,7 @@ namespace Calamari.Deployment.Journal
 
         public void AddJournalEntry(JournalEntry entry)
         {
-            lock (Sync)
+            using (semaphore.Acquire(SemaphoreName, "Another process is updating the deployment journal"))
             {
                 var xElement = entry.ToXmlElement();
                 Log.VerboseFormat("Adding journal entry:\n{0}", xElement.ToString());
@@ -37,12 +40,15 @@ namespace Calamari.Deployment.Journal
 
         public IEnumerable<JournalEntry> GetAllJournalEntries()
         {
-            return Read().Select(element => new JournalEntry(element));
+            using (semaphore.Acquire(SemaphoreName, "Another process is updating the deployment journal"))
+            {
+                return Read().Select(element => new JournalEntry(element));
+            }
         }
 
         public void RemoveJournalEntries(IEnumerable<string> ids)
         {
-            lock (Sync)
+            using (semaphore.Acquire(SemaphoreName, "Another process is updating the deployment journal"))
             {
                 var elements = Read();
 
@@ -56,41 +62,35 @@ namespace Calamari.Deployment.Journal
 
         private IEnumerable<XElement> Read()
         {
-            lock (Sync)
-            {
-                if (!fileSystem.FileExists(JournalPath))
-                    yield break; 
+            if (!fileSystem.FileExists(JournalPath))
+                yield break; 
                 
-                using (var file = fileSystem.OpenFile(JournalPath, FileAccess.Read))
-                {
-                    var document = XDocument.Load(file);
+            using (var file = fileSystem.OpenFile(JournalPath, FileAccess.Read))
+            {
+                var document = XDocument.Load(file);
 
-                    foreach (var element in document.Element("Deployments").Elements())
-                    {
-                        yield return element;
-                    }
+                foreach (var element in document.Element("Deployments").Elements())
+                {
+                    yield return element;
                 }
             }
         }
 
         private void Write(IEnumerable<XElement> elements)
         {
-            lock (Sync)
-            {
-                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(JournalPath));
+            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(JournalPath));
 
-                var tempPath = JournalPath + ".temp-" + Guid.NewGuid() + ".xml";
+            var tempPath = JournalPath + ".temp-" + Guid.NewGuid() + ".xml";
 
-                var root = new XElement("Deployments");
-                var document = new XDocument(root);
-                foreach (var element in elements)
-                    root.Add(element);
+            var root = new XElement("Deployments");
+            var document = new XDocument(root);
+            foreach (var element in elements)
+                root.Add(element);
 
-                using (var stream = fileSystem.OpenFile(tempPath, FileMode.Create, FileAccess.Write))
-                    document.Save(stream);
+            using (var stream = fileSystem.OpenFile(tempPath, FileMode.Create, FileAccess.Write))
+                document.Save(stream);
 
-                fileSystem.OverwriteAndDelete(JournalPath, tempPath);
-            }
+            fileSystem.OverwriteAndDelete(JournalPath, tempPath);
         }
     }
 }
