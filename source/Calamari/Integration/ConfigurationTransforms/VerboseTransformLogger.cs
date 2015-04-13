@@ -25,6 +25,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void LogWarning(string message, params object[] messageArgs)
         {
+            if (Warning != null) { Warning(this, new ErrorDelegateArgs(string.Format(message, messageArgs))); }
             if (_suppressWarnings)
             {
                 Log.Info(message, messageArgs);
@@ -37,6 +38,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void LogWarning(string file, string message, params object[] messageArgs)
         {
+            if (Warning != null) { Warning(this, new ErrorDelegateArgs(string.Format("{0}: {1}", file, string.Format(message, messageArgs)))); }
             if (_suppressWarnings)
             {
                 Log.Info("File {0}: ", file);
@@ -51,6 +53,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
+            if (Warning != null) { Warning(this, new ErrorDelegateArgs(string.Format("{0}({1},{2}): {3}", file, lineNumber, linePosition, string.Format(message, messageArgs)))); }
             if (_suppressWarnings)
             {
                 Log.Info("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
