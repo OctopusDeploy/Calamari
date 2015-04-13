@@ -62,15 +62,14 @@ namespace Calamari.Commands
                 foreach(var nearestPackage in nearestPackages)
                 {
                     Log.VerboseFormat("  - {0}: {1}", nearestPackage.Metadata.Version, nearestPackage.FullPath);
-                    Log.PackageFound(nearestPackage.Metadata.Id, nearestPackage.Metadata.Version, nearestPackage.Metadata.Hash, nearestPackage.FullPath);
+                    Log.ServiceMessages.PackageFound(nearestPackage.Metadata.Id, nearestPackage.Metadata.Version, nearestPackage.Metadata.Hash, nearestPackage.FullPath);
                 }
 
                 return 0;
             }
 
-            Log.Info("##octopus[calamari-found-package]");
             Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash);
-            Log.PackageFound(package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash, package.FullPath);
+            Log.ServiceMessages.PackageFound(package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash, package.FullPath, true);
             return 0;
         }
     }

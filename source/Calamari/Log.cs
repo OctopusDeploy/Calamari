@@ -25,17 +25,12 @@ namespace Calamari
             stdOutMode = mode;
         }
 
-        public static string ConvertServiceMessageValue(string value)
-        {
-            return Convert.ToBase64String(Encoding.Default.GetBytes(value));
-        }
-
         public static void Verbose(string message)
         {
             lock (Sync)
             {
                 SetMode("verbose");
-                StdOut.WriteLine(message);                
+                StdOut.WriteLine(message);
             }
         }
 
@@ -99,22 +94,34 @@ namespace Calamari
             Error(String.Format(messageFormat, args));
         }
 
-        public static void PackageFound(string packageId, string packageVersion, string packageHash, string packageFullPath)
+        public static class ServiceMessages
         {
-            Info("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"]",
-                ConvertServiceMessageValue(packageId),
-                ConvertServiceMessageValue(packageVersion),
-                ConvertServiceMessageValue(packageHash),
-                ConvertServiceMessageValue(packageFullPath));
+            public static string ConvertServiceMessageValue(string value)
+            {
+                return Convert.ToBase64String(Encoding.Default.GetBytes(value));
+            }
 
-        }
+            public static void PackageFound(string packageId, string packageVersion, string packageHash,
+                string packageFullPath, bool exactMatchExists = false)
+            {
+                if (exactMatchExists)
+                    Verbose("##octopus[calamari-found-package]");
 
-        public static void DeltaVerification(string remotePath, string hash, long size)
-        {
-            Info("##octopus[deltaVerification remotePath=\"{0}\" hash=\"{1}\" size=\"{2}\"]",
-                ConvertServiceMessageValue(remotePath),
-                ConvertServiceMessageValue(hash),
-                ConvertServiceMessageValue(size.ToString(CultureInfo.InvariantCulture)));
+                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"]",
+                    ConvertServiceMessageValue(packageId),
+                    ConvertServiceMessageValue(packageVersion),
+                    ConvertServiceMessageValue(packageHash),
+                    ConvertServiceMessageValue(packageFullPath));
+
+            }
+
+            public static void DeltaVerification(string remotePath, string hash, long size)
+            {
+                VerboseFormat("##octopus[deltaVerification remotePath=\"{0}\" hash=\"{1}\" size=\"{2}\"]",
+                    ConvertServiceMessageValue(remotePath),
+                    ConvertServiceMessageValue(hash),
+                    ConvertServiceMessageValue(size.ToString(CultureInfo.InvariantCulture)));
+            }
         }
     }
 }

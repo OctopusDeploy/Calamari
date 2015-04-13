@@ -49,9 +49,9 @@ namespace Calamari.Commands
             using(var newFileStream = new FileStream(newFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
             {
                 Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
-                Log.Info("##octopus[stdout-verbose]");
+                Log.Verbose("##octopus[stdout-verbose]");
                 deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, progressReporter), newFileStream);
-                Log.Info("##octopus[stdout-default]");
+                Log.Verbose("##octopus[stdout-default]");
             }
 
             var package = packageStore.GetPackage(newFilePath);
@@ -60,7 +60,7 @@ namespace Calamari.Commands
             using (var file = new FileStream(package.FullPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var size = file.Length;
-                Log.DeltaVerification(package.FullPath, package.Metadata.Hash, size);
+                Log.ServiceMessages.DeltaVerification(package.FullPath, package.Metadata.Hash, size);
             }
 
             return 0;
