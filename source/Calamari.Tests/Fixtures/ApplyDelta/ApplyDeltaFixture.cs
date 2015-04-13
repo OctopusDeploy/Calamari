@@ -51,6 +51,43 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         }
 
         [Test]
+        public void ShouldApplyDeltaToPreviousPackageToCreateNewPackage()
+        {
+            var signatureBuilder = new SignatureBuilder();
+            var deltaBuilder = new DeltaBuilder();
+
+            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
+            using (var signatureFile = new TemporaryFile(basisFile.FilePath + ".octosig"))
+            {
+                using (var basisFileStream = File.OpenRead(basisFile.FilePath))
+                using (var signatureFileStream = File.OpenWrite(signatureFile.FilePath))
+                {
+                    signatureBuilder.Build(basisFileStream, new SignatureWriter(signatureFileStream));
+                    Assert.That(File.Exists(signatureFile.FilePath));
+                }
+
+                using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.1", true)))
+                using (var deltaFile = new TemporaryFile(basisFile.FilePath +
+                        "_to_" + newFileName + ".octodelta"))
+                {
+                    using (var newFileStream = File.OpenRead(newFile.FilePath))
+                    using (var signatureFileStream = File.OpenRead(signatureFile.FilePath))
+                    using (var deltaFileStream = File.Open(deltaFile.FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read))
+                    {
+                        deltaBuilder.BuildDelta(newFileStream,
+                            new SignatureReader(signatureFileStream, deltaBuilder.ProgressReporter),
+                            new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(deltaFileStream)));
+                    }
+                    var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, newFileName);
+                    result.AssertZero();
+                    result.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
+                        basisFile.Hash, Path.Combine(downloadPath, newFileName));
+                    result.AssertOutput("##octopus[deltaVerification");
+                }
+            }
+        }
+
+        [Test]
         public void ShouldFailWhenNoBasisFileIsSpecified()
         {
             var result = ApplyDelta("", "Hash", "Delta", "New");
@@ -151,43 +188,6 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     basisFile.Hash,
                     Path.Combine(downloadPath, newFileName));
                 result.AssertErrorOutput("The delta file appears to be corrupt.");
-            }
-        }
-
-        [Test]
-        public void ShouldApplyDeltaToPreviousPackageToCreateNewPackage()
-        {
-            var signatureBuilder = new SignatureBuilder();
-            var deltaBuilder = new DeltaBuilder();
-
-            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
-            using (var signatureFile = new TemporaryFile(basisFile.FilePath + ".octosig"))
-            {
-                using (var basisFileStream = File.OpenRead(basisFile.FilePath))
-                using (var signatureFileStream = File.OpenWrite(signatureFile.FilePath))
-                {
-                    signatureBuilder.Build(basisFileStream, new SignatureWriter(signatureFileStream));
-                    Assert.That(File.Exists(signatureFile.FilePath));
-                }
-
-                using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.1", true)))
-                using (var deltaFile = new TemporaryFile(basisFile.FilePath +
-                        "_to_" + newFileName + ".octodelta"))
-                {
-                    using (var newFileStream = File.OpenRead(newFile.FilePath))
-                    using (var signatureFileStream = File.OpenRead(signatureFile.FilePath))
-                    using (var deltaFileStream = File.Open(deltaFile.FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read))
-                    {
-                        deltaBuilder.BuildDelta(newFileStream,
-                            new SignatureReader(signatureFileStream, deltaBuilder.ProgressReporter),
-                            new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(deltaFileStream)));
-                    }
-                    var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, newFileName);
-                    result.AssertZero();
-                    result.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
-                        basisFile.Hash, Path.Combine(downloadPath, newFileName));
-                    result.AssertOutput("##octopus[deltaVerification");
-                }
             }
         }
     }
