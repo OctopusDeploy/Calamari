@@ -1,4 +1,5 @@
 using System.IO;
+using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
@@ -9,14 +10,13 @@ namespace Calamari.Tests.Helpers
     {
         protected CommandLine Calamari()
         {
-            return CommandLine.Execute(typeof (CaptureCommandOutput).Assembly.FullLocalPath());
+            return CommandLine.Execute(typeof (DeployPackageCommand).Assembly.FullLocalPath());
         }
 
         protected CalamariResult Invoke(CommandLine command, VariableDictionary variables)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables), capture));
-
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, capture);
         }
