@@ -35,6 +35,7 @@ namespace Calamari.Deployment.Conventions
             Log.Verbose("Extracted " + filesExtracted + " files");
 
             deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath);
         }
 
         string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)
@@ -46,7 +47,6 @@ namespace Calamari.Deployment.Conventions
         string GetInitialExtractionDirectory(VariableDictionary variables)
         {
             var root = variables.Get(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath)
-                ?? variables.Get(SpecialVariables.Tentacle.Agent.EnvironmentApplicationDirectoryPath)
                 ?? variables.Evaluate("#{env:SystemDrive}\\Applications");
 
             root = AppendEnvironmentNameIfProvided(variables, root);

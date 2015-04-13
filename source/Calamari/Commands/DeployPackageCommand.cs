@@ -4,6 +4,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Deployment.Journal;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
@@ -56,13 +57,17 @@ namespace Calamari.Commands
             var substituter = new FileSubstituter();
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
+            var semaphore = new SystemSemaphore();
             var commandLineRunner = new CommandLineRunner( new SplitCommandOutput( new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+            var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
+                new ContributePreviousInstallationConvention(journal),
                 new LogVariablesConvention(),
-                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem, new SystemSemaphore()),
+                new AlreadyInstalledConvention(journal),
+                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem, semaphore),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
@@ -87,7 +92,19 @@ namespace Calamari.Commands
 
             var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
-            conventionRunner.RunConventions();
+
+            try
+            {
+                conventionRunner.RunConventions();
+                if (!deployment.SkipJournal) 
+                    journal.AddJournalEntry(new JournalEntry(deployment, true));
+            }
+            catch (Exception)
+            {
+                if (!deployment.SkipJournal) 
+                    journal.AddJournalEntry(new JournalEntry(deployment, false));
+                throw;
+            }
 
             return 0;
         }
