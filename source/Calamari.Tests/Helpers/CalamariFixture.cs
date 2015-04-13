@@ -14,6 +14,16 @@ namespace Calamari.Tests.Helpers
             return CommandLine.Execute(typeof (DeployPackageCommand).Assembly.FullLocalPath());
         }
 
+        protected CommandLine OctoDiff()
+        {
+            var currentWorkingDirectory = Path.GetDirectoryName(GetType().Assembly.FullLocalPath());
+            var octoDiffExe = Path.Combine(currentWorkingDirectory, "Octodiff.exe");
+            if (!File.Exists(octoDiffExe))
+                throw new FileNotFoundException("Unable to find Octodiff.exe");
+
+            return CommandLine.Execute(octoDiffExe);
+        }
+
         protected CalamariResult Invoke(CommandLine command, VariableDictionary variables)
         {
             var capture = new CaptureCommandOutput();

@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Security.AccessControl;
+using System.Net.Configuration;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using Calamari.Commands.Support;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Octodiff.Core;
-using Octodiff.Diagnostics;
+using Calamari.Integration.Processes;
+using Calamari.Integration.ServiceMessages;
+using Octostache;
 
 namespace Calamari.Commands
 {
@@ -20,17 +18,21 @@ namespace Calamari.Commands
         string fileHash;
         string deltaFileName;
         string newFileName;
+        bool showProgress;
+        bool skipVerification;
         readonly PackageStore packageStore = new PackageStore();
-        IProgressReporter progressReporter;
-        string feedId;
+
 
         public ApplyDeltaCommand()
         {
-            Options.Add("basisFileName=", "", v => basisFileName = v);
+            Options.Add("basisFileName=", "The file that the delta was created for.", v => basisFileName = v);
             Options.Add("fileHash=", "", v => fileHash = v);
-            Options.Add("deltaFileName=", "", v => deltaFileName = v);
-            Options.Add("newFileName=", "", v => newFileName = v);
-            Options.Add("progress", "", v => progressReporter = new ConsoleProgressReporter());
+            Options.Add("deltaFileName=", "The delta to apply to the basis file", v => deltaFileName = v);
+            Options.Add("newFileName=", "The file to write the result to.", v => newFileName = v);
+            Options.Add("progress", "Whether progress should be written to stdout", v => showProgress = true);
+            Options.Add("skipVerification",
+                "Skip checking whether the basis file is the same as the file used to produce the signature that created the delta.",
+                v => skipVerification = true);
         }
         public override int Execute(string[] commandLineArguments)
         {
@@ -39,20 +41,22 @@ namespace Calamari.Commands
             string newFilePath;
             string basisFilePath;
             ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
+                new ServiceMessageCommandOutput(new VariableDictionary())));
 
-            var deltaApplier = new DeltaApplier
-            {
-                SkipHashCheck = true
-            };
-            using(var basisStream = new FileStream(basisFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using(var deltaStream = new FileStream(deltaFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using(var newFileStream = new FileStream(newFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
-            {
-                Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
-                Log.Verbose("##octopus[stdout-verbose]");
-                deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, progressReporter), newFileStream);
-                Log.Verbose("##octopus[stdout-default]");
-            }
+            var octoDiff = new CommandLine(FindOctoDiffExecutable())
+                .Action("patch")
+                .PositionalArgument(basisFilePath)
+                .PositionalArgument(deltaFilePath)
+                .PositionalArgument(newFilePath)
+                .Build();
+
+            Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
+            commandLineRunner.Execute(octoDiff)
+                .VerifySuccess();
+
+            if (!File.Exists(newFilePath))
+                throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " + basisFilePath);
 
             var package = packageStore.GetPackage(newFilePath);
             if (package == null) return 0;
@@ -99,6 +103,29 @@ namespace Calamari.Commands
                 throw new CommandException("Basis file hash " + previousPackage.Metadata.Hash +
                                            " does not match the file hash specified " + fileHash);
             }
+        }
+
+        string FindOctoDiffExecutable()
+        {
+            var basePath = Path.GetDirectoryName(GetType().Assembly.FullLocalPath());
+            var exePath = Path.Combine(basePath, "Octodiff.exe");
+            if (!File.Exists(exePath))
+                throw new CommandException("Unable to find Octodiff.exe in " + basePath);
+            return exePath;
+        }
+
+        string FormatCommandArguments(string basisFilePath, string deltaFilePath, string newFilePath)
+        {
+            var commandArguments = new StringBuilder();
+            commandArguments.AppendFormat("\"{0}\" ", basisFilePath);
+            commandArguments.AppendFormat("\"{0}\" ", deltaFilePath);
+            commandArguments.AppendFormat("\"{0}\" ", newFilePath);
+            if (showProgress)
+                commandArguments.AppendFormat("--progress ");
+            if (skipVerification)
+                commandArguments.Append("--skip-verification ");
+
+            return commandArguments.ToString().Trim();
         }
     }
 }

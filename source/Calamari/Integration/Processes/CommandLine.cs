@@ -46,12 +46,29 @@ namespace Calamari.Integration.Processes
             return "-" + Normalize(flagName);
         }
 
+        public CommandLine PositionalArgument(object argValue)
+        {
+            arguments.Add(MakePositionalArg(argValue));
+            return this;
+        }
+
         public CommandLine Argument(string argName, object argValue)
         {
             arguments.Add(MakeArg(argName, argValue));
             return this;
         }
 
+        static string MakePositionalArg(object argValue)
+        {
+            var sval = "";
+            var f = argValue as IFormattable;
+            if (f != null)
+                sval = f.ToString(null, CultureInfo.InvariantCulture);
+            else if (argValue != null)
+                sval = argValue.ToString();
+
+            return Escape(sval);
+        }
         static string MakeArg(string argName, object argValue)
         {
             var sval = "";
