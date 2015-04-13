@@ -60,9 +60,9 @@ namespace Calamari.Commands
                 Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
                     feedUri);
 
-                Log.SetVariable("StagedPackage.Hash", hash);
-                Log.SetVariable("StagedPackage.Size", size.ToString(CultureInfo.InvariantCulture));
-                Log.SetVariable("StagedPackage.FullPathOnRemoteMachine", downloadedTo);
+                Log.SetOutputVariable("StagedPackage.Hash", hash);
+                Log.SetOutputVariable("StagedPackage.Size", size.ToString(CultureInfo.InvariantCulture));
+                Log.SetOutputVariable("StagedPackage.FullPathOnRemoteMachine", downloadedTo);
             }
             catch (Exception ex)
             {

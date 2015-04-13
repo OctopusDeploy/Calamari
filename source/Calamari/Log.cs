@@ -33,7 +33,7 @@ namespace Calamari
             }
         }
 
-        public static void SetVariable(string name, string value)
+        public static void SetOutputVariable(string name, string value)
         {
             Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]",
                 ConvertServiceMessageValue(name),
