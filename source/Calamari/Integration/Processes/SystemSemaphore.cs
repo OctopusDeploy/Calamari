@@ -8,7 +8,7 @@ namespace Calamari.Integration.Processes
         public IDisposable Acquire(string name, string waitMessage)
         {
             var semaphore = new Semaphore(1, 1, name);
-            if (!semaphore.WaitOne(1000))
+            if (!semaphore.WaitOne(3000))
             {
                 Log.Verbose(waitMessage);
                 semaphore.WaitOne();

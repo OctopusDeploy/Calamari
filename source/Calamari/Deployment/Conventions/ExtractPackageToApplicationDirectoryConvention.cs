@@ -35,6 +35,7 @@ namespace Calamari.Deployment.Conventions
             Log.Verbose("Extracted " + filesExtracted + " files");
 
             deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath);
         }
 
         string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)

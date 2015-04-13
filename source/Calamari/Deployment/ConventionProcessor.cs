@@ -48,6 +48,11 @@ namespace Calamari.Deployment
             foreach (var convention in conventions.OfType<IInstallConvention>())
             {
                 convention.Install(deployment);
+
+                if (deployment.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
+                {
+                    break;
+                }
             }
         }
 

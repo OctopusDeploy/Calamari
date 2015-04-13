@@ -70,9 +70,11 @@
   <ItemGroup>
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
+    <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationTransformConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationVariablesConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfiguredScriptConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ContributePreviousInstallationConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributeEnvironmentVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\CopyPackageToCustomInstallationDirectoryConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\PackagedScriptConventionFixture.cs" />
@@ -96,6 +98,7 @@
     <Compile Include="Helpers\CalamariResult.cs" />
     <Compile Include="Fixtures\HelpFixture.cs" />
     <Compile Include="Fixtures\PowerShell\PowerShellFixture.cs" />
+    <Compile Include="Helpers\CaptureCommandOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

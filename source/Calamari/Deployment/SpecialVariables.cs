@@ -84,6 +84,12 @@
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string SubstituteInFilesEnabled = "Octopus.Action.SubstituteInFiles.Enabled";
             public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
+            public static readonly string SkipIfAlreadyInstalled = "Octopus.Action.Package.SkipIfAlreadyInstalled";
+
+            public class Output
+            {
+                public static readonly string InstallationDirectoryPath = "Package.InstallationDirectoryPath";
+            }
         }
 
         public static class Environment
@@ -106,6 +112,8 @@
         public static class Action
         {
             public const string Name = "Octopus.Action.Name";
+            public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
+            public const string SkipJournal = "Octopus.Action.SkipJournal";
         }
 
         public static class Machine

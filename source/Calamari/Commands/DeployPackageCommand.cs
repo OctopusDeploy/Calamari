@@ -64,7 +64,9 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
+                new ContributePreviousInstallationConvention(journal),
                 new LogVariablesConvention(),
+                new AlreadyInstalledConvention(journal),
                 new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem, semaphore),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
@@ -94,11 +96,13 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                journal.AddJournalEntry(new JournalEntry(deployment, true));
+                if (!deployment.SkipJournal) 
+                    journal.AddJournalEntry(new JournalEntry(deployment, true));
             }
             catch (Exception)
             {
-                journal.AddJournalEntry(new JournalEntry(deployment, false));
+                if (!deployment.SkipJournal) 
+                    journal.AddJournalEntry(new JournalEntry(deployment, false));
                 throw;
             }
 

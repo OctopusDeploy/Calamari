@@ -22,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         string stagingDirectory;
         ICalamariFileSystem fileSystem;
         VariableDictionary variables;
-        CalamariResult result;
+        string customDirectory;
 
         [SetUp]
         public void SetUp()
@@ -31,6 +31,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Ensure staging directory exists and is empty 
             stagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
+            customDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestCustom");
             fileSystem.EnsureDirectoryExists(stagingDirectory);
             fileSystem.PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimes);
 
@@ -45,13 +46,31 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldDeployPackage()
         {
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
             result.AssertZero();
 
             result.AssertOutput("Extracting package to: " + stagingDirectory + "\\Acme.Web\\1.0.0");
             result.AssertOutput("Extracted 7 files");
 
             result.AssertOutput("Bonjour from PreDeploy.ps1");
+        }
+
+        [Test]
+        public void ShouldSetExtractionVariable()
+        {
+            var result = DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(stagingDirectory + "\\Acme.Web\\1.0.0"));
+        }
+
+        [Test]
+        public void ShouldCopyToCustomDirectoryExtractionVariable()
+        {
+            variables[SpecialVariables.Package.CustomInstallationDirectory] = customDirectory;
+            var result = DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutput("Copying package contents to");
+            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(customDirectory));
         }
 
         [Test]
@@ -62,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
 
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
 
             // The #{foo} variable in web.config should have been replaced by 'bar'
             AssertXmlNodeValue(stagingDirectory + "\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='foo']/@value", "bar");
@@ -75,7 +94,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Environment.Name, "Production");
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
 
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
 
             // The environment app-setting value should have been transformed to 'Production'
             AssertXmlNodeValue(stagingDirectory + "\\Production\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='environment']/@value", "Production");
@@ -91,7 +110,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             fileSystem.PurgeDirectory(customInstallDirectory, DeletionOptions.TryThreeTimes); 
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallDirectory );
 
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
 
             // Assert content was copied to custom-installation directory
             Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets\\styles.css")));
@@ -101,7 +120,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldExecuteFeatureScripts()
         {
             variables.Set(SpecialVariables.Package.EnabledFeatures, "HelloWorld");
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
             result.AssertOutput("Hello World!");
         }
 
@@ -120,7 +139,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
             variables.Set(SpecialVariables.Package.UpdateIisWebsiteName, siteName);
 
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
 
             Assert.AreEqual(
                 Path.Combine(stagingDirectory, "Acme.Web\\1.0.0"), 
@@ -137,7 +156,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
             variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "ps1"), "Write-Host 'The wheels on the bus go round...'");
 
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
 
             result.AssertOutput("The wheels on the bus go round...");
         }
@@ -145,7 +164,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldAddJournalEntry()
         {
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
 
             result.AssertOutput("Adding journal entry");
         }
@@ -160,7 +179,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
             variables.Set(variableName, rawVariableValue) ;
 
-            result = DeployPackage("Acme.Web");
+            var result = DeployPackage("Acme.Web");
 
             //Assert raw variables were output
             result.AssertOutput("The following variables are available:");
@@ -169,6 +188,23 @@ namespace Calamari.Tests.Fixtures.Deployment
             //Assert evaluated variables were output
             result.AssertOutput("The following evaluated variables are available:");
             result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, "The environment is Production"));
+        }
+
+        [Test]
+        public void ShouldSkipIfAlreadyInstalled()
+        {
+            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            variables.Set(SpecialVariables.RetentionPolicySet, "a/b/c/d");
+            variables.Set(SpecialVariables.Package.NuGetPackageId, "Acme.Web");
+            variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
+
+            var result = DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutput("The package has been installed to");
+
+            result = DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutput("The package has already been installed on this machine");
         }
 
         [Test]
@@ -184,6 +220,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 {
                     try
                     {
+                        CalamariResult result;
                         using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
                         {
                             variables.Save(variablesFile.FilePath);
@@ -197,13 +234,16 @@ namespace Calamari.Tests.Fixtures.Deployment
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
                         result.AssertOutput("Extracted 7 files");
-                        if (!extractionDirectories.Contains(extracted))
+                        lock (extractionDirectories)
                         {
-                            extractionDirectories.Add(extracted);
-                        }
-                        else
-                        {
-                            Assert.Fail("The same installation directory was used twice: " + extracted);
+                            if (!extractionDirectories.Contains(extracted))
+                            {
+                                extractionDirectories.Add(extracted);
+                            }
+                            else
+                            {
+                                Assert.Fail("The same installation directory was used twice: " + extracted);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -238,6 +278,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void CleanUp()
         {
             new CalamariPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+            new CalamariPhysicalFileSystem().PurgeDirectory(customDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
         }
 
         private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
