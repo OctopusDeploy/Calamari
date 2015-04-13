@@ -22,6 +22,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         string stagingDirectory;
         ICalamariFileSystem fileSystem;
         VariableDictionary variables;
+        string customDirectory;
 
         [SetUp]
         public void SetUp()
@@ -30,6 +31,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Ensure staging directory exists and is empty 
             stagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
+            customDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestCustom");
             fileSystem.EnsureDirectoryExists(stagingDirectory);
             fileSystem.PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimes);
 
@@ -59,6 +61,16 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage("Acme.Web");
             result.AssertZero();
             result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(stagingDirectory + "\\Acme.Web\\1.0.0"));
+        }
+
+        [Test]
+        public void ShouldCopyToCustomDirectoryExtractionVariable()
+        {
+            variables[SpecialVariables.Package.CustomInstallationDirectory] = customDirectory;
+            var result = DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutput("Copying package contents to");
+            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(customDirectory));
         }
 
         [Test]
@@ -266,6 +278,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void CleanUp()
         {
             new CalamariPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+            new CalamariPhysicalFileSystem().PurgeDirectory(customDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
         }
 
         private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
