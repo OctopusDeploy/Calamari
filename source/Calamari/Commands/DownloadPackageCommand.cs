@@ -93,20 +93,13 @@ namespace Calamari.Commands
         // ReSharper disable UnusedParameter.Local
         static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, out SemanticVersion version, out Uri uri)
         {
-            if (String.IsNullOrWhiteSpace(packageId))
-                throw new CommandException("No package ID was specified. Please pass --packageId YourPackage");
-
-            if (String.IsNullOrWhiteSpace(packageVersion))
-                throw new CommandException("No package version was specified. Please pass --packageVersion 1.0.0.0");
+            Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
+            Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
+            Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
+            Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
             if (!SemanticVersion.TryParse(packageVersion, out version))
                 throw new CommandException(String.Format("Package version '{0}' specified is not a valid semantic version", packageVersion));
-
-            if (String.IsNullOrWhiteSpace(feedId))
-                throw new CommandException("No feed ID was specified. Please pass --feedId feed-id");
-
-            if (String.IsNullOrWhiteSpace(feedUri))
-                throw new CommandException("No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
                 throw new CommandException(String.Format("URI specified '{0}' is not a valid URI", feedUri));

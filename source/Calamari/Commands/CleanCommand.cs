@@ -29,8 +29,7 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            if (string.IsNullOrWhiteSpace(retentionPolicySet))
-                throw new CommandException("No retention-policy-set was specified. Please pass --retentionPolicySet \"Environments-2/projects-161/Step-Package B/machines-65/<default>\"");
+            Guard.NotNullOrWhiteSpace(retentionPolicySet, "No retention-policy-set was specified. Please pass --retentionPolicySet \"Environments-2/projects-161/Step-Package B/machines-65/<default>\"");
 
             if (days <=0 && releases <= 0)
                 throw new CommandException("A value must be provided for either --days or --releases");

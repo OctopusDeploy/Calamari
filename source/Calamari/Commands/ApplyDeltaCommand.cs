@@ -44,7 +44,7 @@ namespace Calamari.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
                 new ServiceMessageCommandOutput(new VariableDictionary())));
 
-            var octoDiff = new CommandLine(FindOctoDiffExecutable())
+            var octoDiff = CommandLine.Execute(FindOctoDiffExecutable())
                 .Action("patch")
                 .PositionalArgument(basisFilePath)
                 .PositionalArgument(deltaFilePath)
@@ -72,24 +72,10 @@ namespace Calamari.Commands
 
         void ValidateParameters(out string basisFilePath, out string deltaFilePath, out string newFilePath)
         {
-            if (String.IsNullOrWhiteSpace(basisFileName))
-            {
-                throw new CommandException("No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
-            }
-            if (String.IsNullOrWhiteSpace(fileHash))
-            {
-                throw new CommandException("No file hash was specified. Please pass --fileHash MyFileHash");
-            }
-            if (String.IsNullOrWhiteSpace(deltaFileName))
-            {
-                throw new CommandException(
-                    "No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
-            }
-            if (String.IsNullOrWhiteSpace(newFileName))
-            {
-                throw new CommandException(
-                    "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
-            }
+            Guard.NotNullOrWhiteSpace(basisFileName, "No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
+            Guard.NotNullOrWhiteSpace(fileHash, "No file hash was specified. Please pass --fileHash MyFileHash");
+            Guard.NotNullOrWhiteSpace(deltaFileName, "No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
+            Guard.NotNullOrWhiteSpace(newFileName, "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
 
             basisFilePath = Path.GetFullPath(basisFileName);
             deltaFilePath = Path.GetFullPath(deltaFileName);

@@ -28,18 +28,13 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            if (String.IsNullOrWhiteSpace(packageId))
-                throw new CommandException("No package ID was specified. Please pass --packageId YourPackage");
-
-            if (String.IsNullOrWhiteSpace(packageVersion))
-                throw new CommandException("No package version was specified. Please pass --packageVersion 1.0.0.0");
-
+            Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
+            Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
+            Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
+            
             SemanticVersion version;
             if(!SemanticVersion.TryParse(packageVersion, out version))
                 throw new CommandException(String.Format("Package version '{0}' is not a valid Semantic Version", packageVersion));
-
-            if(String.IsNullOrWhiteSpace(packageHash))
-                throw new CommandException("No package hash was specified. Please pass --packageHash YourPackageHash");
 
             var packageStore = new PackageStore();
             var packageMetadata = new PackageMetadata {Id = packageId, Version = packageVersion, Hash = packageHash};
