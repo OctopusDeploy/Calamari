@@ -127,16 +127,20 @@ namespace Calamari.Integration.FileSystem
             try
             {
                 var metadata = new ZipPackage(filePath);
-                string hash = HashCalculator.Hash(metadata.GetStream());
 
-                var packageMetadata = new PackageMetadata
+                using (var hashStream = metadata.GetStream())
                 {
-                    Id = metadata.Id,
-                    Version = metadata.Version.ToString(),
-                    Hash = hash
-                };
+                    var hash = HashCalculator.Hash(hashStream);
 
-                return new StoredPackage(packageMetadata, filePath);
+                    var packageMetadata = new PackageMetadata
+                    {
+                        Id = metadata.Id,
+                        Version = metadata.Version.ToString(),
+                        Hash = hash
+                    };
+
+                    return new StoredPackage(packageMetadata, filePath);
+                }
             }
             catch (FileNotFoundException)
             {
