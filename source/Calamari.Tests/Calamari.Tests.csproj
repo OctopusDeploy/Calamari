@@ -51,12 +51,11 @@
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.15, Culture=neutral, processorArchitecture=MSIL">
     <Reference Include="Octodiff, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.14, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Octostache, Version=1.0.2.15, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Octostache.1.0.2.15\lib\net40\Octostache.dll</HintPath>
     </Reference>

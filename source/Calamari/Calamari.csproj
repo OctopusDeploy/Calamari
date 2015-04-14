@@ -50,11 +50,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NuGet.Core.2.8.3\lib\net40-Client\NuGet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.15, Culture=neutral, processorArchitecture=MSIL">
     <Reference Include="Octodiff">
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.14, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Octostache, Version=1.0.2.15, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Octostache.1.0.2.15\lib\net40\Octostache.dll</HintPath>
     </Reference>
