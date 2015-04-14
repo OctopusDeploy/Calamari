@@ -185,7 +185,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     basisFile.FilePath,
                     basisFile.Hash,
                     Path.Combine(downloadPath, newFileName));
-                result.AssertErrorOutput("The delta file appears to be corrupt.");
+                result.AssertOutput("The delta file appears to be corrupt.");
             }
         }
     }
