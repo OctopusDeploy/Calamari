@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -109,9 +110,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                 GetPackageDownloadFolder(), PublicFeedId);
             result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+            result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(ExpectedPackageHash));
+            result.AssertOutputVariable(StagedPackageSizeVariableName, Is.EqualTo(ExpectedPackageSize));
+            result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                Is.StringStarting(
+                    Path.Combine(GetPackageDownloadFolder(), "Files", PublicFeedId) +
+                    "\\" + 
+                    PackageId + 
+                    "." +
+                    PackageVersion));
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, PublicFeedUri);
         }
 
@@ -129,9 +136,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 PackageVersion);
             result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}\\Files\\{1}\\{2}.{3}",
                     GetPackageDownloadFolder(), PublicFeedId, PackageId, PackageVersion);
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+            result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(ExpectedPackageHash));
+            result.AssertOutputVariable(StagedPackageSizeVariableName, Is.EqualTo(ExpectedPackageSize));
+            result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                Is.StringStarting(
+                    Path.Combine(GetPackageDownloadFolder(), "Files", PublicFeedId) +
+                    "\\" +
+                    PackageId +
+                    "." +
+                    PackageVersion));
         }
 
         [Test]
@@ -149,9 +162,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                 GetPackageDownloadFolder(), PublicFeedId);
             result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+            result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(ExpectedPackageHash));
+            result.AssertOutputVariable(StagedPackageSizeVariableName, Is.EqualTo(ExpectedPackageSize));
+            result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                Is.StringStarting(
+                    Path.Combine(GetPackageDownloadFolder(), "Files", PublicFeedId) +
+                    "\\" +
+                    PackageId +
+                    "." +
+                    PackageVersion));
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, PublicFeedUri);
         }
 
@@ -168,9 +187,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                 GetPackageDownloadFolder(), AuthFeedId);
             result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+            result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(ExpectedPackageHash));
+            result.AssertOutputVariable(StagedPackageSizeVariableName, Is.EqualTo(ExpectedPackageSize));
+            result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                Is.StringStarting(
+                    Path.Combine(GetPackageDownloadFolder(), "Files", AuthFeedId) +
+                    "\\" +
+                    PackageId +
+                    "." +
+                    PackageVersion));
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, AuthFeedUri);
         }
 
@@ -189,9 +214,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 PackageVersion);
             result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}\\Files\\{1}\\{2}.{3}",
                     GetPackageDownloadFolder(), AuthFeedId, PackageId, PackageVersion);
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+            result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(ExpectedPackageHash));
+            result.AssertOutputVariable(StagedPackageSizeVariableName, Is.EqualTo(ExpectedPackageSize));
+            result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                Is.StringStarting(
+                    Path.Combine(GetPackageDownloadFolder(), "Files", AuthFeedId) +
+                    "\\" +
+                    PackageId +
+                    "." +
+                    PackageVersion));
         }
 
         [Test]
@@ -210,9 +241,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                 GetPackageDownloadFolder(), AuthFeedId);
             result.AssertOutput("Found package {0} version {1}", PackageId, PackageVersion);
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-            result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+            result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(ExpectedPackageHash));
+            result.AssertOutputVariable(StagedPackageSizeVariableName, Is.EqualTo(ExpectedPackageSize));
+            result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                Is.StringStarting(
+                    Path.Combine(GetPackageDownloadFolder(), "Files", AuthFeedId) +
+                    "\\" +
+                    PackageId +
+                    "." +
+                    PackageVersion));
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PackageId, PackageVersion, AuthFeedUri);
         }
 
@@ -245,9 +282,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                     GetPackageDownloadFolder(), FileShareFeedId);
                 result.AssertOutput("Found package {0} version {1}", FileSharePackageId, FileSharePackageVersion);
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+                result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(acmeWeb.Hash));
+                result.AssertOutputVariable(StagedPackageSizeVariableName,
+                    Is.EqualTo(acmeWeb.Size.ToString(CultureInfo.InvariantCulture)));
+                result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                    Is.StringStarting(
+                        Path.Combine(GetPackageDownloadFolder(), "Files", FileShareFeedId) +
+                        "\\" +
+                        FileSharePackageId +
+                        "." +
+                        FileSharePackageVersion));
                 result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileSharePackageId,
                     FileSharePackageVersion, acmeWeb.DirectoryPath);
             }
@@ -267,9 +311,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertOutput("Checking package cache for package {0} {1}", FileSharePackageId, FileSharePackageVersion);
                 result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}\\Files\\{1}\\{2}.{3}",
                         GetPackageDownloadFolder(), FileShareFeedId, FileSharePackageId, FileSharePackageVersion);
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+                result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(acmeWeb.Hash));
+                result.AssertOutputVariable(StagedPackageSizeVariableName,
+                    Is.EqualTo(acmeWeb.Size.ToString(CultureInfo.InvariantCulture)));
+                result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                    Is.StringStarting(
+                        Path.Combine(GetPackageDownloadFolder(), "Files", FileShareFeedId) +
+                        "\\" +
+                        FileSharePackageId +
+                        "." +
+                        FileSharePackageVersion));
             }
         }
 
@@ -293,9 +344,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertOutput("Downloaded package will be stored in: '{0}\\Files\\{1}'",
                     GetPackageDownloadFolder(), FileShareFeedId);
                 result.AssertOutput("Found package {0} version {1}", FileSharePackageId, FileSharePackageVersion);
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5IYXNo\" value=");
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5TaXpl\" value=");
-                result.AssertOutput("##octopus[setVariable name=\"U3RhZ2VkUGFja2FnZS5GdWxsUGF0aE9uUmVtb3RlTWFjaGluZQ==\" value=");
+                result.AssertOutputVariable(StagedPackageHashVariableName, Is.EqualTo(acmeWeb.Hash));
+                result.AssertOutputVariable(StagedPackageSizeVariableName,
+                    Is.EqualTo(acmeWeb.Size.ToString(CultureInfo.InvariantCulture)));
+                result.AssertOutputVariable(StagedPackageFullPathOnRemoteMachine,
+                    Is.StringStarting(
+                        Path.Combine(GetPackageDownloadFolder(), "Files", FileShareFeedId) +
+                        "\\" +
+                        FileSharePackageId +
+                        "." +
+                        FileSharePackageVersion));
                 result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileSharePackageId,
                     FileSharePackageVersion, acmeWeb.DirectoryPath);
             }
