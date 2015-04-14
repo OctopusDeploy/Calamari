@@ -97,24 +97,12 @@ namespace Calamari.Integration.FileSystem
             var root = GetPackageRoot(null);
             fileSystem.EnsureDirectoryExists(root);
 
-            var taken = 0;
-            var files = fileSystem.EnumerateFilesRecursively(root, packageId + "*.nupkg-*")
-                .OrderByDescending(Path.GetFileName);
-
-            if (!files.Any()) yield break;
-            if (files.Count() < take) take = files.Count();
-
-            foreach (var file in files)
-            {
-                if (taken == take) yield break;
-
-                var package = GetPackage(file);
-                if (package == null)
-                    continue;
-
-                taken++;
-                yield return package;
-            }
+            return (
+                from file in fileSystem.EnumerateFilesRecursively(root, packageId + "*.nupkg-*")
+                orderby Path.GetFileName(file) descending
+                let package = GetPackage(file)
+                where package != null
+                select package).Take(5);
         }
 
         string GetPackageRoot(string prefix)
