@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
+using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -84,7 +85,15 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
                     result.AssertOutput("Found 1 earlier version of {0} on this Tentacle", packageId);
                     result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
-                    result.AssertOutput("##octopus[foundPackage id=\"QWNtZS5XZWI=\" version=\"MS4wLjAuMA==\"");
+
+                    result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
+                        new Dictionary<string, object>
+                    {
+                        {"Metadata.Id", packageId},
+                        {"Metadata.Version", packageVersion},
+                        {"Metadata.Hash", acmeWeb.Hash},
+                        {"FullPath", destinationFilePath}
+                    });
                 }
             }
         }
@@ -101,10 +110,22 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 var result = FindPackages(packageId, packageVersion, acmeWeb.Hash);
 
                 result.AssertZero();
-                result.AssertOutput("##octopus[calamari-found-package]");
+                result.AssertServiceMessage(
+                    ServiceMessageNames.CalamariFoundPackage.Name, 
+                    Is.True,
+                    message: "Expected service message '{0}' to be True", 
+                    args: ServiceMessageNames.CalamariFoundPackage.Name);
+
                 result.AssertOutput("Package {0} {1} hash {2} has already been uploaded", packageId, packageVersion,
                     acmeWeb.Hash);
-                result.AssertOutput("##octopus[foundPackage id=\"QWNtZS5XZWI=\" version=\"MS4wLjAuMA==\"");
+                result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
+                    new Dictionary<string, object>
+                    {
+                        {"Metadata.Id", packageId},
+                        {"Metadata.Version", packageVersion},
+                        {"Metadata.Hash", acmeWeb.Hash},
+                        {"FullPath", destinationFilePath}
+                    });
             }
         }
 

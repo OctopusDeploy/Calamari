@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -80,7 +82,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     patchResult.AssertZero();
                     patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
                         basisFile.Hash, Path.Combine(downloadPath, newFileName));
-                    patchResult.AssertOutput("##octopus[deltaVerification");
+                    patchResult.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name);
                 }
             }
         }

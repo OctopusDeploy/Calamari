@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.ComponentModel;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
@@ -43,6 +45,12 @@ namespace Calamari.Tests.Helpers
             get { return errors; }
         }
 
+        public bool CalamariFoundPackage { get; protected set; }
+
+        public StoredPackage FoundPackage { get; protected set; }
+
+        public StoredPackage DeltaVerification { get; protected set; }
+
         void ParseServiceMessage(ServiceMessage message)
         {
             switch (message.Name)
@@ -53,6 +61,32 @@ namespace Calamari.Tests.Helpers
 
                     if (!string.IsNullOrWhiteSpace(variableName))
                         outputVariables.Set(variableName, variableValue);
+                    break;
+                case ServiceMessageNames.CalamariFoundPackage.Name:
+                    CalamariFoundPackage = true;
+                    break;
+                case ServiceMessageNames.FoundPackage.Name:
+                    var foundPackageId = message.GetValue(ServiceMessageNames.FoundPackage.IdAttribute);
+                    var foundPackageVersion = message.GetValue(ServiceMessageNames.FoundPackage.VersionAttribute);
+                    var foundPackageHash = message.GetValue(ServiceMessageNames.FoundPackage.HashAttribute);
+                    var foundPackageRemotePath = message.GetValue(ServiceMessageNames.FoundPackage.RemotePathAttribute);
+                    FoundPackage =
+                        new StoredPackage(
+                            new PackageMetadata
+                            {
+                                Id = foundPackageId,
+                                Version = foundPackageVersion,
+                                Hash = foundPackageHash
+                            }, foundPackageRemotePath);
+                    break;
+                case ServiceMessageNames.PackageDeltaVerification.Name:
+                    var pdvHash = message.GetValue(ServiceMessageNames.PackageDeltaVerification.HashAttribute);
+                    var pdvSize = message.GetValue(ServiceMessageNames.PackageDeltaVerification.SizeAttribute);
+                    var pdvRemotePath =
+                        message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
+                    DeltaVerification =
+                        new StoredPackage(new PackageMetadata {Hash = pdvHash, Size = long.Parse(pdvSize)},
+                            pdvRemotePath);
                     break;
             }
         }
