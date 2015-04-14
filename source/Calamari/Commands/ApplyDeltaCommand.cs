@@ -21,7 +21,7 @@ namespace Calamari.Commands
         bool showProgress;
         bool skipVerification;
         readonly PackageStore packageStore = new PackageStore();
-
+        readonly ICalamariFileSystem fileSystem = new CalamariPhysicalFileSystem();
 
         public ApplyDeltaCommand()
         {
@@ -41,6 +41,8 @@ namespace Calamari.Commands
             string newFilePath;
             string basisFilePath;
             ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
+            fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
+
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
                 new ServiceMessageCommandOutput(new VariableDictionary())));
 
