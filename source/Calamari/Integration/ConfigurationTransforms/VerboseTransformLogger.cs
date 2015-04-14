@@ -5,6 +5,14 @@ namespace Calamari.Integration.ConfigurationTransforms
 {
     public class VerboseTransformLogger : IXmlTransformationLogger
     {
+        public event LogDelegate Warning;
+        readonly bool _suppressWarnings;
+
+        public VerboseTransformLogger(bool suppressWarnings = false)
+        {
+            _suppressWarnings = suppressWarnings;
+        }
+
         public void LogMessage(string message, params object[] messageArgs)
         {
             Log.VerboseFormat(message, messageArgs);
@@ -17,19 +25,45 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void LogWarning(string message, params object[] messageArgs)
         {
-            Log.WarnFormat(message, messageArgs);
+            if (Warning != null) { Warning(this, new WarningDelegateArgs(string.Format(message, messageArgs))); }
+            if (_suppressWarnings)
+            {
+                Log.Info(message, messageArgs);
+            }
+            else
+            {
+                Log.WarnFormat(message, messageArgs);
+            }
         }
 
         public void LogWarning(string file, string message, params object[] messageArgs)
         {
-            Log.WarnFormat("File {0}: ", file);
-            Log.WarnFormat(message, messageArgs);
+            if (Warning != null) { Warning(this, new WarningDelegateArgs(string.Format("{0}: {1}", file, string.Format(message, messageArgs)))); }
+            if (_suppressWarnings)
+            {
+                Log.Info("File {0}: ", file);
+                Log.Info(message, messageArgs);
+            }
+            else
+            {
+                Log.WarnFormat("File {0}: ", file);
+                Log.WarnFormat(message, messageArgs);
+            }
         }
 
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
-            Log.WarnFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
-            Log.WarnFormat(message, messageArgs);
+            if (Warning != null) { Warning(this, new WarningDelegateArgs(string.Format("{0}({1},{2}): {3}", file, lineNumber, linePosition, string.Format(message, messageArgs)))); }
+            if (_suppressWarnings)
+            {
+                Log.Info("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+                Log.Info(message, messageArgs);
+            }
+            else
+            {
+                Log.WarnFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+                Log.WarnFormat(message, messageArgs);
+            }
         }
 
         public void LogError(string message, params object[] messageArgs)

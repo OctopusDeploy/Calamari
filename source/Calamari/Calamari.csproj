@@ -50,9 +50,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NuGet.Core.2.8.3\lib\net40-Client\NuGet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.14, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Octostache, Version=1.0.2.15, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Octostache.1.0.2.14\lib\net40\Octostache.dll</HintPath>
+      <HintPath>..\packages\Octostache.1.0.2.15\lib\net40\Octostache.dll</HintPath>
     </Reference>
     <Reference Include="Sprache">
       <HintPath>..\packages\Sprache.2.0.0.45\lib\portable-net4+netcore45+win8+wp8+sl5+MonoAndroid1+MonoTouch1\Sprache.dll</HintPath>
@@ -106,6 +106,7 @@
     <Compile Include="Deployment\RunningDeployment.cs" />
     <Compile Include="Deployment\SpecialVariables.cs" />
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
+    <Compile Include="Integration\ConfigurationTransforms\WarningDelegateArgs.cs" />
     <Compile Include="Integration\Time\IClock.cs" />
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />

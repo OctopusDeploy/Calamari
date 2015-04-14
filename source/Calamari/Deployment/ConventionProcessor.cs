@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Commands.Support;
 using Calamari.Deployment.Conventions;
 
 namespace Calamari.Deployment
@@ -28,7 +29,14 @@ namespace Calamari.Deployment
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex);
+                if (ex is CommandException)
+                {
+                    Console.Error.WriteLine(ex.Message);
+                }
+                else
+                {
+                    Console.Error.WriteLine(ex);
+                }
                 Console.Error.WriteLine("Running rollback conventions...");
 
                 deployment.Error(ex);
