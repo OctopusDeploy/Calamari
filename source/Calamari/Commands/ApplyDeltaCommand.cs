@@ -22,6 +22,7 @@ namespace Calamari.Commands
         bool skipVerification;
         readonly PackageStore packageStore = new PackageStore();
         readonly ICalamariFileSystem fileSystem = new CalamariPhysicalFileSystem();
+        readonly ISemaphore semaphore = new SystemSemaphore();
 
         public ApplyDeltaCommand()
         {
@@ -43,22 +44,31 @@ namespace Calamari.Commands
             ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
             fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
 
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
-                new ServiceMessageCommandOutput(new VariableDictionary())));
-
-            var octoDiff = CommandLine.Execute(FindOctoDiffExecutable())
-                .Action("patch")
-                .PositionalArgument(basisFilePath)
-                .PositionalArgument(deltaFilePath)
-                .PositionalArgument(newFilePath)
-                .Build();
-
-            Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
-            commandLineRunner.Execute(octoDiff)
-                .VerifySuccess();
-
             if (!File.Exists(newFilePath))
-                throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " + basisFilePath);
+            {
+                using (semaphore.Acquire("Calamari:" + deltaFileName + ":" + fileHash, "Another process is currently applying delta file " + deltaFileName + " to " + basisFileName + " with hash " + fileHash))
+                {
+                    var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
+                        new ServiceMessageCommandOutput(new VariableDictionary())));
+
+                    var octoDiff = CommandLine.Execute(FindOctoDiffExecutable())
+                        .Action("patch")
+                        .PositionalArgument(basisFilePath)
+                        .PositionalArgument(deltaFilePath)
+                        .PositionalArgument(newFilePath)
+                        .Build();
+
+                    Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash,
+                        newFilePath);
+
+                    commandLineRunner.Execute(octoDiff)
+                        .VerifySuccess();
+                }
+
+                if (!File.Exists(newFilePath))
+                    throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " +
+                                               basisFilePath);
+            }
 
             var package = packageStore.GetPackage(newFilePath);
             if (package == null) return 0;
