@@ -44,31 +44,33 @@ namespace Calamari.Commands
             ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
             fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
 
-            if (!File.Exists(newFilePath))
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
+                new ServiceMessageCommandOutput(new VariableDictionary())));
+
+            var tempNewFilePath = newFilePath + ".partial";
+            var executable = FindOctoDiffExecutable();
+            var octoDiff = CommandLine.Execute(executable)
+                .Action("patch")
+                .PositionalArgument(basisFilePath)
+                .PositionalArgument(deltaFilePath)
+                .PositionalArgument(tempNewFilePath)
+                .Build();
+
+            Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash,
+                newFilePath);
+
+            var result = commandLineRunner.Execute(octoDiff);
+            if (result.ExitCode != 0)
             {
-                using (semaphore.Acquire("Calamari:" + deltaFileName + ":" + fileHash, "Another process is currently applying delta file " + deltaFileName + " to " + basisFileName + " with hash " + fileHash))
-                {
-                    var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
-                        new ServiceMessageCommandOutput(new VariableDictionary())));
-
-                    var octoDiff = CommandLine.Execute(FindOctoDiffExecutable())
-                        .Action("patch")
-                        .PositionalArgument(basisFilePath)
-                        .PositionalArgument(deltaFilePath)
-                        .PositionalArgument(newFilePath)
-                        .Build();
-
-                    Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash,
-                        newFilePath);
-
-                    commandLineRunner.Execute(octoDiff)
-                        .VerifySuccess();
-                }
-
-                if (!File.Exists(newFilePath))
-                    throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " +
-                                               basisFilePath);
+                fileSystem.DeleteFile(tempNewFilePath, DeletionOptions.TryThreeTimes);
+                throw new CommandLineException(executable, result.ExitCode, result.Errors);
             }
+
+            File.Move(tempNewFilePath, newFilePath);
+
+            if (!File.Exists(newFilePath))
+                throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " +
+                                           basisFilePath);
 
             var package = packageStore.GetPackage(newFilePath);
             if (package == null) return 0;
