@@ -53,13 +53,18 @@ namespace Calamari.Commands
                 .Action("patch")
                 .PositionalArgument(basisFilePath)
                 .PositionalArgument(deltaFilePath)
-                .PositionalArgument(tempNewFilePath)
-                .Build();
+                .PositionalArgument(tempNewFilePath);
+
+            if(skipVerification)
+                octoDiff.Flag("skip-verification");
+            
+            if(showProgress)
+                octoDiff.Flag("progress");
 
             Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash,
                 newFilePath);
 
-            var result = commandLineRunner.Execute(octoDiff);
+            var result = commandLineRunner.Execute(octoDiff.Build());
             if (result.ExitCode != 0)
             {
                 fileSystem.DeleteFile(tempNewFilePath, DeletionOptions.TryThreeTimes);
@@ -107,25 +112,11 @@ namespace Calamari.Commands
 
         string FindOctoDiffExecutable()
         {
-            var basePath = Path.GetDirectoryName(GetType().Assembly.FullLocalPath());
+            var basePath = Path.GetDirectoryName(GetType().Assembly.Location);
             var exePath = Path.Combine(basePath, "Octodiff.exe");
             if (!File.Exists(exePath))
                 throw new CommandException("Unable to find Octodiff.exe in " + basePath);
             return exePath;
-        }
-
-        string FormatCommandArguments(string basisFilePath, string deltaFilePath, string newFilePath)
-        {
-            var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("\"{0}\" ", basisFilePath);
-            commandArguments.AppendFormat("\"{0}\" ", deltaFilePath);
-            commandArguments.AppendFormat("\"{0}\" ", newFilePath);
-            if (showProgress)
-                commandArguments.AppendFormat("--progress ");
-            if (skipVerification)
-                commandArguments.Append("--skip-verification ");
-
-            return commandArguments.ToString().Trim();
         }
     }
 }
