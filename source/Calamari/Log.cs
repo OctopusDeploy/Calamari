@@ -1,5 +1,6 @@
 ﻿using System;
 using System.CodeDom.Compiler;
+using System.Globalization;
 using System.Text;
 
 namespace Calamari
@@ -29,7 +30,7 @@ namespace Calamari
             lock (Sync)
             {
                 SetMode("verbose");
-                StdOut.WriteLine(message);                
+                StdOut.WriteLine(message);
             }
         }
 
@@ -91,6 +92,36 @@ namespace Calamari
         public static void ErrorFormat(string messageFormat, params object[] args)
         {
             Error(String.Format(messageFormat, args));
+        }
+
+        public static class ServiceMessages
+        {
+            public static string ConvertServiceMessageValue(string value)
+            {
+                return Convert.ToBase64String(Encoding.Default.GetBytes(value));
+            }
+
+            public static void PackageFound(string packageId, string packageVersion, string packageHash,
+                string packageFullPath, bool exactMatchExists = false)
+            {
+                if (exactMatchExists)
+                    Verbose("##octopus[calamari-found-package]");
+
+                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"]",
+                    ConvertServiceMessageValue(packageId),
+                    ConvertServiceMessageValue(packageVersion),
+                    ConvertServiceMessageValue(packageHash),
+                    ConvertServiceMessageValue(packageFullPath));
+
+            }
+
+            public static void DeltaVerification(string remotePath, string hash, long size)
+            {
+                VerboseFormat("##octopus[deltaVerification remotePath=\"{0}\" hash=\"{1}\" size=\"{2}\"]",
+                    ConvertServiceMessageValue(remotePath),
+                    ConvertServiceMessageValue(hash),
+                    ConvertServiceMessageValue(size.ToString(CultureInfo.InvariantCulture)));
+            }
         }
     }
 }
