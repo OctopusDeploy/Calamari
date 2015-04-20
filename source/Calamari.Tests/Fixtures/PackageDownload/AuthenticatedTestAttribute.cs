@@ -4,13 +4,13 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.PackageDownload
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class AuthenticatedTest : Attribute, ITestAction
+    public class AuthenticatedTestAttribute : Attribute, ITestAction
     {
         readonly string feedUri;
         readonly string feedUsernameVariable;
         readonly string feedPasswordVariable;
 
-        public AuthenticatedTest(string feedUri, string feedUsernameVariable, string feedPasswordVariable)
+        public AuthenticatedTestAttribute(string feedUri, string feedUsernameVariable, string feedPasswordVariable)
         {
             this.feedUri = feedUri;
             this.feedUsernameVariable = feedUsernameVariable;

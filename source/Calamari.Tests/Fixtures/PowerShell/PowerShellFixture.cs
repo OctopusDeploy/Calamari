@@ -119,7 +119,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", MapSamplePath("Scripts\\InvalidSyntax.ps1")));
 
             output.AssertNonZero();
-            output.AssertErrorOutput("Unexpected token");
+            output.AssertErrorOutput("ParserError");
         }
 
         [Test]
