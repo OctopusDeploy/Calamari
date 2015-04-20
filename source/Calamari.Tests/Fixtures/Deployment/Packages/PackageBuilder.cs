@@ -13,15 +13,10 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
     {
         public static string BuildSamplePackage(string name, string version, bool modifyPackage = false)
         {
-            var currentDirectory = typeof(PackageBuilder).Assembly.FullLocalPath();
-            var targetFolder = "source\\";
-            var index = currentDirectory.LastIndexOf(targetFolder, StringComparison.OrdinalIgnoreCase);
-            var solutionRoot = currentDirectory.Substring(0, index + targetFolder.Length);
-            var nugetCommandLine = Path.Combine(solutionRoot, "packages\\NuGet.CommandLine.2.8.3\\tools\\NuGet.exe");
-            Assert.That(File.Exists(nugetCommandLine));
-
-            var packageDirectory = Path.Combine(solutionRoot, "Calamari.Tests\\Fixtures\\Deployment\\Packages\\" + name);
-            Assert.That(Directory.Exists(packageDirectory));
+            var currentDirectory = Path.GetDirectoryName(typeof(PackageBuilder).Assembly.FullLocalPath());
+            
+            var packageDirectory = Path.Combine(currentDirectory, "Fixtures\\Deployment\\Packages\\" + name);
+            Assert.That(Directory.Exists(packageDirectory), packageDirectory);
 
             var nuspec = Path.Combine(packageDirectory, name + ".nuspec");
             Assert.That(File.Exists(nuspec));
@@ -38,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             }
 
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
-            var result = runner.Execute(CommandLine.Execute(nugetCommandLine)
+            var result = runner.Execute(CommandLine.Execute(ResolveNuGet(currentDirectory))
                 .Action("pack")
                 .Argument(nuspec)
                 .Flag("NoPackageAnalysis")
@@ -54,6 +49,22 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
             Assert.That(File.Exists(path));
             return path;
+        }
+
+        static string ResolveNuGet(string currentDirectory)
+        {
+            var file = Path.Combine(currentDirectory, "NuGet.exe");
+            if (File.Exists(file))
+            {
+                return file;
+            }
+
+            var targetFolder = "source\\";
+            var index = currentDirectory.LastIndexOf(targetFolder, StringComparison.OrdinalIgnoreCase);
+            var solutionRoot = currentDirectory.Substring(0, index + targetFolder.Length);
+            var nugetCommandLine = Path.Combine(solutionRoot, "packages\\NuGet.CommandLine.2.8.3\\tools\\NuGet.exe");
+            Assert.That(File.Exists(nugetCommandLine), nugetCommandLine);
+            return nugetCommandLine;    
         }
 
         static string AddFileToPackage(string packageDirectory)
