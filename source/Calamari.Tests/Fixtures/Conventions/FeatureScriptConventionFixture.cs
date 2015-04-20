@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngineSelector.SelectEngine(Arg.Any<string>()).Returns(scriptEngine);
 
             variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Package.EnabledFeatures, "blah");
+            variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.blah");
 
             deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };
         }
