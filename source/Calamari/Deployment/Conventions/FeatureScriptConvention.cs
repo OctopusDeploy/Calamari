@@ -16,7 +16,6 @@ namespace Calamari.Deployment.Conventions
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptEngineSelector scriptEngineSelector;
         readonly ICommandLineRunner commandLineRunner;
-        const string featureScriptNamePrefix = "Octopus.Features."; 
         const string scriptResourcePrefix = "Calamari.Scripts.";
 
         public FeatureScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
@@ -80,7 +79,7 @@ namespace Calamari.Deployment.Conventions
 
         public static string GetScriptName(string feature, string suffix, string extension)
         {
-            return featureScriptNamePrefix + feature + "_" + suffix + "." + extension;
+            return  feature + "_" + suffix + "." + extension;
         }
 
         /// <summary>

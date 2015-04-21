@@ -50,6 +50,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NuGet.Core.2.8.3\lib\net40-Client\NuGet.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Octodiff">
+      <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
+    </Reference>
     <Reference Include="Octostache, Version=1.0.2.15, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Octostache.1.0.2.15\lib\net40\Octostache.dll</HintPath>
@@ -70,7 +73,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\CleanCommand.cs" />
+    <Compile Include="Commands\ApplyDeltaCommand.cs" />
     <Compile Include="Commands\DownloadPackageCommand.cs" />
+    <Compile Include="Commands\FindPackageCommand.cs" />
     <Compile Include="Commands\RunScriptCommand.cs" />
     <Compile Include="Commands\DeployPackageCommand.cs" />
     <Compile Include="Commands\Support\Option.cs" />
@@ -107,6 +112,7 @@
     <Compile Include="Deployment\SpecialVariables.cs" />
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\ConfigurationTransforms\WarningDelegateArgs.cs" />
+    <Compile Include="Guard.cs" />
     <Compile Include="Integration\Time\IClock.cs" />
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
@@ -123,6 +129,8 @@
     <Compile Include="Deployment\Journal\JournalEntry.cs" />
     <Compile Include="Integration\Processes\ISemaphore.cs" />
     <Compile Include="Integration\Processes\SystemSemaphore.cs" />
+    <Compile Include="Integration\FileSystem\PackageStore.cs" />
+    <Compile Include="Integration\Packages\StoredPackage.cs" />
     <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessageNames.cs" />
@@ -193,6 +201,9 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

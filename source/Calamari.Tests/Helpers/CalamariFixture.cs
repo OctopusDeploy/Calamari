@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Calamari.Commands;
 using Calamari.Integration.Processes;
@@ -11,6 +12,16 @@ namespace Calamari.Tests.Helpers
         protected CommandLine Calamari()
         {
             return CommandLine.Execute(typeof (DeployPackageCommand).Assembly.FullLocalPath());
+        }
+
+        protected CommandLine OctoDiff()
+        {
+            var currentWorkingDirectory = Path.GetDirectoryName(GetType().Assembly.FullLocalPath());
+            var octoDiffExe = Path.Combine(currentWorkingDirectory, "Octodiff.exe");
+            if (!File.Exists(octoDiffExe))
+                throw new FileNotFoundException("Unable to find Octodiff.exe");
+
+            return CommandLine.Execute(octoDiffExe);
         }
 
         protected CalamariResult Invoke(CommandLine command, VariableDictionary variables)
@@ -32,6 +43,18 @@ namespace Calamari.Tests.Helpers
             var path = GetType().Namespace.Replace("Calamari.Tests", "");
             path = path.Replace(".", "\\").Trim('.', '\\');
             return Path.GetFullPath(Path.Combine(parent, path, file));
+        }
+
+        protected static string GetPackageDownloadFolder(string fixtureName)
+        {
+            string currentDirectory = typeof(CalamariFixture).Assembly.FullLocalPath();
+            string targetFolder = "source\\";
+            int index = currentDirectory.LastIndexOf(targetFolder, StringComparison.OrdinalIgnoreCase);
+            string solutionRoot = currentDirectory.Substring(0, index + targetFolder.Length);
+
+            var packageDirectory = Path.Combine(solutionRoot, "Calamari.Tests\\bin\\Fixtures", fixtureName);
+
+            return packageDirectory;
         }
     }
 }

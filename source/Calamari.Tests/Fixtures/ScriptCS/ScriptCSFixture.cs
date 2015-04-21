@@ -8,7 +8,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
 {
     public class ScriptCSFixture : CalamariFixture
     {
-        [Test]
+        [Test, RequiresDotNet45]
         public void ShouldCreateArtifacts()
         {
             var output = Invoke(Calamari()
@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=']");
         }
 
-        [Test]
+        [Test, RequiresDotNet45]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();

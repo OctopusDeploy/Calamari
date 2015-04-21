@@ -22,6 +22,11 @@
             get { return exitCode; }
         }
 
+        public string Errors
+        {
+            get { return additionalErrors; }
+        }
+
         public CommandResult VerifySuccess()
         {
             if (exitCode != 0)

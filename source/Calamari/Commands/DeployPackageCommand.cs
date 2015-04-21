@@ -35,8 +35,7 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            if (string.IsNullOrWhiteSpace(packageFile))
-                throw new CommandException("No package file was specified. Please pass --package YourPackage.nupkg");
+            Guard.NotNullOrWhiteSpace(packageFile, "No package file was specified. Please pass --package YourPackage.nupkg");
 
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);    

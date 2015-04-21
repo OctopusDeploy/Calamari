@@ -119,7 +119,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldExecuteFeatureScripts()
         {
-            variables.Set(SpecialVariables.Package.EnabledFeatures, "HelloWorld");
+            variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");
             var result = DeployPackage("Acme.Web");
             result.AssertOutput("Hello World!");
         }
