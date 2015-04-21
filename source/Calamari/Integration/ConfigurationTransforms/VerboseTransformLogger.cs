@@ -7,20 +7,28 @@ namespace Calamari.Integration.ConfigurationTransforms
     {
         public event LogDelegate Warning;
         readonly bool _suppressWarnings;
+        readonly bool _suppressLogging;
 
-        public VerboseTransformLogger(bool suppressWarnings = false)
+        public VerboseTransformLogger(bool suppressWarnings = false, bool suppressLogging = false)
         {
             _suppressWarnings = suppressWarnings;
+            _suppressLogging = suppressLogging;
         }
 
         public void LogMessage(string message, params object[] messageArgs)
         {
-            Log.VerboseFormat(message, messageArgs);
+            if (!_suppressLogging)
+            {
+                Log.VerboseFormat(message, messageArgs);
+            }
         }
 
         public void LogMessage(MessageType type, string message, params object[] messageArgs)
         {
-            LogMessage(message, messageArgs);
+            if (!_suppressLogging)
+            {
+                LogMessage(message, messageArgs);
+            }
         }
 
         public void LogWarning(string message, params object[] messageArgs)
@@ -102,22 +110,34 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void StartSection(string message, params object[] messageArgs)
         {
-            Log.VerboseFormat(message, messageArgs);
+            if (!_suppressLogging)
+            {
+                Log.VerboseFormat(message, messageArgs);
+            }
         }
 
         public void StartSection(MessageType type, string message, params object[] messageArgs)
         {
-            StartSection(message, messageArgs);
+            if (!_suppressLogging)
+            {
+                StartSection(message, messageArgs);
+            }
         }
 
         public void EndSection(string message, params object[] messageArgs)
         {
-            Log.VerboseFormat(message, messageArgs);
+            if (!_suppressLogging)
+            {
+                Log.VerboseFormat(message, messageArgs);
+            }
         }
 
         public void EndSection(MessageType type, string message, params object[] messageArgs)
         {
-            EndSection(message, messageArgs);
+            if (!_suppressLogging)
+            {
+                EndSection(message, messageArgs);
+            }
         }
     }
 }

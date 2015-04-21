@@ -7,17 +7,19 @@ namespace Calamari.Integration.ConfigurationTransforms
     public class ConfigurationTransformer : IConfigurationTransformer
     {
         readonly bool _suppressTransformationErrors;
+        readonly bool _suppressTransformationLogging;
 
-        public ConfigurationTransformer(bool suppressTransformationErrors = false)
+        public ConfigurationTransformer(bool suppressTransformationErrors = false, bool suppressTransformationLogging = false)
         {
             _suppressTransformationErrors = suppressTransformationErrors;
+            _suppressTransformationLogging = suppressTransformationLogging;
         }
 
         public void PerformTransform(string configFile, string transformFile, string destinationFile)
         {
             var transformFailed = false;
             var transformWarning = "";
-            var logger = new VerboseTransformLogger(_suppressTransformationErrors);
+            var logger = new VerboseTransformLogger(_suppressTransformationErrors, _suppressTransformationLogging);
             logger.Warning += (sender, args) =>
             {
                 transformWarning = args.Message;
