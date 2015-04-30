@@ -10,6 +10,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.FindPackage
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class FindPackageFixture : CalamariFixture
     {
         readonly string downloadPath = Path.Combine(GetPackageDownloadFolder("FindPackage"), "Files");
@@ -20,6 +21,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [TestFixtureSetUp]
         public void TestFixtureSetUp()
         {
+            
             Environment.SetEnvironmentVariable("TentacleHome", GetPackageDownloadFolder("FindPackage"));
         }
 

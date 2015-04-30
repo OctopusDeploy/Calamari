@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages
@@ -13,18 +14,14 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
     {
         public static string BuildSamplePackage(string name, string version, bool modifyPackage = false)
         {
-            var currentDirectory = typeof(PackageBuilder).Assembly.FullLocalPath();
-            var targetFolder = "source\\";
-            var index = currentDirectory.LastIndexOf(targetFolder, StringComparison.OrdinalIgnoreCase);
-            var solutionRoot = currentDirectory.Substring(0, index + targetFolder.Length);
-            var nugetCommandLine = Path.Combine(solutionRoot, "packages\\NuGet.CommandLine.2.8.3\\tools\\NuGet.exe");
-            Assert.That(File.Exists(nugetCommandLine));
+            var nugetCommandLine = Path.Combine(TestEnvironment.SolutionRoot, "packages", "NuGet.CommandLine.2.8.3", "tools", "NuGet.exe");
+            Assert.That(File.Exists(nugetCommandLine), string.Format("Nuget.exe is not available (expected at {0}).", nugetCommandLine));
 
-            var packageDirectory = Path.Combine(solutionRoot, "Calamari.Tests\\Fixtures\\Deployment\\Packages\\" + name);
-            Assert.That(Directory.Exists(packageDirectory));
+            var packageDirectory = Path.Combine(TestEnvironment.SolutionRoot, "Calamari.Tests", "Fixtures", "Deployment", "Packages", name);
+            Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
 
             var nuspec = Path.Combine(packageDirectory, name + ".nuspec");
-            Assert.That(File.Exists(nuspec));
+            Assert.That(File.Exists(nuspec), string.Format("Nuspec for {0} is not available (expected at {1}.", name, nuspec));
 
             var output = Path.GetTempPath();
             var path = Path.Combine(output, name + "." + version + ".nupkg");
@@ -52,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
                 && File.Exists(indexFilePath))
                 File.Delete(indexFilePath);
 
-            Assert.That(File.Exists(path));
+            Assert.That(File.Exists(path), string.Format("The generated nupkg was unable to be found (expected at {0}).", path));
             return path;
         }
 
