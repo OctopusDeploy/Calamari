@@ -13,8 +13,21 @@ namespace Calamari.Integration.FileSystem
     public class PackageStore
     {
         readonly ICalamariFileSystem fileSystem = new CalamariPhysicalFileSystem();
-        readonly string rootDirectory = Path.Combine(Environment.GetEnvironmentVariable("TentacleHome"), "Files");
+        readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
 
+
+        private static string TentacleHome
+        {
+            get
+            {
+                var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
+                if (tentacleHome == null)
+                {
+                    Log.Error("Environment variable 'TentacleHome' has not been set.");
+                }
+                return tentacleHome;
+            }
+        }
         public bool DoesPackageExist(PackageMetadata metadata)
         {
             return DoesPackageExist(null, metadata);
@@ -122,7 +135,7 @@ namespace Calamari.Integration.FileSystem
 
                     var packageMetadata = new PackageMetadata
                     {
-                        Id = metadata.Id,
+                       Id = metadata.Id,
                         Version = metadata.Version.ToString(),
                         Hash = hash
                     };

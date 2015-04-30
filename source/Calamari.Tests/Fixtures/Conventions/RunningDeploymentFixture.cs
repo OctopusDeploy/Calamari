@@ -1,10 +1,12 @@
 ﻿using Calamari.Deployment;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class RunningDeploymentFixture
     {
         [Test]
