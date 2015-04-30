@@ -13,7 +13,7 @@ namespace Calamari.Integration.PackageDownload
         const int NumberOfTimesToAttemptToDownloadPackage = 5;
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly PackageRepositoryFactory packageRepositoryFactory = new PackageRepositoryFactory();
-        readonly CalamariPhysicalFileSystem fileSystem = new CalamariPhysicalFileSystem();
+        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
 
 
@@ -21,7 +21,7 @@ namespace Calamari.Integration.PackageDownload
         {
             get
             {
-                var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome", EnvironmentVariableTarget.Machine);
+                var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
                 if (tentacleHome == null)
                 {
                     Log.Error("Environment variable 'TentacleHome' has not been set.");

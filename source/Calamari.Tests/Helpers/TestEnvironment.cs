@@ -30,6 +30,11 @@ namespace Calamari.Tests.Helpers
 
             public const string All = "All";
         }
+
+        public static string ConstructRootedPath(params string[] paths)
+        {
+            return Path.Combine(Path.GetPathRoot(SolutionRoot), Path.Combine(paths));
+        }
     }
 }
 

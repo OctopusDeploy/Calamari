@@ -49,7 +49,7 @@ namespace Calamari.Commands
 
             var variables = new VariableDictionary(variablesFile);
 
-            var fileSystem = new CalamariPhysicalFileSystem();
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var scriptEngine = new ScriptEngineSelector();
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter();

@@ -12,7 +12,7 @@ namespace Calamari.Integration.FileSystem
 {
     public class PackageStore
     {
-        readonly ICalamariFileSystem fileSystem = new CalamariPhysicalFileSystem();
+        readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
 
 

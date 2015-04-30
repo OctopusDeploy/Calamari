@@ -113,6 +113,8 @@
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\ConfigurationTransforms\WarningDelegateArgs.cs" />
     <Compile Include="Guard.cs" />
+    <Compile Include="Integration\FileSystem\NixPhysicalFileSystem.cs" />
+    <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
     <Compile Include="Integration\Time\IClock.cs" />
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
