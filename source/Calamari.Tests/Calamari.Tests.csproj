@@ -136,6 +136,13 @@
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\Deploy.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\PostDeploy.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\Deploy.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\Acme.Web.nuspec">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
