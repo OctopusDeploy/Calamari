@@ -146,6 +146,12 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web\web.Production.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\web.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\web.Production.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -206,6 +212,10 @@
     </Content>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
@@ -213,7 +223,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y
+xcopy "$(SolutionDir)packages\NuGet.CommandLine.2.8.3\tools\Nuget.exe" "$(TargetDir)" /y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

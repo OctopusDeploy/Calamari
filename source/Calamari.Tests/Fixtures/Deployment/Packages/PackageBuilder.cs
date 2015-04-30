@@ -14,10 +14,10 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
     {
         public static string BuildSamplePackage(string name, string version, bool modifyPackage = false)
         {
-            var nugetCommandLine = Path.Combine(TestEnvironment.SolutionRoot, "packages", "NuGet.CommandLine.2.8.3", "tools", "NuGet.exe");
+            var nugetCommandLine = TestEnvironment.GetTestPath("NuGet.exe");
             Assert.That(File.Exists(nugetCommandLine), string.Format("Nuget.exe is not available (expected at {0}).", nugetCommandLine));
 
-            var packageDirectory = Path.Combine(TestEnvironment.SolutionRoot, "Calamari.Tests", "Fixtures", "Deployment", "Packages", name);
+            var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
             Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
 
             var nuspec = Path.Combine(packageDirectory, name + ".nuspec");

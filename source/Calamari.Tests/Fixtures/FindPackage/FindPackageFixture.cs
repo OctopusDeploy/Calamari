@@ -13,7 +13,8 @@ namespace Calamari.Tests.Fixtures.FindPackage
     [Category(TestEnvironment.CompatableOS.All)]
     public class FindPackageFixture : CalamariFixture
     {
-        readonly string downloadPath = Path.Combine(GetPackageDownloadFolder("FindPackage"), "Files");
+        readonly static string tentacleHome = TestEnvironment.GetTestPath("temp", "FindPackage");
+        readonly static string downloadPath = Path.Combine(tentacleHome, "Files");
         readonly string packageId = "Acme.Web";
         readonly string packageVersion = "1.0.0.0";
         readonly string newpackageVersion = "1.0.0.1";
@@ -21,8 +22,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [TestFixtureSetUp]
         public void TestFixtureSetUp()
         {
-            
-            Environment.SetEnvironmentVariable("TentacleHome", GetPackageDownloadFolder("FindPackage"));
+            Environment.SetEnvironmentVariable("TentacleHome", tentacleHome);
         }
 
         [TestFixtureTearDown]

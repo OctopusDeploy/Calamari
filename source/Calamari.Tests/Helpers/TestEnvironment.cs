@@ -16,9 +16,12 @@ namespace Calamari.Tests.Helpers
         {
             get
             {
-                string targetFolder = "source" + Path.DirectorySeparatorChar;
-                int index = AssemblyLocalPath.LastIndexOf(targetFolder, StringComparison.OrdinalIgnoreCase);
-                return AssemblyLocalPath.Substring(0, index + targetFolder.Length - 1);
+//                Console.WriteLine("AssemblyLocalPath " + AssemblyLocalPath);
+//                string targetFolder = "source" + Path.DirectorySeparatorChar;
+//                int index = AssemblyLocalPath.LastIndexOf(targetFolder, StringComparison.OrdinalIgnoreCase);
+//                var ss =AssemblyLocalPath.Substring(0, index + targetFolder.Length - 1);
+//                Console.WriteLine("SolutionRoot " + ss);
+                return CurrentWorkingDirectory;
             }
         }
 
@@ -29,6 +32,11 @@ namespace Calamari.Tests.Helpers
             public const string Windows = "Windows";
 
             public const string All = "All";
+        }
+
+        public static string GetTestPath(params string[] paths)
+        {
+            return Path.Combine(CurrentWorkingDirectory, Path.Combine(paths));
         }
 
         public static string ConstructRootedPath(params string[] paths)
