@@ -127,9 +127,15 @@
     <None Include="Fixtures\ConfigurationVariables\Samples\StrongTyped.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\Deployment\Packages\Acme.Web\PreDeploy.ps1" />
-    <None Include="Fixtures\Deployment\Packages\Acme.Web\PostDeploy.ps1" />
-    <None Include="Fixtures\Deployment\Packages\Acme.Web\Deploy.ps1" />
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\PreDeploy.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\PostDeploy.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\Deploy.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\Acme.Web.nuspec">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
