@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     [Category(TestEnvironment.CompatableOS.All)]
     public class SubstituteInFilesConventionFixture
     {
-        static readonly string StagingDirectory = ConstructAbsolutePath("Applications", "Acme");
+        static readonly string StagingDirectory = TestEnvironment.ConstructRootedPath("Applications", "Acme");
 
         ICalamariFileSystem fileSystem;
         IFileSubstituter substituter;
@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             substituter = Substitute.For<IFileSubstituter>();
             variables = new VariableDictionary();
 
-            deployment = new RunningDeployment(ConstructAbsolutePath("packages"), variables)
+            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
             {
                 StagingDirectory = StagingDirectory
             };
@@ -72,9 +72,5 @@ namespace Calamari.Tests.Fixtures.Conventions
             return new SubstituteInFilesConvention(fileSystem, substituter);
         }
 
-        private static string ConstructAbsolutePath(params string[] paths)
-        {
-            return Path.Combine(Path.GetPathRoot(TestEnvironment.SolutionRoot));
-        }
     }
 }

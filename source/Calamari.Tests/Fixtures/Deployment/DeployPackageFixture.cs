@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [SetUp]
         public void SetUp()
         {
-            fileSystem = new CalamariPhysicalFileSystem();
+            fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             // Ensure staging directory exists and is empty 
             stagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
@@ -277,8 +277,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TearDown]
         public void CleanUp()
         {
-            new CalamariPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
-            new CalamariPhysicalFileSystem().PurgeDirectory(customDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(customDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
         }
 
         private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)

@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             extractor.GetMetadata("C:\\Package.nupkg").Returns(new PackageMetadata { Id = "Acme.Web", Version = "1.0.0" });
 
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => new CalamariPhysicalFileSystem().RemoveInvalidFileNameChars(c.Arg<string>()));
+            fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => CalamariPhysicalFileSystem.GetPhysicalFileSystem().RemoveInvalidFileNameChars(c.Arg<string>()));
 
             variables = new VariableDictionary();
             variables.Set("env:SystemDrive", "C:");

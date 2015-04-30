@@ -9,8 +9,18 @@ using System.Threading;
 
 namespace Calamari.Integration.FileSystem
 {
-    public class CalamariPhysicalFileSystem : ICalamariFileSystem
+    public abstract class CalamariPhysicalFileSystem : ICalamariFileSystem
     {
+        public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
+        {
+            if (Type.GetType("Mono.Runtime") != null)
+            {
+                return new NixCalamariPhysicalFileSystem();
+            } 
+
+            return new WindowsPhysicalFileSystem();
+        }
+
         public bool FileExists(string path)
         {
             return File.Exists(path);
@@ -367,11 +377,9 @@ namespace Calamari.Integration.FileSystem
 
         public void EnsureDiskHasEnoughFreeSpace(string directoryPath, long requiredSpaceInBytes)
         {
-            ulong freeBytesAvailable;
-            ulong totalNumberOfBytes;
             ulong totalNumberOfFreeBytes;
 
-            var success = GetDiskFreeSpaceEx(directoryPath, out freeBytesAvailable, out totalNumberOfBytes, out totalNumberOfFreeBytes);
+            var success = GetFiskFreeSpace(directoryPath, out totalNumberOfFreeBytes);
             if (!success)
                 return;
 
@@ -395,11 +403,7 @@ namespace Calamari.Integration.FileSystem
             return relativeOrAbsoluteFilePath;
         }
 
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool GetDiskFreeSpaceEx(string lpDirectoryName,
-            out ulong lpFreeBytesAvailable,
-            out ulong lpTotalNumberOfBytes,
-            out ulong lpTotalNumberOfFreeBytes);
+        protected abstract bool GetFiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
+
     }
 }
