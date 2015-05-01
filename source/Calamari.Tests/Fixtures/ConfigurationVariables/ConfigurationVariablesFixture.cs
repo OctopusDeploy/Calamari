@@ -10,6 +10,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.ConfigurationVariables
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class ConfigurationVariablesFixture : CalamariFixture
     {
         [Test]
@@ -20,7 +21,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\NoHeader.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "NoHeader.config"), variables);
             Assert.That(text, Is.StringStarting("<configuration"));
         }
 
@@ -32,7 +33,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\CrazyNamespace.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples","CrazyNamespace.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -49,7 +50,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\App.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "App.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -66,7 +67,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\StrongTyped.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "StrongTyped.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -80,7 +81,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("MyDb1", "Server=foo");
             variables.Set("MyDb2", "Server=bar&bar=123");
             
-            var text = PerformTest("Samples\\App.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "App.config"), variables);
 
             var contents = XDocument.Parse(text);
             
@@ -88,10 +89,18 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             Assert.AreEqual("Server=bar&bar=123", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb2']").Attribute("connectionString").Value);
         }
 
+
+        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ConfigurationVariables");
+
+        private string GetFixtureResouce(params string[] paths)
+        {
+            return Path.Combine(FixtureDirectory, Path.Combine(paths));
+        }
+
         string PerformTest(string sampleFile, VariableDictionary variables)
         {
             var temp = Path.GetTempFileName();
-            File.Copy(MapSamplePath(sampleFile), temp, true);
+            File.Copy(sampleFile, temp, true);
             
             using (new TemporaryFile(temp))
             {    

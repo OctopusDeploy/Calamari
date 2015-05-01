@@ -1,6 +1,7 @@
 ﻿using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 using Octostache;
@@ -8,6 +9,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class CopyPackageToCustomInstallationDirectoryConventionFixture
     {
         RunningDeployment deployment;
