@@ -10,10 +10,13 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ApplyDelta
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class ApplyDeltaFixture : CalamariFixture
     {
-        readonly string downloadPath = Path.Combine(GetPackageDownloadFolder("ApplyDelta"), "Files");
-        readonly string newFileName = "Acme.Web.1.0.0.1.nupkg";
+        static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "ApplyDelta");
+        static  readonly string DownloadPath = Path.Combine(TentacleHome, "Files");
+
+        const string NewFileName = "Acme.Web.1.0.0.1.nupkg";
 
         CalamariResult ApplyDelta(string basisFile, string fileHash, string deltaFile, string newFile)
         {
@@ -28,7 +31,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         [TestFixtureSetUp]
         public void TestFixtureSetUp()
         {
-            Environment.SetEnvironmentVariable("TentacleHome", GetPackageDownloadFolder("ApplyDelta"));
+            Environment.SetEnvironmentVariable("TentacleHome", TentacleHome);
         }
 
         [TestFixtureTearDown]
@@ -40,15 +43,15 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         [SetUp]
         public void SetUp()
         {
-            if (!Directory.Exists(downloadPath))
-                Directory.CreateDirectory(downloadPath);
+            if (!Directory.Exists(DownloadPath))
+                Directory.CreateDirectory(DownloadPath);
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (Directory.Exists(downloadPath))
-                Directory.Delete(downloadPath, true);
+            if (Directory.Exists(DownloadPath))
+                Directory.Delete(DownloadPath, true);
         }
 
         [Test]
@@ -66,8 +69,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 Assert.That(File.Exists(signatureFile.FilePath));
 
                 using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.1", true)))
-                using (var deltaFile = new TemporaryFile(basisFile.FilePath +
-                        "_to_" + newFileName + ".octodelta"))
+                using (var deltaFile = new TemporaryFile(basisFile.FilePath + "_to_" + NewFileName + ".octodelta"))
                 {
                     var deltaResult = Invoke(OctoDiff()
                         .Action("delta")
@@ -78,10 +80,10 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     deltaResult.AssertZero();
                     Assert.That(File.Exists(deltaFile.FilePath));
 
-                    var patchResult = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, newFileName);
+                    var patchResult = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, NewFileName);
                     patchResult.AssertZero();
                     patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
-                        basisFile.Hash, Path.Combine(downloadPath, newFileName));
+                        basisFile.Hash, Path.Combine(DownloadPath, NewFileName));
                     patchResult.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name);
                 }
             }
@@ -125,7 +127,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         [Test]
         public void ShouldFailWhenBasisFileCannotBeFound()
         {
-            var basisFile = Path.Combine(downloadPath, "MyPackage.1.0.0.0.nupkg");
+            var basisFile = Path.Combine(DownloadPath, "MyPackage.1.0.0.0.nupkg");
             var result = ApplyDelta(basisFile, "Hash", "Delta", "New");
 
             result.AssertNonZero();
@@ -137,8 +139,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
             {
-                var deltaFilePath = Path.Combine(downloadPath,
-                    "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
+                var deltaFilePath = Path.Combine(DownloadPath, "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, "New");
 
                 result.AssertNonZero();
@@ -152,7 +153,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var otherBasisFileHash = "2e9407c9eae20ffa94bf050283f9b4292a48504c";
             using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
             {
-                var deltaFilePath = Path.Combine(downloadPath,
+                var deltaFilePath = Path.Combine(DownloadPath,
                     "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
                 using (var deltaFile = File.CreateText(deltaFilePath))
                 {
@@ -160,7 +161,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     deltaFile.Flush();
                 }
 
-                var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, newFileName);
+                var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName);
 
                 result.AssertNonZero();
                 result.AssertErrorOutput("Basis file hash {0} does not match the file hash specified {1}", basisFile.Hash, otherBasisFileHash);
@@ -172,7 +173,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
             {
-                var deltaFilePath = Path.Combine(downloadPath,
+                var deltaFilePath = Path.Combine(DownloadPath,
                     "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
                 using (var deltaFile = File.CreateText(deltaFilePath))
                 {
@@ -180,13 +181,13 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     deltaFile.Flush();
                 }
 
-                var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, newFileName);
+                var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, NewFileName);
 
                 result.AssertNonZero();
                 result.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}",
                     basisFile.FilePath,
                     basisFile.Hash,
-                    Path.Combine(downloadPath, newFileName));
+                    Path.Combine(DownloadPath, NewFileName));
                 result.AssertOutput("The delta file appears to be corrupt.");
             }
         }

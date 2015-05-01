@@ -9,12 +9,21 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
+    [Category("ROB")]
     public class ConfigurationTransformsFixture : CalamariFixture
     {
+        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ConfigurationTransforms");
+
+        private string GetFixtureResouce(params string[] paths)
+        {
+            return Path.Combine(FixtureDirectory, Path.Combine(paths));
+        }
+        
         [Test]
         public void WebReleaseConfig()
         {
-            var text = PerformTest("Samples\\Web.config", "Samples\\Web.Release.config");
+            var text = PerformTest(GetFixtureResouce("Samples","Web.config"), GetFixtureResouce("Samples","Web.Release.config"));
             var contents = XDocument.Parse(text);
 
             Assert.IsNull(GetDebugAttribute(contents));
@@ -25,12 +34,12 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         string PerformTest(string configurationFile, string transformFile)
         {
             var temp = Path.GetTempFileName();
-            File.Copy(MapSamplePath(configurationFile), temp, true);
+            File.Copy(configurationFile, temp, true);
             
             using (new TemporaryFile(temp))
             {
                 var substituter = new ConfigurationTransformer();
-                substituter.PerformTransform(temp, MapSamplePath(transformFile), temp);
+                substituter.PerformTransform(temp, transformFile, temp);
                 return File.ReadAllText(temp);
             }
         }

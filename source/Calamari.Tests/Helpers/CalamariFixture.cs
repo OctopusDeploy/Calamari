@@ -43,10 +43,5 @@ namespace Calamari.Tests.Helpers
             return Path.GetFullPath(Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(file)));
         }
 
-
-        protected static string GetPackageDownloadFolder(string fixtureName)
-        {
-            return Path.Combine(TestEnvironment.SolutionRoot, "Calamari.Tests","bin", "Fixtures", fixtureName);
-        }
     }
 }
