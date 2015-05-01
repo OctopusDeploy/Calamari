@@ -13,7 +13,7 @@ namespace Calamari.Integration.FileSystem
     {
         public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
         {
-            if (Type.GetType("Mono.Runtime") != null)
+            if (CalamariEnvironment.IsRunningOnMono)
             {
                 return new NixCalamariPhysicalFileSystem();
             } 

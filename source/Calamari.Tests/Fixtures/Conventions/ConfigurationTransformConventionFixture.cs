@@ -7,6 +7,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 using Octostache;
@@ -14,6 +15,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class ConfigurationTransformConventionFixture
     {
         ICalamariFileSystem fileSystem;
@@ -120,23 +122,6 @@ namespace Calamari.Tests.Fixtures.Conventions
             configurationTransformer.Received().PerformTransform(sourceConfig, transform, sourceConfig);
         }
 
-        private static IEnumerable<Tuple<string, string, string>> TransformFileNameTestCases
-        {
-            get
-            {
-                yield return Tuple.Create("C:\\Some\\path\\to\\web.config", "Release", "C:\\Some\\path\\to\\web.Release.config");
-                yield return Tuple.Create("C:\\Some\\path\\to\\web.config", "Staging.QLD", "C:\\Some\\path\\to\\web.Staging.QLD.config");
-                yield return Tuple.Create("C:\\Some\\path\\to\\web.config", "Production.config", "C:\\Some\\path\\to\\web.Production.config");
-                yield return Tuple.Create("C:\\Some\\path\\to\\bar.config", "foo.config=>bar.config", "C:\\Some\\path\\to\\foo.config");
-                yield return Tuple.Create("C:\\Some\\path\\to\\bar.blah", "foo.baz=>bar.blah", "C:\\Some\\path\\to\\foo.baz");
-                yield return Tuple.Create("C:\\Some\\path\\to\\bar.config", "foo.xml=>bar.config", "C:\\Some\\path\\to\\foo.xml");
-                yield return Tuple.Create("C:\\Some\\path\\to\\xyz.bar.blah", "*.foo.blah=>*.bar.blah", "C:\\Some\\path\\to\\xyz.foo.blah");
-                yield return Tuple.Create("C:\\Some\\path\\to\\xyz.bar.blah", "foo.blah=>*.bar.blah", "C:\\Some\\path\\to\\xyz.foo.blah");
-                yield return Tuple.Create("C:\\Some\\path\\to\\xyz.bar.blah", "*.foo.blah=>bar.blah", "C:\\Some\\path\\to\\xyz.foo.blah");
-                yield return Tuple.Create("C:\\Some\\path\\to\\crossdomainpolicy.xml", "Production.xml", "C:\\Some\\path\\to\\crossdomainpolicy.Production.xml");
-            }
-        }
-
         [Test]
         public void DetermineCorrectTransformFileName()
         {
@@ -163,6 +148,28 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             foreach (var file in files)
                 fileSystem.FileExists(file).Returns(true);
+        }
+
+        private static IEnumerable<Tuple<string, string, string>> TransformFileNameTestCases
+        {
+            get
+            {
+                yield return Tuple.Create(BuildConfigPath("web.config"), "Release", BuildConfigPath("web.Release.config"));
+                yield return Tuple.Create(BuildConfigPath("web.config"), "Staging.QLD", BuildConfigPath("web.Staging.QLD.config"));
+                yield return Tuple.Create(BuildConfigPath("web.config"), "Production.config", BuildConfigPath("web.Production.config"));
+                yield return Tuple.Create(BuildConfigPath("bar.config"), "foo.config=>bar.config", BuildConfigPath("foo.config"));
+                yield return Tuple.Create(BuildConfigPath("bar.blah"), "foo.baz=>bar.blah", BuildConfigPath("foo.baz"));
+                yield return Tuple.Create(BuildConfigPath("bar.config"), "foo.xml=>bar.config", BuildConfigPath("foo.xml"));
+                yield return Tuple.Create(BuildConfigPath("xyz.bar.blah"), "*.foo.blah=>*.bar.blah", BuildConfigPath("xyz.foo.blah"));
+                yield return Tuple.Create(BuildConfigPath("xyz.bar.blah"), "foo.blah=>*.bar.blah", BuildConfigPath("xyz.foo.blah"));
+                yield return Tuple.Create(BuildConfigPath("xyz.bar.blah"), "*.foo.blah=>bar.blah", BuildConfigPath("xyz.foo.blah"));
+                yield return Tuple.Create(BuildConfigPath("crossdomainpolicy.xml"), "Production.xml", BuildConfigPath("crossdomainpolicy.Production.xml"));
+            }
+        }
+
+        private static string BuildConfigPath(string filename)
+        {
+            return TestEnvironment.ConstructRootedPath("random", "path", filename);
         }
     }
 }

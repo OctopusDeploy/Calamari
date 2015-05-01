@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
@@ -7,11 +8,15 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
+    [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Windows)]
     public class PowerShellFixture : CalamariFixture
     {
         [Test]
         public void ShouldCallHello()
         {
+            var x = Environment.OSVersion.Platform;
+
             var output = Invoke(Calamari()
                 .Action("run-script")
                 .Argument("script", MapSamplePath("Scripts\\Hello.ps1")));

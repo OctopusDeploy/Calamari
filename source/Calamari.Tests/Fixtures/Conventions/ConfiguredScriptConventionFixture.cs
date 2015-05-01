@@ -5,6 +5,7 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 using Octostache;
@@ -12,6 +13,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class ConfiguredScriptConventionFixture
     {
         ICalamariFileSystem fileSystem;

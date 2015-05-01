@@ -6,6 +6,8 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
+    [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Windows)]
     public class ScriptCSFixture : CalamariFixture
     {
         [Test]
