@@ -193,7 +193,7 @@
     <None Include="Fixtures\PowerShell\Scripts\PrintVariables.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\ScriptCS\Scripts\CanCreateArtifact.csx">
+    <None Include="Fixtures\ScriptCS\Scripts\PrintEncodedVariable.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\ScriptCS\Scripts\Hello.csx">

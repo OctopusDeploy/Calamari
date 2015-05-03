@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHello()
         {
-            var x = Environment.OSVersion.Platform;
+            
 
             var output = Invoke(Calamari()
                 .Action("run-script")

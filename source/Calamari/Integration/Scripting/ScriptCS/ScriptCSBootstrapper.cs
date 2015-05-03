@@ -24,11 +24,11 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var myPath = typeof(ScriptCSScriptEngine).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
 
-            var attemptOne = Path.GetFullPath(Path.Combine(parent, "ScriptCS\\ScriptCS.exe"));
+            var attemptOne = Path.GetFullPath(Path.Combine(parent, "ScriptCS", "scriptcs.exe"));
             if (File.Exists(attemptOne))
                 return attemptOne;
-            
-            var attemptTwo = Path.GetFullPath(Path.Combine("..\\..\\packages\\Octopus.Dependencies.ScriptCS.3.0.1\\runtime\\ScriptCS.exe"));
+
+            var attemptTwo = Path.GetFullPath(Path.Combine("..", "..", "packages", "Octopus.Dependencies.ScriptCS.3.0.1", "runtime", "scriptcs.exe"));
             if (File.Exists(attemptTwo))
                 return attemptTwo;
 
@@ -38,7 +38,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
         public static string FormatCommandArguments(string bootstrapFile)
         {
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("\"{0}\"", bootstrapFile);
+            commandArguments.AppendFormat("-script \"{0}\"", bootstrapFile);
             return commandArguments.ToString();
         }
 
@@ -79,7 +79,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
-
+            
         static string WriteVariableDictionary(VariableDictionary variables)
         {
             var builder = new StringBuilder();

@@ -48,7 +48,6 @@ namespace Calamari.Commands
                 Log.Info("Using variables from: " + variablesFile);
 
             var variables = new VariableDictionary(variablesFile);
-
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var scriptEngine = new ScriptEngineSelector();
             var replacer = new ConfigurationVariablesReplacer();
