@@ -5,14 +5,6 @@ using Octostache;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
-    public class BashScriptEngine : IScriptEngine
-    {
-        public CommandResult Execute(string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
-
     public class ScriptCSScriptEngine : IScriptEngine
     {
         public CommandResult Execute(string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)

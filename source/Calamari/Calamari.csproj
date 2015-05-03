@@ -117,6 +117,9 @@
     <Compile Include="Guard.cs" />
     <Compile Include="Integration\FileSystem\NixPhysicalFileSystem.cs" />
     <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
+    <Compile Include="Integration\Scripting\Bash\BashScriptBootstrapper.cs" />
+    <Compile Include="Integration\Scripting\Bash\BashScriptEngine.cs" />
+    <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
     <Compile Include="Integration\Time\IClock.cs" />
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
