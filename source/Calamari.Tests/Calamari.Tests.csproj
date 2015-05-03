@@ -102,6 +102,7 @@
     <Compile Include="Fixtures\Retention\RetentionPolicyFixture.cs" />
     <Compile Include="Fixtures\Processes\SemaphoreFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\RequiresDotNet45Attribute.cs" />
+    <Compile Include="Fixtures\Bash\BashFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />
     <Compile Include="Fixtures\ServiceMessages\ServiceMessageParserFixture.cs" />
     <Compile Include="Fixtures\Substitutions\SubstitutionsFixture.cs" />
@@ -114,6 +115,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Fixtures\Bash\Scripts\PrintEncodedVariable.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ConfigurationTransforms\Samples\Web.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -161,6 +165,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\web.Production.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Bash\Scripts\Hello.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">

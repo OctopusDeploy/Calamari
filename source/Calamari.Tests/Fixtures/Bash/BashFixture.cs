@@ -1,29 +1,36 @@
 ﻿using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting.Bash;
+using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Fixtures.ScriptCS
+namespace Calamari.Tests.Fixtures.Bash
 {
     [TestFixture]
     [Category(TestEnvironment.CompatableOS.All)]
-    public class ScriptCSFixture : CalamariFixture
+    public class BashFixture : CalamariFixture
     {
-        [Test, RequiresDotNet45]
+        [Test]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.csx")));
+                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.sh")));
 
             output.AssertZero();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
-        [Test, RequiresDotNet45]
+        [Test]
         public void ShouldCallHello()
         {
+            var eng = new BashScriptEngine();
+
+            
+
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
@@ -34,11 +41,14 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             variables.Set("Host", "Never");
             variables.Save(variablesFile);
 
+            var runner = new CommandLineRunner(
+                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+
             using (new TemporaryFile(variablesFile))
             {
                 var output = Invoke(Calamari()
                     .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Hello.csx"))
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.sh"))
                     .Argument("variables", variablesFile));
 
                 output.AssertZero();
@@ -47,7 +57,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         }
 
 
-        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ScriptCS");
+        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "Bash");
         private string GetFixtureResouce(params string[] paths)
         {
             return Path.Combine(FixtureDirectory, Path.Combine(paths));

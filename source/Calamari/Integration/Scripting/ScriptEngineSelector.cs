@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 
