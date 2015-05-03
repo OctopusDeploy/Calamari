@@ -7,18 +7,18 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class ScriptCSFixture : CalamariFixture
     {
         [Test]
-        public void ShouldCreateArtifacts()
+        public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanCreateArtifact.csx")));
+                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.csx")));
 
             output.AssertZero();
-            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=']");
+            output.AssertOutput("##octopus[setVariable name='RG9ua3k=' value='S29uZw==']");
         }
 
         [Test]
@@ -38,12 +38,19 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             {
                 var output = Invoke(Calamari()
                     .Action("run-script")
-                    .Argument("script", MapSamplePath("Scripts\\Hello.csx"))
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.csx"))
                     .Argument("variables", variablesFile));
 
                 output.AssertZero();
                 output.AssertOutput("Hello Paul");
             }
+        }
+
+
+        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ScriptCS");
+        private string GetFixtureResouce(params string[] paths)
+        {
+            return Path.Combine(FixtureDirectory, Path.Combine(paths));
         }
     }
 }

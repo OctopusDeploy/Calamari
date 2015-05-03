@@ -85,6 +85,7 @@
     <Compile Include="Commands\Support\OptionException.cs" />
     <Compile Include="Commands\Support\OptionSet.cs" />
     <Compile Include="Commands\Support\OptionValueType.cs" />
+    <Compile Include="Commands\VersionCommand.cs" />
     <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureConfigurationConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureDeploymentConvention.cs" />

@@ -26,6 +26,8 @@ namespace Calamari.Integration.Scripting
                         return new PowerShellScriptEngine();
                     case "csx":
                         return new ScriptCSScriptEngine();
+                    case "sh":
+                        return new BashScriptEngine();
                 }
             }
             
