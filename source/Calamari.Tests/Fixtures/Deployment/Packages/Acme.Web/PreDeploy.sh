@@ -1,2 +1,2 @@
 #!/bin/bash
-echo $(get_octopusvariable "Name") "from PreDeploy.bat"
+echo $(get_octopusvariable "PreDeployGreeting") "from PreDeploy.sh"

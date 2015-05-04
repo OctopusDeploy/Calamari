@@ -13,7 +13,6 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class SubstituteInFilesConventionFixture
     {
         static readonly string StagingDirectory = TestEnvironment.ConstructRootedPath("Applications", "Acme");

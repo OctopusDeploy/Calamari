@@ -7,7 +7,6 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class ScriptCSFixture : CalamariFixture
     {
         [Test, RequiresDotNet45]

@@ -10,7 +10,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Bash
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
+    [Category(TestEnvironment.CompatableOS.Nix)]
     public class BashFixture : CalamariFixture
     {
         [Test]

@@ -10,7 +10,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ApplyDelta
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class ApplyDeltaFixture : CalamariFixture
     {
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "ApplyDelta");

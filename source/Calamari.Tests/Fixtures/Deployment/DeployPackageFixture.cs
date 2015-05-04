@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             if (CalamariEnvironment.IsRunningOnNix)
             {
                 result.AssertOutput("Extracted 9 files");
-                result.AssertOutput("Bonjour from PreDeploy.bat");
+                result.AssertOutput("Bonjour from PreDeploy.sh");
                 
             }
             else
@@ -107,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage("Acme.Web");
 
             // The environment app-setting value should have been transformed to 'Production'
-            AssertXmlNodeValue(stagingDirectory + "\\Production\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='environment']/@value", "Production");
+            AssertXmlNodeValue(Path.Combine(stagingDirectory, "Production", "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
 
         [Test]
@@ -127,6 +127,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)]
         public void ShouldExecuteFeatureScripts()
         {
             variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");

@@ -12,7 +12,6 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class CleanFixture : CalamariFixture
     {
         CalamariResult result;

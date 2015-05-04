@@ -9,7 +9,6 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Substitutions
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class SubstitutionsFixture : CalamariFixture
     {
         [Test]
