@@ -252,7 +252,15 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                        result.AssertOutput("Extracted 9 files");
+                        if (CalamariEnvironment.IsRunningOnNix)
+                        {
+                            result.AssertOutput("Extracted 9 files");
+                        }
+                        else
+                        {
+                            result.AssertOutput("Extracted 8 files");
+                        }
+
                         lock (extractionDirectories)
                         {
                             if (!extractionDirectories.Contains(extracted))
