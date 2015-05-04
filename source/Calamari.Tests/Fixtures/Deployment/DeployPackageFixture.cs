@@ -127,7 +127,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
         public void ShouldExecuteFeatureScripts()
         {
             variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");
