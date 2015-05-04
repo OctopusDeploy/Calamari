@@ -50,12 +50,19 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertZero();
 
 
-            result.AssertOutput("Extracting package to: " + stagingDirectory + "\\Acme.Web\\1.0.0");
-            
+            result.AssertOutput("Extracting package to: " + Path.Combine(stagingDirectory, "Acme.Web", "1.0.0"));
 
-            result.AssertOutput("Extracted 7 files");
-
-            result.AssertOutput("Bonjour from PreDeploy.ps1");
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                result.AssertOutput("Extracted 9 files");
+                result.AssertOutput("Bonjour from PreDeploy.bat");
+                
+            }
+            else
+            {
+                result.AssertOutput("Extracted 8 files");
+                result.AssertOutput("Bonjour from PreDeploy.ps1");
+            }
         }
 
         [Test]
@@ -63,7 +70,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             var result = DeployPackage("Acme.Web");
             result.AssertZero();
-            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(stagingDirectory + "\\Acme.Web\\1.0.0"));
+            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(Path.Combine(stagingDirectory, "Acme.Web", "1.0.0")));
         }
 
         [Test]
@@ -87,7 +94,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage("Acme.Web");
 
             // The #{foo} variable in web.config should have been replaced by 'bar'
-            AssertXmlNodeValue(stagingDirectory + "\\Acme.Web\\1.0.0\\web.config", "configuration/appSettings/add[@key='foo']/@value", "bar");
+            AssertXmlNodeValue(Path.Combine(stagingDirectory, "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='foo']/@value", "bar");
         }
 
         [Test]
@@ -116,7 +123,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage("Acme.Web");
 
             // Assert content was copied to custom-installation directory
-            Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets\\styles.css")));
+            Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets", "styles.css")));
         }
 
         [Test]
@@ -128,6 +135,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)]
         public void ShouldModifyIisWebsiteRoot()
         {
             // If the 'UpdateIisWebsite' variable is set, the website root will be updated
@@ -157,7 +165,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldRunConfiguredScripts()
         {
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
-            variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "ps1"), "Write-Host 'The wheels on the bus go round...'");
+
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "sh"), "echo 'The wheels on the bus go round...'");
+            }
+            else
+            {
+                variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "ps1"), "Write-Host 'The wheels on the bus go round...'");
+            }
 
             var result = DeployPackage("Acme.Web");
 
@@ -236,7 +252,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                        result.AssertOutput("Extracted 7 files");
+                        result.AssertOutput("Extracted 9 files");
                         lock (extractionDirectories)
                         {
                             if (!extractionDirectories.Contains(extracted))

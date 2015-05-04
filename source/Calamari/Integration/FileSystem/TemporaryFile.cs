@@ -53,6 +53,8 @@ namespace Calamari.Integration.FileSystem
                 try
                 {
                     File.Delete(filePath);
+                    if (!File.Exists(filePath))
+                        return;
                 }
                 catch (Exception)
                 {

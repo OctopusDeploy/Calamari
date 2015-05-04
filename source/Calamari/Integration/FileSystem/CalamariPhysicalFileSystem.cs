@@ -13,10 +13,10 @@ namespace Calamari.Integration.FileSystem
     {
         public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
         {
-            if (CalamariEnvironment.IsRunningOnMono)
+            if (CalamariEnvironment.IsRunningOnNix)
             {
                 return new NixCalamariPhysicalFileSystem();
-            } 
+            }
 
             return new WindowsPhysicalFileSystem();
         }
