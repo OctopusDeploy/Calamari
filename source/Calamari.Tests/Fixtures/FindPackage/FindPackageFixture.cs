@@ -10,7 +10,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.FindPackage
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class FindPackageFixture : CalamariFixture
     {
         readonly static string tentacleHome = TestEnvironment.GetTestPath("temp", "FindPackage");

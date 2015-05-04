@@ -12,7 +12,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Retention
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class RetentionPolicyFixture
     {
         RetentionPolicy retentionPolicy;

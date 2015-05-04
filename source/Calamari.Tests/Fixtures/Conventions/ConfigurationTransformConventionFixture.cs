@@ -15,7 +15,6 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class ConfigurationTransformConventionFixture
     {
         ICalamariFileSystem fileSystem;

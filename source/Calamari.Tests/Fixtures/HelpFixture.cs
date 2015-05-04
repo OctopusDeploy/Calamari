@@ -4,7 +4,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class HelpFixture : CalamariFixture
     {
         [Test]

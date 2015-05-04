@@ -11,7 +11,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.PackageDownload
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class PackageDownloadFixture : CalamariFixture
     {
         

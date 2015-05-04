@@ -10,7 +10,6 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.ConfigurationVariables
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.All)]
     public class ConfigurationVariablesFixture : CalamariFixture
     {
         [Test]

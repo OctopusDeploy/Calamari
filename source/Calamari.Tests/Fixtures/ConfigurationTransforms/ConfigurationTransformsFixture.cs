@@ -9,7 +9,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
     public class ConfigurationTransformsFixture : CalamariFixture
     {
         readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ConfigurationTransforms");
