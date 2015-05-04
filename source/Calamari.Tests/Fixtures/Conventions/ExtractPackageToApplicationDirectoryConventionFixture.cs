@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment;
+﻿using System.IO;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -11,73 +12,121 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.All)]
     public class ExtractPackageToApplicationDirectoryConventionFixture
     {
         IPackageExtractor extractor;
         VariableDictionary variables;
         ExtractPackageToApplicationDirectoryConvention convention;
         ICalamariFileSystem fileSystem;
+        static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Package.nupkg");
 
         [SetUp]
         public void SetUp()
         {
             extractor = Substitute.For<IPackageExtractor>();
-            extractor.GetMetadata("C:\\Package.nupkg").Returns(new PackageMetadata { Id = "Acme.Web", Version = "1.0.0" });
+            extractor.GetMetadata(PackageLocation).Returns(new PackageMetadata { Id = "Acme.Web", Version = "1.0.0" });
 
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => CalamariPhysicalFileSystem.GetPhysicalFileSystem().RemoveInvalidFileNameChars(c.Arg<string>()));
+            fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));
 
             variables = new VariableDictionary();
-            variables.Set("env:SystemDrive", "C:");
-
             convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem, new SystemSemaphore());
         }
 
         [Test]
+        public void ShouldPrefixAppPathIfSet()
+        {
+            var rootPath = TestEnvironment.ConstructRootedPath("MyApp");
+            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", rootPath);
+
+            convention.Install(new RunningDeployment(PackageLocation, variables));
+
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo(Path.Combine(rootPath, "Acme.Web", "1.0.0")));
+        }
+
+        [Test]
+        public void ShouldPrefixSystemDriveIfPathVariableUnavailable()
+        {
+            var expectedRoot = string.Format("X:{0}Applications", Path.DirectorySeparatorChar);
+            variables.Set("env:SystemDrive", "X:");
+            variables.Set("env:HOME", "SomethingElse");
+            
+            convention.Install(new RunningDeployment(PackageLocation, variables));
+
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo(Path.Combine(expectedRoot, "Acme.Web", "1.0.0")));
+        }
+
+        [Test]
+        public void ShouldPrefixHomeDriveIfOnlyVariableAvailable()
+        {
+            var variable = string.Format("{0}home{0}MyUser", Path.DirectorySeparatorChar);
+            var expectedRoot = string.Format("{0}{1}Applications", variable, Path.DirectorySeparatorChar);
+            variables.Set("env:HOME", variable);
+            
+            convention.Install(new RunningDeployment(PackageLocation, variables));
+
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo(Path.Combine(expectedRoot, "Acme.Web", "1.0.0")));
+        }
+
+        [Test]
+        [ExpectedException]
+        public void ShouldThrowExceptionIfNoPathUnresolved()
+        {
+            convention.Install(new RunningDeployment(PackageLocation, variables));
+        }
+
+
+        [Test]
         public void ShouldExtractToVersionedFolderWithDefaultPath()
         {
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
-            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\Applications\\Acme.Web\\1.0.0"));
+            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
+            
+            convention.Install(new RunningDeployment(PackageLocation, variables));
+
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"),Is.StringEnding(Path.Combine("Acme.Web", "1.0.0")));
         }
+
 
         [Test]
         public void ShouldAppendToVersionedFolderIfAlreadyExisting()
         {
-            fileSystem.DirectoryExists("C:\\Applications\\Acme.Web\\1.0.0").Returns(true);
-            fileSystem.DirectoryExists("C:\\Applications\\Acme.Web\\1.0.0_1").Returns(true);
-            fileSystem.DirectoryExists("C:\\Applications\\Acme.Web\\1.0.0_2").Returns(true);
+            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
 
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
+            fileSystem.DirectoryExists(Arg.Is<string>(path => path.EndsWith(Path.Combine("Acme.Web", "1.0.0")))).Returns(true);
+            fileSystem.DirectoryExists(Arg.Is<string>(path => path.EndsWith(Path.Combine("Acme.Web", "1.0.0_1")))).Returns(true);
+            fileSystem.DirectoryExists(Arg.Is<string>(path => path.EndsWith(Path.Combine("Acme.Web", "1.0.0_2")))).Returns(true);
 
-            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\Applications\\Acme.Web\\1.0.0_3"));
+
+            convention.Install(new RunningDeployment(PackageLocation, variables));
+
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.StringEnding(Path.Combine("Acme.Web", "1.0.0_3")));
+            
         }
+        
 
         [Test]
         public void ShouldExtractToEnvironmentSpecificFolderIfProvided()
         {
+            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
             variables.Set("Octopus.Environment.Name", "Production");
 
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
+            convention.Install(new RunningDeployment(PackageLocation, variables));
 
-            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\Applications\\Production\\Acme.Web\\1.0.0"));
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.StringEnding(Path.Combine("Production","Acme.Web","1.0.0")));
         }
 
         [Test]
         public void ShouldRemoveInvalidPathCharsFromEnvironmentName()
         {
-            variables.Set("Octopus.Environment.Name", "Production: Tokyo");
+            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
+            variables.Set("Octopus.Environment.Name", "Production! Tokyo");
 
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
+            convention.Install(new RunningDeployment(PackageLocation, variables));
 
-            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\Applications\\Production Tokyo\\Acme.Web\\1.0.0"));
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.StringEnding(Path.Combine("Production Tokyo","Acme.Web","1.0.0")));
         }
 
-        [Test]
-        public void ShouldPreferAppDirPathIfSet()
-        {
-            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", "C:\\MyApps");
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
-            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo("C:\\MyApps\\Acme.Web\\1.0.0"));
-        }
+       
     }
 }
