@@ -40,15 +40,15 @@
       <HintPath>..\packages\Microsoft.Web.Administration.7.0.0.0\lib\net20\Microsoft.Web.Administration.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Web.XmlTransform">
-      <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
+      <HintPath>..\lib\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="NuGet.Core, Version=2.8.50926.602, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+    <Reference Include="NuGet.Core, Version=1.6.30117.9648, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.Core.2.8.3\lib\net40-Client\NuGet.Core.dll</HintPath>
+      <HintPath>..\lib\NuGet.Core.dll</HintPath>
     </Reference>
     <Reference Include="Octodiff">
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
@@ -85,7 +85,6 @@
     <Compile Include="Commands\Support\OptionException.cs" />
     <Compile Include="Commands\Support\OptionSet.cs" />
     <Compile Include="Commands\Support\OptionValueType.cs" />
-    <Compile Include="Commands\VersionCommand.cs" />
     <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureConfigurationConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureDeploymentConvention.cs" />
@@ -202,6 +201,7 @@
     <EmbeddedResource Include="Scripts\Octopus.Features.RedGateDatabase_BeforePostDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_AfterPreDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_BeforePostDeploy.ps1" />
+    <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.sh" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />
