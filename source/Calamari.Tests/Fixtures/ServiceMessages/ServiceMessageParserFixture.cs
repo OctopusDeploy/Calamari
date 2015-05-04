@@ -48,16 +48,28 @@ namespace Calamari.Tests.Fixtures.ServiceMessages
         }
 
         [Test]
-        public void ShouldRecognizeMessageOverMultipleLines()
+        public void ShouldRecognizeMessageWithNewLineChar()
         {
+            const string stringWithEncodedCrLf = "dGhpcyBpcyBhIHZlcnkNCg0KdmVyeSBsb25nIGxvbmcgbGluZQ==";
             parser.Parse("Hello world!" + Environment.NewLine);
-            parser.Parse("##octopus[foo name='UGF1bA==' value='dGhpcyBpcyBhIHZlcnkNCg" + Environment.NewLine + Environment.NewLine);
-            parser.Parse("0KdmVyeSBsb25nIGxvbmcgbGluZQ=='] Hello" + Environment.NewLine);
+            parser.Parse(string.Format("##octopus[foo name='UGF1bA==' value='{0}'] Hello", stringWithEncodedCrLf));
 
             Assert.That(messages.Count, Is.EqualTo(1));
             Assert.That(messages[0].Name, Is.EqualTo("foo"));
             Assert.That(messages[0].Properties["name"], Is.EqualTo("Paul"));
-            Assert.That(messages[0].Properties["value"], Is.EqualTo("this is a very" + Environment.NewLine + Environment.NewLine + "very long long line"));
+            Assert.That(messages[0].Properties["value"], Is.EqualTo(string.Format("this is a very\r\n\r\nvery long long line")));
+        }
+
+        [Test]
+        public void ShouldRecognizeMessageSplitOverMultipleLines()
+        {
+            parser.Parse("Hello world!" + Environment.NewLine);
+            parser.Parse(string.Format("##octopus[foo name{0}='UGF1bA==' value='VGhpcyBzZ{0}W50ZW5jZSBpcyBmYWx{0}{0}zZQ=='] Hello", Environment.NewLine));
+
+            Assert.That(messages.Count, Is.EqualTo(1));
+            Assert.That(messages[0].Name, Is.EqualTo("foo"));
+            Assert.That(messages[0].Properties["name"], Is.EqualTo("Paul"));
+            Assert.That(messages[0].Properties["value"], Is.EqualTo(string.Format("This sentence is false")));
         }
 
     }
