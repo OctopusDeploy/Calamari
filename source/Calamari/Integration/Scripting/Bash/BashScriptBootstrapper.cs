@@ -11,6 +11,8 @@ namespace Calamari.Integration.Scripting.Bash
 {
     public class BashScriptBootstrapper
     {
+        public const string WindowsNewLine = "\r\n";
+
         private static readonly string BootstrapScriptTemplate;
 
         static BashScriptBootstrapper()
@@ -34,9 +36,10 @@ namespace Calamari.Integration.Scripting.Bash
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariableSwitchConditions(variables)));
 
+
             using (var writer = new StreamWriter(configurationFile, false, Encoding.ASCII))
             {
-                writer.Write(builder.ToString());
+                writer.Write(builder.Replace(WindowsNewLine, Environment.NewLine));
                 writer.Flush();
             }
 
@@ -62,12 +65,21 @@ namespace Calamari.Integration.Scripting.Bash
             return "bash";
         }
 
+        static void EnsureValidUnixFile(string scriptFilePath)
+        {
+            var text = File.ReadAllText(scriptFilePath);
+            text = text.Replace(WindowsNewLine, Environment.NewLine);
+            File.WriteAllText(scriptFilePath, text);
+        }
+
         public static string PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory)
         {
+            
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
 
             using (var writer = new StreamWriter(bootstrapFile, false, Encoding.ASCII))
             {
+                writer.NewLine = Environment.NewLine;
                 writer.WriteLine("#!/bin/bash");
                 writer.WriteLine("source \"" + configurationFile.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("source \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
@@ -75,7 +87,9 @@ namespace Calamari.Integration.Scripting.Bash
             }
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
+            EnsureValidUnixFile(scriptFilePath);
             return bootstrapFile;
         }
+
     }
 }
