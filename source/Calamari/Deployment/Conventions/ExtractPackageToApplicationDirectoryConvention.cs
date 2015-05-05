@@ -6,45 +6,22 @@ using Octostache;
 
 namespace Calamari.Deployment.Conventions
 {
-
-    public class ExtractPackageToApplicationDirectoryConvention : IInstallConvention
+    public class ExtractPackageToApplicationDirectoryConvention : ExtractPackageConvention 
     {
-        readonly IPackageExtractor extractor;
-        readonly ICalamariFileSystem fileSystem;
         readonly ISemaphore semaphore;
 
-        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ISemaphore semaphore)
+        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ISemaphore semaphore) : base(extractor, fileSystem)
         {
-            this.extractor = extractor;
-            this.fileSystem = fileSystem;
             this.semaphore = semaphore;
         }
 
-        public void Install(RunningDeployment deployment)
-        {
-            var metadata = extractor.GetMetadata(deployment.PackageFilePath);
-
-            var targetPath = GetTargetPath(deployment, metadata);
-            targetPath = EnsureTargetPathIsEmpty(targetPath);
-
-            Log.Verbose("Extracting package to: " + targetPath);
-
-            int filesExtracted;
-            extractor.Install(deployment.PackageFilePath, targetPath, false, out filesExtracted);
-
-            Log.Verbose("Extracted " + filesExtracted + " files");
-
-            deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath);
-        }
-
-        string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)
+        protected override string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)
         {
             var root = GetInitialExtractionDirectory(deployment.Variables);
-            return Path.Combine(root, metadata.Id, metadata.Version);
+            return EnsureTargetPathIsEmpty(Path.Combine(root, metadata.Id, metadata.Version));
         }
 
-        string GetInitialExtractionDirectory(VariableDictionary variables)
+        private string GetInitialExtractionDirectory(VariableDictionary variables)
         {
             var root = variables.Get(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath)
                 ?? variables.Evaluate("#{env:SystemDrive}\\Applications");
@@ -52,6 +29,7 @@ namespace Calamari.Deployment.Conventions
             root = AppendEnvironmentNameIfProvided(variables, root);
             fileSystem.EnsureDirectoryExists(root);
             fileSystem.EnsureDiskHasEnoughFreeSpace(root);
+
             return root;
         }
 
@@ -88,5 +66,6 @@ namespace Calamari.Deployment.Conventions
 
             return target;
         }
+
     }
 }

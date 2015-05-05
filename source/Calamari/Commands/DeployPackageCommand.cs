@@ -81,8 +81,6 @@ namespace Calamari.Commands
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new LegacyIisWebSiteConvention(fileSystem, iis),
-                new AzureUploadConvention(),
-                new AzureDeploymentConvention(),
                 new FeatureScriptConvention(DeploymentStages.BeforePostDeploy, fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, scriptEngine, fileSystem, commandLineRunner),

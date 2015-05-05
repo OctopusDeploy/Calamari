@@ -122,6 +122,14 @@ namespace Calamari.Deployment
         public static class Machine
         {
             public const string Name = "Octopus.Machine.Name";
+
+            public static class Azure
+            {
+                public static readonly string SubscriptionId = "Octopus.Machine.Azure.SubscriptionId";
+                public static readonly string CertificateBytes = "Octopus.Machine.Azure.CertificateBytes";
+                public static readonly string WebSpaceName = "Octopus.Machine.Azure.WebSpaceName";
+                public static readonly string WebAppName = "Octopus.Machine.Azure.WebAppName";
+            }
         }
     }
 }

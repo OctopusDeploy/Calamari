@@ -26,6 +26,8 @@ namespace Calamari.Tests.Helpers
             get { return exitCode; }
         }
 
+        public CaptureCommandOutput CapturedOutput { get { return captured; } }
+
         public void AssertZero()
         {
             Assert.That(ExitCode, Is.EqualTo(0), "Expected command to return exit code 0");
