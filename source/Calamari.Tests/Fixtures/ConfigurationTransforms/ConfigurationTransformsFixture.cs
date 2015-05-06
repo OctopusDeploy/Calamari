@@ -11,13 +11,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
     [TestFixture]
     public class ConfigurationTransformsFixture : CalamariFixture
     {
-        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ConfigurationTransforms");
 
-        private string GetFixtureResouce(params string[] paths)
-        {
-            return Path.Combine(FixtureDirectory, Path.Combine(paths));
-        }
-        
         [Test]
         public void WebReleaseConfig()
         {

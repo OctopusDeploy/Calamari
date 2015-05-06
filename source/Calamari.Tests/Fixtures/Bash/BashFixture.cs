@@ -27,12 +27,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [Test]
         public void ShouldCallHello()
         {
-            var eng = new BashScriptEngine();
-
-            
-
             var variablesFile = Path.GetTempFileName();
-
             var variables = new VariableDictionary();
             variables.Set("Name", "Paul");
             variables.Set("Variable2", "DEF");
@@ -40,9 +35,6 @@ namespace Calamari.Tests.Fixtures.Bash
             variables.Set("Foo_bar", "Hello");
             variables.Set("Host", "Never");
             variables.Save(variablesFile);
-
-            var runner = new CommandLineRunner(
-                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
 
             using (new TemporaryFile(variablesFile))
             {
@@ -54,13 +46,6 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertZero();
                 output.AssertOutput("Hello Paul");
             }
-        }
-
-
-        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "Bash");
-        private string GetFixtureResouce(params string[] paths)
-        {
-            return Path.Combine(FixtureDirectory, Path.Combine(paths));
         }
     }
 }

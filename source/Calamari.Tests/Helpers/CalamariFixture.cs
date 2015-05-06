@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
@@ -36,12 +37,11 @@ namespace Calamari.Tests.Helpers
             return Invoke(command, new VariableDictionary());
         }
 
-        protected string MapSamplePath(params string[] file)
+        protected string GetFixtureResouce(params string[] paths)
         {
-            var path = GetType().Namespace.Replace("Calamari.Tests", "");
-            path = path.Replace('.', Path.DirectorySeparatorChar).Trim('.', Path.DirectorySeparatorChar);
-            return Path.GetFullPath(Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(file)));
+            var path = GetType().Namespace.Replace("Calamari.Tests.", String.Empty);
+            path = path.Replace('.', Path.DirectorySeparatorChar);
+            return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
-
     }
 }

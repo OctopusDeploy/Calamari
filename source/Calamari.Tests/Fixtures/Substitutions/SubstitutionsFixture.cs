@@ -31,17 +31,9 @@ namespace Calamari.Tests.Fixtures.Substitutions
             using (new TemporaryFile(temp))
             {    
                 var substituter = new FileSubstituter();
-                substituter.PerformSubstitution(MapSamplePath(sampleFile), variables, temp);
+                substituter.PerformSubstitution(sampleFile, variables, temp);
                 return File.ReadAllText(temp);
             }
         }
-
-        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "Substitutions");
-        private string GetFixtureResouce(params string[] paths)
-        {
-            return Path.Combine(FixtureDirectory, Path.Combine(paths));
-        }
-
-       
     }
 }

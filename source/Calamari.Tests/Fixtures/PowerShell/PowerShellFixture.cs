@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\Hello.ps1")));
+                .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
             output.AssertZero();
             output.AssertOutput("Hello!");
@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\Output.ps1")));
+                .Argument("script", GetFixtureResouce("Scripts", "Output.ps1")));
 
             output.AssertNonZero();
             output.AssertOutput("Hello, write-host!");
@@ -45,7 +45,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanCreateArtifact.ps1")));
+                .Argument("script", GetFixtureResouce("Scripts", "CanCreateArtifact.ps1")));
 
             output.AssertZero();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=']");
@@ -56,7 +56,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanDotSource.ps1")));
+                .Argument("script", GetFixtureResouce("Scripts", "CanDotSource.ps1")));
 
             output.AssertZero();
             output.AssertOutput("Hello!");
@@ -69,7 +69,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), variables);
+                .Argument("script", GetFixtureResouce("Scripts", "CanSetVariable.ps1")), variables);
 
             output.AssertZero();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
@@ -84,7 +84,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var output = Invoke(Calamari() 
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), 
+                .Argument("script", GetFixtureResouce("Scripts", "CanSetVariable.ps1")), 
                 variables);
 
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
@@ -99,7 +99,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var output = Invoke(Calamari() 
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanSetVariable.ps1")), 
+                .Argument("script", GetFixtureResouce("Scripts", "CanSetVariable.ps1")), 
                 variables);
 
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
@@ -110,7 +110,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\Invalid.ps1")));
+                .Argument("script", GetFixtureResouce("Scripts", "Invalid.ps1")));
 
             output.AssertNonZero();
             output.AssertErrorOutput("A positional parameter cannot be found that accepts");
@@ -121,7 +121,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\InvalidSyntax.ps1")));
+                .Argument("script", GetFixtureResouce("Scripts", "InvalidSyntax.ps1")));
 
             output.AssertNonZero();
             output.AssertErrorOutput("ParserError");
@@ -144,7 +144,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             {
                 var output = Invoke(Calamari()
                    .Action("run-script")
-                   .Argument("script", MapSamplePath("Scripts\\PrintVariables.ps1"))
+                   .Argument("script", GetFixtureResouce("Scripts", "PrintVariables.ps1"))
                    .Argument("variables", variablesFile));
 
                 output.AssertZero();
@@ -169,7 +169,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             {
                 var output = Invoke(Calamari()
                    .Action("run-script")
-                   .Argument("script", MapSamplePath("Scripts\\UseModule.ps1"))
+                   .Argument("script", GetFixtureResouce("Scripts", "UseModule.ps1"))
                    .Argument("variables", variablesFile));
 
                 output.AssertZero();
@@ -182,7 +182,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\Ping.ps1")));
+                .Argument("script", GetFixtureResouce("Scripts", "Ping.ps1")));
 
             output.AssertZero();
             output.AssertOutput("Pinging ");
