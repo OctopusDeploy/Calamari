@@ -88,14 +88,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             Assert.AreEqual("Server=bar&bar=123", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb2']").Attribute("connectionString").Value);
         }
 
-
-        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ConfigurationVariables");
-
-        private string GetFixtureResouce(params string[] paths)
-        {
-            return Path.Combine(FixtureDirectory, Path.Combine(paths));
-        }
-
         string PerformTest(string sampleFile, VariableDictionary variables)
         {
             var temp = Path.GetTempFileName();

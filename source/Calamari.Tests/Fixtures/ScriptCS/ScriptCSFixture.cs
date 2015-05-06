@@ -44,12 +44,5 @@ namespace Calamari.Tests.Fixtures.ScriptCS
                 output.AssertOutput("Hello Paul");
             }
         }
-
-
-        readonly string FixtureDirectory = TestEnvironment.GetTestPath("Fixtures", "ScriptCS");
-        private string GetFixtureResouce(params string[] paths)
-        {
-            return Path.Combine(FixtureDirectory, Path.Combine(paths));
-        }
     }
 }
