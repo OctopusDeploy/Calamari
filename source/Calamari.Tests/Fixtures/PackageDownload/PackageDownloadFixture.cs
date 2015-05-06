@@ -71,11 +71,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri).AssertZero();
 
-            var result = DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri);
+            var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri);
 
             result.AssertZero();
 
-            result.AssertOutput("Checking package cache for package {0} {1}", AuthFeed.PackageId, PublicFeed.Version);
+            result.AssertOutput("Checking package cache for package {0} {1}", PublicFeed.PackageId, PublicFeed.Version);
             result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}", PublicFeed.File);
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
@@ -87,17 +87,17 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri).AssertZero();
 
-            var result = DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri, forcePackageDownload: true);
+            var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri, forcePackageDownload: true);
 
             result.AssertZero();
 
-            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", AuthFeed.PackageId, PublicFeed.Version, PublicFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", PublicFeed.DownloadFolder);
-            result.AssertOutput("Found package {0} version {1}", AuthFeed.PackageId, PublicFeed.Version);
+            result.AssertOutput("Found package {0} version {1}", PublicFeed.PackageId, PublicFeed.Version);
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, PublicFeed.File);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", AuthFeed.PackageId, PublicFeed.Version, PublicFeedUri);
+            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
         }
 
         [Test]
