@@ -6,6 +6,8 @@ namespace Calamari.Integration.FileSystem
     {
         protected override bool GetFiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
         {
+            // This method will not work for UNC paths on windows 
+            // (hence WindowsPhysicalFileSystem) but should be sufficient for Linux mounts
             var pathRoot = Path.GetPathRoot(directoryPath);
             foreach (var drive in DriveInfo.GetDrives())
             {
