@@ -13,6 +13,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
     {
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
         public void WebReleaseConfig()
         {
             var text = PerformTest(GetFixtureResouce("Samples","Web.config"), GetFixtureResouce("Samples","Web.Release.config"));

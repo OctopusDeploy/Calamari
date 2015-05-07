@@ -98,6 +98,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -252,14 +253,9 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                        if (CalamariEnvironment.IsRunningOnNix)
-                        {
-                            result.AssertOutput("Extracted 9 files");
-                        }
-                        else
-                        {
-                            result.AssertOutput("Extracted 8 files");
-                        }
+                        result.AssertOutput(CalamariEnvironment.IsRunningOnNix
+                            ? "Extracted 9 files"
+                            : "Extracted 8 files");
 
                         lock (extractionDirectories)
                         {
