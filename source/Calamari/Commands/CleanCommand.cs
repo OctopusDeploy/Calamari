@@ -37,7 +37,7 @@ namespace Calamari.Commands
             var variables = new VariableDictionary();
             variables.EnrichWithEnvironmentVariables();
 
-            var fileSystem = new CalamariPhysicalFileSystem();
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphore(), variables);
             var clock = new SystemClock();
 

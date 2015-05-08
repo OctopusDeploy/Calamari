@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\NoHeader.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "NoHeader.config"), variables);
             Assert.That(text, Is.StringStarting("<configuration"));
         }
 
@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\CrazyNamespace.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples","CrazyNamespace.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -49,7 +49,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\App.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "App.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -66,7 +66,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest("Samples\\StrongTyped.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "StrongTyped.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -80,7 +80,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("MyDb1", "Server=foo");
             variables.Set("MyDb2", "Server=bar&bar=123");
             
-            var text = PerformTest("Samples\\App.config", variables);
+            var text = PerformTest(GetFixtureResouce("Samples", "App.config"), variables);
 
             var contents = XDocument.Parse(text);
             
@@ -91,7 +91,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         string PerformTest(string sampleFile, VariableDictionary variables)
         {
             var temp = Path.GetTempFileName();
-            File.Copy(MapSamplePath(sampleFile), temp, true);
+            File.Copy(sampleFile, temp, true);
             
             using (new TemporaryFile(temp))
             {    

@@ -2,6 +2,7 @@
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 using Octostache;

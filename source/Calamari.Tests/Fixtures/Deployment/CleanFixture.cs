@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [SetUp]
         public void SetUp()
         {
-            fileSystem = new CalamariPhysicalFileSystem();
+            fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             // Ensure tenticle directory exists
             tentacleDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestTentacle");

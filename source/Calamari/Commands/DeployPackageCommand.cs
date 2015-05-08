@@ -48,16 +48,15 @@ namespace Calamari.Commands
                 Log.Info("Using variables from: " + variablesFile);
 
             var variables = new VariableDictionary(variablesFile);
-
-            var fileSystem = new CalamariPhysicalFileSystem();
-            var scriptEngine = new ScriptEngineSelector();
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var scriptEngine = ScriptEngineSelector.GetScriptEngineSelector();
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter();
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = new SystemSemaphore();
-            var commandLineRunner = new CommandLineRunner( new SplitCommandOutput( new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
             var conventions = new List<IConvention>

@@ -6,17 +6,18 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
+    [TestFixture]
     public class ScriptCSFixture : CalamariFixture
     {
         [Test, RequiresDotNet45]
-        public void ShouldCreateArtifacts()
+        public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", MapSamplePath("Scripts\\CanCreateArtifact.csx")));
+                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.csx")));
 
             output.AssertZero();
-            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=']");
+            output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
         [Test, RequiresDotNet45]
@@ -36,7 +37,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             {
                 var output = Invoke(Calamari()
                     .Action("run-script")
-                    .Argument("script", MapSamplePath("Scripts\\Hello.csx"))
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.csx"))
                     .Argument("variables", variablesFile));
 
                 output.AssertZero();

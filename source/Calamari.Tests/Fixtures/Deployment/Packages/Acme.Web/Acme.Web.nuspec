@@ -12,5 +12,6 @@
   </metadata>
   <files>
     <file src="**\*.*" target="" />
+    <file src="**/*.*" target="" />
   </files>
 </package>
