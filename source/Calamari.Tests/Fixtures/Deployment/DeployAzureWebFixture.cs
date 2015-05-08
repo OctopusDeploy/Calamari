@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -21,17 +22,20 @@ namespace Calamari.Tests.Fixtures.Deployment
             const string azureSubscriptionId = "8affaa7d-3d74-427c-93c5-2d7f6a16e754";
             const string webAppName = "octodemo003-dev";
             const string webSpaceName = "southeastasiawebspace";
+            const string certificateThumbprint = "86B5C8E5553981FED961769B2DA3028C619596AC";
 
-            // To avoid putting the certificate in GitHub, we will store it in an environment variable
-            // and ignore the test if the variable is not set.
-            const string azureCertificateEnvironmentVariable = "OCTOPUS_TEST_AZURE_CERTIFICATE";
-            var certificateBase64 = Environment.GetEnvironmentVariable(azureCertificateEnvironmentVariable);
-            if (string.IsNullOrWhiteSpace(certificateBase64))
-                Assert.Ignore("Azure tests can only execute if environment-variable '{0}' is set.", azureCertificateEnvironmentVariable);
+            // To avoid putting the certificate details in GitHub, we will assume it is stored in the CertificateStore 
+            // of the local machine, and ignore the test if not.
+            var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+            store.Open(OpenFlags.ReadOnly);
+            var certificates = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
+
+            if (certificates.Count == 0)
+                Assert.Ignore("Azure tests can only run if the expected certificate is present in the Certificate Store");
 
             variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Machine.Azure.CertificateBytes, Convert.ToBase64String(certificates[0].Export(X509ContentType.Pfx)));
             variables.Set(SpecialVariables.Machine.Azure.SubscriptionId, azureSubscriptionId);
-            variables.Set(SpecialVariables.Machine.Azure.CertificateBytes, certificateBase64);
             variables.Set(SpecialVariables.Machine.Azure.WebAppName, webAppName);
             variables.Set(SpecialVariables.Machine.Azure.WebSpaceName, webSpaceName);
 
