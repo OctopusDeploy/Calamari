@@ -3,6 +3,7 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures
 {
+    [TestFixture]
     public class HelpFixture : CalamariFixture
     {
         [Test]

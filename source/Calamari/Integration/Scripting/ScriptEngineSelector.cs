@@ -1,18 +1,24 @@
 ﻿using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 
 namespace Calamari.Integration.Scripting
 {
-    public class ScriptEngineSelector : IScriptEngineSelector
+    public abstract class ScriptEngineSelector : IScriptEngineSelector
     {
-        static readonly string[] SupportedExtensions = new []{ "csx", "ps1" };
-
-        public string[] GetSupportedExtensions()
+        public static ScriptEngineSelector GetScriptEngineSelector()
         {
-            return SupportedExtensions;
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                return new NixScriptEngineSelector();
+            }
+
+            return new WindowsScriptEngineSelector();
         }
+
+        public abstract string[] GetSupportedExtensions();
 
         public IScriptEngine SelectEngine(string scriptFile)
         {
@@ -26,6 +32,8 @@ namespace Calamari.Integration.Scripting
                         return new PowerShellScriptEngine();
                     case "csx":
                         return new ScriptCSScriptEngine();
+                    case "sh":
+                        return new BashScriptEngine();
                 }
             }
             

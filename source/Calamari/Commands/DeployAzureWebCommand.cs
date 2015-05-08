@@ -43,7 +43,7 @@ namespace Calamari.Commands
 
             var variables = new VariableDictionary(variablesFile);
 
-            var fileSystem = new CalamariPhysicalFileSystem();
+            var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter();
             var configurationTransformer =

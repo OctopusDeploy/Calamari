@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -23,14 +24,33 @@ namespace Calamari.Deployment.Conventions
 
         private string GetInitialExtractionDirectory(VariableDictionary variables)
         {
-            var root = variables.Get(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath)
-                ?? variables.Evaluate("#{env:SystemDrive}\\Applications");
-
+            var root = GetApplicationDirectoryPath(variables);
             root = AppendEnvironmentNameIfProvided(variables, root);
             fileSystem.EnsureDirectoryExists(root);
             fileSystem.EnsureDiskHasEnoughFreeSpace(root);
 
             return root;
+        }
+
+        string GetApplicationDirectoryPath (VariableDictionary variables)
+        {
+            const string windowsRoot = "env:SystemDrive";
+            const string linuxRoot = "env:HOME";
+
+            var root = variables.Get(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath);
+            if (root != null)
+                return root;
+
+            root = variables.Get(windowsRoot);
+            if (root == null)
+            {
+                root = variables.Get(linuxRoot);
+                if (root == null)
+                {
+                    throw new Exception(string.Format("Unable to determine the ApplicationRootDirectory. Please provide the {0} variable", SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath));
+                }
+            }
+            return string.Format("{0}{1}Applications", root, Path.DirectorySeparatorChar);
         }
 
         string AppendEnvironmentNameIfProvided(VariableDictionary variables, string root)

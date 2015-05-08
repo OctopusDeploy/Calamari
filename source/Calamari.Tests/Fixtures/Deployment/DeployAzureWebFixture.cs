@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Machine.Azure.WebAppName, webAppName);
             variables.Set(SpecialVariables.Machine.Azure.WebSpaceName, webSpaceName);
 
-            fileSystem = new CalamariPhysicalFileSystem();
+            fileSystem = new WindowsPhysicalFileSystem();
         }
 
         [Test]

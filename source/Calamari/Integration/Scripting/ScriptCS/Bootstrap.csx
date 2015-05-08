@@ -9,10 +9,6 @@ public static class Octopus
 {
     public static readonly OctopusParametersDictionary Parameters = new OctopusParametersDictionary();
 
-	static Octopus() 
-	{
-		
-	}
 
 	public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string,string>
 	{
@@ -22,7 +18,7 @@ public static class Octopus
 		}
 	}
 
-	static string EncodeServiceMessageValue(string value)
+	private static string EncodeServiceMessageValue(string value)
 	{
 		var valueBytes = System.Text.Encoding.UTF8.GetBytes(value);
 		return Convert.ToBase64String(valueBytes);

@@ -13,9 +13,22 @@ namespace Calamari.Integration.PackageDownload
         const int NumberOfTimesToAttemptToDownloadPackage = 5;
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly PackageRepositoryFactory packageRepositoryFactory = new PackageRepositoryFactory();
-        readonly CalamariPhysicalFileSystem fileSystem = new CalamariPhysicalFileSystem();
-        readonly string rootDirectory = Path.Combine(Environment.GetEnvironmentVariable("TentacleHome"), "Files");
+        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
 
+
+        private static string TentacleHome
+        {
+            get
+            {
+                var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
+                if (tentacleHome == null)
+                {
+                    Log.Error("Environment variable 'TentacleHome' has not been set.");
+                }
+                return tentacleHome;
+            }
+        }
         public void DownloadPackage(string packageId, SemanticVersion version, string feedId, Uri feedUri, bool forcePackageDownload, out string downloadedTo, out string hash, out long size)
         {
             var cacheDirectory = GetPackageRoot(feedId);

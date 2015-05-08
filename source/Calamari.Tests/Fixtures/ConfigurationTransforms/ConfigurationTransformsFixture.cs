@@ -11,10 +11,12 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
     [TestFixture]
     public class ConfigurationTransformsFixture : CalamariFixture
     {
+
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
         public void WebReleaseConfig()
         {
-            var text = PerformTest("Samples\\Web.config", "Samples\\Web.Release.config");
+            var text = PerformTest(GetFixtureResouce("Samples","Web.config"), GetFixtureResouce("Samples","Web.Release.config"));
             var contents = XDocument.Parse(text);
 
             Assert.IsNull(GetDebugAttribute(contents));
@@ -25,12 +27,12 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         string PerformTest(string configurationFile, string transformFile)
         {
             var temp = Path.GetTempFileName();
-            File.Copy(MapSamplePath(configurationFile), temp, true);
+            File.Copy(configurationFile, temp, true);
             
             using (new TemporaryFile(temp))
             {
                 var substituter = new ConfigurationTransformer();
-                substituter.PerformTransform(temp, MapSamplePath(transformFile), temp);
+                substituter.PerformTransform(temp, transformFile, temp);
                 return File.ReadAllText(temp);
             }
         }

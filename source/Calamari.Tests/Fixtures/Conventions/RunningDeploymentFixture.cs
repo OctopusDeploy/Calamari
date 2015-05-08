@@ -1,4 +1,5 @@
 ﻿using Calamari.Deployment;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
 

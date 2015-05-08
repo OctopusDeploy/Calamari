@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
+using Calamari.Tests.Helpers;
 using NSubstitute;
-using NSubstitute.Core;
 using NUnit.Framework;
 using Octostache;
 
@@ -15,11 +15,12 @@ namespace Calamari.Tests.Fixtures.Conventions
     [TestFixture]
     public class SubstituteInFilesConventionFixture
     {
+        static readonly string StagingDirectory = TestEnvironment.ConstructRootedPath("Applications", "Acme");
+
         ICalamariFileSystem fileSystem;
         IFileSubstituter substituter;
         RunningDeployment deployment;
         VariableDictionary variables;
-        const string stagingDirectory = "C:\\Applications\\Acme";
 
         [SetUp]
         public void SetUp()
@@ -28,26 +29,25 @@ namespace Calamari.Tests.Fixtures.Conventions
             substituter = Substitute.For<IFileSubstituter>();
             variables = new VariableDictionary();
 
-            deployment = new RunningDeployment("C:\\packages", variables)
+            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
             {
-                StagingDirectory = stagingDirectory
+                StagingDirectory = StagingDirectory
             };
         }
 
         [Test]
         public void ShouldPerformSubstitutions()
         {
-            const string substitutionTarget = "subFolder\\config.json";
+            string substitutionTarget = Path.Combine("subFolder","config.json");
 
-            fileSystem.EnumerateFiles(stagingDirectory, substitutionTarget)
-                .Returns(new[] {Path.Combine(stagingDirectory, substitutionTarget)});
+            fileSystem.EnumerateFiles(StagingDirectory, substitutionTarget).Returns(new[] {Path.Combine(StagingDirectory, substitutionTarget)});
 
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, substitutionTarget);
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
 
             CreateConvention().Install(deployment);
 
-            substituter.Received().PerformSubstitution(Path.Combine(stagingDirectory, substitutionTarget), variables);
+            substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, substitutionTarget), variables);
         }
 
         [Test]
@@ -55,8 +55,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string substitutionTarget = "web.config";
 
-            fileSystem.EnumerateFiles(stagingDirectory, substitutionTarget)
-                .Returns(new[] {Path.Combine(stagingDirectory, substitutionTarget)});
+            fileSystem.EnumerateFiles(StagingDirectory, substitutionTarget)
+                .Returns(new[] {Path.Combine(StagingDirectory, substitutionTarget)});
 
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, substitutionTarget);
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, false.ToString());
@@ -70,5 +70,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             return new SubstituteInFilesConvention(fileSystem, substituter);
         }
+
     }
 }
