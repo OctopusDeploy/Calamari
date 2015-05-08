@@ -49,14 +49,12 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage("Acme.Web");
             result.AssertZero();
 
-
             result.AssertOutput("Extracting package to: " + Path.Combine(stagingDirectory, "Acme.Web", "1.0.0"));
 
             if (CalamariEnvironment.IsRunningOnNix)
             {
                 result.AssertOutput("Extracted 9 files");
                 result.AssertOutput("Bonjour from PreDeploy.sh");
-                
             }
             else
             {
