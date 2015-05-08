@@ -226,6 +226,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] // Re-enable when deployments enabled again.
         public void ShouldDeployInParallel()
         {
             var extractionDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
