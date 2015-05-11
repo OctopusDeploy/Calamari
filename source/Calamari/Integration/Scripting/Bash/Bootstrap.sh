@@ -21,7 +21,7 @@ function encode_servicemessagevalue
 # -----------------------------------------------------------------------------
 function decode_servicemessagevalue
 {
-	echo -n "$1" | openssl enc -base64 -d
+	echo -n "$1" | openssl enc -base64 -A -d
 	exit $?
 }
 
@@ -32,7 +32,8 @@ function decode_servicemessagevalue
 #	---------------------------------------------------------------------------
 function get_octopusvariable
 {
-  INPUT=$(echo -n "$1" | openssl enc -base64 -A)
+  INPUT=$( encode_servicemessagevalue "$1" )
+
   case $INPUT in
 #### VariableDeclarations ####
     *)
@@ -64,5 +65,37 @@ function set_octopusvariable
 	MESSAGE="$MESSAGE]"
 
 	echo $MESSAGE
+	exit $?
+}
+
+
+# -----------------------------------------------------------------------------
+# Function to create a new octopus artifact
+#	Accepts 2 arguments:
+#	  string: value of the path to the artifact
+#	  string: value of the original file name of the artifact
+# -----------------------------------------------------------------------------
+function new_octopusartifact
+{
+	echo "Collecting $1 as an artifact..."
+
+	if [ ! -e "$1" ]
+	then
+		error_exit $PROGNAME $LINENO "\"$(1)\" does not exist." $E_FILE_NOT_FOUND
+	    exit $?
+	fi
+
+	pth=$1
+	ofn=$2
+	len=$(stat -c%s $1 )
+
+
+	if [ -z "$ofn" ]
+	then
+	    ofn=`basename "$pth"`
+	fi
+
+	echo "##octopus[createArtifact path='$(encode_servicemessagevalue $pth)' name='$(encode_servicemessagevalue $ofn)' length='$(encode_servicemessagevalue $len)']"
+
 	exit $?
 }
