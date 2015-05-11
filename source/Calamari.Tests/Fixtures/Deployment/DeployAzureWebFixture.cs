@@ -11,6 +11,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Windows)]
     public class DeployAzureWebFixture : CalamariFixture
     {
         ICalamariFileSystem fileSystem;
