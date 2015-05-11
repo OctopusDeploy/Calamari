@@ -49,7 +49,7 @@ namespace Calamari.Integration.Scripting.Bash
 
         static IEnumerable<string> GetVariableSwitchConditions(VariableDictionary variables)
         {
-            return variables.GetNames().Select(variable => string.Format("    \"{1}\"){0}    echo \"{2}\" | openssl enc -base64 -d{0}    ;;{0}", Environment.NewLine, EncodeValue(variable), EncodeValue(variables.Get(variable))));
+            return variables.GetNames().Select(variable => string.Format("    \"{1}\"){0}    decode_servicemessagevalue \"{2}\"  ;;{0}", Environment.NewLine, EncodeValue(variable), EncodeValue(variables.Get(variable))));
         }
 
 
