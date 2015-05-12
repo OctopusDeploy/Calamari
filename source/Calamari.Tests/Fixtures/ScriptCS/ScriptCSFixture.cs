@@ -21,6 +21,18 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         }
 
         [Test, RequiresDotNet45]
+        public void ShouldCreateArtifact()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "CreateArtifact.csx")));
+
+            output.AssertZero();
+            output.AssertOutput("##octopus[createArtifact");
+            output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
+        }
+
+        [Test, RequiresDotNet45]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();

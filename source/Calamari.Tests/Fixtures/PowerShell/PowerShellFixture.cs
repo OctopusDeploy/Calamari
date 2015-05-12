@@ -15,8 +15,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHello()
         {
-            
-
             var output = Invoke(Calamari()
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
@@ -48,7 +46,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", GetFixtureResouce("Scripts", "CanCreateArtifact.ps1")));
 
             output.AssertZero();
-            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=']");
+            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
         }
 
         [Test]

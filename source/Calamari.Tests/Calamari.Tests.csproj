@@ -176,7 +176,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Fixtures\Bash\Scripts\PrintEncodedVariable.sh">
+    <None Include="Fixtures\Bash\Scripts\create-artifact.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Bash\Scripts\print-encoded-variable.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\ConfigurationTransforms\Samples\Web.config">
@@ -231,7 +234,7 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web\web.Production.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\Bash\Scripts\Hello.sh">
+    <None Include="Fixtures\Bash\Scripts\hello.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\PreDeploy.sh">
@@ -241,9 +244,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\web.Production.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fixtures\Bash\Scripts\Hello.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
@@ -274,6 +274,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\PrintVariables.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ScriptCS\Scripts\CreateArtifact.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\ScriptCS\Scripts\PrintEncodedVariable.csx">

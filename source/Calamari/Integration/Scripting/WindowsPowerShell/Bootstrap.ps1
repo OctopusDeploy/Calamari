@@ -30,11 +30,17 @@ function New-OctopusArtifact([string]$path, [string]$name="""")
         $name = Convert-ServiceMessageValue($name)
     }
 
+    $length = ([System.IO.FileInfo]$path).Length;
+	if (!$length) {
+		$length = 0;
+	}
+    $length = Convert-ServiceMessageValue($length.ToString());
+
     $path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
     $path = [System.IO.Path]::GetFullPath($path)
     $path = Convert-ServiceMessageValue($path)
 
-	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)']"
+	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)' length='$($length)']"
 }
 
 function Write-Debug([string]$message)

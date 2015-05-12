@@ -32,7 +32,7 @@ namespace Calamari.Deployment.Conventions
                 {
                     Log.VerboseFormat("File '{0}' was interpreted as an XML configuration transform; variable substitution won't be attempted.", configurationFile);
                     continue;
-                }
+                }   
 
                 replacer.ModifyConfigurationFile(configurationFile, deployment.Variables);
             }
