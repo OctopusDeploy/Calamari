@@ -66,11 +66,15 @@
     </Reference>
     <Reference Include="Microsoft.WindowsAzure.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.3.0\lib\net40\Microsoft.WindowsAzure.Common.dll</HintPath>
+      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.4.1\lib\net40\Microsoft.WindowsAzure.Common.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.WindowsAzure.Common.NetFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.3.0\lib\net40\Microsoft.WindowsAzure.Common.NetFramework.dll</HintPath>
+      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.4.1\lib\net40\Microsoft.WindowsAzure.Common.NetFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAzure.Management.Compute, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.WindowsAzure.Management.Compute.6.1.2\lib\net40\Microsoft.WindowsAzure.Management.Compute.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.WindowsAzure.Management.WebSites, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -141,6 +145,7 @@
     <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationTransformConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationVariablesConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ConfigureAzureCloudServiceConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfiguredScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributePreviousInstallationConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributeEnvironmentVariablesFixture.cs" />
@@ -151,7 +156,9 @@
     <Compile Include="Fixtures\Conventions\LegacyIisWebSiteConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />
     <Compile Include="Fixtures\Conventions\SubstituteInFilesConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\UploadAzureCloudServicePackageConventionFixture.cs" />
     <Compile Include="Fixtures\Deployment\CleanFixture.cs" />
+    <Compile Include="Fixtures\Deployment\DeployAzureCloudServiceFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployAzureWebFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
@@ -171,6 +178,7 @@
     <Compile Include="Fixtures\HelpFixture.cs" />
     <Compile Include="Fixtures\PowerShell\PowerShellFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutput.cs" />
+    <Compile Include="Helpers\Azure\FakeSubscriptionCloudCredentials.cs" />
     <Compile Include="Helpers\TestEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -245,6 +253,21 @@
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\web.Production.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Bash\Scripts\Hello.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\Deploy.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\Humpty.cspkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\Octopus.Sample.AzureCloudService.nuspec">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\ServiceConfiguration.Cloud.cscfg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -321,7 +344,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y
-xcopy "$(SolutionDir)packages\NuGet.CommandLine.2.8.3\tools\Nuget.exe" "$(TargetDir)" /y</PostBuildEvent>
+xcopy "$(SolutionDir)packages\NuGet.CommandLine.2.8.3\tools\Nuget.exe" "$(TargetDir)" /y
+xcopy "$(SolutionDir)packages\Octopus.Dependencies.AzureCmdlets.2.1.0\runtime" "$(TargetDir)AzurePowershell" /y /i</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" />
   <Target Name="EnsureBclBuildImported" BeforeTargets="BeforeBuild" Condition="'$(BclBuildImported)' == ''">

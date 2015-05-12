@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using Calamari.Integration.FileSystem;
+using Calamari.Util;
 using NuGet;
 
 namespace Calamari.Integration.PackageDownload
@@ -230,20 +231,6 @@ namespace Calamari.Integration.PackageDownload
                                string.Join(", ", downloaded.DependencySets.SelectMany(ds => ds.Dependencies).Select(dependency => dependency.ToString())),
                                WhyAmINotAllowedToUseDependencies);
             }
-        }
-    }
-
-    class HashCalculator
-    {
-        public static string Hash(Stream stream)
-        {
-            var hash = GetAlgorithm().ComputeHash(stream);
-            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-        }
-
-        static HashAlgorithm GetAlgorithm()
-        {
-            return new SHA1CryptoServiceProvider();
         }
     }
 }
