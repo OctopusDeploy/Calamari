@@ -36,12 +36,19 @@ public static class Octopus
 
 	public static void CreateArtifact(string path) 
 	{
-		var originalFilename = System.IO.Path.GetFileName(path); 
-		originalFilename = EncodeServiceMessageValue(originalFilename);	
+		var fileName = System.IO.Path.GetFileName(path); 
+		fileName = EncodeServiceMessageValue(fileName);	
+
+		if(!System.IO.File.Exists(path)){
+		}
+
+		var length = System.IO.File.Exists(path) ? new System.IO.FileInfo(path).Length.ToString() : "0";
+		length = EncodeServiceMessageValue(length);
 
 		path = System.IO.Path.GetFullPath(path);
 		path = EncodeServiceMessageValue(path);
 
-		Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}']", path, originalFilename);
+
+		Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", path, fileName, length);
 	}
 }

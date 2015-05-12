@@ -18,10 +18,21 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.sh")));
+                .Argument("script", GetFixtureResouce("Scripts", "print-encoded-variable.sh")));
 
             output.AssertZero();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
+        }
+
+        [Test]
+        public void ShouldCreateArtifact()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "create-artifact.sh")));
+
+            output.AssertZero();
+            output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
         }
 
         [Test]
@@ -40,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Bash
             {
                 var output = Invoke(Calamari()
                     .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Hello.sh"))
+                    .Argument("script", GetFixtureResouce("Scripts", "hello.sh"))
                     .Argument("variables", variablesFile));
 
                 output.AssertZero();
