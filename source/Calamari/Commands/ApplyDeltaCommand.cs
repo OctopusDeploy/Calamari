@@ -95,11 +95,23 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(deltaFileName, "No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
             Guard.NotNullOrWhiteSpace(newFileName, "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
 
-            basisFilePath = Path.GetFullPath(basisFileName);
-            deltaFilePath = Path.GetFullPath(deltaFileName);
+
+            basisFilePath = basisFileName;
+            if (!File.Exists(basisFileName))
+            {
+                basisFilePath = Path.GetFullPath(basisFileName);
+                if (!File.Exists(basisFilePath)) throw new CommandException("Could not find basis file: " + basisFileName);
+            }
+
+            deltaFilePath = deltaFileName;
+            if (!File.Exists(deltaFileName))
+            {
+                deltaFilePath = Path.GetFullPath(deltaFileName);
+                if (!File.Exists(deltaFilePath)) throw new CommandException("Could not find delta file: " + deltaFileName);
+            }
+
+
             newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), newFileName + "-" + Guid.NewGuid());
-            if (!File.Exists(basisFilePath)) throw new CommandException("Could not find basis file: " + basisFileName);
-            if (!File.Exists(deltaFilePath)) throw new CommandException("Could not find delta file: " + deltaFileName);
 
             var previousPackage = packageStore.GetPackage(basisFilePath);
             if (previousPackage.Metadata.Hash != fileHash)
