@@ -120,6 +120,19 @@ namespace Calamari.Deployment
 
             public static class Azure
             {
+                public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
+                public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
+                public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
+
+                public static readonly string WebSpaceName = "Octopus.Action.Azure.WebSpaceName";
+                public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
+
+                public static readonly string CloudServiceName = "Octopus.Action.Azure.CloudServiceName";
+                public static readonly string Slot = "Octopus.Action.Azure.Slot";
+                public static readonly string SwapIfPossible = "Octopus.Action.Azure.SwapIfPossible";
+                public static readonly string StorageAccountName = "Octopus.Action.Azure.StorageAccountName";
+                public static readonly string UseCurrentInstanceCount = "Octopus.Action.Azure.UseCurrentInstanceCount";
+
                 public static readonly string UploadedPackageUri = "Octopus.Action.Azure.UploadedPackageUri";
             }
         }
@@ -127,22 +140,6 @@ namespace Calamari.Deployment
         public static class Machine
         {
             public const string Name = "Octopus.Machine.Name";
-
-            public static class Azure
-            {
-                public static readonly string SubscriptionId = "Octopus.Machine.Azure.SubscriptionId";
-                public static readonly string CertificateBytes = "Octopus.Machine.Azure.CertificateBytes";
-                public static readonly string CertificateThumbprint = "Octopus.Machine.Azure.CertificateThumbprint";
-
-                public static readonly string WebSpaceName = "Octopus.Machine.Azure.WebSpaceName";
-                public static readonly string WebAppName = "Octopus.Machine.Azure.WebAppName";
-
-                public static readonly string CloudServiceName = "Octopus.Machine.Azure.CloudServiceName";
-                public static readonly string Slot = "Octopus.Machine.Azure.Slot";
-                public static readonly string SwapIfPossible = "Octopus.Machine.Azure.SwapIfPossible";
-                public static readonly string StorageAccountName = "Octopus.Machine.Azure.StorageAccountName";
-                public static readonly string UseCurrentInstanceCount = "Octopus.Machine.Azure.UseCurrentInstanceCount";
-            }
         }
 
         public static class Release

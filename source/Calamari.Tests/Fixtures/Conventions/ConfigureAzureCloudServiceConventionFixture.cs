@@ -42,11 +42,11 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
             deployment = new RunningDeployment(stagingDirectory, variables);
 
-            variables.Set(SpecialVariables.Machine.Azure.SubscriptionId, azureSubscriptionId);
-            variables.Set(SpecialVariables.Machine.Azure.CertificateThumbprint, certificateThumbprint);
-            variables.Set(SpecialVariables.Machine.Azure.CertificateBytes, certificateBytes);
-            variables.Set(SpecialVariables.Machine.Azure.CloudServiceName, cloudServiceName);
-            variables.Set(SpecialVariables.Machine.Azure.Slot, deploymentSlot.ToString());
+            variables.Set(SpecialVariables.Action.Azure.SubscriptionId, azureSubscriptionId);
+            variables.Set(SpecialVariables.Action.Azure.CertificateThumbprint, certificateThumbprint);
+            variables.Set(SpecialVariables.Action.Azure.CertificateBytes, certificateBytes);
+            variables.Set(SpecialVariables.Action.Azure.CloudServiceName, cloudServiceName);
+            variables.Set(SpecialVariables.Action.Azure.Slot, deploymentSlot.ToString());
 
             credentialsFactory.GetCredentials(azureSubscriptionId, certificateThumbprint, certificateBytes)
                 .Returns(new FakeSubscriptionCloudCredentials(azureSubscriptionId));
@@ -96,7 +96,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldUseExistingInstanceCountIfSpecified()
         {
             string result = null;
-            variables.Set(SpecialVariables.Machine.Azure.UseCurrentInstanceCount, true.ToString());
+            variables.Set(SpecialVariables.Action.Azure.UseCurrentInstanceCount, true.ToString());
             ArrangeOriginalConfigurationFile(Path.Combine(stagingDirectory, defaultConfigurationFile), SimpleConfigSample, x => result=x);
             configurationRetriever.GetConfiguration(
                 Arg.Is<SubscriptionCloudCredentials>(x => x.SubscriptionId == azureSubscriptionId), cloudServiceName, deploymentSlot)

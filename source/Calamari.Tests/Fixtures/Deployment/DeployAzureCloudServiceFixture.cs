@@ -37,14 +37,14 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var variablesFile = Path.GetTempFileName(); 
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Machine.Azure.CertificateBytes, Convert.ToBase64String(certificates[0].Export(X509ContentType.Pfx)));
-            variables.Set(SpecialVariables.Machine.Azure.CertificateThumbprint, certificateThumbprint);
-            variables.Set(SpecialVariables.Machine.Azure.SubscriptionId, azureSubscriptionId);
-            variables.Set(SpecialVariables.Machine.Azure.CloudServiceName, cloudServiceName);
-            variables.Set(SpecialVariables.Machine.Azure.StorageAccountName, storageAccountName);
-            variables.Set(SpecialVariables.Machine.Azure.Slot, "Staging");
-            variables.Set(SpecialVariables.Machine.Azure.SwapIfPossible, false.ToString());
-            variables.Set(SpecialVariables.Machine.Azure.UseCurrentInstanceCount, false.ToString());
+            variables.Set(SpecialVariables.Action.Azure.CertificateBytes, Convert.ToBase64String(certificates[0].Export(X509ContentType.Pfx)));
+            variables.Set(SpecialVariables.Action.Azure.CertificateThumbprint, certificateThumbprint);
+            variables.Set(SpecialVariables.Action.Azure.SubscriptionId, azureSubscriptionId);
+            variables.Set(SpecialVariables.Action.Azure.CloudServiceName, cloudServiceName);
+            variables.Set(SpecialVariables.Action.Azure.StorageAccountName, storageAccountName);
+            variables.Set(SpecialVariables.Action.Azure.Slot, "Staging");
+            variables.Set(SpecialVariables.Action.Azure.SwapIfPossible, false.ToString());
+            variables.Set(SpecialVariables.Action.Azure.UseCurrentInstanceCount, false.ToString());
 
             variables.Set(SpecialVariables.Action.Name, "AzureCouldService");
             variables.Set(SpecialVariables.Release.Number, "1.0.0");

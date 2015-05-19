@@ -35,10 +35,10 @@ namespace Calamari.Tests.Fixtures.Deployment
                 Assert.Ignore("Azure tests can only run if the expected certificate is present in the Certificate Store");
 
             variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Machine.Azure.CertificateBytes, Convert.ToBase64String(certificates[0].Export(X509ContentType.Pfx)));
-            variables.Set(SpecialVariables.Machine.Azure.SubscriptionId, azureSubscriptionId);
-            variables.Set(SpecialVariables.Machine.Azure.WebAppName, webAppName);
-            variables.Set(SpecialVariables.Machine.Azure.WebSpaceName, webSpaceName);
+            variables.Set(SpecialVariables.Action.Azure.CertificateBytes, Convert.ToBase64String(certificates[0].Export(X509ContentType.Pfx)));
+            variables.Set(SpecialVariables.Action.Azure.SubscriptionId, azureSubscriptionId);
+            variables.Set(SpecialVariables.Action.Azure.WebAppName, webAppName);
+            variables.Set(SpecialVariables.Action.Azure.WebSpaceName, webSpaceName);
 
             fileSystem = new WindowsPhysicalFileSystem();
         }

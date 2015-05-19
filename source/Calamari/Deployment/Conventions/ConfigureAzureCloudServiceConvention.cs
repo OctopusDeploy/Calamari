@@ -112,16 +112,16 @@ namespace Calamari.Deployment.Conventions
 
         void UpdateConfigurationWithCurrentInstanceCount(XContainer localConfigurationFile, string configurationFileName, VariableDictionary variables)
         {
-            if (!variables.GetFlag(SpecialVariables.Machine.Azure.UseCurrentInstanceCount))
+            if (!variables.GetFlag(SpecialVariables.Action.Azure.UseCurrentInstanceCount))
                 return;
 
-            var serviceName = variables.Get(SpecialVariables.Machine.Azure.CloudServiceName);
-            var slot = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), variables.Get(SpecialVariables.Machine.Azure.Slot));
+            var serviceName = variables.Get(SpecialVariables.Action.Azure.CloudServiceName);
+            var slot = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), variables.Get(SpecialVariables.Action.Azure.Slot));
 
             var remoteConfigurationFile = configurationRetriever.GetConfiguration(
-                credentialsFactory.GetCredentials(variables.Get(SpecialVariables.Machine.Azure.SubscriptionId),
-                    variables.Get(SpecialVariables.Machine.Azure.CertificateThumbprint),
-                    variables.Get(SpecialVariables.Machine.Azure.CertificateBytes)),
+                credentialsFactory.GetCredentials(variables.Get(SpecialVariables.Action.Azure.SubscriptionId),
+                    variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
+                    variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                 serviceName,
                 slot);
 

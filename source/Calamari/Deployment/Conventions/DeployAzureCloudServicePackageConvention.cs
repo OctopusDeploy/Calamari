@@ -46,8 +46,8 @@ namespace Calamari.Deployment.Conventions
             var certificateFilePath = Path.Combine(deployment.CurrentDirectory, "Certificate.pfx");
             var azureCertificate =
                 certificateStore.GetOrAdd(
-                    deployment.Variables.Get(SpecialVariables.Machine.Azure.CertificateThumbprint),
-                    deployment.Variables.Get(SpecialVariables.Machine.Azure.CertificateBytes));
+                    deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
+                    deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
             fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificateFilePassword));
 
             var subscriptionName = Guid.NewGuid().ToString();
@@ -57,15 +57,15 @@ namespace Calamari.Deployment.Conventions
             deployment.Variables.SetOutputVariable("OctopusAzureModulePath", Path.Combine(azurePowerShellFolder, "Azure.psd1"));
             deployment.Variables.SetOutputVariable("OctopusAzureCertificateFileName", certificateFilePath);
             deployment.Variables.SetOutputVariable("OctopusAzureCertificatePassword", certificateFilePassword);
-            deployment.Variables.SetOutputVariable("OctopusAzureSubscriptionId", deployment.Variables.Get(SpecialVariables.Machine.Azure.SubscriptionId));
+            deployment.Variables.SetOutputVariable("OctopusAzureSubscriptionId", deployment.Variables.Get(SpecialVariables.Action.Azure.SubscriptionId));
             deployment.Variables.SetOutputVariable("OctopusAzureSubscriptionName", subscriptionName);
-            deployment.Variables.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Machine.Azure.CloudServiceName));
-            deployment.Variables.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Machine.Azure.StorageAccountName));
-            deployment.Variables.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Machine.Azure.Slot));
+            deployment.Variables.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName));
+            deployment.Variables.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName));
+            deployment.Variables.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot));
             deployment.Variables.SetOutputVariable("OctopusAzurePackageUri", deployment.Variables.Get(SpecialVariables.Action.Azure.UploadedPackageUri));
             deployment.Variables.SetOutputVariable("OctopusAzureDeploymentLabel", deployment.Variables.Get(SpecialVariables.Action.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number));
-            deployment.Variables.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Machine.Azure.SwapIfPossible, defaultValue: false.ToString()));
-            deployment.Variables.SetOutputVariable("OctopusAzureUseCurrentInstanceCount", deployment.Variables.Get(SpecialVariables.Machine.Azure.UseCurrentInstanceCount));
+            deployment.Variables.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()));
+            deployment.Variables.SetOutputVariable("OctopusAzureUseCurrentInstanceCount", deployment.Variables.Get(SpecialVariables.Action.Azure.UseCurrentInstanceCount));
 
             // The script name 'DeployToAzure.ps1' is used for backwards-compatibility
             var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToAzure.ps1");

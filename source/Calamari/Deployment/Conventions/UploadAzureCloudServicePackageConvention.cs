@@ -32,12 +32,12 @@ namespace Calamari.Deployment.Conventions
             var uploadedFileName = Path.ChangeExtension(Path.GetFileName(package), "." + nugetPackageVersion + "_" + packageHash + ".cspkg");
 
             var credentials = credentialsFactory.GetCredentials(
-                deployment.Variables.Get(SpecialVariables.Machine.Azure.SubscriptionId),
-                deployment.Variables.Get(SpecialVariables.Machine.Azure.CertificateThumbprint),
-                deployment.Variables.Get(SpecialVariables.Machine.Azure.CertificateBytes)
+                deployment.Variables.Get(SpecialVariables.Action.Azure.SubscriptionId),
+                deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
+                deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateBytes)
                 );
 
-            var storageAccountName = deployment.Variables.Get(SpecialVariables.Machine.Azure.StorageAccountName);
+            var storageAccountName = deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName);
 
             var uploadedUri = azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName);
 

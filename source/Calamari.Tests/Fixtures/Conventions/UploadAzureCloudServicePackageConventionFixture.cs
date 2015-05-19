@@ -40,10 +40,10 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             variables = new VariableDictionary();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
-            variables.Set(SpecialVariables.Machine.Azure.SubscriptionId, azureSubscriptionId);
-            variables.Set(SpecialVariables.Machine.Azure.CertificateThumbprint, certificateThumbprint);
-            variables.Set(SpecialVariables.Machine.Azure.CertificateBytes, certificateBytes);
-            variables.Set(SpecialVariables.Machine.Azure.StorageAccountName, storageAccountName);
+            variables.Set(SpecialVariables.Action.Azure.SubscriptionId, azureSubscriptionId);
+            variables.Set(SpecialVariables.Action.Azure.CertificateThumbprint, certificateThumbprint);
+            variables.Set(SpecialVariables.Action.Azure.CertificateBytes, certificateBytes);
+            variables.Set(SpecialVariables.Action.Azure.StorageAccountName, storageAccountName);
             deployment = new RunningDeployment(stagingDirectory, variables);
 
             convention = new UploadAzureCloudServicePackageConvention(fileSystem, packageUploader, credentialsFactory);
