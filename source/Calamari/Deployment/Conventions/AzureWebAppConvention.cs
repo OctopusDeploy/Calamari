@@ -20,10 +20,10 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var subscriptionId = variables.Get(SpecialVariables.Machine.Azure.SubscriptionId);
-            var certificate = Convert.FromBase64String(variables.Get(SpecialVariables.Machine.Azure.CertificateBytes));
-            var webAppName = variables.Get(SpecialVariables.Machine.Azure.WebAppName);
-            var webSpaceName = variables.Get(SpecialVariables.Machine.Azure.WebSpaceName);
+            var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
+            var certificate = Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
+            var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var webSpaceName = variables.Get(SpecialVariables.Action.Azure.WebSpaceName);
 
             Log.Info("Deploying to Azure WebApp {0} in WebSpace {1} using subscription-id {2}", webAppName, webSpaceName, subscriptionId);
 

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Calamari.Integration.PackageDownload;
 using Calamari.Integration.Packages;
+using Calamari.Util;
 using NuGet;
 
 namespace Calamari.Integration.FileSystem
