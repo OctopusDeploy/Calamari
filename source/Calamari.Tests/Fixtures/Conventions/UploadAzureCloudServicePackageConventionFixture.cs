@@ -6,6 +6,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Azure;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using Calamari.Tests.Helpers.Azure;
 using Microsoft.WindowsAzure;
 using NSubstitute;
@@ -15,6 +16,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Windows)]
     public class UploadAzureCloudServicePackageConventionFixture
     {
         const string stagingDirectory = "C:\\Applications\\Foo"; 
