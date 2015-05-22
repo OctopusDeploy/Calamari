@@ -53,12 +53,12 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             if (CalamariEnvironment.IsRunningOnNix)
             {
-                result.AssertOutput("Extracted 9 files");
+                result.AssertOutput("Extracted 11 files");
                 result.AssertOutput("Bonjour from PreDeploy.sh");
             }
             else
             {
-                result.AssertOutput("Extracted 8 files");
+                result.AssertOutput("Extracted 10 files");
                 result.AssertOutput("Bonjour from PreDeploy.ps1");
             }
         }
@@ -253,8 +253,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
                         result.AssertOutput(CalamariEnvironment.IsRunningOnNix
-                            ? "Extracted 9 files"
-                            : "Extracted 8 files");
+                            ? "Extracted 11 files"
+                            : "Extracted 10 files");
 
                         lock (extractionDirectories)
                         {
