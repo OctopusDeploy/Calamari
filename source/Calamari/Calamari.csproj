@@ -97,6 +97,12 @@
       <HintPath>..\packages\Microsoft.WindowsAzure.Management.WebSites.4.0.0\lib\net40\Microsoft.WindowsAzure.Management.WebSites.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.WindowsAzure.Packaging">
+      <HintPath>..\packages\Octopus.Dependencies.AzureBinaries.2.6.0\lib\Microsoft.WindowsAzure.Packaging.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAzure.ServiceModel.Common">
+      <HintPath>..\packages\Octopus.Dependencies.AzureBinaries.2.6.0\lib\Microsoft.WindowsAzure.ServiceModel.Common.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.WindowsAzure.Storage">
       <HintPath>..\packages\WindowsAzure.Storage.4.3.0\lib\net40\Microsoft.WindowsAzure.Storage.dll</HintPath>
     </Reference>
@@ -185,11 +191,15 @@
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\DeleteStagingDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\DeployAzureCloudServicePackageConvention.cs" />
+    <Compile Include="Deployment\Conventions\EnsureCloudServicePackageIsCtpFormatConvention.cs" />
+    <Compile Include="Deployment\Conventions\ExtractAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToTemporaryDirectoryConvention.cs" />
+    <Compile Include="Deployment\Conventions\FindCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
+    <Compile Include="Deployment\Conventions\RePackageCloudServiceConvention.cs" />
     <Compile Include="Deployment\Conventions\UploadAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\DeploymentStages.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
@@ -207,6 +217,7 @@
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\Azure\AzureCloudServiceConfigurationRetriever.cs" />
     <Compile Include="Integration\Azure\AzurePackageUploader.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\AzureCloudServiceConventions.cs" />
     <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDefinition.cs" />
     <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDescription.cs" />
     <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\FileDefinition.cs" />

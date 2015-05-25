@@ -134,6 +134,8 @@ namespace Calamari.Deployment
                 public static readonly string UseCurrentInstanceCount = "Octopus.Action.Azure.UseCurrentInstanceCount";
 
                 public static readonly string UploadedPackageUri = "Octopus.Action.Azure.UploadedPackageUri";
+
+                public static readonly string CloudServicePackagePath = "Octopus.Action.Azure.CloudServicePackagePath";
             }
         }
 

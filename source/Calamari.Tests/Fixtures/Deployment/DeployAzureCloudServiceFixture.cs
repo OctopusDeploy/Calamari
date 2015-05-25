@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Action.Azure.SwapIfPossible, false.ToString());
             variables.Set(SpecialVariables.Action.Azure.UseCurrentInstanceCount, false.ToString());
 
-            variables.Set(SpecialVariables.Action.Name, "AzureCouldService");
+            variables.Set(SpecialVariables.Action.Name, "AzureCloudService");
             variables.Set(SpecialVariables.Release.Number, "1.0.0");
             variables.Save(variablesFile);
 

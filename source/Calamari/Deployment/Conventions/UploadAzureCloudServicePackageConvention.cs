@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using Calamari.Commands.Support;
+﻿using System.IO;
 using Calamari.Integration.Azure;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -25,7 +22,7 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var package = FindPackageToUpload(deployment.CurrentDirectory);
+            var package = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath); 
             Log.Info("Uploading package to Azure blob storage: '{0}'", package);
             var packageHash = Hash(package);
             var nugetPackageVersion = deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion);
@@ -43,30 +40,6 @@ namespace Calamari.Deployment.Conventions
 
             deployment.Variables.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString());
             Log.Info("Package uploaded to " + uploadedUri.ToString());
-        }
-
-        string FindPackageToUpload(string workingDirectory)
-        {
-            var packages = fileSystem.EnumerateFiles(workingDirectory, "*.cspkg").ToList();
-
-            if (packages.Count == 0)
-            {
-                // Try subdirectories
-                packages = fileSystem.EnumerateFilesRecursively(workingDirectory, "*.cspkg").ToList();
-            }
-
-            if (packages.Count == 0)
-            {
-                throw new CommandException("Your package does not appear to contain any Azure Cloud Service package (.cspkg) files.");
-            }
-
-            if (packages.Count > 1)
-            {
-                throw new CommandException("Your NuGet package contains more than one Cloud Service package (.cspkg) file, which is unsupported. Files: " 
-                    + string.Concat(packages.Select(p => Environment.NewLine + " - " + p)));
-            }
-
-            return packages.Single();
         }
 
         string Hash(string packageFilePath)
