@@ -207,6 +207,14 @@
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\Azure\AzureCloudServiceConfigurationRetriever.cs" />
     <Compile Include="Integration\Azure\AzurePackageUploader.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDefinition.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDescription.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\FileDefinition.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\FileDescription.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\IntegrityCheckHashAlgorithm.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\LayoutDefinition.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\PackageDefinition.cs" />
+    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\PackageMetaData.cs" />
     <Compile Include="Integration\Azure\IAzureCloudServiceConfigurationRetriever.cs" />
     <Compile Include="Integration\Azure\IAzurePackageUploader.cs" />
     <Compile Include="Integration\Azure\ISubscriptionCloudCredentialsFactory.cs" />

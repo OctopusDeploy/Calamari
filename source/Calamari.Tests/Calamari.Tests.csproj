@@ -140,6 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
+    <Compile Include="Fixtures\Azure\CloudServicePackage\ManifestSchema\AzureCloudServicePackageManifestSchemaFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
