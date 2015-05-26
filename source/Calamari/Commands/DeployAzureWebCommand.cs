@@ -7,6 +7,9 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
+using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Octostache;
 
@@ -45,7 +48,9 @@ namespace Calamari.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer();
+            var scriptEngine = ScriptEngineSelector.GetScriptEngineSelector();
             var substituter = new FileSubstituter();
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var configurationTransformer =
                 new ConfigurationTransformer(
                     variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors),
@@ -56,10 +61,16 @@ namespace Calamari.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToTemporaryDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
+                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
+                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
+                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new AzureWebAppConvention(variables),
+                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new DeleteStagingDirectoryConvention(fileSystem)
             };
 

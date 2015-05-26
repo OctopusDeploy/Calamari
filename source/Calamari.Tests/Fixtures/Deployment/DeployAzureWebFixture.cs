@@ -16,9 +16,10 @@ namespace Calamari.Tests.Fixtures.Deployment
     {
         ICalamariFileSystem fileSystem;
         VariableDictionary variables;
+        CalamariResult result;
 
-        [SetUp]
-        public void SetUp()
+        [TestFixtureSetUp]
+        public void Deploy()
         {
             const string azureSubscriptionId = "8affaa7d-3d74-427c-93c5-2d7f6a16e754";
             const string webAppName = "octodemo003-dev";
@@ -40,19 +41,28 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Action.Azure.WebAppName, webAppName);
             variables.Set(SpecialVariables.Action.Azure.WebSpaceName, webSpaceName);
 
+            variables.Set("foo", "bar");
+            // Enable file substitution and configure the target
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
+
             fileSystem = new WindowsPhysicalFileSystem();
+
+            result = DeployPackage("Acme.Web");
         }
 
         [Test]
         public void ShouldDeployPackage()
         {
-            var result = DeployPackage("Acme.Web");
-
             result.AssertZero();
 
-            // Should remove staging directory
-            Assert.False(fileSystem.DirectoryExists(result.CapturedOutput.OutputVariables[SpecialVariables.Package.Output.InstallationDirectoryPath]),
-                "Staging directory should be deleted");
+        }
+
+        [Test]
+        public void ShouldRemoveStagingDirectory()
+        {
+            Assert.False(
+                fileSystem.DirectoryExists(result.CapturedOutput.OutputVariables[SpecialVariables.Package.Output.InstallationDirectoryPath]));
         }
 
         CalamariResult DeployPackage(string packageName)
