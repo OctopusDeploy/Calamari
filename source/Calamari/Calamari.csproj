@@ -171,6 +171,7 @@
     <Compile Include="Commands\DeployAzureCloudServiceCommand.cs" />
     <Compile Include="Commands\DeployAzureWebCommand.cs" />
     <Compile Include="Commands\DownloadPackageCommand.cs" />
+    <Compile Include="Commands\ExtractAzureCloudServicePackageCommand.cs" />
     <Compile Include="Commands\FindPackageCommand.cs" />
     <Compile Include="Commands\RunScriptCommand.cs" />
     <Compile Include="Commands\DeployPackageCommand.cs" />
