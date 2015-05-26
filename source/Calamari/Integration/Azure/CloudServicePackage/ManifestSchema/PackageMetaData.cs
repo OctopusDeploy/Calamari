@@ -7,38 +7,42 @@ namespace Calamari.Integration.Azure.CloudServicePackage.ManifestSchema
     public class PackageMetaData
     {
         public static readonly XName ElementName = PackageDefinition.AzureNamespace + "PackageMetaData";
-        private static readonly XName KeyValuePairElementName = PackageDefinition.AzureNamespace + "KeyValuePair";
-        private static readonly XName KeyElementName = PackageDefinition.AzureNamespace + "Key";
-        private static readonly XName ValueElementName = PackageDefinition.AzureNamespace + "Value";
+        static readonly XName KeyValuePairElementName = PackageDefinition.AzureNamespace + "KeyValuePair";
+        static readonly XName KeyElementName = PackageDefinition.AzureNamespace + "Key";
+        static readonly XName ValueElementName = PackageDefinition.AzureNamespace + "Value";
+
+        const string AzureVersionKey = "http://schemas.microsoft.com/windowsazure/ProductVersion/";
 
         public PackageMetaData()
         {
-            Data = new List<KeyValuePair<string, string>>();
+            Data = new Dictionary<string, string>();
         }
 
         public PackageMetaData(XElement element)
         {
             Data = element.Elements(KeyValuePairElementName)
-                .Select(x => new KeyValuePair<string, string>(
-                    x.Element(KeyElementName).Value, x.Element(ValueElementName).Value
-                    ))
-                .ToList();
-
-            AzureVersion =
-                Data.Where(kv => kv.Key == "http://schemas.microsoft.com/windowsazure/ProductVersion/")
-                    .Select(kv => kv.Value)
-                    .SingleOrDefault();
+                .ToDictionary(x => x.Element(KeyElementName).Value, x => x.Element(ValueElementName).Value);
         }
 
-        public ICollection<KeyValuePair<string, string>> Data { get; private set; }
+        public IDictionary<string, string> Data { get; private set; }
 
-        public string AzureVersion { get; set; }
+        public string AzureVersion
+        {
+            get
+            {
+                string version;
+                return Data.TryGetValue(AzureVersionKey, out version)
+                    ? version
+                    : null;
+            }
+            set { Data[AzureVersionKey] = value; }
+        }
 
         public XElement ToXml()
         {
             return new XElement(ElementName,
                 Data.Select(kv => new XElement(KeyValuePairElementName,
-                    new XElement(KeyElementName, kv.Key), new XElement(ValueElementName, kv.Value))));
+                    new XElement(KeyElementName, kv.Key), new XElement(ValueElementName, kv.Value))).ToArray());
         }
     }
 }

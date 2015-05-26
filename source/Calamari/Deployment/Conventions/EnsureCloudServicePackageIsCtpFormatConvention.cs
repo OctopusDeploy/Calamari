@@ -23,7 +23,7 @@ namespace Calamari.Deployment.Conventions
             switch (packageFormat)
             {
                 case PackageFormats.Legacy:
-                    Log.VerboseFormat("Package is Legacy format. Converting to {1} format.", PackageFormats.V20120315.ToString());
+                    Log.VerboseFormat("Package is Legacy format. Converting to {0} format.", PackageFormats.V20120315.ToString());
                     ConvertPackage(packagePath);
                     return;
                 case PackageFormats.V20120315:

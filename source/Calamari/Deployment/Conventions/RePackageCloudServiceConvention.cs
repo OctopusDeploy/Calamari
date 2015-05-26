@@ -20,6 +20,7 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            Log.Verbose("Re-packaging cspkg.");
             var workingDirectory = deployment.CurrentDirectory;
             var originalPackagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             var newPackagePath = Path.Combine(Path.GetDirectoryName(originalPackagePath), Path.GetFileNameWithoutExtension(originalPackagePath) + "_repacked.cspkg");
@@ -33,8 +34,8 @@ namespace Calamari.Deployment.Conventions
                     MetaData = {AzureVersion = originalManifest.MetaData.AzureVersion}
                 };
 
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, "ServiceDefinition"), "/ServiceDefinition");
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, "NamedStreams"), "/NamedStreams");
+                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, "ServiceDefinition"), "ServiceDefinition");
+                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, "NamedStreams"), "NamedStreams");
                 AddLocalContent(newPackage, newManifest, workingDirectory);
 
                 AddPackageManifest(newPackage, newManifest);
@@ -48,13 +49,13 @@ namespace Calamari.Deployment.Conventions
         void AddPackageManifest(Package package, PackageDefinition manifest)
         {
             var manifestPartUri = PackUriHelper.CreatePartUri(new Uri("/package.xml", UriKind.Relative));
-            var manifestPart = package.CreatePart(manifestPartUri, System.Net.Mime.MediaTypeNames.Application.Octet);
+            var manifestPart = package.CreatePart(manifestPartUri, System.Net.Mime.MediaTypeNames.Application.Octet, CompressionOption.Maximum);
             using (var manifestPartStream = manifestPart.GetStream())
             {
                 manifest.ToXml().Save(manifestPartStream);
             }
 
-            package.CreateRelationship(manifestPartUri, TargetMode.Internal, AzureCloudServiceConventions.CtpFormatPackageDefinitionRelationshipType);
+            package.CreateRelationship(manifestPartUri, TargetMode.External, AzureCloudServiceConventions.CtpFormatPackageDefinitionRelationshipType);
         }
 
         void AddParts(Package package, PackageDefinition manifest, string directory, string baseDataStorePath)
@@ -75,7 +76,7 @@ namespace Calamari.Deployment.Conventions
         {
             foreach (var roleDirectory in fileSystem.EnumerateDirectories(Path.Combine(workingDirectory, "LocalContent")))
             {
-                var layout = new LayoutDefinition {Name = "Roles/" + roleDirectory};
+                var layout = new LayoutDefinition {Name = "Roles/" + new DirectoryInfo(roleDirectory).Name};
                 manifest.Layouts.Add(layout);
                 AddLocalContentParts(package, manifest, layout, roleDirectory, "");
             }
@@ -96,11 +97,11 @@ namespace Calamari.Deployment.Conventions
                 layout.FileDefinitions.Add(
                     new FileDefinition
                     {
-                        FilePath = file,
+                        FilePath = "\\" + Path.Combine(relativeDirectory, Path.GetFileName(file)),
                         Description =
                             new FileDescription
                             {
-                                DataContentReference = Path.Combine(relativeDirectory, Path.GetFileName(file)),
+                                DataContentReference = partUri.ToString(),
                                 ReadOnly = false,
                                 Created = fileDate,
                                 Modified = fileDate
@@ -118,8 +119,7 @@ namespace Calamari.Deployment.Conventions
         {
                 var part =
                     package.CreatePart(
-                        PackUriHelper.CreatePartUri(partUri),
-                        System.Net.Mime.MediaTypeNames.Application.Octet);
+                        PackUriHelper.CreatePartUri(partUri), System.Net.Mime.MediaTypeNames.Application.Octet, CompressionOption.Maximum);
 
                 using (var partStream = part.GetStream())
                 using (var fileStream = fileSystem.OpenFile(file, FileMode.Open))
