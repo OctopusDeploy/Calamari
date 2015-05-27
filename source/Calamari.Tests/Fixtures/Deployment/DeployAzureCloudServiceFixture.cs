@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -15,6 +16,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     public class DeployAzureCloudServiceFixture : CalamariFixture
     {
         CalamariResult result;
+        ICalamariFileSystem fileSystem;
 
         [TestFixtureSetUp]
         public void Deploy()
@@ -48,6 +50,11 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             variables.Set(SpecialVariables.Action.Name, "AzureCloudService");
             variables.Set(SpecialVariables.Release.Number, "1.0.0");
+
+            // Enable variable-substitution
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "ServiceDefinition\\ServiceDefinition.csdef");
+
             variables.Save(variablesFile);
 
             result = Invoke(
@@ -55,12 +62,28 @@ namespace Calamari.Tests.Fixtures.Deployment
                     .Action("deploy-azure-cloud-service")
                     .Argument("package", nugetPackageFile)
                     .Argument("variables", variablesFile));       
+
+            fileSystem = new WindowsPhysicalFileSystem();
         }
 
         [Test]
         public void ShouldReturnZero()
         {
            result.AssertZero(); 
+        }
+
+        [Test]
+        public void ShouldRemoveStagingDirectory()
+        {
+            Assert.False(
+                fileSystem.DirectoryExists(result.CapturedOutput.OutputVariables[SpecialVariables.Package.Output.InstallationDirectoryPath]));
+        }
+
+        [Test]
+        public void ShouldPerformVariableSubstitution()
+        {
+           result.AssertOutput(
+               new Regex(@"Performing variable substitution on '.*ServiceDefinition\\ServiceDefinition\.csdef'")); 
         }
     }
 }
