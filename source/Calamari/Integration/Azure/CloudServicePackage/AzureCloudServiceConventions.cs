@@ -27,5 +27,12 @@ namespace Calamari.Integration.Azure.CloudServicePackage
         {
             return filePath.StartsWith("approot\\") || filePath.StartsWith("sitesroot\\");
         }
+
+        public static class PackageFolders
+        {
+            public const string ServiceDefinition = "ServiceDefinition";
+            public const string NamedStreams = "NamedStreams";
+            public const string LocalContent = "LocalContent";
+        }
     }
 }

@@ -188,6 +188,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <EmbeddedResource Include="Fixtures\Azure\CloudServicePackage\ManifestSchema\PackageDefinition.xsd">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <None Include="Fixtures\Bash\Scripts\create-artifact.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

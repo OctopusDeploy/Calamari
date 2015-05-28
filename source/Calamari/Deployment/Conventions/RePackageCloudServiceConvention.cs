@@ -37,8 +37,10 @@ namespace Calamari.Deployment.Conventions
                     MetaData = {AzureVersion = originalManifest.MetaData.AzureVersion}
                 };
 
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, "ServiceDefinition"), "ServiceDefinition");
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, "NamedStreams"), "NamedStreams");
+                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.ServiceDefinition), 
+                    AzureCloudServiceConventions.PackageFolders.ServiceDefinition);
+                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.NamedStreams), 
+                    AzureCloudServiceConventions.PackageFolders.NamedStreams);
                 AddLocalContent(newPackage, newManifest, workingDirectory);
 
                 AddPackageManifest(newPackage, newManifest);

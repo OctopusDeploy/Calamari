@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
@@ -58,11 +59,22 @@ namespace Calamari.Tests.Fixtures.Azure.CloudServicePackage.ManifestSchema
             manifestXml.Add(manifest.ToXml());
 
             var schemaSet = new XmlSchemaSet();
-            schemaSet.Add(null, XmlReader.Create(new StringReader(PackageDefinition.Schema)));
+            schemaSet.Add(null, XmlReader.Create(new StringReader(GetPackageManifestSchema())));
             manifestXml.Validate(schemaSet, (o, e) =>
             {
                 Assert.Fail("Xml failed to validate: " + e.Message);
             });
+        }
+
+        public static string GetPackageManifestSchema()
+        {
+            using (var stream = typeof (AzureCloudServicePackageManifestSchemaFixture)
+                .Assembly.GetManifestResourceStream(
+                    "Calamari.Tests.Fixtures.Azure.CloudServicePackage.ManifestSchema.PackageDefinition.xsd"))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
         }
     }
 }

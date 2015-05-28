@@ -29,8 +29,8 @@ namespace Calamari.Deployment.Conventions
                 var manifest = AzureCloudServiceConventions.ReadPackageManifest(package);
                 var workingDirectory = deployment.CurrentDirectory;
 
-                ExtractContents(package, manifest, "ServiceDefinition", workingDirectory);
-                ExtractContents(package, manifest, "NamedStreams", workingDirectory);
+                ExtractContents(package, manifest, AzureCloudServiceConventions.PackageFolders.ServiceDefinition, workingDirectory);
+                ExtractContents(package, manifest, AzureCloudServiceConventions.PackageFolders.NamedStreams, workingDirectory);
                 ExtractLayouts(package, manifest, workingDirectory);
             }
         }
@@ -47,7 +47,7 @@ namespace Calamari.Deployment.Conventions
 
         void ExtractLayouts(Package package, PackageDefinition manifest, string workingDirectory)
         {
-            var localContentDirectory = Path.Combine(workingDirectory, "LocalContent");
+            var localContentDirectory = Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.LocalContent);
             fileSystem.EnsureDirectoryExists(localContentDirectory);
 
             foreach (var layout in manifest.Layouts)
