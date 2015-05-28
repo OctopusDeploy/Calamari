@@ -158,9 +158,12 @@
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />
     <Compile Include="Fixtures\Conventions\SubstituteInFilesConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\UploadAzureCloudServicePackageConventionFixture.cs" />
+    <Compile Include="Fixtures\Deployment\Azure\OctopusTestAzureSubscription.cs" />
+    <Compile Include="Fixtures\Deployment\Azure\OctopusTestCloudService.cs" />
     <Compile Include="Fixtures\Deployment\CleanFixture.cs" />
-    <Compile Include="Fixtures\Deployment\DeployAzureCloudServiceFixture.cs" />
-    <Compile Include="Fixtures\Deployment\DeployAzureWebFixture.cs" />
+    <Compile Include="Fixtures\Deployment\Azure\DeployAzureCloudServiceFixture.cs" />
+    <Compile Include="Fixtures\Deployment\Azure\DeployAzureCloudServiceSansPackageExtractionFixture.cs" />
+    <Compile Include="Fixtures\Deployment\Azure\DeployAzureWebFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
     <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />

@@ -20,6 +20,9 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, false))
+                return;
+
             Log.Verbose("Re-packaging cspkg.");
             var workingDirectory = deployment.CurrentDirectory;
             var originalPackagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);

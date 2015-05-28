@@ -16,6 +16,9 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, false))
+                return;
+
             Log.VerboseFormat("Ensuring cloud-service-package is {0} format.", PackageFormats.V20120315.ToString());
             var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             var packageFormat = PackageConverter.GetFormat(packagePath);
