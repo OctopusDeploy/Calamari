@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Runtime.Serialization.Formatters;
+using System.Text.RegularExpressions;
 using Calamari.Integration.ServiceMessages;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -113,10 +114,20 @@ namespace Calamari.Tests.Helpers
                 expected, actual);
 
         }
+
         public void AssertOutput(string expectedOutput)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
+
             Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+        }
+
+        public void AssertOutput(Regex regex)
+        {
+            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+
+            Assert.That(regex.IsMatch(allOutput),
+                string.Format("Output did not match: {0}. Output:\r\n{1}", regex.ToString(), allOutput) );
         }
 
         public string GetOutputForLineContaining(string expectedOutput)

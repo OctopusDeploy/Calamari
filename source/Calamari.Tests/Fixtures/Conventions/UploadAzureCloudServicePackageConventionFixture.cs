@@ -57,6 +57,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string packageFileName = "Acme.cspkg";
             var packageFilePath = Path.Combine(stagingDirectory, packageFileName);
             variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
+            variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, packageFilePath);
             fileSystem.EnumerateFiles(stagingDirectory, "*.cspkg")
                 .Returns(new[] { packageFilePath });
             fileSystem.OpenFile(packageFilePath, Arg.Any<FileMode>())
