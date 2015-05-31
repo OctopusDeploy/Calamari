@@ -14,6 +14,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetAzureSubscription()
         {
+            // If the Azure test certificate is not installed, we cannot run, so ignore
+            OctopusTestAzureSubscription.IgnoreIfCertificateNotInstalled();
+
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
             variables.Set(SpecialVariables.Account.AccountType, "AzureSubscription");
