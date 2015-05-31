@@ -218,6 +218,7 @@
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\Azure\AzureCloudServiceConfigurationRetriever.cs" />
     <Compile Include="Integration\Azure\AzurePackageUploader.cs" />
+    <Compile Include="Integration\Azure\AzurePowershellContext.cs" />
     <Compile Include="Integration\Azure\CloudServicePackage\AzureCloudServiceConventions.cs" />
     <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDefinition.cs" />
     <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDescription.cs" />
@@ -239,11 +240,13 @@
     <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
     <Compile Include="Integration\Scripting\Bash\BashScriptBootstrapper.cs" />
     <Compile Include="Integration\Scripting\Bash\BashScriptEngine.cs" />
+    <Compile Include="Integration\Scripting\FileExtensionAttribute.cs" />
+    <Compile Include="Integration\Scripting\IScriptEngine.cs" />
+    <Compile Include="Integration\Scripting\CombinedScriptEngine.cs" />
+    <Compile Include="Integration\Scripting\ScriptType.cs" />
     <Compile Include="Util\HashCalculator.cs" />
     <Compile Include="Util\Uniquifier.cs" />
     <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
-    <Compile Include="Integration\Scripting\NixScriptEngineSelector.cs" />
-    <Compile Include="Integration\Scripting\WindowsScriptEngineSelector.cs" />
     <Compile Include="Integration\Time\IClock.cs" />
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
@@ -262,7 +265,6 @@
     <Compile Include="Integration\Processes\SystemSemaphore.cs" />
     <Compile Include="Integration\FileSystem\PackageStore.cs" />
     <Compile Include="Integration\Packages\StoredPackage.cs" />
-    <Compile Include="Integration\Scripting\IScriptEngineSelector.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessageNames.cs" />
     <Compile Include="Integration\Substitutions\IFileSubstituter.cs" />
@@ -289,11 +291,9 @@
     <Compile Include="Integration\Processes\CommandLine.cs" />
     <Compile Include="Integration\Processes\EmbeddedResource.cs" />
     <Compile Include="Integration\Processes\SplitCommandOutput.cs" />
-    <Compile Include="Integration\Scripting\IScriptEngine.cs" />
     <Compile Include="Integration\Scripting\ScriptCS\ScriptCSBootstrapper.cs" />
     <Compile Include="Integration\Scripting\WindowsPowerShell\PowerShellScriptEngine.cs" />
     <Compile Include="Integration\Scripting\ScriptCS\ScriptCSScriptEngine.cs" />
-    <Compile Include="Integration\Scripting\ScriptEngineSelector.cs" />
     <Compile Include="Integration\Scripting\WindowsPowerShell\PowerShellBootstrapper.cs" />
     <Compile Include="Integration\Processes\ICommandLineRunner.cs" />
     <Compile Include="Integration\Processes\CommandLineException.cs" />
@@ -330,6 +330,7 @@
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.sh" />
     <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
     <EmbeddedResource Include="Scripts\BootstrapDeployAzureCloudService.ps1" />
+    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />

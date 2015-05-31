@@ -138,12 +138,28 @@ namespace Calamari.Deployment
                 public static readonly string CloudServicePackagePath = "Octopus.Action.Azure.CloudServicePackagePath";
 
                 public static readonly string CloudServicePackageExtractionDisabled = "OctopusCloudServicePackageExtractionDisabled";
+
+                public static class Output
+                {
+                    public static readonly string CertificateFileName = "OctopusAzureCertificateFileName";
+                    public static readonly string CertificatePassword = "OctopusAzureCertificatePassword";
+                    public static readonly string AzurePowershellModulePath = "OctopusAzureModulePath";
+                    public static readonly string SubscriptionId = "OctopusAzureSubscriptionId";
+                    public static readonly string SubscriptionName = "OctopusAzureSubscriptionName";
+                    public static readonly string ModulePath = "OctopusAzureModulePath";
+                }
             }
         }
 
         public static class Machine
         {
             public const string Name = "Octopus.Machine.Name";
+        }
+
+        public static class Account
+        {
+            public const string Name = "Octopus.Account.Name";
+            public const string AccountType = "Octopus.Account.AccountType";
         }
 
         public static class Release

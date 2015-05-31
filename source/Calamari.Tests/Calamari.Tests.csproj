@@ -170,6 +170,7 @@
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTestAttribute.cs" />
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
+    <Compile Include="Fixtures\PowerShell\AzurePowershellFixture.cs" />
     <Compile Include="Fixtures\Retention\RetentionPolicyFixture.cs" />
     <Compile Include="Fixtures\Processes\SemaphoreFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\RequiresDotNet45Attribute.cs" />
@@ -264,6 +265,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\CanSetVariable.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\PowerShell\Scripts\AzureSubscription.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\UseModule.ps1">

@@ -7,6 +7,11 @@ namespace Calamari.Integration.Scripting.ScriptCS
 {
     public class ScriptCSScriptEngine : IScriptEngine
     {
+        public string[] GetSupportedExtensions()
+        {
+            return new[] {ScriptType.ScriptCS.FileExtension()};
+        }
+
         public CommandResult Execute(string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var workingDirectory = Path.GetDirectoryName(scriptFile);

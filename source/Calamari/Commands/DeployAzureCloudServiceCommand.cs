@@ -49,7 +49,7 @@ namespace Calamari.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
-            var scriptEngine = ScriptEngineSelector.GetScriptEngineSelector();
+            var scriptEngine = new CombinedScriptEngine();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var azurePackageUploader = new AzurePackageUploader();
             var certificateStore = new CalamariCertificateStore();

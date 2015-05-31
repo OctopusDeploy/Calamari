@@ -16,18 +16,18 @@ namespace Calamari.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly IScriptEngineSelector scriptEngineSelector;
+        readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICertificateStore certificateStore;
         readonly static RandomNumberGenerator RandomNumberSource = RandomNumberGenerator.Create();
         const int PasswordSizeBytes = 20;
 
         public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
-            IScriptEngineSelector scriptEngineSelector, ICommandLineRunner commandLineRunner, ICertificateStore certificateStore)
+            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICertificateStore certificateStore)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
-            this.scriptEngineSelector = scriptEngineSelector;
+            this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.certificateStore = certificateStore;
         }
@@ -82,7 +82,7 @@ namespace Calamari.Deployment.Conventions
                 embeddedResources.GetEmbeddedResourceText("Calamari.Scripts.BootstrapDeployAzureCloudService.ps1"));
 
             Log.VerboseFormat("Executing '{0}'", bootstrapScript);
-            var result = scriptEngineSelector.SelectEngine(scriptFile).Execute(bootstrapScript, deployment.Variables, commandLineRunner);
+            var result = scriptEngine.Execute(bootstrapScript, deployment.Variables, commandLineRunner);
 
             fileSystem.DeleteFile(scriptFile, DeletionOptions.TryThreeTimesIgnoreFailure);
 

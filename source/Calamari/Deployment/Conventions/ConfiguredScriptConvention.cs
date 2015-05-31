@@ -10,15 +10,15 @@ namespace Calamari.Deployment.Conventions
     public class ConfiguredScriptConvention : IInstallConvention
     {
         readonly string deploymentStage;
-        readonly IScriptEngineSelector scriptEngineSelector;
+        readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public ConfiguredScriptConvention(string deploymentStage, IScriptEngineSelector scriptEngineSelector,
+        public ConfiguredScriptConvention(string deploymentStage, IScriptEngine scriptEngine,
             ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.deploymentStage = deploymentStage;
-            this.scriptEngineSelector = scriptEngineSelector;
+            this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
         }
@@ -30,7 +30,7 @@ namespace Calamari.Deployment.Conventions
             if (!features.Contains(SpecialVariables.Features.CustomScripts))
                 return;
 
-            foreach (var scriptName in scriptEngineSelector.GetSupportedExtensions()
+            foreach (var scriptName in scriptEngine.GetSupportedExtensions() 
                 .Select(extension => GetScriptName(deploymentStage, extension)))
             {
                 var scriptBody = deployment.Variables.Get(scriptName);
@@ -44,7 +44,7 @@ namespace Calamari.Deployment.Conventions
 
                 // Execute the script
                 Log.VerboseFormat("Executing '{0}'", scriptFile);
-                var result = scriptEngineSelector.SelectEngine(scriptFile).Execute(scriptFile, deployment.Variables, commandLineRunner);
+                var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);
 
                 if (result.ExitCode != 0)
                 {

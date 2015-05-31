@@ -14,17 +14,17 @@ namespace Calamari.Deployment.Conventions
         readonly string deploymentStage;
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly IScriptEngineSelector scriptEngineSelector;
+        readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
 
         public FeatureScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
-            IScriptEngineSelector scriptEngineSelector, ICommandLineRunner commandLineRunner)
+            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.deploymentStage = deploymentStage;
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
-            this.scriptEngineSelector = scriptEngineSelector;
+            this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
         }
 
@@ -58,7 +58,7 @@ namespace Calamari.Deployment.Conventions
 
                 // Execute the script
                 Log.VerboseFormat("Executing '{0}'", scriptFile);
-                var result = scriptEngineSelector.SelectEngine(scriptFile).Execute(scriptFile, deployment.Variables, commandLineRunner);
+                var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);
 
                 // And then delete it
                 fileSystem.DeleteFile(scriptFile, DeletionOptions.TryThreeTimesIgnoreFailure);
@@ -87,7 +87,7 @@ namespace Calamari.Deployment.Conventions
         /// </summary>
         private IEnumerable<string> GetScriptNames(string feature)
         {
-            return scriptEngineSelector.GetSupportedExtensions()
+            return scriptEngine.GetSupportedExtensions() 
                 .Select(extension => GetScriptName(feature, deploymentStage, extension ));
         }
 

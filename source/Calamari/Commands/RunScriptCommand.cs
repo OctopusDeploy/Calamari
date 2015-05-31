@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Integration.Azure;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
@@ -44,10 +45,10 @@ namespace Calamari.Commands
             if (!File.Exists(scriptFile))
                 throw new CommandException("Could not find script file: " + scriptFile);
 
-            var engine = ScriptEngineSelector.GetScriptEngineSelector().SelectEngine(scriptFile);
+            var scriptEngine = new CombinedScriptEngine();
             var runner = new CommandLineRunner(
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var result = engine.Execute(scriptFile, variables, runner);
+            var result = scriptEngine.Execute(scriptFile, variables, runner);
             return result.ExitCode;
         }
     }
