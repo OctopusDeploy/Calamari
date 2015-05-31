@@ -255,6 +255,9 @@
     <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\Octopus.Sample.AzureCloudService.nuspec">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\PostDeploy.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\ServiceConfiguration.Cloud.cscfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
