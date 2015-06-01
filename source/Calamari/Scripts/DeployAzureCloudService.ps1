@@ -1,7 +1,7 @@
 ﻿## Octopus Azure deployment script, version 1.0
 ## --------------------------------------------------------------------------------------
 ##
-## This script is used to control how we deploy packages to Windows Azure. 
+## This script is used to control how we deploy packages to Azure CloudServices. 
 ##
 ## When the script is run, the correct Azure subscription will ALREADY be selected,
 ## and we'll have loaded the neccessary management certificates. The Azure PowerShell module
@@ -15,7 +15,7 @@
 ## variables passed to any PowerShell script. 
 ## 
 ##   $OctopusAzureSubscriptionId           // The subscription ID GUID
-##   $OctopusAzureSubscriptionName         // The random name of the temporary Azure subscription record
+##   $OctopusAzureSubscriptionName         // The name of the subscription as stored in the subscription data file. This will be the same as the Account name in Octopus Deploy. 
 ##   $OctopusAzureServiceName              // The name of your cloud service
 ##   $OctopusAzureStorageAccountName       // The name of your storage account
 ##   $OctopusAzureSlot                     // The name of the slot to deploy to (Staging or Production)
@@ -36,15 +36,15 @@ function CreateOrUpdate()
 
     if (($OctopusAzureSwapIfPossible -eq $true) -and ($OctopusAzureSlot -eq "Production")) 
     {
-        Write-Host "Checking whether a swap is possible"
+        Write-Verbose "Checking whether a swap is possible"
         $staging = Get-AzureDeployment -ServiceName $OctopusAzureServiceName -Slot "Staging" -ErrorVariable a -ErrorAction silentlycontinue
         if (($a[0] -ne $null) -or ($staging.Name -eq $null)) 
         {
-            Write-Host "Nothing is deployed in staging"
+            Write-Verbose "Nothing is deployed in staging"
         }
         else 
         {
-            Write-Host ("Current staging deployment: " + $staging.Label)
+            Write-Verbose ("Current staging deployment: " + $staging.Label)
             if ($staging.Label -eq $OctopusAzureDeploymentLabel) {
                 SwapDeployment
                 return
@@ -57,19 +57,19 @@ function CreateOrUpdate()
  
 function SwapDeployment()
 {
-    Write-Host "Swapping the staging environment to production"
+    Write-Verbose "Swapping the staging environment to production"
     Move-AzureDeployment -ServiceName $OctopusAzureServiceName
 }
  
 function UpdateDeployment()
 {
-    Write-Host "A deployment already exists in $OctopusAzureServiceName for slot $OctopusAzureSlot. Upgrading deployment..."
+    Write-Verbose "A deployment already exists in $OctopusAzureServiceName for slot $OctopusAzureSlot. Upgrading deployment..."
     Set-AzureDeployment -Upgrade -ServiceName $OctopusAzureServiceName -Package $OctopusAzurePackageUri -Configuration $OctopusAzureConfigurationFile -Slot $OctopusAzureSlot -Mode Auto -label $OctopusAzureDeploymentLabel -Force
 }
  
 function CreateNewDeployment()
 {
-    Write-Host "Creating a new deployment..."
+    Write-Verbose "Creating a new deployment..."
     New-AzureDeployment -Slot $OctopusAzureSlot -Package $OctopusAzurePackageUri -Configuration $OctopusAzureConfigurationFile -label $OctopusAzureDeploymentLabel -ServiceName $OctopusAzureServiceName
 }
 
