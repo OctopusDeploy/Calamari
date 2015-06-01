@@ -329,7 +329,6 @@
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_BeforePostDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.sh" />
     <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
-    <EmbeddedResource Include="Scripts\BootstrapDeployAzureCloudService.ps1" />
     <EmbeddedResource Include="Scripts\AzureContext.ps1" />
   </ItemGroup>
   <ItemGroup>
