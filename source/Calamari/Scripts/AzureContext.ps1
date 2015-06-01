@@ -36,3 +36,5 @@ Select-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName
 Write-Host "Invoking target script $OctopusAzureTargetScript"
 
 . $OctopusAzureTargetScript 
+
+Select-AzureSubscription -NoCurrent
