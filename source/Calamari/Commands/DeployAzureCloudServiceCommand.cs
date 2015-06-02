@@ -49,7 +49,7 @@ namespace Calamari.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();
-            var scriptEngine = ScriptEngineSelector.GetScriptEngineSelector();
+            var scriptEngine = new CombinedScriptEngine();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var azurePackageUploader = new AzurePackageUploader();
             var certificateStore = new CalamariCertificateStore();
@@ -75,7 +75,7 @@ namespace Calamari.Commands
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new RePackageCloudServiceConvention(fileSystem),
                 new UploadAzureCloudServicePackageConvention(fileSystem, azurePackageUploader, cloudCredentialsFactory),
-                new DeployAzureCloudServicePackageConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner, certificateStore),
+                new DeployAzureCloudServicePackageConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new DeleteStagingDirectoryConvention(fileSystem)

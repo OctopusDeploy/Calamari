@@ -7,6 +7,11 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
     public class PowerShellScriptEngine : IScriptEngine
     {
+        public string[] GetSupportedExtensions()
+        {
+            return new[] {ScriptType.Powershell.FileExtension()};
+        }
+
         public CommandResult Execute(string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var workingDirectory = Path.GetDirectoryName(scriptFile);

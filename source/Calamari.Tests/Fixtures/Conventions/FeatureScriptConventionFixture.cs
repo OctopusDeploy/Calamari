@@ -18,7 +18,6 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         ICalamariFileSystem fileSystem;
         ICalamariEmbeddedResources embeddedResources;
-        IScriptEngineSelector scriptEngineSelector;
         IScriptEngine scriptEngine;
         ICommandLineRunner commandLineRunner;
         RunningDeployment deployment;
@@ -31,12 +30,10 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
             embeddedResources = Substitute.For<ICalamariEmbeddedResources>();
-            scriptEngineSelector = Substitute.For<IScriptEngineSelector>();
             scriptEngine = Substitute.For<IScriptEngine>();
             commandLineRunner = Substitute.For<ICommandLineRunner>();
 
-            scriptEngineSelector.GetSupportedExtensions().Returns(new string[] {"ps1"});
-            scriptEngineSelector.SelectEngine(Arg.Any<string>()).Returns(scriptEngine);
+            scriptEngine.GetSupportedExtensions().Returns(new string[] {"ps1"});
 
             variables = new VariableDictionary();
             variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.blah");
@@ -133,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private FeatureScriptConvention CreateConvention(string deployStage)
         {
-            return new FeatureScriptConvention(deployStage, fileSystem, embeddedResources, scriptEngineSelector, commandLineRunner );
+            return new FeatureScriptConvention(deployStage, fileSystem, embeddedResources, scriptEngine, commandLineRunner );
         }
     }
 }

@@ -22,6 +22,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
         {
             var certificate = GetCertificate();
 
+            variables.Set(SpecialVariables.Account.Name, "OctopusAzureTest");
+            variables.Set(SpecialVariables.Account.AccountType, "AzureSubscription");
             variables.Set(SpecialVariables.Action.Azure.CertificateBytes, Convert.ToBase64String(certificate.Export(X509ContentType.Pfx)));
             variables.Set(SpecialVariables.Action.Azure.CertificateThumbprint, CertificateThumbprint);
             variables.Set(SpecialVariables.Action.Azure.SubscriptionId, AzureSubscriptionId);

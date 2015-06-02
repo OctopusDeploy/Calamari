@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -69,6 +67,13 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
         {
            result.AssertOutput(
                new Regex(@"Performing variable substitution on '.*ServiceDefinition\\ServiceDefinition\.csdef'")); 
+        }
+
+        [Test]
+        public void ShouldRunPackagedScriptsWithAzureModulesAndSubscriptionAvailable()
+        {
+            // PostDeploy.ps1 should output the service-name
+            result.AssertOutput("Service Name: " + OctopusTestCloudService.ServiceName);
         }
     }
 }
