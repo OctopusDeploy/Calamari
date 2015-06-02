@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
