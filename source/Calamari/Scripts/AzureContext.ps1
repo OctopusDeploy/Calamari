@@ -20,7 +20,7 @@ Write-Verbose "Importing Windows Azure modules"
 
 Import-Module $OctopusAzureModulePath
 
-if (!(Get-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName)) {
+if (!(Get-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName -ErrorAction SilentlyContinue)) {
 	Write-Verbose "Loading the management certificate"
 
 	Add-Type -AssemblyName "System"
