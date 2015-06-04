@@ -24,7 +24,7 @@ if (!(Get-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName -Err
 	Write-Verbose "Loading the management certificate"
 
 	Add-Type -AssemblyName "System"
-	$certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword)
+	$certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
 
 	Write-Verbose "Setting up the Azure subscription"
 
