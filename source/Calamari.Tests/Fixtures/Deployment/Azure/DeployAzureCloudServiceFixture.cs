@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
             OctopusTestCloudService.PopulateVariables(variables);
             variables.Set(SpecialVariables.Action.Azure.Slot, "Staging");
             variables.Set(SpecialVariables.Action.Azure.SwapIfPossible, false.ToString());
-            variables.Set(SpecialVariables.Action.Azure.UseCurrentInstanceCount, false.ToString());
+            variables.Set(SpecialVariables.Action.Azure.UseCurrentInstanceCount, true.ToString());
 
             variables.Set(SpecialVariables.Action.Name, "AzureCloudService");
             variables.Set(SpecialVariables.Release.Number, "1.0.0");
