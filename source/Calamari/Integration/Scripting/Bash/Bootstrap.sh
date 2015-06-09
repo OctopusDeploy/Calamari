@@ -11,7 +11,6 @@
 function encode_servicemessagevalue
 {
 	echo -n "$1" | openssl enc -base64 -A
-	exit $?
 }
 
 # -----------------------------------------------------------------------------
@@ -22,7 +21,6 @@ function encode_servicemessagevalue
 function decode_servicemessagevalue
 {
 	echo -n "$1" | openssl enc -base64 -A -d
-	exit $?
 }
 
 #	---------------------------------------------------------------------------
@@ -54,18 +52,17 @@ function set_octopusvariable
 
 	if [ -n "$1" ]
 	then
-		MESSAGE="$MESSAGE name='$(encode_servicemessagevalue $1)'"
+		MESSAGE="$MESSAGE name='$(encode_servicemessagevalue "$1")'"
 	fi
 
 	if [ -n "$2" ]
 	then
-		MESSAGE="$MESSAGE value='$(encode_servicemessagevalue $2)'"
+		MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
 	fi
 
 	MESSAGE="$MESSAGE]"
 
 	echo $MESSAGE
-	exit $?
 }
 
 
@@ -95,7 +92,5 @@ function new_octopusartifact
 	    ofn=`basename "$pth"`
 	fi
 
-	echo "##octopus[createArtifact path='$(encode_servicemessagevalue $pth)' name='$(encode_servicemessagevalue $ofn)' length='$(encode_servicemessagevalue $len)']"
-
-	exit $?
+	echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
 }

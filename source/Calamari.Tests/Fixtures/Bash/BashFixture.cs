@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Bash
                 .Argument("script", GetFixtureResouce("Scripts", "print-encoded-variable.sh")));
 
             output.AssertZero();
-            output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
+            output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
         }
 
         [Test]

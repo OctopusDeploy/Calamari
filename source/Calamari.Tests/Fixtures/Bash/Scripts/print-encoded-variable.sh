@@ -1,2 +1,2 @@
 #!/bin/bash
-set_octopusvariable "Donkey" "Kong"
+set_octopusvariable "Super" "Mario Bros"
