@@ -42,7 +42,7 @@ namespace Calamari.Deployment.Conventions
             // From this point on, the current directory will be the custom-directory
             deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
 
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
         }
     }
 }

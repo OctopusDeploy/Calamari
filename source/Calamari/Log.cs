@@ -2,6 +2,8 @@
 using System.CodeDom.Compiler;
 using System.Globalization;
 using System.Text;
+using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari
 {
@@ -36,9 +38,17 @@ namespace Calamari
 
         public static void SetOutputVariable(string name, string value)
         {
+            SetOutputVariable(name, value, null);
+        }
+
+        public static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        {
             Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]",
                 ConvertServiceMessageValue(name),
                 ConvertServiceMessageValue(value)));
+
+            if (variables != null)
+                variables.SetOutputVariable(name, value);
         }
 
         static string ConvertServiceMessageValue(string value)

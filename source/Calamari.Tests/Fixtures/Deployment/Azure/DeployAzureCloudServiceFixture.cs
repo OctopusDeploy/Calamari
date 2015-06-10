@@ -70,10 +70,16 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
         }
 
         [Test]
+        public void ShouldPerformConfigTransforms()
+        {
+        }
+
+        [Test]
         public void ShouldRunPackagedScriptsWithAzureModulesAndSubscriptionAvailable()
         {
             // PostDeploy.ps1 should output the service-name
             result.AssertOutput("Service Name: " + OctopusTestCloudService.ServiceName);
         }
+
     }
 }
