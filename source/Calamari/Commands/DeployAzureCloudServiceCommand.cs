@@ -6,6 +6,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.Azure;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.ConfigurationTransforms;
+using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -57,6 +58,7 @@ namespace Calamari.Commands
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
             var substituter = new FileSubstituter();
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
+            var replacer = new ConfigurationVariablesReplacer();
 
             var conventions = new List<IConvention>
             {
@@ -71,6 +73,7 @@ namespace Calamari.Commands
                 new ConfigureAzureCloudServiceConvention(fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
+                new ConfigurationVariablesConvention(fileSystem, replacer),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new RePackageCloudServiceConvention(fileSystem),
