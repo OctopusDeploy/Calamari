@@ -35,7 +35,8 @@ namespace Calamari.Deployment.Conventions
                 ExtractLayouts(package, manifest, workingDirectory);
             }
 
-            LogExtractedPackage(deployment.CurrentDirectory);
+            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.LogExtractedCspkg))
+                LogExtractedPackage(deployment.CurrentDirectory);
         }
 
         void ExtractContents(Package package, PackageDefinition manifest, string contentNamePrefix, string workingDirectory)
