@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
+using System.Text;
 using Calamari.Integration.Azure.CloudServicePackage;
 using Calamari.Integration.Azure.CloudServicePackage.ManifestSchema;
 using Calamari.Integration.FileSystem;
@@ -22,8 +23,8 @@ namespace Calamari.Deployment.Conventions
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, false))
                 return;
 
-            Log.Verbose("Extracting cspkg");
             var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
+            Log.VerboseFormat("Extracting Cloud Service package: '{0}'", packagePath);
             using (var package = Package.Open(packagePath, FileMode.Open))
             {
                 var manifest = AzureCloudServiceConventions.ReadPackageManifest(package);
@@ -33,6 +34,9 @@ namespace Calamari.Deployment.Conventions
                 ExtractContents(package, manifest, AzureCloudServiceConventions.PackageFolders.NamedStreams, workingDirectory);
                 ExtractLayouts(package, manifest, workingDirectory);
             }
+
+            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.LogExtractedCspkg))
+                LogExtractedPackage(deployment.CurrentDirectory);
         }
 
         void ExtractContents(Package package, PackageDefinition manifest, string contentNamePrefix, string workingDirectory)
@@ -87,6 +91,46 @@ namespace Calamari.Deployment.Conventions
         static string ConvertToWindowsPath(string path)
         {
             return path.Replace("/", "\\");
+        }
+
+        void LogExtractedPackage(string workingDirectory)
+        {
+            Log.Verbose("CSPKG extracted. Working directory contents:");
+            LogDirectoryContents(workingDirectory, "", 0);
+        }
+
+        void LogDirectoryContents(string workingDirectory, string currentDirectoryRelativePath, int depth = 0)
+        {
+            var directory = new DirectoryInfo(Path.Combine(workingDirectory, currentDirectoryRelativePath));
+
+            var files = fileSystem.EnumerateFiles(directory.FullName).ToList();
+            for (int i = 0; i < files.Count; i++)
+            {
+                // Only log the first 7 files in each directory
+                if (i == 7)
+                {
+                    Log.VerboseFormat("{0}And {1} more files...", Tabs(depth), files.Count - i);
+                    break;
+                }
+
+                var file = files[i];
+                Log.Verbose(Tabs(depth) + Path.GetFileName(file));
+            }
+
+            foreach (var subDirectory in fileSystem.EnumerateDirectories(directory.FullName).Select(x => new DirectoryInfo(x)))
+            {
+                Log.Verbose(Tabs(depth) + "\\" + subDirectory.Name);
+                LogDirectoryContents(workingDirectory, Path.Combine(currentDirectoryRelativePath, subDirectory.Name), depth + 1);
+            }
+        }
+
+        static string Tabs(int n)
+        {
+            var tabs = new StringBuilder();
+            for (int i = 0; i < n; i++)
+                tabs.Append("   ");
+
+            return tabs.ToString();
         }
     }
 }
