@@ -50,10 +50,10 @@ namespace Calamari.Integration.Azure
             if (EnsureCertificateFileExists(workingDirectory, variables))
                 return;
 
-            variables.SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, azurePowershellModulePath);
-            variables.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId));
+            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, azurePowershellModulePath, variables);
+            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             // Use the account-name configured in Octopus as the subscription-data-set name
-            variables.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name));
+            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);
         }
 
         bool EnsureCertificateFileExists(string workingDirectory, VariableDictionary variables)
@@ -71,8 +71,8 @@ namespace Calamari.Integration.Azure
 
             fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificatePassword));
 
-            variables.SetOutputVariable(SpecialVariables.Action.Azure.Output.CertificateFileName, certificateFilePath);
-            variables.SetOutputVariable(SpecialVariables.Action.Azure.Output.CertificatePassword, certificatePassword);
+            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.CertificateFileName, certificateFilePath, variables);
+            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.CertificatePassword, certificatePassword, variables);
 
             return false;
         }

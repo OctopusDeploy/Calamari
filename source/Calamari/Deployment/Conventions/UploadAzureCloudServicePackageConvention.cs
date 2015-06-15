@@ -38,7 +38,7 @@ namespace Calamari.Deployment.Conventions
 
             var uploadedUri = azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName);
 
-            deployment.Variables.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString());
+            Log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), deployment.Variables);
             Log.Info("Package uploaded to " + uploadedUri.ToString());
         }
 

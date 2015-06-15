@@ -32,7 +32,7 @@ namespace Calamari.Deployment.Conventions
         public void Install(RunningDeployment deployment)
         {
             var configurationFile = ChooseWhichConfigurationFileToUse(deployment);
-            deployment.Variables.SetOutputVariable(ConfigurationFileVariable, configurationFile);
+            Log.SetOutputVariable(ConfigurationFileVariable, configurationFile, deployment.Variables);
 
             var configuration = XDocument.Parse(fileSystem.ReadFile(configurationFile));
             UpdateConfigurationWithCurrentInstanceCount(configuration, configurationFile, deployment.Variables);
