@@ -139,6 +139,8 @@ namespace Calamari.Deployment
 
                 public static readonly string CloudServicePackageExtractionDisabled = "OctopusCloudServicePackageExtractionDisabled";
 
+                public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg"; 
+
                 public static class Output
                 {
                     public static readonly string CertificateFileName = "OctopusAzureCertificateFileName";
