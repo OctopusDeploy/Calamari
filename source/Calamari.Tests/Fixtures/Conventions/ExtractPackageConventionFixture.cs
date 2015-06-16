@@ -12,11 +12,11 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    public class ExtractPackageToApplicationDirectoryConventionFixture
+    public class ExtractPackageConventionFixture
     {
         IPackageExtractor extractor;
         VariableDictionary variables;
-        ExtractPackageToApplicationDirectoryConvention convention;
+        ExtractPackageConvention convention;
         ICalamariFileSystem fileSystem;
         static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Package.nupkg");
 
@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));
 
             variables = new VariableDictionary();
-            convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem, new SystemSemaphore());
+            convention = new ExtractPackageConvention(extractor, fileSystem, new SystemSemaphore());
         }
 
         [Test]
