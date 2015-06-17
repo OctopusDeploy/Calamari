@@ -12,7 +12,13 @@ namespace Calamari.Deployment.Conventions
 
         protected override string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)
         {
-            return deployment.Variables[SpecialVariables.Action.Azure.PackageExtractionPath];
+            var packageExtractionPathVariable = deployment.Variables[SpecialVariables.Action.Azure.PackageExtractionPath];
+
+            // The PackageExtractionPath variable will always be provided by the OD server, but just in case Calamari is run
+            // stand-alone, we will fall-back to a temporary path
+            return !string.IsNullOrWhiteSpace(packageExtractionPathVariable)
+                ? packageExtractionPathVariable
+                : fileSystem.CreateTemporaryDirectory();
         }
     }
 }
