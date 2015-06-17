@@ -16,6 +16,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
     public class DeployAzureWebFixture : CalamariFixture
     {
         ICalamariFileSystem fileSystem;
+        string stagingDirectory;
         VariableDictionary variables;
         CalamariResult result;
 
@@ -38,8 +39,16 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
 
             fileSystem = new WindowsPhysicalFileSystem();
+            stagingDirectory = Path.GetTempPath(); 
+            variables.Set(SpecialVariables.Action.Azure.PackageExtractionPath, stagingDirectory);
 
             result = DeployPackage("Acme.Web");
+        }
+
+        [TestFixtureTearDown]
+        public void CleanUp()
+        {
+           fileSystem.DeleteDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure); 
         }
 
         [Test]
@@ -47,13 +56,6 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
         {
             result.AssertZero();
 
-        }
-
-        [Test]
-        public void ShouldRemoveStagingDirectory()
-        {
-            Assert.False(
-                fileSystem.DirectoryExists(result.CapturedOutput.OutputVariables[SpecialVariables.Package.Output.InstallationDirectoryPath]));
         }
 
         [Test]
