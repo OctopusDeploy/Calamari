@@ -152,7 +152,7 @@
     <Compile Include="Fixtures\Conventions\ContributeEnvironmentVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\CopyPackageToCustomInstallationDirectoryConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\PackagedScriptConventionFixture.cs" />
-    <Compile Include="Fixtures\Conventions\ExtractPackageConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ExtractPackageToApplicationDirectoryConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\FeatureScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\LegacyIisWebSiteConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />

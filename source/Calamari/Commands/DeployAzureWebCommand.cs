@@ -60,7 +60,7 @@ namespace Calamari.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageConvention(new LightweightPackageExtractor(), fileSystem, new SystemSemaphore()),
+                new ExtractPackageToStagingDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),

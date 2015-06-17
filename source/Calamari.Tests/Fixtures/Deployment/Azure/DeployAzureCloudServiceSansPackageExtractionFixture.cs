@@ -13,6 +13,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
     public class DeployAzureCloudServiceSansPackageExtractionFixture : CalamariFixture
     {
         CalamariResult result;
+        ICalamariFileSystem fileSystem;
+        string stagingDirectory;
 
         [TestFixtureSetUp]
         public void Deploy()
@@ -35,6 +37,10 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
             // Disable cspkg extraction
             variables.Set(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, true.ToString());
 
+            fileSystem = new WindowsPhysicalFileSystem();
+            stagingDirectory = Path.GetTempPath(); 
+            variables.Set(SpecialVariables.Action.Azure.PackageExtractionPath, stagingDirectory);
+
             variables.Save(variablesFile);
 
             result = Invoke(
@@ -42,6 +48,12 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
                     .Action("deploy-azure-cloud-service")
                     .Argument("package", nugetPackageFile)
                     .Argument("variables", variablesFile));       
+        }
+
+        [TestFixtureTearDown]
+        public void CleanUp()
+        {
+           fileSystem.DeleteDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure); 
         }
 
         [Test]

@@ -15,6 +15,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
     {
         CalamariResult result;
         ICalamariFileSystem fileSystem;
+        string stagingDirectory;
 
         [TestFixtureSetUp]
         public void Deploy()
@@ -38,6 +39,10 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "ServiceDefinition\\ServiceDefinition.csdef");
 
+            fileSystem = new WindowsPhysicalFileSystem();
+            stagingDirectory = Path.GetTempPath(); 
+            variables.Set(SpecialVariables.Action.Azure.PackageExtractionPath, stagingDirectory);
+
             variables.Save(variablesFile);
 
             result = Invoke(
@@ -46,20 +51,18 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
                     .Argument("package", nugetPackageFile)
                     .Argument("variables", variablesFile));       
 
-            fileSystem = new WindowsPhysicalFileSystem();
+        }
+
+        [TestFixtureTearDown]
+        public void CleanUp()
+        {
+           fileSystem.DeleteDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure); 
         }
 
         [Test]
         public void ShouldReturnZero()
         {
            result.AssertZero(); 
-        }
-
-        [Test]
-        public void ShouldRemoveStagingDirectory()
-        {
-            Assert.False(
-                fileSystem.DirectoryExists(result.CapturedOutput.OutputVariables[SpecialVariables.Package.Output.InstallationDirectoryPath]));
         }
 
         [Test]
