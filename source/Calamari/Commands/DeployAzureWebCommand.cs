@@ -60,7 +60,7 @@ namespace Calamari.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToTemporaryDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
+                new ExtractPackageConvention(new LightweightPackageExtractor(), fileSystem, new SystemSemaphore()),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
@@ -71,7 +71,6 @@ namespace Calamari.Commands
                 new AzureWebAppConvention(variables),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, scriptEngine, fileSystem, commandLineRunner),
-                new DeleteStagingDirectoryConvention(fileSystem)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

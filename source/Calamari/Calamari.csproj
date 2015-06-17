@@ -190,12 +190,10 @@
     <Compile Include="Deployment\ConventionProcessor.cs" />
     <Compile Include="Deployment\Conventions\ContributePreviousInstallationConvention.cs" />
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
-    <Compile Include="Deployment\Conventions\DeleteStagingDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\DeployAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\EnsureCloudServicePackageIsCtpFormatConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageConvention.cs" />
-    <Compile Include="Deployment\Conventions\ExtractPackageToTemporaryDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\FindCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
@@ -205,7 +203,6 @@
     <Compile Include="Deployment\DeploymentStages.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
     <Compile Include="Deployment\Conventions\PackagedScriptConvention.cs" />
-    <Compile Include="Deployment\Conventions\ExtractPackageToApplicationDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\IConvention.cs" />
     <Compile Include="Deployment\Conventions\IInstallConvention.cs" />
     <Compile Include="Deployment\Conventions\IRollbackConvention.cs" />
