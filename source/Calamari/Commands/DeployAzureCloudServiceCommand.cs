@@ -81,7 +81,6 @@ namespace Calamari.Commands
                 new DeployAzureCloudServicePackageConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, scriptEngine, fileSystem, commandLineRunner),
-                new DeleteStagingDirectoryConvention(fileSystem)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

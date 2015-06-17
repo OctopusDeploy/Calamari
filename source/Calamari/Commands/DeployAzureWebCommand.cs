@@ -71,7 +71,6 @@ namespace Calamari.Commands
                 new AzureWebAppConvention(variables),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, scriptEngine, fileSystem, commandLineRunner),
-                new DeleteStagingDirectoryConvention(fileSystem)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
