@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Calamari.Deployment
+﻿namespace Calamari.Deployment
 {
     public static class SpecialVariables
     {
@@ -141,7 +139,9 @@ namespace Calamari.Deployment
 
                 public static readonly string CloudServicePackageExtractionDisabled = "OctopusCloudServicePackageExtractionDisabled";
 
-                public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg"; 
+                public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg";
+
+                public static readonly string CloudServiceConfigurationFileRelativePath = "Octopus.Action.Azure.CloudServiceConfigurationFileRelativePath";
 
                 public static class Output
                 {
@@ -151,6 +151,7 @@ namespace Calamari.Deployment
                     public static readonly string SubscriptionId = "OctopusAzureSubscriptionId";
                     public static readonly string SubscriptionName = "OctopusAzureSubscriptionName";
                     public static readonly string ModulePath = "OctopusAzureModulePath";
+                    public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
                 }
             }
         }

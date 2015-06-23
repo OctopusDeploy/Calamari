@@ -183,6 +183,7 @@
     <Compile Include="Commands\Support\OptionValueType.cs" />
     <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
     <Compile Include="Deployment\Conventions\AzureWebAppConvention.cs" />
+    <Compile Include="Deployment\Conventions\ChooseCloudServiceConfigurationFileConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationTransformsConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigureAzureCloudServiceConvention.cs" />

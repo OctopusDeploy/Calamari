@@ -146,6 +146,7 @@
     <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationTransformConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationVariablesConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ChooseAzureCloudServiceConfigurationFileConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigureAzureCloudServiceConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfiguredScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributePreviousInstallationConventionFixture.cs" />

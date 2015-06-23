@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Azure;
@@ -26,82 +27,60 @@ namespace Calamari.Tests.Fixtures.Conventions
         RunningDeployment deployment;
         VariableDictionary variables;
         ConfigureAzureCloudServiceConvention convention;
-        const string stagingDirectory = "C:\\Applications\\Foo"; 
-        const string defaultConfigurationFile = "ServiceConfiguration.Cloud.cscfg";
-        const string azureSubscriptionId = "8affaa7d-3d74-427c-93c5-2d7f6a16e754";
-        const string certificateThumbprint = "86B5C8E5553981FED961769B2DA3028C619596AC";
-        const string certificateBytes = "ThisIsNotAValidCertificate";
-        const string cloudServiceName = "AcmeOnline";
-        const DeploymentSlot deploymentSlot = DeploymentSlot.Production; 
+        const string StagingDirectory = "C:\\Applications\\Foo"; 
+        const string DefaultConfigurationFileName = "ServiceConfiguration.Cloud.cscfg";
+        const string AzureSubscriptionId = "8affaa7d-3d74-427c-93c5-2d7f6a16e754";
+        const string CertificateThumbprint = "86B5C8E5553981FED961769B2DA3028C619596AC";
+        const string CertificateBytes = "ThisIsNotAValidCertificate";
+        const string CloudServiceName = "AcmeOnline";
+        const DeploymentSlot DeploymentSlot = Microsoft.WindowsAzure.Management.Compute.Models.DeploymentSlot.Production;
+
+        string result;
 
         [SetUp]
         public void SetUp()
         {
+            result = null;
+
             fileSystem = Substitute.For<ICalamariFileSystem>();
             credentialsFactory = Substitute.For<ISubscriptionCloudCredentialsFactory>();
             configurationRetriever = Substitute.For<IAzureCloudServiceConfigurationRetriever>(); 
             variables = new VariableDictionary();
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
-            deployment = new RunningDeployment(stagingDirectory, variables);
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, StagingDirectory);
+            deployment = new RunningDeployment(StagingDirectory, variables);
 
-            variables.Set(SpecialVariables.Action.Azure.SubscriptionId, azureSubscriptionId);
-            variables.Set(SpecialVariables.Action.Azure.CertificateThumbprint, certificateThumbprint);
-            variables.Set(SpecialVariables.Action.Azure.CertificateBytes, certificateBytes);
-            variables.Set(SpecialVariables.Action.Azure.CloudServiceName, cloudServiceName);
-            variables.Set(SpecialVariables.Action.Azure.Slot, deploymentSlot.ToString());
+            variables.Set(SpecialVariables.Action.Azure.SubscriptionId, AzureSubscriptionId);
+            variables.Set(SpecialVariables.Action.Azure.CertificateThumbprint, CertificateThumbprint);
+            variables.Set(SpecialVariables.Action.Azure.CertificateBytes, CertificateBytes);
+            variables.Set(SpecialVariables.Action.Azure.CloudServiceName, CloudServiceName);
+            variables.Set(SpecialVariables.Action.Azure.Slot, DeploymentSlot.ToString());
 
-            credentialsFactory.GetCredentials(azureSubscriptionId, certificateThumbprint, certificateBytes)
-                .Returns(new FakeSubscriptionCloudCredentials(azureSubscriptionId));
+            credentialsFactory.GetCredentials(AzureSubscriptionId, CertificateThumbprint, CertificateBytes)
+                .Returns(new FakeSubscriptionCloudCredentials(AzureSubscriptionId));
 
             convention = new ConfigureAzureCloudServiceConvention(fileSystem, credentialsFactory, configurationRetriever);
         }
 
         [Test]
-        public void ShouldUseUserSpecifiedConfigurationFile()
+        [TestCase("A file that doesn't exist")]
+        [TestCase("")]
+        [TestCase(null)]
+        [ExpectedException(typeof(CommandException), ExpectedMessage = "Could not find the Azure Cloud Service Configuration file", MatchType = MessageMatch.StartsWith)]
+        public void ShouldThrowSensibleExceptionIfOriginalConfigurationFileIsMissingOrInvalid(string configurationFilePath)
         {
-            const string userSpecifiedFile = "MyCustomCloud.cscfg";
-            variables.Set(ConfigureAzureCloudServiceConvention.ConfigurationFileNameVariable, userSpecifiedFile);
-            string result = null;
-            ArrangeOriginalConfigurationFile(Path.Combine(stagingDirectory, userSpecifiedFile), SimpleConfigSample, x=>result=x);
+            variables.Set(SpecialVariables.Action.Azure.Output.ConfigurationFile, configurationFilePath);
 
             convention.Install(deployment);
-
-            AssertIsValidConfigurationFile(result);
-        }
-
-        [Test]
-        public void IfNoUserSpecifiedConfigThenShouldUseEnvironmentConfigurationFile()
-        {
-            variables.Set(SpecialVariables.Environment.Name, "Production");
-            const string environmentConfigurationFile = "ServiceConfiguration.Production.cscfg";
-            variables.Set(ConfigureAzureCloudServiceConvention.ConfigurationFileNameVariable, environmentConfigurationFile);
-            string result = null;
-            ArrangeOriginalConfigurationFile(Path.Combine(stagingDirectory, environmentConfigurationFile), SimpleConfigSample, x => result=x);
-
-            convention.Install(deployment);
-
-            AssertIsValidConfigurationFile(result);
-        }
-
-        [Test]
-        public void IfNoUserSpecifiedOrEnvironmentFileThenShouldUseDefault()
-        {
-            string result = null;
-            ArrangeOriginalConfigurationFile(Path.Combine(stagingDirectory, defaultConfigurationFile), SimpleConfigSample, x => result=x);
-
-            convention.Install(deployment);
-
-            AssertIsValidConfigurationFile(result);
         }
 
         [Test]
         public void ShouldUseExistingInstanceCountIfSpecified()
         {
-            string result = null;
+            ArrangeOriginalConfigurationFileForSuccess(Path.Combine(StagingDirectory, DefaultConfigurationFileName), SimpleConfigSample, x => result = x);
+
             variables.Set(SpecialVariables.Action.Azure.UseCurrentInstanceCount, true.ToString());
-            ArrangeOriginalConfigurationFile(Path.Combine(stagingDirectory, defaultConfigurationFile), SimpleConfigSample, x => result=x);
             configurationRetriever.GetConfiguration(
-                Arg.Is<SubscriptionCloudCredentials>(x => x.SubscriptionId == azureSubscriptionId), cloudServiceName, deploymentSlot)
+                Arg.Is<SubscriptionCloudCredentials>(x => x.SubscriptionId == AzureSubscriptionId), CloudServiceName, DeploymentSlot)
                 .Returns(XDocument.Parse(RemoteConfigWithInstanceCount4));
 
             convention.Install(deployment);
@@ -114,9 +93,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldReplaceSettingsValuesWithVariables()
         {
+            ArrangeOriginalConfigurationFileForSuccess(Path.Combine(StagingDirectory, DefaultConfigurationFileName), SimpleConfigSample, x => result = x);
+            
             variables.Set("HelloMessage", "Bonjour");
-            string result = null;
-            ArrangeOriginalConfigurationFile(Path.Combine(stagingDirectory, defaultConfigurationFile), SimpleConfigSample, x => result=x);
 
             convention.Install(deployment);
 
@@ -125,12 +104,13 @@ namespace Calamari.Tests.Fixtures.Conventions
             AssertRoleHasSettingWithValue(result, "Humpty.Worker", "HelloMessage", "Bonjour");
         }
 
-        void ArrangeOriginalConfigurationFile(string configurationFile, string content, Action<string> captureResultingConfiguration)
+        void ArrangeOriginalConfigurationFileForSuccess(string configurationFilePath, string content, Action<string> captureResultingConfiguration)
         {
-            fileSystem.FileExists(configurationFile).Returns(true);
-            fileSystem.ReadFile(configurationFile).Returns(content);
+            variables.Set(SpecialVariables.Action.Azure.Output.ConfigurationFile, configurationFilePath);
+            fileSystem.FileExists(configurationFilePath).Returns(true);
+            fileSystem.ReadFile(configurationFilePath).Returns(content);
 
-            fileSystem.OverwriteFile(configurationFile, Arg.Do<string>(captureResultingConfiguration));
+            fileSystem.OverwriteFile(configurationFilePath, Arg.Do<string>(captureResultingConfiguration));
         }
 
         void AssertIsValidConfigurationFile(string configuration)
