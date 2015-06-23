@@ -34,8 +34,7 @@ namespace Calamari.Deployment
                 return variables;
             }
 
-            var decryptedVariables = CreateDictionary(
-                Decrypt(fileSystem.ReadFile(sensitiveVariablesFile), encryptionPassword, salt));
+            var decryptedVariables = Decrypt(fileSystem.ReadFile(sensitiveVariablesFile), encryptionPassword, salt);
 
             AddVariables(variables, decryptedVariables);
 
@@ -51,19 +50,31 @@ namespace Calamari.Deployment
             }
         }
 
-        static string Decrypt(string cipherText, string encryptionPassword, string salt)
+        static Dictionary<string, string> Decrypt(string cipherText, string encryptionPassword, string salt)
         {
-            using (var algorithm = new AesCryptoServiceProvider{ Key =GetEncryptionKey(encryptionPassword), IV = Convert.FromBase64String(salt)})
+            using (var algorithm = new AesCryptoServiceProvider
+            {
+                Key =GetEncryptionKey(encryptionPassword), 
+                IV = Convert.FromBase64String(salt)
+            })
             using (var decryptor = algorithm.CreateDecryptor())
             using (var decryptedTextStream = new MemoryStream())
+            using (var stringReader = new StreamReader(decryptedTextStream, Encoding.UTF8))
+            using (var jsonReader = new JsonTextReader(stringReader))
             {
                 using (var cryptoStream = new CryptoStream(decryptedTextStream, decryptor, CryptoStreamMode.Write))
                 {
                     var cipherTextBytes = Convert.FromBase64String(cipherText);
                     cryptoStream.Write(cipherTextBytes, 0, cipherTextBytes.Length);
+                    cryptoStream.FlushFinalBlock();
+
+                    var dictionary = new Dictionary<string, string>();
+                    var serializer = new JsonSerializer();
+                    decryptedTextStream.Position = 0;
+                    serializer.Populate(jsonReader, dictionary);
+                    return dictionary;
                 }
 
-                return Encoding.UTF8.GetString(decryptedTextStream.ToArray());
             }
         }
 
@@ -71,19 +82,6 @@ namespace Calamari.Deployment
         {
             var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations);
             return passwordGenerator.GetBytes(16);
-        }
-
-        static Dictionary<string, string> CreateDictionary(string json)
-        {
-            var dictionary = new Dictionary<string, string>();
-
-           using (var stringReader = new StringReader(json))
-           using (var jsonReader = new JsonTextReader(stringReader))
-           {
-               var serializer = new JsonSerializer();
-               serializer.Populate(jsonReader, dictionary);
-               return dictionary;
-           }
         }
     }
 }
