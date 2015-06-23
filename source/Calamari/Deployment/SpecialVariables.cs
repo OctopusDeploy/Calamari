@@ -118,8 +118,6 @@
 
             public static class Azure
             {
-                public static readonly string PackageExtractionPath = "Octopus.Action.Azure.PackageExtractionPath";
-
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
@@ -132,15 +130,11 @@
                 public static readonly string SwapIfPossible = "Octopus.Action.Azure.SwapIfPossible";
                 public static readonly string StorageAccountName = "Octopus.Action.Azure.StorageAccountName";
                 public static readonly string UseCurrentInstanceCount = "Octopus.Action.Azure.UseCurrentInstanceCount";
-
                 public static readonly string UploadedPackageUri = "Octopus.Action.Azure.UploadedPackageUri";
-
                 public static readonly string CloudServicePackagePath = "Octopus.Action.Azure.CloudServicePackagePath";
-
-                public static readonly string CloudServicePackageExtractionDisabled = "OctopusCloudServicePackageExtractionDisabled";
-
+                public static readonly string PackageExtractionPath = "Octopus.Action.Azure.PackageExtractionPath";
+                public static readonly string CloudServicePackageExtractionDisabled = "Octopus.Action.Azure.CloudServicePackageExtractionDisabled";
                 public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg";
-
                 public static readonly string CloudServiceConfigurationFileRelativePath = "Octopus.Action.Azure.CloudServiceConfigurationFileRelativePath";
 
                 public static class Output
