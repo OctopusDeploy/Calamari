@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Newtonsoft.Json;
 using Octostache;
@@ -62,19 +63,27 @@ namespace Calamari.Deployment
             using (var stringReader = new StreamReader(decryptedTextStream, Encoding.UTF8))
             using (var jsonReader = new JsonTextReader(stringReader))
             {
-                using (var cryptoStream = new CryptoStream(decryptedTextStream, decryptor, CryptoStreamMode.Write))
+                try
                 {
-                    var cipherTextBytes = Convert.FromBase64String(cipherText);
-                    cryptoStream.Write(cipherTextBytes, 0, cipherTextBytes.Length);
-                    cryptoStream.FlushFinalBlock();
+                    using (var cryptoStream = new CryptoStream(decryptedTextStream, decryptor, CryptoStreamMode.Write))
+                    {
+                        var cipherTextBytes = Convert.FromBase64String(cipherText);
+                        cryptoStream.Write(cipherTextBytes, 0, cipherTextBytes.Length);
+                        cryptoStream.FlushFinalBlock();
 
-                    var dictionary = new Dictionary<string, string>();
-                    var serializer = new JsonSerializer();
-                    decryptedTextStream.Position = 0;
-                    serializer.Populate(jsonReader, dictionary);
-                    return dictionary;
+                        var dictionary = new Dictionary<string, string>();
+                        var serializer = new JsonSerializer();
+                        decryptedTextStream.Position = 0;
+                        serializer.Populate(jsonReader, dictionary);
+                        return dictionary;
+                    }
                 }
-
+                catch (CryptographicException cryptoException)
+                {
+                    throw new CommandException(
+                        "Cannot decrypt sensitive-variables. Check your password is correct.\nError message: " +
+                        cryptoException.Message);
+                }
             }
         }
 
