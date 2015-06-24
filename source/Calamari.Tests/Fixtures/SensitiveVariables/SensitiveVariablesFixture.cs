@@ -56,7 +56,6 @@ namespace Calamari.Tests.Fixtures.SensitiveVariables
 
             Assert.AreEqual("sensitiveVariableValue", result.Get("sensitiveVariableName"));
             Assert.AreEqual("insensitiveVariableValue", result.Get("insensitiveVariableName"));
-
         }
 
         string CreateEncryptedSensitiveVariablesFile(string fileName, string encryptionPassword, Dictionary<string, string> variables)
