@@ -13,7 +13,16 @@ namespace Calamari.Integration.Certificates
     {
         public X509Certificate2 GetOrAdd(string thumbprint, string bytes)
         {
-            var store = new X509Store("Octopus", StoreLocation.CurrentUser);
+            return GetOrAdd(thumbprint, bytes, new X509Store("Octopus", StoreLocation.CurrentUser));
+        }
+
+        public X509Certificate2 GetOrAdd(string thumbprint, string bytes, StoreName storeName)
+        {
+            return GetOrAdd(thumbprint, bytes, new X509Store(storeName, StoreLocation.CurrentUser));
+        }
+
+        static X509Certificate2 GetOrAdd(string thumbprint, string bytes, X509Store store)
+        {
             store.Open(OpenFlags.ReadWrite);
 
             try

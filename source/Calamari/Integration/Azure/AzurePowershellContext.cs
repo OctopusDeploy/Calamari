@@ -20,7 +20,7 @@ namespace Calamari.Integration.Azure
         const string certificateFileName = "azure_certificate.pfx";
         const int passwordSizeBytes = 20;
 
-        static readonly string azurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "Azure.psd1"); 
+        static readonly string azurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1"); 
 
         public AzurePowershellContext()
         {
@@ -65,7 +65,8 @@ namespace Calamari.Integration.Azure
 
             var azureCertificate = certificateStore.GetOrAdd(
                 variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
+                variables.Get(SpecialVariables.Action.Azure.CertificateBytes),
+                StoreName.My);
 
             var certificatePassword = GenerateCertificatePassword();
 
