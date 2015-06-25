@@ -65,7 +65,8 @@ namespace Calamari.Integration.Azure
 
             var azureCertificate = certificateStore.GetOrAdd(
                 variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
+                variables.Get(SpecialVariables.Action.Azure.CertificateBytes),
+                StoreName.My);
 
             var certificatePassword = GenerateCertificatePassword();
 
