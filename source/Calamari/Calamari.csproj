@@ -213,6 +213,7 @@
     <Compile Include="Deployment\Retention\IRetentionPolicy.cs" />
     <Compile Include="Deployment\Retention\RetentionPolicy.cs" />
     <Compile Include="Deployment\RunningDeployment.cs" />
+    <Compile Include="Deployment\SensitiveVariables.cs" />
     <Compile Include="Deployment\SpecialVariables.cs" />
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\Azure\AzureCloudServiceConfigurationRetriever.cs" />
