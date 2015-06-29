@@ -117,9 +117,9 @@
     <Reference Include="Octodiff">
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.15, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Octostache, Version=1.0.2.16, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Octostache.1.0.2.15\lib\net40\Octostache.dll</HintPath>
+      <HintPath>..\packages\Octostache.1.0.2.16\lib\net40\Octostache.dll</HintPath>
     </Reference>
     <Reference Include="Sprache">
       <HintPath>..\packages\Sprache.2.0.0.45\lib\portable-net4+netcore45+win8+wp8+sl5+MonoAndroid1+MonoTouch1\Sprache.dll</HintPath>
