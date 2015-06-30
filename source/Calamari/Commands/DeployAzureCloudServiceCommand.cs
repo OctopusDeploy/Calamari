@@ -68,6 +68,7 @@ namespace Calamari.Commands
                 new FindCloudServicePackageConvention(fileSystem),
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
                 new ExtractAzureCloudServicePackageConvention(fileSystem),
+                new ChooseCloudServiceConfigurationFileConvention(fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfigureAzureCloudServiceConvention(fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever),

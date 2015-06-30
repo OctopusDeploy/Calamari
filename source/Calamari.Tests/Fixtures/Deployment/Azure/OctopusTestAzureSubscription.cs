@@ -15,7 +15,9 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
         {
             // Ignore the test if the certificate is not installed on the machine
             if (GetCertificate() == null)
-                Assert.Ignore("Azure tests can only run if the expected certificate is present in the Certificate Store");
+                Assert.Ignore(
+                    "Cannot run Azure Integration Tests without an Azure Management Certificate that we can use for delegated access to the Azure Subscription. Was looking for a Certificate with the Thumbprint {0} authorized to Subscription {1}. If you work for Octopus Deploy ask one of your team mates for the test Certificate.",
+                    CertificateThumbprint, AzureSubscriptionId);
         }
 
         public static void PopulateVariables(VariableDictionary variables)

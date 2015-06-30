@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml;
 using System.Xml.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Azure;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 using Octostache;
 
@@ -19,9 +17,6 @@ namespace Calamari.Deployment.Conventions
         readonly ISubscriptionCloudCredentialsFactory credentialsFactory;
         readonly IAzureCloudServiceConfigurationRetriever configurationRetriever;
 
-        public const string ConfigurationFileVariable = "OctopusAzureConfigurationFile";
-        public const string ConfigurationFileNameVariable = "OctopusAzureConfigurationFileName";
-
         public ConfigureAzureCloudServiceConvention(ICalamariFileSystem fileSystem, ISubscriptionCloudCredentialsFactory subscriptionCloudCredentialsFactory, IAzureCloudServiceConfigurationRetriever configurationRetriever)
         {
             this.fileSystem = fileSystem;
@@ -31,53 +26,15 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var configurationFile = ChooseWhichConfigurationFileToUse(deployment);
-            Log.SetOutputVariable(ConfigurationFileVariable, configurationFile, deployment.Variables);
+            // Validate we actually have a real path to the real config file since this value is potentially passed via variable or a previous convention
+            var configurationFilePath = deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile);
+            if (!fileSystem.FileExists(configurationFilePath))
+                throw new CommandException("Could not find the Azure Cloud Service Configuration file: " + configurationFilePath);
 
-            var configuration = XDocument.Parse(fileSystem.ReadFile(configurationFile));
-            UpdateConfigurationWithCurrentInstanceCount(configuration, configurationFile, deployment.Variables);
+            var configuration = XDocument.Parse(fileSystem.ReadFile(configurationFilePath));
+            UpdateConfigurationWithCurrentInstanceCount(configuration, configurationFilePath, deployment.Variables);
             UpdateConfigurationSettings(configuration, deployment.Variables);
-            SaveConfigurationFile(configuration, configurationFile);
-        }
-
-        string ChooseWhichConfigurationFileToUse(RunningDeployment deployment)
-        {
-            var configurationFilePath = deployment.Variables.Get(ConfigurationFileVariable);
-
-            if (!string.IsNullOrWhiteSpace(configurationFilePath) && !fileSystem.FileExists(configurationFilePath))
-            {
-                throw new CommandException("The specified Azure service configuraton file does not exist: " + configurationFilePath);
-            }
-
-            if (string.IsNullOrWhiteSpace(configurationFilePath))
-            {
-                configurationFilePath = GetFirstExistingFile(deployment,
-                    deployment.Variables.Get(ConfigurationFileNameVariable),
-                    "ServiceConfiguration." + deployment.Variables.Get(SpecialVariables.Environment.Name) + ".cscfg",
-                    "ServiceConfiguration.Cloud.cscfg");
-            }
-
-            return configurationFilePath;
-        }
-
-        string GetFirstExistingFile(RunningDeployment deployment, params string[] fileNames)
-        {
-            foreach (var name in fileNames)
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                    continue;
-
-                var path = Path.Combine(deployment.CurrentDirectory, name);
-                if (fileSystem.FileExists(path))
-                {
-                    Log.Verbose("Found Azure service configuration file: " + path);
-                    return path;
-                }
-                
-                Log.Verbose("Azure service configuration file not found: " + path);
-            }
-
-            throw new CommandException("Could not find an Azure service configuration file in the package.");
+            SaveConfigurationFile(configuration, configurationFilePath);
         }
 
         void SaveConfigurationFile(XDocument document, string configurationFilePath)

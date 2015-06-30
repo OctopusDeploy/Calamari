@@ -146,6 +146,7 @@
     <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationTransformConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationVariablesConventionFixture.cs" />
+    <Compile Include="Fixtures\Conventions\ChooseAzureCloudServiceConfigurationFileConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigureAzureCloudServiceConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfiguredScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributePreviousInstallationConventionFixture.cs" />
@@ -328,10 +329,6 @@
     </Content>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
