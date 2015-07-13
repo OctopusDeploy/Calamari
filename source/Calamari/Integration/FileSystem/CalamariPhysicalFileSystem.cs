@@ -126,19 +126,23 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        public IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
+        public virtual IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
         {
+            var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
+
             return searchPatterns.Length == 0
-                ? Directory.EnumerateFiles(parentDirectoryPath, "*", SearchOption.TopDirectoryOnly)
-                : searchPatterns.SelectMany(pattern => Directory.EnumerateFiles(parentDirectoryPath, pattern, SearchOption.TopDirectoryOnly));
+				? parentDirectoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly).Select(fi => fi.FullName)
+                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.TopDirectoryOnly).Select(fi => fi.FullName));
         }
 
-        public IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
+        public virtual IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
         {
-            return searchPatterns.Length == 0
-                ? Directory.EnumerateFiles(parentDirectoryPath, "*", SearchOption.AllDirectories)
-                : searchPatterns.SelectMany(pattern => Directory.EnumerateFiles(parentDirectoryPath, pattern, SearchOption.AllDirectories));
-        }
+            var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
+
+			return searchPatterns.Length == 0
+				? parentDirectoryInfo.GetFiles("*", SearchOption.AllDirectories).Select(fi => fi.FullName)
+                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.AllDirectories).Select(fi => fi.FullName));
+		}
 
         public IEnumerable<string> EnumerateDirectories(string parentDirectoryPath)
         {
