@@ -29,7 +29,7 @@ if (!$serviceName)
 	exit -2
 }
 
-$service = Get-Service $ServiceName -ErrorAction SilentlyContinue
+$service = Get-Service $serviceName -ErrorAction SilentlyContinue
 
 if (!$service)
 {
@@ -40,5 +40,14 @@ else
     Write-Host "The $serviceName service already exists; it will be stopped"
     Write-Host "Stopping the $serviceName service"
 
-    Stop-Service $ServiceName -Force
+    Stop-Service $serviceName -Force
+	## Wait up to 30 seconds for the service to stop
+	$service.WaitForStatus('Stopped', '00:00:30')
+
+	If ($service.Status -ne 'Stopped') 
+	{
+		Write-Warning "Service $serviceName did not stop within 30 seconds"
+	} Else {
+		Write-Verbose "Service $serviceName stopped"
+	}
 }
