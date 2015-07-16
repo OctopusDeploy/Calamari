@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
@@ -71,7 +70,6 @@ namespace Calamari.Integration.FileSystem
                 }
                 catch
                 {
-                    Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
                     firstAttemptFailed = true;
                     if (i == options.RetryAttempts - 1)
                     {
@@ -82,6 +80,7 @@ namespace Calamari.Integration.FileSystem
 
                         break;
                     }
+                    Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
                 }
             }
         }
@@ -111,8 +110,6 @@ namespace Calamari.Integration.FileSystem
                 }
                 catch
                 {
-                    Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
-
                     if (i == options.RetryAttempts - 1)
                     {
                         if (options.ThrowOnFailure)
@@ -122,6 +119,7 @@ namespace Calamari.Integration.FileSystem
 
                         break;
                     }
+                    Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
                 }
             }
         }
@@ -318,12 +316,12 @@ namespace Calamari.Integration.FileSystem
 
         // ReSharper disable AssignNullToNotNullAttribute
 
-        public void CopyDirectory(string sourceDirectory, string targetDirectory, int overwriteFileRetryAttempts = 3)
+        public void CopyDirectory(string sourceDirectory, string targetDirectory, int overwriteFileRetryAttempts = 6)
         {
             CopyDirectory(sourceDirectory, targetDirectory, CancellationToken.None, overwriteFileRetryAttempts);
         }
 
-        public void CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel, int overwriteFileRetryAttempts = 3)
+        public void CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel, int overwriteFileRetryAttempts = 6)
         {
             if (!DirectoryExists(sourceDirectory))
                 return;
@@ -350,7 +348,7 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        public void CopyFile(string sourceFile, string targetFile, int overwriteFileRetryAttempts = 3)
+        public void CopyFile(string sourceFile, string targetFile, int overwriteFileRetryAttempts = 6)
         {
             for (var i = 0; i < overwriteFileRetryAttempts; i++)
             {
@@ -360,12 +358,11 @@ namespace Calamari.Integration.FileSystem
                 }
                 catch
                 {
-                    Thread.Sleep(1000 + (2000 * i));
-
                     if (i == overwriteFileRetryAttempts - 1)
                     {
                         throw;
                     }
+                    Thread.Sleep(1000 + (2000 * i));
                 }
             }
         }
