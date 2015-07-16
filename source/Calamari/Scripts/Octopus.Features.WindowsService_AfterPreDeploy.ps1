@@ -48,6 +48,6 @@ else
 	{
 		Write-Warning "Service $serviceName did not stop within 30 seconds"
 	} Else {
-		Write-Verbose "Service $serviceName stopped"
+		Write-Host "Service $serviceName stopped"
 	}
 }
