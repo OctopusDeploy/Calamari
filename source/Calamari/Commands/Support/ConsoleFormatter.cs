@@ -34,8 +34,7 @@ namespace Calamari.Commands.Support
                 return 43;
             }
 
-            Log.Error(ex.Message);
-            Log.Info(ex.ToString());
+            Log.Error(ex.ToString());
             return 100;
         }
     }
