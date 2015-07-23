@@ -113,12 +113,13 @@ namespace Calamari.Integration.FileSystem
 
             return (
                 from file in fileSystem.EnumerateFilesRecursively(root, packageId + "*.nupkg-*")
-                orderby Path.GetFileName(file) descending
                 let package = ReadPackageFile(file)
                 where package != null
                 && package.Metadata.Id == packageId
-                && SemanticVersion.Parse(package.Metadata.Version) < version
-                select package).Take(5);
+                let semVer = SemanticVersion.Parse(package.Metadata.Version)
+                where semVer < version
+                orderby semVer descending 
+                select package).Take(take);
         }
 
         string GetPackageRoot(string prefix)
