@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [TearDown]
         public void TearDown()
         {
-            if(Directory.Exists(downloadPath))
+            if (Directory.Exists(downloadPath))
                 Directory.Delete(downloadPath, true);
         }
 
@@ -100,6 +100,43 @@ namespace Calamari.Tests.Fixtures.FindPackage
         }
 
         [Test]
+        public void ShouldFindTheCorrectPackageWhenSimilarPackageExist()
+        {
+            using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
+            using (var acmeWebTest = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId + ".Tests", packageVersion)))
+            {
+                var testPkgDestinationFilePath = Path.Combine(downloadPath,
+                    Path.GetFileName(acmeWebTest.FilePath) + "-" + Guid.NewGuid());
+                File.Copy(acmeWebTest.FilePath, testPkgDestinationFilePath);
+
+                var destinationFilePath = Path.Combine(downloadPath,
+                    Path.GetFileName(acmeWeb.FilePath) + "-" + Guid.NewGuid());
+                File.Copy(acmeWeb.FilePath, destinationFilePath);
+
+                using (var newAcmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, newpackageVersion)))
+                {
+                    var result = FindPackages(packageId, newpackageVersion, newAcmeWeb.Hash);
+
+                    result.AssertZero();
+                    result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId, newpackageVersion,
+                        newAcmeWeb.Hash);
+                    result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
+                    result.AssertOutput("Found 1 earlier version of {0} on this Tentacle", packageId);
+                    result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
+
+                    result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
+                        new Dictionary<string, object>
+                    {
+                        {"Metadata.Id", packageId},
+                        {"Metadata.Version", packageVersion},
+                        {"Metadata.Hash", acmeWeb.Hash},
+                        {"FullPath", destinationFilePath}
+                    });
+                }
+            }
+        }
+
+        [Test]
         public void ShouldFindPackageAlreadyUploaded()
         {
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
@@ -112,9 +149,9 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
                 result.AssertZero();
                 result.AssertServiceMessage(
-                    ServiceMessageNames.CalamariFoundPackage.Name, 
+                    ServiceMessageNames.CalamariFoundPackage.Name,
                     Is.True,
-                    message: "Expected service message '{0}' to be True", 
+                    message: "Expected service message '{0}' to be True",
                     args: ServiceMessageNames.CalamariFoundPackage.Name);
 
                 result.AssertOutput("Package {0} {1} hash {2} has already been uploaded", packageId, packageVersion,
