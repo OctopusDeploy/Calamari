@@ -135,7 +135,7 @@ $ErrorActionPreference = 'Stop'
 # Invoke target script
 # -----------------------------------------------------------------
 
-. '{{TargetScriptFile}}'
+. "{{TargetScriptFile}}"
 
 # -----------------------------------------------------------------
 # Ensure we exit with whatever exit code the last exe used
