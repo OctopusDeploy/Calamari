@@ -302,6 +302,9 @@
     <None Include="Fixtures\PowerShell\Scripts\AzureSubscription.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\PowerShell\Scripts\Path With %27\PathWithSingleQuote.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\PowerShell\Scripts\UseModule.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
