@@ -4,6 +4,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Integration.ConfigurationVariables
@@ -14,7 +15,7 @@ namespace Calamari.Integration.ConfigurationVariables
         {
             XDocument doc;
 
-            using (var reader = XmlReader.Create(configurationFilePath))
+            using (var reader = XmlReader.Create(configurationFilePath, XmlUtils.DtdSafeReaderSettings))
             {
                 doc = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
             }

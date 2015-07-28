@@ -5,6 +5,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using Calamari.Integration.Azure.CloudServicePackage.ManifestSchema;
+using Calamari.Util;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Azure.CloudServicePackage.ManifestSchema
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Azure.CloudServicePackage.ManifestSchema
             manifestXml.Add(manifest.ToXml());
 
             var schemaSet = new XmlSchemaSet();
-            schemaSet.Add(null, XmlReader.Create(new StringReader(GetPackageManifestSchema())));
+            schemaSet.Add(null, XmlReader.Create(new StringReader(GetPackageManifestSchema()), XmlUtils.DtdSafeReaderSettings));
             manifestXml.Validate(schemaSet, (o, e) =>
             {
                 Assert.Fail("Xml failed to validate: " + e.Message);

@@ -247,6 +247,7 @@
     <Compile Include="Integration\Scripting\ScriptType.cs" />
     <Compile Include="Util\HashCalculator.cs" />
     <Compile Include="Util\Uniquifier.cs" />
+    <Compile Include="Util\XmlUtils.cs" />
     <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
     <Compile Include="Integration\Time\IClock.cs" />
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />

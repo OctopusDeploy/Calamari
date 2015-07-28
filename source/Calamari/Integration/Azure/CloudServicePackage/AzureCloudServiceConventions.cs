@@ -3,6 +3,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Calamari.Integration.Azure.CloudServicePackage.ManifestSchema;
+using Calamari.Util;
 
 namespace Calamari.Integration.Azure.CloudServicePackage
 {
@@ -17,7 +18,7 @@ namespace Calamari.Integration.Azure.CloudServicePackage
                 package.GetRelationshipsByType(CtpFormatPackageDefinitionRelationshipType).Single().TargetUri);
 
             using (var manifestStream = manifestPart.GetStream())
-            using (var xmlReader = XmlReader.Create(manifestStream))
+            using (var xmlReader = XmlReader.Create(manifestStream, XmlUtils.DtdSafeReaderSettings))
             {
                return new PackageDefinition(XDocument.Load(xmlReader).Root);
             }
