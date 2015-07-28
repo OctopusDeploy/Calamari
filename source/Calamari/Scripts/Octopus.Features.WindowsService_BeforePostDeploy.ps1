@@ -44,7 +44,7 @@ if ($arguments)
 	$binPath = ($binPath + " " + $arguments)	
 }
 
-$fullArguments = @($serviceName, "binPath=", "`"$binPath`"")
+$fullArguments = @("`"$serviceName`"", "binPath=", "`"$binPath`"")
 if ($displayName) 
 {
 	$fullArguments += @("DisplayName=", "`"$displayName`"")
@@ -54,11 +54,11 @@ if(!$dependencies)
 {
 	$dependencies = "/"
 }
-$fullArguments += @("depend=", $dependencies)
+$fullArguments += @("depend=", "`"$dependencies`"")
 
 if ($startMode -and ($startMode -ne 'unchanged')) 
 {
-	$fullArguments += @("start=", $startMode)
+	$fullArguments += @("start=", "`"$startMode`"")
 }
 
 $fullArgumentsSafeForConsole = $fullArguments
@@ -66,7 +66,7 @@ if ($serviceAccount -ne "_CUSTOM")
 {
 	if ($serviceAccount) 
 	{
-		$fullArguments += @("obj=", $serviceAccount)
+		$fullArguments += @("obj=", "`"$serviceAccount`"")
 	}	
 	$fullArgumentsSafeForConsole = $fullArguments
 }
@@ -74,7 +74,7 @@ else
 {
 	if ($customAccountName) 
 	{
-		$fullArguments += @("obj=", $customAccountName)
+		$fullArguments += @("obj=", "`"$customAccountName`"")
 	}	
 	$fullArgumentsSafeForConsole = $fullArguments
 	if ($customAccountPassword) 
@@ -85,7 +85,7 @@ else
 	}
 }
 
-$service = Get-Service $ServiceName -ErrorAction SilentlyContinue
+$service = Get-Service $serviceName -ErrorAction SilentlyContinue
 
 if (!$service)
 {
