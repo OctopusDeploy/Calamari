@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Package", "Package\Package.csproj", "{D44DC6C3-1192-48AB-AF34-96D918742EF3}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -11,7 +11,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{7E20695C-37DE-4E44-B924-2067FA5AD454}"
 	ProjectSection(SolutionItems) = preProject
 		..\NuGet.Config = ..\NuGet.Config
-		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari", "Calamari\Calamari.csproj", "{79CE5CFA-E3FF-4376-8B49-AC1005C3E189}"
