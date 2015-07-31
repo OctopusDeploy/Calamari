@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Integration.Proxies;
 
 namespace Calamari
 {
@@ -9,6 +10,8 @@ namespace Calamari
     {
         static int Main(string[] args)
         {
+            ProxyInitializer.InitializeDefaultProxy();
+
             try
             {
                 var action = GetFirstArgument(args);

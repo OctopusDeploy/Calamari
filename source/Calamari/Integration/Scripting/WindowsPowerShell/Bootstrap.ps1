@@ -118,6 +118,21 @@ function Reload-OctopusVariables([string]$variablesFile)
 	}
 }
 
+function InitializeProxySettings() 
+{
+	$proxyUsername = $env:TentacleProxyUsername
+	$proxyPassword = $env:TentacleProxyPassword
+
+	if ([string]::IsNullOrEmpty($proxyUsername)) 
+	{
+		[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
+	}
+	else 
+	{
+		[System.Net.WebRequest]::DefaultWebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
+	}
+}
+
 # -----------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------
@@ -128,6 +143,8 @@ function Reload-OctopusVariables([string]$variablesFile)
 # -----------------------------------------------------------------
 # Defaults
 # -----------------------------------------------------------------
+
+InitializeProxySettings
 
 $ErrorActionPreference = 'Stop'
 

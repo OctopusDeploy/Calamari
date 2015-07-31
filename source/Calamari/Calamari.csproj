@@ -239,6 +239,7 @@
     <Compile Include="Guard.cs" />
     <Compile Include="Integration\FileSystem\NixPhysicalFileSystem.cs" />
     <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
+    <Compile Include="Integration\Proxies\ProxyInitializer.cs" />
     <Compile Include="Integration\Scripting\Bash\BashScriptBootstrapper.cs" />
     <Compile Include="Integration\Scripting\Bash\BashScriptEngine.cs" />
     <Compile Include="Integration\Scripting\FileExtensionAttribute.cs" />

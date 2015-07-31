@@ -4,11 +4,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Net;
 
 public static class Octopus
 {
     public static readonly OctopusParametersDictionary Parameters = new OctopusParametersDictionary();
 
+	static Octopus() 
+	{
+		InitializeDefaultProxy();
+	}
 
 	public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string,string>
 	{
@@ -50,5 +55,15 @@ public static class Octopus
 
 
 		Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", path, fileName, length);
+	}
+
+	public static void InitializeDefaultProxy() 
+	{
+		var proxyUsername = Environment.GetEnvironmentVariable("TentacleProxyUsername");
+        var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
+
+        WebRequest.DefaultWebProxy.Credentials = string.IsNullOrWhiteSpace(proxyUsername) 
+            ? CredentialCache.DefaultCredentials 
+            : new NetworkCredential(proxyUsername, proxyPassword);
 	}
 }
