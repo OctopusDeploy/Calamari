@@ -335,6 +335,9 @@
     <None Include="Fixtures\ScriptCS\Scripts\Hello.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Substitutions\Samples\UTF16LE.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Substitutions\Samples\Servers.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

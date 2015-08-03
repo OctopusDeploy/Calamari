@@ -49,7 +49,7 @@ namespace Calamari.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer();
             var scriptEngine = new CombinedScriptEngine();
-            var substituter = new FileSubstituter();
+            var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var configurationTransformer =
                 new ConfigurationTransformer(
