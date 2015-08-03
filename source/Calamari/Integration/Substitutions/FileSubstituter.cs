@@ -43,7 +43,7 @@ namespace Calamari.Integration.Substitutions
             }
             catch (ArgumentException)
             {
-                return Encoding.GetEncoding(sourceFile);
+                return fileSystem.GetFileEncoding(sourceFile);
             }
             
         }
