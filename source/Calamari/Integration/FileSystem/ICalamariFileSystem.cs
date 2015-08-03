@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading;
 
 namespace Calamari.Integration.FileSystem
@@ -22,6 +23,7 @@ namespace Calamari.Integration.FileSystem
         string ReadFile(string path);
         void AppendToFile(string path, string contents);
         void OverwriteFile(string path, string contents);
+        void OverwriteFile(string path, string contents, Encoding encoding);
         Stream OpenFile(string path, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream OpenFile(string path, FileMode mode = FileMode.OpenOrCreate, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream CreateTemporaryFile(string extension, out string path);
@@ -40,5 +42,6 @@ namespace Calamari.Integration.FileSystem
         void WriteAllBytes(string filePath, byte[] data);
         string RemoveInvalidFileNameChars(string path);
         void MoveFile(string sourceFile, string destinationFile);
+        Encoding GetFileEncoding(string path);
     }
 }

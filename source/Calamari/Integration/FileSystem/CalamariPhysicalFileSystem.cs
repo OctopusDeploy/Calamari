@@ -168,6 +168,11 @@ namespace Calamari.Integration.FileSystem
             File.WriteAllText(path, contents);
         }
 
+        public void OverwriteFile(string path, string contents, Encoding encoding)
+        {
+            File.WriteAllText(path, contents, encoding);
+        }
+
         public Stream OpenFile(string path, FileAccess access, FileShare share)
         {
             return OpenFile(path, FileMode.OpenOrCreate, access, share);
@@ -304,6 +309,15 @@ namespace Calamari.Integration.FileSystem
         public void MoveFile(string sourceFile, string destinationFile)
         {
             File.Move(sourceFile, destinationFile);
+        }
+
+        public Encoding GetFileEncoding(string path)
+        {
+            using (var reader = new StreamReader(path, Encoding.Default, true))
+            {
+                reader.Peek();
+                return reader.CurrentEncoding;
+            }
         }
 
         public void EnsureDirectoryExists(string directoryPath)
