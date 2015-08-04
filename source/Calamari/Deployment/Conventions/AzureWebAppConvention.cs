@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Commands.Support;
 using Microsoft.Web.Deployment;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.WebSites.Models;
@@ -23,14 +24,23 @@ namespace Calamari.Deployment.Conventions
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var certificate = Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-            var webSpaceName = variables.Get(SpecialVariables.Action.Azure.WebSpaceName);
 
-            Log.Info("Deploying to Azure WebApp {0} in WebSpace {1} using subscription-id {2}", webAppName, webSpaceName, subscriptionId);
+            Log.Info("Deploying to Azure WebApp '{0}' using subscription-id '{1}'", webAppName, subscriptionId);
 
             var cloudClient = CloudContext.Clients.CreateWebSiteManagementClient( 
                 new CertificateCloudCredentials(subscriptionId, new X509Certificate2(certificate)));
 
-            var publishProfile = cloudClient.WebSites.GetPublishProfile(webSpaceName, webAppName)
+            var webApp = cloudClient.WebSpaces.List()
+                .SelectMany(webSpace => cloudClient.WebSpaces.ListWebSites(webSpace.Name, new WebSiteListParameters {}))
+                .FirstOrDefault(webSite => webSite.Name.Equals(webAppName, StringComparison.OrdinalIgnoreCase));
+
+            if (webApp == null)
+            {
+               throw new CommandException(string.Format("Could not find Azure Web App '{0}' in subscription '{1}'",
+                   subscriptionId, webAppName)); 
+            }
+
+            var publishProfile = cloudClient.WebSites.GetPublishProfile(webApp.WebSpace, webAppName)
                 .PublishProfiles.First(x => x.PublishMethod.StartsWith("MSDeploy"));
 
             var changeSummary = DeploymentManager

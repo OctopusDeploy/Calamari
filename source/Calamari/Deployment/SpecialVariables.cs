@@ -122,7 +122,6 @@
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 
-                public static readonly string WebSpaceName = "Octopus.Action.Azure.WebSpaceName";
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
 
                 public static readonly string CloudServiceName = "Octopus.Action.Azure.CloudServiceName";
