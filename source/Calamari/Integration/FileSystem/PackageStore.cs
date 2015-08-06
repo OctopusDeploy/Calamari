@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using Calamari.Integration.PackageDownload;
 using Calamari.Integration.Packages;
 using Calamari.Util;
 using NuGet;
@@ -15,7 +12,6 @@ namespace Calamari.Integration.FileSystem
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
-
 
         private static string TentacleHome
         {
@@ -29,78 +25,46 @@ namespace Calamari.Integration.FileSystem
                 return tentacleHome;
             }
         }
-        public bool DoesPackageExist(PackageMetadata metadata)
-        {
-            return DoesPackageExist(null, metadata);
-        }
-
-        public bool DoesPackageExist(string prefix, PackageMetadata metadata)
-        {
-            var package = GetPackage(prefix, metadata);
-            return package != null;
-        }
-
-        public string GetFileNameForPackage(string name, string prefix = null)
-        {
-            var fullPath = Path.Combine(GetPackageRoot(prefix), name + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg");
-
-            fileSystem.EnsureDirectoryExists(rootDirectory);
-
-            return fullPath;
-        }
-
-        public string GetFilenameForPackage(PackageMetadata metadata, string prefix = null)
-        {
-            var name = GetNameOfPackage(metadata);
-            var fullPath = Path.Combine(GetPackageRoot(prefix), name + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg");
-
-            fileSystem.EnsureDirectoryExists(rootDirectory);
-
-            return fullPath;
-        }
 
         public string GetPackagesDirectory()
         {
-            return GetPackageRoot(null);
-        }
-
-        public string GetPackagesDirectory(string prefix)
-        {
-            return GetPackageRoot(prefix);
+            return rootDirectory;
         }
 
         public StoredPackage GetPackage(string packageFullPath)
         {
-            return ReadPackageFile(packageFullPath);
+            var zip = ReadZipPackage(packageFullPath);
+            if (zip == null)
+                return null;
+            
+            var package = ReadPackageFile(new ZipPackage(packageFullPath));
+            if (package == null)
+                return null;
+
+            return new StoredPackage(package, packageFullPath);
         }
 
         public StoredPackage GetPackage(PackageMetadata metadata)
         {
-            return GetPackage(null, metadata);
-        }
-
-        public StoredPackage GetPackage(string prefix, PackageMetadata metadata)
-        {
             var name = GetNameOfPackage(metadata);
-            var root = GetPackageRoot(prefix);
-            fileSystem.EnsureDirectoryExists(root);
+            fileSystem.EnsureDirectoryExists(rootDirectory);
 
-            var files = fileSystem.EnumerateFilesRecursively(root, name + ".nupkg-*");
+            var files = fileSystem.EnumerateFilesRecursively(rootDirectory, name + ".nupkg-*");
 
             foreach (var file in files)
             {
-                var package = ReadPackageFile(file);
-                if (package == null)
+                var storedPackage = GetPackage(file);
+                if (storedPackage == null)
                     continue;
 
-                if (!string.Equals(package.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || !string.Equals(package.Metadata.Version, metadata.Version, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || !string.Equals(storedPackage.Metadata.Version, metadata.Version, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (string.IsNullOrWhiteSpace(metadata.Hash))
-                    return package;
+                    return storedPackage;
 
-                if (metadata.Hash == package.Metadata.Hash)
-                    return package;
+                if (metadata.Hash == storedPackage.Metadata.Hash)
+                    return storedPackage;
             }
 
             return null;
@@ -108,54 +72,53 @@ namespace Calamari.Integration.FileSystem
 
         public IEnumerable<StoredPackage> GetNearestPackages(string packageId, SemanticVersion version, int take = 5)
         {
-            var root = GetPackageRoot(null);
-            fileSystem.EnsureDirectoryExists(root);
+            fileSystem.EnsureDirectoryExists(rootDirectory);
 
-            return (
-                from file in fileSystem.EnumerateFilesRecursively(root, packageId + "*.nupkg-*")
-                let package = ReadPackageFile(file)
+            var zipPackages =
+                from filePath in fileSystem.EnumerateFilesRecursively(rootDirectory, packageId + "*.nupkg-*")
+                let zip = ReadZipPackage(filePath)
+                where zip != null && zip.Id == packageId && zip.Version <= version
+                orderby zip.Version descending
+                select new {zip, filePath};
+
+            return
+                from zipPackage in zipPackages.Take(take)
+                let package = ReadPackageFile(zipPackage.zip)
                 where package != null
-                && package.Metadata.Id == packageId
-                let semVer = SemanticVersion.Parse(package.Metadata.Version)
-                where semVer < version
-                orderby semVer descending 
-                select package).Take(take);
+                select new StoredPackage(package, zipPackage.filePath);
         }
 
-        string GetPackageRoot(string prefix)
-        {
-            return string.IsNullOrWhiteSpace(prefix) ? rootDirectory : Path.Combine(rootDirectory, prefix);
-        }
-
-        StoredPackage ReadPackageFile(string filePath)
+        static ZipPackage ReadZipPackage(string file)
         {
             try
             {
-                var metadata = new ZipPackage(filePath);
-
-                using (var hashStream = metadata.GetStream())
-                {
-                    var hash = HashCalculator.Hash(hashStream);
-
-                    var packageMetadata = new PackageMetadata
-                    {
-                       Id = metadata.Id,
-                        Version = metadata.Version.ToString(),
-                        Hash = hash
-                    };
-
-                    return new StoredPackage(packageMetadata, filePath);
-                }
-            }
-            catch (FileNotFoundException)
-            {
-                return null;
+                return new ZipPackage(file);
             }
             catch (IOException)
             {
                 return null;
             }
             catch (FileFormatException)
+            {
+                return null;
+            }
+        }
+
+        static PackageMetadata ReadPackageFile(IPackage zip)
+        {
+            try
+            {
+                using (var zipStream = zip.GetStream())
+                {
+                   return new PackageMetadata
+                    {
+                        Id = zip.Id,
+                        Version = zip.Version.ToString(),
+                        Hash = HashCalculator.Hash(zipStream),
+                    };
+                }
+            }
+            catch (IOException)
             {
                 return null;
             }

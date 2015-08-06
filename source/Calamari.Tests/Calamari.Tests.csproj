@@ -167,6 +167,7 @@
     <Compile Include="Fixtures\Deployment\Azure\DeployAzureWebFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
+    <Compile Include="Fixtures\FileSystem\PackageStoreFixture.cs" />
     <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTestAttribute.cs" />
