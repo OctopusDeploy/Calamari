@@ -36,7 +36,8 @@ namespace Calamari.Deployment.Conventions
             var changeSummary = DeploymentManager
                 .CreateObject("contentPath", deployment.CurrentDirectory)
                 .SyncTo("contentPath", publishProfile.MSDeploySite, DeploymentOptions(publishProfile), 
-                new DeploymentSyncOptions {WhatIf = false, UseChecksum = true});
+                DeploymentSyncOptions(variables)
+                );
 
             Log.Info("Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                 changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
@@ -59,6 +60,24 @@ namespace Calamari.Deployment.Conventions
             options.Trace += (sender, eventArgs) => LogDeploymentEvent(eventArgs);
 
             return options;
+        }
+
+        private static DeploymentSyncOptions DeploymentSyncOptions(VariableDictionary variables)
+        {
+            var syncOptions = new DeploymentSyncOptions
+            {
+                WhatIf = false,
+                UseChecksum = true,
+                DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles, false)
+            };
+
+            if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData, false))
+            {
+               syncOptions.Rules.Add(new DeploymentSkipRule("SkipAddDataFiles", "Delete", "filePath", "\\\\App_Data\\\\.*", null)); 
+               syncOptions.Rules.Add(new DeploymentSkipRule("SkipAddDataDir", "Delete", "dirPath", "\\\\App_Data(\\\\.*|$)", null)); 
+            }
+
+            return syncOptions;
         }
 
         private static void LogDeploymentEvent(DeploymentTraceEventArgs args)
