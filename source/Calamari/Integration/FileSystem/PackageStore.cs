@@ -77,7 +77,7 @@ namespace Calamari.Integration.FileSystem
             var zipPackages =
                 from filePath in fileSystem.EnumerateFilesRecursively(rootDirectory, packageId + "*.nupkg-*")
                 let zip = ReadZipPackage(filePath)
-                where zip != null && zip.Id == packageId && zip.Version < version
+                where zip != null && zip.Id == packageId && zip.Version <= version
                 orderby zip.Version descending
                 select new {zip, filePath};
 
