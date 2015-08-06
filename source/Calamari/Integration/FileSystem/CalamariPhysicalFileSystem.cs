@@ -66,6 +66,7 @@ namespace Calamari.Integration.FileSystem
                             File.SetAttributes(path, FileAttributes.Normal);
                         }
                         File.Delete(path);
+                        return;
                     }
                 }
                 catch
@@ -77,7 +78,6 @@ namespace Calamari.Integration.FileSystem
                         {
                             throw;
                         }
-
                         break;
                     }
                     Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
@@ -107,6 +107,7 @@ namespace Calamari.Integration.FileSystem
                         dir.Attributes = dir.Attributes & ~FileAttributes.ReadOnly;
                         dir.Delete(true);
                     }
+                    return;
                 }
                 catch
                 {
@@ -369,6 +370,7 @@ namespace Calamari.Integration.FileSystem
                 try
                 {
                     File.Copy(sourceFile, targetFile, true);
+                    return;
                 }
                 catch
                 {
