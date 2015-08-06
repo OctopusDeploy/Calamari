@@ -85,7 +85,7 @@ namespace Calamari.Tests.Helpers
                     var pdvRemotePath =
                         message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
                     DeltaVerification =
-                        new StoredPackage(new PackageMetadata {Hash = pdvHash, Size = long.Parse(pdvSize)},
+                        new StoredPackage(new PackageMetadata {Hash = pdvHash},
                             pdvRemotePath);
                     break;
             }
