@@ -56,7 +56,7 @@ namespace Calamari.Commands
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
-            var substituter = new FileSubstituter();
+            var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
             var replacer = new ConfigurationVariablesReplacer();
 

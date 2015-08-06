@@ -64,7 +64,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             builder.Replace("{{TargetScriptFile}}", targetScriptFile);
             builder.Replace("{{VariableDeclarations}}", DeclareVariables(variables));
 
-            using (var writer = new StreamWriter(bootstrapFile))
+            using (var writer = new StreamWriter(bootstrapFile, false, new UTF8Encoding(true)))
             {
                 writer.WriteLine(builder.ToString());
                 writer.Flush();
