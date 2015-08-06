@@ -37,7 +37,7 @@ namespace Calamari.Deployment.Conventions
             if (webApp == null)
             {
                throw new CommandException(string.Format("Could not find Azure Web App '{0}' in subscription '{1}'",
-                   subscriptionId, webAppName)); 
+                   webAppName, subscriptionId)); 
             }
 
             var publishProfile = cloudClient.WebSites.GetPublishProfile(webApp.WebSpace, webAppName)
