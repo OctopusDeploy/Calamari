@@ -50,10 +50,17 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertZero();
 
             result.AssertOutput("Extracting package to: " + Path.Combine(stagingDirectory, "Acme.Web", "1.0.0"));
-            result.AssertOutput("Extracted 11 files");
-            result.AssertOutput(CalamariEnvironment.IsRunningOnNix
-                ? "Bonjour from PreDeploy.sh"
-                : "Bonjour from PreDeploy.ps1");
+
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                result.AssertOutput("Extracted 12 files");
+                result.AssertOutput("Bonjour from PreDeploy.sh");
+            }
+            else
+            {
+                result.AssertOutput("Extracted 11 files");
+                result.AssertOutput("Bonjour from PreDeploy.ps1");
+            }
         }
 
         [Test]
@@ -82,7 +89,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
 
-            var result = DeployPackage("Acme.Web");
+            DeployPackage("Acme.Web");
 
             // The #{foo} variable in web.config should have been replaced by 'bar'
             AssertXmlNodeValue(Path.Combine(stagingDirectory, "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='foo']/@value", "bar");
@@ -93,7 +100,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             variables.Set("foo", "bar");
 
-            var path = CalamariEnvironment.IsRunningOnMono ? 
+            var path = CalamariEnvironment.IsRunningOnNix ? 
                 "assets/README.txt" : 
                 "assets\\README.txt";
 
@@ -265,7 +272,9 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                        result.AssertOutput("Extracted 11 files");
+                        result.AssertOutput(CalamariEnvironment.IsRunningOnNix
+                            ? "Extracted 12 files"
+                            : "Extracted 11 files");
 
                         lock (extractionDirectories)
                         {
