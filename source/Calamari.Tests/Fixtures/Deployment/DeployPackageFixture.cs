@@ -50,17 +50,10 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertZero();
 
             result.AssertOutput("Extracting package to: " + Path.Combine(stagingDirectory, "Acme.Web", "1.0.0"));
-
-            if (CalamariEnvironment.IsRunningOnNix)
-            {
-                result.AssertOutput("Extracted 11 files");
-                result.AssertOutput("Bonjour from PreDeploy.sh");
-            }
-            else
-            {
-                result.AssertOutput("Extracted 10 files");
-                result.AssertOutput("Bonjour from PreDeploy.ps1");
-            }
+            result.AssertOutput("Extracted 11 files");
+            result.AssertOutput(CalamariEnvironment.IsRunningOnNix
+                ? "Bonjour from PreDeploy.sh"
+                : "Bonjour from PreDeploy.ps1");
         }
 
         [Test]
@@ -272,9 +265,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                        result.AssertOutput(CalamariEnvironment.IsRunningOnNix
-                            ? "Extracted 11 files"
-                            : "Extracted 10 files");
+                        result.AssertOutput("Extracted 11 files");
 
                         lock (extractionDirectories)
                         {
