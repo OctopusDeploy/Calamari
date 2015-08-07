@@ -73,8 +73,8 @@ namespace Calamari.Deployment.Conventions
 
             if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData, false))
             {
-               syncOptions.Rules.Add(new DeploymentSkipRule("SkipAddDataFiles", "Delete", "filePath", "\\\\App_Data\\\\.*", null)); 
-               syncOptions.Rules.Add(new DeploymentSkipRule("SkipAddDataDir", "Delete", "dirPath", "\\\\App_Data(\\\\.*|$)", null)); 
+               syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataFiles", "Delete", "filePath", "\\\\App_Data\\\\.*", null)); 
+               syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataDir", "Delete", "dirPath", "\\\\App_Data(\\\\.*|$)", null)); 
             }
 
             return syncOptions;
