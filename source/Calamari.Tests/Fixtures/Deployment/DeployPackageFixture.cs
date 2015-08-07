@@ -99,11 +99,16 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSubstituteVariablesInRelativePathFiles()
         {
             variables.Set("foo", "bar");
+
+            var path = CalamariEnvironment.IsRunningOnMono ? 
+                "assets/README.txt" : 
+                "assets\\README.txt";
+
             // Enable file substitution and configure the target
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
-            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "assets\\README.txt");
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, path);
 
-            var result = DeployPackage("Acme.Web");
+            DeployPackage("Acme.Web");
 
             // The #{foo} variable in assets\README.txt should have been replaced by 'bar'
             string actual = fileSystem.ReadFile(Path.Combine(stagingDirectory, "Acme.Web", "1.0.0", "assets", "README.txt"));
