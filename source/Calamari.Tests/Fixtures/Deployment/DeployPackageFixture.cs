@@ -96,6 +96,21 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        public void ShouldSubstituteVariablesInRelativePathFiles()
+        {
+            variables.Set("foo", "bar");
+            // Enable file substitution and configure the target
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "assets\\README.txt");
+
+            var result = DeployPackage("Acme.Web");
+
+            // The #{foo} variable in assets\README.txt should have been replaced by 'bar'
+            string actual = fileSystem.ReadFile(Path.Combine(stagingDirectory, "Acme.Web", "1.0.0", "assets", "README.txt"));
+            Assert.AreEqual("bar", actual);
+        }
+
+        [Test]
         [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
         public void ShouldTransformConfig()
         {

@@ -367,6 +367,9 @@
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\Blob.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\README.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
