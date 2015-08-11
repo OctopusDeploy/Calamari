@@ -7,84 +7,80 @@ using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Octostache;
 
 namespace Calamari.Integration.Azure
 {
-    public class AzurePowershellContext
+    public class AzurePowerShellContext
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
 
-        const string certificateFileName = "azure_certificate.pfx";
-        const int passwordSizeBytes = 20;
+        const string CertificateFileName = "azure_certificate.pfx";
+        const int PasswordSizeBytes = 20;
 
-        static readonly string azurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1"); 
+        static readonly string AzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1");
 
-        public AzurePowershellContext()
+        public AzurePowerShellContext()
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
             this.embeddedResources = new ExecutingAssemblyEmbeddedResources();
         }
 
-        public string CreateAzureContextScript(string targetScriptFile, VariableDictionary variables)
+        public CommandResult ExecuteScript(IScriptEngine scriptEngine, string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
-            var workingDirectory = Path.GetDirectoryName(targetScriptFile);
-            EnsureVariablesSet(workingDirectory, variables);
-            variables.Set("OctopusAzureTargetScript", targetScriptFile);
+            var workingDirectory = Path.GetDirectoryName(scriptFile);
+            variables.Set("OctopusAzureTargetScript", scriptFile);
 
-            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");
-            if (!fileSystem.FileExists(azureContextScriptFile))
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, AzurePowershellModulePath, variables);
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);
+
+            using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
+            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                fileSystem.OverwriteFile(azureContextScriptFile, embeddedResources.GetEmbeddedResourceText("Calamari.Scripts.AzureContext.ps1"));
+                return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
             }
+        }
 
+        string CreateContextScriptFile(string workingDirectory)
+        {
+            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");
+            var contextScript = embeddedResources.GetEmbeddedResourceText("Calamari.Scripts.AzureContext.ps1");
+            fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }
 
-        void EnsureVariablesSet(string workingDirectory, VariableDictionary variables)
+        private string CreateAzureCertificate(string workingDirectory, VariableDictionary variables)
         {
-            // If the certificate-file exists, we assume all variables have also been set
-            if (EnsureCertificateFileExists(workingDirectory, variables))
-                return;
-
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, azurePowershellModulePath, variables);
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
-            // Use the account-name configured in Octopus as the subscription-data-set name
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);
-        }
-
-        bool EnsureCertificateFileExists(string workingDirectory, VariableDictionary variables)
-        {
-            var certificateFilePath = Path.Combine(workingDirectory, certificateFileName);
-
-            if (fileSystem.FileExists(certificateFileName))
-                return true;
-
+            var certificateFilePath = Path.Combine(workingDirectory, CertificateFileName);
+            var certificatePassword = GenerateCertificatePassword();
             var azureCertificate = certificateStore.GetOrAdd(
                 variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
                 variables.Get(SpecialVariables.Action.Azure.CertificateBytes),
                 StoreName.My);
 
-            var certificatePassword = GenerateCertificatePassword();
-
             fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificatePassword));
+            return certificateFilePath;
+        }
 
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.CertificateFileName, certificateFilePath, variables);
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.CertificatePassword, certificatePassword, variables);
-
-            return false;
+        void SetOutputVariable(string name, string value, VariableDictionary variables)
+        {
+            if (variables.Get(name) != value)
+            {
+                Log.SetOutputVariable(name, value, variables);
+            }
         }
 
         static string GenerateCertificatePassword()
         {
             var random = RandomNumberGenerator.Create();
-            var bytes = new byte[passwordSizeBytes]; 
+            var bytes = new byte[PasswordSizeBytes]; 
             random.GetBytes(bytes);
             return Convert.ToBase64String(bytes);
         }
-
     }
 }
