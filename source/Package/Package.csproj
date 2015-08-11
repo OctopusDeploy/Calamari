@@ -68,7 +68,16 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj">
+      <Project>{e58a81ec-2c83-49e4-8dd4-877e68e0759b}</Project>
+      <Name>Calamari.Azure</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Calamari\Calamari.csproj">
+      <Project>{79ce5cfa-e3ff-4376-8b49-ac1005c3e189}</Project>
+      <Name>Calamari</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="Build\Package.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
