@@ -7,13 +7,13 @@ namespace Calamari
 {
     public class Program
     {
-        public static int Main(string[] args)
+        static int Main(string[] args)
         {
             var program = new Program();
             return program.Execute(args);
         }
 
-        private int Execute(string[] args)
+        protected int Execute(string[] args)
         {
             ProxyInitializer.InitializeDefaultProxy();
             RegisterCommandAssemblies();

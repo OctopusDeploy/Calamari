@@ -11,9 +11,10 @@ namespace Calamari.Azure
             ScriptEngineRegistry.Instance.ScriptEngines[ScriptType.Powershell] = new AzurePowerShellScriptEngine();            
         }
 
-        public new static int Main(string[] args)
+        static int Main(string[] args)
         {
-            return Calamari.Program.Main(args);
+            var program = new Azure.Program();
+            return program.Execute(args);
         }
 
         protected override void RegisterCommandAssemblies()
