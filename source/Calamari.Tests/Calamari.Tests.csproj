@@ -64,22 +64,6 @@
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.4.1\lib\net40\Microsoft.WindowsAzure.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Common.NetFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.4.1\lib\net40\Microsoft.WindowsAzure.Common.NetFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Management.Compute, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.Management.Compute.6.1.2\lib\net40\Microsoft.WindowsAzure.Management.Compute.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Management.WebSites, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.Management.WebSites.4.0.0\lib\net40\Microsoft.WindowsAzure.Management.WebSites.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
@@ -140,14 +124,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
-    <Compile Include="Fixtures\Azure\CloudServicePackage\ManifestSchema\AzureCloudServicePackageManifestSchemaFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationTransformConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfigurationVariablesConventionFixture.cs" />
-    <Compile Include="Fixtures\Conventions\ChooseAzureCloudServiceConfigurationFileConventionFixture.cs" />
-    <Compile Include="Fixtures\Conventions\ConfigureAzureCloudServiceConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ConfiguredScriptConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributePreviousInstallationConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\ContributeEnvironmentVariablesFixture.cs" />
@@ -158,20 +139,13 @@
     <Compile Include="Fixtures\Conventions\LegacyIisWebSiteConventionFixture.cs" />
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />
     <Compile Include="Fixtures\Conventions\SubstituteInFilesConventionFixture.cs" />
-    <Compile Include="Fixtures\Conventions\UploadAzureCloudServicePackageConventionFixture.cs" />
-    <Compile Include="Fixtures\Deployment\Azure\OctopusTestAzureSubscription.cs" />
-    <Compile Include="Fixtures\Deployment\Azure\OctopusTestCloudService.cs" />
     <Compile Include="Fixtures\Deployment\CleanFixture.cs" />
-    <Compile Include="Fixtures\Deployment\Azure\DeployAzureCloudServiceFixture.cs" />
-    <Compile Include="Fixtures\Deployment\Azure\DeployAzureCloudServiceSansPackageExtractionFixture.cs" />
-    <Compile Include="Fixtures\Deployment\Azure\DeployAzureWebFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
     <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTestAttribute.cs" />
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
-    <Compile Include="Fixtures\PowerShell\AzurePowershellFixture.cs" />
     <Compile Include="Fixtures\Retention\RetentionPolicyFixture.cs" />
     <Compile Include="Fixtures\Processes\SemaphoreFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\RequiresDotNet45Attribute.cs" />
@@ -180,20 +154,16 @@
     <Compile Include="Fixtures\SensitiveVariables\SensitiveVariablesFixture.cs" />
     <Compile Include="Fixtures\ServiceMessages\ServiceMessageParserFixture.cs" />
     <Compile Include="Fixtures\Substitutions\SubstitutionsFixture.cs" />
-    <Compile Include="Helpers\CalamariFixture.cs" />
-    <Compile Include="Helpers\CalamariResult.cs" />
     <Compile Include="Fixtures\HelpFixture.cs" />
     <Compile Include="Fixtures\PowerShell\PowerShellFixture.cs" />
+    <Compile Include="Helpers\CalamariFixture.cs" />
+    <Compile Include="Helpers\CalamariResult.cs" />
     <Compile Include="Helpers\CaptureCommandOutput.cs" />
-    <Compile Include="Helpers\Azure\FakeSubscriptionCloudCredentials.cs" />
     <Compile Include="Helpers\TestEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <EmbeddedResource Include="Fixtures\Azure\CloudServicePackage\ManifestSchema\PackageDefinition.xsd">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <None Include="Fixtures\Bash\Scripts\create-artifact.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -297,9 +267,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\CanSetVariable.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Fixtures\PowerShell\Scripts\AzureSubscription.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\PowerShell\Scripts\Path With %27\PathWithSingleQuote.ps1">

@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 
 namespace Calamari.Util
 {
-    class HashCalculator
+    public class HashCalculator
     {
         public static string Hash(Stream stream)
         {
