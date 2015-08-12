@@ -50,7 +50,7 @@ namespace Calamari.Azure.Commands
             var variables = new VariableDictionary(variablesFile);
 
             var fileSystem = new WindowsPhysicalFileSystem();
-            var embeddedResources = new ExecutingAssemblyEmbeddedResources();
+            var embeddedResources = new CallingAssemblyEmbeddedResources();
             var scriptEngine = new CombinedScriptEngine();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var azurePackageUploader = new AzurePackageUploader();

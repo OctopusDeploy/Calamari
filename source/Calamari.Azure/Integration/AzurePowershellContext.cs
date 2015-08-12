@@ -19,13 +19,13 @@ namespace Calamari.Azure.Integration
         const string certificateFileName = "azure_certificate.pfx";
         const int passwordSizeBytes = 20;
 
-        static readonly string azurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Calamari.Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1"); 
+        static readonly string ServiceManagementModulePath = Path.Combine(Path.GetDirectoryName(typeof(Calamari.Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1"); 
 
         public AzurePowershellContext()
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
-            this.embeddedResources = new ExecutingAssemblyEmbeddedResources();
+            this.embeddedResources = new CallingAssemblyEmbeddedResources();
         }
 
         public string CreateAzureContextScript(string targetScriptFile, VariableDictionary variables)
@@ -37,7 +37,7 @@ namespace Calamari.Azure.Integration
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");
             if (!fileSystem.FileExists(azureContextScriptFile))
             {
-                fileSystem.OverwriteFile(azureContextScriptFile, embeddedResources.GetEmbeddedResourceText("Calamari.Scripts.AzureContext.ps1"));
+                fileSystem.OverwriteFile(azureContextScriptFile, embeddedResources.GetEmbeddedResourceText("Calamari.Azure.Scripts.AzureContext.ps1"));
             }
 
             return azureContextScriptFile;
@@ -49,7 +49,7 @@ namespace Calamari.Azure.Integration
             if (EnsureCertificateFileExists(workingDirectory, variables))
                 return;
 
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, azurePowershellModulePath, variables);
+            Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, ServiceManagementModulePath, variables);
             Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             // Use the account-name configured in Octopus as the subscription-data-set name
             Log.SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);

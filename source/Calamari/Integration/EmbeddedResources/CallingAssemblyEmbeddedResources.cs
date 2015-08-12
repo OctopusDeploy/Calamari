@@ -4,16 +4,16 @@ using System.Reflection;
 
 namespace Calamari.Integration.EmbeddedResources
 {
-    public class ExecutingAssemblyEmbeddedResources : ICalamariEmbeddedResources
+    public class CallingAssemblyEmbeddedResources : ICalamariEmbeddedResources
     {
         public IEnumerable<string> GetEmbeddedResourceNames()
         {
-            return Assembly.GetExecutingAssembly().GetManifestResourceNames();
+            return Assembly.GetCallingAssembly().GetManifestResourceNames();
         }
 
         public string GetEmbeddedResourceText(string name)
         {
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name))
+            using (var stream = Assembly.GetCallingAssembly().GetManifestResourceStream(name))
             using (var reader = new StreamReader(stream))
             {
                 return reader.ReadToEnd();

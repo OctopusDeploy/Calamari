@@ -196,7 +196,7 @@
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
     <Compile Include="Integration\ConfigurationVariables\IConfigurationVariablesReplacer.cs" />
-    <Compile Include="Integration\EmbeddedResources\ExecutingAssemblyEmbeddedResources.cs" />
+    <Compile Include="Integration\EmbeddedResources\CallingAssemblyEmbeddedResources.cs" />
     <Compile Include="Integration\EmbeddedResources\ICalamariEmbeddedResources.cs" />
     <Compile Include="Integration\Iis\IInternetInformationServer.cs" />
     <Compile Include="Integration\Iis\InternetInformationServer.cs" />
@@ -273,8 +273,6 @@
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_AfterPreDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_BeforePostDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.sh" />
-    <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
-    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />

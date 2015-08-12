@@ -43,7 +43,7 @@ namespace Calamari.Azure.Deployment.Conventions
             // The user may supply the script, to override behaviour
             if (!fileSystem.FileExists(scriptFile))
             {
-               fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText("Calamari.Scripts.DeployAzureCloudService.ps1")); 
+               fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText("Calamari.Azure.Scripts.DeployAzureCloudService.ps1")); 
             }
 
             var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);

@@ -56,7 +56,7 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
-            var embeddedResources = new ExecutingAssemblyEmbeddedResources();
+            var embeddedResources = new CallingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = new SystemSemaphore();
