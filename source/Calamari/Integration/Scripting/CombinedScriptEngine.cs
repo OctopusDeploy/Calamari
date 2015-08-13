@@ -1,5 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Azure;
@@ -13,11 +16,11 @@ namespace Calamari.Integration.Scripting
 {
     public class CombinedScriptEngine : IScriptEngine
     {
-        readonly AzurePowershellContext azurePowershellContext;
+        readonly AzurePowerShellContext azurePowerShellContext;
 
         public CombinedScriptEngine()
         {
-            this.azurePowershellContext = new AzurePowershellContext();
+            this.azurePowerShellContext = new AzurePowerShellContext();
         }
 
         public string[] GetSupportedExtensions()
@@ -37,12 +40,12 @@ namespace Calamari.Integration.Scripting
             if (scriptType == ScriptType.Powershell &&
                 variables.Get(SpecialVariables.Account.AccountType) == "AzureSubscription")
             {
-                var azureContextScriptFile = azurePowershellContext.CreateAzureContextScript(scriptFile, variables);
-                return engine.Execute(azureContextScriptFile, variables, commandLineRunner);
+                return azurePowerShellContext.ExecuteScript(engine, scriptFile, variables, commandLineRunner);
             }
 
             return engine.Execute(scriptFile, variables, commandLineRunner);
         }
+
 
         static IScriptEngine GetSpecificScriptEngine(ScriptType scriptType)
         {
