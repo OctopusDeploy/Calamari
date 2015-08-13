@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -24,14 +22,12 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
         public void Deploy()
         {
             const string webAppName = "octodemo003-dev";
-            const string webSpaceName = "southeastasiawebspace";
 
             OctopusTestAzureSubscription.IgnoreIfCertificateNotInstalled();
 
             variables = new VariableDictionary();
             OctopusTestAzureSubscription.PopulateVariables(variables);
             variables.Set(SpecialVariables.Action.Azure.WebAppName, webAppName);
-            variables.Set(SpecialVariables.Action.Azure.WebSpaceName, webSpaceName);
 
             variables.Set("foo", "bar");
             // Enable file substitution and configure the target
