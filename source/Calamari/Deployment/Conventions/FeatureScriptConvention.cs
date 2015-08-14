@@ -53,7 +53,12 @@ namespace Calamari.Deployment.Conventions
                 // way to override behaviour.
                 if (!fileSystem.FileExists(scriptFile))
                 {
+                    Log.VerboseFormat("Creating '{0}' from embedded resource", scriptFile);
                     fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(scriptEmbeddedResource));
+                }
+                else
+                {
+                    Log.WarnFormat("Did not overwrite '{0}', it was already on disk", scriptFile);
                 }
 
                 // Execute the script
@@ -61,14 +66,13 @@ namespace Calamari.Deployment.Conventions
                 var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);
 
                 // And then delete it
-                fileSystem.DeleteFile(scriptFile, DeletionOptions.TryThreeTimesIgnoreFailure);
+                fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
 
                 if (result.ExitCode != 0)
                 {
                     throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
                         result.ExitCode));
                 }
-
             }
         }
 

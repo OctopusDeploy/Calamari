@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             // Assert directory was purged
-            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<DeletionOptions>());
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>());
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             // Assert directory was purged
-            fileSystem.DidNotReceive().PurgeDirectory(customInstallationDirectory, Arg.Any<DeletionOptions>());
+            fileSystem.DidNotReceive().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>());
         }
 
         [Test]

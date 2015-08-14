@@ -62,7 +62,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var convention = CreateConvention("PreDeploy");
             convention.Install(deployment);
             scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), deployment.Variables, runner);
-            fileSystem.Received().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), Arg.Any<DeletionOptions>());
+            fileSystem.Received().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), Arg.Any<FailureOptions>());
         }
 
         PackagedScriptConvention CreateConvention(string scriptName)

@@ -20,6 +20,25 @@ namespace Calamari.Integration.FileSystem
             return new WindowsPhysicalFileSystem();
         }
 
+        /// <summary>
+        /// For file operations, try again after 100ms and again every 200ms after that
+        /// </summary>
+        static readonly RetryInterval RetryIntervalForFileOperations = new RetryInterval(100, 200, 2);
+
+        /// <summary>
+        /// For file operations, retry constantly up to one minute
+        /// </summary>
+        /// <remarks>
+        /// Windows services can hang on to files for ~30s after the service has stopped as background
+        /// threads shutdown or are killed for not shutting down in a timely fashion
+        /// </remarks>
+        static RetryTracker GetRetryTracker()
+        {
+            return new RetryTracker(maxRetries:10000, 
+                timeLimit: TimeSpan.FromMinutes(1), 
+                retryInterval: RetryIntervalForFileOperations);
+        }
+
         public bool FileExists(string path)
         {
             return File.Exists(path);
@@ -44,43 +63,44 @@ namespace Calamari.Integration.FileSystem
 
         public void DeleteFile(string path)
         {
-            DeleteFile(path, null);
+            DeleteFile(path, FailureOptions.ThrowOnFailure);
         }
 
-        public void DeleteFile(string path, DeletionOptions options)
+        public void DeleteFile(string path, FailureOptions options)
         {
-            options = options ?? DeletionOptions.TryThreeTimes;
-
             if (string.IsNullOrWhiteSpace(path))
                 return;
 
-            var firstAttemptFailed = false;
-            for (var i = 0; i < options.RetryAttempts; i++)
+            var retry = GetRetryTracker();
+
+            while (retry.Try())
             {
                 try
                 {
                     if (File.Exists(path))
                     {
-                        if (firstAttemptFailed)
+                        if (retry.IsNotFirstAttempt)
                         {
                             File.SetAttributes(path, FileAttributes.Normal);
                         }
                         File.Delete(path);
-                        return;
                     }
+                    break;
                 }
                 catch
                 {
-                    firstAttemptFailed = true;
-                    if (i == options.RetryAttempts - 1)
+                    if (retry.CanRetry())
                     {
-                        if (options.ThrowOnFailure)
+                        Log.Warn("Retrying delete on '" + path + "'");
+                        Thread.Sleep(retry.Sleep());
+                    }
+                    else
+                    {
+                        if (options == FailureOptions.ThrowOnFailure)
                         {
                             throw;
                         }
-                        break;
                     }
-                    Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
                 }
             }
         }
@@ -90,14 +110,13 @@ namespace Calamari.Integration.FileSystem
             Directory.Delete(path, true);
         }
 
-        public void DeleteDirectory(string path, DeletionOptions options)
+        public void DeleteDirectory(string path, FailureOptions options)
         {
-            options = options ?? DeletionOptions.TryThreeTimes;
-
             if (string.IsNullOrWhiteSpace(path))
                 return;
 
-            for (var i = 0; i < options.RetryAttempts; i++)
+            var retry = GetRetryTracker();
+            while (retry.Try())
             {
                 try
                 {
@@ -107,20 +126,22 @@ namespace Calamari.Integration.FileSystem
                         dir.Attributes = dir.Attributes & ~FileAttributes.ReadOnly;
                         dir.Delete(true);
                     }
-                    return;
+                    break;
                 }
                 catch
                 {
-                    if (i == options.RetryAttempts - 1)
+                    if (retry.CanRetry())
                     {
-                        if (options.ThrowOnFailure)
+                        Thread.Sleep(retry.Sleep());
+                        Log.Warn("Retrying delete directory on '" + path + "'");
+                    }
+                    else
+                    {
+                        if (options == FailureOptions.ThrowOnFailure)
                         {
                             throw;
                         }
-
-                        break;
                     }
-                    Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
                 }
             }
         }
@@ -217,22 +238,22 @@ namespace Calamari.Integration.FileSystem
             return path;
         }
 
-        public void PurgeDirectory(string targetDirectory, DeletionOptions options)
+        public void PurgeDirectory(string targetDirectory, FailureOptions options)
         {
             PurgeDirectory(targetDirectory, fi => true, options);
         }
 
-        public void PurgeDirectory(string targetDirectory, DeletionOptions options, CancellationToken cancel)
+        public void PurgeDirectory(string targetDirectory, FailureOptions options, CancellationToken cancel)
         {
             PurgeDirectory(targetDirectory, fi => true, options, cancel);
         }
 
-        public void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, DeletionOptions options)
+        public void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, FailureOptions options)
         {
             PurgeDirectory(targetDirectory, include, options, CancellationToken.None);
         }
 
-        void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, DeletionOptions options, CancellationToken cancel, bool includeTarget = false)
+        void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, FailureOptions options, CancellationToken cancel, bool includeTarget = false)
         {
             if (!DirectoryExists(targetDirectory))
             {
@@ -335,41 +356,46 @@ namespace Calamari.Integration.FileSystem
 
         // ReSharper disable AssignNullToNotNullAttribute
 
-        public void CopyDirectory(string sourceDirectory, string targetDirectory, int overwriteFileRetryAttempts = 6)
+        public int CopyDirectory(string sourceDirectory, string targetDirectory)
         {
-            CopyDirectory(sourceDirectory, targetDirectory, CancellationToken.None, overwriteFileRetryAttempts);
+            return CopyDirectory(sourceDirectory, targetDirectory, CancellationToken.None);
         }
 
-        public void CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel, int overwriteFileRetryAttempts = 6)
+        public int CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel)
         {
             if (!DirectoryExists(sourceDirectory))
-                return;
+                return 0;
 
             if (!DirectoryExists(targetDirectory))
             {
                 Directory.CreateDirectory(targetDirectory);
             }
 
+            int count = 0;
             var files = Directory.GetFiles(sourceDirectory, "*");
             foreach (var sourceFile in files)
             {
                 cancel.ThrowIfCancellationRequested();
 
                 var targetFile = Path.Combine(targetDirectory, Path.GetFileName(sourceFile));
-                CopyFile(sourceFile, targetFile, overwriteFileRetryAttempts);
+                CopyFile(sourceFile, targetFile);
+                count++;
             }
 
             foreach (var childSourceDirectory in Directory.GetDirectories(sourceDirectory))
             {
                 var name = Path.GetFileName(childSourceDirectory);
                 var childTargetDirectory = Path.Combine(targetDirectory, name);
-                CopyDirectory(childSourceDirectory, childTargetDirectory, cancel, overwriteFileRetryAttempts);
+                count += CopyDirectory(childSourceDirectory, childTargetDirectory, cancel);
             }
+
+            return count;
         }
 
-        public void CopyFile(string sourceFile, string targetFile, int overwriteFileRetryAttempts = 6)
+        public void CopyFile(string sourceFile, string targetFile)
         {
-            for (var i = 0; i < overwriteFileRetryAttempts; i++)
+            var retry = GetRetryTracker();
+            while (retry.Try())
             {
                 try
                 {
@@ -378,11 +404,15 @@ namespace Calamari.Integration.FileSystem
                 }
                 catch
                 {
-                    if (i == overwriteFileRetryAttempts - 1)
+                    if (retry.CanRetry())
+                    {
+                        Thread.Sleep(retry.Sleep());
+                        Log.Warn("Retrying copy file on '" + targetFile + "'");
+                    }
+                    else
                     {
                         throw;
                     }
-                    Thread.Sleep(1000 + (2000 * i));
                 }
             }
         }

@@ -239,6 +239,8 @@
     <Compile Include="Integration\ConfigurationTransforms\WarningDelegateArgs.cs" />
     <Compile Include="Guard.cs" />
     <Compile Include="Integration\FileSystem\NixPhysicalFileSystem.cs" />
+    <Compile Include="Integration\FileSystem\RetryInterval.cs" />
+    <Compile Include="Integration\FileSystem\RetryTracker.cs" />
     <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
     <Compile Include="Integration\Proxies\ProxyInitializer.cs" />
     <Compile Include="Integration\Scripting\Bash\BashScriptBootstrapper.cs" />
@@ -275,7 +277,7 @@
     <Compile Include="Integration\Time\SystemClock.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Integration\FileSystem\CalamariPhysicalFileSystem.cs" />
-    <Compile Include="Integration\FileSystem\DeletionOptions.cs" />
+    <Compile Include="Integration\FileSystem\FailureOptions.cs" />
     <Compile Include="Integration\FileSystem\FileInfoAdapter.cs" />
     <Compile Include="Integration\FileSystem\FileSizeExtensions.cs" />
     <Compile Include="Integration\FileSystem\IFileInfo.cs" />

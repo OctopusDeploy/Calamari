@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             stagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
             customDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestCustom");
             fileSystem.EnsureDirectoryExists(stagingDirectory);
-            fileSystem.PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimes);
+            fileSystem.PurgeDirectory(stagingDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(stagingDirectory, "DeploymentJournal.xml" ));
 
@@ -136,7 +136,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             string customInstallDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestInstall");
             fileSystem.EnsureDirectoryExists(customInstallDirectory);
             // Ensure the directory is empty before we start
-            fileSystem.PurgeDirectory(customInstallDirectory, DeletionOptions.TryThreeTimes); 
+            fileSystem.PurgeDirectory(customInstallDirectory, FailureOptions.ThrowOnFailure); 
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallDirectory );
 
             var result = DeployPackage("Acme.Web");
@@ -319,8 +319,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TearDown]
         public void CleanUp()
         {
-            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
-            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(customDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(stagingDirectory, FailureOptions.IgnoreFailure);
+            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(customDirectory, FailureOptions.IgnoreFailure);
         }
 
         private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
