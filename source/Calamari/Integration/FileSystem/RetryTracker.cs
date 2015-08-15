@@ -32,6 +32,8 @@ namespace Calamari.Integration.FileSystem
 
         int currentTry = 0;
 
+        public int CurrentTry { get { return currentTry; } }
+
         public RetryTracker(int? maxRetries, TimeSpan? timeLimit, RetryInterval retryInterval, bool throwOnFailure = true)
         {
             this.maxRetries = maxRetries;
@@ -54,9 +56,20 @@ namespace Calamari.Integration.FileSystem
 
         public bool CanRetry()
         {
-            bool canRetry = !(maxRetries.HasValue && currentTry > maxRetries.Value) &&
-                !(timeLimit != null && timeLimit > stopWatch.Value.Elapsed);
-            return canRetry;
+            bool noRetry = (maxRetries.HasValue && currentTry > maxRetries.Value) ||
+                (timeLimit != null && stopWatch.Value.Elapsed > timeLimit);
+            return !noRetry;
+        }
+
+        TimeSpan nextWarning = TimeSpan.Zero;
+        public bool ShouldLogWarning()
+        {
+            var warn = currentTry < 5 || (stopWatch.Value.Elapsed > nextWarning);
+            if (warn)
+            {
+                nextWarning = stopWatch.Value.Elapsed.Add(TimeSpan.FromSeconds(10));
+            }
+            return warn;
         }
 
         public bool IsFirstAttempt { get { return currentTry == 1; } }

@@ -66,6 +66,7 @@ namespace Calamari.Deployment.Conventions
                 var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);
 
                 // And then delete it
+                Log.VerboseFormat("Deleting '{0}'", scriptFile);
                 fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
 
                 if (result.ExitCode != 0)
