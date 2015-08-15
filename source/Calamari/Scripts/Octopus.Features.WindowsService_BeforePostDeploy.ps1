@@ -152,5 +152,11 @@ else
 {
 	Write-Host "Starting the $serviceName service"
 	Start-Service $ServiceName
-	Write-Host "Service started"
+	$service.WaitForStatus('Started', '00:00:30')
+	If ($service.Status -ne 'Started') 
+	{
+		Write-Warning "Service $serviceName did not start within 30 seconds"
+	} Else {
+		Write-Host "Service $serviceName started"
+	}
 }
