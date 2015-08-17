@@ -93,7 +93,7 @@ namespace Calamari.Integration.FileSystem
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.WarnFormat("Retry #{0} on delete file '{1}'", retry.CurrentTry, path);
+                            Log.VerboseFormat("Retry #{0} on delete file '{1}'", retry.CurrentTry, path);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
@@ -137,7 +137,7 @@ namespace Calamari.Integration.FileSystem
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.WarnFormat("Retry #{0} on delete directory '{1}'", retry.CurrentTry, path);
+                            Log.VerboseFormat("Retry #{0} on delete directory '{1}'", retry.CurrentTry, path);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
@@ -414,7 +414,7 @@ namespace Calamari.Integration.FileSystem
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.WarnFormat("Retry #{0} on copy '{1}'", retry.CurrentTry,  targetFile);
+                            Log.VerboseFormat("Retry #{0} on copy '{1}'", retry.CurrentTry,  targetFile);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
