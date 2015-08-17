@@ -53,12 +53,12 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             if (CalamariEnvironment.IsRunningOnNix)
             {
-                result.AssertOutput("Extracted 11 files");
+                result.AssertOutput("Extracted 12 files");
                 result.AssertOutput("Bonjour from PreDeploy.sh");
             }
             else
             {
-                result.AssertOutput("Extracted 10 files");
+                result.AssertOutput("Extracted 11 files");
                 result.AssertOutput("Bonjour from PreDeploy.ps1");
             }
         }
@@ -89,10 +89,30 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
 
-            var result = DeployPackage("Acme.Web");
+            DeployPackage("Acme.Web");
 
             // The #{foo} variable in web.config should have been replaced by 'bar'
             AssertXmlNodeValue(Path.Combine(stagingDirectory, "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='foo']/@value", "bar");
+        }
+
+        [Test]
+        public void ShouldSubstituteVariablesInRelativePathFiles()
+        {
+            variables.Set("foo", "bar");
+
+            var path = CalamariEnvironment.IsRunningOnNix ? 
+                "assets/README.txt" : 
+                "assets\\README.txt";
+
+            // Enable file substitution and configure the target
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, path);
+
+            DeployPackage("Acme.Web");
+
+            // The #{foo} variable in assets\README.txt should have been replaced by 'bar'
+            string actual = fileSystem.ReadFile(Path.Combine(stagingDirectory, "Acme.Web", "1.0.0", "assets", "README.txt"));
+            Assert.AreEqual("bar", actual);
         }
 
         [Test]
@@ -253,8 +273,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
                         result.AssertOutput(CalamariEnvironment.IsRunningOnNix
-                            ? "Extracted 11 files"
-                            : "Extracted 10 files");
+                            ? "Extracted 12 files"
+                            : "Extracted 11 files");
 
                         lock (extractionDirectories)
                         {

@@ -28,9 +28,9 @@ namespace Calamari.Integration.FileSystem
         Stream OpenFile(string path, FileMode mode = FileMode.OpenOrCreate, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream CreateTemporaryFile(string extension, out string path);
         string CreateTemporaryDirectory();
-        void CopyDirectory(string sourceDirectory, string targetDirectory, int overwriteFileRetryAttempts = 3);
-        void CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel, int overwriteFileRetryAttempts = 3);
-        void CopyFile(string sourceFile, string destinationFile, int overwriteFileRetryAttempts = 3);
+        void CopyDirectory(string sourceDirectory, string targetDirectory, int overwriteFileRetryAttempts = 6);
+        void CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel, int overwriteFileRetryAttempts = 6);
+        void CopyFile(string sourceFile, string destinationFile, int overwriteFileRetryAttempts = 6);
         void PurgeDirectory(string targetDirectory, DeletionOptions options);
         void PurgeDirectory(string targetDirectory, DeletionOptions options, CancellationToken cancel);
         void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> filter, DeletionOptions options);

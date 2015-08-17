@@ -66,6 +66,7 @@ namespace Calamari.Integration.FileSystem
                             File.SetAttributes(path, FileAttributes.Normal);
                         }
                         File.Delete(path);
+                        return;
                     }
                 }
                 catch
@@ -77,7 +78,6 @@ namespace Calamari.Integration.FileSystem
                         {
                             throw;
                         }
-
                         break;
                     }
                     Thread.Sleep(options.SleepBetweenAttemptsMilliseconds);
@@ -107,6 +107,7 @@ namespace Calamari.Integration.FileSystem
                         dir.Attributes = dir.Attributes & ~FileAttributes.ReadOnly;
                         dir.Delete(true);
                     }
+                    return;
                 }
                 catch
                 {
@@ -124,18 +125,22 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        public IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
+        public virtual IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
         {
+            var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
+
             return searchPatterns.Length == 0
-                ? Directory.EnumerateFiles(parentDirectoryPath, "*", SearchOption.TopDirectoryOnly)
-                : searchPatterns.SelectMany(pattern => Directory.EnumerateFiles(parentDirectoryPath, pattern, SearchOption.TopDirectoryOnly));
+                ? parentDirectoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly).Select(fi => fi.FullName)
+                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.TopDirectoryOnly).Select(fi => fi.FullName));
         }
 
-        public IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
+        public virtual IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
         {
+            var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
+
             return searchPatterns.Length == 0
-                ? Directory.EnumerateFiles(parentDirectoryPath, "*", SearchOption.AllDirectories)
-                : searchPatterns.SelectMany(pattern => Directory.EnumerateFiles(parentDirectoryPath, pattern, SearchOption.AllDirectories));
+                ? parentDirectoryInfo.GetFiles("*", SearchOption.AllDirectories).Select(fi => fi.FullName)
+                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.AllDirectories).Select(fi => fi.FullName));
         }
 
         public IEnumerable<string> EnumerateDirectories(string parentDirectoryPath)
@@ -369,6 +374,7 @@ namespace Calamari.Integration.FileSystem
                 try
                 {
                     File.Copy(sourceFile, targetFile, true);
+                    return;
                 }
                 catch
                 {

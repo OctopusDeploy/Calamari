@@ -128,6 +128,7 @@
     <Compile Include="Deployment\Azure\OctopusTestAzureSubscription.cs" />
     <Compile Include="Deployment\Azure\OctopusTestCloudService.cs" />
     <Compile Include="FakeSubscriptionCloudCredentials.cs" />
+    <Compile Include="PowerShell\AzurePowerShellContextFixture.cs" />
     <Compile Include="PowerShell\AzurePowershellFixture.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

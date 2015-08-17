@@ -27,8 +27,8 @@ function New-OctopusArtifact([string]$path, [string]$name="""")
     if ($name -eq """") 
     {
         $name = [System.IO.Path]::GetFileName($path)
-        $name = Convert-ServiceMessageValue($name)
     }
+	$name = Convert-ServiceMessageValue($name)
 
     $length = ([System.IO.FileInfo]$path).Length;
 	if (!$length) {
