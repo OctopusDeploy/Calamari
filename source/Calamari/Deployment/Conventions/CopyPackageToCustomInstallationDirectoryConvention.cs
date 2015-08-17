@@ -32,12 +32,13 @@ namespace Calamari.Deployment.Conventions
                 SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
             {
                 Log.Info("Purging the directory '{0}'", customInstallationDirectory);
-                fileSystem.PurgeDirectory(deployment.CustomDirectory, DeletionOptions.TryThreeTimes);
+                fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure);
             }
 
             // Copy files from staging area to custom directory
             Log.Info("Copying package contents to '{0}'", customInstallationDirectory);
-            fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
+            int count = fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
+            Log.Info("Copied {0} files", count);
 
             // From this point on, the current directory will be the custom-directory
             deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;

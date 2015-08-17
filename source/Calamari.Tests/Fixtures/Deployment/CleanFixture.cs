@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var tentacleHiddenDirectory = Path.Combine(tentacleDirectory, ".tentacle"); 
             fileSystem.EnsureDirectoryExists(tentacleDirectory);
             fileSystem.EnsureDirectoryExists(tentacleHiddenDirectory);
-            fileSystem.PurgeDirectory(tentacleHiddenDirectory, DeletionOptions.TryThreeTimes);
+            fileSystem.PurgeDirectory(tentacleHiddenDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(tentacleHiddenDirectory, "DeploymentJournal.xml" ));
 

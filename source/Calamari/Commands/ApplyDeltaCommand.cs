@@ -66,7 +66,7 @@ namespace Calamari.Commands
             var result = commandLineRunner.Execute(octoDiff.Build());
             if (result.ExitCode != 0)
             {
-                fileSystem.DeleteFile(tempNewFilePath, DeletionOptions.TryThreeTimes);
+                fileSystem.DeleteFile(tempNewFilePath, FailureOptions.ThrowOnFailure);
                 throw new CommandLineException(executable, result.ExitCode, result.Errors);
             }
 

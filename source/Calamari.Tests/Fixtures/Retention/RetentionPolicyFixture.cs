@@ -93,12 +93,12 @@ namespace Calamari.Tests.Fixtures.Retention
 
             // The older artifacts should have been removed
             fileSystem.Received().DeleteDirectory(fourDayOldDeployment.ExtractedTo);
-            fileSystem.Received().DeleteFile(fourDayOldDeployment.ExtractedFrom, Arg.Any<DeletionOptions>());
+            fileSystem.Received().DeleteFile(fourDayOldDeployment.ExtractedFrom, Arg.Any<FailureOptions>());
 
             // The newer artifacts, and those from the non-matching policy-set, should have been kept
             // In other words, nothing but the matching deployment should have been removed
             fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedTo)));
-            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedFrom)), Arg.Any<DeletionOptions>());
+            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedFrom)), Arg.Any<FailureOptions>());
 
             // The older entry should have been removed from the journal
             deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldDeployment.Id)));
@@ -112,12 +112,12 @@ namespace Calamari.Tests.Fixtures.Retention
             retentionPolicy.ApplyRetentionPolicy(policySet1, null, 1);
 
             fileSystem.Received().DeleteDirectory(fourDayOldDeployment.ExtractedTo);
-            fileSystem.Received().DeleteFile(fourDayOldDeployment.ExtractedFrom, Arg.Any<DeletionOptions>());
+            fileSystem.Received().DeleteFile(fourDayOldDeployment.ExtractedFrom, Arg.Any<FailureOptions>());
 
             // The newer artifacts, and those from the non-matching policy-set, should have been kept
             // In other words, nothing but the matching deployment should have been removed
             fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedTo)));
-            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedFrom)), Arg.Any<DeletionOptions>());
+            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedFrom)), Arg.Any<FailureOptions>());
 
             // The older entry should have been removed from the journal
             deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldDeployment.Id)));
