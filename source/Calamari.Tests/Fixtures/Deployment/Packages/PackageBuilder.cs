@@ -10,7 +10,7 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages
 {
-    class PackageBuilder
+    public class PackageBuilder
     {
         public static string BuildSamplePackage(string name, string version, bool modifyPackage = false)
         {

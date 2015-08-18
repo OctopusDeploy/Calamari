@@ -1,16 +1,25 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Calamari.Commands.Support
 {
     public class CommandLocator : ICommandLocator
     {
+        private readonly List<Assembly> assemblies = new List<Assembly>(); 
+
         public static readonly CommandLocator Instance = new CommandLocator();
+
+        public void RegisterAssemblies(params Assembly[] assemblies)
+        {
+           this.assemblies.AddRange(assemblies); 
+        }
 
         public ICommandMetadata[] List()
         {
             return
-                (from t in typeof (CommandLocator).Assembly.GetTypes()
+                (from t in assemblies.SelectMany(a => a.GetTypes())
                     where typeof (ICommand).IsAssignableFrom(t)
                     let attribute = (ICommandMetadata) t.GetCustomAttributes(typeof (CommandAttribute), true).FirstOrDefault()
                     where attribute != null
@@ -20,7 +29,7 @@ namespace Calamari.Commands.Support
         public ICommand Find(string name)
         {
             name = name.Trim().ToLowerInvariant();
-            var found = (from t in typeof (CommandLocator).Assembly.GetTypes()
+            var found = (from t in assemblies.SelectMany(a => a.GetTypes())
                 where typeof (ICommand).IsAssignableFrom(t)
                 let attribute = (ICommandMetadata) t.GetCustomAttributes(typeof (CommandAttribute), true).FirstOrDefault()
                 where attribute != null

@@ -75,37 +75,6 @@
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.4.1\lib\net40\Microsoft.WindowsAzure.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Common.NetFramework">
-      <HintPath>..\packages\Microsoft.WindowsAzure.Common.1.4.1\lib\net40\Microsoft.WindowsAzure.Common.NetFramework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Configuration">
-      <HintPath>..\packages\Microsoft.WindowsAzure.ConfigurationManager.1.8.0.0\lib\net35-full\Microsoft.WindowsAzure.Configuration.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Management.Compute">
-      <HintPath>..\packages\Microsoft.WindowsAzure.Management.Compute.6.1.2\lib\net40\Microsoft.WindowsAzure.Management.Compute.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Management.Storage">
-      <HintPath>..\packages\Microsoft.WindowsAzure.Management.Storage.3.2.2\lib\net40\Microsoft.WindowsAzure.Management.Storage.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Management.WebSites">
-      <HintPath>..\packages\Microsoft.WindowsAzure.Management.WebSites.4.0.0\lib\net40\Microsoft.WindowsAzure.Management.WebSites.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Packaging">
-      <HintPath>..\packages\Octopus.Dependencies.AzureBinaries.2.6.0\lib\Microsoft.WindowsAzure.Packaging.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.ServiceModel.Common">
-      <HintPath>..\packages\Octopus.Dependencies.AzureBinaries.2.6.0\lib\Microsoft.WindowsAzure.ServiceModel.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Storage">
-      <HintPath>..\packages\WindowsAzure.Storage.4.3.0\lib\net40\Microsoft.WindowsAzure.Storage.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
@@ -169,10 +138,7 @@
     <Compile Include="CalamariEnvironment.cs" />
     <Compile Include="Commands\CleanCommand.cs" />
     <Compile Include="Commands\ApplyDeltaCommand.cs" />
-    <Compile Include="Commands\DeployAzureCloudServiceCommand.cs" />
-    <Compile Include="Commands\DeployAzureWebCommand.cs" />
     <Compile Include="Commands\DownloadPackageCommand.cs" />
-    <Compile Include="Commands\ExtractAzureCloudServicePackageCommand.cs" />
     <Compile Include="Commands\FindPackageCommand.cs" />
     <Compile Include="Commands\RunScriptCommand.cs" />
     <Compile Include="Commands\DeployPackageCommand.cs" />
@@ -183,26 +149,17 @@
     <Compile Include="Commands\Support\OptionSet.cs" />
     <Compile Include="Commands\Support\OptionValueType.cs" />
     <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
-    <Compile Include="Deployment\Conventions\AzureWebAppConvention.cs" />
-    <Compile Include="Deployment\Conventions\ChooseCloudServiceConfigurationFileConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationTransformsConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationVariablesConvention.cs" />
-    <Compile Include="Deployment\Conventions\ConfigureAzureCloudServiceConvention.cs" />
     <Compile Include="Deployment\Conventions\ContributeEnvironmentVariablesConvention.cs" />
     <Compile Include="Deployment\ConventionProcessor.cs" />
     <Compile Include="Deployment\Conventions\ContributePreviousInstallationConvention.cs" />
     <Compile Include="Deployment\Conventions\CopyPackageToCustomInstallationDirectoryConvention.cs" />
-    <Compile Include="Deployment\Conventions\DeployAzureCloudServicePackageConvention.cs" />
-    <Compile Include="Deployment\Conventions\EnsureCloudServicePackageIsCtpFormatConvention.cs" />
-    <Compile Include="Deployment\Conventions\ExtractAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToStagingDirectoryConvention.cs" />
-    <Compile Include="Deployment\Conventions\FindCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
-    <Compile Include="Deployment\Conventions\RePackageCloudServiceConvention.cs" />
-    <Compile Include="Deployment\Conventions\UploadAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\DeploymentStages.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
     <Compile Include="Deployment\Conventions\PackagedScriptConvention.cs" />
@@ -218,22 +175,6 @@
     <Compile Include="Deployment\SensitiveVariables.cs" />
     <Compile Include="Deployment\SpecialVariables.cs" />
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
-    <Compile Include="Integration\Azure\AzureCloudServiceConfigurationRetriever.cs" />
-    <Compile Include="Integration\Azure\AzurePackageUploader.cs" />
-    <Compile Include="Integration\Azure\AzurePowershellContext.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\AzureCloudServiceConventions.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDefinition.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\ContentDescription.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\FileDefinition.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\FileDescription.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\IntegrityCheckHashAlgorithm.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\LayoutDefinition.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\PackageDefinition.cs" />
-    <Compile Include="Integration\Azure\CloudServicePackage\ManifestSchema\PackageMetaData.cs" />
-    <Compile Include="Integration\Azure\IAzureCloudServiceConfigurationRetriever.cs" />
-    <Compile Include="Integration\Azure\IAzurePackageUploader.cs" />
-    <Compile Include="Integration\Azure\ISubscriptionCloudCredentialsFactory.cs" />
-    <Compile Include="Integration\Azure\SubscriptionCloudCredentialsFactory.cs" />
     <Compile Include="Integration\Certificates\ICertificateStore.cs" />
     <Compile Include="Integration\Certificates\CalamariCertificateStore.cs" />
     <Compile Include="Integration\ConfigurationTransforms\WarningDelegateArgs.cs" />
@@ -248,6 +189,7 @@
     <Compile Include="Integration\Scripting\FileExtensionAttribute.cs" />
     <Compile Include="Integration\Scripting\IScriptEngine.cs" />
     <Compile Include="Integration\Scripting\CombinedScriptEngine.cs" />
+    <Compile Include="Integration\Scripting\ScriptEngineRegistry.cs" />
     <Compile Include="Integration\Scripting\ScriptType.cs" />
     <Compile Include="Util\HashCalculator.cs" />
     <Compile Include="Util\Uniquifier.cs" />
@@ -257,7 +199,7 @@
     <Compile Include="Integration\ConfigurationTransforms\IConfigurationTransformer.cs" />
     <Compile Include="Integration\ConfigurationTransforms\XmlConfigTransformDefinition.cs" />
     <Compile Include="Integration\ConfigurationVariables\IConfigurationVariablesReplacer.cs" />
-    <Compile Include="Integration\EmbeddedResources\ExecutingAssemblyEmbeddedResources.cs" />
+    <Compile Include="Integration\EmbeddedResources\CallingAssemblyEmbeddedResources.cs" />
     <Compile Include="Integration\EmbeddedResources\ICalamariEmbeddedResources.cs" />
     <Compile Include="Integration\Iis\IInternetInformationServer.cs" />
     <Compile Include="Integration\Iis\InternetInformationServer.cs" />
@@ -334,8 +276,6 @@
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_AfterPreDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_BeforePostDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.sh" />
-    <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
-    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />

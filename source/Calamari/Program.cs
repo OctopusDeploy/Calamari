@@ -1,16 +1,22 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
 
 namespace Calamari
 {
-    class Program
+    public class Program
     {
         static int Main(string[] args)
         {
+            var program = new Program();
+            return program.Execute(args);
+        }
+
+        protected int Execute(string[] args)
+        {
             ProxyInitializer.InitializeDefaultProxy();
+            RegisterCommandAssemblies();
 
             try
             {
@@ -24,6 +30,12 @@ namespace Calamari
             {
                 return ConsoleFormatter.PrintError(ex);
             }
+            
+        }
+
+        protected virtual void RegisterCommandAssemblies()
+        {
+            CommandLocator.Instance.RegisterAssemblies(typeof(Program).Assembly);
         }
 
         private static string GetFirstArgument(string[] args)
