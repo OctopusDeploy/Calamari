@@ -49,7 +49,7 @@ namespace Calamari.Azure.Integration
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");
-            var contextScript = embeddedResources.GetEmbeddedResourceText("Calamari.Scripts.AzureContext.ps1");
+            var contextScript = embeddedResources.GetEmbeddedResourceText("Calamari.Azure.Scripts.AzureContext.ps1");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }
