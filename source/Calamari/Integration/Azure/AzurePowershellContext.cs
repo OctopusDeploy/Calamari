@@ -63,8 +63,12 @@ namespace Calamari.Integration.Azure
                 variables.Get(SpecialVariables.Action.Azure.CertificateBytes),
                 StoreName.My);
 
+            variables.Set("OctopusAzureCertificateFileName", certificateFilePath);
+            variables.Set("OctopusAzureCertificatePassword", certificatePassword);
+
             fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificatePassword));
             return certificateFilePath;
+
         }
 
         void SetOutputVariable(string name, string value, VariableDictionary variables)

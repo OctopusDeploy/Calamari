@@ -142,8 +142,6 @@
 
                 public static class Output
                 {
-                    public static readonly string CertificateFileName = "OctopusAzureCertificateFileName";
-                    public static readonly string CertificatePassword = "OctopusAzureCertificatePassword";
                     public static readonly string AzurePowershellModulePath = "OctopusAzureModulePath";
                     public static readonly string SubscriptionId = "OctopusAzureSubscriptionId";
                     public static readonly string SubscriptionName = "OctopusAzureSubscriptionName";
