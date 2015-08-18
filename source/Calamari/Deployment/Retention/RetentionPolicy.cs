@@ -44,7 +44,7 @@ namespace Calamari.Deployment.Retention
                 if (fileSystem.DirectoryExists(deployment.ExtractedTo))
                 {
                     Log.VerboseFormat("Removing directory '{0}'", deployment.ExtractedTo);
-                    fileSystem.PurgeDirectory(deployment.ExtractedTo, DeletionOptions.TryThreeTimesIgnoreFailure);
+                    fileSystem.PurgeDirectory(deployment.ExtractedTo, FailureOptions.IgnoreFailure);
 
                     try
                     {
@@ -59,7 +59,7 @@ namespace Calamari.Deployment.Retention
                 if (!string.IsNullOrWhiteSpace(deployment.ExtractedFrom) && fileSystem.FileExists(deployment.ExtractedFrom))
                 {
                     Log.VerboseFormat("Removing package file '{0}'", deployment.ExtractedFrom);
-                    fileSystem.DeleteFile(deployment.ExtractedFrom, DeletionOptions.TryThreeTimesIgnoreFailure);
+                    fileSystem.DeleteFile(deployment.ExtractedFrom, FailureOptions.IgnoreFailure);
                 }
             }
 

@@ -100,10 +100,21 @@ if (!$service)
 }
 else
 {
-	Write-Host "The $serviceName service already exists. It will be stopped and reconfigured."
-	Write-Host "Stopping the $serviceName service"
+	Write-Host "The $serviceName service already exists, it will be reconfigured."
 
-	Stop-Service $ServiceName -Force
+	If ($service.Status -ne 'Stopped')
+	{
+		Write-Host "Stopping the $serviceName service"
+		Stop-Service $ServiceName -Force
+		## Wait up to 30 seconds for the service to stop
+		$service.WaitForStatus('Stopped', '00:00:30')
+		If ($service.Status -ne 'Stopped') 
+		{
+			Write-Warning "Service $serviceName did not stop within 30 seconds"
+		} Else {
+			Write-Host "Service $serviceName stopped"
+		}
+	}
 
 	Write-Host "sc.exe config $fullArgumentsSafeForConsole"
 	& "sc.exe" config ($fullArguments)
@@ -141,5 +152,11 @@ else
 {
 	Write-Host "Starting the $serviceName service"
 	Start-Service $ServiceName
-	Write-Host "Service started"
+	$service.WaitForStatus('Running', '00:00:30')
+	If ($service.Status -ne 'Running') 
+	{
+		Write-Warning "Service $serviceName did not start within 30 seconds"
+	} Else {
+		Write-Host "Service $serviceName running"
+	}
 }

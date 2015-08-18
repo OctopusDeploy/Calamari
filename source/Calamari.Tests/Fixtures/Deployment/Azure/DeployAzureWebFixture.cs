@@ -45,7 +45,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Azure
         public void CleanUp()
         {
             if (!string.IsNullOrWhiteSpace(stagingDirectory))
-                fileSystem.DeleteDirectory(stagingDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+                fileSystem.DeleteDirectory(stagingDirectory, FailureOptions.IgnoreFailure);
         }
 
         [Test]
