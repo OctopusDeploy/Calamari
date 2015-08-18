@@ -53,7 +53,7 @@ namespace Calamari.Deployment.Conventions
                 }
 
                 // And then delete it (this means if the script failed, it will persist, which may assist debugging)
-                fileSystem.DeleteFile(scriptFile, DeletionOptions.TryThreeTimesIgnoreFailure);
+                fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
             }
         }
 

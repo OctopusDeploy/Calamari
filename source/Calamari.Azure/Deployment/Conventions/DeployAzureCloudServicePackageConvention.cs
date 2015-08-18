@@ -48,7 +48,7 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);
 
-            fileSystem.DeleteFile(scriptFile, DeletionOptions.TryThreeTimesIgnoreFailure);
+            fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
 
             if (result.ExitCode != 0)
             {
