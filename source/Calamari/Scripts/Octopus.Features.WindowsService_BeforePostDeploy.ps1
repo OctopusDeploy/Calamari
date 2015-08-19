@@ -97,6 +97,8 @@ if (!$service)
 	if ($LastExitCode -ne 0) {
 		throw "sc.exe create failed with exit code: $LastExitCode"
 	}
+
+	$service = Get-Service $serviceName -ErrorAction SilentlyContinue
 }
 else
 {
@@ -152,6 +154,7 @@ else
 {
 	Write-Host "Starting the $serviceName service"
 	Start-Service $ServiceName
+
 	$service.WaitForStatus('Running', '00:00:30')
 	If ($service.Status -ne 'Running') 
 	{
