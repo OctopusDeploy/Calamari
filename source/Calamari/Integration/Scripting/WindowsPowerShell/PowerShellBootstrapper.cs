@@ -48,6 +48,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         {
             var commandArguments = new StringBuilder();
             commandArguments.Append("-NoLogo ");
+            commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
             var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
             commandArguments.AppendFormat("-Command \". {{. '{0}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile);
