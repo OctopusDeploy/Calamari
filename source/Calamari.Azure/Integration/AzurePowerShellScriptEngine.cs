@@ -18,7 +18,7 @@ namespace Calamari.Azure.Integration
             var powerShellEngine = new PowerShellScriptEngine();
             if (variables.Get(SpecialVariables.Account.AccountType) == "AzureSubscription")
             {
-                new AzurePowerShellContext().ExecuteScript(powerShellEngine, scriptFile, variables, commandLineRunner);
+                return new AzurePowerShellContext().ExecuteScript(powerShellEngine, scriptFile, variables, commandLineRunner);
             }
 
             return powerShellEngine.Execute(scriptFile, variables, commandLineRunner);
