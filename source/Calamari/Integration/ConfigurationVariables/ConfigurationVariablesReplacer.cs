@@ -13,42 +13,53 @@ namespace Calamari.Integration.ConfigurationVariables
     {
         public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
-            Log.VerboseFormat("Looking for configuration variables in: {0}", configurationFilePath);
-
-            XDocument doc;
-
-            using (var reader = XmlReader.Create(configurationFilePath, XmlUtils.DtdSafeReaderSettings))
+            try
             {
-                doc = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
+                XDocument doc;
+
+                using (var reader = XmlReader.Create(configurationFilePath, XmlUtils.DtdSafeReaderSettings))
+                {
+                    doc = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
+                }
+
+                var changes = new List<string>();
+
+                foreach (var variable in variables.GetNames())
+                {
+                    changes.AddRange(
+                        ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']",
+                            "key", variable, "value", variables).Concat(
+                                ReplaceAppSettingOrConnectionString(doc,
+                                    "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable,
+                                    "connectionString", variables).Concat(
+                                        ReplaceStonglyTypeApplicationSetting(doc,
+                                            "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name",
+                                            variable, variables))));
+                }
+
+                if (!changes.Any())
+                {
+                    Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
+                    return;
+                }
+
+                Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
+
+                foreach (var change in changes)
+                {
+                    Log.Verbose(change);
+                }
+
+                var xws = new XmlWriterSettings {OmitXmlDeclaration = doc.Declaration == null, Indent = true};
+                using (var writer = XmlWriter.Create(configurationFilePath, xws))
+                {
+                    doc.Save(writer);
+                }
             }
-
-            var changes = new List<string>();
-
-            foreach (var variable in variables.GetNames())
+            catch (Exception)
             {
-                changes.AddRange(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable, "value", variables).Concat(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables).Concat(
-                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables))));
-            }
-
-            if (!changes.Any())
-            {
-                Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
-                return;
-            }
-
-            Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
-
-            foreach (var change in changes)
-            {
-                Log.Verbose(change);
-            }
-
-            var xws = new XmlWriterSettings { OmitXmlDeclaration = doc.Declaration == null, Indent = true };
-            using (var writer = XmlWriter.Create(configurationFilePath, xws))
-            {
-                doc.Save(writer);
+                Log.ErrorFormat("Exception while replacing configuration-variables in: {0}", configurationFilePath);
+                throw;
             }
         }
 
