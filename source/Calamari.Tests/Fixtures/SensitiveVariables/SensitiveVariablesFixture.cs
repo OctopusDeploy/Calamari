@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -17,7 +18,6 @@ namespace Calamari.Tests.Fixtures.SensitiveVariables
         string insensitiveVariablesFileName;
         string sensitiveVariablesFileName;
         ICalamariFileSystem fileSystem;
-        Calamari.Deployment.SensitiveVariables subject;
 
         [SetUp]
         public void SetUp()
@@ -26,8 +26,6 @@ namespace Calamari.Tests.Fixtures.SensitiveVariables
             insensitiveVariablesFileName = Path.Combine(tempDirectory, "myVariables.json");
             sensitiveVariablesFileName = Path.ChangeExtension(insensitiveVariablesFileName, "secret");
             fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            subject = new Calamari.Deployment.SensitiveVariables(fileSystem);
         }
 
         [TearDown]
@@ -52,7 +50,7 @@ namespace Calamari.Tests.Fixtures.SensitiveVariables
             };
             var salt = CreateEncryptedSensitiveVariablesFile(sensitiveVariablesFileName, encryptionPassword, sensitiveVariables);
 
-            var result = subject.IncludeSensitiveVariables(insensitiveVariablesFileName, encryptionPassword, salt);
+            var result = new CalamariVariableDictionary(insensitiveVariablesFileName, sensitiveVariablesFileName, encryptionPassword, salt);
 
             Assert.AreEqual("sensitiveVariableValue", result.Get("sensitiveVariableName"));
             Assert.AreEqual("insensitiveVariableValue", result.Get("insensitiveVariableName"));
@@ -62,7 +60,7 @@ namespace Calamari.Tests.Fixtures.SensitiveVariables
         {
             using (var algorithm = new AesCryptoServiceProvider
             {
-                Key = Calamari.Deployment.SensitiveVariables.GetEncryptionKey(encryptionPassword)
+                Key = CalamariVariableDictionary.GetEncryptionKey(encryptionPassword)
             })
             using (var encryptor = algorithm.CreateEncryptor())
             using (var encryptedTextStream = new MemoryStream())

@@ -173,7 +173,6 @@
     <Compile Include="Deployment\Retention\IRetentionPolicy.cs" />
     <Compile Include="Deployment\Retention\RetentionPolicy.cs" />
     <Compile Include="Deployment\RunningDeployment.cs" />
-    <Compile Include="Deployment\SensitiveVariables.cs" />
     <Compile Include="Deployment\SpecialVariables.cs" />
     <Compile Include="Deployment\Conventions\SubstituteInFilesConvention.cs" />
     <Compile Include="Integration\Certificates\ICertificateStore.cs" />
@@ -184,6 +183,7 @@
     <Compile Include="Integration\FileSystem\RetryInterval.cs" />
     <Compile Include="Integration\FileSystem\RetryTracker.cs" />
     <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
+    <Compile Include="Integration\Processes\CalamariVariableDictionary.cs" />
     <Compile Include="Integration\Proxies\ProxyInitializer.cs" />
     <Compile Include="Integration\Scripting\Bash\BashScriptBootstrapper.cs" />
     <Compile Include="Integration\Scripting\Bash\BashScriptEngine.cs" />

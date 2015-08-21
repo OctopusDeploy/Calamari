@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
+using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Integration.Scripting.ScriptCS
@@ -10,6 +11,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
     public static class ScriptCSBootstrapper
     {
         private static readonly string BootstrapScriptTemplate;
+        static readonly string SensitiveVariablePassword = Guid.NewGuid().ToString();
 
         static ScriptCSBootstrapper()
         {
@@ -38,7 +40,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
         public static string FormatCommandArguments(string bootstrapFile)
         {
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("-script \"{0}\"", bootstrapFile);
+            commandArguments.AppendFormat("-script \"{0}\" -- \"{1}\"", bootstrapFile, SensitiveVariablePassword);
             return commandArguments.ToString();
         }
 
@@ -85,7 +87,10 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var builder = new StringBuilder();
             foreach (var variable in variables.GetNames())
             {
-                builder.AppendLine("    this[" + EncodeValue(variable) + "] = " + EncodeValue(variables.Get(variable)) + ";");
+                var variableValue = variables.IsSensitive(variable)
+                    ? EncryptVariable(variables.Get(variable))
+                    : EncodeValue(variables.Get(variable));
+                builder.Append("\t\t\tthis[").Append(EncodeValue(variable)).Append("] = ").Append(variableValue).AppendLine(";");
             }
             return builder.ToString();
         }
@@ -93,15 +98,19 @@ namespace Calamari.Integration.Scripting.ScriptCS
         static string EncodeValue(string value)
         {
             if (value == null)
-                return "null";
+                return "null;";
 
             var bytes = Encoding.UTF8.GetBytes(value);
+            return string.Format("System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{0}\"))", Convert.ToBase64String(bytes));
+        }
 
-            return "System.Text.Encoding.UTF8.GetString(" +
-                   "Convert.FromBase64String(\"" +
-                   Convert.ToBase64String(bytes) +
-                   "\")" +
-                   ")";
+        static string EncryptVariable(string value)
+        {
+            if (value == null)
+                return "null;";
+
+            var variableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
+            return string.Format("DecryptString(\"{0}\")", variableEncryptor.Encrypt(value));
         }
     }
 }

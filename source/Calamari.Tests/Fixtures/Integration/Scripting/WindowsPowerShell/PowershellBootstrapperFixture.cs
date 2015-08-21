@@ -1,62 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
+using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
-using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting.WindowsPowerShell
 {
     [TestFixture]
-    public class PowershellBootstrapperFixture
+    public class ScriptEngineFixture
     {
-
         [Test]
-        public void Powershell()
+        public void PowershellDecryptsSensitiveVariables()
         {
-
-            var output = Path.ChangeExtension(Path.GetTempFileName(), "ps1");
-            File.WriteAllText(output, "Write-Host $mysecrect");
-            var cd = new CalamariVariableDictionary();
-            cd.Set("foo", "bar");
-            cd.SetSensitive("mysecrect","KingKong");
-            
-            var psse = new PowerShellScriptEngine();
-            var capture = new CaptureCommandOutput();
-
-            var runner = new CommandLineRunner(capture);
-            psse.Execute(output, cd, runner);
-
-
-            Assert.IsTrue(capture.Infos.Any(line => line.Contains("KingKong")));
+            using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
+            {
+                File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");
+                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, GetDictionaryWithSecret());
+                result.AssertOutput("KingKong");
+            }
         }
 
         [Test]
-        public void CSharp()
+        public void CSharpDecryptsSensitiveVariables()
         {
+            using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
+            {
+                File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(Octopus.Parameters[\"mysecrect\"]);");
+                var result = ExecuteScript(new ScriptCSScriptEngine(), scriptFile.FilePath, GetDictionaryWithSecret());
+                result.AssertOutput("KingKong");
+            }
+        }
 
-            var output = Path.ChangeExtension(Path.GetTempFileName(), "cs");
-            File.WriteAllText(output, "Write-Host $mysecrect");
+
+        [Test]
+        public void BashDecryptsSensitiveVariables()
+        {
+            Assert.Ignore("Not Yet Implimented");
+        }
+
+        private CalamariVariableDictionary GetDictionaryWithSecret()
+        {
             var cd = new CalamariVariableDictionary();
             cd.Set("foo", "bar");
             cd.SetSensitive("mysecrect", "KingKong");
-
-            var psse = new PowerShellScriptEngine();
-            var capture = new CaptureCommandOutput();
-
-            var runner = new CommandLineRunner(capture);
-            psse.Execute(output, cd, runner);
-
-
-            Assert.IsTrue(capture.Infos.Any(line => line.Contains("KingKong")));
+            return cd;
         }
 
-
+        private CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, CalamariVariableDictionary variables)
+        {
+            var capture = new CaptureCommandOutput();
+            var runner = new CommandLineRunner(capture);
+            var result = psse.Execute(scriptName, variables, runner);
+            return new CalamariResult(result.ExitCode, capture);
+        }
     }
 }

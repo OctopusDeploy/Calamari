@@ -5,6 +5,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Octostache;
 
 namespace Calamari.Azure.Commands
@@ -30,7 +31,7 @@ namespace Calamari.Azure.Commands
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);    
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, packageFile);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, !string.IsNullOrWhiteSpace(destinationDirectory) ? destinationDirectory : Path.GetDirectoryName(packageFile));
 

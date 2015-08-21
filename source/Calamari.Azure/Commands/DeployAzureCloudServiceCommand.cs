@@ -24,11 +24,17 @@ namespace Calamari.Azure.Commands
     {
         private string variablesFile;
         private string packageFile;
+        private string sensitiveVariablesFile;
+        private string sensitiveVariablesPassword;
+        private string sensitiveVariablesSalt;
 
         public DeployAzureCloudServiceCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            Options.Add("sensitiveVariablesSalt=", "Base64 encoded initialization-vector used to decrypt sensitive-variables.", v => sensitiveVariablesSalt = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -44,10 +50,7 @@ namespace Calamari.Azure.Commands
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
             Log.Info("Deploying package:    " + packageFile);
-            if (variablesFile != null)
-                Log.Info("Using variables from: " + variablesFile);
-
-            var variables = new VariableDictionary(variablesFile);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, sensitiveVariablesSalt);
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new CallingAssemblyEmbeddedResources();

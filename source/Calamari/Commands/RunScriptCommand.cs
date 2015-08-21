@@ -31,7 +31,7 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var variables = new CalamariVariableDictionary(scriptFile, sensitiveVariablesFile, sensitiveVariablesPassword, sensitiveVariablesSalt);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, sensitiveVariablesSalt);
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 

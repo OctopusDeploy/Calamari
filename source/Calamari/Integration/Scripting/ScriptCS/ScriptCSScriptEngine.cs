@@ -16,13 +16,15 @@ namespace Calamari.Integration.Scripting.ScriptCS
         {
             var workingDirectory = Path.GetDirectoryName(scriptFile);
 
+            var executable = ScriptCSBootstrapper.FindScriptCSExecutable();
             var configurationFile = ScriptCSBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var boostrapFile = ScriptCSBootstrapper.PrepareBootstrapFile(scriptFile, configurationFile, workingDirectory);
+            var arguments = ScriptCSBootstrapper.FormatCommandArguments(boostrapFile);
 
             using (new TemporaryFile(configurationFile))
             using (new TemporaryFile(boostrapFile))
             {
-                return commandLineRunner.Execute(new CommandLineInvocation(ScriptCSBootstrapper.FindScriptCSExecutable(), ScriptCSBootstrapper.FormatCommandArguments(boostrapFile), workingDirectory));
+                return commandLineRunner.Execute(new CommandLineInvocation(executable, arguments, workingDirectory));
             }
         }
     }

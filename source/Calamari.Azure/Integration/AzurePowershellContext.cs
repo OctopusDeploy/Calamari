@@ -30,7 +30,7 @@ namespace Calamari.Azure.Integration
             this.embeddedResources = new CallingAssemblyEmbeddedResources();
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult ExecuteScript(IScriptEngine scriptEngine, string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var workingDirectory = Path.GetDirectoryName(scriptFile);
             variables.Set("OctopusAzureTargetScript", scriptFile);

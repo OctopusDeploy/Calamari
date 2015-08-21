@@ -5,21 +5,53 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Net;
+using System.Linq;
+using System.Security.Cryptography;
 
 public static class Octopus
 {
-    public static readonly OctopusParametersDictionary Parameters = new OctopusParametersDictionary();
-
+    public static OctopusParametersDictionary Parameters { get; private set; }
+	
 	static Octopus() 
 	{
 		InitializeDefaultProxy();
 	}
 
+	public static void Initialize(string password) {
+		if(Parameters != null) {
+			throw new Exception("Octopus can only be initialized once.");
+		}
+		Parameters = new OctopusParametersDictionary(password);
+	}
+
 	public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string,string>
 	{
-		public OctopusParametersDictionary() : base(System.StringComparer.OrdinalIgnoreCase)
+		private string Password { get;set; }
+
+		public OctopusParametersDictionary(string password) : base(System.StringComparer.OrdinalIgnoreCase)
 		{
-			{{VariableDeclarations}}
+			Password = password;
+{{VariableDeclarations}}
+		}
+
+		private string DecryptString(string encryptedText)
+		{
+			var salt = Encoding.UTF8.GetBytes("SaltCrypto");
+			var vector = Encoding.UTF8.GetBytes("IV_Password");
+			var pass = Encoding.UTF8.GetBytes(Password);
+        
+			var InitializationVector = (new SHA1Managed()).ComputeHash(vector).Take(16).ToArray();
+			var Key = new PasswordDeriveBytes(pass, salt, "SHA1", 5).GetBytes(32);
+
+			var textBytes = Convert.FromBase64String(encryptedText);
+			using (var r = new RijndaelManaged() {Key = Key, IV = InitializationVector})
+			using (var dec = r.CreateDecryptor())
+			using (var ms = new MemoryStream(textBytes))
+			using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
+			using (var sw = new StreamReader(cs))
+			{
+				return sw.ReadToEnd();
+			}
 		}
 	}
 
@@ -67,3 +99,5 @@ public static class Octopus
             : new NetworkCredential(proxyUsername, proxyPassword);
 	}
 }
+
+Octopus.Initialize(Env.ScriptArgs[0]);

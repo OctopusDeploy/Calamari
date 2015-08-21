@@ -1,67 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using Calamari.Commands.Support;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 using Octostache;
 
 namespace Calamari.Integration.Processes
 {
-
-    public class CalamariVariableDictionary : VariableDictionary
-    {
-        protected List<string> SensitiveVariableNames = new List<string>();
-
-        public CalamariVariableDictionary() { }
-
-        public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
-
-        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string sensitiveFileSalt)
-        {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            if (!string.IsNullOrEmpty(storageFilePath))
-            {
-                if (!fileSystem.FileExists(storageFilePath))
-                    throw new CommandException("Could not find variables file: " + storageFilePath);
-
-                Log.Info("Using variables from: " + storageFilePath);
-                var nonSensitiveVariables =  new VariableDictionary(storageFilePath);
-                nonSensitiveVariables.GetNames().ForEach(name => Set(name, nonSensitiveVariables[name]));
-            }
-
-            if (!string.IsNullOrEmpty(sensitiveFilePath))
-            {
-                if (!fileSystem.FileExists(sensitiveFilePath))
-                    throw new CommandException("Could not find variables file: " + sensitiveFilePath);
-
-                if (string.IsNullOrWhiteSpace(sensitiveFilePassword))
-                    throw new CommandException("sensitiveVariablesPassword option must be supplied if sensitiveVariables option is supplied.");
-
-                if (string.IsNullOrWhiteSpace(sensitiveFileSalt))
-                    throw new CommandException("sensitiveVariablesSalt option must be supplied if sensitiveVariables option is supplied.");
-
-                Log.Info("Using sensitive variables from: " + sensitiveFilePath);
-                var sensitiveVariableDictionary = new SensitiveVariables(fileSystem).IncludeSensitiveVariables(sensitiveFilePath, sensitiveFilePassword, sensitiveFileSalt);
-                sensitiveVariableDictionary.GetNames().ForEach(name => Set(name, sensitiveVariableDictionary[name]));
-            }
-        }
-
-        public void SetSensitive(string name, string value)
-        {
-            if (name == null) return;
-            Set(name, value);
-            SensitiveVariableNames.Add(name);
-        }
-
-        public bool IsSensitive(string name)
-        {
-            return name != null && SensitiveVariableNames.Contains(name);
-        }
-    }
-
     public static class VariableDictionaryExtensions
     {
         public static void EnrichWithEnvironmentVariables(this VariableDictionary variables)
