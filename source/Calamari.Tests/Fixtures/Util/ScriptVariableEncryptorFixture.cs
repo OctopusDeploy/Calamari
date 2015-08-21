@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Calamari.Util;
+﻿using Calamari.Util;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Util
@@ -11,7 +7,7 @@ namespace Calamari.Tests.Fixtures.Util
     class ScriptVariableEncryptorFixture
     {
         [Test]
-        public void ScriptVariableEncryptor()
+        public void EncryptionIsSymmetrical()
         {
             var passphrase = "PurpleMonkeyDishwasher";
             var text = "Put It In H!";

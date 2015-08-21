@@ -12,6 +12,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
     {
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = Guid.NewGuid().ToString();
+        static readonly ScriptVariableEncryptor VariableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
 
         static ScriptCSBootstrapper()
         {
@@ -109,8 +110,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             if (value == null)
                 return "null;";
 
-            var variableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
-            return string.Format("DecryptString(\"{0}\")", variableEncryptor.Encrypt(value));
+            return string.Format("DecryptString(\"{0}\")", VariableEncryptor.Encrypt(value));
         }
     }
 }

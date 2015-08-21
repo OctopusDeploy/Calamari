@@ -112,7 +112,7 @@ namespace Calamari.Integration.PackageDownload
 
         private void AttemptToDownload(string packageId, SemanticVersion version, Uri feedUri, string cacheDirectory, out string downloadedTo, out IPackage downloaded)
         {
-            Console.WriteLine("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
+            Log.Info("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
 
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
@@ -225,7 +225,7 @@ namespace Calamari.Integration.PackageDownload
             var dependencies = downloaded.DependencySets.SelectMany(ds => ds.Dependencies).Count();
             if (dependencies > 0)
             {
-                Console.WriteLine("NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
+                Log.Info("NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
                                downloaded.Id,
                                downloaded.Version,
                                string.Join(", ", downloaded.DependencySets.SelectMany(ds => ds.Dependencies).Select(dependency => dependency.ToString())),

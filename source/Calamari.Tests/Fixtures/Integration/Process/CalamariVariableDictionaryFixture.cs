@@ -9,10 +9,10 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Fixtures.SensitiveVariables
+namespace Calamari.Tests.Fixtures.Integration.Process
 {
     [TestFixture]
-    public class SensitiveVariablesFixture
+    public class CalamariVariableDictionaryFixture
     {
         string tempDirectory;
         string insensitiveVariablesFileName;

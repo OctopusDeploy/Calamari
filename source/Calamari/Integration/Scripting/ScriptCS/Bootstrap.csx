@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Net;
-using System.Linq;
 using System.Security.Cryptography;
 
 public static class Octopus
@@ -34,25 +33,73 @@ public static class Octopus
 {{VariableDeclarations}}
 		}
 
-		private string DecryptString(string encryptedText)
-		{
-			var salt = Encoding.UTF8.GetBytes("SaltCrypto");
-			var vector = Encoding.UTF8.GetBytes("IV_Password");
-			var pass = Encoding.UTF8.GetBytes(Password);
-        
-			var InitializationVector = (new SHA1Managed()).ComputeHash(vector).Take(16).ToArray();
-			var Key = new PasswordDeriveBytes(pass, salt, "SHA1", 5).GetBytes(32);
+		 private byte[] ExtractSalt(byte[] encrypted, out byte[] salt)
+        {
+            salt = new byte[8];
+            Buffer.BlockCopy(encrypted, 8, salt, 0, 8);
+            
+            int aesDataLength = encrypted.Length - 16;
+            var aesData = new byte[aesDataLength];
+            Buffer.BlockCopy(encrypted, 16, aesData, 0, aesDataLength);
+            return aesData;
+        }
+		
+        private byte[] GetKey(byte[] salt, out byte[] iv)
+        {
+			var passwordBytes = Encoding.UTF8.GetBytes(Password);
 
-			var textBytes = Convert.FromBase64String(encryptedText);
-			using (var r = new RijndaelManaged() {Key = Key, IV = InitializationVector})
-			using (var dec = r.CreateDecryptor())
-			using (var ms = new MemoryStream(textBytes))
-			using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
-			using (var sw = new StreamReader(cs))
-			{
-				return sw.ReadToEnd();
-			}
-		}
+            byte[] key;
+            using (var md5 = MD5.Create())
+            {
+                int preKeyLength = passwordBytes.Length + salt.Length;
+                byte[] preKey = new byte[preKeyLength];
+                Buffer.BlockCopy(passwordBytes, 0, preKey, 0, passwordBytes.Length);
+                Buffer.BlockCopy(salt, 0, preKey, passwordBytes.Length, salt.Length);
+
+                key = md5.ComputeHash(preKey);
+
+                int preIVLength = key.Length + preKeyLength;
+                byte[] preIV = new byte[preIVLength];
+
+                Buffer.BlockCopy(key, 0, preIV, 0, key.Length);
+                Buffer.BlockCopy(preKey, 0, preIV, key.Length, preKey.Length);
+                iv = md5.ComputeHash(preIV);
+            }
+            return key;
+        }
+
+        private SymmetricAlgorithm GetAlgorithm(byte[] salt)
+        {
+            byte[] iv;
+            var key = GetKey(salt, out iv);
+
+            return new AesManaged
+            {
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                KeySize = 128,
+                BlockSize = 128,
+                Key = key,
+                IV = iv
+            };
+        }
+
+		public string DecryptString(string encryptedText)
+        {
+            var textBytes = Convert.FromBase64String(encryptedText);
+            byte[] salt;
+            var aesData = ExtractSalt(textBytes, out salt);
+            using (var algorithm = GetAlgorithm(salt))
+            {
+                using (var dec = algorithm.CreateDecryptor())
+                using (var ms = new MemoryStream(aesData))
+                using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
+                using (var sw = new StreamReader(cs, Encoding.UTF8))
+                {
+                    return sw.ReadToEnd();
+                }
+            }
+        }
 	}
 
 	private static string EncodeServiceMessageValue(string value)

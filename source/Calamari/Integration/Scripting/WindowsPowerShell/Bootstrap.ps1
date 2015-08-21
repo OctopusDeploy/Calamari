@@ -65,29 +65,56 @@ function Write-Warning([string]$message)
 }
 
 
-function Decrypt-String($Encrypted, $Passphrase=$passwd, $salt="SaltCrypto", $init="IV_Password") 
+function Decrypt-String($Encrypted) 
 { 
-    if($Encrypted -is [string]){ 
-        $Encrypted = [Convert]::FromBase64String($Encrypted) 
-       } 
- 
-    $r = new-Object System.Security.Cryptography.RijndaelManaged 
-    $pass = [Text.Encoding]::UTF8.GetBytes($Passphrase) 
-    $salt = [Text.Encoding]::UTF8.GetBytes($salt) 
- 
-    $r.Key = (new-Object Security.Cryptography.PasswordDeriveBytes $pass, $salt, "SHA1", 5).GetBytes(32) #256/8 
-    $r.IV = (new-Object Security.Cryptography.SHA1Managed).ComputeHash( [Text.Encoding]::UTF8.GetBytes($init) )[0..15] 
- 
-    $dec = $r.CreateDecryptor() 
-    $ms = new-Object IO.MemoryStream @(,$Encrypted) 
-    $cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
-    $sr = new-Object IO.StreamReader $cs 
-    $result = $sr.ReadToEnd() 
-    $sr.Close() 
-    $cs.Close() 
-    $ms.Close() 
-    $r.Clear() 
-	return $result;
+	$passwordBytes = [Text.Encoding]::UTF8.GetBytes($passwd) 
+	$encryptedBytes = [System.Convert]::FromBase64String($Encrypted) 
+
+	#Get salt from encrypted text
+	$salt = New-Object Byte[] 8
+	[System.Buffer]::BlockCopy($encryptedBytes, 8, $salt, 0, 8)
+
+	#Remove salt from encrypted text
+	$aesDataLength = $encryptedBytes.Length - 16
+	$aesData = New-Object Byte[] $aesDataLength
+	[System.Buffer]::BlockCopy($encryptedBytes, 16, $aesData, 0, $aesDataLength)
+
+
+	$md5=[System.Security.Cryptography.MD5]::Create()
+		#Get Key
+		$preKeyLength = $passwordBytes.Length + $salt.Length
+		$preKey = New-Object Byte[] $preKeyLength
+		[System.Buffer]::BlockCopy($passwordBytes, 0, $preKey, 0, $passwordBytes.Length)
+		[System.Buffer]::BlockCopy($salt, 0, $preKey, $passwordBytes.Length, $salt.Length)
+		$key = $md5.ComputeHash($preKey)
+
+		#Get IV
+		$preIVLength = $key.Length + $preKeyLength
+		$preIV =  New-Object Byte[] $preIVLength
+		[System.Buffer]::BlockCopy($key, 0, $preIV, 0, $key.Length)
+		[System.Buffer]::BlockCopy($preKey, 0, $preIV, $key.Length, $preKey.Length)
+		$iv = $md5.ComputeHash($preIV)
+	$md5.Dispose()
+
+	$algoritm = new-Object System.Security.Cryptography.AesManaged;
+	$algoritm.Mode = [System.Security.Cryptography.CipherMode]::CBC
+	$algoritm.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+	$algoritm.KeySize = 128
+	$algoritm.BlockSize = 128
+	$algoritm.Key = $key
+	$algoritm.IV =$iv
+
+	$dec = $algoritm.CreateDecryptor()
+	$ms = new-Object IO.MemoryStream @(,$aesData) 
+	$cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
+	$sr = new-Object IO.StreamReader $cs 
+	$text = $sr.ReadToEnd() 
+	$sr.Close() 
+	$cs.Close() 
+	$ms.Close() 
+	$r.Clear() 
+	return $text
+
 }
 
 function InitializeProxySettings() 

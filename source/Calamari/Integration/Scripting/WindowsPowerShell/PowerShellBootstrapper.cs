@@ -15,6 +15,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         const string EnvPowerShellPath = "PowerShell.exe";
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = Guid.NewGuid().ToString();
+        static readonly ScriptVariableEncryptor VariableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
 
         static PowerShellBootstrapper()
         {
@@ -150,8 +151,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (value == null)
                 return "$null";
 
-            var variableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
-            return string.Format("Decrypt-String \"{0}\"", variableEncryptor.Encrypt(value));
+            return string.Format("Decrypt-String \"{0}\"", VariableEncryptor.Encrypt(value));
         }
 
         static string EncodeValue(string value)

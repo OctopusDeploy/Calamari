@@ -193,7 +193,6 @@
     <Compile Include="Integration\Scripting\ScriptEngineRegistry.cs" />
     <Compile Include="Integration\Scripting\ScriptType.cs" />
     <Compile Include="Util\HashCalculator.cs" />
-    <Compile Include="Util\IScriptVariableEncryptor.cs" />
     <Compile Include="Util\ScriptVariableEncryptor.cs" />
     <Compile Include="Util\Uniquifier.cs" />
     <Compile Include="Util\XmlUtils.cs" />

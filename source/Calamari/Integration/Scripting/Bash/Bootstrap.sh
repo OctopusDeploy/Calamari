@@ -3,6 +3,8 @@
 # Version: 1.0.0
 # -----------------------------------------------------------------------------
  
+sensitiveVariablePasswd=$1
+
 # -----------------------------------------------------------------------------
 # Function to base64 encode a service message value
 #		Accepts 1 argument:
@@ -25,7 +27,7 @@ function decode_servicemessagevalue
 
 function decrypt_variable
 {
-	echo "$1" |  openssl enc -a -d -aes-128-cbc -pass pass:#### SensitiveVariablePassword ####
+	echo "$1" | openssl enc -a -d -aes-128-cbc -pass pass:$sensitiveVariablePasswd
 }
 
 

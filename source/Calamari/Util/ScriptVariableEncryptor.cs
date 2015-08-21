@@ -6,47 +6,117 @@ using System.Text;
 
 namespace Calamari.Util
 {
-    public class ScriptVariableEncryptor : IScriptVariableEncryptor
+    public class ScriptVariableEncryptor
     {
-        byte[] InitializationVector { get; set; }
-        byte[] Key { get; set; }
+        private byte[] passwordBytes;
 
         public ScriptVariableEncryptor(string passphrase)
         {
-            var salt = Encoding.UTF8.GetBytes("SaltCrypto");
-            var vector = Encoding.UTF8.GetBytes("IV_Password");
-            var pass = Encoding.UTF8.GetBytes(passphrase);
+            passwordBytes = Encoding.UTF8.GetBytes(passphrase);
+        }
 
-            // Passwords are one time use so not concerned about salting
-            InitializationVector = (new SHA1Managed()).ComputeHash(vector).Take(16).ToArray();
-            Key = new PasswordDeriveBytes(pass, salt, "SHA1", 5).GetBytes(32);
+        private static byte[] RandomBytes(int size)
+        {
+            var array = new byte[size];
+            new Random().NextBytes(array);
+            return array;
         }
 
         public string Encrypt(string text)
         {
-            using (var r = new RijndaelManaged() {Key = Key, IV = InitializationVector})
-            using (var cryptoTransform = r.CreateEncryptor())
-            using (var ms = new MemoryStream())
+            byte[] plainTextBytes = Encoding.UTF8.GetBytes(text);
+            var salt = RandomBytes(8);
+
+            using (var algorithm = GetAlgorithm(salt))
             {
-                using (var cs = new CryptoStream(ms, cryptoTransform, CryptoStreamMode.Write))
-                using (var sw = new StreamWriter(cs))
+                using (var cryptoTransform = algorithm.CreateEncryptor())
+                using (var MemStream = new MemoryStream())
                 {
-                    sw.Write(text);
+                    using (var cs = new CryptoStream(MemStream, cryptoTransform, CryptoStreamMode.Write))
+                    {
+                        cs.Write(plainTextBytes, 0, plainTextBytes.Length);
+                    }
+                    var encrypted = MemStream.ToArray();
+                    return Convert.ToBase64String(AppendSalt(encrypted, salt));
                 }
-                return Convert.ToBase64String(ms.ToArray());
             }
+        }
+
+        private byte[] AppendSalt(byte[] encrypted, byte[] salt)
+        {
+            int resultLength = encrypted.Length + 8 + 8;
+            byte[] saltPrefix = Encoding.UTF8.GetBytes("Salted__");
+            byte[] result = new byte[resultLength];
+
+            Buffer.BlockCopy(saltPrefix, 0, result, 0, saltPrefix.Length);
+            Buffer.BlockCopy(salt, 0, result, 8, salt.Length);
+            Buffer.BlockCopy(encrypted, 0, result, 16, encrypted.Length);
+            return result;
+        }
+
+        private byte[] ExtractSalt(byte[] encrypted, out byte[] salt)
+        {
+            salt = new byte[8];
+            Buffer.BlockCopy(encrypted, 8, salt, 0, 8);
+
+            int aesDataLength = encrypted.Length - 16;
+            var aesData = new byte[aesDataLength];
+            Buffer.BlockCopy(encrypted, 16, aesData, 0, aesDataLength);
+            return aesData;
+        }
+
+        private byte[] GetKey(byte[] salt, out byte[] iv)
+        {
+            byte[] key;
+            using (var md5 = MD5.Create())
+            {
+                int preKeyLength = passwordBytes.Length + salt.Length;
+                byte[] preKey = new byte[preKeyLength];
+                Buffer.BlockCopy(passwordBytes, 0, preKey, 0, passwordBytes.Length);
+                Buffer.BlockCopy(salt, 0, preKey, passwordBytes.Length, salt.Length);
+
+                key = md5.ComputeHash(preKey);
+
+                int preIVLength = key.Length + preKeyLength;
+                byte[] preIV = new byte[preIVLength];
+
+                Buffer.BlockCopy(key, 0, preIV, 0, key.Length);
+                Buffer.BlockCopy(preKey, 0, preIV, key.Length, preKey.Length);
+                iv = md5.ComputeHash(preIV);
+            }
+            return key;
+        }
+
+        private SymmetricAlgorithm GetAlgorithm(byte[] salt)
+        {
+            byte[] iv;
+            var key = GetKey(salt, out iv);
+
+            return new AesManaged
+            {
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                KeySize = 128,
+                BlockSize = 128,
+                Key = key,
+                IV = iv
+            };
         }
 
         public string Decrypt(string encryptedText)
         {
             var textBytes = Convert.FromBase64String(encryptedText);
-            using (var r = new RijndaelManaged() {Key = Key, IV = InitializationVector})
-            using (var dec = r.CreateDecryptor())
-            using (var ms = new MemoryStream(textBytes))
-            using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
-            using (var sw = new StreamReader(cs))
+            byte[] salt;
+            var aesData = ExtractSalt(textBytes, out salt);
+            using (var algorithm = GetAlgorithm(salt))
             {
-                return sw.ReadToEnd();
+                using (var dec = algorithm.CreateDecryptor())
+                using (var ms = new MemoryStream(aesData))
+                using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
+                using (var sw = new StreamReader(cs, Encoding.UTF8))
+                {
+                    return sw.ReadToEnd();
+                }
             }
         }
     }

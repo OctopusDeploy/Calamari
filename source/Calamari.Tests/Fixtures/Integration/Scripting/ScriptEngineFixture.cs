@@ -2,12 +2,13 @@
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Integration.Scripting.WindowsPowerShell
+namespace Calamari.Tests.Fixtures.Integration.Scripting
 {
     [TestFixture]
     public class ScriptEngineFixture
@@ -35,11 +36,16 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting.WindowsPowerShell
             }
         }
 
-
         [Test]
+        [Category(TestEnvironment.CompatableOS.Nix)]
         public void BashDecryptsSensitiveVariables()
         {
-            Assert.Ignore("Not Yet Implimented");
+            using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))
+            {
+                File.WriteAllText(scriptFile.FilePath, "#!/bin/bash\necho $(get_octopusvariable \"mysecrect\")");
+                var result = ExecuteScript(new BashScriptEngine(), scriptFile.FilePath, GetDictionaryWithSecret());
+                result.AssertOutput("KingKong");
+            }
         }
 
         private CalamariVariableDictionary GetDictionaryWithSecret()
