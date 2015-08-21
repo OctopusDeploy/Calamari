@@ -6,17 +6,10 @@ using System.Text;
 
 namespace Calamari.Util
 {
-    public interface IScriptVariableEncryptor
-    {
-        string Encrypt(string text);
-
-        string Decrypt(string text);
-    }
-
     public class ScriptVariableEncryptor : IScriptVariableEncryptor
     {
-        byte[] InitializationVector { get; }
-        byte[] Key { get; }
+        byte[] InitializationVector { get; set; }
+        byte[] Key { get; set; }
 
         public ScriptVariableEncryptor(string passphrase)
         {

@@ -13,6 +13,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting.WindowsPowerShell
     public class ScriptEngineFixture
     {
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)]
         public void PowershellDecryptsSensitiveVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
