@@ -13,6 +13,8 @@ namespace Calamari.Integration.ConfigurationVariables
     {
         public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
+            Log.VerboseFormat("Looking for configuration variables in: {0}", configurationFilePath);
+
             XDocument doc;
 
             using (var reader = XmlReader.Create(configurationFilePath, XmlUtils.DtdSafeReaderSettings))
