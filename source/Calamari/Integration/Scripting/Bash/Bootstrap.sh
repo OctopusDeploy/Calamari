@@ -23,6 +23,12 @@ function decode_servicemessagevalue
 	echo -n "$1" | openssl enc -base64 -A -d
 }
 
+function decrypt_variable
+{
+	echo "$1" |  openssl enc -a -d -aes-128-cbc -pass pass:#### SensitiveVariablePassword ####
+}
+
+
 #	---------------------------------------------------------------------------
 # Function for getting an octopus variable
 #   Accepts 1 argument:

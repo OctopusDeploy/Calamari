@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class ExtractPackageToApplicationDirectoryConventionFixture
     {
         IPackageExtractor extractor;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         ExtractPackageToApplicationDirectoryConvention convention;
         ICalamariFileSystem fileSystem;
         static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Package.nupkg");
@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));
 
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem, new SystemSemaphore());
         }
 

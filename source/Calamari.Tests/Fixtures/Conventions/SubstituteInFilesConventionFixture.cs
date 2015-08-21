@@ -4,6 +4,7 @@ using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
 using NSubstitute;
@@ -20,14 +21,14 @@ namespace Calamari.Tests.Fixtures.Conventions
         ICalamariFileSystem fileSystem;
         IFileSubstituter substituter;
         RunningDeployment deployment;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
 
         [SetUp]
         public void SetUp()
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
             substituter = Substitute.For<IFileSubstituter>();
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
 
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
             {

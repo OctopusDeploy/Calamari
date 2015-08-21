@@ -14,6 +14,7 @@ namespace Calamari.Commands
     {
         private string variablesFile;
         private string scriptFile;
+        private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
         private string sensitiveVariablesSalt;
 
@@ -21,6 +22,7 @@ namespace Calamari.Commands
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("script=", "Path to the script (PowerShell or ScriptCS) script to execute.", v => scriptFile = Path.GetFullPath(v));
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables (only applicable to offline-drop deployments).", v => sensitiveVariablesPassword = v);
             Options.Add("sensitiveVariablesSalt=", "Base64 encoded initialization-vector used to decrypt sensitive-variables (only applicable to offline-drop deployments).", v => sensitiveVariablesSalt = v);
         }
@@ -29,31 +31,14 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var variables = LoadVariables();
+            var variables = new CalamariVariableDictionary(scriptFile, sensitiveVariablesFile, sensitiveVariablesPassword, sensitiveVariablesSalt);
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
             return InvokeScript(variables);
         }
-
-        private VariableDictionary LoadVariables()
-        {
-            if (variablesFile != null && !File.Exists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
-            if (!string.IsNullOrEmpty(sensitiveVariablesPassword))
-            {
-               if (string.IsNullOrWhiteSpace(sensitiveVariablesSalt)) 
-                throw new CommandException("sensitiveVariablesSalt option must be supplied if sensitiveVariablesPassword option is supplied.");
-
-                return new SensitiveVariables(CalamariPhysicalFileSystem.GetPhysicalFileSystem()).IncludeSensitiveVariables(variablesFile,
-                    sensitiveVariablesPassword, sensitiveVariablesSalt);
-            }
-
-            return new VariableDictionary(variablesFile);
-        }
-
-        private int InvokeScript(VariableDictionary variables)
+        
+        private int InvokeScript(CalamariVariableDictionary variables)
         {
             if (!File.Exists(scriptFile))
                 throw new CommandException("Could not find script file: " + scriptFile);

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
+using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
@@ -13,6 +14,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
         private static readonly string BootstrapScriptTemplate;
+        static readonly string SensitiveVariablePassword = Guid.NewGuid().ToString();
 
         static PowerShellBootstrapper()
         {
@@ -51,11 +53,11 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
             var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
-            commandArguments.AppendFormat("-Command \". {{. '{0}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile);
+            commandArguments.AppendFormat("-Command \". {{. '{0}' -passwd '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, SensitiveVariablePassword);
             return commandArguments.ToString();
         }
 
-        public static string PrepareBootstrapFile(string targetScriptFile, VariableDictionary variables)
+        public static string PrepareBootstrapFile(string targetScriptFile, CalamariVariableDictionary variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(targetScriptFile));
             var name = Path.GetFileName(targetScriptFile);
@@ -75,7 +77,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return bootstrapFile;
         }
 
-        private static string DeclareVariables(VariableDictionary variables)
+        private static string DeclareVariables(CalamariVariableDictionary variables)
         {
             var output = new StringBuilder();
 
@@ -100,16 +102,19 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             }
         }
 
-        static void WriteVariableDictionary(VariableDictionary variables, StringBuilder output)
+        static void WriteVariableDictionary(CalamariVariableDictionary variables, StringBuilder output)
         {
             output.AppendLine("$OctopusParameters = New-Object 'System.Collections.Generic.Dictionary[String,String]' (,[System.StringComparer]::OrdinalIgnoreCase)");
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
             {
-                output.Append("$OctopusParameters[").Append(EncodeValue(variableName)).Append("] = ").AppendLine(EncodeValue(variables.Get(variableName)));
+                var variableValue = variables.IsSensitive(variableName)
+                    ? EncryptVariable(variables.Get(variableName))
+                    : EncodeValue(variables.Get(variableName));
+                output.Append("$OctopusParameters[").Append(EncodeValue(variableName)).Append("] = ").AppendLine(variableValue);
             }
         }
 
-        static void WriteLocalVariables(VariableDictionary variables, StringBuilder output)
+        static void WriteLocalVariables(CalamariVariableDictionary variables, StringBuilder output)
         {
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
             {
@@ -140,13 +145,21 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             writer.AppendLine("}");
         }
 
+        static string EncryptVariable(string value)
+        {
+            if (value == null)
+                return "$null";
+
+            var variableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
+            return string.Format("Decrypt-String \"{0}\"", variableEncryptor.Encrypt(value));
+        }
+
         static string EncodeValue(string value)
         {
             if (value == null)
                 return "$null";
 
             var bytes = Encoding.UTF8.GetBytes(value);
-
             return string.Format("[System.Text.Encoding]::UTF8.GetString(" + "[Convert]::FromBase64String(\"{0}\")" + ")", Convert.ToBase64String(bytes));
         }
 

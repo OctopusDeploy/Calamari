@@ -63,7 +63,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return bootstrapFile;
         }
 
-        public static string PrepareConfigurationFile(string workingDirectory, VariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
 
@@ -80,7 +80,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return configurationFile;
         }
             
-        static string WriteVariableDictionary(VariableDictionary variables)
+        static string WriteVariableDictionary(CalamariVariableDictionary variables)
         {
             var builder = new StringBuilder();
             foreach (var variable in variables.GetNames())

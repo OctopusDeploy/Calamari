@@ -1,6 +1,7 @@
 ﻿using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
@@ -13,7 +14,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         RunningDeployment deployment;
         ICalamariFileSystem fileSystem;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         const string customInstallationDirectory = "C:\\myCustomInstallDir";
         const string stagingDirectory = "C:\\applications\\Acme\\1.0.0";
         const string packageFilePath = "C:\\packages";
@@ -21,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [SetUp]
         public void SetUp()
         {
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
             fileSystem = Substitute.For<ICalamariFileSystem>();
             deployment = new RunningDeployment(packageFilePath, variables);

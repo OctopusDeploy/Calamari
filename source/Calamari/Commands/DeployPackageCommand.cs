@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -24,6 +25,7 @@ namespace Calamari.Commands
     {
         private string variablesFile;
         private string packageFile;
+        private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
         private string sensitiveVariablesSalt;
 
@@ -31,8 +33,9 @@ namespace Calamari.Commands
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables (only applicable to offline-drop deployments).", v => sensitiveVariablesPassword = v);
-            Options.Add("sensitiveVariablesSalt=", "Base64 encoded initialization-vector used to decrypt sensitive-variables (only applicable to offline-drop deployments).", v => sensitiveVariablesSalt = v);
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            Options.Add("sensitiveVariablesSalt=", "Base64 encoded initialization-vector used to decrypt sensitive-variables.", v => sensitiveVariablesSalt = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -45,13 +48,10 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find package file: " + packageFile);    
 
             Log.Info("Deploying package:    " + packageFile);
-            if (variablesFile != null)
-                Log.Info("Using variables from: " + variablesFile);
-
+            
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            var variables = LoadVariables(fileSystem); 
-            
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, sensitiveVariablesSalt);
             var scriptCapability = new CombinedScriptEngine();
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter(fileSystem);
@@ -105,23 +105,6 @@ namespace Calamari.Commands
             }
 
             return 0;
-        }
-
-        VariableDictionary LoadVariables(ICalamariFileSystem fileSystem)
-        {
-            if (variablesFile != null && !fileSystem.FileExists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
-            if (!string.IsNullOrEmpty(sensitiveVariablesPassword))
-            {
-               if (string.IsNullOrWhiteSpace(sensitiveVariablesSalt)) 
-                throw new CommandException("sensitiveVariablesSalt option must be supplied if sensitiveVariablesPassword option is supplied.");
-
-                return new SensitiveVariables(fileSystem).IncludeSensitiveVariables(variablesFile,
-                    sensitiveVariablesPassword, sensitiveVariablesSalt);
-            }
-
-            return new VariableDictionary(variablesFile);
         }
     }
 }

@@ -20,16 +20,14 @@ namespace Calamari.Integration.Scripting.Bash
             BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(BashScriptBootstrapper).Namespace + ".Bootstrap.sh");
         }
 
-
         public static string FormatCommandArguments(string bootstrapFile)
         {
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("\"{0}\"", bootstrapFile);
             return commandArguments.ToString();
         }
-
         
-        public static string PrepareConfigurationFile(string workingDirectory, VariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
 
@@ -47,11 +45,10 @@ namespace Calamari.Integration.Scripting.Bash
             return configurationFile;
         }
 
-        static IEnumerable<string> GetVariableSwitchConditions(VariableDictionary variables)
+        static IEnumerable<string> GetVariableSwitchConditions(CalamariVariableDictionary variables)
         {
             return variables.GetNames().Select(variable => string.Format("    \"{1}\"){0}    decode_servicemessagevalue \"{2}\"  ;;{0}", Environment.NewLine, EncodeValue(variable), EncodeValue(variables.Get(variable))));
         }
-
 
         static string EncodeValue(string value)
         {
@@ -90,6 +87,5 @@ namespace Calamari.Integration.Scripting.Bash
             EnsureValidUnixFile(scriptFilePath);
             return bootstrapFile;
         }
-
     }
 }
