@@ -14,7 +14,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
         private static readonly string BootstrapScriptTemplate;
-        static readonly string SensitiveVariablePassword = Guid.NewGuid().ToString();
+        static readonly string SensitiveVariablePassword = ScriptVariableEncryptor.RandomString(16);
         static readonly ScriptVariableEncryptor VariableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
 
         static PowerShellBootstrapper()

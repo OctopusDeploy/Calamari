@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
@@ -11,7 +12,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
     public static class ScriptCSBootstrapper
     {
         private static readonly string BootstrapScriptTemplate;
-        static readonly string SensitiveVariablePassword = Guid.NewGuid().ToString();
+        static readonly string SensitiveVariablePassword = ScriptVariableEncryptor.RandomString(16);
         static readonly ScriptVariableEncryptor VariableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
 
         static ScriptCSBootstrapper()

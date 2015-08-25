@@ -22,23 +22,26 @@ namespace Calamari.Util
             return array;
         }
 
+        public static string RandomString(int byteSize)
+        {
+            return Convert.ToBase64String(RandomBytes(byteSize));
+        }
+
         public string Encrypt(string text)
         {
             byte[] plainTextBytes = Encoding.UTF8.GetBytes(text);
             var salt = RandomBytes(8);
 
             using (var algorithm = GetAlgorithm(salt))
+            using (var cryptoTransform = algorithm.CreateEncryptor())
+            using (var stream = new MemoryStream())
             {
-                using (var cryptoTransform = algorithm.CreateEncryptor())
-                using (var MemStream = new MemoryStream())
+                using (var cs = new CryptoStream(stream, cryptoTransform, CryptoStreamMode.Write))
                 {
-                    using (var cs = new CryptoStream(MemStream, cryptoTransform, CryptoStreamMode.Write))
-                    {
-                        cs.Write(plainTextBytes, 0, plainTextBytes.Length);
-                    }
-                    var encrypted = MemStream.ToArray();
-                    return Convert.ToBase64String(AppendSalt(encrypted, salt));
+                    cs.Write(plainTextBytes, 0, plainTextBytes.Length);
                 }
+                var encrypted = stream.ToArray();
+                return Convert.ToBase64String(AppendSalt(encrypted, salt));
             }
         }
 

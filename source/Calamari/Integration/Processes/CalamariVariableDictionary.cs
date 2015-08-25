@@ -33,7 +33,6 @@ namespace Calamari.Integration.Processes
                 if (!fileSystem.FileExists(storageFilePath))
                     throw new CommandException("Could not find variables file: " + storageFilePath);
 
-                Log.Info("Using variables from: " + storageFilePath);
                 var nonSensitiveVariables =  new VariableDictionary(storageFilePath);
                 nonSensitiveVariables.GetNames().ForEach(name => Set(name, nonSensitiveVariables[name]));
             }
@@ -49,9 +48,9 @@ namespace Calamari.Integration.Processes
                 if (string.IsNullOrWhiteSpace(sensitiveFileSalt))
                     throw new CommandException("sensitiveVariablesSalt option must be supplied if sensitiveVariables option is supplied.");
 
-                Log.Info("Using sensitive variables from: " + sensitiveFilePath);
+                Log.Verbose("Using sensitive variables from: " + Path.GetFileName(sensitiveFilePath));
 
-                var sensitiveVariables = Decrypt(fileSystem.ReadFile(sensitiveFilePath), sensitiveFilePassword, sensitiveFileSalt);
+                var sensitiveVariables = Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword, sensitiveFileSalt);
                 foreach (var variable in sensitiveVariables)
                 {
                     SetSensitive(variable.Key, variable.Value);
@@ -71,8 +70,7 @@ namespace Calamari.Integration.Processes
             return name != null && SensitiveVariableNames.Contains(name);
         }
 
-
-        static Dictionary<string, string> Decrypt(string cipherText, string encryptionPassword, string salt)
+        static Dictionary<string, string> Decrypt(byte[] encryptedVariables, string encryptionPassword, string salt)
         {
             using (var algorithm = new AesCryptoServiceProvider
             {
@@ -88,8 +86,7 @@ namespace Calamari.Integration.Processes
                 {
                     using (var cryptoStream = new CryptoStream(decryptedTextStream, decryptor, CryptoStreamMode.Write))
                     {
-                        var cipherTextBytes = Convert.FromBase64String(cipherText);
-                        cryptoStream.Write(cipherTextBytes, 0, cipherTextBytes.Length);
+                        cryptoStream.Write(encryptedVariables, 0, encryptedVariables.Length);
                         cryptoStream.FlushFinalBlock();
 
                         var dictionary = new Dictionary<string, string>();

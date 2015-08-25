@@ -95,6 +95,7 @@ function Decrypt-String($Encrypted)
 		[System.Buffer]::BlockCopy($preKey, 0, $preIV, $key.Length, $preKey.Length)
 		$iv = $md5.ComputeHash($preIV)
 	$md5.Dispose()
+	$md5.Clear()
 
 	$algoritm = new-Object System.Security.Cryptography.AesManaged;
 	$algoritm.Mode = [System.Security.Cryptography.CipherMode]::CBC
@@ -109,10 +110,10 @@ function Decrypt-String($Encrypted)
 	$cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
 	$sr = new-Object IO.StreamReader $cs 
 	$text = $sr.ReadToEnd() 
-	$sr.Close() 
-	$cs.Close() 
-	$ms.Close() 
-	$r.Clear() 
+	$sr.Dispose() 
+	$cs.Dispose() 
+	$ms.Dispose() 
+	$dec.Dispose()
 	return $text
 
 }

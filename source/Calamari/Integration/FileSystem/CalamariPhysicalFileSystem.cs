@@ -190,6 +190,11 @@ namespace Calamari.Integration.FileSystem
             return File.ReadAllText(path);
         }
 
+        public byte[] ReadAllBytes(string path)
+        {
+            return File.ReadAllBytes(path);
+        }
+
         public void AppendToFile(string path, string contents)
         {
             File.AppendAllText(path, contents);
