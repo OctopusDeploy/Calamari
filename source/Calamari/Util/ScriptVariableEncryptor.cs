@@ -8,7 +8,7 @@ namespace Calamari.Util
 {
     public class ScriptVariableEncryptor
     {
-        private byte[] passwordBytes;
+        private readonly byte[] passwordBytes;
 
         public ScriptVariableEncryptor(string passphrase)
         {

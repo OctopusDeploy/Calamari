@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         }
 
         [Test]
-        public void ShouldIncludeSensitiveVariables()
+        public void ShouldIncludeEncryptedSensitiveVariables()
         {
             const string encryptionPassword = "HumptyDumpty!";
 
@@ -51,6 +51,26 @@ namespace Calamari.Tests.Fixtures.Integration.Process
             var salt = CreateEncryptedSensitiveVariablesFile(sensitiveVariablesFileName, encryptionPassword, sensitiveVariables);
 
             var result = new CalamariVariableDictionary(insensitiveVariablesFileName, sensitiveVariablesFileName, encryptionPassword, salt);
+
+            Assert.AreEqual("sensitiveVariableValue", result.Get("sensitiveVariableName"));
+            Assert.AreEqual("insensitiveVariableValue", result.Get("insensitiveVariableName"));
+        }
+
+        [Test]
+        public void ShouldIncludeCleartextSensitiveVariables()
+        {
+            var insensitiveVariables = new VariableDictionary(insensitiveVariablesFileName);
+            insensitiveVariables.Set("insensitiveVariableName", "insensitiveVariableValue");
+            insensitiveVariables.Save();
+
+            var sensitiveVariables = new Dictionary<string, string>
+            {
+                {"sensitiveVariableName", "sensitiveVariableValue"}
+            };
+
+            File.WriteAllText(sensitiveVariablesFileName, JsonConvert.SerializeObject(sensitiveVariables));
+
+            var result = new CalamariVariableDictionary(insensitiveVariablesFileName, sensitiveVariablesFileName, null, null);
 
             Assert.AreEqual("sensitiveVariableValue", result.Get("sensitiveVariableName"));
             Assert.AreEqual("insensitiveVariableValue", result.Get("insensitiveVariableName"));
@@ -80,7 +100,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
                 }
 
                 var encryptedBytes = encryptedTextStream.ToArray();
-                fileSystem.OverwriteFile(fileName, Convert.ToBase64String(encryptedBytes));
+                fileSystem.WriteAllBytes(fileName, encryptedBytes);
 
                 return Convert.ToBase64String(algorithm.IV);
             }

@@ -39,18 +39,20 @@ namespace Calamari.Integration.Processes
 
             if (!string.IsNullOrEmpty(sensitiveFilePath))
             {
-                if (!fileSystem.FileExists(sensitiveFilePath))
-                    throw new CommandException("Could not find variables file: " + sensitiveFilePath);
-
-                if (string.IsNullOrWhiteSpace(sensitiveFilePassword))
-                    throw new CommandException("sensitiveVariablesPassword option must be supplied if sensitiveVariables option is supplied.");
-
-                if (string.IsNullOrWhiteSpace(sensitiveFileSalt))
-                    throw new CommandException("sensitiveVariablesSalt option must be supplied if sensitiveVariables option is supplied.");
-
                 Log.Verbose("Using sensitive variables from: " + Path.GetFileName(sensitiveFilePath));
+                Dictionary<string, string> sensitiveVariables;
+                if (string.IsNullOrWhiteSpace(sensitiveFilePassword))
+                {
+                    sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(fileSystem.ReadFile(sensitiveFilePath));
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(sensitiveFileSalt))
+                        throw new CommandException("sensitiveVariablesSalt option must be supplied if sensitiveVariables option is supplied.");
 
-                var sensitiveVariables = Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword, sensitiveFileSalt);
+                    sensitiveVariables = Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword, sensitiveFileSalt);
+                }
+
                 foreach (var variable in sensitiveVariables)
                 {
                     SetSensitive(variable.Key, variable.Value);
