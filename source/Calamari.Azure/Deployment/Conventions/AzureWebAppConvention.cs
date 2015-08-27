@@ -47,12 +47,21 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var changeSummary = DeploymentManager
                 .CreateObject("contentPath", deployment.CurrentDirectory)
-                .SyncTo("contentPath", publishProfile.MSDeploySite, DeploymentOptions(publishProfile), 
+                .SyncTo("contentPath", BuildPath(publishProfile.MSDeploySite, variables), DeploymentOptions(publishProfile), 
                 DeploymentSyncOptions(variables)
                 );
 
             Log.Info("Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                 changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
+        }
+
+        private static string BuildPath(string site, VariableDictionary variables)
+        {
+            var relativePath = (variables.Get(SpecialVariables.Action.Azure.PhysicalPath) ?? "").TrimStart('\\');
+
+            return relativePath != ""
+                ? site + "\\" + relativePath
+                : site;
         }
 
         private static DeploymentBaseOptions DeploymentOptions(
