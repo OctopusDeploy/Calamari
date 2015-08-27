@@ -3,7 +3,7 @@
 # Version: 1.1.0
 # -----------------------------------------------------------------------------
  
-$sensitiveVariableKey=$1
+sensitiveVariableKey=$1
 
 # -----------------------------------------------------------------------------
 # Function to base64 encode a service message value
