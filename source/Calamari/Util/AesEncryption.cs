@@ -38,6 +38,9 @@ namespace Calamari.Util
             using (var cryptoTransform = algorithm.CreateEncryptor())
             using (var stream = new MemoryStream())
             {
+                // The IV is randomly generated each time so safe to append
+                stream.Write(IvPrefix, 0, IvPrefix.Length);
+                stream.Write(algorithm.IV, 0, algorithm.IV.Length);
                 using (var cs = new CryptoStream(stream, cryptoTransform, CryptoStreamMode.Write))
                 {
                     cs.Write(plainTextBytes, 0, plainTextBytes.Length);
@@ -49,9 +52,7 @@ namespace Calamari.Util
                 var iv hex = BitConverter.ToString(algorithm.IV).Replace("-", string.Empty);
                 var enc b64 = Convert.ToBase64String(stream.ToArray());
                 */
-
-                // The IV is randomly generated each time so safe to append
-                return AppendIV(stream.ToArray(), algorithm.IV);
+                return stream.ToArray();
             }
         }
 
@@ -70,18 +71,6 @@ namespace Calamari.Util
                 provider.IV = iv;
             }
             return provider;
-        }
-
-        byte[] AppendIV(byte[] encrypted, byte[] iv)
-        {
-            var ivLength = 16;
-            int resultLength = encrypted.Length + IvPrefix.Length + ivLength;
-            byte[] result = new byte[resultLength];
-
-            Buffer.BlockCopy(IvPrefix, 0, result, 0, IvPrefix.Length);
-            Buffer.BlockCopy(iv, 0, result, IvPrefix.Length, ivLength);
-            Buffer.BlockCopy(encrypted, 0, result, ivLength + IvPrefix.Length, encrypted.Length);
-            return result;
         }
 
         public static byte[] ExtractIV(byte[] encrypted, out byte[] iv)
