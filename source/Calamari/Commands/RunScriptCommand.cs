@@ -16,7 +16,6 @@ namespace Calamari.Commands
         private string scriptFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
-        private string sensitiveVariablesSalt;
 
         public RunScriptCommand()
         {
@@ -24,14 +23,13 @@ namespace Calamari.Commands
             Options.Add("script=", "Path to the script (PowerShell or ScriptCS) script to execute.", v => scriptFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables (only applicable to offline-drop deployments).", v => sensitiveVariablesPassword = v);
-            Options.Add("sensitiveVariablesSalt=", "Base64 encoded initialization-vector used to decrypt sensitive-variables (only applicable to offline-drop deployments).", v => sensitiveVariablesSalt = v);
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, sensitiveVariablesSalt);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 

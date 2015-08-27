@@ -25,80 +25,32 @@ public static class Octopus
 
 	public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string,string>
 	{
-		private string Password { get;set; }
+		private byte[] Key { get;set; }
 
-		public OctopusParametersDictionary(string password) : base(System.StringComparer.OrdinalIgnoreCase)
+		public OctopusParametersDictionary(string key) : base(System.StringComparer.OrdinalIgnoreCase)
 		{
-			Password = password;
+			Key = Convert.FromBase64String(key);
 {{VariableDeclarations}}
 		}
-
-		 private byte[] ExtractSalt(byte[] encrypted, out byte[] salt)
+        
+     	public string DecryptString(string encrypted, string iv)
         {
-            salt = new byte[8];
-            Buffer.BlockCopy(encrypted, 8, salt, 0, 8);
-            
-            int aesDataLength = encrypted.Length - 16;
-            var aesData = new byte[aesDataLength];
-            Buffer.BlockCopy(encrypted, 16, aesData, 0, aesDataLength);
-            return aesData;
-        }
-		
-        private byte[] GetKey(byte[] salt, out byte[] iv)
-        {
-			var passwordBytes = Encoding.UTF8.GetBytes(Password);
-
-            byte[] key;
-            using (var md5 = MD5.Create())
-            {
-                int preKeyLength = passwordBytes.Length + salt.Length;
-                byte[] preKey = new byte[preKeyLength];
-                Buffer.BlockCopy(passwordBytes, 0, preKey, 0, passwordBytes.Length);
-                Buffer.BlockCopy(salt, 0, preKey, passwordBytes.Length, salt.Length);
-
-                key = md5.ComputeHash(preKey);
-
-                int preIVLength = key.Length + preKeyLength;
-                byte[] preIV = new byte[preIVLength];
-
-                Buffer.BlockCopy(key, 0, preIV, 0, key.Length);
-                Buffer.BlockCopy(preKey, 0, preIV, key.Length, preKey.Length);
-                iv = md5.ComputeHash(preIV);
-            }
-            return key;
-        }
-
-        private SymmetricAlgorithm GetAlgorithm(byte[] salt)
-        {
-            byte[] iv;
-            var key = GetKey(salt, out iv);
-
-            return new AesManaged
-            {
+            using (var algorithm = new AesCryptoServiceProvider() {
                 Mode = CipherMode.CBC,
                 Padding = PaddingMode.PKCS7,
                 KeySize = 128,
-                BlockSize = 128,
-                Key = key,
-                IV = iv
-            };
-        }
-
-		public string DecryptString(string encryptedText)
-        {
-            var textBytes = Convert.FromBase64String(encryptedText);
-            byte[] salt;
-            var aesData = ExtractSalt(textBytes, out salt);
-            using (var algorithm = GetAlgorithm(salt))
-            {
-                using (var dec = algorithm.CreateDecryptor())
-                using (var ms = new MemoryStream(aesData))
-                using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
-                using (var sw = new StreamReader(cs, Encoding.UTF8))
-                {
-                    return sw.ReadToEnd();
-                }
-            }
+                BlockSize = 128 })
+			{
+				algorithm.Key = Key;
+				algorithm.IV =  Convert.FromBase64String(iv);
+				using (var dec = algorithm.CreateDecryptor())
+				using (var ms = new MemoryStream(Convert.FromBase64String(encrypted)))
+				using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
+				using (var sr = new StreamReader(cs, Encoding.UTF8))
+				{
+					return sr.ReadToEnd();
+				}
+			}
         }
 	}
 

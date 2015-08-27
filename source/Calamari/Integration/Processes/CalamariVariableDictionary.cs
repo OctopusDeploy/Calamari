@@ -7,6 +7,7 @@ using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Util;
 using Newtonsoft.Json;
 using Octostache;
 
@@ -14,17 +15,13 @@ namespace Calamari.Integration.Processes
 {
     public class CalamariVariableDictionary : VariableDictionary
     {
-        // Changing these values will be break decryption
-        const int PasswordSaltIterations = 1000;
-        static readonly byte[] PasswordPaddingSalt = Encoding.UTF8.GetBytes("Octopuss");
-
         protected List<string> SensitiveVariableNames = new List<string>();
 
         public CalamariVariableDictionary() { }
 
         public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
 
-        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string sensitiveFileSalt)
+        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -34,24 +31,16 @@ namespace Calamari.Integration.Processes
                     throw new CommandException("Could not find variables file: " + storageFilePath);
 
                 var nonSensitiveVariables =  new VariableDictionary(storageFilePath);
-                nonSensitiveVariables.GetNames().ForEach(name => Set(name, nonSensitiveVariables[name]));
+                nonSensitiveVariables.GetNames().ForEach(name => Set(name, nonSensitiveVariables.GetRaw(name)));
             }
 
             if (!string.IsNullOrEmpty(sensitiveFilePath))
             {
-                Log.Verbose("Using sensitive variables from: " + Path.GetFileName(sensitiveFilePath));
-                Dictionary<string, string> sensitiveVariables;
-                if (string.IsNullOrWhiteSpace(sensitiveFilePassword))
-                {
-                    sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(fileSystem.ReadFile(sensitiveFilePath));
-                }
-                else
-                {
-                    if (string.IsNullOrWhiteSpace(sensitiveFileSalt))
-                        throw new CommandException("sensitiveVariablesSalt option must be supplied if sensitiveVariables option is supplied.");
+                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword) ? 
+                    fileSystem.ReadFile(sensitiveFilePath) :
+                    Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
 
-                    sensitiveVariables = Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword, sensitiveFileSalt);
-                }
+                var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
 
                 foreach (var variable in sensitiveVariables)
                 {
@@ -72,45 +61,18 @@ namespace Calamari.Integration.Processes
             return name != null && SensitiveVariableNames.Contains(name);
         }
 
-        static Dictionary<string, string> Decrypt(byte[] encryptedVariables, string encryptionPassword, string salt)
+        static string Decrypt(byte[] encryptedVariables, string encryptionPassword)
         {
-            using (var algorithm = new AesCryptoServiceProvider
+            try
             {
-                Key = GetEncryptionKey(encryptionPassword),
-                IV = Convert.FromBase64String(salt)
-            })
-            using (var decryptor = algorithm.CreateDecryptor())
-            using (var decryptedTextStream = new MemoryStream())
-            using (var stringReader = new StreamReader(decryptedTextStream, Encoding.UTF8))
-            using (var jsonReader = new JsonTextReader(stringReader))
-            {
-                try
-                {
-                    using (var cryptoStream = new CryptoStream(decryptedTextStream, decryptor, CryptoStreamMode.Write))
-                    {
-                        cryptoStream.Write(encryptedVariables, 0, encryptedVariables.Length);
-                        cryptoStream.FlushFinalBlock();
-
-                        var dictionary = new Dictionary<string, string>();
-                        var serializer = new JsonSerializer();
-                        decryptedTextStream.Position = 0;
-                        serializer.Populate(jsonReader, dictionary);
-                        return dictionary;
-                    }
-                }
-                catch (CryptographicException cryptoException)
-                {
-                    throw new CommandException(
-                        "Cannot decrypt sensitive-variables. Check your password is correct.\nError message: " +
-                        cryptoException.Message);
-                }
+                return new AesEncryption(encryptionPassword).Decrypt(encryptedVariables);
             }
-        }
-
-        public static byte[] GetEncryptionKey(string encryptionPassword)
-        {
-            var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations);
-            return passwordGenerator.GetBytes(16);
+            catch (CryptographicException cryptoException)
+            {
+                throw new CommandException(
+                    "Cannot decrypt sensitive-variables. Check your password is correct.\nError message: " +
+                    cryptoException.Message);
+            }
         }
     }
 }

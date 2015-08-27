@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
-using System.Runtime.Serialization.Formatters;
 using System.Text.RegularExpressions;
 using Calamari.Integration.ServiceMessages;
 using Newtonsoft.Json.Linq;

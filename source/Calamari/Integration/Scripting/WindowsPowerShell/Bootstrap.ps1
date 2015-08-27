@@ -1,4 +1,4 @@
-﻿param([string]$passwd="")
+﻿param([string]$key="")
 
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
@@ -65,57 +65,26 @@ function Write-Warning([string]$message)
 }
 
 
-function Decrypt-String($Encrypted) 
+function Decrypt-String($Encrypted, $iv) 
 { 
-	$passwordBytes = [Text.Encoding]::UTF8.GetBytes($passwd) 
-	$encryptedBytes = [System.Convert]::FromBase64String($Encrypted) 
+	$provider = new-Object System.Security.Cryptography.AesCryptoServiceProvider
+	$provider.Mode = [System.Security.Cryptography.CipherMode]::CBC
+	$provider.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+	$provider.KeySize = 128
+	$provider.BlockSize = 128
+	$provider.Key = [System.Convert]::FromBase64String($key)
+	$provider.IV =[System.Convert]::FromBase64String($iv)
 
-	#Get salt from encrypted text
-	$salt = New-Object Byte[] 8
-	[System.Buffer]::BlockCopy($encryptedBytes, 8, $salt, 0, 8)
-
-	#Remove salt from encrypted text
-	$aesDataLength = $encryptedBytes.Length - 16
-	$aesData = New-Object Byte[] $aesDataLength
-	[System.Buffer]::BlockCopy($encryptedBytes, 16, $aesData, 0, $aesDataLength)
-
-
-	$md5=[System.Security.Cryptography.MD5]::Create()
-		#Get Key
-		$preKeyLength = $passwordBytes.Length + $salt.Length
-		$preKey = New-Object Byte[] $preKeyLength
-		[System.Buffer]::BlockCopy($passwordBytes, 0, $preKey, 0, $passwordBytes.Length)
-		[System.Buffer]::BlockCopy($salt, 0, $preKey, $passwordBytes.Length, $salt.Length)
-		$key = $md5.ComputeHash($preKey)
-
-		#Get IV
-		$preIVLength = $key.Length + $preKeyLength
-		$preIV =  New-Object Byte[] $preIVLength
-		[System.Buffer]::BlockCopy($key, 0, $preIV, 0, $key.Length)
-		[System.Buffer]::BlockCopy($preKey, 0, $preIV, $key.Length, $preKey.Length)
-		$iv = $md5.ComputeHash($preIV)
-	$md5.Dispose()
-	$md5.Clear()
-
-	$algoritm = new-Object System.Security.Cryptography.AesManaged;
-	$algoritm.Mode = [System.Security.Cryptography.CipherMode]::CBC
-	$algoritm.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
-	$algoritm.KeySize = 128
-	$algoritm.BlockSize = 128
-	$algoritm.Key = $key
-	$algoritm.IV =$iv
-
-	$dec = $algoritm.CreateDecryptor()
-	$ms = new-Object IO.MemoryStream @(,$aesData) 
+	$dec = $provider.CreateDecryptor()
+	$ms = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
 	$cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
 	$sr = new-Object IO.StreamReader $cs 
-	$text = $sr.ReadToEnd() 
+		Write-Output $sr.ReadToEnd() 
 	$sr.Dispose() 
 	$cs.Dispose() 
 	$ms.Dispose() 
 	$dec.Dispose()
-	return $text
-
+	$provider.Dispose()
 }
 
 function InitializeProxySettings() 

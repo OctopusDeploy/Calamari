@@ -1,9 +1,9 @@
 #!/bin/bash
 # Octopus Linux helper function script
-# Version: 1.0.0
+# Version: 1.1.0
 # -----------------------------------------------------------------------------
  
-sensitiveVariablePasswd=$1
+$sensitiveVariableKey=$1
 
 # -----------------------------------------------------------------------------
 # Function to base64 encode a service message value
@@ -25,11 +25,16 @@ function decode_servicemessagevalue
 	echo -n "$1" | openssl enc -base64 -A -d
 }
 
+# -----------------------------------------------------------------------------
+# Function to decrypt a sensitive variable
+#		Accepts 2 arguments:
+#			string: the value to decrypt (base64 encoded)
+#			string: the decryption iv (hex)
+# -----------------------------------------------------------------------------
 function decrypt_variable
 {
-	echo "$1" | openssl enc -a -d -aes-128-cbc -pass pass:$sensitiveVariablePasswd
+	echo $1 | openssl enc -a -d -aes-128-cbc -nosalt -K $sensitiveVariableKey -iv $2
 }
-
 
 #	---------------------------------------------------------------------------
 # Function for getting an octopus variable

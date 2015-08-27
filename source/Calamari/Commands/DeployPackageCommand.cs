@@ -27,7 +27,6 @@ namespace Calamari.Commands
         private string packageFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
-        private string sensitiveVariablesSalt;
 
         public DeployPackageCommand()
         {
@@ -35,7 +34,6 @@ namespace Calamari.Commands
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
-            Options.Add("sensitiveVariablesSalt=", "Base64 encoded initialization-vector used to decrypt sensitive-variables.", v => sensitiveVariablesSalt = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -51,7 +49,7 @@ namespace Calamari.Commands
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, sensitiveVariablesSalt);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             var scriptCapability = new CombinedScriptEngine();
             var replacer = new ConfigurationVariablesReplacer();
             var substituter = new FileSubstituter(fileSystem);

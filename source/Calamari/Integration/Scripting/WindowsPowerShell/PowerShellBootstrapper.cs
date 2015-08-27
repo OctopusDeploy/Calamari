@@ -14,8 +14,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
         private static readonly string BootstrapScriptTemplate;
-        static readonly string SensitiveVariablePassword = ScriptVariableEncryptor.RandomString(16);
-        static readonly ScriptVariableEncryptor VariableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
+        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
 
         static PowerShellBootstrapper()
         {
@@ -49,12 +49,13 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         public static string FormatCommandArguments(string bootstrapFile)
         {
+            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
             commandArguments.Append("-NoLogo ");
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
             var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
-            commandArguments.AppendFormat("-Command \". {{. '{0}' -passwd '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, SensitiveVariablePassword);
+            commandArguments.AppendFormat("-Command \". {{. '{0}' -key '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
 
@@ -151,7 +152,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (value == null)
                 return "$null";
 
-            return string.Format("Decrypt-String \"{0}\"", VariableEncryptor.Encrypt(value));
+            var encrypted = VariableEncryptor.Encrypt(value);
+            byte[] iv;
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+            return string.Format("Decrypt-String \"{0}\" \"{1}\"", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
         }
 
         static string EncodeValue(string value)

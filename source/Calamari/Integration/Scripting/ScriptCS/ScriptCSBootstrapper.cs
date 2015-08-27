@@ -1,19 +1,17 @@
 using System;
 using System.IO;
-using System.Security;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
-using Octostache;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
     public static class ScriptCSBootstrapper
     {
         private static readonly string BootstrapScriptTemplate;
-        static readonly string SensitiveVariablePassword = ScriptVariableEncryptor.RandomString(16);
-        static readonly ScriptVariableEncryptor VariableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
+        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
 
         static ScriptCSBootstrapper()
         {
@@ -41,8 +39,9 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
         public static string FormatCommandArguments(string bootstrapFile)
         {
+            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("-script \"{0}\" -- \"{1}\"", bootstrapFile, SensitiveVariablePassword);
+            commandArguments.AppendFormat("-script \"{0}\" -- \"{1}\"", bootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
 
@@ -111,7 +110,11 @@ namespace Calamari.Integration.Scripting.ScriptCS
             if (value == null)
                 return "null;";
 
-            return string.Format("DecryptString(\"{0}\")", VariableEncryptor.Encrypt(value));
+            var encrypted = VariableEncryptor.Encrypt(value);
+            byte[] iv;
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+
+            return string.Format("DecryptString(\"{0}\", \"{1}\")", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
         }
     }
 }

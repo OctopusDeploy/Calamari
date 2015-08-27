@@ -4,9 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Util;
-using Octostache;
 
 namespace Calamari.Integration.Scripting.Bash
 {
@@ -15,8 +13,8 @@ namespace Calamari.Integration.Scripting.Bash
         public const string WindowsNewLine = "\r\n";
 
         private static readonly string BootstrapScriptTemplate;
-        static readonly string SensitiveVariablePassword = Guid.NewGuid().ToString();
-        static readonly ScriptVariableEncryptor VariableEncryptor = new ScriptVariableEncryptor(SensitiveVariablePassword);
+        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
 
         static BashScriptBootstrapper()
         {
@@ -25,8 +23,9 @@ namespace Calamari.Integration.Scripting.Bash
 
         public static string FormatCommandArguments(string bootstrapFile)
         {
+            var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("\"{0}\" \"{1}\"", bootstrapFile, SensitiveVariablePassword);
+            commandArguments.AppendFormat("\"{0}\" \"{1}\"", bootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
         
@@ -53,11 +52,25 @@ namespace Calamari.Integration.Scripting.Bash
             return variables.GetNames().Select(variable =>
             {
                 var variableValue = variables.IsSensitive(variable)
-                    ? string.Format("decrypt_variable \"{0}\"", VariableEncryptor.Encrypt(variables.Get(variable)))
+                    ? DecryptValueCommand(variables.Get(variable))
                     : string.Format("decode_servicemessagevalue \"{0}\"", EncodeValue(variables.Get(variable)));
 
                 return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable), variableValue);
             });
+        }
+
+        static string DecryptValueCommand(string value)
+        {
+            var encrypted = VariableEncryptor.Encrypt(value);
+            byte[] iv;
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+            
+            return string.Format("decrypt_variable \"{0}\" \"{1}\"", Convert.ToBase64String(rawEncrypted), ToHex(iv));
+        }
+
+        static string ToHex(byte[] bytes)
+        {
+            return BitConverter.ToString(bytes).Replace("-", "");
         }
 
         static string EncodeValue(string value)
