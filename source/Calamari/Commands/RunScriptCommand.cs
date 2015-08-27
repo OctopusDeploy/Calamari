@@ -21,8 +21,8 @@ namespace Calamari.Commands
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("script=", "Path to the script (PowerShell or ScriptCS) script to execute.", v => scriptFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            Options.Add("sensitiveVariables:", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariablesPassword:", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
 
         public override int Execute(string[] commandLineArguments)

@@ -16,9 +16,6 @@ namespace Calamari
         protected int Execute(string[] args)
         {
             ProxyInitializer.InitializeDefaultProxy();
-
-            Environment.SetEnvironmentVariable("Monkey","Dish", EnvironmentVariableTarget.Process);
-
             RegisterCommandAssemblies();
 
             try
