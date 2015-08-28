@@ -15,7 +15,7 @@ namespace Calamari.Integration.Processes
 {
     public class CalamariVariableDictionary : VariableDictionary
     {
-        protected List<string> SensitiveVariableNames = new List<string>();
+        protected HashSet<string> SensitiveVariableNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public CalamariVariableDictionary() { }
 
@@ -36,15 +36,22 @@ namespace Calamari.Integration.Processes
 
             if (!string.IsNullOrEmpty(sensitiveFilePath))
             {
-                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword) ? 
-                    fileSystem.ReadFile(sensitiveFilePath) :
-                    Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
+                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+                    ? fileSystem.ReadFile(sensitiveFilePath)
+                    : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
 
-                var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
 
-                foreach (var variable in sensitiveVariables)
+                try
                 {
-                    SetSensitive(variable.Key, variable.Value);
+                    var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
+                    foreach (var variable in sensitiveVariables)
+                    {
+                        SetSensitive(variable.Key, variable.Value);
+                    }
+                }
+                catch (JsonReaderException)
+                {
+                    throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
                 }
             }
         }
@@ -67,11 +74,9 @@ namespace Calamari.Integration.Processes
             {
                 return new AesEncryption(encryptionPassword).Decrypt(encryptedVariables);
             }
-            catch (CryptographicException cryptoException)
+            catch (CryptographicException)
             {
-                throw new CommandException(
-                    "Cannot decrypt sensitive-variables. Check your password is correct.\nError message: " +
-                    cryptoException.Message);
+                throw new CommandException("Cannot decrypt sensitive-variables. Check your password is correct.");
             }
         }
     }
