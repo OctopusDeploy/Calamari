@@ -33,10 +33,10 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
             scriptEngine = Substitute.For<IScriptEngine>();
-            scriptEngine.Execute(Arg.Any<string>(), Arg.Any<VariableDictionary>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
+            scriptEngine.Execute(Arg.Any<string>(), Arg.Any<CalamariVariableDictionary>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
             scriptEngine.GetSupportedExtensions().Returns(new[] {"csx", "ps1"});
             runner = Substitute.For<ICommandLineRunner>();
-            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new VariableDictionary());
+            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariableDictionary());
         }
 
         [Test]

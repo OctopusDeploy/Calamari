@@ -21,7 +21,7 @@ namespace Calamari.Azure.Tests.PowerShell
             var scriptEngine = Substitute.For<IScriptEngine>();
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariableDictionary();
             OctopusTestAzureSubscription.PopulateVariables(variables);
 
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))

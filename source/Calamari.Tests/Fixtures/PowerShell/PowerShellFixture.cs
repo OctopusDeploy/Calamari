@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Hello, write-output!");
             output.AssertOutput("Hello, write-verbose!");
             output.AssertOutput("Hello, write-warning!");
-            output.AssertErrorOutput("Hello, write-error!");
+            output.AssertErrorOutput("Hello-Error!");
         }
 
         [Test]

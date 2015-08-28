@@ -1,5 +1,6 @@
 ﻿using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -27,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private VariableDictionary AddEnvironmentVariables()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariableDictionary();
             var convention = new ContributeEnvironmentVariablesConvention();
             convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
 

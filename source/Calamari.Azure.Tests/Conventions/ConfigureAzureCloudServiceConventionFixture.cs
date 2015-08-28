@@ -7,6 +7,7 @@ using Calamari.Azure.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.Compute.Models;
@@ -24,7 +25,7 @@ namespace Calamari.Azure.Tests.Conventions
         ISubscriptionCloudCredentialsFactory credentialsFactory;
         IAzureCloudServiceConfigurationRetriever configurationRetriever;
         RunningDeployment deployment;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         ConfigureAzureCloudServiceConvention convention;
         const string StagingDirectory = "C:\\Applications\\Foo"; 
         const string DefaultConfigurationFileName = "ServiceConfiguration.Cloud.cscfg";
@@ -44,7 +45,7 @@ namespace Calamari.Azure.Tests.Conventions
             fileSystem = Substitute.For<ICalamariFileSystem>();
             credentialsFactory = Substitute.For<ISubscriptionCloudCredentialsFactory>();
             configurationRetriever = Substitute.For<IAzureCloudServiceConfigurationRetriever>(); 
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, StagingDirectory);
             deployment = new RunningDeployment(StagingDirectory, variables);
 

@@ -5,22 +5,53 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Net;
+using System.Security.Cryptography;
 
 public static class Octopus
 {
-    public static readonly OctopusParametersDictionary Parameters = new OctopusParametersDictionary();
-
+    public static OctopusParametersDictionary Parameters { get; private set; }
+	
 	static Octopus() 
 	{
 		InitializeDefaultProxy();
 	}
 
+	public static void Initialize(string password) {
+		if(Parameters != null) {
+			throw new Exception("Octopus can only be initialized once.");
+		}
+		Parameters = new OctopusParametersDictionary(password);
+	}
+
 	public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string,string>
 	{
-		public OctopusParametersDictionary() : base(System.StringComparer.OrdinalIgnoreCase)
+		private byte[] Key { get;set; }
+
+		public OctopusParametersDictionary(string key) : base(System.StringComparer.OrdinalIgnoreCase)
 		{
-			{{VariableDeclarations}}
+			Key = Convert.FromBase64String(key);
+{{VariableDeclarations}}
 		}
+        
+     	public string DecryptString(string encrypted, string iv)
+        {
+            using (var algorithm = new AesCryptoServiceProvider() {
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                KeySize = 128,
+                BlockSize = 128 })
+			{
+				algorithm.Key = Key;
+				algorithm.IV =  Convert.FromBase64String(iv);
+				using (var dec = algorithm.CreateDecryptor())
+				using (var ms = new MemoryStream(Convert.FromBase64String(encrypted)))
+				using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
+				using (var sr = new StreamReader(cs, Encoding.UTF8))
+				{
+					return sr.ReadToEnd();
+				}
+			}
+        }
 	}
 
 	private static string EncodeServiceMessageValue(string value)
@@ -67,3 +98,5 @@ public static class Octopus
             : new NetworkCredential(proxyUsername, proxyPassword);
 	}
 }
+
+Octopus.Initialize(Env.ScriptArgs[0]);

@@ -2,6 +2,7 @@
 using Calamari.Azure.Deployment.Conventions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,7 +16,7 @@ namespace Calamari.Azure.Tests.Conventions
     {
         ICalamariFileSystem fileSystem;
         RunningDeployment deployment;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         ChooseCloudServiceConfigurationFileConvention convention;
         const string StagingDirectory = "C:\\Applications\\Foo";
 
@@ -23,7 +24,7 @@ namespace Calamari.Azure.Tests.Conventions
         public void SetUp()
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, StagingDirectory);
             deployment = new RunningDeployment(StagingDirectory, variables);
 

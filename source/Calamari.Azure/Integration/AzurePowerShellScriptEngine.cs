@@ -13,7 +13,7 @@ namespace Calamari.Azure.Integration
             return new[] { ScriptType.Powershell.FileExtension() };
         }
 
-        public CommandResult Execute(string scriptFile, VariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var powerShellEngine = new PowerShellScriptEngine();
             if (variables.Get(SpecialVariables.Account.AccountType) == "AzureSubscription")

@@ -3,13 +3,15 @@ using System.IO;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
-using Octostache;
+using Calamari.Util;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
     public static class ScriptCSBootstrapper
     {
         private static readonly string BootstrapScriptTemplate;
+        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
 
         static ScriptCSBootstrapper()
         {
@@ -37,8 +39,9 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
         public static string FormatCommandArguments(string bootstrapFile)
         {
+            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("-script \"{0}\"", bootstrapFile);
+            commandArguments.AppendFormat("-script \"{0}\" -- \"{1}\"", bootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
 
@@ -63,7 +66,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return bootstrapFile;
         }
 
-        public static string PrepareConfigurationFile(string workingDirectory, VariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
 
@@ -80,12 +83,15 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return configurationFile;
         }
             
-        static string WriteVariableDictionary(VariableDictionary variables)
+        static string WriteVariableDictionary(CalamariVariableDictionary variables)
         {
             var builder = new StringBuilder();
             foreach (var variable in variables.GetNames())
             {
-                builder.AppendLine("    this[" + EncodeValue(variable) + "] = " + EncodeValue(variables.Get(variable)) + ";");
+                var variableValue = variables.IsSensitive(variable)
+                    ? EncryptVariable(variables.Get(variable))
+                    : EncodeValue(variables.Get(variable));
+                builder.Append("\t\t\tthis[").Append(EncodeValue(variable)).Append("] = ").Append(variableValue).AppendLine(";");
             }
             return builder.ToString();
         }
@@ -93,15 +99,22 @@ namespace Calamari.Integration.Scripting.ScriptCS
         static string EncodeValue(string value)
         {
             if (value == null)
-                return "null";
+                return "null;";
 
             var bytes = Encoding.UTF8.GetBytes(value);
+            return string.Format("System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{0}\"))", Convert.ToBase64String(bytes));
+        }
 
-            return "System.Text.Encoding.UTF8.GetString(" +
-                   "Convert.FromBase64String(\"" +
-                   Convert.ToBase64String(bytes) +
-                   "\")" +
-                   ")";
+        static string EncryptVariable(string value)
+        {
+            if (value == null)
+                return "null;";
+
+            var encrypted = VariableEncryptor.Encrypt(value);
+            byte[] iv;
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+
+            return string.Format("DecryptString(\"{0}\", \"{1}\")", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
         }
     }
 }

@@ -5,6 +5,7 @@ using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Microsoft.WindowsAzure;
 using NSubstitute;
@@ -24,7 +25,7 @@ namespace Calamari.Azure.Tests.Conventions
         const string storageAccountName = "AcmeStorage";
         ICalamariFileSystem fileSystem;
         IAzurePackageUploader packageUploader;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         RunningDeployment deployment;
         ISubscriptionCloudCredentialsFactory credentialsFactory;
         UploadAzureCloudServicePackageConvention convention;
@@ -38,7 +39,7 @@ namespace Calamari.Azure.Tests.Conventions
             credentialsFactory.GetCredentials(azureSubscriptionId, certificateThumbprint, certificateBytes)
                 .Returns(new FakeSubscriptionCloudCredentials(azureSubscriptionId));
 
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
             variables.Set(SpecialVariables.Action.Azure.SubscriptionId, azureSubscriptionId);
             variables.Set(SpecialVariables.Action.Azure.CertificateThumbprint, certificateThumbprint);

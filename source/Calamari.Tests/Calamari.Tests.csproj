@@ -145,6 +145,7 @@
     <Compile Include="Fixtures\FileSystem\PackageStoreFixture.cs" />
     <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
+    <Compile Include="Fixtures\Integration\Scripting\ScriptEngineFixture.cs" />
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTestAttribute.cs" />
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
     <Compile Include="Fixtures\Retention\RetentionPolicyFixture.cs" />
@@ -152,11 +153,12 @@
     <Compile Include="Fixtures\ScriptCS\RequiresDotNet45Attribute.cs" />
     <Compile Include="Fixtures\Bash\BashFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />
-    <Compile Include="Fixtures\SensitiveVariables\SensitiveVariablesFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\CalamariVariableDictionaryFixture.cs" />
     <Compile Include="Fixtures\ServiceMessages\ServiceMessageParserFixture.cs" />
     <Compile Include="Fixtures\Substitutions\SubstitutionsFixture.cs" />
     <Compile Include="Fixtures\HelpFixture.cs" />
     <Compile Include="Fixtures\PowerShell\PowerShellFixture.cs" />
+    <Compile Include="Fixtures\Util\ScriptVariableEncryptorFixture.cs" />
     <Compile Include="Helpers\CalamariFixture.cs" />
     <Compile Include="Helpers\CalamariResult.cs" />
     <Compile Include="Helpers\CaptureCommandOutput.cs" />

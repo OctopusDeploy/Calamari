@@ -2,6 +2,7 @@ using System;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
@@ -14,14 +15,14 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         JournalEntry previous;
         IDeploymentJournal journal;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
 
         [SetUp]
         public void SetUp()
         {
             journal = Substitute.For<IDeploymentJournal>();
             journal.GetLatestInstallation(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(_ => previous);
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
         }
 
         [Test]

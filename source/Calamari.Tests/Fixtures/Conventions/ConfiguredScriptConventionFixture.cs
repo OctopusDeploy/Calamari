@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         IScriptEngine scriptEngine;
         ICommandLineRunner commandLineRunner;
         RunningDeployment deployment;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         const string stagingDirectory = "c:\\applications\\acme\\1.0.0";
 
         [SetUp]
@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             scriptEngine.GetSupportedExtensions().Returns(new string[] { "ps1" });
 
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
 
             deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };
