@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
-            fileSystem.Received().DeleteFile(scriptPath, Arg.Any<DeletionOptions>());
+            fileSystem.Received().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
         }
 
         private ConfiguredScriptConvention CreateConvention(string deployStage)

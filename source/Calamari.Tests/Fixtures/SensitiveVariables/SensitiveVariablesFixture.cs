@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.SensitiveVariables
         public void CleanUp()
         {
             if (fileSystem.DirectoryExists(tempDirectory))
-                fileSystem.DeleteDirectory(tempDirectory, DeletionOptions.TryThreeTimesIgnoreFailure);
+                fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
         }
 
         [Test]

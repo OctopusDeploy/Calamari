@@ -47,7 +47,11 @@ namespace Calamari.Integration.ConfigurationVariables
                     Log.Warn(ex.Message);
                     Log.Warn(ex.StackTrace);
                 }
-                else throw;
+                else
+                {
+                    Log.ErrorFormat("Exception while replacing configuration-variables in: {0}", configurationFilePath);
+                    throw;
+                }
             }
         }
 
@@ -75,12 +79,13 @@ namespace Calamari.Integration.ConfigurationVariables
 
         static void WriteXmlDocument(XDocument doc, string configurationFilePath)
         {
-            var xws = new XmlWriterSettings { OmitXmlDeclaration = doc.Declaration == null, Indent = true };
+            var xws = new XmlWriterSettings {OmitXmlDeclaration = doc.Declaration == null, Indent = true};
             using (var writer = XmlWriter.Create(configurationFilePath, xws))
             {
                 doc.Save(writer);
             }
         }
+
         static IEnumerable<string> ReplaceAppSettingOrConnectionString(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, VariableDictionary variables)
         {
             var changes = new List<string>();

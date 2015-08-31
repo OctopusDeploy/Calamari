@@ -53,7 +53,7 @@ namespace Calamari.Deployment.Conventions
 
             foreach (var script in scripts)
             {
-                fileSystem.DeleteFile(script, DeletionOptions.TryThreeTimesIgnoreFailure);
+                fileSystem.DeleteFile(script, FailureOptions.IgnoreFailure);
             }
         }
 
