@@ -202,6 +202,9 @@
     <None Include="Fixtures\Bash\Scripts\print-encoded-variable.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\ConfigurationTransforms\Samples\Bad.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ConfigurationTransforms\Samples\Web.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

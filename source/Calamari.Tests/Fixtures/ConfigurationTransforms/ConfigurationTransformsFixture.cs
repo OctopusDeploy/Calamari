@@ -11,6 +11,13 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
     [TestFixture]
     public class ConfigurationTransformsFixture : CalamariFixture
     {
+        ConfigurationTransformer configurationTransformer;
+
+        [SetUp]
+        public void SetUp()
+        {
+            configurationTransformer = new ConfigurationTransformer();
+        }
 
         [Test]
         [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
@@ -24,6 +31,22 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             Assert.IsNull(GetCustomErrors(contents));
         }
 
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [ExpectedException(typeof(System.Xml.XmlException))]
+        public void ShouldThrowExceptionForBadConfig()
+        {
+            PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        public void ShouldSupressExceptionForBadConfig()
+        {
+            configurationTransformer = new ConfigurationTransformer(true);
+            PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
+        }
+
         string PerformTest(string configurationFile, string transformFile)
         {
             var temp = Path.GetTempFileName();
@@ -31,8 +54,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             
             using (new TemporaryFile(temp))
             {
-                var substituter = new ConfigurationTransformer();
-                substituter.PerformTransform(temp, transformFile, temp);
+                configurationTransformer.PerformTransform(temp, transformFile, temp);
                 return File.ReadAllText(temp);
             }
         }
