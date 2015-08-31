@@ -53,7 +53,7 @@ namespace Calamari.Commands
             var variables = LoadVariables(fileSystem); 
             
             var scriptCapability = new CombinedScriptEngine();
-            var replacer = new ConfigurationVariablesReplacer();
+            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
             var embeddedResources = new ExecutingAssemblyEmbeddedResources();

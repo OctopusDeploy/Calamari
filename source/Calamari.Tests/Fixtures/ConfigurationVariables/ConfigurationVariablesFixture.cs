@@ -12,6 +12,14 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
     [TestFixture]
     public class ConfigurationVariablesFixture : CalamariFixture
     {
+        ConfigurationVariablesReplacer configurationVariablesReplacer;
+
+        [SetUp]
+        public void SetUp()
+        {
+            configurationVariablesReplacer = new ConfigurationVariablesReplacer();
+        }
+
         [Test]
         public void DoesNotAddXmlHeader()
         {
@@ -88,15 +96,30 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             Assert.AreEqual("Server=bar&bar=123", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb2']").Attribute("connectionString").Value);
         }
 
+        [Test]
+        [ExpectedException(typeof (System.Xml.XmlException))]
+        public void ShouldThrowExceptionForBadConfig()
+        {
+            var variables = new VariableDictionary();
+            PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
+        }
+
+        [Test]
+        public void ShouldSupressExceptionForBadConfig()
+        {
+            configurationVariablesReplacer = new ConfigurationVariablesReplacer(true);
+            var variables = new VariableDictionary();
+            PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
+        }
+
         string PerformTest(string sampleFile, VariableDictionary variables)
         {
             var temp = Path.GetTempFileName();
             File.Copy(sampleFile, temp, true);
             
             using (new TemporaryFile(temp))
-            {    
-                var substituter = new ConfigurationVariablesReplacer();
-                substituter.ModifyConfigurationFile(temp, variables);
+            {
+                configurationVariablesReplacer.ModifyConfigurationFile(temp, variables);
                 return File.ReadAllText(temp);
             }
         }

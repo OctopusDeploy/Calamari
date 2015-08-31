@@ -11,25 +11,44 @@ namespace Calamari.Integration.ConfigurationVariables
 {
     public class ConfigurationVariablesReplacer : IConfigurationVariablesReplacer
     {
+        readonly bool ignoreVariableReplacementErrors;
+
+        public ConfigurationVariablesReplacer(bool ignoreVariableReplacementErrors = false)
+        {
+            this.ignoreVariableReplacementErrors = ignoreVariableReplacementErrors;
+        }
+
         public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
-            var doc = ReadXmlDocument(configurationFilePath);
-            var changes = ApplyChanges(doc, variables);
-
-            if (!changes.Any())
+            try
             {
-                Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
-                return;
+                var doc = ReadXmlDocument(configurationFilePath);
+                var changes = ApplyChanges(doc, variables);
+
+                if (!changes.Any())
+                {
+                    Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
+                    return;
+                }
+
+                Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
+
+                foreach (var change in changes)
+                {
+                    Log.Verbose(change);
+                }
+
+                WriteXmlDocument(doc, configurationFilePath);
             }
-
-            Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
-
-            foreach (var change in changes)
+            catch (Exception ex)
             {
-                Log.Verbose(change);
+                if (ignoreVariableReplacementErrors)
+                {
+                    Log.Warn(ex.Message);
+                    Log.Warn(ex.StackTrace);
+                }
+                else throw;
             }
-
-            WriteXmlDocument(doc, configurationFilePath);
         }
 
         static XDocument ReadXmlDocument(string configurationFilePath)
