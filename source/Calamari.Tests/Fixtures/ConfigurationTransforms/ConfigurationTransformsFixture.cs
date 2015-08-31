@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 
         [Test]
         [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
-        public void ShouldSupressExceptionForBadConfig()
+        public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
             configurationTransformer = new ConfigurationTransformer(true);
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
