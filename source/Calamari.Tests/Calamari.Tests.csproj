@@ -214,6 +214,9 @@
     <None Include="Fixtures\ConfigurationVariables\Samples\App.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\ConfigurationVariables\Samples\Bad.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ConfigurationVariables\Samples\CrazyNamespace.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

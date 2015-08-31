@@ -25,6 +25,9 @@ namespace Calamari.Deployment.Conventions
 
             Log.Verbose("Looking for appSettings and connectionStrings in any .config files");
 
+            if (deployment.Variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors))
+                Log.Info("Variable replacement errors are supressed because the variable Octopus.Action.Package.IgnoreVariableReplacementErrors has been set.");
+
             var configurationFiles = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
             foreach (var configurationFile in configurationFiles)
             {
