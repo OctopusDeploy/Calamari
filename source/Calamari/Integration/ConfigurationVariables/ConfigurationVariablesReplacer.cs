@@ -13,22 +13,8 @@ namespace Calamari.Integration.ConfigurationVariables
     {
         public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
-            XDocument doc;
-
-            using (var reader = XmlReader.Create(configurationFilePath, XmlUtils.DtdSafeReaderSettings))
-            {
-                doc = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
-            }
-
-            var changes = new List<string>();
-
-            foreach (var variable in variables.GetNames())
-            {
-                changes.AddRange(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable, "value", variables).Concat(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables).Concat(
-                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables))));
-            }
+            var doc = ReadXmlDocument(configurationFilePath);
+            var changes = ApplyChanges(doc, variables);
 
             if (!changes.Any())
             {
@@ -43,13 +29,39 @@ namespace Calamari.Integration.ConfigurationVariables
                 Log.Verbose(change);
             }
 
+            WriteXmlDocument(doc, configurationFilePath);
+        }
+
+        static XDocument ReadXmlDocument(string configurationFilePath)
+        {
+            using (var reader = XmlReader.Create(configurationFilePath, XmlUtils.DtdSafeReaderSettings))
+            {
+                return XDocument.Load(reader, LoadOptions.PreserveWhitespace);
+            }
+        }
+
+        static List<string> ApplyChanges(XNode doc, VariableDictionary variables)
+        {
+            var changes = new List<string>();
+
+            foreach (var variable in variables.GetNames())
+            {
+                changes.AddRange(
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable, "value", variables).Concat(
+                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables).Concat(
+                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables))));
+            }
+            return changes;
+        }
+
+        static void WriteXmlDocument(XDocument doc, string configurationFilePath)
+        {
             var xws = new XmlWriterSettings { OmitXmlDeclaration = doc.Declaration == null, Indent = true };
             using (var writer = XmlWriter.Create(configurationFilePath, xws))
             {
                 doc.Save(writer);
             }
         }
-
         static IEnumerable<string> ReplaceAppSettingOrConnectionString(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, VariableDictionary variables)
         {
             var changes = new List<string>();
