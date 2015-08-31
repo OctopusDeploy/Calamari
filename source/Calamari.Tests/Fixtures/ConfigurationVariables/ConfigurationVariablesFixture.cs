@@ -105,7 +105,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         }
 
         [Test]
-        public void ShouldSupressExceptionForBadConfig()
+        public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
             configurationVariablesReplacer = new ConfigurationVariablesReplacer(true);
             var variables = new VariableDictionary();
