@@ -87,13 +87,13 @@ namespace Calamari.Integration.FileSystem
                     }
                     break;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     if (retry.CanRetry())
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.VerboseFormat("Retry #{0} on delete file '{1}'", retry.CurrentTry, path);
+                            Log.VerboseFormat("Retry #{0} on delete file '{1}'. Exception: {2}", retry.CurrentTry, path, ex.Message);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
@@ -128,16 +128,17 @@ namespace Calamari.Integration.FileSystem
                         var dir = new DirectoryInfo(path);
                         dir.Attributes = dir.Attributes & ~FileAttributes.ReadOnly;
                         dir.Delete(true);
+                        EnsureDirectoryDeleted(path, options);
                     }
                     break;
                 }
-                catch
+                catch (Exception ex)
                 {
                     if (retry.CanRetry())
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.VerboseFormat("Retry #{0} on delete directory '{1}'", retry.CurrentTry, path);
+                            Log.VerboseFormat("Retry #{0} on delete directory '{1}'. Exception: {2}", retry.CurrentTry, path, ex.Message);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
@@ -150,6 +151,27 @@ namespace Calamari.Integration.FileSystem
                     }
                 }
             }
+        }
+
+        static void EnsureDirectoryDeleted(string path, FailureOptions failureOptions)
+        {
+            var retry = GetRetryTracker(); 
+
+            while (retry.Try())
+            {
+                if (!Directory.Exists(path))
+                    return;
+
+                if (retry.CanRetry() && retry.ShouldLogWarning())
+                    Log.VerboseFormat("Waiting for directory '{0}' to be deleted", path);
+            }
+
+            var message = $"Unable to ensure directory '{path}' was deleted";
+
+            if (failureOptions == FailureOptions.ThrowOnFailure)
+                throw new Exception(message);
+
+            Log.Verbose(message);
         }
 
         public virtual IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
@@ -408,13 +430,13 @@ namespace Calamari.Integration.FileSystem
                     File.Copy(sourceFile, targetFile, true);
                     return;
                 }
-                catch
+                catch (Exception ex)
                 {
                     if (retry.CanRetry())
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.VerboseFormat("Retry #{0} on copy '{1}'", retry.CurrentTry,  targetFile);
+                            Log.VerboseFormat("Retry #{0} on copy '{1}'. Exception: {2}", retry.CurrentTry,  targetFile, ex.Message);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
