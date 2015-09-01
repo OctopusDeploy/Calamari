@@ -146,7 +146,7 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 			$existing = & netsh http show sslcert hostnameport="$($hostname):$port"
 			if ($LastExitCode -eq 0) {
 				$hasThumb = ($existing | Where-Object { $_.IndexOf($certificate.Thumbprint, [System.StringComparison]::OrdinalIgnoreCase) -ne -1 })
-				if ($hasThumb.Length -eq $null) {
+				if ($hasThumb -eq $null) {
 					Write-Output "A different binding exists for the Hostname/port combination, replacing..."
 					
 					& netsh http delete sslcert hostnameport="$($hostname):$port"
@@ -177,7 +177,7 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 			$existing = & netsh http show sslcert ipport="$($ipAddress):$port"
 			if ($LastExitCode -eq 0) {
 				$hasThumb = ($existing | Where-Object { $_.IndexOf($certificate.Thumbprint, [System.StringComparison]::OrdinalIgnoreCase) -ne -1 })
-				if ($hasThumb.Length -eq $null) {
+				if ($hasThumb -eq $null) {
 					Write-Output "A different binding exists for the IP/port combination, replacing..."
 					
 					& netsh http delete sslcert ipport="$($ipAddress):$port"
