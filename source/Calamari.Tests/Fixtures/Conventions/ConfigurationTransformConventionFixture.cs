@@ -95,43 +95,32 @@ namespace Calamari.Tests.Fixtures.Conventions
             configurationTransformer.Received().PerformTransform(webConfig, specificTransform, webConfig);
         }
 
-        private static IEnumerable WildcardTransformTestCases
+        [Test]
+        [TestCaseSource(nameof(AdvancedTransformTestCases))]
+        public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition,
+            string expectedAppliedTransform)
         {
-            get
-            {
-                yield return new TestCaseData("*.Foo.config=>*.Bar.config");
-                yield return new TestCaseData("*.Foo.config=>Bar.config");
-                yield return new TestCaseData("Foo.config=>*.Bar.config");
-            }
-        }
-
-        [Test, TestCaseSource("WildcardTransformTestCases")]
-        public void RunsAdvancedWildcardConfigTransform(string transformDefinition)
-        {
-            var sourceConfig = Path.Combine(stagingDirectory, "xyz.Bar.config");
-            var transform = Path.Combine(stagingDirectory, "xyz.Foo.config");
-
-            MockSearchableFiles(fileSystem, stagingDirectory, new[] { sourceConfig, transform }, "*.config");
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] { sourceFile, expectedAppliedTransform }, "*" + Path.GetExtension(sourceFile));
 
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition);
             // This will be applied even if the automatically run flag is set to false
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
             CreateConvention().Install(deployment);
 
-            configurationTransformer.Received().PerformTransform(sourceConfig, transform, sourceConfig);
+            configurationTransformer.Received().PerformTransform(sourceFile, expectedAppliedTransform, sourceFile);
         }
 
-        [Test]
-        public void DetermineCorrectTransformFileName()
+        private static IEnumerable AdvancedTransformTestCases
         {
-            foreach (var set in TransformFileNameTestCases)
+            get
             {
-                string sourceFile = set.Item1, transformDefinition = set.Item2, required = set.Item3;
-
-                var transform = new XmlConfigTransformDefinition(transformDefinition);
-                var all = ConfigurationTransformsConvention.DetermineTransformFileNames(sourceFile, transform);
-                var matched = all.Contains(required);
-                Assert.That(matched);
+                yield return new TestCaseData(BuildConfigPath("bar.config"), "foo.config=>bar.config", BuildConfigPath("foo.config"));
+                yield return new TestCaseData(BuildConfigPath("bar.blah"), "foo.baz=>bar.blah", BuildConfigPath("foo.baz"));
+                yield return new TestCaseData(BuildConfigPath("bar.config"), "foo.xml=>bar.config", BuildConfigPath("foo.xml"));
+                yield return new TestCaseData(BuildConfigPath("xyz.bar.blah"), "*.foo.blah=>*.bar.blah", BuildConfigPath("xyz.foo.blah"));
+                yield return new TestCaseData(BuildConfigPath("xyz.bar.blah"), "foo.blah=>*.bar.blah", BuildConfigPath("xyz.foo.blah"));
+                yield return new TestCaseData(BuildConfigPath("xyz.bar.blah"), "*.foo.blah=>bar.blah", BuildConfigPath("xyz.foo.blah"));
+                yield return new TestCaseData(BuildConfigPath("foo.config"), "foo.Bar.Additional.config=>foo.config", BuildConfigPath("foo.Bar.Additional.config"));
             }
         }
 
@@ -146,23 +135,9 @@ namespace Calamari.Tests.Fixtures.Conventions
                 Arg.Is<string[]>(x => new List<string>(x).Contains(searchPattern))).Returns(files);
 
             foreach (var file in files)
-                fileSystem.FileExists(file).Returns(true);
-        }
-
-        private static IEnumerable<Tuple<string, string, string>> TransformFileNameTestCases
-        {
-            get
             {
-                yield return Tuple.Create(BuildConfigPath("web.config"), "Release", BuildConfigPath("web.Release.config"));
-                yield return Tuple.Create(BuildConfigPath("web.config"), "Staging.QLD", BuildConfigPath("web.Staging.QLD.config"));
-                yield return Tuple.Create(BuildConfigPath("web.config"), "Production.config", BuildConfigPath("web.Production.config"));
-                yield return Tuple.Create(BuildConfigPath("bar.config"), "foo.config=>bar.config", BuildConfigPath("foo.config"));
-                yield return Tuple.Create(BuildConfigPath("bar.blah"), "foo.baz=>bar.blah", BuildConfigPath("foo.baz"));
-                yield return Tuple.Create(BuildConfigPath("bar.config"), "foo.xml=>bar.config", BuildConfigPath("foo.xml"));
-                yield return Tuple.Create(BuildConfigPath("xyz.bar.blah"), "*.foo.blah=>*.bar.blah", BuildConfigPath("xyz.foo.blah"));
-                yield return Tuple.Create(BuildConfigPath("xyz.bar.blah"), "foo.blah=>*.bar.blah", BuildConfigPath("xyz.foo.blah"));
-                yield return Tuple.Create(BuildConfigPath("xyz.bar.blah"), "*.foo.blah=>bar.blah", BuildConfigPath("xyz.foo.blah"));
-                yield return Tuple.Create(BuildConfigPath("crossdomainpolicy.xml"), "Production.xml", BuildConfigPath("crossdomainpolicy.Production.xml"));
+                fileSystem.FileExists(file).Returns(true);
+                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(Path.GetFileName(file)))).Returns(new[] {file});
             }
         }
 

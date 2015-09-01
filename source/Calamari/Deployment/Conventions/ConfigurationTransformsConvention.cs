@@ -97,10 +97,14 @@ namespace Calamari.Deployment.Conventions
                 .ToList();
         }
 
-        public static IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation)
+        private IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation)
         {
-            yield return DetermineTransformFileName(sourceFile, transformation, true);
-            yield return DetermineTransformFileName(sourceFile, transformation, false);
+            // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
+            // This prevents any issues with mis-matched casing in transform specifications.
+            return fileSystem.EnumerateFiles(Path.GetDirectoryName(sourceFile),
+               Path.GetFileName(DetermineTransformFileName(sourceFile, transformation, true)),
+               Path.GetFileName(DetermineTransformFileName(sourceFile, transformation, false))
+              );
         }
 
         private static string DetermineTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, bool defaultExtension)
