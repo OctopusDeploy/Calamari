@@ -264,13 +264,36 @@ Execute-WithRetry {
 	Set-ItemProperty $sitePath -name physicalPath -value "$webRoot"
 }
 
+function Bindings-AreEqual($bindingA, $bindingB) {
+    return ($bindingA.protocol -eq $bindingB.protocol) -and ($bindingA.bindingInformation -eq $bindingB.bindinginformation) -and ($bindingA.sslFlags -eq $bindingB.sslFlags)
+}
+
 Execute-WithRetry { 
 	Write-Output "Assigning bindings to website..."
-	Clear-ItemProperty $sitePath -name bindings
+	$existingBindings = Get-ItemProperty $sitePath -name bindings
+
+	#remove existing bindings not configured
+	for ($i = 0; $i -lt $existingBindings.Collection.Count; $i = $i+1) {
+		$binding = $existingBindings.Collection[$i]
+
+		$matching = $wsbindings | Where-Object {Bindings-AreEqual $binding $_ }
+
+		if (-not $matching) {
+			Write-Host "Removing binding: $($binding.protocol) $($binding.bindingInformation)"
+			Remove-WebBinding -Name $webSiteName -BindingInformation $binding.bindingInformation
+		}
+	}
+
+	#add new bindings that don't already exist
 	for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
-		Write-Output ("Binding: " + ($wsbindings[$i].protocol + " " + $wsbindings[$i].bindingInformation + " " + $wsbindings[$i].thumbprint))
-		New-ItemProperty $sitePath -name bindings -value ($wsbindings[$i])
-	
+		$wsbinding = $wsbindings[$i]
+
+		$matching = $existingBindings.Collection | Where-Object {Bindings-AreEqual $wsbinding $_ }
+
+		if (-not $matching) {
+			Write-Host "Adding binding: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
+			New-ItemProperty $sitePath -name bindings -value ($wsbinding)
+		}
 	}
 }
 
