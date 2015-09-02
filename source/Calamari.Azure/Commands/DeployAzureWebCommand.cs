@@ -49,7 +49,7 @@ namespace Calamari.Azure.Commands
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
 
             var fileSystem = new WindowsPhysicalFileSystem();
-            var replacer = new ConfigurationVariablesReplacer();
+            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));

@@ -38,11 +38,11 @@ namespace Calamari.Deployment.Journal
             }
         }
 
-        public IEnumerable<JournalEntry> GetAllJournalEntries()
+        public List<JournalEntry> GetAllJournalEntries()
         {
             using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
             {
-                return Read().Select(element => new JournalEntry(element));
+                return Read().Select(element => new JournalEntry(element)).ToList();
             }
         }
 

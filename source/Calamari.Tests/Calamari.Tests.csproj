@@ -82,9 +82,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.17, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Octostache.1.0.2.17\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.18, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.18\lib\net40\Octostache.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Sprache, Version=2.0.0.45, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -143,6 +143,7 @@
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
     <Compile Include="Fixtures\FileSystem\PackageStoreFixture.cs" />
+    <Compile Include="Fixtures\FileSystem\RetryFixture.cs" />
     <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\Integration\Scripting\ScriptEngineFixture.cs" />
@@ -173,6 +174,9 @@
     <None Include="Fixtures\Bash\Scripts\print-encoded-variable.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\ConfigurationTransforms\Samples\Bad.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ConfigurationTransforms\Samples\Web.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -180,6 +184,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\ConfigurationVariables\Samples\App.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ConfigurationVariables\Samples\Bad.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\ConfigurationVariables\Samples\CrazyNamespace.config">

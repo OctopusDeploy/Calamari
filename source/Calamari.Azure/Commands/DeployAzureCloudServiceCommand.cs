@@ -60,7 +60,7 @@ namespace Calamari.Azure.Commands
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
-            var replacer = new ConfigurationVariablesReplacer();
+            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
 
             var conventions = new List<IConvention>
             {

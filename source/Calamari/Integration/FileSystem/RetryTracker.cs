@@ -45,8 +45,9 @@ namespace Calamari.Integration.FileSystem
 
         public bool Try()
         {
+            var canRetry = CanRetry();
             currentTry++;
-            return CanRetry();
+            return canRetry;
         }
 
         public int Sleep()

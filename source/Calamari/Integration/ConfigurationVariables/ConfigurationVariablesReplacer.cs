@@ -11,15 +11,60 @@ namespace Calamari.Integration.ConfigurationVariables
 {
     public class ConfigurationVariablesReplacer : IConfigurationVariablesReplacer
     {
+        readonly bool ignoreVariableReplacementErrors;
+
+        public ConfigurationVariablesReplacer(bool ignoreVariableReplacementErrors = false)
+        {
+            this.ignoreVariableReplacementErrors = ignoreVariableReplacementErrors;
+        }
+
         public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
-            XDocument doc;
+            try
+            {
+                var doc = ReadXmlDocument(configurationFilePath);
+                var changes = ApplyChanges(doc, variables);
 
+                if (!changes.Any())
+                {
+                    Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
+                    return;
+                }
+
+                Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
+
+                foreach (var change in changes)
+                {
+                    Log.Verbose(change);
+                }
+
+                WriteXmlDocument(doc, configurationFilePath);
+            }
+            catch (Exception ex)
+            {
+                if (ignoreVariableReplacementErrors)
+                {
+                    Log.Warn(ex.Message);
+                    Log.Warn(ex.StackTrace);
+                }
+                else
+                {
+                    Log.ErrorFormat("Exception while replacing configuration-variables in: {0}", configurationFilePath);
+                    throw;
+                }
+            }
+        }
+
+        static XDocument ReadXmlDocument(string configurationFilePath)
+        {
             using (var reader = XmlReader.Create(configurationFilePath, XmlUtils.DtdSafeReaderSettings))
             {
-                doc = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
+                return XDocument.Load(reader, LoadOptions.PreserveWhitespace);
             }
+        }
 
+        static List<string> ApplyChanges(XNode doc, VariableDictionary variables)
+        {
             var changes = new List<string>();
 
             foreach (var variable in variables.GetNames())
@@ -29,21 +74,12 @@ namespace Calamari.Integration.ConfigurationVariables
                     ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables).Concat(
                     ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables))));
             }
+            return changes;
+        }
 
-            if (!changes.Any())
-            {
-                Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
-                return;
-            }
-
-            Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
-
-            foreach (var change in changes)
-            {
-                Log.Verbose(change);
-            }
-
-            var xws = new XmlWriterSettings { OmitXmlDeclaration = doc.Declaration == null, Indent = true };
+        static void WriteXmlDocument(XDocument doc, string configurationFilePath)
+        {
+            var xws = new XmlWriterSettings {OmitXmlDeclaration = doc.Declaration == null, Indent = true};
             using (var writer = XmlWriter.Create(configurationFilePath, xws))
             {
                 doc.Save(writer);
