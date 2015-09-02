@@ -166,7 +166,7 @@ namespace Calamari.Integration.FileSystem
                     Log.VerboseFormat("Waiting for directory '{0}' to be deleted", path);
             }
 
-            var message = $"Unable to ensure directory '{path}' was deleted";
+            var message = $"Directory '{path}' still exists, despite requested deletion";
 
             if (failureOptions == FailureOptions.ThrowOnFailure)
                 throw new Exception(message);
