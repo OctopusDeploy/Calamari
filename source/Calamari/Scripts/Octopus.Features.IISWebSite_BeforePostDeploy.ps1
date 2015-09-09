@@ -268,32 +268,50 @@ function Bindings-AreEqual($bindingA, $bindingB) {
     return ($bindingA.protocol -eq $bindingB.protocol) -and ($bindingA.bindingInformation -eq $bindingB.bindinginformation) -and ($bindingA.sslFlags -eq $bindingB.sslFlags)
 }
 
-Execute-WithRetry { 
-	Write-Output "Assigning bindings to website..."
-	$existingBindings = Get-ItemProperty $sitePath -name bindings
-
-	#remove existing bindings not configured
+# Returns $true if existing IIS bindings are as specified in configuration, otherwise $false
+function Bindings-AreCorrect($existingBindings, $configuredBindings) {
+    # Are there existing assigned bindings that are not configured
 	for ($i = 0; $i -lt $existingBindings.Collection.Count; $i = $i+1) {
 		$binding = $existingBindings.Collection[$i]
-
+ 
 		$matching = $wsbindings | Where-Object {Bindings-AreEqual $binding $_ }
 
 		if (-not $matching) {
-			Write-Host "Removing binding: $($binding.protocol) $($binding.bindingInformation)"
-			Remove-WebBinding -Name $webSiteName -BindingInformation $binding.bindingInformation
+			Write-Host "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
+			return $false
 		}
 	}
 
-	#add new bindings that don't already exist
+	# Are there configured bindings which are not assigned
 	for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
-		$wsbinding = $wsbindings[$i]
+	    $wsbinding = $wsbindings[$i]
 
-		$matching = $existingBindings.Collection | Where-Object {Bindings-AreEqual $wsbinding $_ }
+	    $matching = $existingBindings.Collection | Where-Object {Bindings-AreEqual $wsbinding $_ }
 
-		if (-not $matching) {
-			Write-Host "Adding binding: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
-			New-ItemProperty $sitePath -name bindings -value ($wsbinding)
-		}
+	    if (-not $matching) {
+		    Write-Host "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
+		    return $false
+	    }
+	}
+
+    return $true
+}
+
+Execute-WithRetry { 
+	Write-Output "Comparing existing IIS bindings with configured bindings..."
+	$existingBindings = Get-ItemProperty $sitePath -name bindings
+
+	if (-not (Bindings-AreCorrect $existingBindings $wsbindings)) {
+        Write-Host "Existing IIS bindings do not match configured bindings."
+		Write-Host "Clearing IIS bindings"
+        Clear-ItemProperty $sitePath -name bindings
+
+       	for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
+		    Write-Output ("Assigning binding: " + ($wsbindings[$i].protocol + " " + $wsbindings[$i].bindingInformation))
+		    New-ItemProperty $sitePath -name bindings -value ($wsbindings[$i])
+	    }
+    } else {
+		Write-Host "Bindings are as configured. No changes required."
 	}
 }
 
