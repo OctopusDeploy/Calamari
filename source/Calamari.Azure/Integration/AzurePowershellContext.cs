@@ -21,7 +21,7 @@ namespace Calamari.Azure.Integration
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
-        static readonly string AzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1");
+        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1");
 
         public AzurePowerShellContext()
         {
@@ -35,7 +35,11 @@ namespace Calamari.Azure.Integration
             var workingDirectory = Path.GetDirectoryName(scriptFile);
             variables.Set("OctopusAzureTargetScript", scriptFile);
 
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, AzurePowershellModulePath, variables);
+            // If the Azure PowerShell module to use has not been explicitly configured, then default to the version
+            // bundled with Calamari
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, 
+                variables.Get(SpecialVariables.Action.Azure.PowerShellModulePath, BuiltInAzurePowershellModulePath), variables);
+
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);
 
