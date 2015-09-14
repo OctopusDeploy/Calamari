@@ -120,6 +120,8 @@
 
             public static class Azure
             {
+                public static readonly string PowerShellModulePath = "Octopus.Action.Azure.PowerShellModule";
+
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
