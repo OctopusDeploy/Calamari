@@ -1,0 +1,58 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
+
+namespace Calamari.Azure.Integration.CloudServicePackage.ManifestSchema
+{
+    public class PackageDefinition
+    {
+        public static readonly XNamespace AzureNamespace = "http://schemas.microsoft.com/windowsazure";
+        public static readonly XName ElementName = AzureNamespace + "PackageDefinition";
+        private static readonly XName PackageContentsElementName = AzureNamespace + "PackageContents";
+        private static readonly XName PackageLayoutsElementName = AzureNamespace + "PackageLayouts";
+
+        public PackageDefinition()
+        {
+            MetaData = new PackageMetaData();
+            Layouts = new List<LayoutDefinition>();
+            Contents = new List<ContentDefinition>();
+        }
+
+        public PackageDefinition(XElement element)
+        {
+            MetaData = new PackageMetaData(element.Element(PackageMetaData.ElementName));
+
+            Contents = element
+                .Element(PackageContentsElementName)
+                .Elements(ContentDefinition.ElementName)
+                .Select(x => new ContentDefinition(x))
+                .ToList();
+
+            Layouts = element
+                .Element(PackageLayoutsElementName)
+                .Elements(LayoutDefinition.ElementName)
+                .Select(x => new LayoutDefinition(x))
+                .ToList();
+        }
+
+        public PackageMetaData MetaData { get; private set; }
+
+        public ICollection<ContentDefinition> Contents { get; private set; }
+
+        public ICollection<LayoutDefinition> Layouts { get; private set; }
+
+        public ContentDefinition GetContentDefinition(string name)
+        {
+            return Contents.Single(x => x.Name == name);
+        }
+
+        public XElement ToXml()
+        {
+           return new XElement(ElementName,
+               MetaData.ToXml(), 
+               new XElement(PackageContentsElementName, Contents.Select(x => x.ToXml())),
+               new XElement(PackageLayoutsElementName, Layouts.Select(x => x.ToXml()))
+               ); 
+        }
+    }
+}

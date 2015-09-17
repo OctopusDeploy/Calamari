@@ -1,4 +1,6 @@
-﻿# All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
+﻿param([string]$key="")
+
+# All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
 #  2. Loads the $OctopusParameters variables
 #  3. Sets a few defaults, like aborting scripts when an error is encountered
@@ -62,60 +64,27 @@ function Write-Warning([string]$message)
 	Write-Host "##octopus[stdout-default]"
 }
 
-function Reload-OctopusVariables([string]$variablesFile)
-{
-	function MakeLegacyKey($key) 
-	{
-		$result = New-Object System.Text.StringBuilder
 
-		for ($i = 0; $i -lt $key.Length; $i++)
-		{
-			if ([System.Char]::IsLetterOrDigit($key[$i]))
-			{
-				$c = $key[$i]
-				$null = $result.Append($c)
-			}
-		}
+function Decrypt-String($Encrypted, $iv) 
+{ 
+	$provider = new-Object System.Security.Cryptography.AesCryptoServiceProvider
+	$provider.Mode = [System.Security.Cryptography.CipherMode]::CBC
+	$provider.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+	$provider.KeySize = 128
+	$provider.BlockSize = 128
+	$provider.Key = [System.Convert]::FromBase64String($key)
+	$provider.IV =[System.Convert]::FromBase64String($iv)
 
-		return $result.ToString()
-	}
-
-	function MakeSmartKey($key)
-	{
-		$result = New-Object System.Text.StringBuilder
-
-		for ($i = 0; $i -lt $key.Length; $i++)
-		{
-			$c = $key[$i]
-			if (([System.Char]::IsLetterOrDigit($key[$i])) -or ($c -eq '_'))
-			{
-				$null = $result.Append($c)
-			}
-		}
-
-		return $result.ToString()
-	}
-
-	function AssignVariable($k, $v) 
-	{
-		$fullVariablePath = "variable:global:$k"
-		if (-Not (Test-Path $fullVariablePath)) 
-		{
-			Set-Item -Path $fullVariablePath -Value $v
-		}
-	}
-	
-	$global:OctopusParameters.GetNames() | ForEach-Object {
-		$name = $_
-		$value = $result.Get($_)
-		$legacyKey = MakeLegacyKey($name)
-		$smartKey = MakeSmartKey($name)
-		if ($legacyKey -ne $smartKey)
-		{
-			AssignVariable -k $legacyKey -v $value
-		}
-	    AssignVariable -k $smartKey -v $value
-	}
+	$dec = $provider.CreateDecryptor()
+	$ms = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
+	$cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
+	$sr = new-Object IO.StreamReader $cs 
+		Write-Output $sr.ReadToEnd() 
+	$sr.Dispose() 
+	$cs.Dispose() 
+	$ms.Dispose() 
+	$dec.Dispose()
+	$provider.Dispose()
 }
 
 function InitializeProxySettings() 

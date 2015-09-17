@@ -34,7 +34,7 @@ namespace Calamari.Commands
             if (days <=0 && releases <= 0)
                 throw new CommandException("A value must be provided for either --days or --releases");
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariableDictionary();
             variables.EnrichWithEnvironmentVariables();
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();

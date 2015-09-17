@@ -44,7 +44,7 @@ namespace Calamari.Commands
             fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
 
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
-                new ServiceMessageCommandOutput(new VariableDictionary())));
+                new ServiceMessageCommandOutput(new CalamariVariableDictionary())));
 
             var tempNewFilePath = newFilePath + ".partial";
             var executable = FindOctoDiffExecutable();

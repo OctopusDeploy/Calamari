@@ -15,5 +15,6 @@
 
     <MakeDir Directories="$(ProjectDir)..\..\built-packages"/>
     <Exec Command='"$(NuGetExePath)" pack "$(ProjectDir)Windows\Calamari.nuspec" -BasePath "$(ProjectDir.TrimEnd("\"))" -Version $(OctopusPackageVersion) -NoPackageAnalysis -NonInteractive -OutputDirectory "$(ProjectDir)..\..\built-packages"' />
+    <Exec Command='"$(NuGetExePath)" pack "$(ProjectDir)Windows\Calamari.Azure.nuspec" -BasePath "$(ProjectDir.TrimEnd("\"))" -Version $(OctopusPackageVersion) -NoPackageAnalysis -NonInteractive -OutputDirectory "$(ProjectDir)..\..\built-packages"' />
   </Target>
 </Project>

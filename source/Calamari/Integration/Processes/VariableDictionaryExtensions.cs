@@ -39,12 +39,14 @@ namespace Calamari.Integration.Processes
             // Then we will set Octopus.Action[DeployWeb].Output[Web01].Foo
             var machineName = variables.Get(SpecialVariables.Machine.Name);
 
-            if (string.IsNullOrWhiteSpace(machineName)) 
+            if (string.IsNullOrWhiteSpace(machineName))
                 return;
 
             var machineIndexedVariableName = SpecialVariables.GetMachineIndexedOutputVariableName(actionName, machineName, name);
             variables.Set(machineIndexedVariableName, value);
         }
+
+
 
         public static void LogVariables(this VariableDictionary variables)
         {

@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Integration.Processes;
 using Octostache;
 
 namespace Calamari.Deployment
@@ -6,9 +7,9 @@ namespace Calamari.Deployment
     public class RunningDeployment
     {
         private readonly string packageFilePath;
-        private readonly VariableDictionary variables;
+        private readonly CalamariVariableDictionary variables;
 
-        public RunningDeployment(string packageFilePath, VariableDictionary variables)
+        public RunningDeployment(string packageFilePath, CalamariVariableDictionary variables)
         {
             this.packageFilePath = packageFilePath;
             this.variables = variables;
@@ -48,7 +49,7 @@ namespace Calamari.Deployment
             get { return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ? StagingDirectory : CustomDirectory; }
         }
 
-        public VariableDictionary Variables
+        public CalamariVariableDictionary Variables
         {
             get {  return variables; }
         }

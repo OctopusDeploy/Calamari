@@ -7,6 +7,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
@@ -20,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         ICalamariFileSystem fileSystem;
         IConfigurationTransformer configurationTransformer;
         RunningDeployment deployment;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         const string stagingDirectory = "c:\\applications\\acme\\1.0.0";
 
         [SetUp]
@@ -29,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem = Substitute.For<ICalamariFileSystem>();
             configurationTransformer = Substitute.For<IConfigurationTransformer>();
 
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
 
             deployment = new RunningDeployment("C:\\packages", variables);
