@@ -64,7 +64,6 @@ function Write-Warning([string]$message)
 	Write-Host "##octopus[stdout-default]"
 }
 
-
 function Decrypt-String($Encrypted, $iv) 
 { 
 	$provider = new-Object System.Security.Cryptography.AesCryptoServiceProvider
@@ -84,7 +83,11 @@ function Decrypt-String($Encrypted, $iv)
 	$cs.Dispose() 
 	$ms.Dispose() 
 	$dec.Dispose()
+	# The AesCryptoServiceProvider class implemented IDiposable explicitly in .NET 2, so 
+	# the line below would fail under PowerShell 2.0 
+	try {
 	$provider.Dispose()
+	} catch {}
 }
 
 function InitializeProxySettings() 

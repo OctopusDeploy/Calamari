@@ -112,6 +112,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 var variableValue = variables.IsSensitive(variableName)
                     ? EncryptVariable(variables.Get(variableName))
                     : EncodeValue(variables.Get(variableName));
+
                 output.Append("$OctopusParameters[").Append(EncodeValue(variableName)).Append("] = ").AppendLine(variableValue);
             }
         }
@@ -155,7 +156,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var encrypted = VariableEncryptor.Encrypt(value);
             byte[] iv;
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
-            return string.Format("Decrypt-String \"{0}\" \"{1}\"", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
+            // The seemingly superfluous '-as' below was for PowerShell 2.0.  Without it, a cast exception was thrown when trying to add the object
+            // to a generic collection. 
+            return string.Format("(Decrypt-String \"{0}\" \"{1}\") -as [string]", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
         }
 
         static string EncodeValue(string value)
