@@ -64,18 +64,6 @@ function Write-Warning([string]$message)
 	Write-Host "##octopus[stdout-default]"
 }
 
-# This function handles objects that implement IDisposable in .NET 4, but didn't in .NET 2  
-# We try calling Dispose, but swallow the exception if the method doesn't exist.
-function Try-Dispose($obj) 
-{
-	try {
-	$obj.Dispose()
-	}
-	catch {
-	}
-}
-
-
 function Decrypt-String($Encrypted, $iv) 
 { 
 	$provider = new-Object System.Security.Cryptography.AesCryptoServiceProvider
@@ -95,7 +83,11 @@ function Decrypt-String($Encrypted, $iv)
 	$cs.Dispose() 
 	$ms.Dispose() 
 	$dec.Dispose()
-	Try-Dispose $provider
+	# The AesCryptoServiceProvider class implemented IDiposable explicitly in .NET 2, so 
+	# the line below would fail under PowerShell 2.0 
+	try {
+	$provider.Dispose()
+	} catch {}
 }
 
 function InitializeProxySettings() 
