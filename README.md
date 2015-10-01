@@ -7,7 +7,7 @@ This repository is currently a work-in-progress as we migrate the tools and scri
 To use your own build of Calamari with an Octopus 3.0 server, add the following setting to your Octopus Server configuration file:
 
 ```
-  <set key="Octopus.Deployment.CustomCalamariPackageDirectory">C:\GitHub\Calamari\built-packages</set>
+  <set key="Octopus.Deployment.CustomBundledPackageDirectory">C:\GitHub\Calamari\built-packages</set>
 ```
 
 The configuration file can normally be found at:
