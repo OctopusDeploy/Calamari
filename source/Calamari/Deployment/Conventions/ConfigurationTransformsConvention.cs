@@ -102,9 +102,16 @@ namespace Calamari.Deployment.Conventions
             // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
             // This prevents any issues with mis-matched casing in transform specifications.
             return fileSystem.EnumerateFiles(Path.GetDirectoryName(sourceFile),
-               Path.GetFileName(DetermineTransformFileName(sourceFile, transformation, true)),
-               Path.GetFileName(DetermineTransformFileName(sourceFile, transformation, false))
-              );
+               GetRelativePathToTransformFile(sourceFile, DetermineTransformFileName(sourceFile, transformation, true)),
+               GetRelativePathToTransformFile(sourceFile, DetermineTransformFileName(sourceFile, transformation, false))
+            );
+        }
+
+        private static string GetRelativePathToTransformFile(string sourceFile, string transformFile)
+        {
+            return transformFile
+                .Replace(Path.GetDirectoryName(sourceFile) ?? string.Empty, "")
+                .TrimStart('\\');
         }
 
         private static string DetermineTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, bool defaultExtension)
