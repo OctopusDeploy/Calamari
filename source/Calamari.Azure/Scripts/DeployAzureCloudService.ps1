@@ -26,7 +26,10 @@
 
 function CreateOrUpdate() 
 {
-	Set-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName -CurrentStorageAccount $OctopusAzureStorageAccountName 
+	$azureProfile = New-AzureProfile -Path ".\AzureProfile.json"
+	Select-AzureProfile -Profile $azureProfile | Out-Null
+
+	Set-AzureSubscription -SubscriptionId $OctopusAzureSubscriptionId -CurrentStorageAccount $OctopusAzureStorageAccountName
 
     $deployment = Get-AzureDeployment -ServiceName $OctopusAzureServiceName -Slot $OctopusAzureSlot -ErrorVariable a -ErrorAction silentlycontinue
  
