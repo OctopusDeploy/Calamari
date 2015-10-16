@@ -27,10 +27,7 @@ Write-Verbose "Loading the management certificate"
 Add-Type -AssemblyName "System"
 $certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
 $azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -Certificate $certificate
-
-if (!(Test-Path ".\AzureProfile.json" -ErrorAction SilentlyContinue)) {
-	$azureProfile.Save(".\AzureProfile.json")
-}
+$azureProfile.Save(".\AzureProfile.json")
 
 Select-AzureProfile -Profile $azureProfile | Out-Null
 
