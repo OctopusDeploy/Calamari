@@ -19,9 +19,6 @@ Write-Verbose "  Subscription name:     $OctopusAzureSubscriptionName"
 Write-Verbose "Importing Windows Azure modules"
 
 Import-Module $OctopusAzureModulePath
-function Get-OctopusAzureCertificate {
-	return $certificate
-}
 
 Write-Verbose "Loading the management certificate"
 Add-Type -AssemblyName "System"
