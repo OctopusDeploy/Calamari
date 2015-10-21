@@ -26,7 +26,7 @@
 
 function CreateOrUpdate() 
 {
-	Set-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName -CurrentStorageAccount $OctopusAzureStorageAccountName 
+	Set-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName -CurrentStorageAccount $OctopusAzureStorageAccountName
 
     $deployment = Get-AzureDeployment -ServiceName $OctopusAzureServiceName -Slot $OctopusAzureSlot -ErrorVariable a -ErrorAction silentlycontinue
  
