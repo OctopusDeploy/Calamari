@@ -25,6 +25,7 @@ namespace Calamari.Tests.Fixtures.Retention
         JournalEntry threeDayOldDeployment;
         JournalEntry twoDayOldDeployment;
         JournalEntry oneDayOldUnsuccessfulDeployment;
+        JournalEntry fourDayOldSameLocationDeployment;
 
         const string policySet2 = "policySet2";
         JournalEntry fiveDayOldNonMatchingDeployment;
@@ -44,6 +45,11 @@ namespace Calamari.Tests.Fixtures.Retention
             fourDayOldDeployment = new JournalEntry("fourDayOld", "blah", "blah", "blah", "blah", policySet1,
                 now.AddDays(-4).LocalDateTime,
                 "C:\\packages\\Acme.1.0.0.nupkg", "C:\\Applications\\Acme.1.0.0", null, true);
+
+            // Deployed 4 days prior to 'now' but to the same location as the latest successful deployment
+            fourDayOldSameLocationDeployment = new JournalEntry("twoDayOld", "blah", "blah", "blah", "blah", policySet1,
+                now.AddDays(-4).LocalDateTime,
+                "C:\\packages\\Acme.1.2.0.nupkg", "C:\\Applications\\Acme.1.2.0", null, true);
 
             // Deployed 3 days prior to 'now'
             threeDayOldDeployment = new JournalEntry("threeDayOld", "blah", "blah", "blah", "blah", policySet1,
@@ -81,6 +87,36 @@ namespace Calamari.Tests.Fixtures.Retention
                 fileSystem.FileExists(journalEntry.ExtractedFrom).Returns(true);
                 fileSystem.DirectoryExists(journalEntry.ExtractedTo).Returns(true);
             }
+        }
+
+
+        [Test]
+        public void ShouldNotDeleteDirectoryWhereRetainedDeployedToSame()
+        {
+            var journalEntries = new List<JournalEntry>
+            {
+                fourDayOldDeployment,
+                fourDayOldSameLocationDeployment,
+                twoDayOldDeployment,
+            };
+            deploymentJournal.GetAllJournalEntries().Returns(journalEntries);
+            fileSystem.FileExists(fourDayOldSameLocationDeployment.ExtractedFrom).Returns(true);
+            fileSystem.DirectoryExists(fourDayOldSameLocationDeployment.ExtractedTo).Returns(true);
+
+            const int days = 3;
+            retentionPolicy.ApplyRetentionPolicy(policySet1, days, null);
+
+            // Ensure the directories are the same
+            Assert.AreEqual(twoDayOldDeployment.ExtractedTo, fourDayOldSameLocationDeployment.ExtractedTo);
+            
+            // The old directory was not removed...
+            fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => s.Equals(fourDayOldSameLocationDeployment.ExtractedTo)));
+
+            // ...despite being removed from the journal
+            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Contains(fourDayOldSameLocationDeployment.Id)));
+
+            // and unique directory still removed
+            fileSystem.Received().DeleteDirectory(Arg.Is<string>(s => s.Equals(fourDayOldDeployment.ExtractedTo)));
 
         }
 
