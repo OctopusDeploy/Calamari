@@ -6,7 +6,7 @@ namespace Calamari.Azure
 {
     class Program : Calamari.Program
     {
-        public Program()
+        public Program() : base("Calamari.Azure", typeof(Azure.Program).Assembly.GetInformationalVersion())
         {
             ScriptEngineRegistry.Instance.ScriptEngines[ScriptType.Powershell] = new AzurePowerShellScriptEngine();            
         }

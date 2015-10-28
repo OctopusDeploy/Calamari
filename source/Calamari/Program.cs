@@ -7,14 +7,25 @@ namespace Calamari
 {
     public class Program
     {
+        readonly string displayName;
+        readonly string informationalVersion;
+
+        public Program(string displayName, string informationalVersion)
+        {
+            this.displayName = displayName;
+            this.informationalVersion = informationalVersion;
+        }
+
         static int Main(string[] args)
         {
-            var program = new Program();
+            var program = new Program("Calamari", typeof(Program).Assembly.GetInformationalVersion());
             return program.Execute(args);
         }
 
         protected int Execute(string[] args)
         {
+            Log.Verbose($"Octopus Deploy: {displayName} version {informationalVersion}");
+
             ProxyInitializer.InitializeDefaultProxy();
             RegisterCommandAssemblies();
 
