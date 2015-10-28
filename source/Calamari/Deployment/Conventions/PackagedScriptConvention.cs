@@ -33,7 +33,7 @@ namespace Calamari.Deployment.Conventions
             DeleteScripts(deployment);
         }
 
-        void RunScripts(RunningDeployment deployment)
+        protected void RunScripts(RunningDeployment deployment)
         {
             var scripts = FindScripts(deployment);
 
