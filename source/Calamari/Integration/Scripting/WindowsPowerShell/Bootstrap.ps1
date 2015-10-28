@@ -105,6 +105,8 @@ function InitializeProxySettings()
 	}
 }
 
+$ErrorActionPreference = 'Stop'
+
 # -----------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------
@@ -117,8 +119,6 @@ function InitializeProxySettings()
 # -----------------------------------------------------------------
 
 InitializeProxySettings
-
-$ErrorActionPreference = 'Stop'
 
 # -----------------------------------------------------------------
 # Invoke target script
