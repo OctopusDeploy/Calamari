@@ -1,5 +1,7 @@
 ﻿param([string]$key="")
 
+Add-Type -AssemblyName System.Core
+
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
 #  2. Loads the $OctopusParameters variables
@@ -105,6 +107,8 @@ function InitializeProxySettings()
 	}
 }
 
+$ErrorActionPreference = 'Stop'
+
 # -----------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------
@@ -117,8 +121,6 @@ function InitializeProxySettings()
 # -----------------------------------------------------------------
 
 InitializeProxySettings
-
-$ErrorActionPreference = 'Stop'
 
 # -----------------------------------------------------------------
 # Invoke target script
