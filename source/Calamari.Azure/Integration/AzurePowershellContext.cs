@@ -42,12 +42,26 @@ namespace Calamari.Azure.Integration
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);
+            SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
-            using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
+                {
+                    SetOutputVariable("OctopusUseServicePrincipal", true.ToString(), variables);
+                    SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
+                    SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
+                    variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
+                    return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                }
+
+                //otherwise use management certificate
+                SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
+                using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
+                {
+                    return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                }
             }
         }
 

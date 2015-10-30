@@ -123,6 +123,9 @@
                 public static readonly string PowerShellModulePath = "Octopus.Action.Azure.PowerShellModule";
 
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
+                public static readonly string ClientId = "Octopus.Action.Azure.ClientId";
+                public static readonly string TenantId = "Octopus.Action.Azure.TenantId";
+                public static readonly string Password = "Octopus.Action.Azure.Password";
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 
