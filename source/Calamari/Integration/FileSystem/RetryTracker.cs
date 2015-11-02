@@ -31,6 +31,7 @@ namespace Calamari.Integration.FileSystem
         public bool ThrowOnFailure { get; private set; }
 
         int currentTry = 0;
+        TimeSpan lastTry = TimeSpan.Zero;
 
         public int CurrentTry { get { return currentTry; } }
 
@@ -47,6 +48,7 @@ namespace Calamari.Integration.FileSystem
         {
             var canRetry = CanRetry();
             currentTry++;
+            lastTry = stopWatch.Value.Elapsed;
             return canRetry;
         }
 
@@ -58,7 +60,7 @@ namespace Calamari.Integration.FileSystem
         public bool CanRetry()
         {
             bool noRetry = (maxRetries.HasValue && currentTry > maxRetries.Value) ||
-                (timeLimit != null && stopWatch.Value.Elapsed > timeLimit);
+                (timeLimit != null && lastTry.TotalMilliseconds + retryInterval.GetInterval(currentTry) > timeLimit.Value.TotalMilliseconds);
             return !noRetry;
         }
 
