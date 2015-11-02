@@ -132,6 +132,7 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
+    <Compile Include="Fixtures\SetUpFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
     <Compile Include="Fixtures\Conventions\AlreadyInstalledConventionFixture.cs" />
@@ -363,7 +364,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y
+    <PostBuildEvent>xcopy "$(SolutionDir)\Calamari\bin\Calamari.exe.config" "$(TargetDir)" /y
+xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y
 xcopy "$(SolutionDir)packages\NuGet.CommandLine.2.8.3\tools\Nuget.exe" "$(TargetDir)NuGet\"  /y</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" />
