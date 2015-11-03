@@ -146,6 +146,10 @@
                 public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg";
                 public static readonly string CloudServiceConfigurationFileRelativePath = "Octopus.Action.Azure.CloudServiceConfigurationFileRelativePath";
 
+                public static readonly string ResourceGroupName = "Octopus.Action.Azure.ResourceGroupName";
+                public static readonly string ResourceGroupDeploymentName = "Octopus.Action.Azure.ResourceGroupDeploymentName";
+                public static readonly string ResourceGroupDeploymentMode = "Octopus.Action.Azure.ResourceGroupDeploymentMode";
+
                 public static class Output
                 {
                     public static readonly string AzurePowershellModulePath = "OctopusAzureModulePath";
