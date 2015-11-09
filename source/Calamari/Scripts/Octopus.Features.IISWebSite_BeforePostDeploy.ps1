@@ -254,8 +254,11 @@ Execute-WithRetry {
 }
 
 $cmd = { 
-	Write-Output "Assigning website to application pool..."
-	Set-ItemProperty $sitePath -name applicationPool -value $ApplicationPoolName
+	$pool = Get-ItemProperty $sitePath -name applicationPool
+	if ($ApplicationPoolName -ne $pool) {
+		Write-Output "Assigning website to application pool..."
+		Set-ItemProperty $sitePath -name applicationPool -value $ApplicationPoolName
+	}
 }
 Execute-WithRetry -Command $cmd
 
