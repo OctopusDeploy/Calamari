@@ -234,6 +234,9 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web.Tests\web.Production.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\Deploy.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

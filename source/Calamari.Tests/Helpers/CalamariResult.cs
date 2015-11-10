@@ -113,6 +113,13 @@ namespace Calamari.Tests.Helpers
 
         }
 
+        public void AssertNoOutput(string expectedOutput)
+        {
+            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+
+            Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) == -1, string.Format("Expected not to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+        }
+
         public void AssertOutput(string expectedOutput)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);

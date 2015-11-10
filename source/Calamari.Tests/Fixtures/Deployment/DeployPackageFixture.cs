@@ -129,6 +129,25 @@ namespace Calamari.Tests.Fixtures.Deployment
             AssertXmlNodeValue(Path.Combine(stagingDirectory, "Production", "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
 
+
+        
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        public void ShouldInvokeDeployFailedOnError()
+        {
+            variables.Set("ShouldFail", "yes");
+            var result = DeployPackage("Acme.Web");
+            result.AssertOutput("I have failed! DeployFailed.ps1");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        public void ShouldNotInvokeDeployWhenNoError()
+        {
+            var result = DeployPackage("Acme.Web");
+            result.AssertNoOutput("I have failed! DeployFailed.ps1");
+        }
+
         [Test]
         public void ShouldCopyFilesToCustomInstallationDirectory()
         {
