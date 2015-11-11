@@ -1,6 +1,6 @@
 ﻿param([string]$key="")
 
-Add-Type -AssemblyName System.Core
+$ErrorActionPreference = 'Stop'
 
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
@@ -67,28 +67,36 @@ function Write-Warning([string]$message)
 }
 
 function Decrypt-String($Encrypted, $iv) 
-{ 
-	$provider = new-Object System.Security.Cryptography.AesCryptoServiceProvider
-	$provider.Mode = [System.Security.Cryptography.CipherMode]::CBC
-	$provider.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
-	$provider.KeySize = 128
-	$provider.BlockSize = 128
-	$provider.Key = [System.Convert]::FromBase64String($key)
-	$provider.IV =[System.Convert]::FromBase64String($iv)
+{
+	# Try AesCryptoServiceProvider first (requires .NET 3.5+), otherwise fall back to AesManaged (.NET 2.0)
+	# Note using AesManaged will fail in FIPS compliant environments: https://support.microsoft.com/en-us/kb/811833
+	Add-Type -AssemblyName System.Core -ErrorAction SilentlyContinue
+	$aes = [System.Security.Cryptography.Aes] (New-Object System.Security.Cryptography.AesCryptoServiceProvider -ErrorAction SilentlyContinue)
+	if ($aes -eq $null) {
+		$aes = [System.Security.Cryptography.Aes] (New-Object System.Security.Cryptography.AesManaged)
+	}
 
-	$dec = $provider.CreateDecryptor()
+	$aes.Mode = [System.Security.Cryptography.CipherMode]::CBC
+	$aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+	$aes.KeySize = 128
+	$aes.BlockSize = 128
+	$aes.Key = [System.Convert]::FromBase64String($key)
+	$aes.IV =[System.Convert]::FromBase64String($iv)
+	$dec = [System.Security.Cryptography.ICryptoTransform]$aes.CreateDecryptor()
+
 	$ms = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
 	$cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
 	$sr = new-Object IO.StreamReader $cs 
-		Write-Output $sr.ReadToEnd() 
+	Write-Output $sr.ReadToEnd()
 	$sr.Dispose() 
 	$cs.Dispose() 
 	$ms.Dispose() 
 	$dec.Dispose()
-	# The AesCryptoServiceProvider class implemented IDiposable explicitly in .NET 2, so 
-	# the line below would fail under PowerShell 2.0 
+	
+	# The Aes base class implemented IDiposable explicitly in .NET 3.5, so 
+	# the line below would fail under PowerShell 2.0 / CLR 2.0
 	try {
-	$provider.Dispose()
+		$aes.Dispose()
 	} catch {}
 }
 
@@ -106,8 +114,6 @@ function InitializeProxySettings()
 		[System.Net.WebRequest]::DefaultWebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 	}
 }
-
-$ErrorActionPreference = 'Stop'
 
 # -----------------------------------------------------------------
 # Variables
