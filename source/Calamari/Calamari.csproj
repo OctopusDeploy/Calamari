@@ -169,6 +169,7 @@
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
+    <Compile Include="Integration\Scripting\PackagedScriptRunner.cs" />
     <Compile Include="Deployment\Conventions\RollbackScriptConvention.cs" />
     <Compile Include="Deployment\DeploymentStages.cs" />
     <Compile Include="Deployment\DeploymentWorkingDirectory.cs" />
