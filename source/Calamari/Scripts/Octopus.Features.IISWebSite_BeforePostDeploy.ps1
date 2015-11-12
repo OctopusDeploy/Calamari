@@ -81,32 +81,79 @@ $supportsSNI = $iisVersion -ge 8
 
 $wsbindings = new-object System.Collections.ArrayList
 
-# Each binding string consists of a protocol/binding information (IP, port, hostname)/SSL thumbprint/enabled/sslFlags
-# Binding strings are pipe (|) separated to allow multiple to be specified
-$bindingString.Split("|") | foreach-object {
-    $bindingParts = $_.split("/")
-	$skip = $false
-	if ($bindingParts.Length -ge 4) {
-		if (![String]::IsNullOrEmpty($bindingParts[3]) -and [Bool]::Parse($bindingParts[3]) -eq $false) {
-			$skip = $true
+Write-Output $bindingString
+
+if($bindingString.StartsWith("[{")) {
+	
+	if(Get-Command ConvertFrom-Json -errorAction SilentlyContinue){
+		$bindingArray = (ConvertFrom-Json $bindingString)
+	} else {
+		add-type -assembly system.web.extensions
+		$serializer=new-object system.web.script.serialization.javascriptSerializer
+		$bindingArray = ($serializer.DeserializeObject($bindingString))
+	}
+
+	ForEach($binding in $bindingArray){
+		$sslFlagPart = @{$true=1;$false=0}[$binding.requireSni]  
+		if($binding.enabled) {
+			if ($supportsSNI -eq $true ) {
+				$wsbindings.Add(@{ 
+					protocol=$binding.protocol;
+					ipAddress=$binding.ipAddress;
+					port=$binding.port;
+					host=$binding.host;
+					bindingInformation=$binding.ipAddress+":"+$binding.port+":"+$binding.host;
+					thumbprint=$binding.thumbprint.Trim();
+					sslFlags=$sslFlagPart }) | Out-Null
+			} else {
+				$wsbindings.Add(@{ 
+					protocol=$binding.protocol;
+					ipAddress=$binding.ipAddress;
+					port=$binding.port;
+					host=$binding.host;
+					bindingInformation=$binding.ipAddress+":"+$binding.port+":"+$binding.host;
+					thumbprint=$binding.thumbprint.Trim() }) | Out-Null
+			}
+		} else {
+			Write-Output "Ignore binding: $binding"
 		}
 	}
+
+} else {	
+	# Each binding string consists of a protocol/binding information (IP, port, hostname)/SSL thumbprint/enabled/sslFlags
+	# Binding strings are pipe (|) separated to allow multiple to be specified
+	$bindingString.Split("|") | foreach-object {
+		$bindingParts = $_.split("/")
+		$skip = $false
+		if ($bindingParts.Length -ge 4) {
+			if (![String]::IsNullOrEmpty($bindingParts[3]) -and [Bool]::Parse($bindingParts[3]) -eq $false) {
+				$skip = $true
+			}
+		}
 	 
-	if ($skip -eq $false) {
-		$sslFlagPart = 0
-		if($bindingParts.Length -ge 5){
-			if (![String]::IsNullOrEmpty($bindingParts[4]) -and [Bool]::Parse($bindingParts[4]) -eq $true){
-				$sslFlagPart = 1
+		if ($skip -eq $false) {
+			$sslFlagPart = 0
+			if($bindingParts.Length -ge 5){
+				if (![String]::IsNullOrEmpty($bindingParts[4]) -and [Bool]::Parse($bindingParts[4]) -eq $true){
+					$sslFlagPart = 1
+				}
 			}
-		}
-		if ($supportsSNI -eq $true ){
-			$wsbindings.Add(@{ protocol=$bindingParts[0];bindingInformation=$bindingParts[1];thumbprint=$bindingParts[2].Trim();sslFlags=$sslFlagPart }) | Out-Null
+			if ($supportsSNI -eq $true ){
+				$wsbindings.Add(@{ 
+					protocol=$bindingParts[0];
+					bindingInformation=$bindingParts[1];
+					thumbprint=$bindingParts[2].Trim();
+					sslFlags=$sslFlagPart }) | Out-Null
+				}
+			else{
+				$wsbindings.Add(@{ 
+					protocol=$bindingParts[0];
+					bindingInformation=$bindingParts[1];
+					thumbprint=$bindingParts[2].Trim() }) | Out-Null
 			}
-		else{
-			$wsbindings.Add(@{ protocol=$bindingParts[0];bindingInformation=$bindingParts[1];thumbprint=$bindingParts[2].Trim() }) | Out-Null
+		} else {
+			Write-Output "Ignore binding: $_"
 		}
-	} else {
-		Write-Output "Ignore binding: $_"
 	}
 }
 
@@ -130,14 +177,12 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 
     Write-Output ("Found certificate: " + $certificate.Subject + " in: " + $certStoreName)
 
-    $bindingInfo = $_.bindingInformation
-    $bindingParts = $bindingInfo.split(':')
-    $ipAddress = $bindingParts[0]
+    $ipAddress = $_.ipAddress;
     if ((! $ipAddress) -or ($ipAddress -eq '*')) {
         $ipAddress = "0.0.0.0"
     }
-    $port = $bindingParts[1]
-	$hostname = $bindingParts[2]
+    $port = $_.port
+	$hostname = $_.host
 	Execute-WithRetry { 
 	
 		#If we are supporting SNI then we need to bind cert to hostname instead of ip
@@ -214,7 +259,9 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 pushd IIS:\
 
 $appPoolPath = ("IIS:\AppPools\" + $ApplicationPoolName)
+$sitePath = ("IIS:\Sites\" + $webSiteName)
 
+# Set App Pool
 Execute-WithRetry { 
 	$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
 	if (!$pool) { 
@@ -226,6 +273,7 @@ Execute-WithRetry {
 	}
 }
 
+# Set App Pool Identity
 Execute-WithRetry { 
 	Write-Output "Set application pool identity: $applicationPoolIdentityType"
 	if ($applicationPoolIdentityType -eq "SpecificUser") {
@@ -235,13 +283,13 @@ Execute-WithRetry {
 	}
 }
 
+# Set .NET Framework
 Execute-WithRetry { 
 	Write-Output "Set .NET framework version: $appPoolFrameworkVersion" 
 	Set-ItemProperty $appPoolPath managedRuntimeVersion $appPoolFrameworkVersion
 }
 
-$sitePath = ("IIS:\Sites\" + $webSiteName)
-
+# Create Website
 Execute-WithRetry { 
 	$site = Get-Item $sitePath -ErrorAction SilentlyContinue
 	if (!$site) { 
@@ -253,12 +301,13 @@ Execute-WithRetry {
 	}
 }
 
-$cmd = { 
+# Assign Website to App Pool
+Execute-WithRetry { 
 	Write-Output "Assigning website to application pool..."
 	Set-ItemProperty $sitePath -name applicationPool -value $ApplicationPoolName
 }
-Execute-WithRetry -Command $cmd
 
+# Set Path
 Execute-WithRetry { 
 	Write-Output ("Home directory: " + $webRoot)
 	Set-ItemProperty $sitePath -name physicalPath -value "$webRoot"
@@ -297,6 +346,7 @@ function Bindings-AreCorrect($existingBindings, $configuredBindings) {
     return $true
 }
 
+# Set Bindings
 Execute-WithRetry { 
 	Write-Output "Comparing existing IIS bindings with configured bindings..."
 	$existingBindings = Get-ItemProperty $sitePath -name bindings
@@ -353,6 +403,7 @@ try {
 # It can take a while for the App Pool to come to life (#490)
 Start-Sleep -s 1
 
+# Start App Pool
 Execute-WithRetry { 
 	$state = Get-WebAppPoolState $ApplicationPoolName
 	if ($state.Value -eq "Stopped") {
@@ -361,6 +412,7 @@ Execute-WithRetry {
 	}
 }
 
+# Start Website
 Execute-WithRetry { 
 	$state = Get-WebsiteState $WebSiteName
 	if ($state.Value -eq "Stopped") {
