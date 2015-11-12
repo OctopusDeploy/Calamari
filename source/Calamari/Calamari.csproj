@@ -88,8 +88,8 @@
     <Reference Include="Octodiff">
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.19, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octostache.1.0.2.19\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.20, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.20\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache">
