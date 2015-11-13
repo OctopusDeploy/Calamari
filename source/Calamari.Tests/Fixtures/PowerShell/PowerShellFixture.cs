@@ -196,5 +196,16 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertZero();
             output.AssertOutput("Hello from a path containing a '");
         }
+
+        [Test]
+        public void ShouldExecuteWhenPathContainsDollar()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts\\Path With $", "PathWithDollar.ps1")));
+
+            output.AssertZero();
+            output.AssertOutput("Hello from a path containing a $");
+        }
     }
 }
