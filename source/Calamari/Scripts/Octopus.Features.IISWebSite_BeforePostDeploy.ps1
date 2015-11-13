@@ -303,8 +303,13 @@ Execute-WithRetry {
 
 # Assign Website to App Pool
 Execute-WithRetry { 
-	Write-Output "Assigning website to application pool..."
-	Set-ItemProperty $sitePath -name applicationPool -value $ApplicationPoolName
+	$pool = Get-ItemProperty $sitePath -name applicationPool
+	if ($ApplicationPoolName -ne $pool) {
+		Write-Output "Assigning website to application pool..."
+		Set-ItemProperty $sitePath -name applicationPool -value $ApplicationPoolName
+	} else {
+		Write-Output "Application pool already assigned to website"
+	}
 }
 
 # Set Path
