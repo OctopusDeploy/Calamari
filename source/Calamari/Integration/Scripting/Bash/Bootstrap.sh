@@ -97,7 +97,7 @@ function new_octopusartifact
 
 	pth=$1
 	ofn=$2
-	len=$(stat -c%s $1 )
+	len=$(wc -c < $1 )
 
 
 	if [ -z "$ofn" ]
