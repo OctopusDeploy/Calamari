@@ -2,7 +2,6 @@
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
-using Octostache;
 
 namespace Calamari.Azure.Integration
 {

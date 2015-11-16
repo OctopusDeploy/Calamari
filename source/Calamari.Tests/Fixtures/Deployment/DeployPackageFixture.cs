@@ -128,8 +128,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             // The environment app-setting value should have been transformed to 'Production'
             AssertXmlNodeValue(Path.Combine(stagingDirectory, "Production", "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
-
-
         
         [Test]
         [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux

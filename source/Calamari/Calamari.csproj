@@ -88,8 +88,8 @@
     <Reference Include="Octodiff">
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.21, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octostache.1.0.2.21\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.26, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.26\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache">
@@ -283,7 +283,9 @@
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
     <None Include="app.config" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <EmbeddedResource Include="Scripts\Octopus.Features.IISWebSite_BeforePostDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.RedGateDatabase_BeforePostDeploy.ps1" />
     <EmbeddedResource Include="Scripts\Octopus.Features.WindowsService_AfterPreDeploy.ps1" />

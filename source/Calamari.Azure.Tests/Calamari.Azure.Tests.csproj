@@ -72,8 +72,8 @@
       <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.21, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octostache.1.0.2.21\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.26, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.26\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
