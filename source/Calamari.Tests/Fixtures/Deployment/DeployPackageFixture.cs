@@ -53,12 +53,12 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             if (CalamariEnvironment.IsRunningOnNix)
             {
-                result.AssertOutput("Extracted 12 files");
+                result.AssertOutput("Extracted 13 files");
                 result.AssertOutput("Bonjour from PreDeploy.sh");
             }
             else
             {
-                result.AssertOutput("Extracted 11 files");
+                result.AssertOutput("Extracted 12 files");
                 result.AssertOutput("Bonjour from PreDeploy.ps1");
             }
         }
@@ -127,6 +127,25 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // The environment app-setting value should have been transformed to 'Production'
             AssertXmlNodeValue(Path.Combine(stagingDirectory, "Production", "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='environment']/@value", "Production");
+        }
+
+
+        
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        public void ShouldInvokeDeployFailedOnError()
+        {
+            variables.Set("ShouldFail", "yes");
+            var result = DeployPackage("Acme.Web");
+            result.AssertOutput("I have failed! DeployFailed.ps1");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        public void ShouldNotInvokeDeployWhenNoError()
+        {
+            var result = DeployPackage("Acme.Web");
+            result.AssertNoOutput("I have failed! DeployFailed.ps1");
         }
 
         [Test]
@@ -273,8 +292,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
                         result.AssertOutput(CalamariEnvironment.IsRunningOnNix
-                            ? "Extracted 12 files"
-                            : "Extracted 11 files");
+                            ? "Extracted 13 files"
+                            : "Extracted 12 files");
 
                         lock (extractionDirectories)
                         {
