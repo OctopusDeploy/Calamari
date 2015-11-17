@@ -81,8 +81,6 @@ $supportsSNI = $iisVersion -ge 8
 
 $wsbindings = new-object System.Collections.ArrayList
 
-Write-Output $bindingString
-
 if($bindingString.StartsWith("[{")) {
 	
 	if(Get-Command ConvertFrom-Json -errorAction SilentlyContinue){
@@ -95,6 +93,8 @@ if($bindingString.StartsWith("[{")) {
 
 	ForEach($binding in $bindingArray){
 		$sslFlagPart = @{$true=1;$false=0}[$binding.requireSni]  
+		$bindingIpAddress =  @{$true="*";$false=$binding.ipAddress}[[string]::IsNullOrEmpty($binding.ipAddress)]
+		$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
 		if($binding.enabled) {
 			if ($supportsSNI -eq $true ) {
 				$wsbindings.Add(@{ 
@@ -102,7 +102,7 @@ if($bindingString.StartsWith("[{")) {
 					ipAddress=$binding.ipAddress;
 					port=$binding.port;
 					host=$binding.host;
-					bindingInformation=$binding.ipAddress+":"+$binding.port+":"+$binding.host;
+					bindingInformation=$bindingInformation;
 					thumbprint=$binding.thumbprint.Trim();
 					sslFlags=$sslFlagPart }) | Out-Null
 			} else {
@@ -111,7 +111,7 @@ if($bindingString.StartsWith("[{")) {
 					ipAddress=$binding.ipAddress;
 					port=$binding.port;
 					host=$binding.host;
-					bindingInformation=$binding.ipAddress+":"+$binding.port+":"+$binding.host;
+					bindingInformation=$bindingInformation;
 					thumbprint=$binding.thumbprint.Trim() }) | Out-Null
 			}
 		} else {
@@ -130,8 +130,9 @@ if($bindingString.StartsWith("[{")) {
 				$skip = $true
 			}
 		}
-	 
+		
 		if ($skip -eq $false) {
+			$addressParts = $bindingParts[1].split(':')
 			$sslFlagPart = 0
 			if($bindingParts.Length -ge 5){
 				if (![String]::IsNullOrEmpty($bindingParts[4]) -and [Bool]::Parse($bindingParts[4]) -eq $true){
@@ -143,12 +144,18 @@ if($bindingString.StartsWith("[{")) {
 					protocol=$bindingParts[0];
 					bindingInformation=$bindingParts[1];
 					thumbprint=$bindingParts[2].Trim();
+					ipAddress=$addressParts[0];
+					port= $addressParts[1];
+					host=$addressParts[2];
 					sslFlags=$sslFlagPart }) | Out-Null
 				}
 			else{
 				$wsbindings.Add(@{ 
 					protocol=$bindingParts[0];
 					bindingInformation=$bindingParts[1];
+					ipAddress=$addressParts[0];
+					port= $addressParts[1];
+					host=$addressParts[2];
 					thumbprint=$bindingParts[2].Trim() }) | Out-Null
 			}
 		} else {
@@ -209,14 +216,11 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 					Write-Output "The required certificate binding is already in place"
 				}
 			} else {
-				Write-Output "Adding a new SSL certificate binding..."
-
 				$appid = [System.Guid]::NewGuid().ToString("b")
 				& netsh http add sslcert hostnameport="$($hostname):$port" certhash="$($certificate.Thumbprint)" appid="$appid" certstorename="$certStoreName"
 				if ($LastExitCode -ne 0 ){
 					throw
 				}
-				
 			}	
 		} else {
 			$existing = & netsh http show sslcert ipport="$($ipAddress):$port"
@@ -241,7 +245,6 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 				}
 			} else {
 				Write-Output "Adding a new SSL certificate binding..."
-
 				$appid = [System.Guid]::NewGuid().ToString("b")
 				& netsh http add sslcert ipport="$($ipAddress):$port" certhash="$($certificate.Thumbprint)" appid="$appid" certstorename="$certStoreName"
 				if ($LastExitCode -ne 0 ){
@@ -331,7 +334,7 @@ function Bindings-AreCorrect($existingBindings, $configuredBindings) {
 		$matching = $wsbindings | Where-Object {Bindings-AreEqual $binding $_ }
 
 		if (-not $matching) {
-			Write-Host "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
+			Write-Output "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
 			return $false
 		}
 	}
@@ -343,7 +346,7 @@ function Bindings-AreCorrect($existingBindings, $configuredBindings) {
 	    $matching = $existingBindings.Collection | Where-Object {Bindings-AreEqual $wsbinding $_ }
 
 	    if (-not $matching) {
-		    Write-Host "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
+		    Write-Output "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
 		    return $false
 	    }
 	}
@@ -357,8 +360,8 @@ Execute-WithRetry {
 	$existingBindings = Get-ItemProperty $sitePath -name bindings
 
 	if (-not (Bindings-AreCorrect $existingBindings $wsbindings)) {
-        Write-Host "Existing IIS bindings do not match configured bindings."
-		Write-Host "Clearing IIS bindings"
+        Write-Output "Existing IIS bindings do not match configured bindings."
+		Write-Output "Clearing IIS bindings"
         Clear-ItemProperty $sitePath -name bindings
 
        	for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
@@ -366,7 +369,7 @@ Execute-WithRetry {
 		    New-ItemProperty $sitePath -name bindings -value ($wsbindings[$i])
 	    }
     } else {
-		Write-Host "Bindings are as configured. No changes required."
+		Write-Output "Bindings are as configured. No changes required."
 	}
 }
 
