@@ -39,7 +39,7 @@ if ($sleepBetweenFailures -Match "^\d+$") {
 }
 
 if ($sleepBetweenFailures -gt 60) {
-    Write-Output "Invalid Sleep time between failures.  Setting to max of 60 seconds"
+    Write-Host "Invalid Sleep time between failures.  Setting to max of 60 seconds"
     $sleepBetweenFailures = 60
 }
 
@@ -52,9 +52,9 @@ function Execute-WithRetry([ScriptBlock] $command) {
 		$attemptCount = ($attemptCount + 1)
 
 		if ($attemptCount -ge 2) {
-			Write-Output "Waiting for $sleepBetweenFailures seconds before retrying..."
+			Write-Host "Waiting for $sleepBetweenFailures seconds before retrying..."
 			Start-Sleep -s $sleepBetweenFailures
-			Write-Output "Retrying..."
+			Write-Host "Retrying..."
 		}
 
 		try {
@@ -63,7 +63,7 @@ function Execute-WithRetry([ScriptBlock] $command) {
 			$operationIncomplete = $false
 		} catch [System.Exception] {
 			if ($attemptCount -lt ($maxFailures)) {
-				Write-Output ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
+				Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
 			} else {
 				throw
 			}
@@ -92,11 +92,13 @@ if($bindingString.StartsWith("[{")) {
 	}
 
 	ForEach($binding in $bindingArray){
-		$sslFlagPart = @{$true=1;$false=0}[$binding.requireSni]  
+		$sslFlagPart = @{$true=1;$false=0}[[Bool]::Parse($binding.requireSni)]  
 		$bindingIpAddress =  @{$true="*";$false=$binding.ipAddress}[[string]::IsNullOrEmpty($binding.ipAddress)]
 		$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
-		if($binding.enabled) {
-			if ($supportsSNI -eq $true ) {
+		
+		if([Bool]::Parse($binding.enabled)) {
+			Write-Host "Found binding: $binding"
+			if ([Bool]::Parse($supportsSNI)) {
 				$wsbindings.Add(@{ 
 					protocol=$binding.protocol;
 					ipAddress=$binding.ipAddress;
@@ -115,7 +117,7 @@ if($bindingString.StartsWith("[{")) {
 					thumbprint=$binding.thumbprint.Trim() }) | Out-Null
 			}
 		} else {
-			Write-Output "Ignore binding: $binding"
+			Write-Host "Ignore binding: $binding"
 		}
 	}
 
@@ -159,7 +161,7 @@ if($bindingString.StartsWith("[{")) {
 					thumbprint=$bindingParts[2].Trim() }) | Out-Null
 			}
 		} else {
-			Write-Output "Ignore binding: $_"
+			Write-Host "Ignore binding: $_"
 		}
 	}
 }
@@ -171,7 +173,7 @@ Import-Module WebAdministration -ErrorAction SilentlyContinue
 # For any HTTPS bindings, ensure the certificate is configured for the IP/port combination
 $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
     $sslCertificateThumbprint = $_.thumbprint.Trim()
-    Write-Output "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
+    Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
     
     $certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
     if (! $certificate) 
@@ -182,7 +184,7 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
     $certPathParts = $certificate.PSParentPath.Split('\')
     $certStoreName = $certPathParts[$certPathParts.Length-1]
 
-    Write-Output ("Found certificate: " + $certificate.Subject + " in: " + $certStoreName)
+    Write-Host ("Found certificate: " + $certificate.Subject + " in: " + $certStoreName)
 
     $ipAddress = $_.ipAddress;
     if ((! $ipAddress) -or ($ipAddress -eq '*')) {
@@ -199,7 +201,7 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 			if ($LastExitCode -eq 0) {
 				$hasThumb = ($existing | Where-Object { $_.IndexOf($certificate.Thumbprint, [System.StringComparison]::OrdinalIgnoreCase) -ne -1 })
 				if ($hasThumb -eq $null) {
-					Write-Output "A different binding exists for the Hostname/port combination, replacing..."
+					Write-Host "A different binding exists for the Hostname/port combination, replacing..."
 					
 					& netsh http delete sslcert hostnameport="$($hostname):$port"
 					if ($LastExitCode -ne 0 ){
@@ -213,7 +215,7 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 					}
 
 				} else {
-					Write-Output "The required certificate binding is already in place"
+					Write-Host "The required certificate binding is already in place"
 				}
 			} else {
 				$appid = [System.Guid]::NewGuid().ToString("b")
@@ -227,7 +229,7 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 			if ($LastExitCode -eq 0) {
 				$hasThumb = ($existing | Where-Object { $_.IndexOf($certificate.Thumbprint, [System.StringComparison]::OrdinalIgnoreCase) -ne -1 })
 				if ($hasThumb -eq $null) {
-					Write-Output "A different binding exists for the IP/port combination, replacing..."
+					Write-Host "A different binding exists for the IP/port combination, replacing..."
 					
 					& netsh http delete sslcert ipport="$($ipAddress):$port"
 					if ($LastExitCode -ne 0 ){
@@ -241,10 +243,10 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 					}
 					
 				} else {
-					Write-Output "The required certificate binding is already in place"
+					Write-Host "The required certificate binding is already in place"
 				}
 			} else {
-				Write-Output "Adding a new SSL certificate binding..."
+				Write-Host "Adding a new SSL certificate binding..."
 				$appid = [System.Guid]::NewGuid().ToString("b")
 				& netsh http add sslcert ipport="$($ipAddress):$port" certhash="$($certificate.Thumbprint)" appid="$appid" certstorename="$certStoreName"
 				if ($LastExitCode -ne 0 ){
@@ -268,17 +270,17 @@ $sitePath = ("IIS:\Sites\" + $webSiteName)
 Execute-WithRetry { 
 	$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
 	if (!$pool) { 
-		Write-Output "Application pool `"$ApplicationPoolName`" does not exist, creating..." 
+		Write-Host "Application pool `"$ApplicationPoolName`" does not exist, creating..." 
 		new-item $appPoolPath -confirm:$false
 		$pool = Get-Item $appPoolPath
 	} else {
-		Write-Output "Application pool `"$ApplicationPoolName`" already exists"
+		Write-Host "Application pool `"$ApplicationPoolName`" already exists"
 	}
 }
 
 # Set App Pool Identity
 Execute-WithRetry { 
-	Write-Output "Set application pool identity: $applicationPoolIdentityType"
+	Write-Host "Set application pool identity: $applicationPoolIdentityType"
 	if ($applicationPoolIdentityType -eq "SpecificUser") {
 		Set-ItemProperty $appPoolPath -name processModel -value @{identitytype="SpecificUser"; username="$applicationPoolUsername"; password="$applicationPoolPassword"}
 	} else {
@@ -288,7 +290,7 @@ Execute-WithRetry {
 
 # Set .NET Framework
 Execute-WithRetry { 
-	Write-Output "Set .NET framework version: $appPoolFrameworkVersion" 
+	Write-Host "Set .NET framework version: $appPoolFrameworkVersion" 
 	Set-ItemProperty $appPoolPath managedRuntimeVersion $appPoolFrameworkVersion
 }
 
@@ -296,11 +298,11 @@ Execute-WithRetry {
 Execute-WithRetry { 
 	$site = Get-Item $sitePath -ErrorAction SilentlyContinue
 	if (!$site) { 
-		Write-Output "Site `"$WebSiteName`" does not exist, creating..." 
+		Write-Host "Site `"$WebSiteName`" does not exist, creating..." 
 		$id = (dir iis:\sites | foreach {$_.id} | sort -Descending | select -first 1) + 1
 		new-item $sitePath -bindings @{protocol="http";bindingInformation=":81:od-temp.example.com"} -id $id -physicalPath $webRoot -confirm:$false
 	} else {
-		Write-Output "Site `"$WebSiteName`" already exists"
+		Write-Host "Site `"$WebSiteName`" already exists"
 	}
 }
 
@@ -308,16 +310,16 @@ Execute-WithRetry {
 Execute-WithRetry { 
 	$pool = Get-ItemProperty $sitePath -name applicationPool
 	if ($ApplicationPoolName -ne $pool) {
-		Write-Output "Assigning website to application pool..."
+		Write-Host "Assigning website to application pool..."
 		Set-ItemProperty $sitePath -name applicationPool -value $ApplicationPoolName
 	} else {
-		Write-Output "Application pool already assigned to website"
+		Write-Host "Application pool already assigned to website"
 	}
 }
 
 # Set Path
 Execute-WithRetry { 
-	Write-Output ("Home directory: " + $webRoot)
+	Write-Host ("Home directory: " + $webRoot)
 	Set-ItemProperty $sitePath -name physicalPath -value "$webRoot"
 }
 
@@ -327,49 +329,51 @@ function Bindings-AreEqual($bindingA, $bindingB) {
 
 # Returns $true if existing IIS bindings are as specified in configuration, otherwise $false
 function Bindings-AreCorrect($existingBindings, $configuredBindings) {
-    # Are there existing assigned bindings that are not configured
+	# Are there existing assigned bindings that are not configured
 	for ($i = 0; $i -lt $existingBindings.Collection.Count; $i = $i+1) {
 		$binding = $existingBindings.Collection[$i]
- 
-		$matching = $wsbindings | Where-Object {Bindings-AreEqual $binding $_ }
 
-		if (-not $matching) {
-			Write-Output "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
+		$matching = $configuredBindings | Where-Object {Bindings-AreEqual $binding $_ }
+		
+		if ($matching -eq $null) {
+			Write-Host "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
 			return $false
 		}
 	}
 
 	# Are there configured bindings which are not assigned
-	for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
-	    $wsbinding = $wsbindings[$i]
+	for ($i = 0; $i -lt $configuredBindings.Count; $i = $i+1) {
+	    $wsbinding = $configuredBindings[$i]
 
 	    $matching = $existingBindings.Collection | Where-Object {Bindings-AreEqual $wsbinding $_ }
 
-	    if (-not $matching) {
-		    Write-Output "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
+	    if ($matching -eq $null) {
+		    Write-Host "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
 		    return $false
 	    }
 	}
+	Write-Host "Looks OK"
+
 
     return $true
 }
 
 # Set Bindings
 Execute-WithRetry { 
-	Write-Output "Comparing existing IIS bindings with configured bindings..."
+	Write-Host "Comparing existing IIS bindings with configured bindings..."
 	$existingBindings = Get-ItemProperty $sitePath -name bindings
 
 	if (-not (Bindings-AreCorrect $existingBindings $wsbindings)) {
-        Write-Output "Existing IIS bindings do not match configured bindings."
-		Write-Output "Clearing IIS bindings"
+        Write-Host "Existing IIS bindings do not match configured bindings."
+		Write-Host "Clearing IIS bindings"
         Clear-ItemProperty $sitePath -name bindings
 
        	for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
-		    Write-Output ("Assigning binding: " + ($wsbindings[$i].protocol + " " + $wsbindings[$i].bindingInformation))
+		    Write-Host ("Assigning binding: " + ($wsbindings[$i].protocol + " " + $wsbindings[$i].bindingInformation))
 		    New-ItemProperty $sitePath -name bindings -value ($wsbindings[$i])
 	    }
     } else {
-		Write-Output "Bindings are as configured. No changes required."
+		Write-Host "Bindings are as configured. No changes required."
 	}
 }
 
@@ -380,7 +384,7 @@ if ((Test-Path $appCmdPath) -eq $false) {
 
 try {
 	Execute-WithRetry { 
-		Write-Output "Anonymous authentication enabled: $enableAnonymous"
+		Write-Host "Anonymous authentication enabled: $enableAnonymous"
 		& $appCmdPath set config "$WebSiteName" -section:"system.webServer/security/authentication/anonymousAuthentication" /enabled:"$enableAnonymous" /commit:apphost
 		if ($LastExitCode -ne 0 ){
 			throw
@@ -388,7 +392,7 @@ try {
 	}
 
 	Execute-WithRetry { 
-		Write-Output "Basic authentication enabled: $enableBasic"
+		Write-Host "Basic authentication enabled: $enableBasic"
 		& $appCmdPath set config "$WebSiteName" -section:"system.webServer/security/authentication/basicAuthentication" /enabled:"$enableBasic" /commit:apphost
 		if ($LastExitCode -ne 0 ){
 			throw
@@ -396,7 +400,7 @@ try {
 	}
 
 	Execute-WithRetry { 
-		Write-Output "Windows authentication enabled: $enableWindows"
+		Write-Host "Windows authentication enabled: $enableWindows"
 		& $appCmdPath set config "$WebSiteName" -section:"system.webServer/security/authentication/windowsAuthentication" /enabled:"$enableWindows" /commit:apphost
 		if ($LastExitCode -ne 0 ){
 			throw
@@ -404,7 +408,7 @@ try {
 		
 	}
 } catch [System.Exception] {
-	Write-Output "Authentication options could not be set. This can happen when there is a problem with your application's web.config. For example, you might be using a section that requires an extension that is not installed on this web server (such as URL Rewrtiting). It can also happen when you have selected an authentication option and the appropriate IIS module is not installed (for example, for Windows authentication, you need to enable the Windows Authentication module in IIS/Windows first)"
+	Write-Host "Authentication options could not be set. This can happen when there is a problem with your application's web.config. For example, you might be using a section that requires an extension that is not installed on this web server (such as URL Rewrtiting). It can also happen when you have selected an authentication option and the appropriate IIS module is not installed (for example, for Windows authentication, you need to enable the Windows Authentication module in IIS/Windows first)"
 	throw
 }
 
@@ -415,7 +419,7 @@ Start-Sleep -s 1
 Execute-WithRetry { 
 	$state = Get-WebAppPoolState $ApplicationPoolName
 	if ($state.Value -eq "Stopped") {
-		Write-Output "Application pool is stopped. Attempting to start..."
+		Write-Host "Application pool is stopped. Attempting to start..."
 		Start-WebAppPool $ApplicationPoolName
 	}
 }
@@ -424,11 +428,11 @@ Execute-WithRetry {
 Execute-WithRetry { 
 	$state = Get-WebsiteState $WebSiteName
 	if ($state.Value -eq "Stopped") {
-		Write-Output "Web site is stopped. Attempting to start..."
+		Write-Host "Web site is stopped. Attempting to start..."
 		Start-Website $WebSiteName
 	}
 }
 
 popd
 
-Write-Output "IIS configuration complete"
+Write-Host "IIS configuration complete"
