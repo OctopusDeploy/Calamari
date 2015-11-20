@@ -12,6 +12,11 @@ $ErrorActionPreference = 'Stop'
 # Functions
 # -----------------------------------------------------------------
 
+function Write-VersionTable
+{
+	Write-Verbose ($PSVersionTable | Out-String)
+}
+
 function Convert-ServiceMessageValue([string]$value)
 {
 	$valueBytes = [System.Text.Encoding]::UTF8.GetBytes($value)
@@ -114,6 +119,8 @@ function Initialize-ProxySettings()
 		[System.Net.WebRequest]::DefaultWebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 	}
 }
+
+Write-VersionTable
 
 # -----------------------------------------------------------------
 # Variables
