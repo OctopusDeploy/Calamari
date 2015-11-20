@@ -100,7 +100,7 @@ function Decrypt-String($Encrypted, $iv)
 	} catch {}
 }
 
-function InitializeProxySettings() 
+function Initialize-ProxySettings() 
 {
 	$proxyUsername = $env:TentacleProxyUsername
 	$proxyPassword = $env:TentacleProxyPassword
@@ -121,12 +121,11 @@ function InitializeProxySettings()
 
 {{VariableDeclarations}}
 
-
 # -----------------------------------------------------------------
 # Defaults
 # -----------------------------------------------------------------
 
-InitializeProxySettings
+Initialize-ProxySettings
 
 # -----------------------------------------------------------------
 # Invoke target script
