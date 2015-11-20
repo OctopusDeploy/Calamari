@@ -12,6 +12,18 @@ $ErrorActionPreference = 'Stop'
 # Functions
 # -----------------------------------------------------------------
 
+function Write-VersionTable
+{
+	Write-Verbose ($PSVersionTable | Out-String)
+
+	$dotnet = Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' -Recurse |
+		Get-ItemProperty -Name Version, Release -EA 0 |
+		Where { $_.PSChildName -match '^(?!S)\p{L}'} |
+		Select-Object -Property @{Name=".NET Framework";E={$_.PSChildName}}, @{Name="Version";E={$_.Version}}, @{Name="Release";E={$_.Release}}
+
+	Write-Verbose ($dotnet | Out-String)
+}
+
 function Convert-ServiceMessageValue([string]$value)
 {
 	$valueBytes = [System.Text.Encoding]::UTF8.GetBytes($value)
@@ -114,6 +126,8 @@ function Initialize-ProxySettings()
 		[System.Net.WebRequest]::DefaultWebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 	}
 }
+
+Write-VersionTable
 
 # -----------------------------------------------------------------
 # Variables
