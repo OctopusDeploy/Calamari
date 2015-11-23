@@ -132,6 +132,8 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
+    <Compile Include="Fixtures\AppSettingsJson\AppSettingsJsonFixture.cs" />
+    <Compile Include="Fixtures\Conventions\AppSettingsJsonConventionFixture.cs" />
     <Compile Include="Fixtures\SetUpFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
@@ -177,6 +179,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.existing-expected.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.existing-initial.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.simple.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Bash\Scripts\create-artifact.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
