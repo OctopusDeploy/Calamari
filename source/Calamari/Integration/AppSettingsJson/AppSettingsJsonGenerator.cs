@@ -9,7 +9,7 @@ namespace Calamari.Integration.AppSettingsJson
     public class AppSettingsJsonGenerator : IAppSettingsJsonGenerator
     {
         const string KeyDelimiter = ":";
-
+        
         public void Generate(string appSettingsFilePath, VariableDictionary variables)
         {
             var root = LoadJson(appSettingsFilePath);
@@ -19,6 +19,9 @@ namespace Calamari.Integration.AppSettingsJson
 
             foreach (var name in names)
             {
+                if (name.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 SetValueRecursive(root, name, variables.Get(name));
             }
 

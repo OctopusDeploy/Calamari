@@ -36,6 +36,19 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
         }
 
         [Test]
+        public void ShouldIgnoreOctopusPrefix()
+        {
+            var variables = new VariableDictionary();
+            variables.Set("MyMessage", "Hello world");
+            variables.Set("IThinkOctopusIsGreat", "Yes, I do");
+            variables.Set("OctopusRocks", "This is ignored");
+            variables.Set("Octopus.Rocks", "So is this");
+            
+            var generated = Generate(variables);
+            AssertJsonEquivalent(generated, "appsettings.ignore-octopus.json");
+        }
+
+        [Test]
         public void ShouldKeepExistingValues()
         {
             var variables = new VariableDictionary();
