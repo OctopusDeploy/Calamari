@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using Calamari.Integration.Processes;
 using Octostache;
@@ -10,15 +11,16 @@ namespace Calamari
     public class Log
     {
         static string stdOutMode;
-        static readonly IndentedTextWriter StdOut;
-        static readonly IndentedTextWriter StdErr;
         static readonly object Sync = new object();
 
         static Log()
         {
-            StdOut = new IndentedTextWriter(Console.Out, "  ");
-            StdErr = new IndentedTextWriter(Console.Error, "  ");
+            StdOut = Console.Out;
+            StdErr = Console.Error;
         }
+
+        public static TextWriter StdOut { get; set; }
+        public static TextWriter StdErr { get; set; }
 
         static void SetMode(string mode)
         {
@@ -43,12 +45,9 @@ namespace Calamari
 
         public static void SetOutputVariable(string name, string value, VariableDictionary variables)
         {
-            Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]",
-                ConvertServiceMessageValue(name),
-                ConvertServiceMessageValue(value)));
+            Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
 
-            if (variables != null)
-                variables.SetOutputVariable(name, value);
+            variables?.SetOutputVariable(name, value);
         }
 
         static string ConvertServiceMessageValue(string value)
@@ -58,7 +57,7 @@ namespace Calamari
 
         public static void VerboseFormat(string messageFormat, params object[] args)
         {
-            Verbose(String.Format(messageFormat, args));
+            Verbose(string.Format(messageFormat, args));
         }
 
         public static void Info(string message)
@@ -101,7 +100,7 @@ namespace Calamari
 
         public static void ErrorFormat(string messageFormat, params object[] args)
         {
-            Error(String.Format(messageFormat, args));
+            Error(string.Format(messageFormat, args));
         }
 
         public static class ServiceMessages
