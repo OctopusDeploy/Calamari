@@ -49,6 +49,20 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
         }
 
         [Test]
+        public void ShouldWarnAndIgnoreAmbiguousSettings()
+        {
+            var variables = new VariableDictionary();
+            variables.Set("EmailSettings:DefaultRecipients:To", "paul@octopus.com");
+            variables.Set("EmailSettings:DefaultRecipients", "test@test.com");
+
+            var writer = new StringWriter();
+            Log.StdOut = writer;
+            var generated = Generate(variables);
+            AssertJsonEquivalent(generated, "appsettings.ambiguous.json");
+            Assert.That(writer.ToString(), Is.StringContaining("Unable to set value for EmailSettings:DefaultRecipients:To. The property at EmailSettings.DefaultRecipients is a String."));
+        }
+
+        [Test]
         public void ShouldKeepExistingValues()
         {
             var variables = new VariableDictionary();

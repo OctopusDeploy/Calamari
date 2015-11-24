@@ -22,7 +22,7 @@ namespace Calamari.Integration.AppSettingsJson
                 if (name.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                SetValueRecursive(root, name, variables.Get(name));
+                SetValueRecursive(root, name, name, variables.Get(name));
             }
 
             SaveJson(appSettingsFilePath, root);
@@ -43,7 +43,7 @@ namespace Calamari.Integration.AppSettingsJson
             }
         }
 
-        static void SetValueRecursive(JObject currentObject, string name, string value)
+        static void SetValueRecursive(JObject currentObject, string name, string fullName, string value)
         {
             if (string.IsNullOrWhiteSpace(name))
                 return;
@@ -54,9 +54,12 @@ namespace Calamari.Integration.AppSettingsJson
                 var key = name.Substring(0, firstKey);
                 var remainder = name.Substring(firstKey + 1).Trim(':');
 
-                var property = GetOrCreateProperty(currentObject, key);
+                var property = GetOrCreateProperty(currentObject, key, fullName);
 
-                SetValueRecursive((JObject)property, remainder, value);
+                if (property != null)
+                {
+                    SetValueRecursive((JObject)property, remainder, fullName, value);
+                }
             }
             else
             {
@@ -64,7 +67,7 @@ namespace Calamari.Integration.AppSettingsJson
             }
         }
 
-        static JToken GetOrCreateProperty(JObject currentObject, string key)
+        static JObject GetOrCreateProperty(JObject currentObject, string key, string fullName)
         {
             JToken currentToken;
             if (currentObject.TryGetValue(key, StringComparison.InvariantCultureIgnoreCase, out currentToken))
@@ -75,14 +78,15 @@ namespace Calamari.Integration.AppSettingsJson
                     //  Foo = "Hello"
                     //  Foo:Bar = "World"
                     // In this case, what would Foo be set to - the string or the object? We go with the first value, the string. Since the keys are sorted first we get the shortest value
-                    return currentToken;
+                    Log.WarnFormat("Unable to set value for {0}. The property at {1} is a {2}.", fullName, currentToken.Path, currentToken.Type);
+                    return null;
                 }
             }
             else
             {
                 currentObject[key] = currentToken = new JObject();
             }
-            return currentToken;
+            return (JObject) currentToken;
         }
 
         static void SaveJson(string appSettingsFilePath, JObject root)

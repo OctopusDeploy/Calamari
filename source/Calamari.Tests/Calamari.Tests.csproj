@@ -188,6 +188,9 @@
     <None Include="Fixtures\AppSettingsJson\Samples\appsettings.ignore-octopus.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.ambiguous.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\AppSettingsJson\Samples\appsettings.simple.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
