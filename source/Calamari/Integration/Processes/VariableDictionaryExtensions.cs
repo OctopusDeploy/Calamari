@@ -52,11 +52,13 @@ namespace Calamari.Integration.Processes
         {
             if (variables.GetFlag(SpecialVariables.PrintVariables))
             {
+                Log.Warn($"{SpecialVariables.PrintVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
                 Log.Verbose("The following variables are available:" + Environment.NewLine + variables.ToString(IsPrintable, true));
             }
 
             if (variables.GetFlag(SpecialVariables.PrintEvaluatedVariables))
             {
+                Log.Warn($"{SpecialVariables.PrintEvaluatedVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
                 Log.Verbose("The following evaluated variables are available:" + Environment.NewLine + variables.ToString(IsPrintable, false));
             }
         }
