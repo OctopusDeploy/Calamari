@@ -84,6 +84,7 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, scriptCapability, fileSystem, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, embeddedResources, scriptCapability, commandLineRunner),
+                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

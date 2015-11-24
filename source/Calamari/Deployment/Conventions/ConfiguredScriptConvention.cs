@@ -33,7 +33,10 @@ namespace Calamari.Deployment.Conventions
             foreach (var scriptName in scriptEngine.GetSupportedExtensions() 
                 .Select(extension => GetScriptName(deploymentStage, extension)))
             {
-                var scriptBody = deployment.Variables.Get(scriptName);
+                string error;
+                var scriptBody = deployment.Variables.Get(scriptName, out error);
+                if (!string.IsNullOrEmpty(error))
+                    Log.VerboseFormat("Parsing script for phase {0} with Octostache returned the following error: `{1}`", deploymentStage, error);
 
                 if (string.IsNullOrWhiteSpace(scriptBody))
                     continue;

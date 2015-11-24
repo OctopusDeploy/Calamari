@@ -1,5 +1,7 @@
 ﻿param([string]$key="")
 
+$ErrorActionPreference = 'Stop'
+
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
 #  2. Loads the $OctopusParameters variables
@@ -9,6 +11,11 @@
 # -----------------------------------------------------------------
 # Functions
 # -----------------------------------------------------------------
+
+function Write-VersionTable
+{
+	Write-Verbose ($PSVersionTable | Out-String)
+}
 
 function Convert-ServiceMessageValue([string]$value)
 {
@@ -65,32 +72,40 @@ function Write-Warning([string]$message)
 }
 
 function Decrypt-String($Encrypted, $iv) 
-{ 
-	$provider = new-Object System.Security.Cryptography.AesCryptoServiceProvider
-	$provider.Mode = [System.Security.Cryptography.CipherMode]::CBC
-	$provider.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
-	$provider.KeySize = 128
-	$provider.BlockSize = 128
-	$provider.Key = [System.Convert]::FromBase64String($key)
-	$provider.IV =[System.Convert]::FromBase64String($iv)
-
-	$dec = $provider.CreateDecryptor()
-	$ms = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
-	$cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
-	$sr = new-Object IO.StreamReader $cs 
-		Write-Output $sr.ReadToEnd() 
-	$sr.Dispose() 
-	$cs.Dispose() 
-	$ms.Dispose() 
-	$dec.Dispose()
-	# The AesCryptoServiceProvider class implemented IDiposable explicitly in .NET 2, so 
-	# the line below would fail under PowerShell 2.0 
+{
+	# Try AesCryptoServiceProvider first (requires .NET 3.5+), otherwise fall back to RijndaelManaged (.NET 2.0)
+	# Note using RijndaelManaged will fail in FIPS compliant environments: https://support.microsoft.com/en-us/kb/811833
+	$algorithm = $null
 	try {
-	$provider.Dispose()
-	} catch {}
+		Add-Type -AssemblyName System.Core
+		$algorithm = [System.Security.Cryptography.SymmetricAlgorithm] (New-Object System.Security.Cryptography.AesCryptoServiceProvider)
+	} catch {
+		Write-Verbose "Could not load AesCryptoServiceProvider, falling back to RijndaelManaged (.NET 2.0)."
+		$algorithm = [System.Security.Cryptography.SymmetricAlgorithm] (New-Object System.Security.Cryptography.RijndaelManaged)
+	}
+
+	$algorithm.Mode = [System.Security.Cryptography.CipherMode]::CBC
+	$algorithm.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+	$algorithm.KeySize = 128
+	$algorithm.BlockSize = 128 # AES is just Rijndael with a fixed block size
+	$algorithm.Key = [System.Convert]::FromBase64String($key)
+	$algorithm.IV =[System.Convert]::FromBase64String($iv)
+	$decryptor = [System.Security.Cryptography.ICryptoTransform]$algorithm.CreateDecryptor()
+
+	$memoryStream = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
+	$cryptoStream = new-Object Security.Cryptography.CryptoStream $memoryStream,$decryptor,"Read" 
+	$streamReader = new-Object IO.StreamReader $cryptoStream 
+	Write-Output $streamReader.ReadToEnd()
+	$streamReader.Dispose() 
+	$cryptoStream.Dispose() 
+	$memoryStream.Dispose()
+
+	# RijndaelManaged/RijndaelManagedTransform implemented IDiposable explicitly
+	[System.IDisposable].GetMethod("Dispose").Invoke($decryptor, @())
+	[System.IDisposable].GetMethod("Dispose").Invoke($algorithm, @())
 }
 
-function InitializeProxySettings() 
+function Initialize-ProxySettings() 
 {
 	$proxyUsername = $env:TentacleProxyUsername
 	$proxyPassword = $env:TentacleProxyPassword
@@ -105,26 +120,24 @@ function InitializeProxySettings()
 	}
 }
 
+Write-VersionTable
+
 # -----------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------
 
 {{VariableDeclarations}}
 
-
 # -----------------------------------------------------------------
 # Defaults
 # -----------------------------------------------------------------
 
-InitializeProxySettings
-
-$ErrorActionPreference = 'Stop'
+Initialize-ProxySettings
 
 # -----------------------------------------------------------------
 # Invoke target script
 # -----------------------------------------------------------------
-
-. "{{TargetScriptFile}}"
+. '{{TargetScriptFile}}'
 
 # -----------------------------------------------------------------
 # Ensure we exit with whatever exit code the last exe used

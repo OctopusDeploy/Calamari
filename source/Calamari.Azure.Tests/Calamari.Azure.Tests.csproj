@@ -75,8 +75,8 @@
       <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.19, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octostache.1.0.2.19\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.28, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.28\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -103,6 +103,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Solution Items\SolutionInfo.cs">
+      <Link>Properties\SolutionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\Solution Items\VersionInfo.cs">
+      <Link>Properties\VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="CloudServicePackage\ManifestSchema\AzureCloudServicePackageManifestSchemaFixture.cs" />
     <Compile Include="Conventions\ChooseAzureCloudServiceConfigurationFileConventionFixture.cs" />
     <Compile Include="Conventions\ConfigureAzureCloudServiceConventionFixture.cs" />
@@ -116,6 +122,7 @@
     <Compile Include="PowerShell\AzurePowerShellContextFixture.cs" />
     <Compile Include="PowerShell\AzurePowershellFixture.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SetUpFixture.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CloudServicePackage\ManifestSchema\PackageDefinition.xsd">
@@ -155,7 +162,15 @@ xcopy "$(SolutionDir)packages\NuGet.CommandLine.2.8.3\tools\Nuget.exe" "$(Target
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
+    <Error Condition="!Exists('..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(SolutionDir)\Calamari\bin\Calamari.exe.config" "$(TargetDir)" /y
+xcopy "$(SolutionDir)\Calamari.Azure\bin\Calamari.Azure.exe.config" "$(TargetDir)" /y
+xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y
+xcopy "$(SolutionDir)packages\NuGet.CommandLine.2.8.3\tools\Nuget.exe" "$(TargetDir)NuGet\"  /y</PostBuildEvent>
+  </PropertyGroup>
+  <Import Project="..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets" Condition="Exists('..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

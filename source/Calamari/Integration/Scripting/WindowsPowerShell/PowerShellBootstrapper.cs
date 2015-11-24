@@ -66,7 +66,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{TargetScriptFile}}", targetScriptFile);
+            builder.Replace("{{TargetScriptFile}}", targetScriptFile.Replace("'", "''"));
             builder.Replace("{{VariableDeclarations}}", DeclareVariables(variables));
 
             using (var writer = new StreamWriter(bootstrapFile, false, new UTF8Encoding(true)))

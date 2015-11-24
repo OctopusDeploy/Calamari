@@ -13,5 +13,7 @@
         public const string BeforePostDeploy = "BeforePostDeploy";
         public const string PostDeploy = "PostDeploy";
         public const string AfterPostDeploy = "AfterPostDeploy";
+
+        public const string DeployFailed = "DeployFailed";
     }
 }

@@ -141,8 +141,8 @@
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.19, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octostache.1.0.2.19\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.28, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.28\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -175,6 +175,12 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Solution Items\SolutionInfo.cs">
+      <Link>Properties\SolutionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\Solution Items\VersionInfo.cs">
+      <Link>Properties\VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="Commands\DeployAzureCloudServiceCommand.cs" />
     <Compile Include="Commands\DeployAzureResourceGroupCommand.cs" />
     <Compile Include="Commands\DeployAzureWebCommand.cs" />
@@ -228,7 +234,9 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
+    <Error Condition="!Exists('..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets'))" />
   </Target>
+  <Import Project="..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets" Condition="Exists('..\packages\GitVersionTask.3.3.0\build\portable-net+sl+win+wpa+wp\GitVersionTask.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
