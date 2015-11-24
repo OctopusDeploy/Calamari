@@ -73,36 +73,36 @@ function Write-Warning([string]$message)
 
 function Decrypt-String($Encrypted, $iv) 
 {
-	# Try AesCryptoServiceProvider first (requires .NET 3.5+), otherwise fall back to RijndaelManaged (.NET 2.0)
-	# Note using RijndaelManaged will fail in FIPS compliant environments: https://support.microsoft.com/en-us/kb/811833
-	$algorithm = $null
-	try {
-		Add-Type -AssemblyName System.Core
-		$algorithm = [System.Security.Cryptography.SymmetricAlgorithm] (New-Object System.Security.Cryptography.AesCryptoServiceProvider)
-	} catch {
-		Write-Verbose "Could not load AesCryptoServiceProvider, falling back to RijndaelManaged (.NET 2.0)."
-		$algorithm = [System.Security.Cryptography.SymmetricAlgorithm] (New-Object System.Security.Cryptography.RijndaelManaged)
+	# Try AesCryptoServiceProvider first (requires .NET 3.5+), otherwise fall back to AesManaged (.NET 2.0)
+	# Note using AesManaged will fail in FIPS compliant environments: https://support.microsoft.com/en-us/kb/811833
+	Add-Type -AssemblyName System.Core -ErrorAction SilentlyContinue
+	$aes = [System.Security.Cryptography.Aes] (New-Object System.Security.Cryptography.AesCryptoServiceProvider -ErrorAction SilentlyContinue)
+	if ($aes -eq $null) {
+		$aes = [System.Security.Cryptography.Aes] (New-Object System.Security.Cryptography.AesManaged)
 	}
 
-	$algorithm.Mode = [System.Security.Cryptography.CipherMode]::CBC
-	$algorithm.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
-	$algorithm.KeySize = 128
-	$algorithm.BlockSize = 128 # AES is just Rijndael with a fixed block size
-	$algorithm.Key = [System.Convert]::FromBase64String($key)
-	$algorithm.IV =[System.Convert]::FromBase64String($iv)
-	$decryptor = [System.Security.Cryptography.ICryptoTransform]$algorithm.CreateDecryptor()
+	$aes.Mode = [System.Security.Cryptography.CipherMode]::CBC
+	$aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+	$aes.KeySize = 128
+	$aes.BlockSize = 128
+	$aes.Key = [System.Convert]::FromBase64String($key)
+	$aes.IV =[System.Convert]::FromBase64String($iv)
+	$dec = [System.Security.Cryptography.ICryptoTransform]$aes.CreateDecryptor()
 
-	$memoryStream = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
-	$cryptoStream = new-Object Security.Cryptography.CryptoStream $memoryStream,$decryptor,"Read" 
-	$streamReader = new-Object IO.StreamReader $cryptoStream 
-	Write-Output $streamReader.ReadToEnd()
-	$streamReader.Dispose() 
-	$cryptoStream.Dispose() 
-	$memoryStream.Dispose()
-
-	# RijndaelManaged/RijndaelManagedTransform implemented IDiposable explicitly
-	[System.IDisposable].GetMethod("Dispose").Invoke($decryptor, @())
-	[System.IDisposable].GetMethod("Dispose").Invoke($algorithm, @())
+	$ms = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
+	$cs = new-Object Security.Cryptography.CryptoStream $ms,$dec,"Read" 
+	$sr = new-Object IO.StreamReader $cs 
+	Write-Output $sr.ReadToEnd()
+	$sr.Dispose() 
+	$cs.Dispose() 
+	$ms.Dispose() 
+	$dec.Dispose()
+	
+	# The Aes base class implemented IDiposable explicitly in .NET 3.5, so 
+	# the line below would fail under PowerShell 2.0 / CLR 2.0
+	try {
+		$aes.Dispose()
+	} catch {}
 }
 
 function Initialize-ProxySettings() 
