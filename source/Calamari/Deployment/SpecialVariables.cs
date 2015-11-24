@@ -129,6 +129,7 @@
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";
                 public static readonly string PreserveAppData = "Octopus.Action.Azure.PreserveAppData";
+                public static readonly string PreservePaths = "Octopus.Action.Azure.PreservePaths";
                 public static readonly string PhysicalPath = "Octopus.Action.Azure.PhysicalPath";
 
                 public static readonly string CloudServiceName = "Octopus.Action.Azure.CloudServiceName";
