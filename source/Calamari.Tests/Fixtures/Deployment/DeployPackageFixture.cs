@@ -51,16 +51,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertOutput("Extracting package to: " + Path.Combine(stagingDirectory, "Acme.Web", "1.0.0"));
 
-            if (CalamariEnvironment.IsRunningOnNix)
-            {
-                result.AssertOutput("Extracted 13 files");
-                result.AssertOutput("Bonjour from PreDeploy.sh");
-            }
-            else
-            {
-                result.AssertOutput("Extracted 12 files");
-                result.AssertOutput("Bonjour from PreDeploy.ps1");
-            }
+            result.AssertOutput("Extracted 12 files");
+            result.AssertOutput("Bonjour from PreDeploy.ps1");
         }
 
         [Test]
@@ -100,9 +92,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             variables.Set("foo", "bar");
 
-            var path = CalamariEnvironment.IsRunningOnNix ? 
-                "assets/README.txt" : 
-                "assets\\README.txt";
+            var path = Path.Combine("assets", "README.txt");
 
             // Enable file substitution and configure the target
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
@@ -147,7 +137,9 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void ShouldCopyFilesToCustomInstallationDirectory()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ShouldCopyFilesToCustomInstallationDirectory(bool deployAsTar)
         {
             // Set-up a custom installation directory
             string customInstallDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestInstall");
@@ -156,17 +148,19 @@ namespace Calamari.Tests.Fixtures.Deployment
             fileSystem.PurgeDirectory(customInstallDirectory, FailureOptions.ThrowOnFailure); 
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallDirectory );
 
-            var result = DeployPackage("Acme.Web");
+            var result = deployAsTar ? DeployTarPackage("Acme.Web") : DeployPackage("Acme.Web");
 
             // Assert content was copied to custom-installation directory
             Assert.IsTrue(fileSystem.FileExists(Path.Combine(customInstallDirectory, "assets", "styles.css")));
         }
 
         [Test]
-        public void ShouldExecuteFeatureScripts()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ShouldExecuteFeatureScripts(bool deployAsTar)
         {
             variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");
-            var result = DeployPackage("Acme.Web");
+            var result = deployAsTar ? DeployTarPackage("Acme.Web") : DeployPackage("Acme.Web");
             result.AssertOutput("Hello World!");
         }
 
@@ -248,14 +242,33 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void ShouldSkipIfAlreadyInstalled()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ShouldSkipIfAlreadyInstalled(bool deployAsTar)
         {
             variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             variables.Set(SpecialVariables.RetentionPolicySet, "a/b/c/d");
             variables.Set(SpecialVariables.Package.NuGetPackageId, "Acme.Web");
             variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
 
-            var result = DeployPackage("Acme.Web");
+            var result = deployAsTar ? DeployTarPackage("Acme.Web") : DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutput("The package has been installed to");
+
+            result = deployAsTar ? DeployTarPackage("Acme.Web") : DeployPackage("Acme.Web");
+            result.AssertZero();
+            result.AssertOutput("The package has already been installed on this machine");
+        }
+
+        [Test]
+        public void ShouldSkipIfAlreadyInstalledWithDifferentPackageType()
+        {
+            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            variables.Set(SpecialVariables.RetentionPolicySet, "a/b/c/d");
+            variables.Set(SpecialVariables.Package.NuGetPackageId, "Acme.Web");
+            variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
+
+            var result = DeployTarPackage("Acme.Web");
             result.AssertZero();
             result.AssertOutput("The package has been installed to");
 
@@ -291,9 +304,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                         result.AssertZero();
                         var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                        result.AssertOutput(CalamariEnvironment.IsRunningOnNix
-                            ? "Extracted 13 files"
-                            : "Extracted 12 files");
+                        result.AssertOutput("Extracted 12 files");
 
                         lock (extractionDirectories)
                         {
@@ -319,6 +330,24 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var allErrors = string.Join(Environment.NewLine, errors.Select(e => e.ToString()));
             Assert.That(allErrors, Is.EqualTo(""), allErrors);
+        }
+
+        CalamariResult DeployTarPackage(string packageName)
+        {
+            var tarName = Path.Combine(Path.GetTempPath(), string.Format("{0}.{1}.{2}", "Acme.Web", "1.0.0", "tar.gz"));
+
+            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            using (var tarWeb = new TemporaryFile(tarName))
+            {
+                TarGzBuilder.BuildSamplePackage(tarName, GetFixtureResouce("Packages", "Acme.Web"));
+                variables.Save(variablesFile.FilePath);
+
+                return Invoke(Calamari()
+                    .Action("deploy-package")
+                    .Argument("package", tarName)
+                    .Argument("variables", variablesFile.FilePath));
+            }
+
         }
 
         CalamariResult DeployPackage(string packageName)
