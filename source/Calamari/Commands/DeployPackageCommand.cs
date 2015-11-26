@@ -61,6 +61,7 @@ namespace Calamari.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = new SystemSemaphore();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
+            var packageExtractor = new PackageExtractorFactory().GetExtractor(packageFile);
 
             var conventions = new List<IConvention>
             {
@@ -68,7 +69,7 @@ namespace Calamari.Commands
                 new ContributePreviousInstallationConvention(journal),
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
-                new ExtractPackageToApplicationDirectoryConvention(new OpenPackagingConventionExtractor(), fileSystem, semaphore),
+                new ExtractPackageToApplicationDirectoryConvention(packageExtractor, fileSystem, semaphore),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, embeddedResources, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptCapability, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
