@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.IO.Packaging;
 using System.Linq;
 using NuGet;
@@ -12,14 +13,10 @@ namespace Calamari.Integration.Packages
     /// This class simply uses the packaging API's directly to extract, and only uses 6mb and takes 10 seconds on the 
     /// same 180mb file. 
     /// </summary>
-    public class LightweightPackageExtractor : IPackageExtractor
+    public class OpenPackagingConventionExtractor : IPackageExtractor
     {
-        static readonly string[] ExcludePaths = new[] { "_rels", "package\\services\\metadata" };
-
-        public LightweightPackageExtractor()
-        {
-        }
-
+        static readonly string[] ExcludePaths = new[] { "_rels", Path.Combine("package","services","metadata") };
+        
         public PackageMetadata GetMetadata(string packageFile)
         {
             using (var package = Package.Open(packageFile, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -54,9 +51,9 @@ namespace Calamari.Integration.Packages
             return result;
         }
 
-        public void Install(string packageFile, string directory, bool suppressNestedScriptWarning, out int filesExtracted)
+        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
-            filesExtracted = 0;
+            int filesExtracted = 0;
             using (var package = Package.Open(packageFile, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var files =
@@ -88,7 +85,10 @@ namespace Calamari.Integration.Packages
                     }
                 }
             }
+            return filesExtracted;
         }
+
+        public string[] Extensions { get { return new[] {".nupkg"}; } }
 
         void WarnIfScriptInSubFolder(string path)
         {

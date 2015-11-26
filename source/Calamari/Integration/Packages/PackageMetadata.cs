@@ -4,6 +4,10 @@
     {
         public string Id { get; set; }
         public string Version { get; set; }
+    }
+
+    public class ExtendedPackageMetadata : PackageMetadata
+    {
         public string Hash { get; set; }
     }
 }

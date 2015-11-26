@@ -34,6 +34,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="MarkdownSharp">
       <HintPath>..\packages\MarkdownSharp.1.13.0.0\lib\35\MarkdownSharp.dll</HintPath>
     </Reference>
@@ -172,6 +176,13 @@
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
     <Compile Include="Integration\AppSettingsJson\AppSettingsJsonGenerator.cs" />
     <Compile Include="Integration\AppSettingsJson\IAppSettingsJsonGenerator.cs" />
+    <Compile Include="Integration\Packages\PackageExtractorFactory.cs" />
+    <Compile Include="Integration\Packages\SimplePackageExtractor.cs" />
+    <Compile Include="Integration\Packages\TarBzipPackageExtractor.cs" />
+    <Compile Include="Integration\Packages\TarLzwPackageExtractor.cs" />
+    <Compile Include="Integration\Packages\TarGzipPackageExtractor.cs" />
+    <Compile Include="Integration\Packages\TarPackageExtractor.cs" />
+    <Compile Include="Integration\Packages\ZipPackageExtractor.cs" />
     <Compile Include="Integration\Scripting\PackagedScriptRunner.cs" />
     <Compile Include="Deployment\Conventions\RollbackScriptConvention.cs" />
     <Compile Include="Deployment\DeploymentStages.cs" />
@@ -241,7 +252,7 @@
     <Compile Include="Integration\FileSystem\IFileInfo.cs" />
     <Compile Include="Integration\FileSystem\ICalamariFileSystem.cs" />
     <Compile Include="Integration\Packages\IPackageExtractor.cs" />
-    <Compile Include="Integration\Packages\LightweightPackageExtractor.cs" />
+    <Compile Include="Integration\Packages\OpenPackagingConventionExtractor.cs" />
     <Compile Include="Integration\Packages\PackageMetadata.cs" />
     <Compile Include="Integration\Processes\VariableDictionaryExtensions.cs" />
     <Compile Include="Integration\ConfigurationTransforms\ConfigurationTransformer.cs" />
