@@ -6,49 +6,49 @@ namespace Calamari.Tests.Helpers
 {
     public static class TarGzBuilder
     {
-        public static void BuildSamplePackage(string tgzFilename, string sourceDirectory)
+
+        /// <summary>
+        /// Creates a GZipped Tar file from a source directory
+        /// </summary>
+        /// <param name="outputTarFilename">Output .tar.gz file</param>
+        /// <param name="sourceDirectory">Input directory containing files to be added to GZipped tar archive</param>
+        public static void BuildSamplePackage(string outputTarFilename, string sourceDirectory)
         {
-
-            Stream outStream = File.Create(tgzFilename);
-            Stream gzoStream = new GZipOutputStream(outStream);
-            TarArchive tarArchive = TarArchive.CreateOutputTarArchive(gzoStream);
-
-            // Note that the RootPath is currently case sensitive and must be forward slashes e.g. "c:/temp"
-            // and must not end with a slash, otherwise cuts off first char of filename
-            // This is scheduled for fix in next release
-            tarArchive.RootPath = sourceDirectory.Replace('\\', '/');
-            if (tarArchive.RootPath.EndsWith("/"))
-                tarArchive.RootPath = tarArchive.RootPath.Remove(tarArchive.RootPath.Length - 1);
-
-            AddDirectoryFilesToTar(tarArchive, sourceDirectory, true);
-
-            tarArchive.Close();
-        }
-        private static void AddDirectoryFilesToTar(TarArchive tarArchive, string sourceDirectory, bool recurse)
-        {
-
-            // Optionally, write an entry for the directory itself.
-            // Specify false for recursion here if we will add the directory's files individually.
-            //
-            TarEntry tarEntry = TarEntry.CreateEntryFromFile(sourceDirectory);
-            //tarEntry.Name = tarEntry.Name.Replace("Fixtures/Deployment/Packages/Acme.Web", "");
-            tarArchive.WriteEntry(tarEntry, false);
-
-            // Write each file to the tar.
-            //
-            string[] filenames = Directory.GetFiles(sourceDirectory);
-            foreach (string filename in filenames)
+            using (FileStream fs = new FileStream(outputTarFilename, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (Stream gzipStream = new GZipOutputStream(fs))
+            using (TarArchive tarArchive = TarArchive.CreateOutputTarArchive(gzipStream))
             {
-                tarEntry = TarEntry.CreateEntryFromFile(filename);
-                tarEntry.Name = tarEntry.Name.Replace("Fixtures/Deployment/Packages/Acme.Web/", "");
-                tarArchive.WriteEntry(tarEntry, true);
+                var rootPath = sourceDirectory
+                    .Replace(Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar, "")
+                    .Replace('\\', '/');
+                AddDirectoryFilesToTar2(tarArchive, sourceDirectory, true, rootPath);
             }
+        }
 
+        
+        private static void AddDirectoryFilesToTar2(TarArchive tarArchive, string sourceDirectory, bool recurse, string rootDirectory)
+        {
+            // Recursively add sub-folders
             if (recurse)
             {
                 string[] directories = Directory.GetDirectories(sourceDirectory);
                 foreach (string directory in directories)
-                    AddDirectoryFilesToTar(tarArchive, directory, recurse);
+                    AddDirectoryFilesToTar2(tarArchive, directory, recurse, rootDirectory);
+            }
+
+            // Add files
+            string[] filenames = Directory.GetFiles(sourceDirectory);
+            foreach (string filename in filenames)
+            {
+                TarEntry tarEntry = TarEntry.CreateEntryFromFile(filename);
+
+                if (tarEntry.Name.StartsWith(rootDirectory))
+                {
+                    tarEntry.Name = tarEntry.Name.Substring(rootDirectory.Length+1);
+                }
+
+
+                tarArchive.WriteEntry(tarEntry, true);
             }
         }
     }

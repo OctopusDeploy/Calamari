@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("Extracting package to: " + Path.Combine(stagingDirectory, "Acme.Web", "1.0.0"));
 
             result.AssertOutput("Extracted 12 files");
-            result.AssertOutput("Bonjour from PreDeploy.ps1");
+            result.AssertOutput("Bonjour from PreDeploy");
         }
 
         [Test]
@@ -334,12 +334,12 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         CalamariResult DeployTarPackage(string packageName)
         {
-            var tarName = Path.Combine(Path.GetTempPath(), string.Format("{0}.{1}.{2}", "Acme.Web", "1.0.0", "tar.gz"));
+            var tarName = Path.Combine(Path.GetTempPath(), string.Format("{0}.{1}.{2}", packageName, "1.0.0", "tar.gz"));
 
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
-            using (var tarWeb = new TemporaryFile(tarName))
+            using (new TemporaryFile(tarName))
             {
-                TarGzBuilder.BuildSamplePackage(tarName, GetFixtureResouce("Packages", "Acme.Web"));
+                TarGzBuilder.BuildSamplePackage(tarName, GetFixtureResouce("Packages", packageName));
                 variables.Save(variablesFile.FilePath);
 
                 return Invoke(Calamari()

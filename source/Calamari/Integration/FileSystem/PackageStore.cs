@@ -10,6 +10,7 @@ namespace Calamari.Integration.FileSystem
 {
     public class PackageStore
     {
+        private readonly PackageExtractorFactory packageExtractorFactory;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
 
@@ -24,6 +25,11 @@ namespace Calamari.Integration.FileSystem
                 }
                 return tentacleHome;
             }
+        }
+
+        public PackageStore(PackageExtractorFactory packageExtractorFactory)
+        {
+            this.packageExtractorFactory = packageExtractorFactory;
         }
 
         public string GetPackagesDirectory()
@@ -70,7 +76,7 @@ namespace Calamari.Integration.FileSystem
 
         private IEnumerable<string> PackageFiles(string name)
         {
-            var patterns = new PackageExtractorFactory().ValidExtensions.Select(e => name + e +"-*").ToArray();
+            var patterns = packageExtractorFactory.ValidExtensions.Select(e => name + e +"-*").ToArray();
             return fileSystem.EnumerateFilesRecursively(rootDirectory, patterns);
         }
 
@@ -91,11 +97,11 @@ namespace Calamari.Integration.FileSystem
                 select new StoredPackage(package, zipPackage.filePath);
         }
 
-        static PackageMetadata PackageMetadata(string file)
+        PackageMetadata PackageMetadata(string file)
         {
             try
             {
-                return new PackageExtractorFactory().GetExtractor(file).GetMetadata(file);
+                return packageExtractorFactory.GetExtractor(file).GetMetadata(file);
             }
             catch (IOException)
             {

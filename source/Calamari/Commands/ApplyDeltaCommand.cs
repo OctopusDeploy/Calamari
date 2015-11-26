@@ -5,6 +5,7 @@ using System.Runtime.Remoting.Messaging;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
@@ -20,7 +21,7 @@ namespace Calamari.Commands
         string newFileName;
         bool showProgress;
         bool skipVerification;
-        readonly PackageStore packageStore = new PackageStore();
+        readonly PackageStore packageStore = new PackageStore(new PackageExtractorFactory());
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public ApplyDeltaCommand()
