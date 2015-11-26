@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,6 +22,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         RunningDeployment deployment;
         CalamariVariableDictionary variables;
         const string stagingDirectory = "c:\\applications\\acme\\1.0.0";
+        ProxyLog logs;
 
         [SetUp]
         public void SetUp()
@@ -34,6 +34,13 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
 
             deployment = new RunningDeployment("C:\\packages", variables);
+            logs = new ProxyLog();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            logs.Dispose();
         }
 
         [Test]
@@ -81,12 +88,25 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
+        public void ShouldLogErrorIfUnableToFindFile()
+        {
+            var webConfig = Path.Combine(stagingDirectory, "web.config");
+
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] {webConfig}, "*.config");
+
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "WebX.Release.config => Web.config");
+
+            CreateConvention().Install(deployment);
+            logs.AssertContains("The transform pattern \"WebX.Release.config => Web.config\" was not performed due to a missing file or overlapping rule.");
+        }
+
+        [Test]
         public void ShouldApplySpecificCustomTransform()
         {
             var webConfig = Path.Combine(stagingDirectory, "web.config");
             var specificTransform = Path.Combine(stagingDirectory, "web.Foo.config");
 
-            MockSearchableFiles(fileSystem, stagingDirectory, new[] { webConfig, specificTransform }, "*.config");
+            MockSearchableFiles(fileSystem, stagingDirectory, new[] {webConfig, specificTransform}, "*.config");
 
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "web.Foo.config => web.config");
             // This will be applied even if the automatically run flag is set to false
@@ -94,12 +114,12 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(webConfig, specificTransform, webConfig);
+            logs.AssertDoesNotContain("The transform pattern \"web.Foo.config => web.config\" was not performed due to a missing file or overlapping rule.");
         }
 
         [Test]
         [TestCaseSource(nameof(AdvancedTransformTestCases))]
-        public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition,
-            string expectedAppliedTransform)
+        public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
         {
             MockSearchableFiles(fileSystem, stagingDirectory, new[] { sourceFile, expectedAppliedTransform }, "*" + Path.GetExtension(sourceFile));
 
@@ -109,6 +129,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(sourceFile, expectedAppliedTransform, sourceFile);
+            logs.AssertDoesNotContain("The transform pattern");
         }
 
         [Test]
@@ -125,6 +146,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             configurationTransformer.DidNotReceive().PerformTransform(webConfig, specificTransform, webConfig);
+            logs.AssertContains("The transform pattern \"config\\*.Foo.config => web.config\" was not performed due to a missing file or overlapping rule.");
         }
 
         private static IEnumerable AdvancedTransformTestCases

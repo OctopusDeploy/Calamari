@@ -10,8 +10,8 @@ namespace Calamari
     public class Log
     {
         static string stdOutMode;
-        static readonly IndentedTextWriter StdOut;
-        static readonly IndentedTextWriter StdErr;
+        internal static IndentedTextWriter StdOut;
+        internal static IndentedTextWriter StdErr;
         static readonly object Sync = new object();
 
         static Log()

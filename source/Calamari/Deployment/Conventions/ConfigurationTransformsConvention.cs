@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using NuGet;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -21,42 +22,82 @@ namespace Calamari.Deployment.Conventions
         public void Install(RunningDeployment deployment)
         {
 
-            var transformDefinitions = GetTransformDefinitions(deployment.Variables.Get(SpecialVariables.Package.AdditionalXmlConfigurationTransforms));
+            var explicitTransforms = GetExplicitTransforms(deployment);
+            var automaticTransforms = GetAutomaticTransforms(deployment);
+            var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);           
 
-            var sourceExtensions = new HashSet<string>(
-                  transformDefinitions
-                    .Where(transform => transform.Advanced)
-                    .Select(transform => "*" + Path.GetExtension(transform.SourcePattern))
-                    .Distinct()
-                );
 
+            var transformsRun = new Dictionary<string, XmlConfigTransformDefinition>();
+            var allTransforms = explicitTransforms.Concat(automaticTransforms).ToList();
+            foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions))
+            {
+                ApplyTransformations(configFile, allTransforms, transformsRun);
+            }
+
+
+            LogFailedTransforms(explicitTransforms.Except(transformsRun.Values));
+
+            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformsRun.Keys, "|");
+        }
+
+        private List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)
+        {
+            var result = new List<XmlConfigTransformDefinition>();
             if (deployment.Variables.GetFlag(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
             {
-                sourceExtensions.Add("*.config");
-                transformDefinitions.Add(new XmlConfigTransformDefinition("Release"));
+                result.Add(new XmlConfigTransformDefinition("Release"));
 
                 var environment = deployment.Variables.Get(SpecialVariables.Environment.Name);
                 if (!string.IsNullOrWhiteSpace(environment))
                 {
-                    transformDefinitions.Add(new XmlConfigTransformDefinition(environment));
+                    result.Add(new XmlConfigTransformDefinition(environment));
                 }
             }
-
-            var transformsRun = new HashSet<string>();
-            foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory,
-                sourceExtensions.ToArray()))
-            {
-                ApplyTransformations(configFile, transformDefinitions, transformsRun);
-
-            }
-
-            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformsRun, "|");
+            return result;
         }
 
-        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations,
-            HashSet<string> alreadyRun)
+        private static List<XmlConfigTransformDefinition> GetExplicitTransforms(RunningDeployment deployment)
         {
+            var transforms = deployment.Variables.Get(SpecialVariables.Package.AdditionalXmlConfigurationTransforms);
 
+            if (string.IsNullOrWhiteSpace(transforms))
+                return new List<XmlConfigTransformDefinition>();
+
+            return transforms
+                .Split(',', '\r', '\n')
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => new XmlConfigTransformDefinition(s))
+                .ToList();
+        }
+
+        private static string[] GetSourceExtensions(RunningDeployment deployment, List<XmlConfigTransformDefinition> transformDefinitions)
+        {
+            var extensions = new HashSet<string>();
+
+            if (deployment.Variables.GetFlag(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
+            {
+                extensions.Add("*.config");
+            }
+
+            extensions.AddRange(transformDefinitions
+                .Where(transform => transform.Advanced)
+                .Select(transform => "*" + Path.GetExtension(transform.SourcePattern))
+                .Distinct());
+
+            return extensions.ToArray();
+        }
+
+        void LogFailedTransforms(IEnumerable<XmlConfigTransformDefinition> configTransform)
+        {
+            foreach (var transform in configTransform.Select(trans => trans.ToString()).Distinct())
+            {
+                Log.VerboseFormat("The transform pattern \"{0}\" was not performed due to a missing file or overlapping rule.", transform);
+            }
+        }
+        
+        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, Dictionary<string, XmlConfigTransformDefinition> alreadyRun)
+        {
             foreach (var transformation in transformations)
             {
                 if (transformation.Advanced && !transformation.Wildcard && !string.Equals(transformation.SourcePattern, Path.GetFileName(sourceFile), StringComparison.InvariantCultureIgnoreCase))
@@ -73,28 +114,14 @@ namespace Calamari.Deployment.Conventions
                     if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
                         continue;
 
-                    if (alreadyRun.Contains(transformFile))
+                    if (alreadyRun.ContainsKey(transformFile))
                         continue;
 
                     Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
                     configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
-                    alreadyRun.Add(transformFile);
+                    alreadyRun.Add(transformFile, transformation);
                 }
-
             }
-        }
-
-        private static List<XmlConfigTransformDefinition> GetTransformDefinitions(string transforms)
-        {
-            if (string.IsNullOrWhiteSpace(transforms))
-                return new List<XmlConfigTransformDefinition>();
-
-            return transforms
-                .Split(',', '\r', '\n')
-                .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Select(s => new XmlConfigTransformDefinition(s))
-                .ToList();
         }
 
         private IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation)
@@ -111,7 +138,7 @@ namespace Calamari.Deployment.Conventions
         {
             return transformFile
                 .Replace(Path.GetDirectoryName(sourceFile) ?? string.Empty, "")
-                .TrimStart('\\');
+                .TrimStart(Path.DirectorySeparatorChar);
         }
 
         private static string DetermineTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, bool defaultExtension)
