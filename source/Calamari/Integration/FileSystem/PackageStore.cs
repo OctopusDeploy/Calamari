@@ -77,7 +77,6 @@ namespace Calamari.Integration.FileSystem
         public IEnumerable<StoredPackage> GetNearestPackages(string packageId, SemanticVersion version, int take = 5)
         {
             fileSystem.EnsureDirectoryExists(rootDirectory);
-            var x = PackageFiles(packageId + "*");
             var zipPackages =
                 from filePath in PackageFiles(packageId +"*")
                 let zip = PackageMetadata(filePath)
