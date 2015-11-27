@@ -189,6 +189,7 @@
     <Compile Include="Deployment\Conventions\ChooseCloudServiceConfigurationFileConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigureAzureCloudServiceConvention.cs" />
     <Compile Include="Deployment\Conventions\DeployAzureCloudServicePackageConvention.cs" />
+    <Compile Include="Deployment\Conventions\DeployAzureResourceGroupConvention.cs" />
     <Compile Include="Deployment\Conventions\EnsureCloudServicePackageIsCtpFormatConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\FindCloudServicePackageConvention.cs" />
