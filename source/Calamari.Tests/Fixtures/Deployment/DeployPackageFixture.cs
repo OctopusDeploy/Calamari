@@ -305,48 +305,45 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var errors = new List<Exception>();
 
-            using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0")))
+            var threads = Enumerable.Range(0, 4).Select(i => new Thread(new ThreadStart(delegate
             {
-                var threads = Enumerable.Range(0, 4).Select(i => new Thread(new ThreadStart(delegate
+                try
                 {
-                    try
+                    CalamariResult result;
+                    using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
                     {
-                        CalamariResult result;
-                        using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
-                        {
-                            variables.Save(variablesFile.FilePath);
+                        variables.Save(variablesFile.FilePath);
 
-                            result = Invoke(Calamari()
-                                .Action("deploy-package")
-                                .Argument("package", acmeWeb.FilePath)
-                                .Argument("variables", variablesFile.FilePath));
+                        result = Invoke(Calamari()
+                            .Action("deploy-package")
+                            .Argument("package", nupkgFile.FilePath)
+                            .Argument("variables", variablesFile.FilePath));
+                    }
+
+                    result.AssertZero();
+                    var extracted = result.GetOutputForLineContaining("Extracting package to: ");
+                    result.AssertOutput("Extracted 12 files");
+
+                    lock (extractionDirectories)
+                    {
+                        if (!extractionDirectories.Contains(extracted))
+                        {
+                            extractionDirectories.Add(extracted);
                         }
-
-                        result.AssertZero();
-                        var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                        result.AssertOutput("Extracted 12 files");
-
-                        lock (extractionDirectories)
+                        else
                         {
-                            if (!extractionDirectories.Contains(extracted))
-                            {
-                                extractionDirectories.Add(extracted);
-                            }
-                            else
-                            {
-                                Assert.Fail("The same installation directory was used twice: " + extracted);
-                            }
+                            Assert.Fail("The same installation directory was used twice: " + extracted);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        errors.Add(ex);
-                    }
-                }))).ToList();
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(ex);
+                }
+            }))).ToList();
 
-                foreach (var thread in threads) thread.Start();
-                foreach (var thread in threads) thread.Join();
-            }
+            foreach (var thread in threads) thread.Start();
+            foreach (var thread in threads) thread.Join();
 
             var allErrors = string.Join(Environment.NewLine, errors.Select(e => e.ToString()));
             Assert.That(allErrors, Is.EqualTo(""), allErrors);
