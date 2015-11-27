@@ -6,14 +6,15 @@ namespace Calamari.Tests.Helpers
 {
     public static class TarGzBuilder
     {
-
-        /// <summary>
-        /// Creates a GZipped Tar file from a source directory
-        /// </summary>
-        /// <param name="outputTarFilename">Output .tar.gz file</param>
-        /// <param name="sourceDirectory">Input directory containing files to be added to GZipped tar archive</param>
-        public static void BuildSamplePackage(string outputTarFilename, string sourceDirectory)
+        public static string BuildSamplePackage(string name, string version)
         {
+            var sourceDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
+            
+            var outputTarFilename = Path.Combine(Path.GetTempPath(), name + "." + version + ".tar.gz");
+            if (File.Exists(outputTarFilename))
+                File.Delete(outputTarFilename);
+
+
             using (FileStream fs = new FileStream(outputTarFilename, FileMode.Create, FileAccess.Write, FileShare.None))
             using (Stream gzipStream = new GZipOutputStream(fs))
             using (TarArchive tarArchive = TarArchive.CreateOutputTarArchive(gzipStream))
@@ -23,6 +24,7 @@ namespace Calamari.Tests.Helpers
                     .Replace('\\', '/');
                 AddDirectoryFilesToTar2(tarArchive, sourceDirectory, true, rootPath);
             }
+            return outputTarFilename;
         }
 
         
