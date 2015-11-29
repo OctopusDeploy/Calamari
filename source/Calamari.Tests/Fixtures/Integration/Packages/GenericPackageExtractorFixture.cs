@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -11,14 +7,14 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
-    public class PackageExtractorFactoryFixture : CalamariFixture
+    public class GenericPackageExtractorFixture : CalamariFixture
     {
-        GenericPackageExtractor factory;
+        GenericPackageExtractor extractor;
 
         [SetUp]
         public void SetUp()
         {
-            factory = new GenericPackageExtractor();
+            extractor = new GenericPackageExtractor();
         }
 
         [Test]
@@ -29,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("nupkg", typeof(OpenPackagingConventionExtractor))]
         public void GettingFileByExtension(string extension, Type expectedType)
         {
-            var extractor = factory.GetExtractor("foo."+ extension);
+            var extractor = this.extractor.GetExtractor("foo."+ extension);
 
             Assert.AreEqual(expectedType, extractor.GetType());
         }
@@ -39,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Package is missing file extension. This is needed to select the correct extraction algorithm.")]
         public void FileWithNoExtensionThrowsError()
         {
-            factory.GetExtractor("blah");
+            extractor.GetExtractor("blah");
         }
 
 
@@ -47,12 +43,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Unsupported file extension \".7z\"")]
         public void FileWithUnsupportedExtensionThrowsError()
         {
-            factory.GetExtractor("blah.7z");
-        }
-
-        private string GetFileName(string extension)
-        {
-            return GetFixtureResouce("Samples", "Acme.Core.1.0.0.0-bugfix" + "." + extension);
+            extractor.GetExtractor("blah.7z");
         }
     }
 }

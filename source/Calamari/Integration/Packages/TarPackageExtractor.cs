@@ -18,7 +18,7 @@ namespace Calamari.Integration.Packages
                 var compressionStream = GetCompressionStream(inStream);
                 try
                 {
-                    return ExtractTar(directory, compressionStream);
+                    return ExtractTar(directory, compressionStream, suppressNestedScriptWarning);
                 }
                 finally
                 {
@@ -30,12 +30,12 @@ namespace Calamari.Integration.Packages
             }
         }
 
-        private int ExtractTar(string directory, Stream compressionStream)
+        private int ExtractTar(string directory, Stream compressionStream, bool suppressNestedScriptWarning)
         {
             var nonDirectoryFiles = 0;
             using (var tarArchive = TarArchive.CreateInputTarArchive(compressionStream))
             {
-                tarArchive.ProgressMessageEvent += (archive, entry, message) => ProcessEvent(ref nonDirectoryFiles, entry);
+                tarArchive.ProgressMessageEvent += (archive, entry, message) => ProcessEvent(ref nonDirectoryFiles, entry, suppressNestedScriptWarning);
                 tarArchive.ExtractContents(directory);
             }
             return nonDirectoryFiles;
@@ -46,10 +46,33 @@ namespace Calamari.Integration.Packages
             return stream;
         }
 
-        protected void ProcessEvent(ref int filesExtracted, TarEntry entry)
+        protected void ProcessEvent(ref int filesExtracted, TarEntry entry, bool suppressNestedScriptWarning)
         {
             if (!entry.IsDirectory)
+            {
                 filesExtracted++;
+
+                if (!suppressNestedScriptWarning)
+                {
+                    WarnIfScriptInSubFolder(entry.Name);
+                }
+            }
+        }
+
+        void WarnIfScriptInSubFolder(string path)
+        {
+            var fileName = Path.GetFileName(path);
+            if (string.Equals(fileName, "Deploy.ps1", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(fileName, "PreDeploy.ps1", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(fileName, "PostDeploy.ps1", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(fileName, "DeployFailed.ps1", StringComparison.OrdinalIgnoreCase))
+            {
+                var directoryName = Path.GetDirectoryName(path);
+                if (!string.IsNullOrWhiteSpace(directoryName))
+                {
+                    Log.WarnFormat("The script file \"{0}\" contained within the package will not be executed because it is contained within a child folder. As of Octopus Deploy 2.4, scripts in sub folders will not be executed.", path);
+                }
+            }
         }
     }
 }

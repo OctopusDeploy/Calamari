@@ -139,7 +139,7 @@
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Fixtures\AppSettingsJson\AppSettingsJsonFixture.cs" />
     <Compile Include="Fixtures\Conventions\AppSettingsJsonConventionFixture.cs" />
-    <Compile Include="Fixtures\Integration\Packages\PackageExtractorFactoryFixture.cs" />
+    <Compile Include="Fixtures\Integration\Packages\GenericPackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\PackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\SimplePackageExtractorFixture.cs" />
     <Compile Include="Fixtures\SetUpFixture.cs" />

@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(ZipPackageExtractor), "zip")]
         [TestCase(typeof(OpenPackagingConventionExtractor), "nupkg")]
         //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
-        public void ProvidingZipReturnsZipExtractor(Type extractorType, string extension)
+        public void GetMetadataReturnsPackageDetails(Type extractorType, string extension)
         {
             var fileName = GetFileName(extension);
             var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType);
@@ -39,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(ZipPackageExtractor), "zip")]
         [TestCase(typeof(OpenPackagingConventionExtractor), "nupkg")]
         //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
-        public void ExtractGZipSample(Type extractorType, string extension)
+        public void ExtractPumpsFilesToFilesystem(Type extractorType, string extension)
         {
             var fileName = GetFileName(extension);
             var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
