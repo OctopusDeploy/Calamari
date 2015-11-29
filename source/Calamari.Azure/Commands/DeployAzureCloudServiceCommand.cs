@@ -63,13 +63,12 @@ namespace Calamari.Azure.Commands
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var generator = new AppSettingsJsonGenerator();
-            var packageExtractor = new PackageExtractorFactory().GetExtractor(packageFile);
 
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem),
                 new FindCloudServicePackageConvention(fileSystem),
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
                 new ExtractAzureCloudServicePackageConvention(fileSystem),

@@ -6,9 +6,4 @@
         public string Version { get; set; }
         public string FileExtension { get; set; }
     }
-
-    public class ExtendedPackageMetadata : PackageMetadata
-    {
-        public string Hash { get; set; }
-    }
 }

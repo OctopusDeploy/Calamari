@@ -21,7 +21,7 @@ namespace Calamari.Commands
         string newFileName;
         bool showProgress;
         bool skipVerification;
-        readonly PackageStore packageStore = new PackageStore(new PackageExtractorFactory());
+        readonly PackageStore packageStore = new PackageStore(new GenericPackageExtractor());
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public ApplyDeltaCommand()

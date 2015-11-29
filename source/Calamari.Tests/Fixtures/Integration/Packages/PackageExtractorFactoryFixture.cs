@@ -13,12 +13,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     [TestFixture]
     public class PackageExtractorFactoryFixture : CalamariFixture
     {
-        PackageExtractorFactory factory;
+        GenericPackageExtractor factory;
 
         [SetUp]
         public void SetUp()
         {
-            factory = new PackageExtractorFactory();
+            factory = new GenericPackageExtractor();
         }
 
         [Test]

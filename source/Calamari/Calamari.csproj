@@ -176,6 +176,8 @@
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
     <Compile Include="Integration\AppSettingsJson\AppSettingsJsonGenerator.cs" />
     <Compile Include="Integration\AppSettingsJson\IAppSettingsJsonGenerator.cs" />
+    <Compile Include="Integration\Packages\ExtendedPackageMetadata.cs" />
+    <Compile Include="Integration\Packages\IGenericPackageExtractor.cs" />
     <Compile Include="Integration\Packages\PackageExtractorFactory.cs" />
     <Compile Include="Integration\Packages\SimplePackageExtractor.cs" />
     <Compile Include="Integration\Packages\TarBzipPackageExtractor.cs" />

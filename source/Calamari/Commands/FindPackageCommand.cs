@@ -33,7 +33,7 @@ namespace Calamari.Commands
             if(!SemanticVersion.TryParse(packageVersion, out version))
                 throw new CommandException(String.Format("Package version '{0}' is not a valid Semantic Version", packageVersion));
 
-            var packageStore = new PackageStore(new PackageExtractorFactory());
+            var packageStore = new PackageStore(new GenericPackageExtractor());
             var packageMetadata = new ExtendedPackageMetadata() {Id = packageId, Version = packageVersion, Hash = packageHash};
             var package = packageStore.GetPackage(packageMetadata);
             if (package == null)

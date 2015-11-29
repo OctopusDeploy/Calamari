@@ -55,7 +55,6 @@ namespace Calamari.Azure.Commands
             var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var packageExtractor = new PackageExtractorFactory().GetExtractor(packageFile);
             var configurationTransformer =
                 new ConfigurationTransformer(
                     variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors),
@@ -65,7 +64,7 @@ namespace Calamari.Azure.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),

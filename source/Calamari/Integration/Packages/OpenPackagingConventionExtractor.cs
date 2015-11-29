@@ -16,7 +16,9 @@ namespace Calamari.Integration.Packages
     public class OpenPackagingConventionExtractor : IPackageExtractor
     {
         static readonly string[] ExcludePaths = new[] { "_rels", Path.Combine("package","services","metadata") };
-        
+
+        public string[] Extensions { get { return new[] { ".nupkg" }; } }
+
         public PackageMetadata GetMetadata(string packageFile)
         {
             using (var package = Package.Open(packageFile, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -87,8 +89,6 @@ namespace Calamari.Integration.Packages
             }
             return filesExtracted;
         }
-
-        public string[] Extensions { get { return new[] {".nupkg"}; } }
 
         void WarnIfScriptInSubFolder(string path)
         {
