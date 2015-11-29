@@ -13,12 +13,21 @@ namespace Calamari.Integration.Packages
             get { return extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
         }
 
+        public PackageMetadata GetMetadata(string packageFile)
+        {
+            return GetExtractor(packageFile).GetMetadata(packageFile);
+        }
+
+        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        {
+            return GetExtractor(packageFile).Extract(packageFile, directory, suppressNestedScriptWarning);
+        }
+
         public IPackageExtractor GetExtractor(string packageFile)
         {
             if (string.IsNullOrEmpty(Path.GetExtension(packageFile)))
             {
-                throw new FileFormatException(
-                    "Package is missing file extension. This is needed to select the correct extraction algorithm.");
+                throw new FileFormatException("Package is missing file extension. This is needed to select the correct extraction algorithm.");
             }
 
             var extractor = ExtensionSuffix(packageFile);
@@ -30,19 +39,10 @@ namespace Calamari.Integration.Packages
             if (extractor != null)
                 return extractor;
 
-            throw new FileFormatException(string.Format("Unsupported file extension \"{0}\"",
-                Path.GetExtension(packageFile)));
+            throw new FileFormatException(string.Format("Unsupported file extension \"{0}\"", Path.GetExtension(packageFile)));
         }
 
-        public PackageMetadata GetMetadata(string packageFile)
-        {
-            return GetExtractor(packageFile).GetMetadata(packageFile);
-        }
 
-        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
-        {
-            return GetExtractor(packageFile).Extract(packageFile, directory, suppressNestedScriptWarning);
-        }
 
         /// Order is important here since .tar.gz should be checked for before .gz
         private readonly List<IPackageExtractor> extractors = new List<IPackageExtractor>

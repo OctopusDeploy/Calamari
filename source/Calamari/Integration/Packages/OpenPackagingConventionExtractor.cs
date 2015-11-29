@@ -45,11 +45,14 @@ namespace Calamari.Integration.Packages
 
         PackageMetadata ReadManifestStream(Stream manifestStream)
         {
-            var result = new PackageMetadata();
             var manifest = Manifest.ReadFrom(manifestStream, validateSchema: false);
             var packageMetadata = (IPackageMetadata)manifest.Metadata;
-            result.Id = packageMetadata.Id;
-            result.Version = packageMetadata.Version.ToString();
+            var result = new PackageMetadata
+            {
+                Id = packageMetadata.Id,
+                Version = packageMetadata.Version.ToString(),
+                FileExtension = Extensions.First()
+            };
             return result;
         }
 

@@ -178,7 +178,7 @@
     <Compile Include="Integration\AppSettingsJson\IAppSettingsJsonGenerator.cs" />
     <Compile Include="Integration\Packages\ExtendedPackageMetadata.cs" />
     <Compile Include="Integration\Packages\IGenericPackageExtractor.cs" />
-    <Compile Include="Integration\Packages\PackageExtractorFactory.cs" />
+    <Compile Include="Integration\Packages\GenericPackageExtractor.cs" />
     <Compile Include="Integration\Packages\SimplePackageExtractor.cs" />
     <Compile Include="Integration\Packages\TarBzipPackageExtractor.cs" />
     <Compile Include="Integration\Packages\TarLzwPackageExtractor.cs" />
