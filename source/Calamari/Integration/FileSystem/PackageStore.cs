@@ -119,10 +119,11 @@ namespace Calamari.Integration.FileSystem
             {
                 using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
                 {
-                   return new ExtendedPackageMetadata
-                   {
+                    return new ExtendedPackageMetadata
+                    {
                         Id = metadata.Id,
                         Version = metadata.Version,
+                        FileExtension = metadata.FileExtension,
                         Hash = HashCalculator.Hash(stream),
                     };
                 }
