@@ -122,7 +122,9 @@
     <Compile Include="PowerShell\AzurePowerShellContextFixture.cs" />
     <Compile Include="PowerShell\AzurePowershellFixture.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResourceGroups\ResourceGroupTemplateParserFixture.cs" />
     <Compile Include="SetUpFixture.cs" />
+    <Compile Include="AzureTestEnvironment.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CloudServicePackage\ManifestSchema\PackageDefinition.xsd">
@@ -147,6 +149,12 @@
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="PowerShell\AzureSubscription.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="ResourceGroups\params_sans_envelope.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="ResourceGroups\params_with_envelope.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

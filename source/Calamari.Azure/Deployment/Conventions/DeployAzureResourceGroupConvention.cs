@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Calamari.Azure.Deployment.Integration;
+using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -12,6 +15,7 @@ using Microsoft.Azure;
 using Microsoft.Azure.Management.Resources;
 using Microsoft.Azure.Management.Resources.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Newtonsoft.Json;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
@@ -20,12 +24,15 @@ namespace Calamari.Azure.Deployment.Conventions
         readonly string templateFile;
         readonly string templateParametersFile;
         readonly ICalamariFileSystem fileSystem;
+        readonly IResourceGroupTemplateParameterParser parameterParser;
 
-        public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, ICalamariFileSystem fileSystem)
+        public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, 
+            ICalamariFileSystem fileSystem, IResourceGroupTemplateParameterParser parameterParser)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
             this.fileSystem = fileSystem;
+            this.parameterParser = parameterParser;
         }
 
         public void Install(RunningDeployment deployment)
@@ -42,7 +49,9 @@ namespace Calamari.Azure.Deployment.Conventions
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
             var template = variables.Evaluate(fileSystem.ReadFile(templateFile));
-            var parameters = variables.Evaluate(fileSystem.ReadFile(templateParametersFile));
+            var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
+                ? parameterParser.ParseParameters(variables.Evaluate(fileSystem.ReadFile(templateParametersFile)))
+                : null;
 
             Log.Info(
                 $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
@@ -79,7 +88,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         static void CreateDeployment(ResourceManagementClient armClient, string resourceGroupName, string deploymentName,
-            DeploymentMode deploymentMode, string template, string parameters)
+            DeploymentMode deploymentMode, string template, IDictionary<string, ResourceGroupTemplateParameter> parameters)
         {
             var createDeploymentResult = armClient.Deployments.CreateOrUpdate(resourceGroupName, deploymentName,
                 new Microsoft.Azure.Management.Resources.Models.Deployment
@@ -88,7 +97,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     {
                         Mode = deploymentMode,
                         Template = template,
-                        Parameters = parameters
+                        Parameters = parameters != null ? JsonConvert.SerializeObject(parameters) : null
                     }
                 });
 

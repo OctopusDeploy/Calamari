@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Calamari.Azure.Deployment.Conventions;
+using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -51,7 +52,7 @@ namespace Calamari.Azure.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
-                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, fileSystem)
+                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, fileSystem, new ResourceGroupTemplateParameterParser())
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
