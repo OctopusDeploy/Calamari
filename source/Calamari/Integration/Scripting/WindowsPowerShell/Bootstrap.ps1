@@ -96,13 +96,13 @@ function Decrypt-String($Encrypted, $iv)
 	$cryptoStream = new-Object Security.Cryptography.CryptoStream $memoryStream,$decryptor,"Read" 
 	$streamReader = new-Object IO.StreamReader $cryptoStream 
 	Write-Output $streamReader.ReadToEnd()
-	$streamReader.Dispose() 
-	$cryptoStream.Dispose() 
-	$memoryStream.Dispose()
+	$streamReader.Dispose() | Out-Null
+	$cryptoStream.Dispose() | Out-Null
+	$memoryStream.Dispose() | Out-Null
 
 	# RijndaelManaged/RijndaelManagedTransform implemented IDiposable explicitly
-	[System.IDisposable].GetMethod("Dispose").Invoke($decryptor, @())
-	[System.IDisposable].GetMethod("Dispose").Invoke($algorithm, @())
+	[System.IDisposable].GetMethod("Dispose").Invoke($decryptor, @()) | Out-Null
+	[System.IDisposable].GetMethod("Dispose").Invoke($algorithm, @()) | Out-Null
 }
 
 function Initialize-ProxySettings() 
