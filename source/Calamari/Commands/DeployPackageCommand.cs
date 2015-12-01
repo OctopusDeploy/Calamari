@@ -21,7 +21,7 @@ using Octostache;
 
 namespace Calamari.Commands
 {
-    [Command("deploy-package", Description = "Extracts and installs a NuGet package")]
+    [Command("deploy-package", Description = "Extracts and installs a deployment package")]
     public class DeployPackageCommand : Command
     {
         private string variablesFile;
@@ -32,7 +32,7 @@ namespace Calamari.Commands
         public DeployPackageCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
