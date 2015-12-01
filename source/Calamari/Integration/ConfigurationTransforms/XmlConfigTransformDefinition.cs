@@ -32,7 +32,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             }
         }
 
-        string TrimWildcardPattern(string pattern)
+        static string TrimWildcardPattern(string pattern)
         {
             return (pattern.LastIndexOf('.') > 2)
                 ? pattern.Remove(0, 2)
