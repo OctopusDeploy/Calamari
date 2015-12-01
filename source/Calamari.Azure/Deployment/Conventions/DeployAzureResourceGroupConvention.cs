@@ -56,8 +56,6 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info(
                 $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
-            Log.Verbose($"Template:\n{template}\n\nParameters:\n{parameters}");
-
             using (var armClient = new ResourceManagementClient(
                 new TokenCloudCredentials(subscriptionId, GetAuthorizationToken(tenantId, clientId, password))))
             {
@@ -90,6 +88,14 @@ namespace Calamari.Azure.Deployment.Conventions
         static void CreateDeployment(ResourceManagementClient armClient, string resourceGroupName, string deploymentName,
             DeploymentMode deploymentMode, string template, IDictionary<string, ResourceGroupTemplateParameter> parameters)
         {
+            var parameterJson = parameters != null ? JsonConvert.SerializeObject(parameters, Formatting.Indented) : null;
+
+            Log.Verbose($"Template:\n{template}\n");
+            if (parameterJson != null)
+            {
+               Log.Verbose($"Parameters:\n{parameterJson}\n"); 
+            }
+
             var createDeploymentResult = armClient.Deployments.CreateOrUpdate(resourceGroupName, deploymentName,
                 new Microsoft.Azure.Management.Resources.Models.Deployment
                 {
@@ -97,7 +103,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     {
                         Mode = deploymentMode,
                         Template = template,
-                        Parameters = parameters != null ? JsonConvert.SerializeObject(parameters) : null
+                        Parameters = parameterJson 
                     }
                 });
 
