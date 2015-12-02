@@ -196,7 +196,7 @@
     <Compile Include="Integration\CloudServicePackage\ManifestSchema\IntegrityCheckHashAlgorithm.cs" />
     <Compile Include="Integration\CloudServicePackage\ManifestSchema\LayoutDefinition.cs" />
     <Compile Include="Integration\CloudServicePackage\ManifestSchema\PackageDefinition.cs" />
-    <Compile Include="Integration\CloudServicePackage\ManifestSchema\PackageMetaData.cs" />
+    <Compile Include="Integration\CloudServicePackage\ManifestSchema\AzurePackageMetadata.cs" />
     <Compile Include="Integration\IAzureCloudServiceConfigurationRetriever.cs" />
     <Compile Include="Integration\IAzurePackageUploader.cs" />
     <Compile Include="Integration\ISubscriptionCloudCredentialsFactory.cs" />

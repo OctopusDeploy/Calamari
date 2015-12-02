@@ -55,11 +55,12 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
             variables.Set("EmailSettings:DefaultRecipients:To", "paul@octopus.com");
             variables.Set("EmailSettings:DefaultRecipients", "test@test.com");
 
-            var writer = new StringWriter();
-            Log.StdOut = writer;
-            var generated = Generate(variables);
-            AssertJsonEquivalent(generated, "appsettings.ambiguous.json");
-            Assert.That(writer.ToString(), Is.StringContaining("Unable to set value for EmailSettings:DefaultRecipients:To. The property at EmailSettings.DefaultRecipients is a String."));
+            using (var proxyLog = new ProxyLog())
+            {
+                var generated = Generate(variables);
+                AssertJsonEquivalent(generated, "appsettings.ambiguous.json");
+                proxyLog.AssertContains("Unable to set value for EmailSettings:DefaultRecipients:To. The property at EmailSettings.DefaultRecipients is a String.");
+            }
         }
 
         [Test]

@@ -10,6 +10,7 @@ namespace Calamari.Integration.FileSystem
 {
     public class PackageStore
     {
+        private readonly IPackageExtractor packageExtractorFactory;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
 
@@ -26,6 +27,11 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
+        public PackageStore(IPackageExtractor packageExtractorFactory)
+        {
+            this.packageExtractorFactory = packageExtractorFactory;
+        }
+
         public string GetPackagesDirectory()
         {
             return rootDirectory;
@@ -33,31 +39,29 @@ namespace Calamari.Integration.FileSystem
 
         public StoredPackage GetPackage(string packageFullPath)
         {
-            var zip = ReadZipPackage(packageFullPath);
+            var zip = PackageMetadata(packageFullPath);
             if (zip == null)
                 return null;
             
-            var package = ReadPackageFile(new ZipPackage(packageFullPath));
+            var package = ExtendedPackageMetadata(packageFullPath, PackageMetadata(packageFullPath));
             if (package == null)
                 return null;
 
             return new StoredPackage(package, packageFullPath);
         }
 
-        public StoredPackage GetPackage(PackageMetadata metadata)
+        public StoredPackage GetPackage(ExtendedPackageMetadata metadata)
         {
             var name = GetNameOfPackage(metadata);
             fileSystem.EnsureDirectoryExists(rootDirectory);
 
-            var files = fileSystem.EnumerateFilesRecursively(rootDirectory, name + ".nupkg-*");
-
-            foreach (var file in files)
+            foreach (var file in PackageFiles(name))
             {
                 var storedPackage = GetPackage(file);
                 if (storedPackage == null)
                     continue;
 
-                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || !string.Equals(storedPackage.Metadata.Version, metadata.Version, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || !string.Equals(storedPackage.Metadata.Version.ToString(), metadata.Version.ToString(), StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (string.IsNullOrWhiteSpace(metadata.Hash))
@@ -70,29 +74,34 @@ namespace Calamari.Integration.FileSystem
             return null;
         }
 
+        private IEnumerable<string> PackageFiles(string name)
+        {
+            var patterns = packageExtractorFactory.Extensions.Select(e => name + e +"-*").ToArray();
+            return fileSystem.EnumerateFilesRecursively(rootDirectory, patterns);
+        }
+
         public IEnumerable<StoredPackage> GetNearestPackages(string packageId, SemanticVersion version, int take = 5)
         {
             fileSystem.EnsureDirectoryExists(rootDirectory);
-
             var zipPackages =
-                from filePath in fileSystem.EnumerateFilesRecursively(rootDirectory, packageId + "*.nupkg-*")
-                let zip = ReadZipPackage(filePath)
-                where zip != null && zip.Id == packageId && zip.Version <= version
+                from filePath in PackageFiles(packageId +"*")
+                let zip = PackageMetadata(filePath)
+                where zip != null && zip.Id == packageId && new SemanticVersion(zip.Version) <= version
                 orderby zip.Version descending
                 select new {zip, filePath};
 
             return
                 from zipPackage in zipPackages.Take(take)
-                let package = ReadPackageFile(zipPackage.zip)
+                let package = ExtendedPackageMetadata(zipPackage.filePath, zipPackage.zip)
                 where package != null
                 select new StoredPackage(package, zipPackage.filePath);
         }
 
-        static ZipPackage ReadZipPackage(string file)
+        PackageMetadata PackageMetadata(string file)
         {
             try
             {
-                return new ZipPackage(file);
+                return packageExtractorFactory.GetMetadata(file);
             }
             catch (IOException)
             {
@@ -104,17 +113,18 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        static PackageMetadata ReadPackageFile(IPackage zip)
+        static ExtendedPackageMetadata ExtendedPackageMetadata(string file, PackageMetadata metadata)
         {
             try
             {
-                using (var zipStream = zip.GetStream())
+                using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
                 {
-                   return new PackageMetadata
+                    return new ExtendedPackageMetadata
                     {
-                        Id = zip.Id,
-                        Version = zip.Version.ToString(),
-                        Hash = HashCalculator.Hash(zipStream),
+                        Id = metadata.Id,
+                        Version = metadata.Version,
+                        FileExtension = metadata.FileExtension,
+                        Hash = HashCalculator.Hash(stream),
                     };
                 }
             }
