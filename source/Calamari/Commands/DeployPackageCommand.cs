@@ -6,6 +6,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
+using Calamari.Integration.AppSettingsJson;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
@@ -20,7 +21,7 @@ using Octostache;
 
 namespace Calamari.Commands
 {
-    [Command("deploy-package", Description = "Extracts and installs a NuGet package")]
+    [Command("deploy-package", Description = "Extracts and installs a deployment package")]
     public class DeployPackageCommand : Command
     {
         private string variablesFile;
@@ -31,7 +32,7 @@ namespace Calamari.Commands
         public DeployPackageCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
@@ -52,6 +53,7 @@ namespace Calamari.Commands
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             var scriptCapability = new CombinedScriptEngine();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
+            var generator = new AppSettingsJsonGenerator();
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
             var embeddedResources = new CallingAssemblyEmbeddedResources();
@@ -66,7 +68,7 @@ namespace Calamari.Commands
                 new ContributePreviousInstallationConvention(journal),
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
-                new ExtractPackageToApplicationDirectoryConvention(new LightweightPackageExtractor(), fileSystem, semaphore),
+                new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, embeddedResources, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptCapability, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
@@ -74,6 +76,7 @@ namespace Calamari.Commands
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
+                new AppSettingsJsonConvention(generator),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, embeddedResources, scriptCapability, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),

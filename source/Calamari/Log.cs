@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using Calamari.Integration.Processes;
 using Octostache;
@@ -10,15 +11,18 @@ namespace Calamari
     public class Log
     {
         static string stdOutMode;
+
+        static readonly object Sync = new object();
+
         internal static IndentedTextWriter StdOut;
         internal static IndentedTextWriter StdErr;
-        static readonly object Sync = new object();
 
         static Log()
         {
             StdOut = new IndentedTextWriter(Console.Out, "  ");
             StdErr = new IndentedTextWriter(Console.Error, "  ");
         }
+        
 
         static void SetMode(string mode)
         {
@@ -43,12 +47,9 @@ namespace Calamari
 
         public static void SetOutputVariable(string name, string value, VariableDictionary variables)
         {
-            Info(String.Format("##octopus[setVariable name=\"{0}\" value=\"{1}\"]",
-                ConvertServiceMessageValue(name),
-                ConvertServiceMessageValue(value)));
+            Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
 
-            if (variables != null)
-                variables.SetOutputVariable(name, value);
+            variables?.SetOutputVariable(name, value);
         }
 
         static string ConvertServiceMessageValue(string value)
@@ -58,7 +59,7 @@ namespace Calamari
 
         public static void VerboseFormat(string messageFormat, params object[] args)
         {
-            Verbose(String.Format(messageFormat, args));
+            Verbose(string.Format(messageFormat, args));
         }
 
         public static void Info(string message)
@@ -101,7 +102,7 @@ namespace Calamari
 
         public static void ErrorFormat(string messageFormat, params object[] args)
         {
-            Error(String.Format(messageFormat, args));
+            Error(string.Format(messageFormat, args));
         }
 
         public static class ServiceMessages
@@ -112,16 +113,17 @@ namespace Calamari
             }
 
             public static void PackageFound(string packageId, string packageVersion, string packageHash,
-                string packageFullPath, bool exactMatchExists = false)
+                string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
             {
                 if (exactMatchExists)
                     Verbose("##octopus[calamari-found-package]");
 
-                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"]",
+                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\" fileExtension=\"{4}\"]",
                     ConvertServiceMessageValue(packageId),
                     ConvertServiceMessageValue(packageVersion),
                     ConvertServiceMessageValue(packageHash),
-                    ConvertServiceMessageValue(packageFullPath));
+                    ConvertServiceMessageValue(packageFullPath),
+                    ConvertServiceMessageValue(packageFileExtension));
 
             }
 

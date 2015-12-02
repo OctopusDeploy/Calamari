@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -92,10 +93,23 @@ namespace Calamari.Azure.Deployment.Conventions
                 DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles, false)
             };
 
+            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
             if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData, false))
             {
                syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataFiles", "Delete", "filePath", "\\\\App_Data\\\\.*", null)); 
                syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataDir", "Delete", "dirPath", "\\\\App_Data(\\\\.*|$)", null)); 
+            }
+
+            // If PreservePaths variable set, then create SkipDelete rules for each path regex
+            var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+            if (preservePaths != null)
+            {
+                for (var i = 0; i < preservePaths.Count; i++)
+                {
+                   var path = preservePaths[i];
+                   syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteFiles_" + i, "Delete", "filePath", path, null)); 
+                   syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDir_" + i, "Delete", "dirPath", path, null)); 
+                }
             }
 
             return syncOptions;

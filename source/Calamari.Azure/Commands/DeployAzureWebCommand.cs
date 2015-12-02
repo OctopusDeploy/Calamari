@@ -4,6 +4,7 @@ using Calamari.Azure.Deployment.Conventions;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.AppSettingsJson;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
@@ -16,7 +17,7 @@ using Octostache;
 
 namespace Calamari.Azure.Commands
 {
-    [Command("deploy-azure-web", Description = "Extracts and installs a NuGet package to an Azure Web Application")]
+    [Command("deploy-azure-web", Description = "Extracts and installs a deployment package to an Azure Web Application")]
     public class DeployAzureWebCommand : Command
     {
         private string variablesFile;
@@ -27,7 +28,7 @@ namespace Calamari.Azure.Commands
         public DeployAzureWebCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
@@ -50,6 +51,7 @@ namespace Calamari.Azure.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
+            var generator = new AppSettingsJsonGenerator();
             var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
@@ -62,12 +64,13 @@ namespace Calamari.Azure.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
+                new AppSettingsJsonConvention(generator),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new AzureWebAppConvention(variables),

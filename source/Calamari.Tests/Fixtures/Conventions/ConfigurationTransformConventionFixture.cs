@@ -162,6 +162,8 @@ namespace Calamari.Tests.Fixtures.Conventions
                 yield return new TestCaseData(BuildConfigPath("xyz.bar.blah"), "foo.blah=>*.bar.blah", BuildConfigPath("xyz.foo.blah"));
                 yield return new TestCaseData(BuildConfigPath("xyz.bar.blah"), "*.foo.blah=>bar.blah", BuildConfigPath("xyz.foo.blah"));
                 yield return new TestCaseData(BuildConfigPath("foo.config"), "foo.Bar.Additional.config=>foo.config", BuildConfigPath("foo.Bar.Additional.config"));
+                yield return new TestCaseData(BuildConfigPath("foo.config"), "*.Bar.config=>*.config", BuildConfigPath("foo.Bar.config"));
+                yield return new TestCaseData(BuildConfigPath("foo.xml"), "*.Bar.xml=>*.xml", BuildConfigPath("foo.Bar.xml"));
             }
         }
 

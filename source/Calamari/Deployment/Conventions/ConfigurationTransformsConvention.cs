@@ -106,21 +106,34 @@ namespace Calamari.Deployment.Conventions
                 if ((transformation.Wildcard && !sourceFile.EndsWith(transformation.SourcePattern, StringComparison.InvariantCultureIgnoreCase)))
                     continue;
 
-                foreach (var transformFile in DetermineTransformFileNames(sourceFile, transformation))
+                try
                 {
-                    if (!fileSystem.FileExists(transformFile))
-                        continue;
-
-                    if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
-                        continue;
-
-                    if (alreadyRun.ContainsKey(transformFile))
-                        continue;
-
-                    Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
-                    configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
-                    alreadyRun.Add(transformFile, transformation);
+                    ApplyTransformations(sourceFile, transformation, alreadyRun);
                 }
+                catch (Exception)
+                {
+                    Log.ErrorFormat("Could not transform the file '{0}' using the {1}pattern '{2}'.", sourceFile, transformation.Wildcard ? "wildcard " : "", transformation.TransformPattern);
+                    throw;
+                }
+            }
+        }
+
+        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, Dictionary<string, XmlConfigTransformDefinition> alreadyRun)
+        {
+            foreach (var transformFile in DetermineTransformFileNames(sourceFile, transformation))
+            {
+                if (!fileSystem.FileExists(transformFile))
+                    continue;
+
+                if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                if (alreadyRun.ContainsKey(transformFile))
+                    continue;
+
+                Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
+                configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
+                alreadyRun.Add(transformFile, transformation);
             }
         }
 

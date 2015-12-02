@@ -1,50 +1,55 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 
 namespace Calamari.Integration.ConfigurationTransforms
 {
-        public class XmlConfigTransformDefinition
+    public class XmlConfigTransformDefinition
+    {
+        private readonly string definition;
+
+        public XmlConfigTransformDefinition(string definition)
         {
-            private readonly string definition;
-
-            public XmlConfigTransformDefinition(string definition)
+            this.definition = definition;
+            if (definition.Contains("=>"))
             {
-                this.definition = definition;
-                if (definition.Contains("=>"))
+                Advanced = true;
+                var separators = new[] {"=>"};
+                var parts = definition.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                TransformPattern = parts[0].Trim();
+                SourcePattern = parts[1].Trim();
+
+                if (TransformPattern.StartsWith("*."))
                 {
-                    Advanced = true;
-                    var separators = new[] {"=>"};
-                    var parts = definition.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-                    TransformPattern = parts[0].Trim();
-                    SourcePattern = parts[1].Trim();
-
-                    if (TransformPattern.StartsWith("*."))
-                    {
-                        Wildcard = true;
-                        TransformPattern = TransformPattern.Remove(0, 2);
-                    }
-
-                    if (SourcePattern.StartsWith("*."))
-                    {
-                        Wildcard = true;
-                        SourcePattern = SourcePattern.Remove(0, 2);
-                    }
+                    Wildcard = true;
+                    TransformPattern = TrimWildcardPattern(TransformPattern);
                 }
-                else
+
+                if (SourcePattern.StartsWith("*."))
                 {
-                    TransformPattern = definition;
+                    Wildcard = true;
+                    SourcePattern = TrimWildcardPattern(SourcePattern);
                 }
             }
-
-            public string TransformPattern { get; private set; }
-            public string SourcePattern { get; private set; }
-            public bool Wildcard { get; private set; }
-            public bool Advanced { get; private set; }
-
-            public override string ToString()
+            else
             {
-                return definition;
+                TransformPattern = definition;
             }
         }
+
+        static string TrimWildcardPattern(string pattern)
+        {
+            return (pattern.LastIndexOf('.') > 2)
+                ? pattern.Remove(0, 2)
+                : pattern.Remove(0, 1);
+        }
+
+        public string TransformPattern { get; private set; }
+        public string SourcePattern { get; private set; }
+        public bool Wildcard { get; private set; }
+        public bool Advanced { get; private set; }
+
+        public override string ToString()
+        {
+            return definition;
+        }
+    }
 }
