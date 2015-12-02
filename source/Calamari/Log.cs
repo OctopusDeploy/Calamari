@@ -111,16 +111,17 @@ namespace Calamari
             }
 
             public static void PackageFound(string packageId, string packageVersion, string packageHash,
-                string packageFullPath, bool exactMatchExists = false)
+                string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
             {
                 if (exactMatchExists)
                     Verbose("##octopus[calamari-found-package]");
 
-                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"]",
+                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\" fileExtension=\"{4}\"]",
                     ConvertServiceMessageValue(packageId),
                     ConvertServiceMessageValue(packageVersion),
                     ConvertServiceMessageValue(packageHash),
-                    ConvertServiceMessageValue(packageFullPath));
+                    ConvertServiceMessageValue(packageFullPath),
+                    ConvertServiceMessageValue(packageFileExtension));
 
             }
 

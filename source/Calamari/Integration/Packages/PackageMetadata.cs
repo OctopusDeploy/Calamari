@@ -4,6 +4,6 @@
     {
         public string Id { get; set; }
         public string Version { get; set; }
-        public string Hash { get; set; }
+        public string FileExtension { get; set; }
     }
 }
