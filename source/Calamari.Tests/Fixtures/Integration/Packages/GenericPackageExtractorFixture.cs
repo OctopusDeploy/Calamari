@@ -30,14 +30,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.AreEqual(expectedType, extractor.GetType());
         }
 
-
         [Test]
         [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Package is missing file extension. This is needed to select the correct extraction algorithm.")]
         public void FileWithNoExtensionThrowsError()
         {
             extractor.GetExtractor("blah");
         }
-
 
         [Test]
         [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Unsupported file extension \".7z\"")]

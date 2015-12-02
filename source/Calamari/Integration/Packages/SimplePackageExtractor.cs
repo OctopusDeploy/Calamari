@@ -63,7 +63,7 @@ namespace Calamari.Integration.Packages
             {
                 foreach (var ext in Extensions)
                 {
-                    var match = new Regex("(?<extension>" + ext.Replace(".", "\\.") + ")-[a-z0-9\\-]*$").Match(fileName);
+                    var match = new Regex("(?<extension>" + Regex.Escape(ext) + ")-[a-z0-9\\-]*$").Match(fileName);
                     if (match.Success)
                     {
                         matchingExtension = match.Groups["extension"].Value;
