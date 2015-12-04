@@ -43,18 +43,15 @@ namespace Calamari.Deployment.Conventions
             }
 
             var transformsRun = new HashSet<string>();
-            foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory,
-                sourceExtensions.ToArray()))
+            foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions.ToArray()))
             {
                 ApplyTransformations(configFile, transformDefinitions, transformsRun);
-
             }
 
             deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformsRun, "|");
         }
 
-        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations,
-            HashSet<string> alreadyRun)
+        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, HashSet<string> alreadyRun)
         {
             foreach (var transformation in transformations)
             {
@@ -63,7 +60,6 @@ namespace Calamari.Deployment.Conventions
 
                 if ((transformation.Wildcard && !sourceFile.EndsWith(transformation.SourcePattern, StringComparison.InvariantCultureIgnoreCase)))
                     continue;
-
                 try
                 {
                     ApplyTransformations(sourceFile, transformation, alreadyRun);
@@ -133,7 +129,13 @@ namespace Calamari.Deployment.Conventions
 
             if (transformation.Advanced && transformation.Wildcard)
             {
-                var baseFileName = sourceFile.Replace(transformation.SourcePattern, "");
+                var sourcePatternWithoutPrefix = transformation.SourcePattern;
+                if (transformation.SourcePattern.StartsWith("."))
+                {
+                    sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
+                }
+                    
+                var baseFileName = sourceFile.Replace(sourcePatternWithoutPrefix, "");
                 return Path.ChangeExtension(baseFileName, tp);
             }
 
@@ -142,7 +144,5 @@ namespace Calamari.Deployment.Conventions
 
             return Path.ChangeExtension(sourceFile, tp);
         }
-
-
     }
 }
