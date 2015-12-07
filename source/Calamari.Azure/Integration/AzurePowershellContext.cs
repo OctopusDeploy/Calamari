@@ -41,7 +41,6 @@ namespace Calamari.Azure.Integration
                 variables.Get(SpecialVariables.Action.Azure.PowerShellModulePath, BuiltInAzurePowershellModulePath), variables);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))

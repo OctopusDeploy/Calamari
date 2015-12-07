@@ -157,7 +157,6 @@
                 {
                     public static readonly string AzurePowershellModulePath = "OctopusAzureModulePath";
                     public static readonly string SubscriptionId = "OctopusAzureSubscriptionId";
-                    public static readonly string SubscriptionName = "OctopusAzureSubscriptionName";
                     public static readonly string ModulePath = "OctopusAzureModulePath";
                     public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
                 }

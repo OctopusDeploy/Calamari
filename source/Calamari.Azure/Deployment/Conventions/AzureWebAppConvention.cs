@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Microsoft.Web.Deployment;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.Management.WebSites.Models;
 using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
@@ -25,35 +21,44 @@ namespace Calamari.Azure.Deployment.Conventions
         public void Install(RunningDeployment deployment)
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
-            var certificate = Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
-            var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
-            Log.Info("Deploying to Azure WebApp '{0}' using subscription-id '{1}'", webAppName, subscriptionId);
+            Log.Info("Deploying to Azure WebApp '{0}' using subscription-id '{1}'", siteName, subscriptionId);
 
-            var cloudClient = CloudContext.Clients.CreateWebSiteManagementClient( 
-                new CertificateCloudCredentials(subscriptionId, new X509Certificate2(certificate)));
-
-            var webApp = cloudClient.WebSpaces.List()
-                .SelectMany(webSpace => cloudClient.WebSpaces.ListWebSites(webSpace.Name, new WebSiteListParameters {}))
-                .FirstOrDefault(webSite => webSite.Name.Equals(webAppName, StringComparison.OrdinalIgnoreCase));
-
-            if (webApp == null)
-            {
-               throw new CommandException(string.Format("Could not find Azure Web App '{0}' in subscription '{1}'",
-                   webAppName, subscriptionId)); 
-            }
-
-            var publishProfile = cloudClient.WebSites.GetPublishProfile(webApp.WebSpace, webAppName)
-                .PublishProfiles.First(x => x.PublishMethod.StartsWith("MSDeploy"));
+            var publishProfile = GetPublishProfile(variables);
 
             var changeSummary = DeploymentManager
                 .CreateObject("contentPath", deployment.CurrentDirectory)
-                .SyncTo("contentPath", BuildPath(publishProfile.MSDeploySite, variables), DeploymentOptions(publishProfile), 
+                .SyncTo("contentPath", BuildPath(siteName, variables), DeploymentOptions(siteName, publishProfile), 
                 DeploymentSyncOptions(variables)
                 );
 
             Log.Info("Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                 changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
+        }
+
+        private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
+        {
+            var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
+            var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+
+            var accountType = variables.Get(SpecialVariables.Account.AccountType);
+            switch (accountType)
+            {
+                case AzureAccountTypes.ServicePrincipalAccountType:
+                    return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId, siteName,
+                        variables.Get(SpecialVariables.Action.Azure.TenantId),
+                        variables.Get(SpecialVariables.Action.Azure.ClientId),
+                        variables.Get(SpecialVariables.Action.Azure.Password)); 
+
+                case AzureAccountTypes.ManagementCertificateAccountType:
+                    return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
+                        Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)), 
+                        siteName);
+                default:
+                    throw new CommandException("Account type must be either Azure Management Certificate or Azure Service Principal");
+
+            }
         }
 
         private static string BuildPath(string site, VariableDictionary variables)
@@ -65,8 +70,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 : site;
         }
 
-        private static DeploymentBaseOptions DeploymentOptions(
-            WebSiteGetPublishProfileResponse.PublishProfile publishProfile)
+        private static DeploymentBaseOptions DeploymentOptions(string siteName, SitePublishProfile publishProfile)
         {
             var options = new DeploymentBaseOptions
             {
@@ -75,9 +79,9 @@ namespace Calamari.Azure.Deployment.Conventions
                 RetryInterval = 1000,
                 TraceLevel = TraceLevel.Verbose,
                 UserName = publishProfile.UserName,
-                Password = publishProfile.UserPassword,
+                Password = publishProfile.Password,
                 UserAgent = "OctopusDeploy/1.0",
-                ComputerName = string.Format("https://{0}/msdeploy.axd?site={1}", publishProfile.PublishUrl, publishProfile.MSDeploySite),
+                ComputerName = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={siteName}").ToString()
             };
             options.Trace += (sender, eventArgs) => LogDeploymentEvent(eventArgs);
 

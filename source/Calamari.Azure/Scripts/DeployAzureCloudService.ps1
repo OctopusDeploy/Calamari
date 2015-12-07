@@ -15,7 +15,6 @@
 ## variables passed to any PowerShell script. 
 ## 
 ##   $OctopusAzureSubscriptionId           // The subscription ID GUID
-##   $OctopusAzureSubscriptionName         // The name of the subscription as stored in the subscription data file. This will be the same as the Account name in Octopus Deploy. 
 ##   $OctopusAzureServiceName              // The name of your cloud service
 ##   $OctopusAzureStorageAccountName       // The name of your storage account
 ##   $OctopusAzureSlot                     // The name of the slot to deploy to (Staging or Production)

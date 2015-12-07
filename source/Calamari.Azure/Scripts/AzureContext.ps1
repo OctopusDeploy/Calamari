@@ -16,39 +16,22 @@
 ##   $OctopusAzureADClientId = "...."
 ##   $OctopusAzureADPassword = "...."
 
-Write-Verbose "Azure context parameters: "
-Write-Verbose "  Subscription ID:       $OctopusAzureSubscriptionId"
-Write-Verbose "  Subscription name:     $OctopusAzureSubscriptionName"
-
-Write-Verbose "Importing Windows Azure modules"
-
+Write-Verbose "Importing Azure PowerShell modules"
 Import-Module $OctopusAzureModulePath
 
 If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 	$securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
 	$creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-	$azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Credential $creds -Tenant $OctopusAzureADTenantId -ServicePrincipal
+	Write-Verbose "Authenticating with Service Principal"
+	Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -ServicePrincipal
 } Else {
 	Write-Verbose "Loading the management certificate"
 	Add-Type -AssemblyName "System"
 	$certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
 	$azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Certificate $certificate
+	$azureProfile.Save(".\AzureProfile.json")
+	Select-AzureProfile -Profile $azureProfile | Out-Null
 } 
-
-$azureProfile.Save(".\AzureProfile.json")
-
-Select-AzureProfile -Profile $azureProfile | Out-Null
-
-
-<#
-if (!(Get-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName -ErrorAction SilentlyContinue)) {
-	Write-Verbose "Setting up the Azure subscription"
-
-	Set-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName -SubscriptionId $OctopusAzureSubscriptionId -Certificate $certificate
-}
-
-Select-AzureSubscription -SubscriptionName $OctopusAzureSubscriptionName
-#>
 
 Write-Verbose "Invoking target script $OctopusAzureTargetScript"
 

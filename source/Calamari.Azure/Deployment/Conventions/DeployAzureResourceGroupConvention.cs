@@ -6,15 +6,15 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Calamari.Azure.Deployment.Integration;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
+using Calamari.Azure.Integration.Security;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
-using Microsoft.Azure;
 using Microsoft.Azure.Management.Resources;
 using Microsoft.Azure.Management.Resources.Models;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Rest;
 using Newtonsoft.Json;
 
 namespace Calamari.Azure.Deployment.Conventions
@@ -57,19 +57,11 @@ namespace Calamari.Azure.Deployment.Conventions
                 $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             using (var armClient = new ResourceManagementClient(
-                new TokenCloudCredentials(subscriptionId, GetAuthorizationToken(tenantId, clientId, password))))
+                new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password))){ SubscriptionId = subscriptionId })
             {
                 CreateDeployment(armClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
                 PollForCompletion(armClient, resourceGroupName, deploymentName);
             }
-        }
-
-        static string GetAuthorizationToken(string tenantId, string clientId, string password)
-        {
-            var context = new AuthenticationContext($"https://login.windows.net/{tenantId}");
-            var result = context.AcquireToken("https://management.core.windows.net/",
-                new ClientCredential(clientId, password));
-            return result.AccessToken;
         }
 
         static string GenerateDeploymentNameFromStepName(string stepName)
@@ -107,7 +99,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     }
                 });
 
-            Log.Info($"Deployment created: {createDeploymentResult.Deployment.Id}");
+            Log.Info($"Deployment created: {createDeploymentResult.Id}");
         }
 
         static void PollForCompletion(IResourceManagementClient armClient, string resourceGroupName,
@@ -122,7 +114,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 Thread.Sleep(TimeSpan.FromSeconds(Math.Min(currentPollWait, 30)));
 
                 Log.Verbose("Polling for status of deployment...");
-                var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName).Deployment;
+                var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName);
                 Log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
 
                 switch (deployment.Properties.ProvisioningState)
@@ -130,7 +122,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     case "Succeeded":
                         Log.Info($"Deployment {deploymentName} complete.");  
                         Log.Info("Deployment Outputs:");
-                        Log.Info(!string.IsNullOrWhiteSpace(deployment.Properties.Outputs) ? deployment.Properties.Outputs : "No deployment outputs");
+                        Log.Info(deployment.Properties.Outputs != null ? JsonConvert.SerializeObject(deployment.Properties.Outputs) : "No deployment outputs");
                         Log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
                         continueToPoll = false;
                         break;
@@ -151,20 +143,20 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var log = new StringBuilder("Operations details:\n");
             var operations =
-                armClient.DeploymentOperations.List(resourceGroupName, deploymentName,
-                    new DeploymentOperationsListParameters()).Operations;
+                armClient.DeploymentOperations.List(resourceGroupName, deploymentName);
 
             foreach (var operation in operations)
             {
                 log.AppendLine($"Resource: {operation.Properties.TargetResource.ResourceName}");
                 log.AppendLine($"Type: {operation.Properties.TargetResource.ResourceType}");
-                log.AppendLine($"Timestamp: {operation.Properties.Timestamp.ToLocalTime().ToString("s")}");
+                if (operation.Properties.Timestamp.HasValue)
+                    log.AppendLine($"Timestamp: {operation.Properties.Timestamp.Value.ToLocalTime().ToString("s")}");
                 log.AppendLine($"Deployment operation: {operation.Id}");
                 log.AppendLine($"Status: {operation.Properties.StatusCode}");
                 log.AppendLine($"Provisioning State: {operation.Properties.ProvisioningState}");
-                if (!string.IsNullOrWhiteSpace(operation.Properties.StatusMessage))
+                if (operation.Properties.StatusMessage != null)
                 {
-                    log.AppendLine($"Status Message: {operation.Properties.StatusMessage}");
+                    log.AppendLine($"Status Message: {JsonConvert.SerializeObject(operation.Properties.StatusMessage)}");
                 }
             }
 
