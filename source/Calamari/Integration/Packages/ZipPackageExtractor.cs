@@ -1,7 +1,8 @@
 using System;
 using System.IO;
-using ICSharpCode.SharpZipLib.Zip;
-
+using SharpCompress.Common;
+using SharpCompress.Reader;
+using SharpCompress.Reader.Zip;
 
 namespace Calamari.Integration.Packages
 {
@@ -11,17 +12,29 @@ namespace Calamari.Integration.Packages
 
         public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
-            var fileExtractionCount = 0;
-            var fastZip = new FastZip(new FastZipEvents()
-            {
-                CompletedFile = (sender, args) =>
+            var filesExtracted = 0;
+            using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
+            using (var reader = ZipReader.Open(inStream))
+            {               
+                while (reader.MoveToNextEntry())
                 {
-                    fileExtractionCount++;
-                    WarnIfScriptInSubFolder(args.Name);
+                    ProcessEvent(ref filesExtracted, reader.Entry, suppressNestedScriptWarning);
+                    reader.WriteEntryToDirectory(directory,ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite);
                 }
-            });
-            fastZip.ExtractZip(packageFile, directory, string.Empty);
-            return fileExtractionCount;
+            }
+            return filesExtracted;
+        }
+
+        protected void ProcessEvent(ref int filesExtracted, IEntry entry, bool suppressNestedScriptWarning)
+        {
+            if (entry.IsDirectory) return;
+
+            filesExtracted++;
+
+            if (!suppressNestedScriptWarning)
+            {
+                WarnIfScriptInSubFolder(entry.Key);
+            }
         }
 
         void WarnIfScriptInSubFolder(string path)

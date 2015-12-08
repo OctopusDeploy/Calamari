@@ -1,5 +1,11 @@
 ﻿using System.IO;
-using ICSharpCode.SharpZipLib.GZip;
+using System.Linq;
+using SharpCompress.Archive;
+using SharpCompress.Archive.GZip;
+using SharpCompress.Compressor;
+using SharpCompress.Compressor.Deflate;
+using SharpCompress.Compressor.LZMA;
+using SharpCompress.Reader.GZip;
 
 namespace Calamari.Integration.Packages
 {
@@ -9,7 +15,9 @@ namespace Calamari.Integration.Packages
 
         protected override Stream GetCompressionStream(Stream stream)
         {
-            return new GZipInputStream(stream);
+            var gzipReader = GZipReader.Open(stream);
+            gzipReader.MoveToNextEntry();
+            return gzipReader.OpenEntryStream();
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Runtime.ExceptionServices;
-using Calamari.Util;
-using ICSharpCode.SharpZipLib.Tar;
+using SharpCompress.Archive.GZip;
+using SharpCompress.Common;
+using SharpCompress.Common.Tar;
+using SharpCompress.Compressor.Deflate;
+using SharpCompress.Reader;
+using SharpCompress.Reader.Tar;
 
 namespace Calamari.Integration.Packages
 {
@@ -13,12 +15,20 @@ namespace Calamari.Integration.Packages
 
         public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
+            var files = 0;
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
             {
                 var compressionStream = GetCompressionStream(inStream);
                 try
                 {
-                    return ExtractTar(directory, compressionStream, suppressNestedScriptWarning);
+                    using (var reader = TarReader.Open(compressionStream, Options.None))
+                    {
+                        while (reader.MoveToNextEntry())
+                        {
+                            ProcessEvent(ref files, reader.Entry, suppressNestedScriptWarning);
+                            reader.WriteEntryToDirectory(directory, ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite);
+                        }
+                    }
                 }
                 finally
                 {
@@ -28,34 +38,24 @@ namespace Calamari.Integration.Packages
                     }
                 }
             }
+            return files;
         }
-
-        private int ExtractTar(string directory, Stream compressionStream, bool suppressNestedScriptWarning)
-        {
-            var nonDirectoryFiles = 0;
-            using (var tarArchive = TarArchive.CreateInputTarArchive(compressionStream))
-            {
-                tarArchive.ProgressMessageEvent += (archive, entry, message) => ProcessEvent(ref nonDirectoryFiles, entry, suppressNestedScriptWarning);
-                tarArchive.ExtractContents(directory);
-            }
-            return nonDirectoryFiles;
-        }
+        
 
         protected virtual Stream GetCompressionStream(Stream stream)
         {
             return stream;
         }
 
-        protected void ProcessEvent(ref int filesExtracted, TarEntry entry, bool suppressNestedScriptWarning)
+        protected void ProcessEvent(ref int filesExtracted, IEntry entry, bool suppressNestedScriptWarning)
         {
-            if (!entry.IsDirectory)
-            {
-                filesExtracted++;
+            if (entry.IsDirectory) return;
 
-                if (!suppressNestedScriptWarning)
-                {
-                    WarnIfScriptInSubFolder(entry.Name);
-                }
+            filesExtracted++;
+
+            if (!suppressNestedScriptWarning)
+            {
+                WarnIfScriptInSubFolder(entry.Key);
             }
         }
 

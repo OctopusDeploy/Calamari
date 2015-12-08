@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
-using ICSharpCode.SharpZipLib.LZW;
+using SharpCompress.Archive;
+using SharpCompress.Compressor.LZMA;
+
 
 namespace Calamari.Integration.Packages
 {
@@ -10,7 +12,7 @@ namespace Calamari.Integration.Packages
 
         protected override Stream GetCompressionStream(Stream stream)
         {
-            return new LzwInputStream(stream);
+            throw new NotImplementedException();
         }
     }
 }

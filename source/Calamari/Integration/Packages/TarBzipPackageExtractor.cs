@@ -1,5 +1,6 @@
 using System.IO;
-using ICSharpCode.SharpZipLib.BZip2;
+using SharpCompress.Compressor;
+using SharpCompress.Compressor.BZip2;
 
 namespace Calamari.Integration.Packages
 {
@@ -9,7 +10,7 @@ namespace Calamari.Integration.Packages
 
         protected override Stream GetCompressionStream(Stream stream)
         {
-            return new BZip2InputStream(stream);
+            return new BZip2Stream(stream, CompressionMode.Decompress);
         }
     }
 }
