@@ -3,7 +3,6 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.ServiceMessages;
-using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -11,10 +10,10 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Bash
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Nix)]
     public class BashFixture : CalamariFixture
     {
         [Test]
-        [PlatformTest(CompatablePlatform.Nix)]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
@@ -26,7 +25,6 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [PlatformTest(CompatablePlatform.Nix)]
         public void ShouldCreateArtifact()
         {
             var output = Invoke(Calamari()
@@ -38,7 +36,6 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [PlatformTest(CompatablePlatform.Nix)]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();

@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
-using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -11,6 +10,7 @@ using Octostache;
 namespace Calamari.Azure.Tests.Deployment.Azure
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Windows)]
     public class DeployAzureWebFixture : CalamariFixture
     {
         ICalamariFileSystem fileSystem;
@@ -48,14 +48,14 @@ namespace Calamari.Azure.Tests.Deployment.Azure
                 fileSystem.DeleteDirectory(stagingDirectory, FailureOptions.IgnoreFailure);
         }
 
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
         public void ShouldDeployPackage()
         {
             result.AssertZero();
 
         }
 
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
         public void ShouldPerformVariableSubstitution()
         {
            result.AssertOutput(

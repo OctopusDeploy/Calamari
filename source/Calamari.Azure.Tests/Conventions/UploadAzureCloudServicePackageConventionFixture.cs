@@ -6,7 +6,6 @@ using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using Microsoft.WindowsAzure;
 using NSubstitute;
@@ -16,6 +15,7 @@ using Octostache;
 namespace Calamari.Azure.Tests.Conventions
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Windows)]
     public class UploadAzureCloudServicePackageConventionFixture
     {
         const string stagingDirectory = "C:\\Applications\\Foo"; 
@@ -50,7 +50,7 @@ namespace Calamari.Azure.Tests.Conventions
             convention = new UploadAzureCloudServicePackageConvention(fileSystem, packageUploader, credentialsFactory);
         }
 
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
         public void ShouldUploadPackage()
         {
             const string packageFileName = "Acme.cspkg";

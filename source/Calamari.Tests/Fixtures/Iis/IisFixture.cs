@@ -1,12 +1,12 @@
 ﻿using System;
 using Calamari.Integration.Iis;
-using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Iis
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatableOS.Windows)]
     public class IisFixture
     {
         readonly WebServerSupport webServer = WebServerSupport.AutoDetect();
@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Iis
             webServer.CreateWebSiteOrVirtualDirectory(siteName, "/Foo/Bar/Baz", "C:\\InetPub\\wwwroot", 1081);
         }
 
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
         public void CanUpdateIisSite()
         {
             var server = new InternetInformationServer();
@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Iis
             Assert.AreEqual("C:\\Windows\\system32", path);
         }
 
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
         public void CanUpdateIisSiteWithVirtualDirectory()
         {
             var server = new InternetInformationServer();
@@ -43,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Iis
             Assert.AreEqual("C:\\Windows\\Microsoft.NET", path);
         }
 
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
         public void CanUpdateIisSiteWithNestedVirtualDirectory()
         {
             var server = new InternetInformationServer();

@@ -1,7 +1,6 @@
 ﻿using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
-using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -11,15 +10,16 @@ namespace Calamari.Tests.Fixtures.Conventions
     [TestFixture]
     public class ContributeEnvironmentVariablesConventionFixture
     {
-
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)]
         public void ShouldAddWindowsEnvironmentVariables()
         {
             var variables = AddEnvironmentVariables();
             WindowsEnvironmentVariableTest(variables);
         }
 
-        [PlatformTest(CompatablePlatform.Nix)]
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Nix)]
         public void ShouldAddLinuxEnvironmentVariables()
         {
             var variables = AddEnvironmentVariables();

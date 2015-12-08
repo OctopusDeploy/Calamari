@@ -10,7 +10,6 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Iis;
 using Calamari.Tests.Fixtures.Deployment.Packages;
-using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -126,7 +125,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual("bar", actual);
         }
 
-        [PlatformTest(CompatablePlatform.Windows)] //Problem with XML on Linux
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -138,8 +138,9 @@ namespace Calamari.Tests.Fixtures.Deployment
             // The environment app-setting value should have been transformed to 'Production'
             AssertXmlNodeValue(Path.Combine(stagingDirectory, "Production", "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
-
-        [PlatformTest(CompatablePlatform.Windows)] //Problem with XML on Linux
+        
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
         public void ShouldInvokeDeployFailedOnError()
         {
             variables.Set("ShouldFail", "yes");
@@ -147,7 +148,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("I have failed! DeployFailed.ps1");
         }
 
-        [PlatformTest(CompatablePlatform.Windows)] //Problem with XML on Linux
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
         public void ShouldNotInvokeDeployWhenNoError()
         {
             var result = DeployPackage();
@@ -182,7 +184,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("Hello World!");
         }
 
-        [PlatformTest(CompatablePlatform.Windows)]
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)]
         public void ShouldModifyIisWebsiteRoot()
         {
             // If the 'UpdateIisWebsite' variable is set, the website root will be updated
@@ -294,7 +297,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("The package has already been installed on this machine");
         }
 
-        [PlatformTest(CompatablePlatform.Windows)] // Re-enable when deployments enabled again.
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)] // Re-enable when deployments enabled again.
         public void ShouldDeployInParallel()
         {
             var extractionDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
