@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -9,10 +10,10 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
+    
     public class PowerShellFixture : CalamariFixture
     {
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldCallHello()
         {
             var output = Invoke(Calamari()
@@ -23,7 +24,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Hello!");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldCaptureAllOutput()
         {
             var output = Invoke(Calamari()
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertErrorOutput("Hello-Error!");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldCreateArtifacts()
         {
             var output = Invoke(Calamari()
@@ -49,7 +50,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldAllowDotSourcing()
         {
             var output = Invoke(Calamari()
@@ -60,7 +61,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Hello!");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldSetVariables()
         {
             var variables = new VariableDictionary();
@@ -74,7 +75,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             Assert.AreEqual("World!", variables.Get("TestA"));
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldSetActionIndexedOutputVariables()
         {
             var variables = new VariableDictionary();
@@ -88,7 +89,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldSetMachineIndexedOutputVariables()
         {
             var variables = new VariableDictionary();
@@ -103,7 +104,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldFailOnInvalid()
         {
             var output = Invoke(Calamari()
@@ -114,7 +115,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertErrorOutput("A positional parameter cannot be found that accepts");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldFailOnInvalidSyntax()
         {
             var output = Invoke(Calamari()
@@ -125,7 +126,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertErrorOutput("ParserError");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldPrintVariables()
         {
             var variablesFile = Path.GetTempFileName();
@@ -154,7 +155,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldSupportModulesInVariables()
         {
             var variablesFile = Path.GetTempFileName();
@@ -175,7 +176,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldPing()
         {
             var output = Invoke(Calamari()
@@ -186,7 +187,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Pinging ");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldExecuteWhenPathContainsSingleQuote()
         {
             var output = Invoke(Calamari()
@@ -197,7 +198,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Hello from a path containing a '");
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldExecuteWhenPathContainsDollar()
         {
             var output = Invoke(Calamari()

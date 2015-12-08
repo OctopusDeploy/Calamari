@@ -3,6 +3,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -19,8 +20,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             configurationTransformer = new ConfigurationTransformer();
         }
 
-        [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [PlatformTest(CompatablePlatform.Windows)] //Problem with XML on Linux
         public void WebReleaseConfig()
         {
             var text = PerformTest(GetFixtureResouce("Samples","Web.config"), GetFixtureResouce("Samples","Web.Release.config"));
@@ -31,16 +31,14 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             Assert.IsNull(GetCustomErrors(contents));
         }
 
-        [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [PlatformTest(CompatablePlatform.Windows)] //Problem with XML on Linux
         [ExpectedException(typeof(System.Xml.XmlException))]
         public void ShouldThrowExceptionForBadConfig()
         {
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
         }
 
-        [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [PlatformTest(CompatablePlatform.Windows)] //Problem with XML on Linux
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
             configurationTransformer = new ConfigurationTransformer(true);

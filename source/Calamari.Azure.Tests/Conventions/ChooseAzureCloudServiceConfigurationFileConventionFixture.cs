@@ -3,6 +3,7 @@ using Calamari.Azure.Deployment.Conventions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
@@ -11,7 +12,6 @@ using Octostache;
 namespace Calamari.Azure.Tests.Conventions
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
     public class ChooseAzureCloudServiceConfigurationFileConventionFixture
     {
         ICalamariFileSystem fileSystem;
@@ -31,7 +31,7 @@ namespace Calamari.Azure.Tests.Conventions
             convention = new ChooseCloudServiceConfigurationFileConvention(fileSystem);
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         [TestCase("MyCustomCloud.cscfg")]
         [TestCase("CloudService\\MyCustomCloud.cscfg")]
         [TestCase("\\CloudService\\MyCustomCloud.cscfg")]
@@ -47,7 +47,7 @@ namespace Calamari.Azure.Tests.Conventions
             Assert.That(GetResolvedPathFromVariables(), Is.EqualTo(expectedAbsolutePath));
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         [TestCase("Production")]
         [TestCase("Staging")]
         [TestCase("SomeOtherEnvironment")]
@@ -63,7 +63,7 @@ namespace Calamari.Azure.Tests.Conventions
             Assert.That(GetResolvedPathFromVariables(), Is.EqualTo(expectedAbsolutePath));
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void IfNoUserSpecifiedOrEnvironmentFileThenShouldUseDefault()
         {
             var expectedAbsolutePath = Path.Combine(StagingDirectory, "ServiceConfiguration.Cloud.cscfg");

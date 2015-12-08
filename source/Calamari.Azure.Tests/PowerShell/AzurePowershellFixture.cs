@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Calamari.Azure.Tests.Deployment.Azure;
 using Calamari.Deployment;
+using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -8,10 +9,9 @@ using Octostache;
 namespace Calamari.Azure.Tests.PowerShell
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
     public class AzurePowershellFixture : CalamariFixture
     {
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldSetAzureSubscription()
         {
             // If the Azure test certificate is not installed, we cannot run, so ignore

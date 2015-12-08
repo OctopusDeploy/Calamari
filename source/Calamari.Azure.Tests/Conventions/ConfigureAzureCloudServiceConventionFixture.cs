@@ -8,6 +8,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.Compute.Models;
@@ -18,7 +19,6 @@ using Octostache;
 namespace Calamari.Azure.Tests.Conventions
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
     public class ConfigureAzureCloudServiceConventionFixture
     {
         ICalamariFileSystem fileSystem;
@@ -61,7 +61,7 @@ namespace Calamari.Azure.Tests.Conventions
             convention = new ConfigureAzureCloudServiceConvention(fileSystem, credentialsFactory, configurationRetriever);
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         [TestCase("A file that doesn't exist")]
         [TestCase("")]
         [TestCase(null)]
@@ -73,7 +73,7 @@ namespace Calamari.Azure.Tests.Conventions
             convention.Install(deployment);
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldUseExistingInstanceCountIfSpecified()
         {
             ArrangeOriginalConfigurationFileForSuccess(Path.Combine(StagingDirectory, DefaultConfigurationFileName), SimpleConfigSample, x => result = x);
@@ -90,7 +90,7 @@ namespace Calamari.Azure.Tests.Conventions
             AssertRoleHasInstanceCount(result, "Humpty.Worker", 6);
         }
 
-        [Test]
+        [PlatformTest(CompatablePlatform.Windows)]
         public void ShouldReplaceSettingsValuesWithVariables()
         {
             ArrangeOriginalConfigurationFileForSuccess(Path.Combine(StagingDirectory, DefaultConfigurationFileName), SimpleConfigSample, x => result = x);

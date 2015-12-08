@@ -143,6 +143,7 @@
     <Compile Include="Fixtures\Integration\Packages\GenericPackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\PackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\SimplePackageExtractorFixture.cs" />
+    <Compile Include="Helpers\PlatformTestAttribute.cs" />
     <Compile Include="Fixtures\SetUpFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
