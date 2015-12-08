@@ -187,7 +187,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             return transformFile
                 .Replace(Path.GetDirectoryName(sourceFile) ?? string.Empty, "")
-                .TrimStart('\\');
+                .TrimStart(Path.DirectorySeparatorChar);
         }
 
         private static string BuildConfigPath(string filename)
