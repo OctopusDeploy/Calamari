@@ -101,7 +101,7 @@ if($bindingString.StartsWith("[{")) {
 			if ([Bool]::Parse($supportsSNI)) {
 				$wsbindings.Add(@{ 
 					protocol=$binding.protocol;
-					ipAddress=$binding.ipAddress;
+					ipAddress=$bindingIpAddress;
 					port=$binding.port;
 					host=$binding.host;
 					bindingInformation=$bindingInformation;
@@ -110,7 +110,7 @@ if($bindingString.StartsWith("[{")) {
 			} else {
 				$wsbindings.Add(@{ 
 					protocol=$binding.protocol;
-					ipAddress=$binding.ipAddress;
+					ipAddress=$bindingIpAddress;
 					port=$binding.port;
 					host=$binding.host;
 					bindingInformation=$bindingInformation;
