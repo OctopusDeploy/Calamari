@@ -41,6 +41,8 @@
         public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";
         public static readonly string PrintEvaluatedVariables = "OctopusPrintEvaluatedVariables";
 
+        public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
+
         public static class Tentacle
         {
             public static class CurrentDeployment

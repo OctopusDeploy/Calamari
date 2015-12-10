@@ -17,7 +17,10 @@ namespace Calamari.Deployment.Conventions
         public void Install(RunningDeployment deployment)
         {
             RunScripts(deployment);
-            DeleteScripts(deployment);
+            if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
+            {
+                DeleteScripts(deployment);
+            }
         }
     }
 }

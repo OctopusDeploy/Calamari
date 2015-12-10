@@ -28,7 +28,8 @@ namespace Calamari.Tests.Fixtures.Conventions
                 TestEnvironment.ConstructRootedPath("App", "MyApp", "Hello.ps1"),
                 TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"),
                 TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1")
+                TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"),
+                TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1")
             });
 
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
@@ -63,6 +64,38 @@ namespace Calamari.Tests.Fixtures.Conventions
             convention.Install(deployment);
             scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), deployment.Variables, runner);
             fileSystem.Received().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), Arg.Any<FailureOptions>());
+        }
+
+        [Test]
+        public void ShouldNotDeletePreDeployScriptAfterExecutionIfSpecialVariableIsSet()
+        {
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            var convention = CreateConvention("PreDeploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), deployment.Variables, runner);
+            fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), Arg.Any<FailureOptions>());
+        }
+
+        [Test]
+        public void ShouldNotDeleteDeployScriptAfterExecutionIfSpecialVariableIsSet()
+        {
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            var convention = CreateConvention("Deploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"), deployment.Variables, runner);
+            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"), deployment.Variables, runner);
+            fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"), Arg.Any<FailureOptions>());
+            fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"), Arg.Any<FailureOptions>());
+        }
+
+        [Test]
+        public void ShouldNotDeletePostDeployScriptAfterExecutionIfSpecialVariableIsSet()
+        {
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            var convention = CreateConvention("PostDeploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"), deployment.Variables, runner);
+            fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"), Arg.Any<FailureOptions>());
         }
 
         PackagedScriptConvention CreateConvention(string scriptName)
