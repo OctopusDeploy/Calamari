@@ -10,10 +10,10 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Bash
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Nix)]
     public class BashFixture : CalamariFixture
     {
         [Test]
+        [Category(TestEnvironment.CompatableOS.Nix)]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
@@ -25,6 +25,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Nix)]
         public void ShouldCreateArtifact()
         {
             var output = Invoke(Calamari()
@@ -36,6 +37,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Nix)]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();
@@ -57,6 +59,18 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertZero();
                 output.AssertOutput("Hello Paul");
             }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)]
+        public void ThrowsExceptionOnNix()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "print-encoded-variable.sh")));
+
+
+            output.AssertErrorOutput("Script type `sh` unsupported on this platform");
         }
     }
 }
