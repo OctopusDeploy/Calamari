@@ -67,6 +67,22 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.Received().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
         }
 
+        [Test]
+        public void ShouldNotRemoveCustomPostDeployScriptFileAfterRunningIfSpecialVariableIsSet()
+        {
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            const string stage = DeploymentStages.PostDeploy;
+            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, "ps1");
+            var scriptPath = Path.Combine(stagingDirectory, scriptName);
+            variables.Set(scriptName, "blah blah");
+
+            var convention = CreateConvention(stage);
+            scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            convention.Install(deployment);
+
+            fileSystem.DidNotReceive().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
+        }
+
         private ConfiguredScriptConvention CreateConvention(string deployStage)
         {
             return new ConfiguredScriptConvention(deployStage, scriptEngine, fileSystem, commandLineRunner);

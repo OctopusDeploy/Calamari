@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using Calamari.Azure.Integration.Websites.Publishing;
+using System.Diagnostics;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -11,15 +11,9 @@ namespace Calamari.Azure.Deployment.Conventions
 {
     public class AzureWebAppConvention : IInstallConvention
     {
-        readonly VariableDictionary variables;
-
-        public AzureWebAppConvention(VariableDictionary variables)
-        {
-            this.variables = variables;
-        }
-
         public void Install(RunningDeployment deployment)
         {
+            var variables = deployment.Variables;
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
@@ -29,8 +23,11 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var changeSummary = DeploymentManager
                 .CreateObject("contentPath", deployment.CurrentDirectory)
-                .SyncTo("contentPath", BuildPath(siteName, variables), DeploymentOptions(siteName, publishProfile), 
-                DeploymentSyncOptions(variables)
+                .SyncTo(
+                    "contentPath", 
+                    BuildPath(siteName, variables), 
+                    DeploymentOptions(siteName, publishProfile), 
+                    DeploymentSyncOptions(variables)
                 );
 
             Log.Info("Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
@@ -73,7 +70,7 @@ namespace Calamari.Azure.Deployment.Conventions
         private static DeploymentBaseOptions DeploymentOptions(string siteName, SitePublishProfile publishProfile)
         {
             var options = new DeploymentBaseOptions
-            {
+            {              
                 AuthenticationType = "Basic",
                 RetryAttempts = 3,
                 RetryInterval = 1000,
@@ -94,29 +91,55 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 WhatIf = false,
                 UseChecksum = true,
-                DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles, false)
+                DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles),
             };
 
-            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
-            if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData, false))
-            {
-               syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataFiles", "Delete", "filePath", "\\\\App_Data\\\\.*", null)); 
-               syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataDir", "Delete", "dirPath", "\\\\App_Data(\\\\.*|$)", null)); 
-            }
+            ApplyAppOfflineDeploymentRule(syncOptions, variables);
+            ApplyPreserveAppDataDeploymentRule(syncOptions, variables);
+            ApplyPreservePathsDeploymentRule(syncOptions, variables);
+            return syncOptions;
+        }
 
+        private static void ApplyPreserveAppDataDeploymentRule(DeploymentSyncOptions syncOptions, VariableDictionary variables)
+        {
+            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
+            if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
+            {
+                syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataFiles", "Delete", "filePath", "\\\\App_Data\\\\.*", null));
+                syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataDir", "Delete", "dirPath", "\\\\App_Data(\\\\.*|$)", null));
+            }
+        }
+
+        private static void ApplyPreservePathsDeploymentRule(DeploymentSyncOptions syncOptions, VariableDictionary variables)
+        {
             // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
             if (preservePaths != null)
             {
                 for (var i = 0; i < preservePaths.Count; i++)
                 {
-                   var path = preservePaths[i];
-                   syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteFiles_" + i, "Delete", "filePath", path, null)); 
-                   syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDir_" + i, "Delete", "dirPath", path, null)); 
+                    var path = preservePaths[i];
+                    syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteFiles_" + i, "Delete", "filePath", path, null));
+                    syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDir_" + i, "Delete", "dirPath", path, null));
                 }
             }
+        }
 
-            return syncOptions;
+        private static void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions, VariableDictionary variables)
+        {
+            if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
+            {
+                var rules = Microsoft.Web.Deployment.DeploymentSyncOptions.GetAvailableRules();
+                DeploymentRule rule;
+                if (rules.TryGetValue("AppOffline", out rule))
+                {
+                    syncOptions.Rules.Add(rule);
+                }
+                else
+                {
+                    Log.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
+                }
+            }
         }
 
         private static void LogDeploymentEvent(DeploymentTraceEventArgs args)

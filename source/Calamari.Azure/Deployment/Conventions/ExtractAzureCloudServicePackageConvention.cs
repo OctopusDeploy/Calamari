@@ -111,31 +111,31 @@ namespace Calamari.Azure.Deployment.Conventions
             var files = fileSystem.EnumerateFiles(directory.FullName).ToList();
             for (int i = 0; i < files.Count; i++)
             {
-                // Only log the first 7 files in each directory
-                if (i == 7)
+                // Only log the first 50 files in each directory
+                if (i == 50)
                 {
-                    Log.VerboseFormat("{0}And {1} more files...", Tabs(depth), files.Count - i);
+                    Log.VerboseFormat("{0}And {1} more files...", Indent(depth), files.Count - i);
                     break;
                 }
 
                 var file = files[i];
-                Log.Verbose(Tabs(depth) + Path.GetFileName(file));
+                Log.Verbose(Indent(depth) + Path.GetFileName(file));
             }
 
             foreach (var subDirectory in fileSystem.EnumerateDirectories(directory.FullName).Select(x => new DirectoryInfo(x)))
             {
-                Log.Verbose(Tabs(depth) + "\\" + subDirectory.Name);
+                Log.Verbose(Indent(depth + 1) + "\\" + subDirectory.Name);
                 LogDirectoryContents(workingDirectory, Path.Combine(currentDirectoryRelativePath, subDirectory.Name), depth + 1);
             }
         }
 
-        static string Tabs(int n)
+        static string Indent(int n)
         {
-            var tabs = new StringBuilder();
+            var indent = new StringBuilder("|");
             for (int i = 0; i < n; i++)
-                tabs.Append("   ");
+                indent.Append("-");
 
-            return tabs.ToString();
+            return indent.ToString();
         }
     }
 }
