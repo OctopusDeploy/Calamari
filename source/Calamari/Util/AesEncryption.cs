@@ -96,7 +96,10 @@ namespace Calamari.Util
         {
             var array = new byte[byteSize];
             new Random().NextBytes(array);
-            return Convert.ToBase64String(array);
+            return Convert.ToBase64String(array)
+                // Replace URL unfriendly characters
+                .Replace("//", "_")
+                .Replace("+", "-");
         }
     }
 }
