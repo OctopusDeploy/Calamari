@@ -156,6 +156,7 @@
                     public static readonly string SubscriptionName = "OctopusAzureSubscriptionName";
                     public static readonly string ModulePath = "OctopusAzureModulePath";
                     public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
+                    public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
                 }
             }
         }
