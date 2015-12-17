@@ -11,7 +11,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class ContributeEnvironmentVariablesConventionFixture
     {
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldAddWindowsEnvironmentVariables()
         {
             var variables = AddEnvironmentVariables();
@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
         public void ShouldAddLinuxEnvironmentVariables()
         {
             var variables = AddEnvironmentVariables();

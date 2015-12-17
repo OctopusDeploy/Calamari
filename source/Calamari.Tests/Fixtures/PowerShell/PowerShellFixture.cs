@@ -12,7 +12,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public class PowerShellFixture : CalamariFixture
     {
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCallHello()
         {
             var output = Invoke(Calamari()
@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCaptureAllOutput()
         {
             var output = Invoke(Calamari()
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCreateArtifacts()
         {
             var output = Invoke(Calamari()
@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldAllowDotSourcing()
         {
             var output = Invoke(Calamari()
@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetVariables()
         {
             var variables = new VariableDictionary();
@@ -79,7 +79,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetActionIndexedOutputVariables()
         {
             var variables = new VariableDictionary();
@@ -94,7 +94,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetMachineIndexedOutputVariables()
         {
             var variables = new VariableDictionary();
@@ -110,7 +110,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldFailOnInvalid()
         {
             var output = Invoke(Calamari()
@@ -122,7 +122,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldFailOnInvalidSyntax()
         {
             var output = Invoke(Calamari()
@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldPrintVariables()
         {
             var variablesFile = Path.GetTempFileName();
@@ -164,7 +164,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSupportModulesInVariables()
         {
             var variablesFile = Path.GetTempFileName();
@@ -186,7 +186,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldPing()
         {
             var output = Invoke(Calamari()
@@ -198,7 +198,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsSingleQuote()
         {
             var output = Invoke(Calamari()
@@ -210,7 +210,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsDollar()
         {
             var output = Invoke(Calamari()
@@ -222,7 +222,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
         public void ThrowsExceptionOnNix()
         {
             var output = Invoke(Calamari()
