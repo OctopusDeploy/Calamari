@@ -53,7 +53,8 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 var setting = variables.Get(roleName + "/" + settingName) ??
                             variables.Get(roleName + "\\" + settingName) ??
-                            variables.Get(settingName);
+                            variables.Get(settingName) ??
+                            (variables.GetNames().Contains(settingName) ? "" : null);
                 
                 if (setting != null)
                 {
