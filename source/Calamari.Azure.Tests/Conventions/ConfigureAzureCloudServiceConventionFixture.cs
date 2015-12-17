@@ -18,7 +18,7 @@ using Octostache;
 namespace Calamari.Azure.Tests.Conventions
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
+    [Category(TestEnvironment.CompatibleOS.Windows)]
     public class ConfigureAzureCloudServiceConventionFixture
     {
         ICalamariFileSystem fileSystem;
