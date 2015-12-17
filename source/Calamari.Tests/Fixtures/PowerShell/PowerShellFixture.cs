@@ -198,6 +198,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatableOS.Windows)]
         public void ShouldExecuteWhenPathContainsSingleQuote()
         {
             var output = Invoke(Calamari()
