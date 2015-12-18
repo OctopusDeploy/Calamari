@@ -26,6 +26,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
+            fileSystem.GetRelativePath(Arg.Any<string>(), Arg.Any<string>()).Returns(x =>
+                new WindowsPhysicalFileSystem().GetRelativePath((string) x[0], (string) x[1]));
             configurationTransformer = Substitute.For<IConfigurationTransformer>();
 
             variables = new CalamariVariableDictionary();
@@ -96,7 +98,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         [Test]
         [TestCaseSource(nameof(AdvancedTransformTestCases))]
-        public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
+        public void   ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
         {
             var searchPattern = "*" + Path.GetExtension(sourceFile);
             MockSearchableFiles(fileSystem, StagingDirectory, new[] { sourceFile, expectedAppliedTransform }, searchPattern);
@@ -166,6 +168,8 @@ namespace Calamari.Tests.Fixtures.Conventions
                 yield return new TestCaseData(BuildConfigPath("foo.config"), "foo.Bar.Additional.config=>foo.config", BuildConfigPath("foo.Bar.Additional.config"));
                 yield return new TestCaseData(BuildConfigPath("foo.config"), "*.Bar.config=>*.config", BuildConfigPath("foo.Bar.config"));
                 yield return new TestCaseData(BuildConfigPath("foo.xml"), "*.Bar.xml=>*.xml", BuildConfigPath("foo.Bar.xml"));
+                yield return new TestCaseData(BuildConfigPath("config\\foo.xml"), "foo.Bar.xml=>config\\foo.xml", BuildConfigPath("foo.Bar.xml"));
+                yield return new TestCaseData(BuildConfigPath("config\\foo.xml"), "transform\\foo.Bar.xml=>config\\foo.xml", BuildConfigPath("transform\\foo.Bar.xml"));
             }
         }
 
@@ -182,14 +186,14 @@ namespace Calamari.Tests.Fixtures.Conventions
             foreach (var file in files)
             {
                 fileSystem.FileExists(file).Returns(true);
-                fileSystem.EnumerateFiles(Path.GetDirectoryName(files[0]), Arg.Is<string[]>(s => s.Contains(GetRelativePathToTransformFile(files[0], file)))).Returns(new[] {file});
+                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(GetRelativePathToTransformFile(files[0], file)))).Returns(new[] {file});
             }
         }
         private static string GetRelativePathToTransformFile(string sourceFile, string transformFile)
         {
-            return transformFile
-                .Replace(Path.GetDirectoryName(sourceFile) ?? string.Empty, "")
-                .TrimStart('\\');
+            return transformFile.Contains('\\')
+                ? transformFile.Substring(transformFile.LastIndexOf('\\')).Trim('\\')
+                : transformFile;
         }
 
         private static string BuildConfigPath(string filename)

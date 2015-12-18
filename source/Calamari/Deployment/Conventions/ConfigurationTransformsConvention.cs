@@ -55,9 +55,6 @@ namespace Calamari.Deployment.Conventions
         {
             foreach (var transformation in transformations)
             {
-                if (transformation.Advanced && !transformation.Wildcard && !string.Equals(transformation.SourcePattern, Path.GetFileName(sourceFile), StringComparison.InvariantCultureIgnoreCase))
-                    continue;
-
                 if ((transformation.Wildcard && !sourceFile.EndsWith(transformation.SourcePattern, StringComparison.InvariantCultureIgnoreCase)))
                     continue;
                 try
@@ -76,6 +73,13 @@ namespace Calamari.Deployment.Conventions
         {
             foreach (var transformFile in DetermineTransformFileNames(sourceFile, transformation))
             {
+                var sourceFileName = (transformation?.SourcePattern?.Contains("\\") ?? false)
+                    ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.','\\')
+                    : Path.GetFileName(sourceFile);
+
+                if (transformation.Advanced && !transformation.Wildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
                 if (!fileSystem.FileExists(transformFile))
                     continue;
 
@@ -106,19 +110,18 @@ namespace Calamari.Deployment.Conventions
 
         private IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation)
         {
+            var defaultTransformFileName = DetermineTransformFileName(sourceFile, transformation, true);
+            var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
+
+            var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
+            var transformPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFile), Path.GetDirectoryName(relativeTransformPath)));
+
             // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
             // This prevents any issues with mis-matched casing in transform specifications.
-            return fileSystem.EnumerateFiles(Path.GetDirectoryName(sourceFile),
-               GetRelativePathToTransformFile(sourceFile, DetermineTransformFileName(sourceFile, transformation, true)),
-               GetRelativePathToTransformFile(sourceFile, DetermineTransformFileName(sourceFile, transformation, false))
+            return fileSystem.EnumerateFiles(transformPath,
+               Path.GetFileName(Path.GetFileName(defaultTransformFileName)),
+               Path.GetFileName(Path.GetFileName(transformFileName))
             );
-        }
-
-        private static string GetRelativePathToTransformFile(string sourceFile, string transformFile)
-        {
-            return transformFile
-                .Replace(Path.GetDirectoryName(sourceFile) ?? string.Empty, "")
-                .TrimStart('\\');
         }
 
         private static string DetermineTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, bool defaultExtension)
@@ -140,9 +143,23 @@ namespace Calamari.Deployment.Conventions
             }
 
             if (transformation.Advanced && !transformation.Wildcard)
-                return Path.Combine(Path.GetDirectoryName(sourceFile), tp);
+            {
+                var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
+                return Path.Combine(transformDirectory, tp);
+            }
 
             return Path.ChangeExtension(sourceFile, tp);
+        }
+
+        static string GetTransformationFileDirectory(string sourceFile, XmlConfigTransformDefinition transformation)
+        {
+            var sourceDirectory = Path.GetDirectoryName(sourceFile) ?? string.Empty;
+            if (!transformation.SourcePattern.Contains("\\"))
+                return sourceDirectory;
+
+            var sourcePattern = transformation.SourcePattern;
+            var sourcePatternPath = sourcePattern.Substring(0, sourcePattern.LastIndexOf("\\", StringComparison.Ordinal));
+            return sourceDirectory.Replace(sourcePatternPath, string.Empty);
         }
     }
 }

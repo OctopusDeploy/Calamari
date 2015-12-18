@@ -134,6 +134,7 @@
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Fixtures\AppSettingsJson\AppSettingsJsonFixture.cs" />
     <Compile Include="Fixtures\Conventions\AppSettingsJsonConventionFixture.cs" />
+    <Compile Include="Fixtures\Integration\FileSystem\WindowsPhysicalFileSystemFixture.cs" />
     <Compile Include="Fixtures\SetUpFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
@@ -153,8 +154,8 @@
     <Compile Include="Fixtures\Deployment\CleanFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
-    <Compile Include="Fixtures\FileSystem\PackageStoreFixture.cs" />
-    <Compile Include="Fixtures\FileSystem\RetryFixture.cs" />
+    <Compile Include="Fixtures\Integration\FileSystem\PackageStoreFixture.cs" />
+    <Compile Include="Fixtures\Integration\FileSystem\RetryFixture.cs" />
     <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\Integration\Scripting\ScriptEngineFixture.cs" />

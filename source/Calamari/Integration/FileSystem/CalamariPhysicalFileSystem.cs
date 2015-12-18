@@ -488,5 +488,30 @@ namespace Calamari.Integration.FileSystem
 
         protected abstract bool GetFiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
 
+        public string GetRelativePath(string fromFile, string toFile)
+        {
+            var fromPathTokens = fromFile.Split('\\');
+            var toPathTokens = toFile.Split('\\');
+
+            var matchingTokens = 0;
+            for (; matchingTokens < fromPathTokens.Count() - 1; matchingTokens++)
+            {
+                if (!fromPathTokens[matchingTokens].Equals(toPathTokens[matchingTokens], StringComparison.Ordinal))
+                    break;
+            }
+
+            var relativePath = new StringBuilder();
+            for (var i = matchingTokens; i < fromPathTokens.Length - 1; i++)
+                relativePath.Append("..\\");
+
+            for (var i = matchingTokens; i < toPathTokens.Length; i++)
+            {
+                relativePath.Append(toPathTokens[i]);
+                if (i != toPathTokens.Length - 1)
+                    relativePath.Append("\\");
+            }
+
+            return relativePath.ToString();
+        }
     }
 }
