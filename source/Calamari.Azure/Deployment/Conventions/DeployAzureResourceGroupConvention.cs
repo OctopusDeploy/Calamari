@@ -12,6 +12,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
+using Microsoft.Azure;
 using Microsoft.Azure.Management.Resources;
 using Microsoft.Azure.Management.Resources.Models;
 using Microsoft.Rest;
@@ -57,7 +58,9 @@ namespace Calamari.Azure.Deployment.Conventions
                 $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             using (var armClient = new ResourceManagementClient(
-                new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password))){ SubscriptionId = subscriptionId })
+                new TokenCloudCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password)) ))
+            //using (var armClient = new ResourceManagementClient(
+            //    new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password))){ SubscriptionId = subscriptionId })
             {
                 CreateDeployment(armClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
                 PollForCompletion(armClient, resourceGroupName, deploymentName);
@@ -99,7 +102,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     }
                 });
 
-            Log.Info($"Deployment created: {createDeploymentResult.Id}");
+            Log.Info($"Deployment created: {createDeploymentResult.Deployment.Id}");
         }
 
         static void PollForCompletion(IResourceManagementClient armClient, string resourceGroupName,
@@ -114,7 +117,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 Thread.Sleep(TimeSpan.FromSeconds(Math.Min(currentPollWait, 30)));
 
                 Log.Verbose("Polling for status of deployment...");
-                var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName);
+                var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName).Deployment;
                 Log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
 
                 switch (deployment.Properties.ProvisioningState)
@@ -143,14 +146,13 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var log = new StringBuilder("Operations details:\n");
             var operations =
-                armClient.DeploymentOperations.List(resourceGroupName, deploymentName);
+                armClient.DeploymentOperations.List(resourceGroupName, deploymentName, new DeploymentOperationsListParameters()).Operations;
 
             foreach (var operation in operations)
             {
                 log.AppendLine($"Resource: {operation.Properties.TargetResource.ResourceName}");
                 log.AppendLine($"Type: {operation.Properties.TargetResource.ResourceType}");
-                if (operation.Properties.Timestamp.HasValue)
-                    log.AppendLine($"Timestamp: {operation.Properties.Timestamp.Value.ToLocalTime().ToString("s")}");
+                log.AppendLine($"Timestamp: {operation.Properties.Timestamp.ToLocalTime().ToString("s")}");
                 log.AppendLine($"Deployment operation: {operation.Id}");
                 log.AppendLine($"Status: {operation.Properties.StatusCode}");
                 log.AppendLine($"Provisioning State: {operation.Properties.ProvisioningState}");

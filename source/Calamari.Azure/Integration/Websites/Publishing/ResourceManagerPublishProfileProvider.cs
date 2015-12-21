@@ -4,7 +4,9 @@ using System.Net.Http;
 using System.Threading;
 using Calamari.Azure.Integration.Security;
 using Calamari.Commands.Support;
+using Microsoft.Azure;
 using Microsoft.Azure.Management.Resources;
+using Microsoft.Azure.Management.Resources.Models;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
@@ -15,12 +17,13 @@ namespace Calamari.Azure.Integration.Websites.Publishing
     {
         public static SitePublishProfile GetPublishProperties(string subscriptionId, string siteName, string tenantId, string applicationId, string password)
         {
-            var credentials = new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password));
-            using (var resourcesClient = new ResourceManagementClient(credentials) { SubscriptionId = subscriptionId})
-            using (var webSiteClient = new WebSiteManagementClient(credentials) { SubscriptionId = subscriptionId})
+            var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password);
+            using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token)))
+            //using (var resourcesClient = new ResourceManagementClient(credentials) { SubscriptionId = subscriptionId})
+            using (var webSiteClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
                 // Because we only know the site name, we need to search the ResourceGroups to find it 
-                var resourceGroups = resourcesClient.ResourceGroups.List().Select(rg => rg.Name).ToList();
+                var resourceGroups = resourcesClient.ResourceGroups.List(new ResourceGroupListParameters()).ResourceGroups.Select(rg => rg.Name).ToList();
 
                 foreach (var resourceGroup in resourceGroups)
                 {

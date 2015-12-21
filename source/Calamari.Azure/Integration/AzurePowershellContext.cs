@@ -21,7 +21,7 @@ namespace Calamari.Azure.Integration
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
-        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1");
+        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell");
 
         public AzurePowerShellContext()
         {
@@ -35,10 +35,7 @@ namespace Calamari.Azure.Integration
             var workingDirectory = Path.GetDirectoryName(scriptFile);
             variables.Set("OctopusAzureTargetScript", scriptFile);
 
-            // If the Azure PowerShell module to use has not been explicitly configured, then default to the version
-            // bundled with Calamari
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, 
-                variables.Get(SpecialVariables.Action.Azure.PowerShellModulePath, BuiltInAzurePowershellModulePath), variables);
+            SetAzureModuleLoadingMethod(variables);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
@@ -62,6 +59,14 @@ namespace Calamari.Azure.Integration
                     return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
                 }
             }
+        }
+
+        static void SetAzureModuleLoadingMethod(VariableDictionary variables)
+        {
+            // By default use the Azure PowerShell modules bundled with Calamari
+            // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
+            SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, BuiltInAzurePowershellModulePath, variables);
         }
 
         string CreateContextScriptFile(string workingDirectory)
@@ -89,7 +94,7 @@ namespace Calamari.Azure.Integration
 
         }
 
-        void SetOutputVariable(string name, string value, VariableDictionary variables)
+        static void SetOutputVariable(string name, string value, VariableDictionary variables)
         {
             if (variables.Get(name) != value)
             {
