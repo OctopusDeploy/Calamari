@@ -20,7 +20,6 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-
             var transformDefinitions = GetTransformDefinitions(deployment.Variables.Get(SpecialVariables.Package.AdditionalXmlConfigurationTransforms));
 
             var sourceExtensions = new HashSet<string>(
@@ -114,13 +113,13 @@ namespace Calamari.Deployment.Conventions
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
 
             var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
-            var transformPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFile), Path.GetDirectoryName(relativeTransformPath)));
+            var fullTransformPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFile), Path.GetDirectoryName(relativeTransformPath)));
 
             // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
             // This prevents any issues with mis-matched casing in transform specifications.
-            return fileSystem.EnumerateFiles(transformPath,
-               Path.GetFileName(Path.GetFileName(defaultTransformFileName)),
-               Path.GetFileName(Path.GetFileName(transformFileName))
+            return fileSystem.EnumerateFiles(fullTransformPath,
+               Path.GetFileName(defaultTransformFileName),
+               Path.GetFileName(transformFileName)
             );
         }
 

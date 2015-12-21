@@ -98,7 +98,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         [Test]
         [TestCaseSource(nameof(AdvancedTransformTestCases))]
-        public void   ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
+        public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
         {
             var searchPattern = "*" + Path.GetExtension(sourceFile);
             MockSearchableFiles(fileSystem, StagingDirectory, new[] { sourceFile, expectedAppliedTransform }, searchPattern);
@@ -153,6 +153,23 @@ namespace Calamari.Tests.Fixtures.Conventions
             configurationTransformer.ReceivedWithAnyArgs(1).PerformTransform("", "", ""); // Only Called Once
         }
 
+        [Test]
+
+        public void ShouldOnlyApplyRelativePathTransformsToTheCorrectFiles()
+        {
+            var transformConfig = Path.Combine(StagingDirectory, "transform\\Web.Transform.config");
+            var webConfig = Path.Combine(StagingDirectory, "config\\Web.config");
+
+            MockSearchableFiles(fileSystem, StagingDirectory, new[] { transformConfig, webConfig }, "*.config");
+
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "transform\\Web.Transform.config => config\\Web.config");
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+            CreateConvention().Install(deployment);
+
+            configurationTransformer.Received().PerformTransform(webConfig, transformConfig, webConfig);
+            configurationTransformer.DidNotReceive().PerformTransform(transformConfig, transformConfig, transformConfig);
+            configurationTransformer.ReceivedWithAnyArgs(1).PerformTransform("", "", ""); // Only Called Once
+        }
         private static IEnumerable AdvancedTransformTestCases
         {
             get
@@ -186,10 +203,10 @@ namespace Calamari.Tests.Fixtures.Conventions
             foreach (var file in files)
             {
                 fileSystem.FileExists(file).Returns(true);
-                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(GetRelativePathToTransformFile(files[0], file)))).Returns(new[] {file});
+                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(StripPathFromTransformFile(file)))).Returns(new[] {file});
             }
         }
-        private static string GetRelativePathToTransformFile(string sourceFile, string transformFile)
+        private static string StripPathFromTransformFile(string transformFile)
         {
             return transformFile.Contains('\\')
                 ? transformFile.Substring(transformFile.LastIndexOf('\\')).Trim('\\')
