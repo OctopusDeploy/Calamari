@@ -41,6 +41,8 @@
         public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";
         public static readonly string PrintEvaluatedVariables = "OctopusPrintEvaluatedVariables";
 
+        public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
+
         public static class Tentacle
         {
             public static class CurrentDeployment
@@ -154,6 +156,7 @@
                     public static readonly string SubscriptionName = "OctopusAzureSubscriptionName";
                     public static readonly string ModulePath = "OctopusAzureModulePath";
                     public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
+                    public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
                 }
             }
         }

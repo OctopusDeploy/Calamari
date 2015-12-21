@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
         public void WebReleaseConfig()
         {
             var text = PerformTest(GetFixtureResouce("Samples","Web.config"), GetFixtureResouce("Samples","Web.Release.config"));
@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
         [ExpectedException(typeof(System.Xml.XmlException))]
         public void ShouldThrowExceptionForBadConfig()
         {
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
             configurationTransformer = new ConfigurationTransformer(true);

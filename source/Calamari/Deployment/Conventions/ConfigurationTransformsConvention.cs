@@ -70,6 +70,28 @@ namespace Calamari.Deployment.Conventions
                 .Select(s => new XmlConfigTransformDefinition(s))
                 .ToList();
         }
+        
+        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, Dictionary<string, XmlConfigTransformDefinition> alreadyRun)
+        {
+            foreach (var transformation in transformations)
+            {
+                if (transformation.Advanced && !transformation.Wildcard && !string.Equals(transformation.SourcePattern, Path.GetFileName(sourceFile), StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                if ((transformation.Wildcard && !sourceFile.EndsWith(transformation.SourcePattern, StringComparison.InvariantCultureIgnoreCase)))
+                    continue;
+
+                try
+                {
+                    ApplyTransformations(sourceFile, transformation, alreadyRun);
+                }
+                catch (Exception)
+                {
+                    Log.ErrorFormat("Could not transform the file '{0}' using the {1}pattern '{2}'.", sourceFile, transformation.Wildcard ? "wildcard " : "", transformation.TransformPattern);
+                    throw;
+                }
+            }
+        }
 
         private static string[] GetSourceExtensions(RunningDeployment deployment, List<XmlConfigTransformDefinition> transformDefinitions)
         {
@@ -93,28 +115,6 @@ namespace Calamari.Deployment.Conventions
             foreach (var transform in configTransform.Select(trans => trans.ToString()).Distinct())
             {
                 Log.VerboseFormat("The transform pattern \"{0}\" was not performed due to a missing file or overlapping rule.", transform);
-            }
-        }
-        
-        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, Dictionary<string, XmlConfigTransformDefinition> alreadyRun)
-        {
-            foreach (var transformation in transformations)
-            {
-                if (transformation.Advanced && !transformation.Wildcard && !string.Equals(transformation.SourcePattern, Path.GetFileName(sourceFile), StringComparison.InvariantCultureIgnoreCase))
-                    continue;
-
-                if ((transformation.Wildcard && !sourceFile.EndsWith(transformation.SourcePattern, StringComparison.InvariantCultureIgnoreCase)))
-                    continue;
-
-                try
-                {
-                    ApplyTransformations(sourceFile, transformation, alreadyRun);
-                }
-                catch (Exception)
-                {
-                    Log.ErrorFormat("Could not transform the file '{0}' using the {1}pattern '{2}'.", sourceFile, transformation.Wildcard ? "wildcard " : "", transformation.TransformPattern);
-                    throw;
-                }
             }
         }
 
@@ -162,7 +162,13 @@ namespace Calamari.Deployment.Conventions
 
             if (transformation.Advanced && transformation.Wildcard)
             {
-                var baseFileName = sourceFile.Replace(transformation.SourcePattern, "");
+                var sourcePatternWithoutPrefix = transformation.SourcePattern;
+                if (transformation.SourcePattern.StartsWith("."))
+                {
+                    sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
+                }
+                    
+                var baseFileName = sourceFile.Replace(sourcePatternWithoutPrefix, "");
                 return Path.ChangeExtension(baseFileName, tp);
             }
 
@@ -171,7 +177,5 @@ namespace Calamari.Deployment.Conventions
 
             return Path.ChangeExtension(sourceFile, tp);
         }
-
-
     }
 }

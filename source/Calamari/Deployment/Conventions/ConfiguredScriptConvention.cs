@@ -55,8 +55,11 @@ namespace Calamari.Deployment.Conventions
                         result.ExitCode));
                 }
 
-                // And then delete it (this means if the script failed, it will persist, which may assist debugging)
-                fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
+                if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
+                {
+                    // And then delete it (this means if the script failed, it will persist, which may assist debugging)
+                    fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
+                }
             }
         }
 

@@ -126,7 +126,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -140,7 +140,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
         public void ShouldInvokeDeployFailedOnError()
         {
             variables.Set("ShouldFail", "yes");
@@ -149,7 +149,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] //Problem with XML on Linux
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
         public void ShouldNotInvokeDeployWhenNoError()
         {
             var result = DeployPackage();
@@ -185,7 +185,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldModifyIisWebsiteRoot()
         {
             // If the 'UpdateIisWebsite' variable is set, the website root will be updated
@@ -298,7 +298,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)] // Re-enable when deployments enabled again.
+        [Category(TestEnvironment.CompatibleOS.Windows)] // Re-enable when deployments enabled again.
         public void ShouldDeployInParallel()
         {
             var extractionDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
