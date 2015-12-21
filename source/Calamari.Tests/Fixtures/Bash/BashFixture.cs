@@ -13,7 +13,7 @@ namespace Calamari.Tests.Fixtures.Bash
     public class BashFixture : CalamariFixture
     {
         [Test]
-        [Category(TestEnvironment.CompatableOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
         public void ShouldCreateArtifact()
         {
             var output = Invoke(Calamari()
@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();
@@ -62,7 +62,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatableOS.Windows)]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ThrowsExceptionOnNix()
         {
             var output = Invoke(Calamari()

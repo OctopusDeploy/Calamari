@@ -3,6 +3,8 @@
     public interface IPackageExtractor
     {
         PackageMetadata GetMetadata(string packageFile);
-        void Install(string packageFile, string directory, bool suppressNestedScriptWarning, out int filesExtracted);
+        int Extract(string packageFile, string directory, bool suppressNestedScriptWarning);
+
+        string[] Extensions { get; }
     }
 }

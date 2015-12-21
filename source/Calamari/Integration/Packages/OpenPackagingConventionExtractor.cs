@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.IO.Packaging;
 using System.Linq;
 using NuGet;
@@ -12,13 +13,11 @@ namespace Calamari.Integration.Packages
     /// This class simply uses the packaging API's directly to extract, and only uses 6mb and takes 10 seconds on the 
     /// same 180mb file. 
     /// </summary>
-    public class LightweightPackageExtractor : IPackageExtractor
+    public class OpenPackagingConventionExtractor : IPackageExtractor
     {
-        static readonly string[] ExcludePaths = new[] { "_rels", "package\\services\\metadata" };
+        static readonly string[] ExcludePaths = new[] { "_rels", Path.Combine("package","services","metadata") };
 
-        public LightweightPackageExtractor()
-        {
-        }
+        public string[] Extensions { get { return new[] { ".nupkg" }; } }
 
         public PackageMetadata GetMetadata(string packageFile)
         {
@@ -46,17 +45,20 @@ namespace Calamari.Integration.Packages
 
         PackageMetadata ReadManifestStream(Stream manifestStream)
         {
-            var result = new PackageMetadata();
             var manifest = Manifest.ReadFrom(manifestStream, validateSchema: false);
             var packageMetadata = (IPackageMetadata)manifest.Metadata;
-            result.Id = packageMetadata.Id;
-            result.Version = packageMetadata.Version.ToString();
+            var result = new PackageMetadata
+            {
+                Id = packageMetadata.Id,
+                Version = packageMetadata.Version.ToString(),
+                FileExtension = Extensions.First()
+            };
             return result;
         }
 
-        public void Install(string packageFile, string directory, bool suppressNestedScriptWarning, out int filesExtracted)
+        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
-            filesExtracted = 0;
+            int filesExtracted = 0;
             using (var package = Package.Open(packageFile, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var files =
@@ -88,18 +90,19 @@ namespace Calamari.Integration.Packages
                     }
                 }
             }
+            return filesExtracted;
         }
 
         void WarnIfScriptInSubFolder(string path)
         {
             var fileName = Path.GetFileName(path);
-            var directoryName = Path.GetDirectoryName(path);
 
             if (string.Equals(fileName, "Deploy.ps1", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileName, "PreDeploy.ps1", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileName, "PostDeploy.ps1", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileName, "DeployFailed.ps1", StringComparison.OrdinalIgnoreCase))
             {
+                var directoryName = Path.GetDirectoryName(path);
                 if (!string.IsNullOrWhiteSpace(directoryName))
                 {
                     Log.WarnFormat("The script file \"{0}\" contained within the package will not be executed because it is contained within a child folder. As of Octopus Deploy 2.4, scripts in sub folders will not be executed.", path);

@@ -21,6 +21,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         RunningDeployment deployment;
         CalamariVariableDictionary variables;
         const string StagingDirectory = "c:\\applications\\acme\\1.0.0";
+        ProxyLog logs;
 
         [SetUp]
         public void SetUp()
@@ -32,6 +33,13 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, StagingDirectory);
 
             deployment = new RunningDeployment("C:\\packages", variables);
+            logs = new ProxyLog();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            logs.Dispose();
         }
 
         [Test]
@@ -79,6 +87,19 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
+        public void ShouldLogErrorIfUnableToFindFile()
+        {
+            var webConfig = Path.Combine(StagingDirectory, "web.config");
+
+            MockSearchableFiles(fileSystem, StagingDirectory, new[] {webConfig}, "*.config");
+
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "WebX.Release.config => Web.config");
+
+            CreateConvention().Install(deployment);
+            logs.AssertContains("The transform pattern \"WebX.Release.config => Web.config\" was not performed due to a missing file or overlapping rule.");
+        }
+
+        [Test]
         public void ShouldApplySpecificCustomTransform()
         {
             var webConfig = Path.Combine(StagingDirectory, "web.config");
@@ -92,6 +113,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(webConfig, specificTransform, webConfig);
+            logs.AssertDoesNotContain("The transform pattern \"web.Foo.config => web.config\" was not performed due to a missing file or overlapping rule.");
         }
 
         [Test]
@@ -107,6 +129,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             configurationTransformer.Received().PerformTransform(sourceFile, expectedAppliedTransform, sourceFile);
+            logs.AssertDoesNotContain("The transform pattern");
         }
 
         [Test]
@@ -123,6 +146,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             configurationTransformer.DidNotReceive().PerformTransform(webConfig, specificTransform, webConfig);
+            logs.AssertContains("The transform pattern \"config\\*.Foo.config => web.config\" was not performed due to a missing file or overlapping rule.");
         }
 
         [Test]
@@ -189,7 +213,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             return transformFile
                 .Replace(Path.GetDirectoryName(sourceFile) ?? string.Empty, "")
-                .TrimStart('\\');
+                .TrimStart(Path.DirectorySeparatorChar);
         }
 
         private static string BuildConfigPath(string filename)

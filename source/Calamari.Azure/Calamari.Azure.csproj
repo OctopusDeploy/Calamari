@@ -207,6 +207,7 @@
     <Compile Include="Deployment\Conventions\EnsureCloudServicePackageIsCtpFormatConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Conventions\FindCloudServicePackageConvention.cs" />
+    <Compile Include="Deployment\Conventions\SwapAzureDeploymentConvention.cs" />
     <Compile Include="Deployment\Conventions\RePackageCloudServiceConvention.cs" />
     <Compile Include="Deployment\Conventions\UploadAzureCloudServicePackageConvention.cs" />
     <Compile Include="Deployment\Integration\ResourceGroups\ResourceGroupTemplateParameter.cs" />
@@ -223,7 +224,7 @@
     <Compile Include="Integration\CloudServicePackage\ManifestSchema\IntegrityCheckHashAlgorithm.cs" />
     <Compile Include="Integration\CloudServicePackage\ManifestSchema\LayoutDefinition.cs" />
     <Compile Include="Integration\CloudServicePackage\ManifestSchema\PackageDefinition.cs" />
-    <Compile Include="Integration\CloudServicePackage\ManifestSchema\PackageMetaData.cs" />
+    <Compile Include="Integration\CloudServicePackage\ManifestSchema\AzurePackageMetadata.cs" />
     <Compile Include="Integration\IAzureCloudServiceConfigurationRetriever.cs" />
     <Compile Include="Integration\IAzurePackageUploader.cs" />
     <Compile Include="Integration\ISubscriptionCloudCredentialsFactory.cs" />
@@ -247,6 +248,7 @@
     <EmbeddedResource Include="Scripts\AzureContext.ps1" />
     <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Scripts\SwapAzureCloudServiceDeployment.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />

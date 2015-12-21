@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using Newtonsoft.Json;
 using NuGet;
 
 namespace Calamari.Commands
@@ -36,8 +33,8 @@ namespace Calamari.Commands
             if(!SemanticVersion.TryParse(packageVersion, out version))
                 throw new CommandException(String.Format("Package version '{0}' is not a valid Semantic Version", packageVersion));
 
-            var packageStore = new PackageStore();
-            var packageMetadata = new PackageMetadata {Id = packageId, Version = packageVersion, Hash = packageHash};
+            var packageStore = new PackageStore(new GenericPackageExtractor());
+            var packageMetadata = new ExtendedPackageMetadata() {Id = packageId, Version = packageVersion, Hash = packageHash};
             var package = packageStore.GetPackage(packageMetadata);
             if (package == null)
             {
@@ -57,14 +54,14 @@ namespace Calamari.Commands
                 foreach(var nearestPackage in nearestPackages)
                 {
                     Log.VerboseFormat("  - {0}: {1}", nearestPackage.Metadata.Version, nearestPackage.FullPath);
-                    Log.ServiceMessages.PackageFound(nearestPackage.Metadata.Id, nearestPackage.Metadata.Version, nearestPackage.Metadata.Hash, nearestPackage.FullPath);
+                    Log.ServiceMessages.PackageFound(nearestPackage.Metadata.Id, nearestPackage.Metadata.Version, nearestPackage.Metadata.Hash, nearestPackage.Metadata.FileExtension, nearestPackage.FullPath);
                 }
 
                 return 0;
             }
 
             Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash);
-            Log.ServiceMessages.PackageFound(package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash, package.FullPath, true);
+            Log.ServiceMessages.PackageFound(package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash, package.Metadata.FileExtension, package.FullPath, true);
             return 0;
         }
     }
