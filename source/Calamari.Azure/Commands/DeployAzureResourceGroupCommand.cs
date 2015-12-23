@@ -51,7 +51,7 @@ namespace Calamari.Azure.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem),
                 new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, fileSystem, new ResourceGroupTemplateParameterParser())
             };
 
