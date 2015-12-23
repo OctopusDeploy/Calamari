@@ -77,8 +77,8 @@ namespace Calamari.Deployment.Conventions
 
             foreach (var transformFile in DetermineTransformFileNames(sourceFile, transformation))
             {
-                var sourceFileName = (transformation?.SourcePattern?.Contains("\\") ?? false)
-                    ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.','\\')
+                var sourceFileName = (transformation?.SourcePattern?.Contains(Path.DirectorySeparatorChar) ?? false)
+                    ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.',Path.DirectorySeparatorChar)
                     : GetFileName(sourceFile);
 
                 if (transformation.Advanced && !transformation.IsSourceWildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.InvariantCultureIgnoreCase))
