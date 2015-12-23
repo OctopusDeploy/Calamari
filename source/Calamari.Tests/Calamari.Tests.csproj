@@ -234,6 +234,12 @@
     <None Include="Fixtures\Conventions\ConfigTransforms\bar.foo.blah">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.Production.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.Release.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Conventions\ConfigTransforms\bar.sitemap">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

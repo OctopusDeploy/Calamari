@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
@@ -21,148 +19,93 @@ namespace Calamari.Tests.Fixtures.Conventions
         IConfigurationTransformer configurationTransformer;
         RunningDeployment deployment;
         CalamariVariableDictionary variables;
-        const string StagingDirectory = "c:\\applications\\acme\\1.0.0";
 
         [SetUp]
         public void SetUp()
         {
-            fileSystem = Substitute.For<ICalamariFileSystem>();
-            fileSystem.GetRelativePath(Arg.Any<string>(), Arg.Any<string>()).Returns(x =>
-                new WindowsPhysicalFileSystem().GetRelativePath((string) x[0], (string) x[1]));
+            fileSystem = new WindowsPhysicalFileSystem();
             configurationTransformer = Substitute.For<IConfigurationTransformer>();
 
-            variables = new CalamariVariableDictionary();
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, StagingDirectory);
+            var deployDirectory = BuildConfigPath(null);
 
-            deployment = new RunningDeployment("C:\\packages", variables);
+            variables = new CalamariVariableDictionary();
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
+
+            deployment = new RunningDeployment(deployDirectory, variables);
         }
 
         [Test]
         public void ShouldApplyReleaseTransformIfAutomaticallyRunConfigurationTransformationFilesFlagIsSet()
         {
-            var webConfig = Path.Combine(StagingDirectory, "web.config");
-            var webConfigReleaseTransform = Path.Combine(StagingDirectory, "web.Release.config");
-
-            MockSearchableFiles(fileSystem, StagingDirectory, new[] { webConfig, webConfigReleaseTransform }, "*.config");
-
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+
             CreateConvention().Install(deployment);
 
-            configurationTransformer.Received().PerformTransform(webConfig, webConfigReleaseTransform, webConfig);
+            AssertTransformRun("bar.config", "bar.Release.config");
         }
 
         [Test]
         public void ShouldNotApplyReleaseTransformIfAutomaticallyRunConfigurationTransformationFilesFlagNotSet()
         {
-            var webConfig = Path.Combine(StagingDirectory, "web.config");
-            var webConfigReleaseTransform = Path.Combine(StagingDirectory, "web.Release.config");
-
-            MockSearchableFiles(fileSystem, StagingDirectory, new[] { webConfig, webConfigReleaseTransform }, "*.config");
-
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+
             CreateConvention().Install(deployment);
 
-            configurationTransformer.DidNotReceive().PerformTransform(webConfig, webConfigReleaseTransform, webConfig);
+            AssertTransformNotRun("bar.config", "bar.Release.config");
         }
 
         [Test]
         public void ShouldApplyEnvironmentTransform()
         {
             const string environment = "Production";
-            var webConfig = Path.Combine(StagingDirectory, "web.config");
-            var environmentTransform = Path.Combine(StagingDirectory, "web.Production.config");
-
-            MockSearchableFiles(fileSystem, StagingDirectory, new[] { webConfig, environmentTransform }, "*.config");
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             variables.Set(SpecialVariables.Environment.Name, environment);
+
             CreateConvention().Install(deployment);
 
-            configurationTransformer.Received().PerformTransform(webConfig, environmentTransform, webConfig);
+            AssertTransformRun("bar.config", "bar.Production.config");
         }
 
         [Test]
         public void ShouldApplySpecificCustomTransform()
         {
-            var webConfig = Path.Combine(StagingDirectory, "web.config");
-            var specificTransform = Path.Combine(StagingDirectory, "web.Foo.config");
-
-            MockSearchableFiles(fileSystem, StagingDirectory, new[] { webConfig, specificTransform }, "*.config");
-
-            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "web.Foo.config => web.config");
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "foo.bar.config => foo.config");
             // This will be applied even if the automatically run flag is set to false
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+
             CreateConvention().Install(deployment);
 
-            configurationTransformer.Received().PerformTransform(webConfig, specificTransform, webConfig);
+            AssertTransformRun("foo.config", "foo.bar.config");
         }
 
         [Test]
         [TestCaseSource(nameof(AdvancedTransformTestCases))]
         public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
         {
-            var deployDirectory = BuildConfigPath(null);
-            var currentDeployment = new RunningDeployment(deployDirectory, variables);
-            var physicalFileSystem = new WindowsPhysicalFileSystem();
-
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
-            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition.Replace('\\', Path.DirectorySeparatorChar));
-            // This will be applied even if the automatically run flag is set to false
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition.Replace('\\', Path.DirectorySeparatorChar));            
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            var target = new ConfigurationTransformsConvention(physicalFileSystem, configurationTransformer);
-            target.Install(currentDeployment);
-
-            configurationTransformer.Received().PerformTransform(BuildConfigPath(sourceFile), BuildConfigPath(expectedAppliedTransform), BuildConfigPath(sourceFile));
-            configurationTransformer.ReceivedWithAnyArgs(1).PerformTransform("", "", ""); // Only Called Once
-        }
-
-        [Test]
-        public void ShouldApplyAdvancedTransformationToAppropriateFilesAndNotOtherTransformationFiles()
-        {
-            var newDoc = Path.Combine(StagingDirectory, "New Text Document.txt");
-            var octoExe = Path.Combine(StagingDirectory, "Octo.exe");
-            var octoExeConfig = Path.Combine(StagingDirectory, "Octo.exe.config");
-            var somethingConfig = Path.Combine(StagingDirectory, "Something.config");
-            var somethingReleaseConfig = Path.Combine(StagingDirectory, "Something.Release.config");
-            var somethingReleaseXml = Path.Combine(StagingDirectory, "Something.Release.xml");
-            var somethingTestConfig = Path.Combine(StagingDirectory, "Something.Test.config");
-            var somethingTestXml = Path.Combine(StagingDirectory, "Something.Test.xml");
-            var somethingXml = Path.Combine(StagingDirectory, "Something.xml");
-            var webConfig = Path.Combine(StagingDirectory, "Web.config");
-            var webReleaseConfig = Path.Combine(StagingDirectory, "Web.Release.config");
-
-            MockSearchableFiles(fileSystem, StagingDirectory, new[] { newDoc, octoExe, octoExeConfig, somethingConfig, somethingReleaseConfig, somethingReleaseXml, somethingTestConfig, somethingTestXml, somethingXml, webConfig, webReleaseConfig }, "*.xml");
-
-            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "*.Release.xml => *.xml");
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
             CreateConvention().Install(deployment);
 
-            configurationTransformer.Received().PerformTransform(somethingXml, somethingReleaseXml, somethingXml);
-            configurationTransformer.DidNotReceive().PerformTransform(somethingTestXml, somethingReleaseXml, somethingTestXml);
+            AssertTransformRun(sourceFile, expectedAppliedTransform);
             configurationTransformer.ReceivedWithAnyArgs(1).PerformTransform("", "", ""); // Only Called Once
         }
 
         [Test]
         public void ShouldApplyMultipleWildcardsToSourceFile()
         {
-            var deployDirectory = BuildConfigPath(null);
-            var currentDeployment = new RunningDeployment(deployDirectory, variables);
-            var physicalFileSystem = new WindowsPhysicalFileSystem();
-
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "*.bar.blah => bar.blah");
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            var target = new ConfigurationTransformsConvention(physicalFileSystem, configurationTransformer);
-            target.Install(currentDeployment);
+            CreateConvention().Install(deployment);
 
-            configurationTransformer.Received().PerformTransform(BuildConfigPath("bar.blah"), BuildConfigPath("foo.bar.blah"), BuildConfigPath("bar.blah"));
-            configurationTransformer.Received().PerformTransform(BuildConfigPath("bar.blah"), BuildConfigPath("xyz.bar.blah"), BuildConfigPath("bar.blah"));
+            AssertTransformRun("bar.blah", "foo.bar.blah");
+            AssertTransformRun("bar.blah", "xyz.bar.blah");
             configurationTransformer.ReceivedWithAnyArgs(2).PerformTransform("", "", "");
         }
 
-        private IEnumerable AdvancedTransformTestCases
+        private static IEnumerable AdvancedTransformTestCases
         {
             get
             {
@@ -189,23 +132,14 @@ namespace Calamari.Tests.Fixtures.Conventions
             return new ConfigurationTransformsConvention(fileSystem, configurationTransformer);
         }
 
-        private static void MockSearchableFiles(ICalamariFileSystem fileSystem, string parentDirectory, string[] files, string searchPattern)
+        private void AssertTransformRun(string configFile, string transformFile)
         {
-            fileSystem.EnumerateFilesRecursively(parentDirectory,
-                Arg.Is<string[]>(x => new List<string>(x).Contains(searchPattern))).Returns(files);
-
-            foreach (var file in files)
-            {
-                fileSystem.FileExists(file).Returns(true);
-                fileSystem.DirectoryExists(Path.GetDirectoryName(file)).Returns(true);
-                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(StripPathFromTransformFile(file)))).Returns(new[] {file});                
-            }
+            configurationTransformer.Received().PerformTransform(BuildConfigPath(configFile), BuildConfigPath(transformFile), BuildConfigPath(configFile));
         }
-        private static string StripPathFromTransformFile(string transformFile)
+
+        private void AssertTransformNotRun(string configFile, string transformFile)
         {
-            return transformFile.Contains(Path.DirectorySeparatorChar)
-                ? transformFile.Substring(transformFile.LastIndexOf(Path.DirectorySeparatorChar)).Trim('\\')
-                : transformFile;
+            configurationTransformer.DidNotReceive().PerformTransform(BuildConfigPath(configFile), BuildConfigPath(transformFile), BuildConfigPath(configFile));
         }
 
         private string BuildConfigPath(string filename)
