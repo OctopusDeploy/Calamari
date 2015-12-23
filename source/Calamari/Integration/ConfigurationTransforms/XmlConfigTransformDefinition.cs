@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Calamari.Integration.ConfigurationTransforms
 {
@@ -14,15 +15,15 @@ namespace Calamari.Integration.ConfigurationTransforms
                 TransformPattern = parts[0].Trim();
                 SourcePattern = parts[1].Trim();
 
-                if (TransformPattern.StartsWith("*."))
+                if (Path.GetFileName(TransformPattern).StartsWith("*."))
                 {
-                    Wildcard = true;
+                    IsTransformWildcard = true;
                     TransformPattern = TrimWildcardPattern(TransformPattern);
                 }
 
-                if (SourcePattern.StartsWith("*."))
+                if (Path.GetFileName(SourcePattern).StartsWith("*."))
                 {
-                    Wildcard = true;
+                    IsSourceWildcard = true;
                     SourcePattern = TrimWildcardPattern(SourcePattern);
                 }
             }
@@ -34,14 +35,16 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         static string TrimWildcardPattern(string pattern)
         {
-            return (pattern.LastIndexOf('.') > 2)
-                ? pattern.Remove(0, 2)
-                : pattern.Remove(0, 1);
+            var wildcardIndex = pattern.IndexOf('*');
+            return (pattern.LastIndexOf('.') > wildcardIndex + 1)
+                ? pattern.Remove(wildcardIndex, 2)
+                : pattern.Remove(wildcardIndex, 1);
         }
 
         public string TransformPattern { get; private set; }
         public string SourcePattern { get; private set; }
-        public bool Wildcard { get; private set; }
+        public bool IsTransformWildcard { get; private set; }
+        public bool IsSourceWildcard { get; private set; }
         public bool Advanced { get; private set; }
     }
 }

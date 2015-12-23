@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 
@@ -54,7 +56,7 @@ namespace Calamari.Deployment.Conventions
         {
             foreach (var transformation in transformations)
             {
-                if ((transformation.Wildcard && !sourceFile.EndsWith(transformation.SourcePattern, StringComparison.InvariantCultureIgnoreCase)))
+                if ((transformation.IsTransformWildcard && !sourceFile.EndsWith(Path.GetFileName(transformation.SourcePattern), StringComparison.InvariantCultureIgnoreCase)))
                     continue;
                 try
                 {
@@ -62,7 +64,7 @@ namespace Calamari.Deployment.Conventions
                 }
                 catch (Exception)
                 {
-                    Log.ErrorFormat("Could not transform the file '{0}' using the {1}pattern '{2}'.", sourceFile, transformation.Wildcard ? "wildcard " : "", transformation.TransformPattern);
+                    Log.ErrorFormat("Could not transform the file '{0}' using the {1}pattern '{2}'.", sourceFile, transformation.IsTransformWildcard ? "wildcard " : "", transformation.TransformPattern);
                     throw;
                 }
             }
@@ -76,7 +78,10 @@ namespace Calamari.Deployment.Conventions
                     ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.','\\')
                     : Path.GetFileName(sourceFile);
 
-                if (transformation.Advanced && !transformation.Wildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.InvariantCultureIgnoreCase))
+                if (transformation.Advanced && !transformation.IsSourceWildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                if (transformation.Advanced && transformation.IsSourceWildcard && !DoesFileMatchWildcardPattern(sourceFileName, transformation.SourcePattern))
                     continue;
 
                 if (!fileSystem.FileExists(transformFile))
@@ -115,6 +120,9 @@ namespace Calamari.Deployment.Conventions
             var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
             var fullTransformPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFile), Path.GetDirectoryName(relativeTransformPath)));
 
+            if (!fileSystem.DirectoryExists(fullTransformPath))
+                return Enumerable.Empty<string>();
+
             // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
             // This prevents any issues with mis-matched casing in transform specifications.
             return fileSystem.EnumerateFiles(fullTransformPath,
@@ -129,19 +137,29 @@ namespace Calamari.Deployment.Conventions
             if (defaultExtension && !tp.EndsWith(".config"))
                 tp += ".config";
 
-            if (transformation.Advanced && transformation.Wildcard)
+            if (transformation.Advanced && transformation.IsTransformWildcard && transformation.IsSourceWildcard)
             {
-                var sourcePatternWithoutPrefix = transformation.SourcePattern;
+                var sourcePatternWithoutPrefix = Path.GetFileName(transformation.SourcePattern);
                 if (transformation.SourcePattern.StartsWith("."))
                 {
                     sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
                 }
-                    
-                var baseFileName = sourceFile.Replace(sourcePatternWithoutPrefix, "");
-                return Path.ChangeExtension(baseFileName, tp);
+
+                var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
+                var baseFileName = transformation.IsSourceWildcard ?
+                    Path.GetFileName(sourceFile).Replace(sourcePatternWithoutPrefix, "")
+                    : Path.GetFileName(sourceFile);
+                var baseTransformPath = Path.Combine(transformDirectory, Path.GetDirectoryName(tp), baseFileName);
+                return Path.ChangeExtension(baseTransformPath, Path.GetFileName(tp));
             }
 
-            if (transformation.Advanced && !transformation.Wildcard)
+            if (transformation.Advanced && transformation.IsTransformWildcard && !transformation.IsSourceWildcard)
+            {
+                var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
+                return Path.Combine(transformDirectory, Path.GetDirectoryName(tp), "*." + Path.GetFileName(tp).TrimStart('.'));
+            }
+
+            if (transformation.Advanced && !transformation.IsTransformWildcard)
             {
                 var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
                 return Path.Combine(transformDirectory, tp);
@@ -159,6 +177,17 @@ namespace Calamari.Deployment.Conventions
             var sourcePattern = transformation.SourcePattern;
             var sourcePatternPath = sourcePattern.Substring(0, sourcePattern.LastIndexOf("\\", StringComparison.Ordinal));
             return sourceDirectory.Replace(sourcePatternPath, string.Empty);
+        }
+
+        static bool DoesFileMatchWildcardPattern(string sourceFileName, string pattern)
+        {
+            var patternDirectory = Path.GetDirectoryName(pattern) ?? string.Empty;
+            var regexBuilder = new StringBuilder();
+            regexBuilder.Append(patternDirectory.Replace("\\", "\\\\"))
+                .Append(string.IsNullOrEmpty(patternDirectory) ? string.Empty : @"\\")
+                .Append(@".*?\.")
+                .Append(Path.GetFileName(pattern)?.TrimStart('.').Replace(".", @"\."));
+            return Regex.IsMatch(sourceFileName, regexBuilder.ToString());
         }
     }
 }
