@@ -142,18 +142,7 @@ namespace Calamari.Deployment.Conventions
 
             if (transformation.Advanced && transformation.IsTransformWildcard && transformation.IsSourceWildcard)
             {
-                var sourcePatternWithoutPrefix = GetFileName(transformation.SourcePattern);
-                if (transformation.SourcePattern.StartsWith("."))
-                {
-                    sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
-                }
-
-                var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
-                var baseFileName = transformation.IsSourceWildcard ?
-                    GetFileName(sourceFile).Replace(sourcePatternWithoutPrefix, "")
-                    : GetFileName(sourceFile);
-                var baseTransformPath = Path.Combine(transformDirectory, GetDirectoryName(tp), baseFileName);
-                return Path.ChangeExtension(baseTransformPath, GetFileName(tp));
+                return DetermineWildcardTransformFileName(sourceFile, transformation, tp);
             }
 
             if (transformation.Advanced && transformation.IsTransformWildcard && !transformation.IsSourceWildcard)
@@ -179,6 +168,23 @@ namespace Calamari.Deployment.Conventions
         static string GetFileName(string path)
         {
             return Path.GetFileName(path) ?? string.Empty;
+        }
+
+        static string DetermineWildcardTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, string transformPattern)
+        {
+            var sourcePatternWithoutPrefix = GetFileName(transformation.SourcePattern);
+            if (transformation.SourcePattern.StartsWith("."))
+            {
+                sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
+            }
+
+            var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
+            var baseFileName = transformation.IsSourceWildcard ?
+                GetFileName(sourceFile).Replace(sourcePatternWithoutPrefix, "")
+                : GetFileName(sourceFile);
+            var baseTransformPath = Path.Combine(transformDirectory, GetDirectoryName(transformPattern), baseFileName);
+
+            return Path.ChangeExtension(baseTransformPath, GetFileName(transformPattern));
         }
 
         static string GetTransformationFileDirectory(string sourceFile, XmlConfigTransformDefinition transformation)
