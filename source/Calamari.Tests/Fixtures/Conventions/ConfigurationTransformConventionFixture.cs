@@ -203,8 +203,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
         private static string StripPathFromTransformFile(string transformFile)
         {
-            return transformFile.Contains('\\')
-                ? transformFile.Substring(transformFile.LastIndexOf('\\')).Trim('\\')
+            return transformFile.Contains(Path.DirectorySeparatorChar)
+                ? transformFile.Substring(transformFile.LastIndexOf(Path.DirectorySeparatorChar)).Trim(Path.DirectorySeparatorChar)
                 : transformFile;
         }
 
@@ -217,7 +217,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             if (string.IsNullOrEmpty(filename))
                 return workingDirectory;
 
-            return Path.Combine(workingDirectory, filename);
+            return Path.Combine(workingDirectory, filename.Replace('\\', Path.DirectorySeparatorChar));
         }
     }
 }
