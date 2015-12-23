@@ -120,7 +120,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 yield return new TestCaseData("foo.config", "foo.bar.additional.config=>foo.config", "foo.bar.additional.config");
                 yield return new TestCaseData("foo.config", "*.bar.config=>*.config", "foo.bar.config");
                 yield return new TestCaseData("foo.xml", "*.bar.xml=>*.xml", "foo.bar.xml");
-                yield return new TestCaseData("config\\fizz.xml", "foo.Bar.xml=>config\\fizz.xml", "foo.bar.xml");
+                yield return new TestCaseData("config\\fizz.xml", "foo.bar.xml=>config\\fizz.xml", "foo.bar.xml");
                 yield return new TestCaseData("config\\fizz.xml", "transform\\fizz.buzz.xml=>config\\fizz.xml", "transform\\fizz.buzz.xml");
                 yield return new TestCaseData("config\\fizz.xml", "transform\\*.xml=>config\\*.xml", "transform\\fizz.xml");
                 yield return new TestCaseData("foo.config", "transform\\*.config=>foo.config", "transform\\fizz.config");
