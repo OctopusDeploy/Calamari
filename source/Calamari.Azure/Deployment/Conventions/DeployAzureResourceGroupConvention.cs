@@ -15,8 +15,9 @@ using Calamari.Util;
 using Microsoft.Azure;
 using Microsoft.Azure.Management.Resources;
 using Microsoft.Azure.Management.Resources.Models;
-using Microsoft.Rest;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
@@ -59,11 +60,9 @@ namespace Calamari.Azure.Deployment.Conventions
 
             using (var armClient = new ResourceManagementClient(
                 new TokenCloudCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password)) ))
-            //using (var armClient = new ResourceManagementClient(
-            //    new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password))){ SubscriptionId = subscriptionId })
             {
                 CreateDeployment(armClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
-                PollForCompletion(armClient, resourceGroupName, deploymentName);
+                PollForCompletion(armClient, resourceGroupName, deploymentName, variables);
             }
         }
 
@@ -106,7 +105,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         static void PollForCompletion(IResourceManagementClient armClient, string resourceGroupName,
-            string deploymentName)
+            string deploymentName, VariableDictionary variables)
         {
             var currentPollWait = 1;
             var previousPollWait = 0;
@@ -124,9 +123,8 @@ namespace Calamari.Azure.Deployment.Conventions
                 {
                     case "Succeeded":
                         Log.Info($"Deployment {deploymentName} complete.");  
-                        Log.Info("Deployment Outputs:");
-                        Log.Info(deployment.Properties.Outputs != null ? JsonConvert.SerializeObject(deployment.Properties.Outputs) : "No deployment outputs");
                         Log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
+                        CaptureOutputs(deployment.Properties.Outputs, variables);
                         continueToPoll = false;
                         break;
 
@@ -163,6 +161,22 @@ namespace Calamari.Azure.Deployment.Conventions
             }
 
             return log.ToString();
+        }
+
+        static void CaptureOutputs(string outputsJson, VariableDictionary variables)
+        {
+            if (string.IsNullOrWhiteSpace(outputsJson))
+                return;
+
+            Log.Verbose("Deployment Outputs:");
+            Log.Verbose(outputsJson);
+
+            var outputs = JObject.Parse(outputsJson);
+
+            foreach (var output in outputs)
+            {
+                Log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
+            }
         }
     }
 }
