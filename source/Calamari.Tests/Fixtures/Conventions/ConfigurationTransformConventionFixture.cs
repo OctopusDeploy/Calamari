@@ -143,6 +143,25 @@ namespace Calamari.Tests.Fixtures.Conventions
             configurationTransformer.ReceivedWithAnyArgs(1).PerformTransform("", "", ""); // Only Called Once
         }
 
+        [Test]
+        public void ShouldApplyMultipleWildcardsToSourceFile()
+        {
+            var deployDirectory = BuildConfigPath(null);
+            var currentDeployment = new RunningDeployment(deployDirectory, variables);
+            var physicalFileSystem = new WindowsPhysicalFileSystem();
+
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "*.bar.blah => bar.blah");
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+
+            var target = new ConfigurationTransformsConvention(physicalFileSystem, configurationTransformer);
+            target.Install(currentDeployment);
+
+            configurationTransformer.Received().PerformTransform(BuildConfigPath("bar.blah"), BuildConfigPath("foo.bar.blah"), BuildConfigPath("bar.blah"));
+            configurationTransformer.Received().PerformTransform(BuildConfigPath("bar.blah"), BuildConfigPath("xyz.bar.blah"), BuildConfigPath("bar.blah"));
+            configurationTransformer.ReceivedWithAnyArgs(2).PerformTransform("", "", "");
+        }
+
         private IEnumerable AdvancedTransformTestCases
         {
             get
@@ -178,8 +197,8 @@ namespace Calamari.Tests.Fixtures.Conventions
             foreach (var file in files)
             {
                 fileSystem.FileExists(file).Returns(true);
-                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(StripPathFromTransformFile(file)))).Returns(new[] {file});
-                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(searchPattern))).Returns(new[] { file });
+                fileSystem.DirectoryExists(Path.GetDirectoryName(file)).Returns(true);
+                fileSystem.EnumerateFiles(Path.GetDirectoryName(file), Arg.Is<string[]>(s => s.Contains(StripPathFromTransformFile(file)))).Returns(new[] {file});                
             }
         }
         private static string StripPathFromTransformFile(string transformFile)
