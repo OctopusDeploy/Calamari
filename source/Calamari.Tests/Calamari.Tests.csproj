@@ -243,7 +243,7 @@
     <None Include="Fixtures\Conventions\ConfigTransforms\config\fizz.sitemap.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\Conventions\ConfigTransforms\foo.Bar.Additional.config">
+    <None Include="Fixtures\Conventions\ConfigTransforms\foo.bar.additional.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Conventions\ConfigTransforms\foo.bar.blah">
