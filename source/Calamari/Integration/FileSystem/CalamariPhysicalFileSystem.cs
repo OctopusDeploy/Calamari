@@ -490,8 +490,8 @@ namespace Calamari.Integration.FileSystem
 
         public string GetRelativePath(string fromFile, string toFile)
         {
-            var fromPathTokens = fromFile.Split('\\');
-            var toPathTokens = toFile.Split('\\');
+            var fromPathTokens = fromFile.Split(Path.DirectorySeparatorChar);
+            var toPathTokens = toFile.Split(Path.DirectorySeparatorChar);
 
             var matchingTokens = 0;
             for (; matchingTokens < fromPathTokens.Count() - 1; matchingTokens++)
@@ -502,13 +502,13 @@ namespace Calamari.Integration.FileSystem
 
             var relativePath = new StringBuilder();
             for (var i = matchingTokens; i < fromPathTokens.Length - 1; i++)
-                relativePath.Append("..\\");
+                relativePath.Append("..").Append(Path.DirectorySeparatorChar);
 
             for (var i = matchingTokens; i < toPathTokens.Length; i++)
             {
                 relativePath.Append(toPathTokens[i]);
                 if (i != toPathTokens.Length - 1)
-                    relativePath.Append("\\");
+                    relativePath.Append(Path.DirectorySeparatorChar);
             }
 
             return relativePath.ToString();

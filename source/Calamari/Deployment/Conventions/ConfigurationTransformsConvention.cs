@@ -171,23 +171,23 @@ namespace Calamari.Deployment.Conventions
         static string GetTransformationFileDirectory(string sourceFile, XmlConfigTransformDefinition transformation)
         {
             var sourceDirectory = Path.GetDirectoryName(sourceFile) ?? string.Empty;
-            if (!transformation.SourcePattern.Contains("\\"))
+            if (!transformation.SourcePattern.Contains(Path.DirectorySeparatorChar))
                 return sourceDirectory;
 
             var sourcePattern = transformation.SourcePattern;
-            var sourcePatternPath = sourcePattern.Substring(0, sourcePattern.LastIndexOf("\\", StringComparison.Ordinal));
+            var sourcePatternPath = sourcePattern.Substring(0, sourcePattern.LastIndexOf(Path.DirectorySeparatorChar));
             return sourceDirectory.Replace(sourcePatternPath, string.Empty);
         }
 
-        static bool DoesFileMatchWildcardPattern(string sourceFileName, string pattern)
+        static bool DoesFileMatchWildcardPattern(string fileName, string pattern)
         {
             var patternDirectory = Path.GetDirectoryName(pattern) ?? string.Empty;
             var regexBuilder = new StringBuilder();
-            regexBuilder.Append(patternDirectory.Replace("\\", "\\\\"))
-                .Append(string.IsNullOrEmpty(patternDirectory) ? string.Empty : @"\\")
-                .Append(@".*?\.")
-                .Append(Path.GetFileName(pattern)?.TrimStart('.').Replace(".", @"\."));
-            return Regex.IsMatch(sourceFileName, regexBuilder.ToString());
+            regexBuilder.Append(Regex.Escape(patternDirectory))
+                .Append(string.IsNullOrEmpty(patternDirectory) ? string.Empty : Regex.Escape(Path.DirectorySeparatorChar.ToString()))
+                .Append(".*?").Append(Regex.Escape("."))
+                .Append(Regex.Escape(Path.GetFileName(pattern)?.TrimStart('.') ?? string.Empty));
+            return Regex.IsMatch(fileName, regexBuilder.ToString());
         }
     }
 }
