@@ -106,7 +106,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var physicalFileSystem = new WindowsPhysicalFileSystem();
 
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
-            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition);
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition.Replace('\\', Path.DirectorySeparatorChar));
             // This will be applied even if the automatically run flag is set to false
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
@@ -204,7 +204,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         private static string StripPathFromTransformFile(string transformFile)
         {
             return transformFile.Contains(Path.DirectorySeparatorChar)
-                ? transformFile.Substring(transformFile.LastIndexOf(Path.DirectorySeparatorChar)).Trim(Path.DirectorySeparatorChar)
+                ? transformFile.Substring(transformFile.LastIndexOf(Path.DirectorySeparatorChar)).Trim('\\')
                 : transformFile;
         }
 
