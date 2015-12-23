@@ -52,11 +52,11 @@ namespace Calamari.Deployment.Conventions
             deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformsRun, "|");
         }
 
-        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, HashSet<string> alreadyRun)
+        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, ISet<string> alreadyRun)
         {
             foreach (var transformation in transformations)
             {
-                if ((transformation.IsTransformWildcard && !sourceFile.EndsWith(Path.GetFileName(transformation.SourcePattern), StringComparison.InvariantCultureIgnoreCase)))
+                if ((transformation.IsTransformWildcard && !sourceFile.EndsWith(GetFileName(transformation.SourcePattern), StringComparison.InvariantCultureIgnoreCase)))
                     continue;
                 try
                 {
@@ -70,13 +70,16 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, HashSet<string> alreadyRun)
+        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, ISet<string> alreadyRun)
         {
+            if (transformation == null)
+                return;
+
             foreach (var transformFile in DetermineTransformFileNames(sourceFile, transformation))
             {
                 var sourceFileName = (transformation?.SourcePattern?.Contains("\\") ?? false)
                     ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.','\\')
-                    : Path.GetFileName(sourceFile);
+                    : GetFileName(sourceFile);
 
                 if (transformation.Advanced && !transformation.IsSourceWildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.InvariantCultureIgnoreCase))
                     continue;
@@ -118,7 +121,7 @@ namespace Calamari.Deployment.Conventions
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
 
             var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
-            var fullTransformPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFile), Path.GetDirectoryName(relativeTransformPath)));
+            var fullTransformPath = Path.GetFullPath(Path.Combine(GetDirectoryName(sourceFile), GetDirectoryName(relativeTransformPath)));
 
             if (!fileSystem.DirectoryExists(fullTransformPath))
                 return Enumerable.Empty<string>();
@@ -126,8 +129,8 @@ namespace Calamari.Deployment.Conventions
             // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
             // This prevents any issues with mis-matched casing in transform specifications.
             return fileSystem.EnumerateFiles(fullTransformPath,
-               Path.GetFileName(defaultTransformFileName),
-               Path.GetFileName(transformFileName)
+               GetFileName(defaultTransformFileName),
+               GetFileName(transformFileName)
             );
         }
 
@@ -139,7 +142,7 @@ namespace Calamari.Deployment.Conventions
 
             if (transformation.Advanced && transformation.IsTransformWildcard && transformation.IsSourceWildcard)
             {
-                var sourcePatternWithoutPrefix = Path.GetFileName(transformation.SourcePattern);
+                var sourcePatternWithoutPrefix = GetFileName(transformation.SourcePattern);
                 if (transformation.SourcePattern.StartsWith("."))
                 {
                     sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
@@ -147,16 +150,16 @@ namespace Calamari.Deployment.Conventions
 
                 var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
                 var baseFileName = transformation.IsSourceWildcard ?
-                    Path.GetFileName(sourceFile).Replace(sourcePatternWithoutPrefix, "")
-                    : Path.GetFileName(sourceFile);
-                var baseTransformPath = Path.Combine(transformDirectory, Path.GetDirectoryName(tp), baseFileName);
-                return Path.ChangeExtension(baseTransformPath, Path.GetFileName(tp));
+                    GetFileName(sourceFile).Replace(sourcePatternWithoutPrefix, "")
+                    : GetFileName(sourceFile);
+                var baseTransformPath = Path.Combine(transformDirectory, GetDirectoryName(tp), baseFileName);
+                return Path.ChangeExtension(baseTransformPath, GetFileName(tp));
             }
 
             if (transformation.Advanced && transformation.IsTransformWildcard && !transformation.IsSourceWildcard)
             {
                 var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
-                return Path.Combine(transformDirectory, Path.GetDirectoryName(tp), "*." + Path.GetFileName(tp).TrimStart('.'));
+                return Path.Combine(transformDirectory, GetDirectoryName(tp), "*." + GetFileName(tp).TrimStart('.'));
             }
 
             if (transformation.Advanced && !transformation.IsTransformWildcard)
@@ -168,9 +171,19 @@ namespace Calamari.Deployment.Conventions
             return Path.ChangeExtension(sourceFile, tp);
         }
 
+        static string GetDirectoryName(string path)
+        {
+            return Path.GetDirectoryName(path) ?? string.Empty;
+        }
+
+        static string GetFileName(string path)
+        {
+            return Path.GetFileName(path) ?? string.Empty;
+        }
+
         static string GetTransformationFileDirectory(string sourceFile, XmlConfigTransformDefinition transformation)
         {
-            var sourceDirectory = Path.GetDirectoryName(sourceFile) ?? string.Empty;
+            var sourceDirectory = GetDirectoryName(sourceFile);
             if (!transformation.SourcePattern.Contains(Path.DirectorySeparatorChar))
                 return sourceDirectory;
 
@@ -181,12 +194,13 @@ namespace Calamari.Deployment.Conventions
 
         static bool DoesFileMatchWildcardPattern(string fileName, string pattern)
         {
-            var patternDirectory = Path.GetDirectoryName(pattern) ?? string.Empty;
+            var patternDirectory = GetDirectoryName(pattern);
             var regexBuilder = new StringBuilder();
             regexBuilder.Append(Regex.Escape(patternDirectory))
                 .Append(string.IsNullOrEmpty(patternDirectory) ? string.Empty : Regex.Escape(Path.DirectorySeparatorChar.ToString()))
                 .Append(".*?").Append(Regex.Escape("."))
                 .Append(Regex.Escape(Path.GetFileName(pattern)?.TrimStart('.') ?? string.Empty));
+
             return Regex.IsMatch(fileName, regexBuilder.ToString());
         }
     }
