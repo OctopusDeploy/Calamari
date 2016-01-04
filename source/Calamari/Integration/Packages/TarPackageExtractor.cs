@@ -1,9 +1,6 @@
 ﻿using System;
 using System.IO;
-using SharpCompress.Archive.GZip;
 using SharpCompress.Common;
-using SharpCompress.Common.Tar;
-using SharpCompress.Compressor.Deflate;
 using SharpCompress.Reader;
 using SharpCompress.Reader.Tar;
 
@@ -26,7 +23,7 @@ namespace Calamari.Integration.Packages
                         while (reader.MoveToNextEntry())
                         {
                             ProcessEvent(ref files, reader.Entry, suppressNestedScriptWarning);
-                            reader.WriteEntryToDirectory(directory, ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite);
+                            reader.WriteEntryToDirectory(directory, ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime);
                         }
                     }
                 }

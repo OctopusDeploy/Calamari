@@ -19,7 +19,7 @@ namespace Calamari.Integration.Packages
                 while (reader.MoveToNextEntry())
                 {
                     ProcessEvent(ref filesExtracted, reader.Entry, suppressNestedScriptWarning);
-                    reader.WriteEntryToDirectory(directory,ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite);
+                    reader.WriteEntryToDirectory(directory,ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime);
                 }
             }
             return filesExtracted;

@@ -14,6 +14,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         private const string PackageId = "Acme.Core";
         private const string PackageVersion = "1.0.0.0-bugfix";
 
+
         [Test]
         [TestCase(typeof(TarGzipPackageExtractor), "tar.gz")]
         [TestCase(typeof(TarPackageExtractor), "tar")]
@@ -42,12 +43,17 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void ExtractPumpsFilesToFilesystem(Type extractorType, string extension)
         {
             var fileName = GetFileName(extension);
+            var timeBeforeExtraction = DateTime.Now.AddSeconds(-1);
+
             var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
             var targetDir = GetTargetDir(extractorType, fileName);
 
             var filesExtracted = extractor.Extract(fileName, targetDir, true);
-            var text = File.ReadAllText(Path.Combine(targetDir, "my resource.txt"));
+            var textFileName = Path.Combine(targetDir, "my resource.txt");
+            var text = File.ReadAllText(textFileName);
+            var fileInfo = new FileInfo(textFileName);
 
+            //Assert.Less(fileInfo.LastWriteTime, timeBeforeExtraction); //TODO: Once SharpCompress publishes new NuGet package with changes to support this.
             Assert.AreEqual(1, filesExtracted);
             Assert.AreEqual("Im in a package!", text.TrimEnd('\n'));
         }
