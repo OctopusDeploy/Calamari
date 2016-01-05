@@ -81,6 +81,14 @@ $supportsSNI = $iisVersion -ge 8
 
 $wsbindings = new-object System.Collections.ArrayList
 
+function Write-IISBinding($message, $bindingObject) {
+	if(-not ($bindingObject -is [PSObject])) {
+		Write-Host "$message @{$([String]::Join("; ", ($bindingObject.Keys | % { return "$($_)=$($bindingObject[$_])" })))}"
+	} else {
+		Write-Host "$message $bindingObject"
+	}
+}
+
 if($bindingString.StartsWith("[{")) {
 	
 	if(Get-Command ConvertFrom-Json -errorAction SilentlyContinue){
@@ -97,7 +105,7 @@ if($bindingString.StartsWith("[{")) {
 		$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
 		
 		if([Bool]::Parse($binding.enabled)) {
-			Write-Host "Found binding: $binding"
+			Write-IISBinding "Found binding: " $binding
 			if ([Bool]::Parse($supportsSNI)) {
 				$wsbindings.Add(@{ 
 					protocol=$binding.protocol;
@@ -117,7 +125,7 @@ if($bindingString.StartsWith("[{")) {
 					thumbprint=$binding.thumbprint.Trim() }) | Out-Null
 			}
 		} else {
-			Write-Host "Ignore binding: $binding"
+			Write-IISBinding "Ignore binding: " $binding
 		}
 	}
 
