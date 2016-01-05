@@ -16,6 +16,12 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            if (string.IsNullOrWhiteSpace(deployment.PackageFilePath))
+            {
+               Log.Verbose("No package path defined. Skipping package extraction.");
+               return;
+            }
+
             var metadata = extractor.GetMetadata(deployment.PackageFilePath);
 
             var targetPath = GetTargetPath(deployment, metadata);

@@ -21,7 +21,7 @@ namespace Calamari.Azure.Integration
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
-        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell", "ServiceManagement\\Azure\\Azure.psd1");
+        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell");
 
         public AzurePowerShellContext()
         {
@@ -35,20 +35,38 @@ namespace Calamari.Azure.Integration
             var workingDirectory = Path.GetDirectoryName(scriptFile);
             variables.Set("OctopusAzureTargetScript", scriptFile);
 
-            // If the Azure PowerShell module to use has not been explicitly configured, then default to the version
-            // bundled with Calamari
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, 
-                variables.Get(SpecialVariables.Action.Azure.PowerShellModulePath, BuiltInAzurePowershellModulePath), variables);
+            SetAzureModuleLoadingMethod(variables);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionName, variables.Get(SpecialVariables.Account.Name), variables);
+            SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
-            using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
+                {
+                    SetOutputVariable("OctopusUseServicePrincipal", true.ToString(), variables);
+                    SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
+                    SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
+                    variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
+                    return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                }
+
+                //otherwise use management certificate
+                SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
+                using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
+                {
+                    return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                }
             }
+        }
+
+        static void SetAzureModuleLoadingMethod(VariableDictionary variables)
+        {
+            // By default use the Azure PowerShell modules bundled with Calamari
+            // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
+            SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, BuiltInAzurePowershellModulePath, variables);
         }
 
         string CreateContextScriptFile(string workingDirectory)
@@ -76,7 +94,7 @@ namespace Calamari.Azure.Integration
 
         }
 
-        void SetOutputVariable(string name, string value, VariableDictionary variables)
+        static void SetOutputVariable(string name, string value, VariableDictionary variables)
         {
             if (variables.Get(name) != value)
             {
