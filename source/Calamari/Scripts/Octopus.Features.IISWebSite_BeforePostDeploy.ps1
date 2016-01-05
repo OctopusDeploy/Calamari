@@ -8,6 +8,16 @@ if (!$isEnabled -or ![Bool]::Parse($isEnabled))
    exit 0
 }
 
+try {
+    Add-PSSnapin WebAdministration
+} catch {
+    try {
+        Import-Module WebAdministration
+    } catch {
+        throw ($error | Select-Object -First 1)
+    }
+}
+
 $WebSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
 $ApplicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
 $bindingString = $OctopusParameters["Octopus.Action.IISWebSite.Bindings"]
@@ -166,9 +176,6 @@ if($bindingString.StartsWith("[{")) {
 	}
 }
 
-
-Add-PSSnapin WebAdministration -ErrorAction SilentlyContinue
-Import-Module WebAdministration -ErrorAction SilentlyContinue
 
 # For any HTTPS bindings, ensure the certificate is configured for the IP/port combination
 $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
