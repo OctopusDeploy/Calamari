@@ -27,11 +27,11 @@ namespace Calamari.Integration.ConfigurationVariables
 
                 if (!changes.Any())
                 {
-                    Log.Info("No matching setting or connection string names were found in: {0}", configurationFilePath);
+                    Log.Info("No matching appSetting, applicationSetting, nor connectionString names were found in: {0}", configurationFilePath);
                     return;
                 }
 
-                Log.Info("Updating appSettings and connectionStrings in: {0}", configurationFilePath);
+                Log.Info("Updating appSettings, applicationSettings, and connectionStrings in: {0}", configurationFilePath);
 
                 foreach (var change in changes)
                 {
