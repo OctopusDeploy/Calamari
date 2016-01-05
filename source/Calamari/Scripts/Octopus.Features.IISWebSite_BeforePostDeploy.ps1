@@ -14,6 +14,9 @@ try {
     try {
         Import-Module WebAdministration
     } catch {
+		Write-Warning "We failed to load the WebAdministration module. This usually resolved by doing one of the following:"
+		Write-Warning "1. Install .NET Framework 3.5.1"
+		Write-Warning "2. Upgrade to PowerShell 3.0 (or greater)"
         throw ($error | Select-Object -First 1)
     }
 }
