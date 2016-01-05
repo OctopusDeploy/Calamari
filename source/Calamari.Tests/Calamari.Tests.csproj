@@ -134,6 +134,7 @@
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Fixtures\AppSettingsJson\AppSettingsJsonFixture.cs" />
     <Compile Include="Fixtures\Conventions\AppSettingsJsonConventionFixture.cs" />
+    <Compile Include="Fixtures\Integration\FileSystem\WindowsPhysicalFileSystemFixture.cs" />
     <Compile Include="Fixtures\SetUpFixture.cs" />
     <Compile Include="Fixtures\ConfigurationTransforms\ConfigurationTransformsFixture.cs" />
     <Compile Include="Fixtures\ConfigurationVariables\ConfigurationVariablesFixture.cs" />
@@ -153,8 +154,8 @@
     <Compile Include="Fixtures\Deployment\CleanFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
-    <Compile Include="Fixtures\FileSystem\PackageStoreFixture.cs" />
-    <Compile Include="Fixtures\FileSystem\RetryFixture.cs" />
+    <Compile Include="Fixtures\Integration\FileSystem\PackageStoreFixture.cs" />
+    <Compile Include="Fixtures\Integration\FileSystem\RetryFixture.cs" />
     <Compile Include="Fixtures\FindPackage\FindPackageFixture.cs" />
     <Compile Include="Fixtures\Iis\IisFixture.cs" />
     <Compile Include="Fixtures\Integration\Scripting\ScriptEngineFixture.cs" />
@@ -222,6 +223,57 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\ConfigurationVariables\Samples\StrongTyped.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.blah">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.foo.blah">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.Production.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.Release.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\bar.sitemap">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\config\fizz.buzz.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\config\fizz.sitemap.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\foo.bar.additional.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\foo.bar.blah">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\foo.bar.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\foo.baz">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\foo.blah">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\foo.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\transform\fizz.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\xyz.bar.blah">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\xyz.foo.blah">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web.Tests\Acme.Web.Tests.nuspec">
@@ -366,6 +418,21 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <Content Include="Fixtures\Conventions\ConfigTransforms\config\fizz.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\Conventions\ConfigTransforms\foo.bar.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\Conventions\ConfigTransforms\foo.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\Conventions\ConfigTransforms\transform\fizz.buzz.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\Conventions\ConfigTransforms\transform\fizz.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web.Tests\assets\Blob.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
