@@ -8,6 +8,19 @@ if (!$isEnabled -or ![Bool]::Parse($isEnabled))
    exit 0
 }
 
+try {
+    Add-PSSnapin WebAdministration
+} catch {
+    try {
+        Import-Module WebAdministration
+    } catch {
+		Write-Warning "We failed to load the WebAdministration module. This usually resolved by doing one of the following:"
+		Write-Warning "1. Install .NET Framework 3.5.1"
+		Write-Warning "2. Upgrade to PowerShell 3.0 (or greater)"
+        throw ($error | Select-Object -First 1)
+    }
+}
+
 $WebSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
 $ApplicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
 $bindingString = $OctopusParameters["Octopus.Action.IISWebSite.Bindings"]
@@ -166,9 +179,6 @@ if($bindingString.StartsWith("[{")) {
 	}
 }
 
-
-Add-PSSnapin WebAdministration -ErrorAction SilentlyContinue
-Import-Module WebAdministration -ErrorAction SilentlyContinue
 
 # For any HTTPS bindings, ensure the certificate is configured for the IP/port combination
 $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
