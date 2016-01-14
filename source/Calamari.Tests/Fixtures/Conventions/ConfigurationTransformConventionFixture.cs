@@ -105,6 +105,19 @@ namespace Calamari.Tests.Fixtures.Conventions
             configurationTransformer.ReceivedWithAnyArgs(2).PerformTransform("", "", "");
         }
 
+        [Test]
+        public void ShouldApplyTransformToMulipleTargetFiles()
+        {
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "bar.blah => *.bar.blah");
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
+
+            CreateConvention().Install(deployment);
+
+            AssertTransformRun("foo.bar.blah", "bar.blah");
+            AssertTransformRun("xyz.bar.blah", "bar.blah");
+            configurationTransformer.ReceivedWithAnyArgs(2).PerformTransform("", "", "");
+        }
+
         private static IEnumerable AdvancedTransformTestCases
         {
             get
@@ -115,7 +128,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 yield return new TestCaseData("bar.blah", "foo.baz=>bar.blah", "foo.baz");
                 yield return new TestCaseData("bar.config", "foo.xml=>bar.config", "foo.xml");
                 yield return new TestCaseData("xyz.bar.blah", "*.foo.blah=>*.bar.blah", "xyz.foo.blah");
-                yield return new TestCaseData("foo.bar.blah", "foo.blah=>*.bar.blah", "foo.blah");
+                yield return new TestCaseData("foo.bar.config", "foo.config=>*.bar.config", "foo.config");
                 yield return new TestCaseData("bar.blah", "*.bar.config=>bar.blah", "foo.bar.config");
                 yield return new TestCaseData("foo.config", "foo.bar.additional.config=>foo.config", "foo.bar.additional.config");
                 yield return new TestCaseData("foo.config", "*.bar.config=>*.config", "foo.bar.config");

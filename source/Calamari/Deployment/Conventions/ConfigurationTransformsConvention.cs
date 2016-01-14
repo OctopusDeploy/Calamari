@@ -43,13 +43,15 @@ namespace Calamari.Deployment.Conventions
                 }
             }
 
-            var transformsRun = new HashSet<string>();
+            var allTransformsRun = new HashSet<string>();
             foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions.ToArray()))
             {
+                var transformsRun = new HashSet<string>();
                 ApplyTransformations(configFile, transformDefinitions, transformsRun);
+                allTransformsRun.Concat(transformsRun);
             }
 
-            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformsRun, "|");
+            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, allTransformsRun, "|");
         }
 
         void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, ISet<string> alreadyRun)
