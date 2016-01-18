@@ -51,6 +51,10 @@ namespace Calamari.Commands
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+
+            fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
+            fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
+
             var scriptCapability = new CombinedScriptEngine();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var generator = new AppSettingsJsonGenerator();
