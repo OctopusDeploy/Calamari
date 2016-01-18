@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using Calamari.Deployment;
+using Microsoft.Web.Administration;
 
 namespace Calamari.Integration.FileSystem
 {
@@ -453,25 +455,40 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
+        public bool SkipFreeDiskSpaceCheck { get; set; }
+        public int? FreeDiskSpaceOverrideInMegaBytes { get; set; }
+
         public void EnsureDiskHasEnoughFreeSpace(string directoryPath)
         {
-            EnsureDiskHasEnoughFreeSpace(directoryPath, 500 * 1024 * 1024);
+            if (SkipFreeDiskSpaceCheck)
+            {
+                Log.Verbose($"{SpecialVariables.SkipFreeDiskSpaceCheck} is enabled. The check to ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has enough free space will be skipped.");
+                return;
+            }
+
+            if (FreeDiskSpaceOverrideInMegaBytes.HasValue)
+                Log.Verbose($"{SpecialVariables.FreeDiskSpaceOverrideInMegaBytes} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {FreeDiskSpaceOverrideInMegaBytes.Value}MB free disk space.");
+
+            EnsureDiskHasEnoughFreeSpace(directoryPath, FreeDiskSpaceOverrideInMegaBytes * 1024 * 1024 ?? 500L * 1024 * 1024);
         }
 
         public void EnsureDiskHasEnoughFreeSpace(string directoryPath, long requiredSpaceInBytes)
         {
             ulong totalNumberOfFreeBytes;
 
-            var success = GetFiskFreeSpace(directoryPath, out totalNumberOfFreeBytes);
+            var success = GetDiskFreeSpace(directoryPath, out totalNumberOfFreeBytes);
             if (!success)
                 return;
 
-            // Always make sure at least 500MB are available regardless of what we need 
             var required = requiredSpaceInBytes < 0 ? 0 : (ulong)requiredSpaceInBytes;
-            required = Math.Max(required, 500L * 1024 * 1024);
+            // If a free disk space override value has not been provided, always make sure at least 500MB are available regardless of what we need
+            if(!FreeDiskSpaceOverrideInMegaBytes.HasValue)
+                required = Math.Max(required, 500L * 1024 * 1024);
+
             if (totalNumberOfFreeBytes < required)
             {
-                throw new IOException(string.Format("The drive containing the directory '{0}' on machine '{1}' does not have enough free disk space available for this operation to proceed. The disk only has {2} available; please free up at least {3}.", directoryPath, Environment.MachineName, totalNumberOfFreeBytes.ToFileSizeString(), required.ToFileSizeString()));
+                throw new IOException(
+                    $"The drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' does not have enough free disk space available for this operation to proceed. The disk only has {totalNumberOfFreeBytes.ToFileSizeString()} available; please free up at least {required.ToFileSizeString()}.");
             }
         }
 
@@ -486,7 +503,7 @@ namespace Calamari.Integration.FileSystem
             return relativeOrAbsoluteFilePath;
         }
 
-        protected abstract bool GetFiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
+        protected abstract bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
 
         public string GetRelativePath(string fromFile, string toFile)
         {
