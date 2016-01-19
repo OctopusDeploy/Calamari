@@ -72,7 +72,7 @@ namespace Calamari.Tests.Helpers
                     var foundPackageRemotePath = message.GetValue(ServiceMessageNames.FoundPackage.RemotePathAttribute);
                     FoundPackage =
                         new StoredPackage(
-                            new PackageMetadata
+                            new ExtendedPackageMetadata
                             {
                                 Id = foundPackageId,
                                 Version = foundPackageVersion,
@@ -85,7 +85,7 @@ namespace Calamari.Tests.Helpers
                     var pdvRemotePath =
                         message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
                     DeltaVerification =
-                        new StoredPackage(new PackageMetadata {Hash = pdvHash},
+                        new StoredPackage(new ExtendedPackageMetadata { Hash = pdvHash},
                             pdvRemotePath);
                     break;
             }

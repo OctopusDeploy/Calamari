@@ -70,13 +70,13 @@ public static class Octopus
 		Console.WriteLine("##octopus[setVariable name='{0}' value='{1}']", name, value);
 	}
 
-	public static void CreateArtifact(string path) 
+	public static void CreateArtifact(string path, string fileName = null) 
 	{
-		var fileName = System.IO.Path.GetFileName(path); 
-		fileName = EncodeServiceMessageValue(fileName);	
+		if(fileName == null){
+			fileName = System.IO.Path.GetFileName(path); 
+		} 
 
-		if(!System.IO.File.Exists(path)){
-		}
+		fileName = EncodeServiceMessageValue(fileName);	
 
 		var length = System.IO.File.Exists(path) ? new System.IO.FileInfo(path).Length.ToString() : "0";
 		length = EncodeServiceMessageValue(length);

@@ -38,7 +38,7 @@ namespace Calamari.Azure.Deployment.Conventions
 
             if (packages.Count > 1)
             {
-                throw new CommandException("Your NuGet package contains more than one Cloud Service package (.cspkg) file, which is unsupported. Files: " 
+                throw new CommandException("Your deployment package contains more than one Cloud Service package (.cspkg) file, which is unsupported. Files: "
                     + string.Concat(packages.Select(p => Environment.NewLine + " - " + p)));
             }
 

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
+using Calamari.Integration.Packages;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
@@ -49,15 +49,12 @@ namespace Calamari.Commands
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
 
-            var extractor = new LightweightPackageExtractor();
-            int filesExtracted;
-            extractor.Install(packageFile, Environment.CurrentDirectory, true, out filesExtracted);
-
-            Log.Verbose("Extracted " + filesExtracted + " files");
+            var extractor = new GenericPackageExtractor();
+            extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);
 
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
         }
-
+        
         private int InvokeScript(CalamariVariableDictionary variables)
         {
             if (!File.Exists(scriptFile))

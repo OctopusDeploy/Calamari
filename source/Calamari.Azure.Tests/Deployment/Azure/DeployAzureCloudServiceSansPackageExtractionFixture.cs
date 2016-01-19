@@ -9,7 +9,7 @@ using Octostache;
 namespace Calamari.Azure.Tests.Deployment.Azure
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
+    [Category(TestEnvironment.CompatibleOS.Windows)]
     public class DeployAzureCloudServiceSansPackageExtractionFixture : CalamariFixture
     {
         CalamariResult result;

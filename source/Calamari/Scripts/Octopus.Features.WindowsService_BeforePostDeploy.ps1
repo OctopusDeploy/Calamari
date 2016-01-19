@@ -44,7 +44,7 @@ if ($arguments)
 	$binPath = ($binPath + " " + $arguments)	
 }
 
-$fullArguments = @("`"$serviceName`"", "binPath=", "`"$binPath`"")
+$fullArguments = @("`"$serviceName`"", "binPath=", $binPath)
 if ($displayName) 
 {
 	$fullArguments += @("DisplayName=", "`"$displayName`"")

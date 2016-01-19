@@ -9,10 +9,10 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
     public class PowerShellFixture : CalamariFixture
     {
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCallHello()
         {
             var output = Invoke(Calamari()
@@ -24,6 +24,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCaptureAllOutput()
         {
             var output = Invoke(Calamari()
@@ -39,6 +40,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCreateArtifacts()
         {
             var output = Invoke(Calamari()
@@ -50,6 +52,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldAllowDotSourcing()
         {
             var output = Invoke(Calamari()
@@ -61,6 +64,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetVariables()
         {
             var variables = new VariableDictionary();
@@ -75,6 +79,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetActionIndexedOutputVariables()
         {
             var variables = new VariableDictionary();
@@ -89,6 +94,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetMachineIndexedOutputVariables()
         {
             var variables = new VariableDictionary();
@@ -104,6 +110,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldFailOnInvalid()
         {
             var output = Invoke(Calamari()
@@ -115,6 +122,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldFailOnInvalidSyntax()
         {
             var output = Invoke(Calamari()
@@ -126,6 +134,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldPrintVariables()
         {
             var variablesFile = Path.GetTempFileName();
@@ -155,6 +164,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSupportModulesInVariables()
         {
             var variablesFile = Path.GetTempFileName();
@@ -176,6 +186,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldPing()
         {
             var output = Invoke(Calamari()
@@ -187,6 +198,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsSingleQuote()
         {
             var output = Invoke(Calamari()
@@ -198,6 +210,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsDollar()
         {
             var output = Invoke(Calamari()
@@ -206,6 +219,17 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertZero();
             output.AssertOutput("Hello from a path containing a $");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void ThrowsExceptionOnNix()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
+
+            output.AssertErrorOutput("Script type `ps1` unsupported on this platform");
         }
     }
 }

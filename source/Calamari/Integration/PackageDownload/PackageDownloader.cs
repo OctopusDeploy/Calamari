@@ -63,7 +63,7 @@ namespace Calamari.Integration.PackageDownload
 
             var name = GetNameOfPackage(packageId, version.ToString());
             fileSystem.EnsureDirectoryExists(cacheDirectory);
-
+            
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, name + "*.nupkg");
 
             foreach (var file in files)

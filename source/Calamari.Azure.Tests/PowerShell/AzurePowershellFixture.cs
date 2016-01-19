@@ -8,7 +8,7 @@ using Octostache;
 namespace Calamari.Azure.Tests.PowerShell
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatableOS.Windows)]
+    [Category(TestEnvironment.CompatibleOS.Windows)]
     public class AzurePowershellFixture : CalamariFixture
     {
         [Test]

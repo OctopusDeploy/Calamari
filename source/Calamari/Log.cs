@@ -11,16 +11,18 @@ namespace Calamari
     public class Log
     {
         static string stdOutMode;
+
         static readonly object Sync = new object();
+
+        internal static IndentedTextWriter StdOut;
+        internal static IndentedTextWriter StdErr;
 
         static Log()
         {
-            StdOut = Console.Out;
-            StdErr = Console.Error;
+            StdOut = new IndentedTextWriter(Console.Out, "  ");
+            StdErr = new IndentedTextWriter(Console.Error, "  ");
         }
-
-        public static TextWriter StdOut { get; set; }
-        public static TextWriter StdErr { get; set; }
+        
 
         static void SetMode(string mode)
         {
@@ -111,16 +113,17 @@ namespace Calamari
             }
 
             public static void PackageFound(string packageId, string packageVersion, string packageHash,
-                string packageFullPath, bool exactMatchExists = false)
+                string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
             {
                 if (exactMatchExists)
                     Verbose("##octopus[calamari-found-package]");
 
-                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\"]",
+                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\" fileExtension=\"{4}\"]",
                     ConvertServiceMessageValue(packageId),
                     ConvertServiceMessageValue(packageVersion),
                     ConvertServiceMessageValue(packageHash),
-                    ConvertServiceMessageValue(packageFullPath));
+                    ConvertServiceMessageValue(packageFullPath),
+                    ConvertServiceMessageValue(packageFileExtension));
 
             }
 
