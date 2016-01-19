@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using NuGet;
@@ -21,23 +23,23 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-
             var explicitTransforms = GetExplicitTransforms(deployment);
             var automaticTransforms = GetAutomaticTransforms(deployment);
             var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);           
 
-
-            var transformsRun = new Dictionary<string, XmlConfigTransformDefinition>();
             var allTransforms = explicitTransforms.Concat(automaticTransforms).ToList();
-            foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions))
+            var transformDefinitionsApplied = new List<XmlConfigTransformDefinition>();
+            var transformFilesApplied = new HashSet<string>();
+           
+            foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions.ToArray()))
             {
-                ApplyTransformations(configFile, allTransforms, transformsRun);
+                var transformFilesAppliedForCurrentTarget = new HashSet<string>();
+                ApplyTransformations(configFile, allTransforms, transformFilesAppliedForCurrentTarget, transformDefinitionsApplied);
+                transformFilesApplied.UnionWith(transformFilesAppliedForCurrentTarget);
             }
 
-
-            LogFailedTransforms(explicitTransforms.Except(transformsRun.Values));
-
-            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformsRun.Keys, "|");
+            LogFailedTransforms(explicitTransforms.Except(transformDefinitionsApplied));
+            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformFilesApplied, "|");
         }
 
         private List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)
@@ -70,26 +72,58 @@ namespace Calamari.Deployment.Conventions
                 .Select(s => new XmlConfigTransformDefinition(s))
                 .ToList();
         }
-        
-        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, Dictionary<string, XmlConfigTransformDefinition> alreadyRun)
+
+        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, 
+            ISet<string> transformFilesApplied,  IList<XmlConfigTransformDefinition> transformDefinitionsApplied)
         {
             foreach (var transformation in transformations)
             {
-                if (transformation.Advanced && !transformation.Wildcard && !string.Equals(transformation.SourcePattern, Path.GetFileName(sourceFile), StringComparison.InvariantCultureIgnoreCase))
+                if ((transformation.IsTransformWildcard && !sourceFile.EndsWith(GetFileName(transformation.SourcePattern), StringComparison.InvariantCultureIgnoreCase)))
                     continue;
-
-                if ((transformation.Wildcard && !sourceFile.EndsWith(transformation.SourcePattern, StringComparison.InvariantCultureIgnoreCase)))
-                    continue;
-
                 try
                 {
-                    ApplyTransformations(sourceFile, transformation, alreadyRun);
+                    ApplyTransformations(sourceFile, transformation, transformFilesApplied, transformDefinitionsApplied);
                 }
                 catch (Exception)
                 {
-                    Log.ErrorFormat("Could not transform the file '{0}' using the {1}pattern '{2}'.", sourceFile, transformation.Wildcard ? "wildcard " : "", transformation.TransformPattern);
+                    Log.ErrorFormat("Could not transform the file '{0}' using the {1}pattern '{2}'.", sourceFile, transformation.IsTransformWildcard ? "wildcard " : "", transformation.TransformPattern);
                     throw;
                 }
+            }
+        }
+
+        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, 
+            ISet<string> transformFilesApplied,  ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied)
+        {
+            if (transformation == null)
+                return;
+
+            foreach (var transformFile in DetermineTransformFileNames(sourceFile, transformation))
+            {
+                var sourceFileName = (transformation?.SourcePattern?.Contains(Path.DirectorySeparatorChar) ?? false)
+                    ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.',Path.DirectorySeparatorChar)
+                    : GetFileName(sourceFile);
+
+                if (transformation.Advanced && !transformation.IsSourceWildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                if (transformation.Advanced && transformation.IsSourceWildcard && !DoesFileMatchWildcardPattern(sourceFileName, transformation.SourcePattern))
+                    continue;
+
+                if (!fileSystem.FileExists(transformFile))
+                    continue;
+
+                if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                if (transformFilesApplied.Contains(transformFile))
+                    continue;
+
+                Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
+                configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
+
+                transformFilesApplied.Add(transformFile);
+                transformDefinitionsApplied.Add(transformation);
             }
         }
 
@@ -118,40 +152,23 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, Dictionary<string, XmlConfigTransformDefinition> alreadyRun)
-        {
-            foreach (var transformFile in DetermineTransformFileNames(sourceFile, transformation))
-            {
-                if (!fileSystem.FileExists(transformFile))
-                    continue;
-
-                if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
-                    continue;
-
-                if (alreadyRun.ContainsKey(transformFile))
-                    continue;
-
-                Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
-                configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
-                alreadyRun.Add(transformFile, transformation);
-            }
-        }
-
         private IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation)
         {
+            var defaultTransformFileName = DetermineTransformFileName(sourceFile, transformation, true);
+            var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
+
+            var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
+            var fullTransformPath = Path.GetFullPath(Path.Combine(GetDirectoryName(sourceFile), GetDirectoryName(relativeTransformPath)));
+
+            if (!fileSystem.DirectoryExists(fullTransformPath))
+                return Enumerable.Empty<string>();
+
             // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
             // This prevents any issues with mis-matched casing in transform specifications.
-            return fileSystem.EnumerateFiles(Path.GetDirectoryName(sourceFile),
-               GetRelativePathToTransformFile(sourceFile, DetermineTransformFileName(sourceFile, transformation, true)),
-               GetRelativePathToTransformFile(sourceFile, DetermineTransformFileName(sourceFile, transformation, false))
+            return fileSystem.EnumerateFiles(fullTransformPath,
+               GetFileName(defaultTransformFileName),
+               GetFileName(transformFileName)
             );
-        }
-
-        private static string GetRelativePathToTransformFile(string sourceFile, string transformFile)
-        {
-            return transformFile
-                .Replace(Path.GetDirectoryName(sourceFile) ?? string.Empty, "")
-                .TrimStart(Path.DirectorySeparatorChar);
         }
 
         private static string DetermineTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, bool defaultExtension)
@@ -160,22 +177,74 @@ namespace Calamari.Deployment.Conventions
             if (defaultExtension && !tp.EndsWith(".config"))
                 tp += ".config";
 
-            if (transformation.Advanced && transformation.Wildcard)
+            if (transformation.Advanced && transformation.IsTransformWildcard && transformation.IsSourceWildcard)
             {
-                var sourcePatternWithoutPrefix = transformation.SourcePattern;
-                if (transformation.SourcePattern.StartsWith("."))
-                {
-                    sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
-                }
-                    
-                var baseFileName = sourceFile.Replace(sourcePatternWithoutPrefix, "");
-                return Path.ChangeExtension(baseFileName, tp);
+                return DetermineWildcardTransformFileName(sourceFile, transformation, tp);
             }
 
-            if (transformation.Advanced && !transformation.Wildcard)
-                return Path.Combine(Path.GetDirectoryName(sourceFile), tp);
+            if (transformation.Advanced && transformation.IsTransformWildcard && !transformation.IsSourceWildcard)
+            {
+                var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
+                return Path.Combine(transformDirectory, GetDirectoryName(tp), "*." + GetFileName(tp).TrimStart('.'));
+            }
+
+            if (transformation.Advanced && !transformation.IsTransformWildcard)
+            {
+                var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
+                return Path.Combine(transformDirectory, tp);
+            }
 
             return Path.ChangeExtension(sourceFile, tp);
+        }
+
+        static string GetDirectoryName(string path)
+        {
+            return Path.GetDirectoryName(path) ?? string.Empty;
+        }
+
+        static string GetFileName(string path)
+        {
+            return Path.GetFileName(path) ?? string.Empty;
+        }
+
+        static string DetermineWildcardTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, string transformPattern)
+        {
+            var sourcePatternWithoutPrefix = GetFileName(transformation.SourcePattern);
+            if (transformation.SourcePattern.StartsWith("."))
+            {
+                sourcePatternWithoutPrefix = transformation.SourcePattern.Remove(0, 1);
+            }
+
+            var transformDirectory = GetTransformationFileDirectory(sourceFile, transformation);
+            var baseFileName = transformation.IsSourceWildcard ?
+                GetFileName(sourceFile).Replace(sourcePatternWithoutPrefix, "")
+                : GetFileName(sourceFile);
+            var baseTransformPath = Path.Combine(transformDirectory, GetDirectoryName(transformPattern), baseFileName);
+
+            return Path.ChangeExtension(baseTransformPath, GetFileName(transformPattern));
+        }
+
+        static string GetTransformationFileDirectory(string sourceFile, XmlConfigTransformDefinition transformation)
+        {
+            var sourceDirectory = GetDirectoryName(sourceFile);
+            if (!transformation.SourcePattern.Contains(Path.DirectorySeparatorChar))
+                return sourceDirectory;
+
+            var sourcePattern = transformation.SourcePattern;
+            var sourcePatternPath = sourcePattern.Substring(0, sourcePattern.LastIndexOf(Path.DirectorySeparatorChar));
+            return sourceDirectory.Replace(sourcePatternPath, string.Empty);
+        }
+
+        static bool DoesFileMatchWildcardPattern(string fileName, string pattern)
+        {
+            var patternDirectory = GetDirectoryName(pattern);
+            var regexBuilder = new StringBuilder();
+            regexBuilder.Append(Regex.Escape(patternDirectory))
+                .Append(string.IsNullOrEmpty(patternDirectory) ? string.Empty : Regex.Escape(Path.DirectorySeparatorChar.ToString()))
+                .Append(".*?").Append(Regex.Escape("."))
+                .Append(Regex.Escape(Path.GetFileName(pattern)?.TrimStart('.') ?? string.Empty));
+
+            return Regex.IsMatch(fileName, regexBuilder.ToString());
         }
     }
 }

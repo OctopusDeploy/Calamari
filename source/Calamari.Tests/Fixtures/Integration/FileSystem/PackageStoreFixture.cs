@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
@@ -10,7 +8,7 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using NUnit.Framework;
 using SemanticVersion = NuGet.SemanticVersion;
 
-namespace Calamari.Tests.Fixtures.FileSystem
+namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
     [TestFixture]
     public class PackageStoreFixture

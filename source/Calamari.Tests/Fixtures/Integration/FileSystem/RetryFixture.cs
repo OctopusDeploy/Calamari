@@ -2,7 +2,7 @@
 using Calamari.Integration.FileSystem;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.FileSystem
+namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
     [TestFixture]
     public class RetryFixture

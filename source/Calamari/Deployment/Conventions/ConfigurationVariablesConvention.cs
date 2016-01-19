@@ -23,7 +23,7 @@ namespace Calamari.Deployment.Conventions
 
             var appliedAsTransforms = deployment.Variables.GetStrings(SpecialVariables.AppliedXmlConfigTransforms, '|');
 
-            Log.Verbose("Looking for appSettings and connectionStrings in any .config files");
+            Log.Verbose("Looking for appSettings, applicationSettings, and connectionStrings in any .config files");
 
             if (deployment.Variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors))
                 Log.Info("Variable replacement errors are supressed because the variable Octopus.Action.Package.IgnoreVariableReplacementErrors has been set.");
