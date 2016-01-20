@@ -133,6 +133,8 @@ publish/
 
 # NuGet Packages
 *.nupkg
+!**/*/Acme.Core.1.0.0.0-bugfix.nupkg
+
 # The packages folder can be ignored because of Package Restore
 source/packages
 

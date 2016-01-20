@@ -69,7 +69,7 @@ namespace Calamari.Azure.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new SwapAzureDeploymentConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
-                new ExtractPackageToStagingDirectoryConvention(new LightweightPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem),
                 new FindCloudServicePackageConvention(fileSystem),
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
                 new ExtractAzureCloudServicePackageConvention(fileSystem),

@@ -7,10 +7,10 @@ namespace Calamari.Integration.Packages
 {
     public class StoredPackage
     {
-        public PackageMetadata Metadata { get; set; }
+        public ExtendedPackageMetadata Metadata { get; set; }
         public string FullPath { get; set; }
 
-        public StoredPackage(PackageMetadata metadata, string fullPath)
+        public StoredPackage(ExtendedPackageMetadata metadata, string fullPath)
         {
             Metadata = metadata;
             FullPath = fullPath;

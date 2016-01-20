@@ -16,14 +16,19 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            if (string.IsNullOrWhiteSpace(deployment.PackageFilePath))
+            {
+               Log.Verbose("No package path defined. Skipping package extraction.");
+               return;
+            }
+
             var metadata = extractor.GetMetadata(deployment.PackageFilePath);
 
             var targetPath = GetTargetPath(deployment, metadata);
 
             Log.Verbose("Extracting package to: " + targetPath);
 
-            int filesExtracted;
-            extractor.Install(deployment.PackageFilePath, targetPath, false, out filesExtracted);
+            var filesExtracted = extractor.Extract(deployment.PackageFilePath, targetPath, false);
 
             Log.Verbose("Extracted " + filesExtracted + " files");
 

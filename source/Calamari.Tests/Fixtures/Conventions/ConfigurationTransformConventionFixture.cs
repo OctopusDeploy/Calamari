@@ -19,6 +19,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         IConfigurationTransformer configurationTransformer;
         RunningDeployment deployment;
         CalamariVariableDictionary variables;
+        ProxyLog logs;
 
         [SetUp]
         public void SetUp()
@@ -32,6 +33,13 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
+            logs = new ProxyLog();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            logs.Dispose();
         }
 
         [Test]
@@ -77,6 +85,15 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             AssertTransformRun("foo.config", "foo.bar.config");
+        }
+
+        [Test]
+        public void ShouldLogErrorIfUnableToFindFile()
+        {
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "foo.missing.config => foo.config");
+
+            CreateConvention().Install(deployment);
+            logs.AssertContains("The transform pattern \"foo.missing.config => foo.config\" was not performed due to a missing file or overlapping rule.");
         }
 
         [Test]

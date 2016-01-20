@@ -4,7 +4,7 @@ using System.Xml.Linq;
 
 namespace Calamari.Azure.Integration.CloudServicePackage.ManifestSchema
 {
-    public class PackageMetaData
+    public class AzurePackageMetadata
     {
         public static readonly XName ElementName = PackageDefinition.AzureNamespace + "PackageMetaData";
         static readonly XName KeyValuePairElementName = PackageDefinition.AzureNamespace + "KeyValuePair";
@@ -13,12 +13,12 @@ namespace Calamari.Azure.Integration.CloudServicePackage.ManifestSchema
 
         const string AzureVersionKey = "http://schemas.microsoft.com/windowsazure/ProductVersion/";
 
-        public PackageMetaData()
+        public AzurePackageMetadata()
         {
             Data = new Dictionary<string, string>();
         }
 
-        public PackageMetaData(XElement element)
+        public AzurePackageMetadata(XElement element)
         {
             Data = element.Elements(KeyValuePairElementName)
                 .ToDictionary(x => x.Element(KeyElementName).Value, x => x.Element(ValueElementName).Value);

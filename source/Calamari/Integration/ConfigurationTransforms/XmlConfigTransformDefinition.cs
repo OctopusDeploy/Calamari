@@ -5,8 +5,11 @@ namespace Calamari.Integration.ConfigurationTransforms
 {
     public class XmlConfigTransformDefinition
     {
+        private readonly string definition;
+
         public XmlConfigTransformDefinition(string definition)
         {
+            this.definition = definition;
             if (definition.Contains("=>"))
             {
                 Advanced = true;
@@ -46,5 +49,10 @@ namespace Calamari.Integration.ConfigurationTransforms
         public bool IsTransformWildcard { get; private set; }
         public bool IsSourceWildcard { get; private set; }
         public bool Advanced { get; private set; }
+
+        public override string ToString()
+        {
+            return definition;
+        }
     }
 }

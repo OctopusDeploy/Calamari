@@ -13,14 +13,14 @@ namespace Calamari.Azure.Integration.CloudServicePackage.ManifestSchema
 
         public PackageDefinition()
         {
-            MetaData = new PackageMetaData();
+            MetaData = new AzurePackageMetadata();
             Layouts = new List<LayoutDefinition>();
             Contents = new List<ContentDefinition>();
         }
 
         public PackageDefinition(XElement element)
         {
-            MetaData = new PackageMetaData(element.Element(PackageMetaData.ElementName));
+            MetaData = new AzurePackageMetadata(element.Element(AzurePackageMetadata.ElementName));
 
             Contents = element
                 .Element(PackageContentsElementName)
@@ -35,7 +35,7 @@ namespace Calamari.Azure.Integration.CloudServicePackage.ManifestSchema
                 .ToList();
         }
 
-        public PackageMetaData MetaData { get; private set; }
+        public AzurePackageMetadata MetaData { get; private set; }
 
         public ICollection<ContentDefinition> Contents { get; private set; }
 
