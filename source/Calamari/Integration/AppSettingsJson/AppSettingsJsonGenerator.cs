@@ -30,12 +30,13 @@ namespace Calamari.Integration.AppSettingsJson
 
         static JObject LoadJson(string appSettingsFilePath)
         {
-            if (!File.Exists(appSettingsFilePath))
+            if (!File.Exists(appSettingsFilePath) || (new FileInfo(appSettingsFilePath).Length == 0))
+            {
+                Log.Verbose($"\"{appSettingsFilePath}\" was not found, it will be created");
                 return new JObject();
+            }
 
-            if (new FileInfo(appSettingsFilePath).Length == 0)
-                return new JObject();
-
+            Log.Verbose($"Found existing \"{appSettingsFilePath}\"");
             using (var reader = new StreamReader(appSettingsFilePath))
             using (var json = new JsonTextReader(reader))
             {

@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.AppSettingsJson;
+﻿using System.IO;
+using Calamari.Integration.AppSettingsJson;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 
@@ -20,11 +21,13 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
-            var path = deployment.Variables.Get(SpecialVariables.Package.AppSettingsJsonPath);
-            if (string.IsNullOrWhiteSpace(path))
+            var relativePath = deployment.Variables.Get(SpecialVariables.Package.AppSettingsJsonPath);
+            if (string.IsNullOrWhiteSpace(relativePath))
                 return;
 
-            appSettings.Generate(path, deployment.Variables);
+            var absolutePath = Path.Combine(deployment.CurrentDirectory, relativePath);
+            Log.Info($"Applying JSON configuration generation to \"{absolutePath}\"");
+            appSettings.Generate(absolutePath, deployment.Variables);
         }
     }
 }
