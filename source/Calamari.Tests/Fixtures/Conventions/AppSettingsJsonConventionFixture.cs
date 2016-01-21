@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment;
+﻿using System.IO;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.AppSettingsJson;
 using Calamari.Integration.Processes;
@@ -12,11 +13,14 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         RunningDeployment deployment;
         IAppSettingsJsonGenerator generator;
+        const string StagingDirectory = "C:\\applications\\Acme\\1.0.0";
 
         [SetUp]
         public void SetUp()
         {
-            deployment = new RunningDeployment("C:\\Packages", new CalamariVariableDictionary());
+            var variables = new CalamariVariableDictionary(); 
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, StagingDirectory);
+            deployment = new RunningDeployment("C:\\Packages", variables);
             generator = Substitute.For<IAppSettingsJsonGenerator>();
         }
 
@@ -35,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deployment.Variables.Set(SpecialVariables.Package.AppSettingsJsonPath, "appsettings.environment.json");
             var convention = new AppSettingsJsonConvention(generator);
             convention.Install(deployment);
-            generator.Received().Generate("appsettings.environment.json", deployment.Variables);
+            generator.Received().Generate(Path.Combine(StagingDirectory, "appsettings.environment.json"), deployment.Variables);
         }
     }
 }
