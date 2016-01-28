@@ -29,20 +29,18 @@ namespace Calamari.Deployment.Conventions
 
             var allTransforms = explicitTransforms.Concat(automaticTransforms).ToList();
             var transformDefinitionsApplied = new List<XmlConfigTransformDefinition>();
-            var transformFilesApplied = new HashSet<string>();
+            var transformFilesApplied = new HashSet<Tuple<string, string>>();
            
             foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions.ToArray()))
             {
-                var transformFilesAppliedForCurrentTarget = new HashSet<string>();
-                ApplyTransformations(configFile, allTransforms, transformFilesAppliedForCurrentTarget, transformDefinitionsApplied);
-                transformFilesApplied.UnionWith(transformFilesAppliedForCurrentTarget);
+                ApplyTransformations(configFile, allTransforms, transformFilesApplied, transformDefinitionsApplied);
             }
 
             LogFailedTransforms(explicitTransforms.Except(transformDefinitionsApplied));
-            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformFilesApplied, "|");
+            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformFilesApplied.Select(t => t.Item1), "|");
         }
 
-        private List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)
+        private static List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)
         {
             var result = new List<XmlConfigTransformDefinition>();
             if (deployment.Variables.GetFlag(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
@@ -74,7 +72,7 @@ namespace Calamari.Deployment.Conventions
         }
 
         void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, 
-            ISet<string> transformFilesApplied,  IList<XmlConfigTransformDefinition> transformDefinitionsApplied)
+            ISet<Tuple<string, string>> transformFilesApplied,  IList<XmlConfigTransformDefinition> transformDefinitionsApplied)
         {
             foreach (var transformation in transformations)
             {
@@ -93,7 +91,7 @@ namespace Calamari.Deployment.Conventions
         }
 
         void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, 
-            ISet<string> transformFilesApplied,  ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied)
+            ISet<Tuple<string, string>> transformFilesApplied,  ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied)
         {
             if (transformation == null)
                 return;
@@ -116,13 +114,14 @@ namespace Calamari.Deployment.Conventions
                 if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
                     continue;
 
-                if (transformFilesApplied.Contains(transformFile))
+                var transformFiles = new Tuple<string, string>(transformFile, sourceFile);
+                if (transformFilesApplied.Contains(transformFiles))
                     continue;
 
                 Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
                 configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
 
-                transformFilesApplied.Add(transformFile);
+                transformFilesApplied.Add(transformFiles);
                 transformDefinitionsApplied.Add(transformation);
             }
         }
