@@ -43,18 +43,16 @@ namespace Calamari.Deployment.Conventions
                 }
             }
 
-            var allTransformsRun = new HashSet<string>();
+            var transformsRun = new HashSet<Tuple<string, string>>();
             foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions.ToArray()))
             {
-                var transformsRun = new HashSet<string>();
                 ApplyTransformations(configFile, transformDefinitions, transformsRun);
-                allTransformsRun.Concat(transformsRun);
             }
 
-            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, allTransformsRun, "|");
+            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformsRun.Select(t => t.Item1), "|");
         }
 
-        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, ISet<string> alreadyRun)
+        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, ISet<Tuple<string, string>> alreadyRun)
         {
             foreach (var transformation in transformations)
             {
@@ -72,7 +70,7 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, ISet<string> alreadyRun)
+        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, ISet<Tuple<string, string>> alreadyRun)
         {
             if (transformation == null)
                 return;
@@ -95,12 +93,13 @@ namespace Calamari.Deployment.Conventions
                 if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
                     continue;
 
-                if (alreadyRun.Contains(transformFile))
+                var transformFiles = new Tuple<string, string>(transformFile, sourceFile);
+                if (alreadyRun.Contains(transformFiles))
                     continue;
 
                 Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
                 configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
-                alreadyRun.Add(transformFile);
+                alreadyRun.Add(transformFiles);
             }
         }
 
