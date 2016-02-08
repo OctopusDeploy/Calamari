@@ -80,7 +80,7 @@ namespace Calamari.Commands
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new AppSettingsJsonConvention(generator),
+                new AppSettingsJsonConvention(generator, fileSystem),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, embeddedResources, scriptCapability, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),

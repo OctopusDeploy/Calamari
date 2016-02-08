@@ -70,7 +70,7 @@ namespace Calamari.Azure.Commands
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new AppSettingsJsonConvention(generator),
+                new AppSettingsJsonConvention(generator, fileSystem),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new AzureWebAppConvention(),
