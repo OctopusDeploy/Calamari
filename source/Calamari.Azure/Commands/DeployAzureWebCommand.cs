@@ -51,7 +51,7 @@ namespace Calamari.Azure.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var jsonReplacer = new JsonFileSubstitutor();
+            var jsonReplacer = new JsonConfigurationVariableReplacer();
             var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
@@ -70,7 +70,7 @@ namespace Calamari.Azure.Commands
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new SubstituteInJsonFilesConvention(jsonReplacer, fileSystem),
+                new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new AzureWebAppConvention(),

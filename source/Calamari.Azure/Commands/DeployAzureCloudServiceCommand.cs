@@ -62,7 +62,7 @@ namespace Calamari.Azure.Commands
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var jsonVariablesReplacer = new JsonFileSubstitutor();
+            var jsonVariablesReplacer = new JsonConfigurationVariableReplacer();
 
             var conventions = new List<IConvention>
             {
@@ -80,7 +80,7 @@ namespace Calamari.Azure.Commands
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new SubstituteInJsonFilesConvention(jsonVariablesReplacer, fileSystem),
+                new JsonConfigurationVariablesConvention(jsonVariablesReplacer, fileSystem),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, scriptEngine, fileSystem, commandLineRunner),
                 new RePackageCloudServiceConvention(fileSystem),

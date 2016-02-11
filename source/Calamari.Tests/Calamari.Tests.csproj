@@ -138,8 +138,8 @@
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
-    <Compile Include="Fixtures\JsonVariables\JsonFileSubstitutorFixture.cs" />
-    <Compile Include="Fixtures\Conventions\SubstituteInJsonFilesConventionFixture.cs" />
+    <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
+    <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\GenericPackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\PackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\SimplePackageExtractorFixture.cs" />

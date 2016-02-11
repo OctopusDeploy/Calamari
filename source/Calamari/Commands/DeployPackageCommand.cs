@@ -57,7 +57,7 @@ namespace Calamari.Commands
 
             var scriptCapability = new CombinedScriptEngine();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var generator = new JsonFileSubstitutor();
+            var generator = new JsonConfigurationVariableReplacer();
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
             var embeddedResources = new CallingAssemblyEmbeddedResources();
@@ -80,7 +80,7 @@ namespace Calamari.Commands
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new SubstituteInJsonFilesConvention(generator, fileSystem),
+                new JsonConfigurationVariablesConvention(generator, fileSystem),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, embeddedResources, scriptCapability, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),

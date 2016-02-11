@@ -11,14 +11,14 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.JsonVariables
 {
     [TestFixture]
-    public class JsonFileSubstitutorFixture : CalamariFixture
+    public class JsonConfigurationVariableReplacerFixture : CalamariFixture
     {
-        JsonFileSubstitutor fileSubstitutor;
+        JsonConfigurationVariableReplacer configurationVariableReplacer;
 
         [SetUp]
         public void SetUp()
         {
-            fileSubstitutor = new JsonFileSubstitutor();
+            configurationVariableReplacer = new JsonConfigurationVariableReplacer();
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
 
             using (new TemporaryFile(temp))
             {
-                fileSubstitutor.ModifyJsonFile(temp, variables);
+                configurationVariableReplacer.ModifyJsonFile(temp, variables);
                 return File.ReadAllText(temp);
             }
         }

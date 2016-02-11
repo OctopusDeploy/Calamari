@@ -2,7 +2,7 @@
 
 namespace Calamari.Integration.JsonVariables
 {
-    public interface IJsonFileSubstitutor
+    public interface IJsonConfigurationVariableReplacer
     {
         void ModifyJsonFile(string jsonFilePath, VariableDictionary variables);
     }

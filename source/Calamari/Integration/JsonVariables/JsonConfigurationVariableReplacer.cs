@@ -7,7 +7,7 @@ using Octostache;
 
 namespace Calamari.Integration.JsonVariables
 {
-    public class JsonFileSubstitutor : IJsonFileSubstitutor
+    public class JsonConfigurationVariableReplacer : IJsonConfigurationVariableReplacer
     {
         const string KeyDelimiter = ":";
         
