@@ -163,7 +163,7 @@
     <Compile Include="Commands\Support\OptionValueType.cs" />
     <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationTransformsConvention.cs" />
-    <Compile Include="Deployment\Conventions\AppSettingsJsonConvention.cs" />
+    <Compile Include="Deployment\Conventions\SubstituteInJsonFilesConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\ContributeEnvironmentVariablesConvention.cs" />
     <Compile Include="Deployment\ConventionProcessor.cs" />
@@ -174,8 +174,8 @@
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
-    <Compile Include="Integration\AppSettingsJson\AppSettingsJsonGenerator.cs" />
-    <Compile Include="Integration\AppSettingsJson\IAppSettingsJsonGenerator.cs" />
+    <Compile Include="Integration\JsonVariables\JsonFileSubstitutor.cs" />
+    <Compile Include="Integration\JsonVariables\IJsonFileSubstitutor.cs" />
     <Compile Include="Integration\Packages\ExtendedPackageMetadata.cs" />
     <Compile Include="Integration\Packages\IGenericPackageExtractor.cs" />
     <Compile Include="Integration\Packages\GenericPackageExtractor.cs" />

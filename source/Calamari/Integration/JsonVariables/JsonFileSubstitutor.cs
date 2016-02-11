@@ -1,18 +1,19 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
 
-namespace Calamari.Integration.AppSettingsJson
+namespace Calamari.Integration.JsonVariables
 {
-    public class AppSettingsJsonGenerator : IAppSettingsJsonGenerator
+    public class JsonFileSubstitutor : IJsonFileSubstitutor
     {
         const string KeyDelimiter = ":";
         
-        public void Generate(string appSettingsFilePath, VariableDictionary variables)
+        public void ModifyJsonFile(string jsonFilePath, VariableDictionary variables)
         {
-            var root = LoadJson(appSettingsFilePath);
+            var root = LoadJson(jsonFilePath);
 
             var names = variables.GetNames();
             names.Sort(StringComparer.OrdinalIgnoreCase);
@@ -25,19 +26,18 @@ namespace Calamari.Integration.AppSettingsJson
                 SetValueRecursive(root, name, name, variables.Get(name));
             }
 
-            SaveJson(appSettingsFilePath, root);
+            SaveJson(jsonFilePath, root);
         }
 
-        static JObject LoadJson(string appSettingsFilePath)
+        static JObject LoadJson(string jsonFilePath)
         {
-            if (!File.Exists(appSettingsFilePath) || (new FileInfo(appSettingsFilePath).Length == 0))
-            {
-                Log.Verbose($"\"{appSettingsFilePath}\" was not found, it will be created");
+            if (!File.Exists(jsonFilePath))
                 return new JObject();
-            }
 
-            Log.Verbose($"Found existing \"{appSettingsFilePath}\"");
-            using (var reader = new StreamReader(appSettingsFilePath))
+            if (new FileInfo(jsonFilePath).Length == 0)
+                return new JObject();
+
+            using (var reader = new StreamReader(jsonFilePath))
             using (var json = new JsonTextReader(reader))
             {
                 return JObject.Load(json);
@@ -64,7 +64,19 @@ namespace Calamari.Integration.AppSettingsJson
             }
             else
             {
-                currentObject[name] = value;
+                var settings = (
+                    from objectValue in currentObject.Values()
+                    let key = objectValue.Path
+                    where key != null
+                    where string.Equals(key, name, StringComparison.InvariantCultureIgnoreCase)
+                    select objectValue).ToList();
+
+                if (!settings.Any()) return;
+
+                foreach (var setting in settings)
+                {
+                    currentObject[setting.Path] = value;
+                }
             }
         }
 
@@ -90,9 +102,9 @@ namespace Calamari.Integration.AppSettingsJson
             return (JObject) currentToken;
         }
 
-        static void SaveJson(string appSettingsFilePath, JObject root)
+        static void SaveJson(string jsonFilePath, JObject root)
         {
-            using (var writer = new StreamWriter(appSettingsFilePath))
+            using (var writer = new StreamWriter(jsonFilePath))
             using (var json = new JsonTextWriter(writer))
             {
                 json.Formatting = Formatting.Indented;
