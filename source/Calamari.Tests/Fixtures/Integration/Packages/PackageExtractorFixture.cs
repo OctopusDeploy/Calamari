@@ -34,13 +34,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz")]
-        [TestCase(typeof(TarPackageExtractor), "tar")]
-        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2")]
-        [TestCase(typeof(ZipPackageExtractor), "zip")]
-        [TestCase(typeof(OpenPackagingConventionExtractor), "nupkg")]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", true)]
+        [TestCase(typeof(TarPackageExtractor), "tar", true)]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
+        [TestCase(typeof(ZipPackageExtractor), "zip", true)]
+        [TestCase(typeof(OpenPackagingConventionExtractor), "nupkg", false)]
         //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
-        public void ExtractPumpsFilesToFilesystem(Type extractorType, string extension)
+        public void ExtractPumpsFilesToFilesystem(Type extractorType, string extension, bool preservesTimestamp)
         {
             var fileName = GetFileName(extension);
             var timeBeforeExtraction = DateTime.Now.AddSeconds(-1);
@@ -53,7 +53,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var text = File.ReadAllText(textFileName);
             var fileInfo = new FileInfo(textFileName);
 
-            //Assert.Less(fileInfo.LastWriteTime, timeBeforeExtraction); //TODO: Once SharpCompress publishes new NuGet package with changes to support this.
+            if (preservesTimestamp)
+            {
+                Assert.Less(fileInfo.LastWriteTime, timeBeforeExtraction);
+            }
             Assert.AreEqual(1, filesExtracted);
             Assert.AreEqual("Im in a package!", text.TrimEnd('\n'));
         }

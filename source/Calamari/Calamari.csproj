@@ -92,8 +92,8 @@
       <HintPath>..\packages\Octostache.1.0.2.28\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="SharpCompress, Version=0.11.2.0, Culture=neutral, PublicKeyToken=beaf6f427e128133, processorArchitecture=MSIL">
-      <HintPath>..\packages\sharpcompress.0.11.2\lib\net40\SharpCompress.dll</HintPath>
+    <Reference Include="SharpCompress, Version=0.11.3.0, Culture=neutral, PublicKeyToken=beaf6f427e128133, processorArchitecture=MSIL">
+      <HintPath>..\packages\sharpcompress.0.11.4\lib\net40\SharpCompress.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache">
