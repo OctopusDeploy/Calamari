@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using Calamari.Integration.AppSettingsJson;
+using Calamari.Integration.JsonVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
@@ -8,21 +8,21 @@ using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Fixtures.AppSettingsJson
+namespace Calamari.Tests.Fixtures.JsonVariables
 {
     [TestFixture]
-    public class AppSettingsJsonFixture : CalamariFixture
+    public class JsonFileSubstitutorFixture : CalamariFixture
     {
-        AppSettingsJsonGenerator appSettings;
+        JsonFileSubstitutor fileSubstitutor;
 
         [SetUp]
         public void SetUp()
         {
-            appSettings = new AppSettingsJsonGenerator();
+            fileSubstitutor = new JsonFileSubstitutor();
         }
 
         [Test]
-        public void ShouldGenerateSimpleFile()
+        public void ShouldReplaceInSimpleFile()
         {
             var variables = new VariableDictionary();
             variables.Set("MyMessage", "Hello world");
@@ -31,8 +31,8 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
             variables.Set("EmailSettings:DefaultRecipients:To", "paul@octopus.com");
             variables.Set("EmailSettings:DefaultRecipients:Cc", "mike@octopus.com");
 
-            var generated = Generate(variables);
-            AssertJsonEquivalent(generated, "appsettings.simple.json");
+            var replaced = Replace(variables, existingFile: "appsettings.simple.json");
+            AssertJsonEquivalent(replaced, "appsettings.simple.json");
         }
 
         [Test]
@@ -43,9 +43,9 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
             variables.Set("IThinkOctopusIsGreat", "Yes, I do");
             variables.Set("OctopusRocks", "This is ignored");
             variables.Set("Octopus.Rocks", "So is this");
-            
-            var generated = Generate(variables);
-            AssertJsonEquivalent(generated, "appsettings.ignore-octopus.json");
+
+            var replaced = Replace(variables, existingFile: "appsettings.ignore-octopus.json");
+            AssertJsonEquivalent(replaced, "appsettings.ignore-octopus.json");
         }
 
         [Test]
@@ -57,8 +57,8 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
 
             using (var proxyLog = new ProxyLog())
             {
-                var generated = Generate(variables);
-                AssertJsonEquivalent(generated, "appsettings.ambiguous.json");
+                var replaced = Replace(variables, existingFile: "appsettings.ambiguous.json");
+                AssertJsonEquivalent(replaced, "appsettings.ambiguous.json");
                 proxyLog.AssertContains("Unable to set value for EmailSettings:DefaultRecipients:To. The property at EmailSettings.DefaultRecipients is a String.");
             }
         }
@@ -71,11 +71,11 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
             variables.Set("EmailSettings:SmtpPort", "24");
             variables.Set("EmailSettings:DefaultRecipients:Cc", "damo@octopus.com");
 
-            var generated = Generate(variables, existingFile: "appsettings.existing-expected.json");
-            AssertJsonEquivalent(generated, "appsettings.existing-expected.json");
+            var replaced = Replace(variables, existingFile: "appsettings.existing-expected.json");
+            AssertJsonEquivalent(replaced, "appsettings.existing-expected.json");
         }
 
-        string Generate(VariableDictionary variables, string existingFile = null)
+        string Replace(VariableDictionary variables, string existingFile = null)
         {
             var temp = Path.GetTempFileName();
             if (existingFile != null)
@@ -83,27 +83,27 @@ namespace Calamari.Tests.Fixtures.AppSettingsJson
 
             using (new TemporaryFile(temp))
             {
-                appSettings.Generate(temp, variables);
+                fileSubstitutor.ModifyJsonFile(temp, variables);
                 return File.ReadAllText(temp);
             }
         }
 
-        void AssertJsonEquivalent(string generated, string sampleFile)
+        void AssertJsonEquivalent(string replaced, string sampleFile)
         {
             var expected = File.ReadAllText(GetFixtureResouce("Samples", sampleFile));
 
-            var generatedJson = JToken.Parse(generated);
+            var replacedJson = JToken.Parse(replaced);
             var expectedJson = JToken.Parse(expected);
 
-            if (!JToken.DeepEquals(generatedJson, expectedJson))
+            if (!JToken.DeepEquals(replacedJson, expectedJson))
             {
                 Console.WriteLine("Expected:");
                 Console.WriteLine(expectedJson.ToString(Formatting.Indented));
 
-                Console.WriteLine("Generated:");
-                Console.WriteLine(generatedJson.ToString(Formatting.Indented));
+                Console.WriteLine("Replaced:");
+                Console.WriteLine(replacedJson.ToString(Formatting.Indented));
 
-                Assert.Fail("Generated JSON did not match expected JSON");                
+                Assert.Fail("Replaced JSON did not match expected JSON");                
             }
         } 
     }
