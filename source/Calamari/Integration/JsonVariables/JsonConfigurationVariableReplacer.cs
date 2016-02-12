@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
@@ -55,7 +56,7 @@ namespace Calamari.Integration.JsonVariables
                 var key = name.Substring(0, firstKey);
                 var remainder = name.Substring(firstKey + 1).Trim(':');
 
-                var property = GetOrCreateProperty(currentObject, key, fullName);
+                var property = GetProperty(currentObject, key, fullName);
 
                 if (property != null)
                 {
@@ -64,23 +65,26 @@ namespace Calamari.Integration.JsonVariables
             }
             else
             {
-                var settings = (
-                    from objectValue in currentObject.Values()
-                    let key = objectValue.Path
-                    where key != null
-                    where string.Equals(key, name, StringComparison.InvariantCultureIgnoreCase)
-                    select objectValue).ToList();
-
-                if (!settings.Any()) return;
-
-                foreach (var setting in settings)
+                var configs = new List<string>();
+                foreach (var val in currentObject)
                 {
-                    currentObject[setting.Path] = value;
+                    if (string.Equals(val.Key, name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        configs.Add(val.Key);
+                    }
+                }
+
+                if (!configs.Any()) return;
+
+                foreach (var configKey in configs)
+                {
+                    Log.Verbose($"Setting '{name}' = '{value}'");
+                    currentObject[configKey] = value;
                 }
             }
         }
 
-        static JObject GetOrCreateProperty(JObject currentObject, string key, string fullName)
+        static JObject GetProperty(JObject currentObject, string key, string fullName)
         {
             JToken currentToken;
             if (currentObject.TryGetValue(key, StringComparison.InvariantCultureIgnoreCase, out currentToken))
@@ -94,10 +98,6 @@ namespace Calamari.Integration.JsonVariables
                     Log.WarnFormat("Unable to set value for {0}. The property at {1} is a {2}.", fullName, currentToken.Path, currentToken.Type);
                     return null;
                 }
-            }
-            else
-            {
-                currentObject[key] = currentToken = new JObject();
             }
             return (JObject) currentToken;
         }
