@@ -138,8 +138,8 @@
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
-    <Compile Include="Fixtures\AppSettingsJson\AppSettingsJsonFixture.cs" />
-    <Compile Include="Fixtures\Conventions\AppSettingsJsonConventionFixture.cs" />
+    <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
+    <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\GenericPackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\PackageExtractorFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\SimplePackageExtractorFixture.cs" />
@@ -190,19 +190,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.existing-expected.json">
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.existing-expected.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.existing-initial.json">
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.existing-initial.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.ignore-octopus.json">
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.ignore-octopus.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.ambiguous.json">
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.ambiguous.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\AppSettingsJson\Samples\appsettings.simple.json">
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.simple.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Bash\Scripts\create-artifact.sh">

@@ -1,18 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
 
-namespace Calamari.Integration.AppSettingsJson
+namespace Calamari.Integration.JsonVariables
 {
-    public class AppSettingsJsonGenerator : IAppSettingsJsonGenerator
+    public class JsonConfigurationVariableReplacer : IJsonConfigurationVariableReplacer
     {
         const string KeyDelimiter = ":";
         
-        public void Generate(string appSettingsFilePath, VariableDictionary variables)
+        public void ModifyJsonFile(string jsonFilePath, VariableDictionary variables)
         {
-            var root = LoadJson(appSettingsFilePath);
+            var root = LoadJson(jsonFilePath);
 
             var names = variables.GetNames();
             names.Sort(StringComparer.OrdinalIgnoreCase);
@@ -25,19 +27,18 @@ namespace Calamari.Integration.AppSettingsJson
                 SetValueRecursive(root, name, name, variables.Get(name));
             }
 
-            SaveJson(appSettingsFilePath, root);
+            SaveJson(jsonFilePath, root);
         }
 
-        static JObject LoadJson(string appSettingsFilePath)
+        static JObject LoadJson(string jsonFilePath)
         {
-            if (!File.Exists(appSettingsFilePath) || (new FileInfo(appSettingsFilePath).Length == 0))
-            {
-                Log.Verbose($"\"{appSettingsFilePath}\" was not found, it will be created");
+            if (!File.Exists(jsonFilePath))
                 return new JObject();
-            }
 
-            Log.Verbose($"Found existing \"{appSettingsFilePath}\"");
-            using (var reader = new StreamReader(appSettingsFilePath))
+            if (new FileInfo(jsonFilePath).Length == 0)
+                return new JObject();
+
+            using (var reader = new StreamReader(jsonFilePath))
             using (var json = new JsonTextReader(reader))
             {
                 return JObject.Load(json);
@@ -55,7 +56,7 @@ namespace Calamari.Integration.AppSettingsJson
                 var key = name.Substring(0, firstKey);
                 var remainder = name.Substring(firstKey + 1).Trim(':');
 
-                var property = GetOrCreateProperty(currentObject, key, fullName);
+                var property = GetProperty(currentObject, key, fullName);
 
                 if (property != null)
                 {
@@ -64,11 +65,26 @@ namespace Calamari.Integration.AppSettingsJson
             }
             else
             {
-                currentObject[name] = value;
+                var configs = new List<string>();
+                foreach (var val in currentObject)
+                {
+                    if (string.Equals(val.Key, name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        configs.Add(val.Key);
+                    }
+                }
+
+                if (!configs.Any()) return;
+
+                foreach (var configKey in configs)
+                {
+                    Log.Verbose($"Setting '{name}' = '{value}'");
+                    currentObject[configKey] = value;
+                }
             }
         }
 
-        static JObject GetOrCreateProperty(JObject currentObject, string key, string fullName)
+        static JObject GetProperty(JObject currentObject, string key, string fullName)
         {
             JToken currentToken;
             if (currentObject.TryGetValue(key, StringComparison.InvariantCultureIgnoreCase, out currentToken))
@@ -83,16 +99,12 @@ namespace Calamari.Integration.AppSettingsJson
                     return null;
                 }
             }
-            else
-            {
-                currentObject[key] = currentToken = new JObject();
-            }
             return (JObject) currentToken;
         }
 
-        static void SaveJson(string appSettingsFilePath, JObject root)
+        static void SaveJson(string jsonFilePath, JObject root)
         {
-            using (var writer = new StreamWriter(appSettingsFilePath))
+            using (var writer = new StreamWriter(jsonFilePath))
             using (var json = new JsonTextWriter(writer))
             {
                 json.Formatting = Formatting.Indented;
