@@ -68,6 +68,7 @@ If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 	$creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
 	Write-Verbose "Authenticating with Service Principal"
 	Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -ServicePrincipal
+	Set-AzureRmContext -SubscriptionId $OctopusAzureSubscriptionId - TenantId $OctopusAzureADTenantId  
 } Else {
 	# Authenticate via Management Certificate
 	Write-Verbose "Loading the management certificate"
