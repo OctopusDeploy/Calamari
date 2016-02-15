@@ -7,6 +7,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -24,8 +25,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             var variables = new CalamariVariableDictionary(); 
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, StagingDirectory);
-            deployment = new RunningDeployment("C:\\Packages", variables);
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0"));
+            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), variables);
             configurationVariableReplacer = Substitute.For<IJsonConfigurationVariableReplacer>();
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.DirectoryExists(Arg.Any<string>()).Returns(false);
@@ -42,14 +43,14 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldFindAndCallModifyOnTargetFile()
         {
-            fileSystem.EnumerateFiles(StagingDirectory, "appsettings.environment.json")
-                .Returns(new[] {Path.Combine(StagingDirectory, "appsettings.environment.json")});
+            fileSystem.EnumerateFiles(Arg.Any<string>(), "appsettings.environment.json")
+                .Returns(new[] {TestEnvironment.ConstructRootedPath("applications" ,"Acme", "1.0.0", "appsettings.environment.json")});
 
             deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesEnabled, "true");
             deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesTargets, "appsettings.environment.json");
             var convention = new JsonConfigurationVariablesConvention(configurationVariableReplacer, fileSystem);
             convention.Install(deployment);
-            configurationVariableReplacer.Received().ModifyJsonFile(Path.Combine(StagingDirectory, "appsettings.environment.json"), deployment.Variables);
+            configurationVariableReplacer.Received().ModifyJsonFile(TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", "appsettings.environment.json"), deployment.Variables);
         }
 
         [Test]
@@ -62,10 +63,10 @@ namespace Calamari.Tests.Fixtures.Conventions
                 "config.prod.json"
             };
 
-            fileSystem.EnumerateFiles(StagingDirectory, "config.json")
-                .Returns(new[] {targetFiles[0]}.Select(t => Path.Combine(StagingDirectory, t)));
-            fileSystem.EnumerateFiles(StagingDirectory, "config.*.json")
-                .Returns(targetFiles.Skip(1).Select(t => Path.Combine(StagingDirectory, t)));
+            fileSystem.EnumerateFiles(Arg.Any<string>(), "config.json")
+                .Returns(new[] {targetFiles[0]}.Select(t => TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", t)));
+            fileSystem.EnumerateFiles(Arg.Any<string>(), "config.*.json")
+                .Returns(targetFiles.Skip(1).Select(t => TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", t)));
 
             deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesEnabled, "true");
             deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesTargets, string.Join(Environment.NewLine, "config.json", "config.*.json"));
@@ -76,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             foreach (var targetFile in targetFiles)
             {
                 configurationVariableReplacer.Received()
-                    .ModifyJsonFile(Path.Combine(StagingDirectory, targetFile), deployment.Variables);
+                    .ModifyJsonFile(TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", targetFile), deployment.Variables);
             }
         }
 
