@@ -286,6 +286,7 @@ $sitePath = ("IIS:\Sites\" + $webSiteName)
 
 # Set App Pool
 Execute-WithRetry { 
+	Write-Verbose "Loading Application pool"
 	$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
 	if (!$pool) { 
 		Write-Host "Application pool `"$ApplicationPoolName`" does not exist, creating..." 
@@ -314,6 +315,7 @@ Execute-WithRetry {
 
 # Create Website
 Execute-WithRetry { 
+	Write-Verbose "Loading Site"
 	$site = Get-Item $sitePath -ErrorAction SilentlyContinue
 	if (!$site) { 
 		Write-Host "Site `"$WebSiteName`" does not exist, creating..." 
@@ -326,6 +328,7 @@ Execute-WithRetry {
 
 # Assign Website to App Pool
 Execute-WithRetry { 
+	Write-Verbose "Loading Site"
 	$pool = Get-ItemProperty $sitePath -name applicationPool
 	if ($ApplicationPoolName -ne $pool) {
 		Write-Host "Assigning website `"$sitePath`" to application pool `"$ApplicationPoolName`"..."
