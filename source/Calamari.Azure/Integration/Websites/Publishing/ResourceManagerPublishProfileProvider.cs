@@ -9,6 +9,7 @@ using Microsoft.Azure;
 using Microsoft.Azure.Management.Resources;
 using Microsoft.Azure.Management.Resources.Models;
 using Microsoft.Azure.Management.WebSites;
+using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
 
@@ -33,9 +34,11 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     if (matchingSite == null)
                         continue;
 
+                    var siteNameToUse = GetCorrectSiteNameUrlPart(matchingSite);
+
                     // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
                     var publishSettingsUri = new Uri(resourcesClient.BaseUri, 
-                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{matchingSite.Name}/config/publishingCredentialz/list?api-version=2015-08-01");
+                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{siteNameToUse}/config/publishingCredentials/list?api-version=2015-08-01");
                     Log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
 
                     SitePublishProfile publishProperties = null;
@@ -67,6 +70,17 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 throw new CommandException( $"Could not find Azure WebSite '{siteName}' in subscription '{subscriptionId}'"); 
             }
+        }
+
+        private static string GetCorrectSiteNameUrlPart(Resource matchingSite)
+        {
+            if (!matchingSite.Name.Contains("/")) return matchingSite.Name;
+            if (matchingSite.Name.EndsWith("/")) return matchingSite.Name.Trim('/');  // I think it is safe to say you can't have a "/" in your site name
+
+            var parts = matchingSite.Name.Split('/');
+
+            // We will only use the first 2 parts as we are expecting the format "sitename/slotname
+            return $"{parts[0]}/slots/{parts[1]}";
         }
     }
 }
