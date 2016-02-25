@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure.Integration.Security;
@@ -19,6 +20,8 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         public static SitePublishProfile GetPublishProperties(string subscriptionId, string siteName, string tenantId, string applicationId, string password)
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password);
+
+
             using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token)))
             using (var webSiteClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
@@ -28,18 +31,18 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                 foreach (var resourceGroup in resourceGroups)
                 {
                     var sites = webSiteClient.Sites.GetSites(resourceGroup, null, null, true).Value;
-                    var matchingSite = sites.FirstOrDefault(x => x.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
+                    var matchingSite = sites.FirstOrDefault(x => x.SiteName.Equals(siteName, StringComparison.OrdinalIgnoreCase));
 
                     if (matchingSite == null)
                         continue;
 
                     // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
-                    var publishSettingsUri = new Uri(resourcesClient.BaseUri, 
-                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{matchingSite.Name}/config/publishingCredentials/list?api-version=2015-08-01");
+                    var publishSettingsUri = new Uri(resourcesClient.BaseUri,
+                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{matchingSite.Name.Replace("/", "/slots/")}/config/publishingCredentials/list?api-version=2015-08-01");
                     Log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
 
                     SitePublishProfile publishProperties = null;
-                    var request = new HttpRequestMessage { Method = HttpMethod.Post, RequestUri = publishSettingsUri};
+                    var request = new HttpRequestMessage {Method = HttpMethod.Post, RequestUri = publishSettingsUri};
                     // Add the authentication headers
                     var requestTask = resourcesClient.Credentials.ProcessHttpRequestAsync(request, new CancellationToken())
                         .ContinueWith(authResult => resourcesClient.HttpClient.SendAsync(request), TaskContinuationOptions.NotOnFaulted)
@@ -65,7 +68,8 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     return publishProperties;
                 }
 
-                throw new CommandException( $"Could not find Azure WebSite '{siteName}' in subscription '{subscriptionId}'"); 
+                throw new CommandException(
+                    $"Could not find Azure WebSite '{siteName}' in subscription '{subscriptionId}'");
             }
         }
     }
