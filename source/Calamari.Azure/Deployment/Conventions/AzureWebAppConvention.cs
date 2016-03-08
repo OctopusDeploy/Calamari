@@ -90,7 +90,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var syncOptions = new DeploymentSyncOptions
             {
                 WhatIf = false,
-                UseChecksum = true,
+                UseChecksum = variables.GetFlag(SpecialVariables.Action.Azure.UseCheckSum),
                 DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles),
             };
 
