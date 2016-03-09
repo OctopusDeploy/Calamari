@@ -9,5 +9,5 @@ To use your own build of Calamari with an Octopus 3.0 server, add the following 
 The configuration file can normally be found at:
 
 ```
-C:\Octopus\OctopusServer\OctopusSever.config
+C:\Octopus\OctopusServer\OctopusServer.config
 ```
