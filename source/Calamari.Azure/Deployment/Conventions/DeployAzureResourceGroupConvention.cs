@@ -107,13 +107,16 @@ namespace Calamari.Azure.Deployment.Conventions
         static void PollForCompletion(IResourceManagementClient armClient, string resourceGroupName,
             string deploymentName, VariableDictionary variables)
         {
+            // While the deployment is running, we poll to check it's state.
+            // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds. 
             var currentPollWait = 1;
             var previousPollWait = 0;
             var continueToPoll = true;
+            const int maxWaitSeconds = 30;
 
             while (continueToPoll)
             {
-                Thread.Sleep(TimeSpan.FromSeconds(Math.Min(currentPollWait, 30)));
+                Thread.Sleep(TimeSpan.FromSeconds(Math.Min(currentPollWait, maxWaitSeconds)));
 
                 Log.Verbose("Polling for status of deployment...");
                 var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName).Deployment;
@@ -132,9 +135,12 @@ namespace Calamari.Azure.Deployment.Conventions
                         throw new CommandException($"Azure Resource Group deployment {deploymentName} failed:\n" + GetOperationResults(armClient, resourceGroupName, deploymentName));
 
                     default:
-                        var temp = previousPollWait;
-                        previousPollWait = currentPollWait;
-                        currentPollWait = temp + currentPollWait;
+                        if (currentPollWait < maxWaitSeconds)
+                        {
+                            var temp = previousPollWait;
+                            previousPollWait = currentPollWait;
+                            currentPollWait = temp + currentPollWait;
+                        }
                         break;
                 }
             }
