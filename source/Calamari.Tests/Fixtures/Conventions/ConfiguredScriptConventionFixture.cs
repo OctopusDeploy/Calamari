@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -6,7 +7,6 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using NSubstitute;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {
@@ -48,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
-            fileSystem.Received().OverwriteFile(scriptPath, scriptBody);
+            fileSystem.Received().OverwriteFile(scriptPath, scriptBody, Encoding.Unicode);
             scriptEngine.Received().Execute(scriptPath, variables, commandLineRunner);
         }
 

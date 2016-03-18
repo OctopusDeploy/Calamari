@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
+using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -43,7 +44,7 @@ namespace Calamari.Deployment.Conventions
 
                 var scriptFile = Path.Combine(deployment.CurrentDirectory, scriptName);
 
-                fileSystem.OverwriteFile(scriptFile, scriptBody);
+                fileSystem.OverwriteFile(scriptFile, scriptBody, Encoding.Unicode);
 
                 // Execute the script
                 Log.VerboseFormat("Executing '{0}'", scriptFile);
