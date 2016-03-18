@@ -379,6 +379,9 @@
     <None Include="Fixtures\Integration\Packages\Samples\Acme.Core.1.0.0.0-bugfix.zip">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\PowerShell\Packages\PackagedScript.1.0.0.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
