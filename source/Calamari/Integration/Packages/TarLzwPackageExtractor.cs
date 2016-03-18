@@ -1,8 +1,5 @@
 ﻿using System;
 using System.IO;
-using SharpCompress.Archive;
-using SharpCompress.Compressor.LZMA;
-
 
 namespace Calamari.Integration.Packages
 {

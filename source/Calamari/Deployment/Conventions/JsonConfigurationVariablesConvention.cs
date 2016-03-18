@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
-using Calamari.Integration.JsonVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.JsonVariables;
 
 namespace Calamari.Deployment.Conventions
 {

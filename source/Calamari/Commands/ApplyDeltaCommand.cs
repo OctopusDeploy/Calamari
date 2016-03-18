@@ -1,14 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Net.Configuration;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
-using Octostache;
 
 namespace Calamari.Commands
 {

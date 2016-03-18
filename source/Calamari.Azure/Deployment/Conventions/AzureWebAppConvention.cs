@@ -1,6 +1,6 @@
 ﻿using System;
-using Calamari.Azure.Integration.Websites.Publishing;
 using System.Diagnostics;
+using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;

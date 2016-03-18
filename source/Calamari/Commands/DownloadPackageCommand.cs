@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.Net;
-using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.PackageDownload;
 using NuGet;

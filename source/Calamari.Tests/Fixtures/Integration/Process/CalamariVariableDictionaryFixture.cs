@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;

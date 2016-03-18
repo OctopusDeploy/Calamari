@@ -4,16 +4,15 @@ using Calamari.Azure.Deployment.Conventions;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.JsonVariables;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
-using Octostache;
 
 namespace Calamari.Azure.Commands
 {
