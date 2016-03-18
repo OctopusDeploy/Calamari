@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

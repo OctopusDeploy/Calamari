@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using Calamari.Integration.Processes;
-using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Processes

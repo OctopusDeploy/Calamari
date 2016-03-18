@@ -1,5 +1,4 @@
 ﻿using Calamari.Integration.Processes;
-using Octostache;
 
 namespace Calamari.Integration.Scripting
 {

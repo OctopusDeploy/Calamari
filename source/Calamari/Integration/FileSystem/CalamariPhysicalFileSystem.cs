@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using Calamari.Deployment;
-using Microsoft.Web.Administration;
 
 namespace Calamari.Integration.FileSystem
 {
