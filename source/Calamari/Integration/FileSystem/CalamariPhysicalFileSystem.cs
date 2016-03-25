@@ -221,17 +221,17 @@ namespace Calamari.Integration.FileSystem
 
         public void AppendToFile(string path, string contents)
         {
-            File.AppendAllText(path, contents);
+            RetryTrackerFileAction(() => File.AppendAllText(path, contents), path, "append");
         }
 
         public void OverwriteFile(string path, string contents)
         {
-            File.WriteAllText(path, contents);
+            RetryTrackerFileAction(() => File.WriteAllText(path, contents), path, "overwrite");
         }
 
         public void OverwriteFile(string path, string contents, Encoding encoding)
         {
-            File.WriteAllText(path, contents, encoding);
+            RetryTrackerFileAction(() => File.WriteAllText(path, contents, encoding), path, "overwrite");
         }
 
         public Stream OpenFile(string path, FileAccess access, FileShare share)
@@ -429,12 +429,17 @@ namespace Calamari.Integration.FileSystem
 
         public void CopyFile(string sourceFile, string targetFile)
         {
+            RetryTrackerFileAction(() => File.Copy(sourceFile, targetFile, true), targetFile, "copy");
+        }
+
+        private static void RetryTrackerFileAction(Action fileAction, string target, string action)
+        {
             var retry = GetRetryTracker();
             while (retry.Try())
             {
                 try
                 {
-                    File.Copy(sourceFile, targetFile, true);
+                    fileAction();
                     return;
                 }
                 catch (Exception ex)
@@ -443,7 +448,7 @@ namespace Calamari.Integration.FileSystem
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.VerboseFormat("Retry #{0} on copy '{1}'. Exception: {2}", retry.CurrentTry,  targetFile, ex.Message);
+                            Log.VerboseFormat("Retry #{0} on {1} '{2}'. Exception: {3}", retry.CurrentTry, action, target, ex.Message);
                         }
                         Thread.Sleep(retry.Sleep());
                     }

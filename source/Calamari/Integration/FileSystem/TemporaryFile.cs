@@ -1,13 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
-using System.Threading;
 
 namespace Calamari.Integration.FileSystem
 {
     public class TemporaryFile : IDisposable
     {
         private readonly string filePath;
+        readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public TemporaryFile(string filePath)
         {
@@ -48,19 +48,7 @@ namespace Calamari.Integration.FileSystem
         }
         public void Dispose()
         {
-            for (var i = 0; i < 10; i++)
-            {
-                try
-                {
-                    File.Delete(filePath);
-                    if (!File.Exists(filePath))
-                        return;
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(1000);
-                }
-            }
+            fileSystem.DeleteFile(filePath, FailureOptions.IgnoreFailure);
         }
     }
 }
