@@ -13,7 +13,6 @@ using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 using NSubstitute;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Azure.Tests.Conventions
 {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Calamari.Integration.Processes
+﻿namespace Calamari.Integration.Processes
 {
     public class ConsoleCommandOutput : ICommandOutput
     {

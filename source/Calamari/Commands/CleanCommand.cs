@@ -1,13 +1,9 @@
-﻿using System;
-using System.IO;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
+﻿using Calamari.Commands.Support;
 using Calamari.Deployment.Journal;
 using Calamari.Deployment.Retention;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Time;
-using Octostache;
 
 namespace Calamari.Commands
 {

@@ -6,7 +6,6 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using NSubstitute;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Azure.Tests.PowerShell
 {

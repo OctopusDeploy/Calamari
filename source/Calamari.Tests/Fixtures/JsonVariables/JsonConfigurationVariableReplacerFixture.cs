@@ -1,11 +1,10 @@
 ﻿using System;
 using System.IO;
-using Calamari.Integration.JsonVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.JsonVariables;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NSubstitute.Core;
 using NUnit.Framework;
 using Octostache;
 
