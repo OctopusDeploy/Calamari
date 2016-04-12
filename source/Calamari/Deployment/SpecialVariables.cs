@@ -98,7 +98,8 @@
 
             public class Output
             {
-                public static readonly string InstallationDirectoryPath = "Package.InstallationDirectoryPath";
+                public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
+                public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
             }
         }
 
