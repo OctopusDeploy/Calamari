@@ -37,12 +37,19 @@ if (!$serviceName)
 	exit -2
 }
 
-$binPath = ("\`"" + $fullPath + "\`"")
+# Items in the fullArgumentsArray are automatically surrounded by quote when passed to the sc.exe command below
+# We need to escape any existing quotes that may exist 
+
 if ($arguments) 
 {
 	$arguments = $arguments.Replace("`"", "\`"")
-	$binPath = ($binPath + " " + $arguments)	
+	$binPath = ("\`"" + $fullPath + "\`" " + $arguments) # An extra set of escaped quotes added around the exe	
 }
+else
+{
+    $binPath = $fullPath 
+}
+
 
 $fullArguments = @("`"$serviceName`"", "binPath=", $binPath)
 if ($displayName) 

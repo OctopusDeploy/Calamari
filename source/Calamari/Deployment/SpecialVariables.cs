@@ -170,6 +170,11 @@
                     public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
                 }
             }
+
+            public class WindowsService
+            {
+                public const string Arguments = "Octopus.Action.WindowsService.Arguments";
+            }
         }
 
         public static class Machine
