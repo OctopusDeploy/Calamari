@@ -5,11 +5,13 @@ using System.ServiceProcess;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatibleOS.Windows)]
     public class DeployWindowsServiceFixture : DeployPackageFixture
     {
         private const string ServiceName = "Acme.Service";
