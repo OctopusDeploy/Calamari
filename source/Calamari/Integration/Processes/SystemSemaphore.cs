@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.AccessControl;
 using System.Threading;
 
 namespace Calamari.Integration.Processes
@@ -7,7 +8,16 @@ namespace Calamari.Integration.Processes
     {
         public IDisposable Acquire(string name, string waitMessage)
         {
-            var semaphore = new Semaphore(1, 1, string.Format("Global\\{0}",name));
+            Semaphore semaphore;
+            var globalName = $"Global\\{name}";
+            try
+            {
+                semaphore = CreateGlobalSemaphoreAccessibleToEveryone(globalName);
+            }
+            catch (Exception)
+            {
+                semaphore = new Semaphore(1, 1, globalName);
+            }
             if (!semaphore.WaitOne(3000))
             {
                 Log.Verbose(waitMessage);
@@ -15,6 +25,18 @@ namespace Calamari.Integration.Processes
             }
 
             return new SemaphoreReleaser(semaphore);
+        }
+
+        static Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
+        {
+            var semaphoreSecurity = new SemaphoreSecurity();
+            var rule = new SemaphoreAccessRule("Everyone", SemaphoreRights.FullControl, AccessControlType.Allow);
+
+            semaphoreSecurity.AddAccessRule(rule);
+            bool createdNew;
+
+            var semaphore = new Semaphore(1, 1, name, out createdNew, semaphoreSecurity);
+            return semaphore;
         }
 
         class SemaphoreReleaser : IDisposable
