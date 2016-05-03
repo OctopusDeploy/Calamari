@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Threading;
 
 namespace Calamari.Integration.Processes
@@ -30,7 +31,8 @@ namespace Calamari.Integration.Processes
         static Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
         {
             var semaphoreSecurity = new SemaphoreSecurity();
-            var rule = new SemaphoreAccessRule("Everyone", SemaphoreRights.FullControl, AccessControlType.Allow);
+            var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
+            var rule = new SemaphoreAccessRule(everyone, SemaphoreRights.FullControl, AccessControlType.Allow);
 
             semaphoreSecurity.AddAccessRule(rule);
             bool createdNew;
