@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 
@@ -13,7 +14,9 @@ namespace Calamari.Deployment.Conventions
 
         protected override string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)
         {
-            return Environment.CurrentDirectory;
+            var targetPath = Path.Combine(Environment.CurrentDirectory, "staging"); 
+            fileSystem.EnsureDirectoryExists(targetPath);
+            return targetPath;
         }
     }
 }
