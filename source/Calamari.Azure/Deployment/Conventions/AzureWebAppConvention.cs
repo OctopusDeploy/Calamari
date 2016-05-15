@@ -1,6 +1,6 @@
 ﻿using System;
-using Calamari.Azure.Integration.Websites.Publishing;
 using System.Diagnostics;
+using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -90,7 +90,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var syncOptions = new DeploymentSyncOptions
             {
                 WhatIf = false,
-                UseChecksum = true,
+                UseChecksum = variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum),
                 DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles),
             };
 

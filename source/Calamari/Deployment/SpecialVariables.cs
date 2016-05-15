@@ -84,8 +84,8 @@
             public static readonly string CustomInstallationDirectory = "Octopus.Action.Package.CustomInstallationDirectory";
             public static readonly string CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment";
             public static readonly string AutomaticallyUpdateAppSettingsAndConnectionStrings = "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings";
-            public static readonly string GenerateAppSettingsJson = "Octopus.Action.Package.GenerateAppSettingsJson";
-            public static readonly string AppSettingsJsonPath = "Octopus.Action.Package.AppSettingsJsonPath";
+            public static readonly string JsonConfigurationVariablesEnabled = "Octopus.Action.Package.JsonConfigurationVariablesEnabled";
+            public static readonly string JsonConfigurationVariablesTargets = "Octopus.Action.Package.JsonConfigurationVariablesTargets";
             public static readonly string AutomaticallyRunConfigurationTransformationFiles = "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles";
             public static readonly string IgnoreConfigTransformationErrors = "Octopus.Action.Package.IgnoreConfigTransformationErrors";
             public static readonly string SuppressConfigTransformationLogging = "Octopus.Action.Package.SuppressConfigTransformationLogging";
@@ -98,7 +98,8 @@
 
             public class Output
             {
-                public static readonly string InstallationDirectoryPath = "Package.InstallationDirectoryPath";
+                public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
+                public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
             }
         }
 
@@ -142,6 +143,7 @@
                 public static readonly string PreserveAppData = "Octopus.Action.Azure.PreserveAppData";
                 public static readonly string PreservePaths = "Octopus.Action.Azure.PreservePaths";
                 public static readonly string PhysicalPath = "Octopus.Action.Azure.PhysicalPath";
+                public static readonly string UseChecksum = "Octopus.Action.Azure.UseChecksum";
 
                 public static readonly string CloudServiceName = "Octopus.Action.Azure.CloudServiceName";
                 public static readonly string Slot = "Octopus.Action.Azure.Slot";
@@ -167,6 +169,11 @@
                     public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
                     public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
                 }
+            }
+
+            public class WindowsService
+            {
+                public const string Arguments = "Octopus.Action.WindowsService.Arguments";
             }
         }
 

@@ -55,7 +55,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
             var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
-            commandArguments.AppendFormat("-Command \". {{. '{0}' -key '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, encryptionKey);
+            commandArguments.AppendFormat("-Command \". {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
 
@@ -68,6 +68,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("{{TargetScriptFile}}", targetScriptFile.Replace("'", "''"));
             builder.Replace("{{VariableDeclarations}}", DeclareVariables(variables));
+            builder.Replace("{{ScriptModules}}", DeclareScriptModules(variables));
 
             using (var writer = new StreamWriter(bootstrapFile, false, new UTF8Encoding(true)))
             {
@@ -83,11 +84,18 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         {
             var output = new StringBuilder();
 
-            WriteScriptModules(variables, output);
-            output.AppendLine();
             WriteVariableDictionary(variables, output);
             output.AppendLine();
             WriteLocalVariables(variables, output);
+
+            return output.ToString();
+        }
+
+        private static string DeclareScriptModules(CalamariVariableDictionary variables)
+        {
+            var output = new StringBuilder();
+
+            WriteScriptModules(variables, output);
 
             return output.ToString();
         }

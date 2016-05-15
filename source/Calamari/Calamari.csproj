@@ -92,8 +92,8 @@
       <HintPath>..\packages\Octostache.1.0.2.28\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="SharpCompress, Version=0.11.2.0, Culture=neutral, PublicKeyToken=beaf6f427e128133, processorArchitecture=MSIL">
-      <HintPath>..\packages\sharpcompress.0.11.2\lib\net40\SharpCompress.dll</HintPath>
+    <Reference Include="SharpCompress, Version=0.11.6.0, Culture=neutral, PublicKeyToken=beaf6f427e128133, processorArchitecture=MSIL">
+      <HintPath>..\packages\sharpcompress.0.11.6\lib\net40\SharpCompress.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache">
@@ -163,7 +163,7 @@
     <Compile Include="Commands\Support\OptionValueType.cs" />
     <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationTransformsConvention.cs" />
-    <Compile Include="Deployment\Conventions\AppSettingsJsonConvention.cs" />
+    <Compile Include="Deployment\Conventions\JsonConfigurationVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\ContributeEnvironmentVariablesConvention.cs" />
     <Compile Include="Deployment\ConventionProcessor.cs" />
@@ -174,8 +174,8 @@
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
-    <Compile Include="Integration\AppSettingsJson\AppSettingsJsonGenerator.cs" />
-    <Compile Include="Integration\AppSettingsJson\IAppSettingsJsonGenerator.cs" />
+    <Compile Include="Integration\JsonVariables\JsonConfigurationVariableReplacer.cs" />
+    <Compile Include="Integration\JsonVariables\IJsonConfigurationVariableReplacer.cs" />
     <Compile Include="Integration\Packages\ExtendedPackageMetadata.cs" />
     <Compile Include="Integration\Packages\IGenericPackageExtractor.cs" />
     <Compile Include="Integration\Packages\GenericPackageExtractor.cs" />

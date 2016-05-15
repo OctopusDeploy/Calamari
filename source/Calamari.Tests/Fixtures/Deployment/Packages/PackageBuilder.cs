@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

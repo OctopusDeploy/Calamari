@@ -1,4 +1,4 @@
-﻿param([string]$key="")
+﻿param([string]$OctopusKey="")
 
 $ErrorActionPreference = 'Stop'
 
@@ -88,7 +88,7 @@ function Decrypt-String($Encrypted, $iv)
 	$algorithm.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
 	$algorithm.KeySize = 128
 	$algorithm.BlockSize = 128 # AES is just Rijndael with a fixed block size
-	$algorithm.Key = [System.Convert]::FromBase64String($key)
+	$algorithm.Key = [System.Convert]::FromBase64String($OctopusKey)
 	$algorithm.IV =[System.Convert]::FromBase64String($iv)
 	$decryptor = [System.Security.Cryptography.ICryptoTransform]$algorithm.CreateDecryptor()
 
@@ -127,6 +127,12 @@ Write-VersionTable
 # -----------------------------------------------------------------
 
 {{VariableDeclarations}}
+
+# -----------------------------------------------------------------
+# Script Modules - after variables
+# -----------------------------------------------------------------
+
+{{ScriptModules}}
 
 # -----------------------------------------------------------------
 # Defaults

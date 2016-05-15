@@ -44,6 +44,7 @@ namespace Calamari.Deployment.Conventions
             deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
 
             Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
         }
     }
 }

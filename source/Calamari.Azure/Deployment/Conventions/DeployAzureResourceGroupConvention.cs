@@ -58,12 +58,11 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info(
                 $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
-            using (var armClient = new ResourceManagementClient(
-                new TokenCloudCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password)) ))
-            {
-                CreateDeployment(armClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
-                PollForCompletion(armClient, resourceGroupName, deploymentName, variables);
-            }
+            // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
+            Func<IResourceManagementClient> createArmClient = () => new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password)));
+
+            CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
+            PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
         }
 
         static string GenerateDeploymentNameFromStepName(string stepName)
@@ -79,7 +78,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return deploymentName;
         }
 
-        static void CreateDeployment(ResourceManagementClient armClient, string resourceGroupName, string deploymentName,
+        static void CreateDeployment(Func<IResourceManagementClient> createArmClient, string resourceGroupName, string deploymentName,
             DeploymentMode deploymentMode, string template, IDictionary<string, ResourceGroupTemplateParameter> parameters)
         {
             var parameterJson = parameters != null ? JsonConvert.SerializeObject(parameters, Formatting.Indented) : null;
@@ -90,52 +89,66 @@ namespace Calamari.Azure.Deployment.Conventions
                Log.Verbose($"Parameters:\n{parameterJson}\n"); 
             }
 
-            var createDeploymentResult = armClient.Deployments.CreateOrUpdate(resourceGroupName, deploymentName,
-                new Microsoft.Azure.Management.Resources.Models.Deployment
-                {
-                    Properties = new DeploymentProperties
+            using (var armClient = createArmClient())
+            {
+                var createDeploymentResult = armClient.Deployments.CreateOrUpdate(resourceGroupName, deploymentName,
+                    new Microsoft.Azure.Management.Resources.Models.Deployment
                     {
-                        Mode = deploymentMode,
-                        Template = template,
-                        Parameters = parameterJson 
-                    }
-                });
+                        Properties = new DeploymentProperties
+                        {
+                            Mode = deploymentMode,
+                            Template = template,
+                            Parameters = parameterJson
+                        }
+                    });
 
-            Log.Info($"Deployment created: {createDeploymentResult.Deployment.Id}");
+                Log.Info($"Deployment created: {createDeploymentResult.Deployment.Id}");
+            }
         }
 
-        static void PollForCompletion(IResourceManagementClient armClient, string resourceGroupName,
+        static void PollForCompletion(Func<IResourceManagementClient> createArmClient, string resourceGroupName,
             string deploymentName, VariableDictionary variables)
         {
+            // While the deployment is running, we poll to check it's state.
+            // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds. 
             var currentPollWait = 1;
             var previousPollWait = 0;
             var continueToPoll = true;
+            const int maxWaitSeconds = 30;
 
             while (continueToPoll)
             {
-                Thread.Sleep(TimeSpan.FromSeconds(Math.Min(currentPollWait, 30)));
+                Thread.Sleep(TimeSpan.FromSeconds(Math.Min(currentPollWait, maxWaitSeconds)));
 
                 Log.Verbose("Polling for status of deployment...");
-                var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName).Deployment;
-                Log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
-
-                switch (deployment.Properties.ProvisioningState)
+                using (var armClient = createArmClient())
                 {
-                    case "Succeeded":
-                        Log.Info($"Deployment {deploymentName} complete.");  
-                        Log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
-                        CaptureOutputs(deployment.Properties.Outputs, variables);
-                        continueToPoll = false;
-                        break;
+                    var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName).Deployment;
 
-                    case "Failed":
-                        throw new CommandException($"Azure Resource Group deployment {deploymentName} failed:\n" + GetOperationResults(armClient, resourceGroupName, deploymentName));
+                    Log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
 
-                    default:
-                        var temp = previousPollWait;
-                        previousPollWait = currentPollWait;
-                        currentPollWait = temp + currentPollWait;
-                        break;
+                    switch (deployment.Properties.ProvisioningState)
+                    {
+                        case "Succeeded":
+                            Log.Info($"Deployment {deploymentName} complete.");
+                            Log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
+                            CaptureOutputs(deployment.Properties.Outputs, variables);
+                            continueToPoll = false;
+                            break;
+
+                        case "Failed":
+                            throw new CommandException($"Azure Resource Group deployment {deploymentName} failed:\n" +
+                                                       GetOperationResults(armClient, resourceGroupName, deploymentName));
+
+                        default:
+                            if (currentPollWait < maxWaitSeconds)
+                            {
+                                var temp = previousPollWait;
+                                previousPollWait = currentPollWait;
+                                currentPollWait = temp + currentPollWait;
+                            }
+                            break;
+                    }
                 }
             }
         }
