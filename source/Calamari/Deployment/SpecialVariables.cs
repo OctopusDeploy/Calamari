@@ -175,6 +175,11 @@
             {
                 public const string Arguments = "Octopus.Action.WindowsService.Arguments";
             }
+
+            public static class PowerShell
+            {
+                public static readonly string CustomPowerShellVersion = "Octopus.Action.PowerShell.CustomPowerShellVersion";
+            }
         }
 
         public static class Machine

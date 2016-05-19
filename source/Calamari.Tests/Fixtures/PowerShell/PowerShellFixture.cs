@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -11,6 +12,32 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [TestFixture]
     public class PowerShellFixture : CalamariFixture
     {
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [TestCase("2", "PSVersion                      2.0")]
+        [TestCase("2.0", "PSVersion                      2.0")]
+        public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                // Let's just use the Hello.ps1 script for something simples
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertZero();
+                output.AssertOutput(expectedLogMessage);
+                output.AssertOutput("Hello!");
+            }
+        }
+
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCallHello()
