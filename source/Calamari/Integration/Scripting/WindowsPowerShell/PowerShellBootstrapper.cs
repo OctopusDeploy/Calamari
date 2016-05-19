@@ -55,7 +55,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
             var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
-            commandArguments.AppendFormat("-Command \". {{. '{0}' -key '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, encryptionKey);
+            commandArguments.AppendFormat("-Command \". {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
 

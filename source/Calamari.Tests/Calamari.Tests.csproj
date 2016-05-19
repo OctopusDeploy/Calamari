@@ -119,6 +119,7 @@
     <Reference Include="System.Runtime">
       <HintPath>..\packages\Microsoft.Bcl.1.1.9\lib\net40\System.Runtime.dll</HintPath>
     </Reference>
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Threading.Tasks">
       <HintPath>..\packages\Microsoft.Bcl.1.1.9\lib\net40\System.Threading.Tasks.dll</HintPath>
     </Reference>
@@ -137,6 +138,8 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
+    <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
+    <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
     <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
@@ -161,7 +164,7 @@
     <Compile Include="Fixtures\Conventions\RunningDeploymentFixture.cs" />
     <Compile Include="Fixtures\Conventions\SubstituteInFilesConventionFixture.cs" />
     <Compile Include="Fixtures\Deployment\CleanFixture.cs" />
-    <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
+    <Compile Include="Fixtures\Deployment\DeployWebPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\Packages\PackageBuilder.cs" />
     <Compile Include="Fixtures\Integration\FileSystem\PackageStoreFixture.cs" />
     <Compile Include="Fixtures\Integration\FileSystem\RetryFixture.cs" />
@@ -190,6 +193,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="Fixtures\Deployment\Packages\Acme.Service\Acme.Service.nuspec">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.existing-expected.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -379,6 +385,9 @@
     <None Include="Fixtures\Integration\Packages\Samples\Acme.Core.1.0.0.0-bugfix.zip">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\PowerShell\Packages\PackagedScript.1.0.0.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\PowerShell\Scripts\CanCreateArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -460,6 +469,9 @@
     </Content>
     <Content Include="Fixtures\Conventions\ConfigTransforms\transform\fizz.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\Deployment\Packages\Acme.Service\Acme.Service.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Fixtures\Deployment\Packages\Acme.Web.Tests\assets\Blob.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

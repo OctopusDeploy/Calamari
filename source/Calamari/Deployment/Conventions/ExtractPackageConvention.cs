@@ -34,6 +34,7 @@ namespace Calamari.Deployment.Conventions
 
             deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
             Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath, deployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, targetPath, deployment.Variables);
         }
 
         protected abstract string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata);

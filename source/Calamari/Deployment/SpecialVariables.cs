@@ -98,7 +98,8 @@
 
             public class Output
             {
-                public static readonly string InstallationDirectoryPath = "Package.InstallationDirectoryPath";
+                public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
+                public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
             }
         }
 
@@ -168,6 +169,11 @@
                     public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
                     public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
                 }
+            }
+
+            public class WindowsService
+            {
+                public const string Arguments = "Octopus.Action.WindowsService.Arguments";
             }
         }
 

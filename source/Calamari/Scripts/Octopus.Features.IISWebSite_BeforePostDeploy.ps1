@@ -310,7 +310,14 @@ Execute-WithRetry {
 # Set .NET Framework
 Execute-WithRetry { 
 	Write-Host "Set .NET framework version: $appPoolFrameworkVersion" 
-	Set-ItemProperty $appPoolPath managedRuntimeVersion $appPoolFrameworkVersion
+	if($appPoolFrameworkVersion -eq "No Managed Code")
+	{
+		Set-ItemProperty $appPoolPath managedRuntimeVersion ""
+	}
+	else
+	{
+		Set-ItemProperty $appPoolPath managedRuntimeVersion $appPoolFrameworkVersion
+	}
 }
 
 # Create Website

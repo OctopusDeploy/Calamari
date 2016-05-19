@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Configuration;
-using System.IO;
 using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.JsonVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NSubstitute;
