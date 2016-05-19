@@ -1,4 +1,6 @@
-﻿namespace Calamari.Deployment.Retention
+﻿using Octostache;
+
+namespace Calamari.Deployment.Retention
 {
     public interface IRetentionPolicy
     {

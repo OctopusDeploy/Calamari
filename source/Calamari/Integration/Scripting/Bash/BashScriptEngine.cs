@@ -1,6 +1,8 @@
 ﻿using System.IO;
+using System.Runtime.Remoting.Messaging;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Integration.Scripting.Bash
 {

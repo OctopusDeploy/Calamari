@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;

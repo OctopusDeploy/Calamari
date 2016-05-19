@@ -1,5 +1,6 @@
 ﻿using System;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Deployment
 {

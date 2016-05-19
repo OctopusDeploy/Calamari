@@ -1,6 +1,6 @@
-﻿using Calamari.Integration.FileSystem;
+﻿using NUnit.Framework;
+using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
-using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {

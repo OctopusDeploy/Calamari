@@ -1,5 +1,8 @@
 ﻿using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting.Bash;
+using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;

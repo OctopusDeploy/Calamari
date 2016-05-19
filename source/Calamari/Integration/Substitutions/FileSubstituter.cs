@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;

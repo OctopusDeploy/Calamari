@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
+using Calamari.Integration.Packages;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;

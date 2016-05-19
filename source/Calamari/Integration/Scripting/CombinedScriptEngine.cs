@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Integration.Scripting
 {

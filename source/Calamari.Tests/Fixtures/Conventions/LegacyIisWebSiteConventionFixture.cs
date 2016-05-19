@@ -6,6 +6,7 @@ using Calamari.Integration.Iis;
 using Calamari.Integration.Processes;
 using NSubstitute;
 using NUnit.Framework;
+using Octostache;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {

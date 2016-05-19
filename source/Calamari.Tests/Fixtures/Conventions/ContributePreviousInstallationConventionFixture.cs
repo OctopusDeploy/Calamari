@@ -3,8 +3,10 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
+using Octostache;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {

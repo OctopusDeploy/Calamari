@@ -1,4 +1,9 @@
-﻿namespace Calamari.Integration.Packages
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Calamari.Integration.Packages
 {
     public class StoredPackage
     {

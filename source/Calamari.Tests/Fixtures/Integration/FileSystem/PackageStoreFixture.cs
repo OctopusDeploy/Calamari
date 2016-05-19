@@ -4,9 +4,9 @@ using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
-using NuGet;
+using Calamari.Tests.Fixtures.Deployment.Packages;
 using NUnit.Framework;
-using PackageBuilder = Calamari.Tests.Fixtures.Deployment.Packages.PackageBuilder;
+using SemanticVersion = NuGet.SemanticVersion;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {

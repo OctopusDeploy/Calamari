@@ -10,6 +10,7 @@ using Calamari.Tests.Helpers;
 using Microsoft.WindowsAzure;
 using NSubstitute;
 using NUnit.Framework;
+using Octostache;
 
 namespace Calamari.Azure.Tests.Conventions
 {

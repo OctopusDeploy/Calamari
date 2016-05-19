@@ -6,6 +6,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Azure.Commands
 {
