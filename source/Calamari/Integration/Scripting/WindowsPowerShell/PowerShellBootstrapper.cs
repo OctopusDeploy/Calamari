@@ -51,7 +51,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            var customPowerShellVersion = variables[SpecialVariables.Action.PowerShellVersion];
+            var customPowerShellVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
             if (!string.IsNullOrEmpty(customPowerShellVersion))
             {
                 commandArguments.Append($"-Version {customPowerShellVersion} ");
