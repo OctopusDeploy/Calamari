@@ -46,12 +46,14 @@ namespace Calamari.Azure.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
 
+            var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
+
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem),
-                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, fileSystem, new ResourceGroupTemplateParameterParser())
+                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, fileSystem, new ResourceGroupTemplateParameterParser())
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

@@ -26,14 +26,16 @@ namespace Calamari.Azure.Deployment.Conventions
     {
         readonly string templateFile;
         readonly string templateParametersFile;
+        private readonly bool filesInPackage;
         readonly ICalamariFileSystem fileSystem;
         readonly IResourceGroupTemplateParameterParser parameterParser;
 
-        public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, 
+        public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, bool filesInPackage, 
             ICalamariFileSystem fileSystem, IResourceGroupTemplateParameterParser parameterParser)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
+            this.filesInPackage = filesInPackage;
             this.fileSystem = fileSystem;
             this.parameterParser = parameterParser;
         }
@@ -51,9 +53,9 @@ namespace Calamari.Azure.Deployment.Conventions
                     : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = FindAndSubstituteFile(templateFile, variables); 
+            var template = ResolveAndSubstituteFile(templateFile, filesInPackage, variables); 
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
-                ? parameterParser.ParseParameters(FindAndSubstituteFile(templateParametersFile, variables))
+                ? parameterParser.ParseParameters(ResolveAndSubstituteFile(templateParametersFile, filesInPackage, variables))
                 : null;
 
             Log.Info(
@@ -194,21 +196,14 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         // The template and parameter files are relative paths, and may be located either inside or outside of the package.
-        // This method finds them, reads the file, and performs variable-substitution. 
-        string FindAndSubstituteFile(string relativeFilePath, VariableDictionary variables)
+        string ResolveAndSubstituteFile(string relativeFilePath, bool inPackage, VariableDictionary variables)
         {
-            var evaluatedPath = variables.Evaluate(relativeFilePath);
-            var pathToFileOutsidePackage = Path.Combine(Environment.CurrentDirectory, evaluatedPath);
-            var pathToFileInsidePackage = Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), evaluatedPath);
+            var absolutePath = inPackage
+                ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(relativeFilePath))
+                : Path.Combine(Environment.CurrentDirectory, relativeFilePath);
 
-            string absolutePath;
-
-            if (fileSystem.FileExists(pathToFileOutsidePackage))
-                absolutePath = pathToFileOutsidePackage;
-            else if (fileSystem.FileExists(pathToFileInsidePackage))
-                absolutePath = pathToFileInsidePackage;
-            else
-                throw new CommandException("Could not locate file: " + relativeFilePath);
+            if (!File.Exists(absolutePath))
+                throw new CommandException($"Could not resolve '{relativeFilePath}' to physical file");
 
             return variables.Evaluate(fileSystem.ReadFile(absolutePath));
         }
