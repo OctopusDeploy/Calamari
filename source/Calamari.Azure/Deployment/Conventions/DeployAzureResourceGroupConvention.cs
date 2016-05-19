@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -50,9 +51,9 @@ namespace Calamari.Azure.Deployment.Conventions
                     : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = variables.Evaluate(fileSystem.ReadFile(templateFile));
+            var template = FindAndSubstituteFile(templateFile, variables); 
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
-                ? parameterParser.ParseParameters(variables.Evaluate(fileSystem.ReadFile(templateParametersFile)))
+                ? parameterParser.ParseParameters(FindAndSubstituteFile(templateParametersFile, variables))
                 : null;
 
             Log.Info(
@@ -190,6 +191,26 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 Log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
             }
+        }
+
+        // The template and parameter files are relative paths, and may be located either inside or outside of the package.
+        // This method finds them, reads the file, and performs variable-substitution. 
+        string FindAndSubstituteFile(string relativeFilePath, VariableDictionary variables)
+        {
+            var evaluatedPath = variables.Evaluate(relativeFilePath);
+            var pathToFileOutsidePackage = Path.Combine(Environment.CurrentDirectory, evaluatedPath);
+            var pathToFileInsidePackage = Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), evaluatedPath);
+
+            string absolutePath;
+
+            if (fileSystem.FileExists(pathToFileOutsidePackage))
+                absolutePath = pathToFileOutsidePackage;
+            else if (fileSystem.FileExists(pathToFileInsidePackage))
+                absolutePath = pathToFileInsidePackage;
+            else
+                throw new CommandException("Could not locate file: " + relativeFilePath);
+
+            return variables.Evaluate(fileSystem.ReadFile(absolutePath));
         }
     }
 }
