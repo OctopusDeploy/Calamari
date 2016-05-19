@@ -17,7 +17,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             var executable = PowerShellBootstrapper.PathToPowerShellExecutable();
             var boostrapFile = PowerShellBootstrapper.PrepareBootstrapFile(scriptFile, variables);
-            var arguments = PowerShellBootstrapper.FormatCommandArguments(boostrapFile);
+            var arguments = PowerShellBootstrapper.FormatCommandArguments(boostrapFile, variables);
 
             using (new TemporaryFile(boostrapFile))
             {
