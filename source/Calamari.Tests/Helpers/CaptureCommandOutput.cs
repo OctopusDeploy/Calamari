@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -8,6 +9,7 @@ namespace Calamari.Tests.Helpers
 {
     public class CaptureCommandOutput : ICommandOutput
     {
+        readonly List<string> all = new List<string>();
         readonly List<string> infos = new List<string>();
         readonly List<string> errors = new List<string>();
         readonly ServiceMessageParser serviceMessageParser;
@@ -21,11 +23,13 @@ namespace Calamari.Tests.Helpers
         public void WriteInfo(string line)
         {
             serviceMessageParser.Parse(line);
+            all.Add(line);
             infos.Add(line);
         }
 
         public void WriteError(string line)
         {
+            all.Add(line);
             errors.Add(line);
         }
 
@@ -42,6 +46,11 @@ namespace Calamari.Tests.Helpers
         public IList<string> Errors
         {
             get { return errors; }
+        }
+
+        public IList<string> AllMessages
+        {
+            get { return all; }
         }
 
         public bool CalamariFoundPackage { get; protected set; }

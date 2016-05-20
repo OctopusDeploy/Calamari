@@ -2,7 +2,6 @@
 using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -68,7 +67,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldCreateArtifacts()
+        public void ShouldWriteServiceMessageForArtifacts()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
@@ -76,6 +75,20 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertZero();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
+            output.ApproveOutput();
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "WarningForMissingArtifact.ps1")));
+
+            output.AssertZero();
+            output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
+            output.ApproveOutput();
         }
 
         [Test]
