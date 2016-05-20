@@ -75,7 +75,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertZero();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
-            output.ApproveOutput();
+            //output.ApproveOutput();
         }
 
         [Test]
@@ -87,8 +87,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", GetFixtureResouce("Scripts", "WarningForMissingArtifact.ps1")));
 
             output.AssertZero();
+            output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
-            output.ApproveOutput();
+            //output.ApproveOutput();
         }
 
         [Test]
