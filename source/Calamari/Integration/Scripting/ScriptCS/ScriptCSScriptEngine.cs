@@ -11,7 +11,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return new[] {ScriptType.ScriptCS.FileExtension()};
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, string scriptParameters = null)
         {
             var workingDirectory = Path.GetDirectoryName(scriptFile);
 

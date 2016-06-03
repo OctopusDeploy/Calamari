@@ -12,7 +12,7 @@ namespace Calamari.Azure.Integration
             return new[] { ScriptType.Powershell.FileExtension() };
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, string scriptParameters = null)
         {
             var powerShellEngine = new PowerShellScriptEngine();
             if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
@@ -20,7 +20,7 @@ namespace Calamari.Azure.Integration
                 return new AzurePowerShellContext().ExecuteScript(powerShellEngine, scriptFile, variables, commandLineRunner);
             }
 
-            return powerShellEngine.Execute(scriptFile, variables, commandLineRunner);
+            return powerShellEngine.Execute(scriptFile, variables, commandLineRunner, scriptParameters);
         }
     }
 }

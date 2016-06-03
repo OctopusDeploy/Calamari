@@ -64,16 +64,17 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return commandArguments.ToString();
         }
 
-        public static string PrepareBootstrapFile(string targetScriptFile, CalamariVariableDictionary variables)
+        public static string PrepareBootstrapFile(string targetScriptFile, string scriptParameters, CalamariVariableDictionary variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(targetScriptFile));
             var name = Path.GetFileName(targetScriptFile);
             var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{TargetScriptFile}}", targetScriptFile.Replace("'", "''"));
-            builder.Replace("{{VariableDeclarations}}", DeclareVariables(variables));
-            builder.Replace("{{ScriptModules}}", DeclareScriptModules(variables));
+            builder.Replace("{{TargetScriptFile}}", targetScriptFile.Replace("'", "''"))
+                    .Replace("{{ScriptParameters}}", scriptParameters)
+                    .Replace("{{VariableDeclarations}}", DeclareVariables(variables))
+                    .Replace("{{ScriptModules}}", DeclareScriptModules(variables));
 
             using (var writer = new StreamWriter(bootstrapFile, false, new UTF8Encoding(true)))
             {

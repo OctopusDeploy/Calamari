@@ -11,12 +11,12 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return new[] {ScriptType.Powershell.FileExtension()};
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, string scriptParameters)
         {
             var workingDirectory = Path.GetDirectoryName(scriptFile);
 
             var executable = PowerShellBootstrapper.PathToPowerShellExecutable();
-            var boostrapFile = PowerShellBootstrapper.PrepareBootstrapFile(scriptFile, variables);
+            var boostrapFile = PowerShellBootstrapper.PrepareBootstrapFile(scriptFile, scriptParameters, variables);
             var arguments = PowerShellBootstrapper.FormatCommandArguments(boostrapFile, variables);
 
             using (new TemporaryFile(boostrapFile))

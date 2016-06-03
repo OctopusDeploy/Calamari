@@ -14,10 +14,10 @@ namespace Calamari.Integration.Scripting
                 : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension()};
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, string scriptParameters = null)
         {
             var scriptType = ValidateScriptType(scriptFile);
-            return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(scriptFile, variables, commandLineRunner);
+            return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(scriptFile, variables, commandLineRunner, scriptParameters);
         }
 
         private ScriptType ValidateScriptType(string scriptFile)
