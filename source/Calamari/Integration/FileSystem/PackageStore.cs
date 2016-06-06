@@ -103,11 +103,7 @@ namespace Calamari.Integration.FileSystem
             {
                 return packageExtractorFactory.GetMetadata(file);
             }
-            catch (IOException)
-            {
-                return null;
-            }
-            catch (FileFormatException)
+            catch (Exception)
             {
                 return null;
             }
