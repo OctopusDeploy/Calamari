@@ -44,7 +44,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText("Calamari.Azure.Scripts.SwapAzureCloudServiceDeployment.ps1"));
             }
 
-            var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);
+            var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
 
             fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
 

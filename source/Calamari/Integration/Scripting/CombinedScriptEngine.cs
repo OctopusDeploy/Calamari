@@ -14,15 +14,15 @@ namespace Calamari.Integration.Scripting
                 : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension()};
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, string scriptParameters = null)
+        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
-            var scriptType = ValidateScriptType(scriptFile);
-            return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(scriptFile, variables, commandLineRunner, scriptParameters);
+            var scriptType = ValidateScriptType(script);
+            return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(script, variables, commandLineRunner);
         }
 
-        private ScriptType ValidateScriptType(string scriptFile)
+        private ScriptType ValidateScriptType(Script script)
         {
-            var scriptExtension = Path.GetExtension(scriptFile).TrimStart('.');
+            var scriptExtension = Path.GetExtension(script.File).TrimStart('.');
             if (!GetSupportedExtensions().Any(ext => ext.Equals(scriptExtension, StringComparison.InvariantCultureIgnoreCase)))
             {
                 throw new InvalidOperationException(string.Format("Script type `{0}` unsupported on this platform.", scriptExtension));

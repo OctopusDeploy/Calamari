@@ -63,7 +63,7 @@ namespace Calamari.Deployment.Conventions
 
                 // Execute the script
                 Log.VerboseFormat("Executing '{0}'", scriptFile);
-                var result = scriptEngine.Execute(scriptFile, deployment.Variables, commandLineRunner);
+                var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
 
                 // And then delete it
                 Log.VerboseFormat("Deleting '{0}'", scriptFile);

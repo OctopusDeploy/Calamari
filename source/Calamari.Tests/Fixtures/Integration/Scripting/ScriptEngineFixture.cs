@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(capture);
-            var result = psse.Execute(scriptName, variables, runner);
+            var result = psse.Execute(new Script(scriptName), variables, runner);
             return new CalamariResult(result.ExitCode, capture);
         }
     }

@@ -11,13 +11,13 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return new[] {ScriptType.ScriptCS.FileExtension()};
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, string scriptParameters = null)
+        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
-            var workingDirectory = Path.GetDirectoryName(scriptFile);
+            var workingDirectory = Path.GetDirectoryName(script.File);
 
             var executable = ScriptCSBootstrapper.FindScriptCSExecutable();
             var configurationFile = ScriptCSBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var boostrapFile = ScriptCSBootstrapper.PrepareBootstrapFile(scriptFile, configurationFile, workingDirectory);
+            var boostrapFile = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory);
             var arguments = ScriptCSBootstrapper.FormatCommandArguments(boostrapFile);
 
             using (new TemporaryFile(configurationFile))

@@ -30,10 +30,10 @@ namespace Calamari.Azure.Integration
             this.embeddedResources = new CallingAssemblyEmbeddedResources();
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
-            var workingDirectory = Path.GetDirectoryName(scriptFile);
-            variables.Set("OctopusAzureTargetScript", scriptFile);
+            var workingDirectory = Path.GetDirectoryName(script.File);
+            variables.Set("OctopusAzureTargetScript", script.File);
 
             SetAzureModuleLoadingMethod(variables);
 
@@ -49,14 +49,14 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
                 {
-                    return scriptEngine.Execute(contextScriptFile.FilePath, variables, commandLineRunner);
+                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
                 }
             }
         }

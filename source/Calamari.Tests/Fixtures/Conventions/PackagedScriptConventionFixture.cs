@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
             scriptEngine = Substitute.For<IScriptEngine>();
-            scriptEngine.Execute(Arg.Any<string>(), Arg.Any<CalamariVariableDictionary>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
+            scriptEngine.Execute(new Script(Arg.Any<string>()), Arg.Any<CalamariVariableDictionary>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
             scriptEngine.GetSupportedExtensions().Returns(new[] {"csx", "ps1"});
             runner = Substitute.For<ICommandLineRunner>();
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariableDictionary());
@@ -44,8 +44,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             var convention = CreateConvention("Deploy");
             convention.Install(deployment);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"), deployment.Variables, runner);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1")), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx")), deployment.Variables, runner);
         }
 
         [Test]
@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             var convention = CreateConvention("PreDeploy");
             convention.Install(deployment);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1")), deployment.Variables, runner);
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             var convention = CreateConvention("PreDeploy");
             convention.Install(deployment);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1")), deployment.Variables, runner);
             fileSystem.Received().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), Arg.Any<FailureOptions>());
         }
 
@@ -71,7 +71,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
             var convention = CreateConvention("PreDeploy");
             convention.Install(deployment);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1")), deployment.Variables, runner);
             fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), Arg.Any<FailureOptions>());
         }
 
@@ -81,8 +81,8 @@ namespace Calamari.Tests.Fixtures.Conventions
             deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
             var convention = CreateConvention("Deploy");
             convention.Install(deployment);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"), deployment.Variables, runner);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1")), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx")), deployment.Variables, runner);
             fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"), Arg.Any<FailureOptions>());
             fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"), Arg.Any<FailureOptions>());
         }
@@ -93,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
             var convention = CreateConvention("PostDeploy");
             convention.Install(deployment);
-            scriptEngine.Received().Execute(TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"), deployment.Variables, runner);
+            scriptEngine.Received().Execute(new Script(TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1")), deployment.Variables, runner);
             fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"), Arg.Any<FailureOptions>());
         }
 

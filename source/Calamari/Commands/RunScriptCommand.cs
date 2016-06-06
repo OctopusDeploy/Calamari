@@ -81,7 +81,7 @@ namespace Calamari.Commands
             var scriptEngine = new CombinedScriptEngine();
             var runner = new CommandLineRunner(
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var result = scriptEngine.Execute(validatedScriptFilePath, variables, runner, scriptParameters);
+            var result = scriptEngine.Execute(new Script(validatedScriptFilePath, scriptParameters), variables, runner);
             return result.ExitCode;
         }
 

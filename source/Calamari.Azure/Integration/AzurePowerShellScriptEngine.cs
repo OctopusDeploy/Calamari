@@ -12,15 +12,15 @@ namespace Calamari.Azure.Integration
             return new[] { ScriptType.Powershell.FileExtension() };
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, string scriptParameters = null)
+        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var powerShellEngine = new PowerShellScriptEngine();
             if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
             {
-                return new AzurePowerShellContext().ExecuteScript(powerShellEngine, scriptFile, variables, commandLineRunner);
+                return new AzurePowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
             }
 
-            return powerShellEngine.Execute(scriptFile, variables, commandLineRunner, scriptParameters);
+            return powerShellEngine.Execute(script, variables, commandLineRunner);
         }
     }
 }

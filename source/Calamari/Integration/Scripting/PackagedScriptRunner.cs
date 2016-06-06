@@ -30,7 +30,7 @@ namespace Calamari.Integration.Scripting
 
             foreach (var script in scripts)
             {
-                var result = scriptEngine.Execute(script, deployment.Variables, commandLineRunner);
+                var result = scriptEngine.Execute(new Script(script), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
                     throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}. Deployment terminated.", script, result.ExitCode));

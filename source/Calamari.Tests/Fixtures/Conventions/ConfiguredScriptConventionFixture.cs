@@ -42,14 +42,15 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string scriptBody = "lorem ipsum blah blah blah";
             var scriptName = ConfiguredScriptConvention.GetScriptName(stage, "ps1");
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
+            var script = new Script(scriptPath);
             variables.Set(scriptName, scriptBody);
 
             var convention = CreateConvention(stage);
-            scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(script, variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.Received().OverwriteFile(scriptPath, scriptBody, Encoding.UTF8);
-            scriptEngine.Received().Execute(scriptPath, variables, commandLineRunner);
+            scriptEngine.Received().Execute(script, variables, commandLineRunner);
         }
 
         [Test]
@@ -58,10 +59,11 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string stage = DeploymentStages.PostDeploy;
             var scriptName = ConfiguredScriptConvention.GetScriptName(stage, "ps1");
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
+            var script = new Script(scriptPath);
             variables.Set(scriptName, "blah blah");
 
             var convention = CreateConvention(stage);
-            scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(script, variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.Received().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
@@ -74,10 +76,11 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string stage = DeploymentStages.PostDeploy;
             var scriptName = ConfiguredScriptConvention.GetScriptName(stage, "ps1");
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
+            var script = new Script(scriptPath);
             variables.Set(scriptName, "blah blah");
 
             var convention = CreateConvention(stage);
-            scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(script, variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.DidNotReceive().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
