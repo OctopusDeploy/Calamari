@@ -22,8 +22,9 @@ namespace Calamari.Integration.Substitutions
 
         public void PerformSubstitution(string sourceFile, VariableDictionary variables, string targetFile)
         {
-            var source = fileSystem.ReadFile(sourceFile);
-            var encoding = GetEncoding(sourceFile, variables);
+            Encoding sourceFileEncoding;
+            var source = fileSystem.ReadFile(sourceFile, out sourceFileEncoding);
+            var encoding = GetEncoding(variables, sourceFileEncoding);
 
             string error;
             var result = variables.Evaluate(source, out error);
@@ -34,12 +35,12 @@ namespace Calamari.Integration.Substitutions
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }
 
-        private Encoding GetEncoding(string sourceFile, VariableDictionary variables)
+        private Encoding GetEncoding(VariableDictionary variables, Encoding fileEncoding)
         {
             var requestedEncoding = variables.Get(SpecialVariables.Package.SubstituteInFilesOutputEncoding);
             if (requestedEncoding == null)
             {
-                return fileSystem.GetFileEncoding(sourceFile);
+                return fileEncoding;
             }
 
             try
@@ -48,7 +49,7 @@ namespace Calamari.Integration.Substitutions
             }
             catch (ArgumentException)
             {
-                return fileSystem.GetFileEncoding(sourceFile);
+                return fileEncoding;
             }
             
         }
