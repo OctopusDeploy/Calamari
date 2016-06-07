@@ -34,6 +34,7 @@ namespace Calamari.Azure.Integration
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", script.File);
+            variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
             SetAzureModuleLoadingMethod(variables);
 
