@@ -99,4 +99,4 @@ public static class Octopus
 	}
 }
 
-Octopus.Initialize(Env.ScriptArgs[0]);
+Octopus.Initialize(Env.ScriptArgs[Env.ScriptArgs.Count - 1]);

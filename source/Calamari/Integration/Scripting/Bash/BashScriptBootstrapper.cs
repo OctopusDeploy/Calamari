@@ -93,8 +93,7 @@ namespace Calamari.Integration.Scripting.Bash
         }
 
         public static string PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory)
-        {
-            
+        {            
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
 
             using (var writer = new StreamWriter(bootstrapFile, false, Encoding.ASCII))
