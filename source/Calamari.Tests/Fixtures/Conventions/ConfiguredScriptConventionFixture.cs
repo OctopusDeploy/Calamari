@@ -6,6 +6,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using NSubstitute;
+using NSubstitute.Core.Arguments;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Conventions
@@ -46,11 +47,11 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(scriptName, scriptBody);
 
             var convention = CreateConvention(stage);
-            scriptEngine.Execute(script, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(Arg.Any<Script>(), variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.Received().OverwriteFile(scriptPath, scriptBody, Encoding.UTF8);
-            scriptEngine.Received().Execute(script, variables, commandLineRunner);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner);
         }
 
         [Test]
@@ -63,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(scriptName, "blah blah");
 
             var convention = CreateConvention(stage);
-            scriptEngine.Execute(script, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(Arg.Any<Script>(), variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.Received().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
@@ -76,11 +77,10 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string stage = DeploymentStages.PostDeploy;
             var scriptName = ConfiguredScriptConvention.GetScriptName(stage, "ps1");
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
-            var script = new Script(scriptPath);
             variables.Set(scriptName, "blah blah");
 
             var convention = CreateConvention(stage);
-            scriptEngine.Execute(script, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(Arg.Any<Script>(), variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.DidNotReceive().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
