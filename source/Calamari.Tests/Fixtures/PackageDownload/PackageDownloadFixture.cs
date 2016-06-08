@@ -36,7 +36,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 Directory.CreateDirectory(TentacleHome);
 
             Directory.SetCurrentDirectory(TentacleHome);
+   
             Environment.SetEnvironmentVariable("TentacleHome", TentacleHome);
+            Console.WriteLine("TentacleHome is set to: " + TentacleHome);
         }
 
         [TearDown]
