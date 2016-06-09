@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Bash
             var output = Invoke(Calamari()
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "parameters.sh"))
-                .Argument("scriptParameters", "-- \"Para meter0\" 'Para meter1'"));
+                .Argument("scriptParameters", "\"Para meter0\" 'Para meter1'"));
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1'");

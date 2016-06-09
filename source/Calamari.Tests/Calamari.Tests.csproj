@@ -401,6 +401,9 @@
     <None Include="Fixtures\PowerShell\Packages\PackagedScript.1.0.0.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\PowerShell\Scripts\Parameters.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\PowerShell\Scripts\WarningForMissingArtifact.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

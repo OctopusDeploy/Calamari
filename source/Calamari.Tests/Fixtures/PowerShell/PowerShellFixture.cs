@@ -51,6 +51,19 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldConsumeParametersWithQuotes()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "Parameters.ps1"))
+                .Argument("scriptParameters", "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"));
+
+            output.AssertSuccess();
+            output.AssertOutput("Parameters Para meter0Para meter1");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCaptureAllOutput()
         {
             var output = Invoke(Calamari()
