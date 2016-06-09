@@ -28,7 +28,7 @@ namespace Calamari.Tests.Helpers
 
         public CaptureCommandOutput CapturedOutput { get { return captured; } }
 
-        public void AssertZero()
+        public void AssertSuccess()
         {
             var capturedErrors = string.Join(Environment.NewLine, captured.Errors);
             Assert.That(ExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0{0}{0}Output:{0}{1}", Environment.NewLine, capturedErrors));

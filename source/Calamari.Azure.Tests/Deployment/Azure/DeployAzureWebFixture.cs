@@ -51,7 +51,7 @@ namespace Calamari.Azure.Tests.Deployment.Azure
         [Test]
         public void ShouldDeployPackage()
         {
-            result.AssertZero();
+            result.AssertSuccess();
 
         }
 

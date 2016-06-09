@@ -54,7 +54,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", PublicFeed.DownloadFolder);
@@ -68,11 +68,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         public void ShouldUsePackageFromCache()
         {
-            DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri).AssertZero();
+            DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri).AssertSuccess();
 
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             result.AssertOutput("Checking package cache for package {0} {1}", PublicFeed.PackageId, PublicFeed.Version);
             result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}", PublicFeed.File);
@@ -84,11 +84,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         public void ShouldByPassCacheAndDownloadPackage()
         {
-            DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri).AssertZero();
+            DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri).AssertSuccess();
 
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri, forcePackageDownload: true);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", PublicFeed.DownloadFolder);
@@ -105,7 +105,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             var result = DownloadPackage(AuthFeed.PackageId, AuthFeed.Version, AuthFeed.Id, AuthFeedUri, FeedUsername, FeedPassword);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", AuthFeed.DownloadFolder);
@@ -121,11 +121,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void PrivateNuGetFeedShouldUsePackageFromCache()
         {
             DownloadPackage(AuthFeed.PackageId, AuthFeed.Version, AuthFeed.Id, AuthFeedUri, FeedUsername, FeedPassword)
-                .AssertZero();
+                .AssertSuccess();
 
             var result = DownloadPackage(AuthFeed.PackageId, AuthFeed.Version, AuthFeed.Id, AuthFeedUri, FeedUsername, FeedPassword);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             result.AssertOutput("Checking package cache for package {0} {1}", AuthFeed.PackageId, AuthFeed.Version);
             result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}", AuthFeed.File);
@@ -138,11 +138,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldByPassCacheAndDownloadPackage()
         {
-            DownloadPackage(AuthFeed.PackageId, AuthFeed.Version, AuthFeed.Id, AuthFeedUri, FeedUsername, FeedPassword).AssertZero();
+            DownloadPackage(AuthFeed.PackageId, AuthFeed.Version, AuthFeed.Id, AuthFeedUri, FeedUsername, FeedPassword).AssertSuccess();
 
             var result = DownloadPackage(AuthFeed.PackageId, AuthFeed.Version, AuthFeed.Id, AuthFeedUri, FeedUsername, FeedPassword, true);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", AuthFeed.DownloadFolder);
@@ -173,7 +173,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             {
                 var result = DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, acmeWeb.DirectoryPath);
 
-                result.AssertZero();
+                result.AssertSuccess();
 
                 result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
                 result.AssertOutput("Downloaded package will be stored in: '{0}'", FileShare.DownloadFolder);
@@ -190,10 +190,10 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             using (var acmeWeb = CreateSamplePackage())
             {
-                DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, acmeWeb.DirectoryPath).AssertZero();
+                DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, acmeWeb.DirectoryPath).AssertSuccess();
 
                 var result = DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, acmeWeb.DirectoryPath);
-                result.AssertZero();
+                result.AssertSuccess();
 
                 result.AssertOutput("Checking package cache for package {0} {1}", FileShare.PackageId, FileShare.Version);
                 result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}", FileShare.File);
@@ -209,12 +209,12 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             using (var acmeWeb = CreateSamplePackage())
             {
                 DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, acmeWeb.DirectoryPath)
-                    .AssertZero();
+                    .AssertSuccess();
 
                 var result = DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, acmeWeb.DirectoryPath,
                     forcePackageDownload: true);
 
-                result.AssertZero();
+                result.AssertSuccess();
 
                 result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
                 result.AssertOutput("Downloaded package will be stored in: '{0}'", FileShare.DownloadFolder);

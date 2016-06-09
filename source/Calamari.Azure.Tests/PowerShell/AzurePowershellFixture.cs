@@ -29,7 +29,7 @@ namespace Calamari.Azure.Tests.PowerShell
                 .Argument("script", GetFixtureResouce("AzureSubscription.ps1"))
                 .Argument("variables", variablesFile));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Current subscription ID: " + OctopusTestAzureSubscription.AzureSubscriptionId);
         }
     }
