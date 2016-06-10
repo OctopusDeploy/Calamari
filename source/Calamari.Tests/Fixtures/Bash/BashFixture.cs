@@ -43,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Bash
                 .Argument("scriptParameters", "\"Para meter0\" 'Para meter1'"));
 
             output.AssertSuccess();
-            output.AssertOutput("Parameters Para meter0Para meter1'");
+            output.AssertOutput("Parameters Para meter0Para meter1");
         }
 
         [Test]
