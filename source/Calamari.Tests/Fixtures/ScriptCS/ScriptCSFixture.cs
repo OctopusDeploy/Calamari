@@ -63,10 +63,10 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             var output = Invoke(Calamari()
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Parameters.csx"))
-                .Argument("scriptParameters", "-- \"Para meter0\" 'Parameter1'"));                ;
+                .Argument("scriptParameters", "-- \"Para meter0\" Parameter1")); ;
 
             output.AssertSuccess();
-            output.AssertOutput("Parameters Para meter0'Parameter1'");
+            output.AssertOutput("Parameters Para meter0Parameter1");
         }
 
         [Test, RequiresDotNet45]
