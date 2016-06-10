@@ -30,7 +30,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             if (File.Exists(attemptOne))
                 return attemptOne;
 
-            var attemptTwo = Path.GetFullPath(Path.Combine("..", "..", "packages", "Octopus.Dependencies.ScriptCS.3.0.1", "runtime", "scriptcs.exe"));
+            var attemptTwo = Path.GetFullPath(Path.Combine("..", "..", "packages", "scriptcs.0.16.1", "tools", "scriptcs.exe"));
             if (File.Exists(attemptTwo))
                 return attemptTwo;
 
