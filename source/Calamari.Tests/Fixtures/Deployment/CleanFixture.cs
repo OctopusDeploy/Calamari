@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             result = Clean("retentionPolicySet1", 3, null);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             Assert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
             Assert.False(fileSystem.FileExists(Path.Combine(packagesDirectory, "Acme.1.0.0.nupkg")));
@@ -75,7 +75,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             result = Clean("retentionPolicySet1", null, 1);
 
-            result.AssertZero();
+            result.AssertSuccess();
 
             Assert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
             Assert.False(fileSystem.FileExists(Path.Combine(packagesDirectory, "Acme.1.0.0.nupkg")));

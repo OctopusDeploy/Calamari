@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Bash
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "print-encoded-variable.sh")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
         }
 
@@ -29,8 +29,21 @@ namespace Calamari.Tests.Fixtures.Bash
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "create-artifact.sh")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void ShouldConsumeParametersWithQuotes()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "parameters.sh"))
+                .Argument("scriptParameters", "\"Para meter0\" 'Para meter1'"));
+
+            output.AssertSuccess();
+            output.AssertOutput("Parameters Para meter0Para meter1'");
         }
 
         [Test]
@@ -53,7 +66,7 @@ namespace Calamari.Tests.Fixtures.Bash
                     .Argument("script", GetFixtureResouce("Scripts", "hello.sh"))
                     .Argument("variables", variablesFile));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput("Hello Paul");
             }
         }

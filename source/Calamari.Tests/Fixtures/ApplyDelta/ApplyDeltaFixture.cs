@@ -63,7 +63,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     .PositionalArgument(basisFile.FilePath)
                     .PositionalArgument(signatureFile.FilePath));
                 
-                signatureResult.AssertZero();
+                signatureResult.AssertSuccess();
                 Assert.That(File.Exists(signatureFile.FilePath));
 
                 using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.1", true)))
@@ -75,11 +75,11 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                         .PositionalArgument(newFile.FilePath)
                         .PositionalArgument(deltaFile.FilePath));
 
-                    deltaResult.AssertZero();
+                    deltaResult.AssertSuccess();
                     Assert.That(File.Exists(deltaFile.FilePath));
 
                     var patchResult = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, NewFileName);
-                    patchResult.AssertZero();
+                    patchResult.AssertSuccess();
                     patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
                         basisFile.Hash, Path.Combine(DownloadPath, NewFileName));
                     patchResult.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name);

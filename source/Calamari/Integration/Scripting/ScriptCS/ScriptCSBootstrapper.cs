@@ -37,12 +37,21 @@ namespace Calamari.Integration.Scripting.ScriptCS
             throw new CommandException(string.Format("ScriptCS.exe was not found at either '{0}' or '{1}'", attemptOne, attemptTwo));
         }
 
-        public static string FormatCommandArguments(string bootstrapFile)
+        public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
         {
+            scriptParameters = RetriveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("-script \"{0}\" -- \"{1}\"", bootstrapFile, encryptionKey);
+            commandArguments.AppendFormat("-script \"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
+        }
+
+        private static string RetriveParameterValues(string scriptParameters)
+        {
+            if (scriptParameters == null) return null;
+            return scriptParameters.Trim()
+                                   .TrimStart('-')
+                                   .Trim();
         }
 
         static bool IsNet45OrNewer()

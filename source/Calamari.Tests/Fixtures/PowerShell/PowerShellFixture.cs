@@ -31,7 +31,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1"))
                     .Argument("variables", variablesFile));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput(expectedLogMessage);
                 output.AssertOutput("Hello!");
             }
@@ -45,8 +45,21 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Hello!");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldConsumeParametersWithQuotes()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "Parameters.ps1"))
+                .Argument("scriptParameters", "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"));
+
+            output.AssertSuccess();
+            output.AssertOutput("Parameters Para meter0Para meter1");
         }
 
         [Test]
@@ -73,7 +86,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "CanCreateArtifact.ps1")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
             //output.ApproveOutput();
         }
@@ -86,7 +99,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "WarningForMissingArtifact.ps1")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
             //output.ApproveOutput();
@@ -100,7 +113,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "CanDotSource.ps1")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Hello!");
         }
 
@@ -114,7 +127,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "CanSetVariable.ps1")), variables);
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
             Assert.AreEqual("World!", variables.Get("TestA"));
         }
@@ -195,7 +208,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                    .Argument("script", GetFixtureResouce("Scripts", "PrintVariables.ps1"))
                    .Argument("variables", variablesFile));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput("V1= ABC");
                 output.AssertOutput("V2= DEF");
                 output.AssertOutput("V3= GHI");
@@ -221,7 +234,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                    .Argument("script", GetFixtureResouce("Scripts", "UseModule.ps1"))
                    .Argument("variables", variablesFile));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput("Hello from module!");
             }
         }
@@ -248,7 +261,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("script", scriptFile)
                     .Argument("variables", variablesFile));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput("Hello #{Octopus.Environment.Name}!");
             }
         }
@@ -276,7 +289,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile)
                     .Flag("substituteVariables"));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput("Substituting variables");
                 output.AssertOutput("Hello Production!");
             }
@@ -301,7 +314,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile)
                     .Flag("substituteVariables"));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput("Extracting package");
                 output.AssertOutput("Substituting variables");
                 output.AssertOutput("OctopusParameter: Production");
@@ -318,7 +331,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Ping.ps1")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Pinging ");
         }
 
@@ -330,7 +343,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts\\Path With '", "PathWithSingleQuote.ps1")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a '");
         }
 
@@ -342,7 +355,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts\\Path With $", "PathWithDollar.ps1")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a $");
         }
 

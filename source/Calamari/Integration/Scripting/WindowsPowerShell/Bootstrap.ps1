@@ -147,7 +147,7 @@ Initialize-ProxySettings
 # -----------------------------------------------------------------
 # Invoke target script
 # -----------------------------------------------------------------
-. '{{TargetScriptFile}}'
+. '{{TargetScriptFile}}' {{ScriptParameters}}
 
 # -----------------------------------------------------------------
 # Ensure we exit with whatever exit code the last exe used

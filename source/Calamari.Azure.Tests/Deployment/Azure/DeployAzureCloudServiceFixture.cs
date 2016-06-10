@@ -63,7 +63,7 @@ namespace Calamari.Azure.Tests.Deployment.Azure
         [Test]
         public void ShouldReturnZero()
         {
-           result.AssertZero(); 
+           result.AssertSuccess(); 
         }
 
         [Test]

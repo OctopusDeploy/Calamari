@@ -47,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldDeployPackage()
         {
             var result = DeployPackage();
-            result.AssertZero();
+            result.AssertSuccess();
 
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
@@ -59,7 +59,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSetExtractionVariable()
         {
             var result = DeployPackage();
-            result.AssertZero();
+            result.AssertSuccess();
             result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(Path.Combine(StagingDirectory, "Acme.Web", "1.0.0")));
         }
 
@@ -68,7 +68,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables[SpecialVariables.Package.CustomInstallationDirectory] = CustomDirectory;
             var result = DeployPackage();
-            result.AssertZero();
+            result.AssertSuccess();
             result.AssertOutput("Copying package contents to");
             result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(CustomDirectory));
         }
@@ -252,11 +252,11 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
 
             var result = DeployPackage(deploymentType);
-            result.AssertZero();
+            result.AssertSuccess();
             result.AssertOutput("The package has been installed to");
 
             result = DeployPackage(deploymentType);
-            result.AssertZero();
+            result.AssertSuccess();
             result.AssertOutput("The package has already been installed on this machine");
         }
 
@@ -269,11 +269,11 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
 
             var result = DeployPackage(DeploymentType.Tar);
-            result.AssertZero();
+            result.AssertSuccess();
             result.AssertOutput("The package has been installed to");
 
             result = DeployPackage(DeploymentType.Nupkg);
-            result.AssertZero();
+            result.AssertSuccess();
             result.AssertOutput("The package has already been installed on this machine");
         }
 
@@ -300,7 +300,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                             .Argument("variables", variablesFile.FilePath));
                     }
 
-                    result.AssertZero();
+                    result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
                     result.AssertOutput("Extracted 12 files");
 

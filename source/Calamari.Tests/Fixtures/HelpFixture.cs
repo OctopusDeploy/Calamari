@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures
         public void HelpShouldPrintHelp()
         {
             var output = Invoke(Calamari().Action("help"));
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Usage: Calamari");
         }
 
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures
         public void HelpOnCommandShouldPrintHelp()
         {
             var output = Invoke(Calamari().Action("help").Argument("run-script"));
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Usage: Calamari run-script");
         }
 
@@ -43,7 +43,7 @@ namespace Calamari.Tests.Fixtures
         public void QuestionMarkShouldPrintHelp()
         {
             var output = Invoke(Calamari().Action("-?"));
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("Usage: Calamari");
         }
     }

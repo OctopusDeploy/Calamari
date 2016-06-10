@@ -3,7 +3,7 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Tests.Helpers
 {
-    public static class TestEnvironment
+    public static class TestEnvironment 
     {
         public static readonly string AssemblyLocalPath = typeof(TestEnvironment).Assembly.FullLocalPath();
         public static readonly string CurrentWorkingDirectory = Path.GetDirectoryName(AssemblyLocalPath);

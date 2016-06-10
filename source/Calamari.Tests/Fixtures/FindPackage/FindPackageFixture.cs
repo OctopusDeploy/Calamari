@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
             {
                 var result = FindPackages(packageId, packageVersion, acmeWeb.Hash);
 
-                result.AssertZero();
+                result.AssertSuccess();
                 result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId, packageVersion, acmeWeb.Hash);
                 result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
                 result.AssertOutput("No earlier packages for {0} has been uploaded", packageId);
@@ -80,7 +80,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 {
                     var result = FindPackages(packageId, newpackageVersion, newAcmeWeb.Hash);
 
-                    result.AssertZero();
+                    result.AssertSuccess();
                     result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId, newpackageVersion,
                         newAcmeWeb.Hash);
                     result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
@@ -117,7 +117,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 {
                     var result = FindPackages(packageId, newpackageVersion, newAcmeWeb.Hash);
 
-                    result.AssertZero();
+                    result.AssertSuccess();
                     result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId, newpackageVersion,
                         newAcmeWeb.Hash);
                     result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
@@ -147,7 +147,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
                 var result = FindPackages(packageId, packageVersion, acmeWeb.Hash);
 
-                result.AssertZero();
+                result.AssertSuccess();
                 result.AssertServiceMessage(
                     ServiceMessageNames.CalamariFoundPackage.Name,
                     Is.True,
