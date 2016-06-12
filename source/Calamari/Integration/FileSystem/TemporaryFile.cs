@@ -12,6 +12,7 @@ namespace Calamari.Integration.FileSystem
         public TemporaryFile(string filePath)
         {
             this.filePath = filePath;
+            Console.WriteLine(filePath);
         }
 
         public string DirectoryPath
@@ -48,19 +49,19 @@ namespace Calamari.Integration.FileSystem
         }
         public void Dispose()
         {
-            for (var i = 0; i < 10; i++)
-            {
-                try
-                {
-                    File.Delete(filePath);
-                    if (!File.Exists(filePath))
-                        return;
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(1000);
-                }
-            }
+            //for (var i = 0; i < 10; i++)
+            //{
+            //    try
+            //    {
+            //        File.Delete(filePath);
+            //        if (!File.Exists(filePath))
+            //            return;
+            //    }
+            //    catch (Exception)
+            //    {
+            //        Thread.Sleep(1000);
+            //    }
+            //}
         }
     }
 }
