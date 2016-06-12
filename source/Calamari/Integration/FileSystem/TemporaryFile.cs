@@ -8,13 +8,10 @@ namespace Calamari.Integration.FileSystem
     public class TemporaryFile : IDisposable
     {
         private readonly string filePath;
-        private readonly bool dispose;
 
-
-        public TemporaryFile(string filePath, bool dispose = true)
+        public TemporaryFile(string filePath)
         {
             this.filePath = filePath;
-            this.dispose = dispose;
             Console.WriteLine(filePath);
         }
 
@@ -52,7 +49,6 @@ namespace Calamari.Integration.FileSystem
         }
         public void Dispose()
         {
-            if (!dispose) return;
             for (var i = 0; i < 10; i++)
             {
                 try
