@@ -20,8 +20,8 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var boostrapFile = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory);
             var arguments = ScriptCSBootstrapper.FormatCommandArguments(boostrapFile, script.Parameters);
 
-            using (new TemporaryFile(configurationFile, false))
-            using (new TemporaryFile(boostrapFile, false))
+            using (new TemporaryFile(configurationFile))
+            using (new TemporaryFile(boostrapFile))
             {
                 return commandLineRunner.Execute(new CommandLineInvocation(executable, arguments, workingDirectory));
             }
