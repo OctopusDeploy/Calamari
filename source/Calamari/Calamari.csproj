@@ -220,6 +220,8 @@
     <Compile Include="Integration\Scripting\Script.cs" />
     <Compile Include="Integration\Scripting\FSharp\FSharpBootstrapper.cs" />
     <Compile Include="Integration\Scripting\FSharp\FSharpEngine.cs" />
+    <Compile Include="Integration\Scripting\ScriptCS\MonoVersionCanNotBeDeterminedException.cs" />
+    <Compile Include="Integration\Scripting\ScriptCS\ScriptingEnvironment.cs" />
     <Compile Include="Integration\Scripting\ScriptEngineRegistry.cs" />
     <Compile Include="Integration\Scripting\ScriptType.cs" />
     <Compile Include="Util\AssemblyExtensions.cs" />

@@ -151,6 +151,7 @@
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
     <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
+    <Compile Include="Fixtures\ScriptCS\RequiresMono4Attribute.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
     <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
