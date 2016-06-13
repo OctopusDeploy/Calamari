@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.ServiceMessages
 {
-    [TestFixture]
+    [TestFixture] 
     public class ServiceMessageParserFixture
     {
         ServiceMessageParser parser;
