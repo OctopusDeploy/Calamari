@@ -12,7 +12,6 @@ namespace Calamari.Integration.FileSystem
         public TemporaryFile(string filePath)
         {
             this.filePath = filePath;
-            Console.WriteLine(filePath);
         }
 
         public string DirectoryPath
