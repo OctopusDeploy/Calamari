@@ -149,6 +149,7 @@
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
+    <Compile Include="Fixtures\ScriptCS\RequiresMono4Attribute.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />

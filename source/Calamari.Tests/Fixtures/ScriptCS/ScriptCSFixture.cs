@@ -9,7 +9,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
     [TestFixture]
     public class ScriptCSFixture : CalamariFixture
     {
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldCreateArtifact()
         {
             var output = Invoke(Calamari()
@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();

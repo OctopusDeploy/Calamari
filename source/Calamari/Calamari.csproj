@@ -217,6 +217,8 @@
     <Compile Include="Integration\Scripting\FileExtensionAttribute.cs" />
     <Compile Include="Integration\Scripting\IScriptEngine.cs" />
     <Compile Include="Integration\Scripting\CombinedScriptEngine.cs" />
+    <Compile Include="Integration\Scripting\ScriptCS\MonoVersionCanNotBeDeterminedException.cs" />
+    <Compile Include="Integration\Scripting\ScriptCS\ScriptingEnvironment.cs" />
     <Compile Include="Integration\Scripting\Script.cs" />
     <Compile Include="Integration\Scripting\ScriptEngineRegistry.cs" />
     <Compile Include="Integration\Scripting\ScriptType.cs" />
