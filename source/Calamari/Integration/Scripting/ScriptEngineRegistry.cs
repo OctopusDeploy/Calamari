@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Calamari.Integration.Scripting.Bash;
+using Calamari.Integration.Scripting.FSharp;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 
@@ -11,7 +12,8 @@ namespace Calamari.Integration.Scripting
         {
             {ScriptType.Powershell, new PowerShellScriptEngine() },
             {ScriptType.ScriptCS, new ScriptCSScriptEngine() },
-            {ScriptType.Bash, new BashScriptEngine() }
+            {ScriptType.Bash, new BashScriptEngine()},
+            {ScriptType.FSharp, new FSharpEngine()}
         }; 
 
         public static readonly ScriptEngineRegistry Instance = new ScriptEngineRegistry();

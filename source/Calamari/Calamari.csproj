@@ -218,6 +218,8 @@
     <Compile Include="Integration\Scripting\IScriptEngine.cs" />
     <Compile Include="Integration\Scripting\CombinedScriptEngine.cs" />
     <Compile Include="Integration\Scripting\Script.cs" />
+    <Compile Include="Integration\Scripting\FSharp\FSharpBootstrapper.cs" />
+    <Compile Include="Integration\Scripting\FSharp\FSharpEngine.cs" />
     <Compile Include="Integration\Scripting\ScriptEngineRegistry.cs" />
     <Compile Include="Integration\Scripting\ScriptType.cs" />
     <Compile Include="Util\AssemblyExtensions.cs" />
@@ -301,6 +303,7 @@
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
     <None Include="app.config" />
+    <EmbeddedResource Include="Integration\Scripting\FSharp\Bootstrap.fsx" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

@@ -5,53 +5,43 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 
-namespace Calamari.Integration.Scripting.ScriptCS
+namespace Calamari.Integration.Scripting.FSharp
 {
-    public static class ScriptCSBootstrapper
+    public static class FSharpBootstrapper
     {
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
 
-        static ScriptCSBootstrapper()
+        static FSharpBootstrapper()
         {
-            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(ScriptCSBootstrapper).Namespace + ".Bootstrap.csx");
+            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(FSharpBootstrapper).Namespace + ".Bootstrap.fsx");
         }
 
         public static string FindExecutable()
         {
             if (!IsNet45OrNewer())
-                throw new CommandException("ScriptCS scripts require the Roslyn CTP, which requires .NET framework 4.5");
+                throw new CommandException("FSharp scripts require requires .NET framework 4.5");
 
-            var myPath = typeof(ScriptCSScriptEngine).Assembly.Location;
+            var myPath = typeof(FSharpEngine).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
 
-            var attemptOne = Path.GetFullPath(Path.Combine(parent, "ScriptCS", "scriptcs.exe"));
+            var attemptOne = Path.GetFullPath(Path.Combine(parent, "FSharp", "fsi.exe"));
             if (File.Exists(attemptOne))
                 return attemptOne;
 
-            var attemptTwo = Path.GetFullPath(Path.Combine("..", "..", "packages", "Octopus.Dependencies.ScriptCS.3.0.1", "runtime", "scriptcs.exe"));
-            if (File.Exists(attemptTwo))
-                return attemptTwo;
+            var attemptTwo = Path.GetFullPath(Path.Combine("..", "..", "packages", "FSharp.Compiler.Tools.4.0.0.1", "tools", "fsi.exe"));
+            if (File.Exists(attemptTwo)) return attemptTwo;
 
-            throw new CommandException(string.Format("ScriptCS.exe was not found at either '{0}' or '{1}'", attemptOne, attemptTwo));
+            throw new CommandException(string.Format("fsi.exe was not found at either '{0}' or '{1}'", attemptOne, attemptTwo));
         }
 
         public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
         {
-            scriptParameters = RetriveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("-script \"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
+            commandArguments.AppendFormat("\"{0}\" {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
-        }
-
-        private static string RetriveParameterValues(string scriptParameters)
-        {
-            if (scriptParameters == null) return null;
-            return scriptParameters.Trim()
-                                   .TrimStart('-')
-                                   .Trim();
         }
 
         static bool IsNet45OrNewer()
@@ -77,7 +67,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
         public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
         {
-            var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
+            var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".fsx");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("{{VariableDeclarations}}", WriteVariableDictionary(variables));

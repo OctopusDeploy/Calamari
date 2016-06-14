@@ -149,6 +149,7 @@
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
+    <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
@@ -443,6 +444,18 @@
     <None Include="Fixtures\PowerShell\Scripts\PrintVariables.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Content Include="Fixtures\FSharp\Scripts\CreateArtifact.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\FSharp\Scripts\Hello.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\FSharp\Scripts\Parameters.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\FSharp\Scripts\PrintEncodedVariable.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="Fixtures\ScriptCS\Scripts\CreateArtifact.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
