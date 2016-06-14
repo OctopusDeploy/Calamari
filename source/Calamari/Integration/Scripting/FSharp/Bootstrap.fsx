@@ -1,4 +1,6 @@
-﻿#r "System.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+﻿module Bootstrap
+
+#r "System.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
 
 open System
 open System.Collections.Generic
@@ -7,97 +9,37 @@ open System.Text
 open System.Net
 open System.Security.Cryptography
 
-(*public static class Octopus
-{
-    public static OctopusParametersDictionary Parameters { get; private set; }
-	
-	static Octopus() 
-	{
-		InitializeDefaultProxy();
-	}
+type OctopusParametersDictionary(values : IDictionary<string, string>, key) = 
+    inherit System.Collections.Generic.Dictionary<string,string>(values, System.StringComparer.OrdinalIgnoreCase)
+    member this.Key =  Convert.FromBase64String(key)
+    member this.DecryptString(encrypted, iv) =
+        use algorithm = new AesCryptoServiceProvider(Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, KeySize = 128, BlockSize = 128, Key = this.Key, IV =  Convert.FromBase64String(iv))
+        use dec = algorithm.CreateDecryptor()
+        use ms = new MemoryStream(Convert.FromBase64String(encrypted))
+        use cs = new CryptoStream(ms, dec, CryptoStreamMode.Read)
+        use sr = new StreamReader(cs, Encoding.UTF8)
+        sr.ReadToEnd();
 
-	public static void Initialize(string password) {
-		if(Parameters != null) {
-			throw new Exception("Octopus can only be initialized once.");
-		}
-		Parameters = new OctopusParametersDictionary(password);
-	}
+type Octopus(password) =
+    do  
+        let proxyUsername = Environment.GetEnvironmentVariable("TentacleProxyUsername")
+        let proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword")
+        WebRequest.DefaultWebProxy.Credentials = if System.String.IsNullOrWhiteSpace(proxyUsername) then CredentialCache.DefaultCredentials else (new NetworkCredential(proxyUsername, proxyPassword) :> ICredentials)
+        |> ignore
+    member this.Parameters = new OctopusParametersDictionary(password)
+    member this.EncodeServiceMessageValue (value:string) = System.Text.Encoding.UTF8.GetBytes(value) |> Convert.ToBase64String
+    member this.SetVariable name value = 
+        let encodedName = this.EncodeServiceMessageValue name
+        let encodedValue = this.EncodeServiceMessageValue value
+        //Not sure why, but when we call [key] = value for a key that does not exist then we get KeyNotFoundException
+        if this.Parameters.ContainsKey encodedName then this.Parameters.[encodedName] = encodedValue |> ignore else this.Parameters.Add(encodedName, encodedValue)
+        printfn "##octopus[setVariable name='%s' value='%s']" encodedName encodedValue
+    member this.CreateArtifact path fileName =
+        let finalFileName = match fileName with
+                            | Some value -> value |> this.EncodeServiceMessageValue
+                            | None -> System.IO.Path.GetFileName(path) |> this.EncodeServiceMessageValue
+        let length = (if System.IO.File.Exists(path) then (new System.IO.FileInfo(path)).Length.ToString() else "0") |> this.EncodeServiceMessageValue
+        let finalPath = System.IO.Path.GetFullPath(path) |> this.EncodeServiceMessageValue
+        printfn "##octopus[createArtifact path='%s' name='%s' length='%s']" finalPath finalFileName length
 
-	public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string,string>
-	{
-		private byte[] Key { get;set; }
-
-		public OctopusParametersDictionary(string key) : base(System.StringComparer.OrdinalIgnoreCase)
-		{
-			Key = Convert.FromBase64String(key);
-{{VariableDeclarations}}
-		}
-        
-     	public string DecryptString(string encrypted, string iv)
-        {
-            using (var algorithm = new AesCryptoServiceProvider() {
-                Mode = CipherMode.CBC,
-                Padding = PaddingMode.PKCS7,
-                KeySize = 128,
-                BlockSize = 128 })
-			{
-				algorithm.Key = Key;
-				algorithm.IV =  Convert.FromBase64String(iv);
-				using (var dec = algorithm.CreateDecryptor())
-				using (var ms = new MemoryStream(Convert.FromBase64String(encrypted)))
-				using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
-				using (var sr = new StreamReader(cs, Encoding.UTF8))
-				{
-					return sr.ReadToEnd();
-				}
-			}
-        }
-	}
-
-	private static string EncodeServiceMessageValue(string value)
-	{
-		var valueBytes = System.Text.Encoding.UTF8.GetBytes(value);
-		return Convert.ToBase64String(valueBytes);
-	}
-
-	public static void SetVariable(string name, string value) 
-	{ 	
-		name = EncodeServiceMessageValue(name);
-		value = EncodeServiceMessageValue(value);
-
-		Parameters[name] = value;
-
-		Console.WriteLine("##octopus[setVariable name='{0}' value='{1}']", name, value);
-	}
-
-	public static void CreateArtifact(string path, string fileName = null) 
-	{
-		if(fileName == null){
-			fileName = System.IO.Path.GetFileName(path); 
-		} 
-
-		fileName = EncodeServiceMessageValue(fileName);	
-
-		var length = System.IO.File.Exists(path) ? new System.IO.FileInfo(path).Length.ToString() : "0";
-		length = EncodeServiceMessageValue(length);
-
-		path = System.IO.Path.GetFullPath(path);
-		path = EncodeServiceMessageValue(path);
-
-
-		Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", path, fileName, length);
-	}
-
-	public static void InitializeDefaultProxy() 
-	{
-		var proxyUsername = Environment.GetEnvironmentVariable("TentacleProxyUsername");
-        var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
-
-        WebRequest.DefaultWebProxy.Credentials = string.IsNullOrWhiteSpace(proxyUsername) 
-            ? CredentialCache.DefaultCredentials 
-            : new NetworkCredential(proxyUsername, proxyPassword);
-	}
-}
-
-Octopus.Initialize(Env.ScriptArgs[Env.ScriptArgs.Count - 1]);
-*)
+let Octopus = new Octopus(new Dictionary<string, string>(dict[ {{VariableDeclarations}} ]), fsi.CommandLineArgs.[fsi.CommandLineArgs.Length - 1])

@@ -57,6 +57,7 @@ namespace Calamari.Integration.Scripting.FSharp
             using (var writer = new StreamWriter(bootstrapFile, false, Encoding.UTF8))
             {
                 writer.WriteLine("#load \"" + configurationFile.Replace("\\", "\\\\") + "\"");
+                writer.WriteLine("open Bootstrap");
                 writer.WriteLine("#load \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
                 writer.Flush();
             }
@@ -90,7 +91,7 @@ namespace Calamari.Integration.Scripting.FSharp
                 var variableValue = variables.IsSensitive(variable)
                     ? EncryptVariable(variables.Get(variable))
                     : EncodeValue(variables.Get(variable));
-                builder.Append("\t\t\tthis[").Append(EncodeValue(variable)).Append("] = ").Append(variableValue).AppendLine(";");
+                builder.AppendFormat("({0}, {1});", EncodeValue(variable), variableValue);
             }
             return builder.ToString();
         }

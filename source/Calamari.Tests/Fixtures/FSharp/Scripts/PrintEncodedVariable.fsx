@@ -1,4 +1,4 @@
 ﻿open System
 
-//Octopus.SetVariable("Donkey","Kong");
+Octopus.SetVariable "Donkey" "Kong"
 
