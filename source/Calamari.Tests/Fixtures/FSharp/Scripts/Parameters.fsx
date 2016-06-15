@@ -1,3 +1,3 @@
 ﻿open System
 
-printfn "Parameters %s-%s" fsi.CommandLineArgs.[1] fsi.CommandLineArgs.[2]
+printfn "Parameters %s-%s" fsi.CommandLineArgs.[1] fsi.CommandLineArgs.[2] 
