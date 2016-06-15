@@ -316,7 +316,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                     result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                    result.AssertOutput("Extracted 12 files");
+                    result.AssertOutput("Extracted 14 files");
 
                     lock (extractionDirectories)
                     {
