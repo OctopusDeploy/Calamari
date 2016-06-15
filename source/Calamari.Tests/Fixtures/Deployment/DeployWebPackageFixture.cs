@@ -53,8 +53,6 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertOutput("Extracted 14 files");
             result.AssertOutput("Hello from Deploy.ps1");
-            result.AssertOutput("Hello from Deploy.fsx");
-            result.AssertOutput("Hello from Deploy.csx");
         }
 
         [Test]
@@ -65,8 +63,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertSuccess();
 
             result.AssertOutput("Hello from Deploy.sh");
-            result.AssertOutput("Hello from Deploy.fsx");
-            result.AssertOutput("Hello from Deploy.csx");
         }
 
         [Test]
@@ -140,6 +136,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
             result.AssertOutput("I have failed! DeployFailed.ps1");
+            result.AssertOutput("I have failed! DeployFailed.fsx");
+            result.AssertOutput("I have failed! DeployFailed.csx");
         }
 
         [Test]

@@ -10,7 +10,7 @@ namespace Calamari.Tests.Fixtures.FSharp
     [TestFixture]
     public class FSharpFixture : CalamariFixture
     {
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldCreateArtifact()
         {
             var output = Invoke(Calamari()
@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();
@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             }
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldConsumeParametersWithQuotes()
         {
             var output = Invoke(Calamari()

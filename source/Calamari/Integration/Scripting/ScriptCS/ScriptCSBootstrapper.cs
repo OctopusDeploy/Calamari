@@ -20,7 +20,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
         public static string FindExecutable()
         {
-            if (!IsNet45OrNewer())
+            if (!ScriptingEnvironment.IsNet45OrNewer())
                 throw new CommandException("ScriptCS scripts require the Roslyn CTP, which requires .NET framework 4.5");
 
             var myPath = typeof(ScriptCSScriptEngine).Assembly.Location;
@@ -52,12 +52,6 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return scriptParameters.Trim()
                                    .TrimStart('-')
                                    .Trim();
-        }
-
-        static bool IsNet45OrNewer()
-        {
-            // Class "ReflectionContext" exists from .NET 4.5 onwards.
-            return Type.GetType("System.Reflection.ReflectionContext", false) != null;
         }
 
         public static string PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory)
