@@ -1,8 +1,9 @@
 using System;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Calamari.Integration.Scripting.ScriptCS;
 
-namespace Calamari.Integration.Scripting.ScriptCS
+namespace Calamari.Integration.Scripting
 {
     public class ScriptingEnvironment
     {

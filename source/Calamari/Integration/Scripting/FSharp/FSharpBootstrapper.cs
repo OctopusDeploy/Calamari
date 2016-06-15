@@ -20,7 +20,7 @@ namespace Calamari.Integration.Scripting.FSharp
 
         public static string FindExecutable()
         {
-            if (!IsNet45OrNewer())
+            if (!ScriptingEnvironment.IsNet45OrNewer())
                 throw new CommandException("FSharp scripts require requires .NET framework 4.5");
 
             var myPath = typeof(FSharpEngine).Assembly.Location;
@@ -42,12 +42,6 @@ namespace Calamari.Integration.Scripting.FSharp
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("\"{0}\" {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
-        }
-
-        static bool IsNet45OrNewer()
-        {
-            // Class "ReflectionContext" exists from .NET 4.5 onwards.
-            return Type.GetType("System.Reflection.ReflectionContext", false) != null;
         }
 
         public static string PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory)
