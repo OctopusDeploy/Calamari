@@ -19,8 +19,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     {
         // Fixture Depedencies
         TemporaryFile nupkgFile;
-        TemporaryFile tarFile;
-     
+        TemporaryFile tarFile;     
 
         [SetUp]
         public override void SetUp()
@@ -44,15 +43,30 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void ShouldDeployPackage()
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldDeployPackageOnWindows()
         {
             var result = DeployPackage();
             result.AssertSuccess();
 
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
-            result.AssertOutput("Extracted 12 files");
-            result.AssertOutput("Bonjour from PreDeploy");
+            result.AssertOutput("Extracted 14 files");
+            result.AssertOutput("Hello from Deploy.ps1");
+            result.AssertOutput("Hello from Deploy.fsx");
+            result.AssertOutput("Hello from Deploy.csx");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void ShouldDeployPackageOnNix()
+        {
+            var result = DeployPackage();
+            result.AssertSuccess();
+
+            result.AssertOutput("Hello from Deploy.sh");
+            result.AssertOutput("Hello from Deploy.fsx");
+            result.AssertOutput("Hello from Deploy.csx");
         }
 
         [Test]
