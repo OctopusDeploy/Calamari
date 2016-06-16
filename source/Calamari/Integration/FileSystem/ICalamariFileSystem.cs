@@ -21,6 +21,7 @@ namespace Calamari.Integration.FileSystem
         IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns);
         long GetFileSize(string path);
         string ReadFile(string path);
+        string ReadFile(string path, out Encoding encoding);
         void AppendToFile(string path, string contents);
         void OverwriteFile(string path, string contents);
         void OverwriteFile(string path, string contents, Encoding encoding);
@@ -42,7 +43,6 @@ namespace Calamari.Integration.FileSystem
         void WriteAllBytes(string filePath, byte[] data);
         string RemoveInvalidFileNameChars(string path);
         void MoveFile(string sourceFile, string destinationFile);
-        Encoding GetFileEncoding(string path);
         string GetRelativePath(string fromFile, string toFile);
     }
 }

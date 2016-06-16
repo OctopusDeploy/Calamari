@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.csx")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "CreateArtifact.csx")));
 
-            output.AssertZero();
+            output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact");
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
@@ -52,9 +52,33 @@ namespace Calamari.Tests.Fixtures.ScriptCS
                     .Argument("script", GetFixtureResouce("Scripts", "Hello.csx"))
                     .Argument("variables", variablesFile));
 
-                output.AssertZero();
+                output.AssertSuccess();
                 output.AssertOutput("Hello Paul");
             }
+        }
+
+        [Test, RequiresDotNet45]
+        public void ShouldConsumeParametersWithQuotes()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "Parameters.csx"))
+                .Argument("scriptParameters", "-- \"Para meter0\" Parameter1")); ;
+
+            output.AssertSuccess();
+            output.AssertOutput("Parameters Para meter0Parameter1");
+        }
+
+        [Test, RequiresDotNet45]
+        public void ShouldConsumeParametersWithoutParametersPrefix()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "Parameters.csx"))
+                .Argument("scriptParameters", "Parameter0 Parameter1")); ;
+
+            output.AssertSuccess();
+            output.AssertOutput("Parameters Parameter0Parameter1");
         }
     }
 }

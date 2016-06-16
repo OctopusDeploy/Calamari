@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using ApprovalTests;
 using Calamari.Integration.ServiceMessages;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -27,7 +28,7 @@ namespace Calamari.Tests.Helpers
 
         public CaptureCommandOutput CapturedOutput { get { return captured; } }
 
-        public void AssertZero()
+        public void AssertSuccess()
         {
             var capturedErrors = string.Join(Environment.NewLine, captured.Errors);
             Assert.That(ExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0{0}{0}Output:{0}{1}", Environment.NewLine, capturedErrors));
@@ -151,6 +152,11 @@ namespace Calamari.Tests.Helpers
         {
             var allOutput = string.Join(Environment.NewLine, captured.Errors);
             Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+        }
+
+        public void ApproveOutput()
+        {
+            Approvals.Verify(captured.ToApprovalString());
         }
     }
 }

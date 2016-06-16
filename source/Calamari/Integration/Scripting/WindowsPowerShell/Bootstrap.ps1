@@ -33,6 +33,10 @@ function Set-OctopusVariable([string]$name, [string]$value)
 
 function New-OctopusArtifact([string]$path, [string]$name="""") 
 { 	
+    if ((Test-Path $path) -eq $false) {
+        Write-Verbose "There is no file at '$path' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
+    }
+
     if ($name -eq """") 
     {
         $name = [System.IO.Path]::GetFileName($path)
@@ -166,7 +170,7 @@ Initialize-ProxySettings
 # -----------------------------------------------------------------
 # Invoke target script
 # -----------------------------------------------------------------
-. '{{TargetScriptFile}}'
+. '{{TargetScriptFile}}' {{ScriptParameters}}
 
 # -----------------------------------------------------------------
 # Ensure we exit with whatever exit code the last exe used

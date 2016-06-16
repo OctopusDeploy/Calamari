@@ -28,10 +28,10 @@ namespace Calamari.Azure.Tests.PowerShell
                 var expectedCertFile = Path.Combine(variablesFile.DirectoryPath, "azure_certificate.pfx");
 
                 scriptEngine
-                    .When(engine => engine.Execute(Arg.Any<string>(), variables, commandLineRunner))
+                    .When(engine => engine.Execute(new Script(Arg.Any<string>()), variables, commandLineRunner))
                     .Do(callInfo => Assert.True(File.Exists(expectedCertFile)));
 
-                powershellContext.ExecuteScript(scriptEngine, variablesFile.FilePath, variables, commandLineRunner);
+                powershellContext.ExecuteScript(scriptEngine, new Script(variablesFile.FilePath), variables, commandLineRunner);
 
                 Assert.False(File.Exists(expectedCertFile));
             }

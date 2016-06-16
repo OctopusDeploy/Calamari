@@ -183,3 +183,5 @@ FakesAssemblies/
 TestResults.xml
 source/Octopus.Deploy.Scripts.Tests/Tests/Variables.vars
 *.orig
+
+*.received.*

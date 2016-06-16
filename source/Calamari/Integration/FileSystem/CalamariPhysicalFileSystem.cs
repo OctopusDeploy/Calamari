@@ -210,7 +210,46 @@ namespace Calamari.Integration.FileSystem
 
         public string ReadFile(string path)
         {
-            return File.ReadAllText(path);
+            Encoding encoding;
+            return ReadFile(path, out encoding);
+        }
+
+        //Read a file and detect different encodings. Based on answer from http://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp
+        //but don't try to handle UTF16 without BOM or non-default ANSI codepage. We also take utf8 if all bytes are below 0x80 rather than using Default
+        public string ReadFile(string filename, out Encoding encoding)
+        {
+            var b = File.ReadAllBytes(filename);
+
+            // BOM/signature exists (sourced from http://www.unicode.org/faq/utf_bom.html#bom4)
+            if (b.Length >= 4 && b[0] == 0x00 && b[1] == 0x00 && b[2] == 0xFE && b[3] == 0xFF) { encoding = Encoding.GetEncoding("utf-32BE"); return Encoding.GetEncoding("utf-32BE").GetString(b, 4, b.Length - 4); }  // UTF-32, big-endian 
+            else if (b.Length >= 4 && b[0] == 0xFF && b[1] == 0xFE && b[2] == 0x00 && b[3] == 0x00) { encoding = Encoding.UTF32; return Encoding.UTF32.GetString(b, 4, b.Length - 4); }    // UTF-32, little-endian
+            else if (b.Length >= 2 && b[0] == 0xFE && b[1] == 0xFF) { encoding = Encoding.BigEndianUnicode; return Encoding.BigEndianUnicode.GetString(b, 2, b.Length - 2); }     // UTF-16, big-endian
+            else if (b.Length >= 2 && b[0] == 0xFF && b[1] == 0xFE) { encoding = Encoding.Unicode; return Encoding.Unicode.GetString(b, 2, b.Length - 2); }            // UTF-16, little-endian
+            else if (b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) { encoding = Encoding.UTF8; return Encoding.UTF8.GetString(b, 3, b.Length - 3); }  // UTF-8
+            else if (b.Length >= 3 && b[0] == 0x2b && b[1] == 0x2f && b[2] == 0x76) { encoding = Encoding.UTF7; return Encoding.UTF7.GetString(b, 3, b.Length - 3);  } // UTF-7
+
+            // Some text files are encoded in UTF8, but have no BOM/signature. Hence
+            // the below manually checks for a UTF8 pattern. This code is based off
+            // the top answer at: http://stackoverflow.com/questions/6555015/check-for-invalid-utf8
+            var i = 0;
+            var utf8 = false;
+            while (i < b.Length - 4)
+            {
+                if (b[i] <= 0x7F) { i += 1; utf8 = true; continue; } // If all characters are below 0x80, then it is valid UTF8.
+                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0) { i += 2; utf8 = true; continue; }
+                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0) { i += 3; utf8 = true; continue; }
+                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0) { i += 4; utf8 = true; continue; }
+                utf8 = false; break;
+            }
+            if (utf8 == true)
+            {
+                encoding = Encoding.UTF8;
+                return Encoding.UTF8.GetString(b);
+            }
+
+            // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage! 
+            encoding = Encoding.Default;
+            return Encoding.Default.GetString(b);
         }
 
         public byte[] ReadAllBytes(string path)
@@ -369,15 +408,6 @@ namespace Calamari.Integration.FileSystem
         public void MoveFile(string sourceFile, string destinationFile)
         {
             File.Move(sourceFile, destinationFile);
-        }
-
-        public Encoding GetFileEncoding(string path)
-        {
-            using (var reader = new StreamReader(path, Encoding.Default, true))
-            {
-                reader.Peek();
-                return reader.CurrentEncoding;
-            }
         }
 
         public void EnsureDirectoryExists(string directoryPath)

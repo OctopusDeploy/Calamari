@@ -36,7 +36,6 @@ namespace Calamari.Integration.Scripting.Bash
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariableSwitchConditions(variables)));
 
-
             using (var writer = new StreamWriter(configurationFile, false, Encoding.ASCII))
             {
                 writer.Write(builder.Replace(WindowsNewLine, Environment.NewLine));
@@ -92,22 +91,21 @@ namespace Calamari.Integration.Scripting.Bash
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static string PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory)
-        {
-            
-            var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
+        public static string PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory)
+        {            
+            var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
 
             using (var writer = new StreamWriter(bootstrapFile, false, Encoding.ASCII))
             {
                 writer.NewLine = Environment.NewLine;
                 writer.WriteLine("#!/bin/bash");
                 writer.WriteLine("source \"" + configurationFile.Replace("\\", "\\\\") + "\"");
-                writer.WriteLine("source \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
+                writer.WriteLine("source \"" + script.File.Replace("\\", "\\\\") + "\" " + script.Parameters);
                 writer.Flush();
             }
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
-            EnsureValidUnixFile(scriptFilePath);
+            EnsureValidUnixFile(script.File);
             return bootstrapFile;
         }
     }

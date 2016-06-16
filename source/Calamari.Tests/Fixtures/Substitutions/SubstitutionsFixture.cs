@@ -37,8 +37,10 @@ namespace Calamari.Tests.Fixtures.Substitutions
             variables["LocalCacheFolderName"] = "SpongeBob";
 
             var result = PerformTest(filePath, variables);
-            
-            Assert.AreEqual(Encoding.Unicode, FileSystem.GetFileEncoding(filePath));
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.Unicode, encoding);
             Assert.AreEqual(Encoding.Unicode, result.Encoding);
             Assert.True(Regex.Match(result.Text, "\\bLocalCacheFolderName=SpongeBob\\b").Success);
         }
@@ -52,8 +54,10 @@ namespace Calamari.Tests.Fixtures.Substitutions
             variables[SpecialVariables.Package.SubstituteInFilesOutputEncoding] = "utf-8";
 
             var encoding = (Encoding)PerformTest(filePath, variables).Encoding;
-            
-            Assert.AreEqual(Encoding.Unicode, FileSystem.GetFileEncoding(filePath));
+
+            Encoding fileEncoding;
+            FileSystem.ReadFile(filePath, out fileEncoding);
+            Assert.AreEqual(Encoding.Unicode, fileEncoding);
             Assert.AreEqual(Encoding.UTF8, encoding);
         }
 
@@ -67,8 +71,40 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             var encoding = (Encoding)PerformTest(filePath, variables).Encoding;
 
-            Assert.AreEqual(Encoding.Unicode, FileSystem.GetFileEncoding(filePath));
+            Encoding fileEncoding;
+            FileSystem.ReadFile(filePath, out fileEncoding);
+            Assert.AreEqual(Encoding.Unicode, fileEncoding);
             Assert.AreEqual(Encoding.Unicode, encoding);
+        }
+
+        [Test]
+        public void ShouldDetectUTF8WithNoBom()
+        {
+            var filePath = GetFixtureResouce("Samples", "UTF8.txt");
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.UTF8, encoding);
+        }
+
+        [Test]
+        public void ShouldDetectUTF8WithBom()
+        {
+            var filePath = GetFixtureResouce("Samples", "UTF8BOM.txt");
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.UTF8, encoding);
+        }
+
+        [Test]
+        public void ShouldFallBackToDefaultCodePage()
+        {
+            var filePath = GetFixtureResouce("Samples", "ANSI.txt");
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.Default, encoding);
         }
 
         dynamic PerformTest(string sampleFile, VariableDictionary variables)
@@ -78,9 +114,11 @@ namespace Calamari.Tests.Fixtures.Substitutions
             {
                 var substituter = new FileSubstituter(FileSystem);
                 substituter.PerformSubstitution(sampleFile, variables, temp);
+                Encoding encoding;
+                var text = FileSystem.ReadFile(temp, out encoding);
                 return new {
-                    Text = FileSystem.ReadFile(temp),
-                    Encoding = FileSystem.GetFileEncoding(temp)
+                    Text = text,
+                    Encoding = encoding
                 };
             }
         }

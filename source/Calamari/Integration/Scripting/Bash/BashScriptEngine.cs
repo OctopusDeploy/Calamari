@@ -11,13 +11,11 @@ namespace Calamari.Integration.Scripting.Bash
             return new[] {ScriptType.Bash.FileExtension()};
         }
 
-        public CommandResult Execute(string scriptFile, CalamariVariableDictionary variables,
-            ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
-
-            var workingDirectory = Path.GetDirectoryName(scriptFile);
+            var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var boostrapFile = BashScriptBootstrapper.PrepareBootstrapFile(scriptFile, configurationFile, workingDirectory);
+            var boostrapFile = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory);
 
             using (new TemporaryFile(configurationFile))
             using (new TemporaryFile(boostrapFile))

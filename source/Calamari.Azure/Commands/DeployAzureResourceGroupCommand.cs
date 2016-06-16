@@ -30,9 +30,8 @@ namespace Calamari.Azure.Commands
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.",
                 v => sensitiveVariablesPassword = v);
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("template=", "Path to the JSON template file.", v => templateFile = Path.GetFullPath(v));
-            Options.Add("templateParameters=", "Path to the JSON template parameters file.",
-                v => templateParameterFile = Path.GetFullPath(v));
+            Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
+            Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -47,12 +46,14 @@ namespace Calamari.Azure.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
 
+            var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
+
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem),
-                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, fileSystem, new ResourceGroupTemplateParameterParser())
+                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, fileSystem, new ResourceGroupTemplateParameterParser())
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
@@ -61,5 +62,6 @@ namespace Calamari.Azure.Commands
             conventionRunner.RunConventions();
             return 0;
         }
+
     }
 }

@@ -41,3 +41,5 @@
 *.vbproj text merge=union 
 
 *.sln text eol=crlf merge=union 
+
+*.approved.* binary

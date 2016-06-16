@@ -104,7 +104,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, "1.0.0")))
             {
                 var result = DeployPackage(file.FilePath);
-                result.AssertZero();
+                result.AssertSuccess();
 
                 result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, ServiceName, "1.0.0"));
 

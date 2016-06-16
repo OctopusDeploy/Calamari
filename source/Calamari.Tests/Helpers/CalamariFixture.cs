@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using ApprovalTests.Namers;
+using ApprovalTests.Reporters;
 using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
@@ -7,6 +9,8 @@ using Octostache;
 
 namespace Calamari.Tests.Helpers
 {
+    [UseReporter(typeof(DiffReporter))]
+    [UseApprovalSubdirectory("Approved")]
     public abstract class CalamariFixture
     {
         protected CommandLine Calamari()

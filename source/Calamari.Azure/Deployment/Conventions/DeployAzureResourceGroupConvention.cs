@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -25,14 +26,16 @@ namespace Calamari.Azure.Deployment.Conventions
     {
         readonly string templateFile;
         readonly string templateParametersFile;
+        private readonly bool filesInPackage;
         readonly ICalamariFileSystem fileSystem;
         readonly IResourceGroupTemplateParameterParser parameterParser;
 
-        public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, 
+        public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, bool filesInPackage, 
             ICalamariFileSystem fileSystem, IResourceGroupTemplateParameterParser parameterParser)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
+            this.filesInPackage = filesInPackage;
             this.fileSystem = fileSystem;
             this.parameterParser = parameterParser;
         }
@@ -50,9 +53,9 @@ namespace Calamari.Azure.Deployment.Conventions
                     : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = variables.Evaluate(fileSystem.ReadFile(templateFile));
+            var template = ResolveAndSubstituteFile(templateFile, filesInPackage, variables); 
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
-                ? parameterParser.ParseParameters(variables.Evaluate(fileSystem.ReadFile(templateParametersFile)))
+                ? parameterParser.ParseParameters(ResolveAndSubstituteFile(templateParametersFile, filesInPackage, variables))
                 : null;
 
             Log.Info(
@@ -190,6 +193,19 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 Log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
             }
+        }
+
+        // The template and parameter files are relative paths, and may be located either inside or outside of the package.
+        string ResolveAndSubstituteFile(string relativeFilePath, bool inPackage, VariableDictionary variables)
+        {
+            var absolutePath = inPackage
+                ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(relativeFilePath))
+                : Path.Combine(Environment.CurrentDirectory, relativeFilePath);
+
+            if (!File.Exists(absolutePath))
+                throw new CommandException($"Could not resolve '{relativeFilePath}' to physical file");
+
+            return variables.Evaluate(fileSystem.ReadFile(absolutePath));
         }
     }
 }

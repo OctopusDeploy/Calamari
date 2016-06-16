@@ -8,6 +8,7 @@
 ##   $OctopusUseBundledAzureModules = "true"
 ##   $OctopusAzureModulePath = "....\Calamari\AzurePowershell\Azure.psd1"
 ##   $OctopusAzureTargetScript = "..."
+##   $OctopusAzureTargetScriptParameters = "..."
 ##   $UseServicePrincipal = "false"
 ##   $OctopusAzureSubscriptionId = "..."
 ##   $OctopusAzureStorageAccountName = "..."
@@ -79,10 +80,10 @@ If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 	Select-AzureProfile -Profile $azureProfile | Out-Null
 } 
 
-Write-Verbose "Invoking target script $OctopusAzureTargetScript"
+Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters"
 
 try {
-	. $OctopusAzureTargetScript
+	Invoke-Expression ". $OctopusAzureTargetScript $OctopusAzureTargetScriptParameters"
 } catch {
 	# Warn if FIPS 140 compliance required when using Service Management SDK
 	if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {

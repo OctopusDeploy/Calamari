@@ -52,7 +52,8 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             foreach (var feature in features)
             {
-                scriptEngine.Received().Execute(Path.Combine(stagingDirectory, FeatureScriptConvention.GetScriptName(feature, suffix, "ps1")), variables, commandLineRunner);
+                var scriptPath = Path.Combine(stagingDirectory, FeatureScriptConvention.GetScriptName(feature, suffix, "ps1"));
+                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner);
             }
         }
 
@@ -68,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.FileExists(scriptPath).Returns(false);
 
             var convention = CreateConvention(deployStage);
-            scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.Received().OverwriteFile(scriptPath, scriptContents );
@@ -86,7 +87,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             var convention = CreateConvention(deployStage);
 
-            scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
 
             fileSystem.DidNotReceive().OverwriteFile(scriptPath, Arg.Any<string>() );
@@ -102,7 +103,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             Arrange(new List<string>{ feature }, deployStage);
             var convention = CreateConvention(deployStage);
 
-            scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+            scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner).Returns(new CommandResult("", 0));
             convention.Install(deployment);
             fileSystem.Received().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
         }
@@ -120,7 +121,8 @@ namespace Calamari.Tests.Fixtures.Conventions
                 embeddedResources.GetEmbeddedResourceText(embeddedResourceName).Returns(scriptContents);
                 embeddedResourceNames.Add(embeddedResourceName);
                 var scriptPath = Path.Combine(stagingDirectory, scriptName);
-                scriptEngine.Execute(scriptPath, variables, commandLineRunner).Returns(new CommandResult("", 0));
+                scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner)
+                            .Returns(new CommandResult("", 0));
             }
 
             embeddedResources.GetEmbeddedResourceNames().Returns(embeddedResourceNames.ToArray());
