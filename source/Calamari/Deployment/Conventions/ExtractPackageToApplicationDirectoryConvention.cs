@@ -25,6 +25,7 @@ namespace Calamari.Deployment.Conventions
         private string GetInitialExtractionDirectory(VariableDictionary variables)
         {
             var root = GetApplicationDirectoryPath(variables);
+            root = AppendTenantNameIfProvided(variables, root);
             root = AppendEnvironmentNameIfProvided(variables, root);
             fileSystem.EnsureDirectoryExists(root);
             fileSystem.EnsureDiskHasEnoughFreeSpace(root);
@@ -60,6 +61,18 @@ namespace Calamari.Deployment.Conventions
             {
                 environment = fileSystem.RemoveInvalidFileNameChars(environment);
                 root = Path.Combine(root, environment);
+            }
+
+            return root;
+        }
+
+        string AppendTenantNameIfProvided(VariableDictionary variables, string root)
+        {
+            var tenant = variables.Get(SpecialVariables.Deployment.Tenant.Name);
+            if (!string.IsNullOrWhiteSpace(tenant))
+            {
+                tenant = fileSystem.RemoveInvalidFileNameChars(tenant);
+                root = Path.Combine(root, tenant);
             }
 
             return root;
