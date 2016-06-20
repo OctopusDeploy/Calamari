@@ -207,8 +207,8 @@
     <Compile Include="Integration\ConfigurationTransforms\WarningDelegateArgs.cs" />
     <Compile Include="Guard.cs" />
     <Compile Include="Integration\FileSystem\NixPhysicalFileSystem.cs" />
-    <Compile Include="Integration\FileSystem\RetryInterval.cs" />
-    <Compile Include="Integration\FileSystem\RetryTracker.cs" />
+    <Compile Include="Integration\Retry\RetryInterval.cs" />
+    <Compile Include="Integration\Retry\RetryTracker.cs" />
     <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
     <Compile Include="Integration\Processes\CalamariVariableDictionary.cs" />
     <Compile Include="Integration\Proxies\ProxyInitializer.cs" />
