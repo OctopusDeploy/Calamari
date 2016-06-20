@@ -41,32 +41,32 @@ namespace Calamari.Tests.Fixtures.Retention
             clock.GetUtcTime().Returns(now);
 
             // Deployed 4 days prior to 'now'
-            fourDayOldDeployment = new JournalEntry("fourDayOld", "blah", "blah", "blah", "blah", policySet1,
+            fourDayOldDeployment = new JournalEntry("fourDayOld", "blah", "blah", "blah", "blah", "blah", policySet1,
                 now.AddDays(-4).LocalDateTime,
                 "C:\\packages\\Acme.1.0.0.nupkg", "C:\\Applications\\Acme.1.0.0", null, true);
 
             // Deployed 4 days prior to 'now' but to the same location as the latest successful deployment
-            fourDayOldSameLocationDeployment = new JournalEntry("twoDayOld", "blah", "blah", "blah", "blah", policySet1,
+            fourDayOldSameLocationDeployment = new JournalEntry("twoDayOld", "blah", "blah", "blah", "blah", "blah", policySet1,
                 now.AddDays(-4).LocalDateTime,
                 "C:\\packages\\Acme.1.2.0.nupkg", "C:\\Applications\\Acme.1.2.0", null, true);
 
             // Deployed 3 days prior to 'now'
-            threeDayOldDeployment = new JournalEntry("threeDayOld", "blah", "blah", "blah", "blah", policySet1,
+            threeDayOldDeployment = new JournalEntry("threeDayOld", "blah", "blah", "blah", "blah", "blah", policySet1,
                 now.AddDays(-3).LocalDateTime,
                 "C:\\packages\\Acme.1.1.0.nupkg", "C:\\Applications\\Acme.1.1.0", null, true);
 
             // Deployed 2 days prior to 'now'
-            twoDayOldDeployment = new JournalEntry("twoDayOld", "blah", "blah", "blah", "blah", policySet1,
+            twoDayOldDeployment = new JournalEntry("twoDayOld", "blah", "blah", "blah", "blah", "blah", policySet1,
                 now.AddDays(-2).LocalDateTime,
                 "C:\\packages\\Acme.1.2.0.nupkg", "C:\\Applications\\Acme.1.2.0", null, true);
 
             // Deployed (unsuccessfully) 1 day prior to 'now'
-            oneDayOldUnsuccessfulDeployment = new JournalEntry("oneDayOldUnsuccessful", "blah", "blah", "blah", "blah", policySet1,
+            oneDayOldUnsuccessfulDeployment = new JournalEntry("oneDayOldUnsuccessful", "blah", "blah", "blah", "blah", "blah", policySet1,
                 now.AddDays(-1).LocalDateTime,
                 "C:\\packages\\Acme.1.3.0.nupkg", "C:\\Applications\\Acme.1.3.0", null, false);
 
             // Deployed 5 days prior to 'now', but has a different policy-set
-            fiveDayOldNonMatchingDeployment = new JournalEntry("fiveDayOld", "blah", "blah", "blah", "blah", policySet2,
+            fiveDayOldNonMatchingDeployment = new JournalEntry("fiveDayOld", "blah", "blah", "blah", "blah", "blah", policySet2,
                 now.AddDays(-5).LocalDateTime,
                 "C:\\packages\\Beta.1.0.0.nupkg", "C:\\Applications\\Beta.1.0.0", null, true);
 

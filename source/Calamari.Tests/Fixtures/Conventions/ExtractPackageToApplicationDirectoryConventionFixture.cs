@@ -115,6 +115,19 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
+        public void ShouldExtractToTenantSpecificFolderIfProvided()
+        {
+            variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
+            variables.Set("Octopus.Environment.Name", "Production");
+            variables.Set("Octopus.Deployment.Tenant.Name", "MegaCorp");
+
+            convention.Install(new RunningDeployment(PackageLocation, variables));
+
+            Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.StringEnding(Path.Combine("MegaCorp", "Production", "Acme.Web", "1.0.0")));
+        }
+
+
+        [Test]
         public void ShouldRemoveInvalidPathCharsFromEnvironmentName()
         {
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());

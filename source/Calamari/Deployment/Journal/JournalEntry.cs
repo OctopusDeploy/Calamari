@@ -9,6 +9,7 @@ namespace Calamari.Deployment.Journal
         public JournalEntry(RunningDeployment deployment, bool wasSuccessful)
             : this(Guid.NewGuid().ToString(),
                 deployment.Variables.Get(SpecialVariables.Environment.Id),
+                deployment.Variables.Get(SpecialVariables.Deployment.Tenant.Id),
                 deployment.Variables.Get(SpecialVariables.Project.Id),
                 deployment.Variables.Get(SpecialVariables.Package.NuGetPackageId),
                 deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion),
@@ -25,6 +26,7 @@ namespace Calamari.Deployment.Journal
             : this(
               GetAttribute(element, "Id"),
               GetAttribute(element, "EnvironmentId"),
+              GetAttribute(element, "TenantId"),
               GetAttribute(element, "ProjectId"),
               GetAttribute(element, "PackageId"),
               GetAttribute(element, "PackageVersion"),
@@ -37,11 +39,12 @@ namespace Calamari.Deployment.Journal
            ) 
         { }
 
-        internal JournalEntry(string id, string environmentId, string projectId, string packageId, string packageVersion,
+        internal JournalEntry(string id, string environmentId, string tenantId, string projectId, string packageId, string packageVersion,
             string retentionPolicySet, DateTime installedOn, string extractedFrom, string extractedTo, string customInstallationDirectory, bool wasSuccessful)
         {
             Id = id;
             EnvironmentId = environmentId;
+            TenantId = tenantId;
             ProjectId = projectId;
             PackageId = packageId;
             PackageVersion = packageVersion;
@@ -55,6 +58,7 @@ namespace Calamari.Deployment.Journal
 
         public string Id { get; private set; }
         public string EnvironmentId { get; private set; }
+        public string TenantId { get; private set; }
         public string ProjectId { get; private set; }
         public string PackageId { get; private set; }
         public string PackageVersion { get; private set; }
@@ -70,6 +74,7 @@ namespace Calamari.Deployment.Journal
             return new XElement("Deployment",
                 new XAttribute("Id", Id),
                 new XAttribute("EnvironmentId", EnvironmentId ?? string.Empty),
+                new XAttribute("TenantId", TenantId ?? string.Empty),
                 new XAttribute("ProjectId", ProjectId ?? string.Empty),
                 new XAttribute("PackageId", PackageId ?? string.Empty),
                 new XAttribute("PackageVersion", PackageVersion ?? string.Empty),
