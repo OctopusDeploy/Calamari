@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Processes;
 using Microsoft.Web.Deployment;
 using Octostache;
 
@@ -20,18 +22,62 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info("Deploying to Azure WebApp '{0}' using subscription-id '{1}'", siteName, subscriptionId);
 
             var publishProfile = GetPublishProfile(variables);
+            var isAspNet5 = Directory.Exists($"{deployment.CurrentDirectory}\\approot");
 
-            var changeSummary = DeploymentManager
-                .CreateObject("contentPath", deployment.CurrentDirectory)
-                .SyncTo(
-                    "contentPath", 
-                    BuildPath(siteName, variables), 
-                    DeploymentOptions(siteName, publishProfile), 
-                    DeploymentSyncOptions(variables)
-                );
+            var changeSummary = isAspNet5
+                ? HandleAspNet5Deployment(deployment.CurrentDirectory, publishProfile, siteName, variables)
+                : HandleAspNetDeployment(deployment.CurrentDirectory, publishProfile, siteName, variables);
 
             Log.Info("Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                 changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
+        }
+
+        private DeploymentChangeSummary HandleAspNetDeployment(string appPath, SitePublishProfile publishProfile, string siteName,
+            VariableDictionary variables)
+        {
+            return DeploymentManager
+                .CreateObject(DeploymentWellKnownProvider.ContentPath, appPath)
+                .SyncTo(
+                    DeploymentWellKnownProvider.ContentPath, 
+                    BuildPath(siteName, variables),
+                    DeploymentOptions(siteName, publishProfile),
+                    DeploymentSyncOptions(variables)
+                );
+        }
+
+        private DeploymentChangeSummary HandleAspNet5Deployment(string appPath, SitePublishProfile publishProfile,
+            string siteName, VariableDictionary variables)
+        {
+            var sourceDeploymentProviderOptions = new DeploymentProviderOptions(DeploymentWellKnownProvider.ContentPath)
+            {
+                Path = $"{appPath}\\wwwroot"
+            };
+
+            var sourceDeploymentOptions = new DeploymentBaseOptions();
+            EnableContentLibExtension(sourceDeploymentOptions);
+
+            var destinationDeploymentOptions = DeploymentOptions(siteName, publishProfile);
+            EnableContentLibExtension(destinationDeploymentOptions);
+
+            return DeploymentManager
+                .CreateObject(sourceDeploymentProviderOptions, sourceDeploymentOptions)
+                .SyncTo(
+                    DeploymentWellKnownProvider.ContentPath, 
+                    BuildPath(siteName, variables),
+                    destinationDeploymentOptions,
+                    DeploymentSyncOptions(variables)
+                );
+        }
+
+        void EnableContentLibExtension(DeploymentBaseOptions options)
+        {
+            foreach (var extension in options.LinkExtensions)
+            {
+                if (extension.Name == "ContentLibExtension")
+                {
+                    extension.Enabled = true;
+                }
+            }
         }
 
         private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
