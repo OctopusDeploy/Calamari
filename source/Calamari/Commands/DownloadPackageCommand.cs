@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.PackageDownload;
-using NuGet;
 using PackageDownloader = Calamari.Integration.PackageDownload.PackageDownloader;
 
 namespace Calamari.Commands
@@ -37,7 +36,7 @@ namespace Calamari.Commands
 
             try
             {
-                SemanticVersion version;
+                NuGetVersion version;
                 Uri uri;
                 CheckArguments(packageId, packageVersion, feedId, feedUri, feedUsername, feedPassword, out version, out uri);
 
