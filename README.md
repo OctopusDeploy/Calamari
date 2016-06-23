@@ -9,7 +9,7 @@ Octopus.Server.exe configure --instance <instance> --customBundledPackageDirecto
 Octopus.Server.exe service --instance <instance> --start --nologo --console}
 ```
 
-where `<directory>` is the directory containing the `Calimari*.nupkg` files.
+where `<directory>` is the directory containing the `Calamari.*.nupkg` files.
 
 This will add the following setting to your Octopus Server configuration file:
 
