@@ -79,7 +79,7 @@ chmod +x Binaries/ScriptCS/*.exe]]></param>
     <artifact-dependencies>
       <dependency sourceBuildTypeId="OctopusDeploy_BuildCalamari" cleanDestination="true">
         <revisionRule name="sameChainOrLastFinished" revision="latest.sameChainOrLastFinished" />
-        <artifact sourcePath="Binaries.zip!**=&gt;Binaries&#xD;&#xA;ScriptCS.zip!**=&gt;Binaries\ScriptCS&#xD;&#xA;FSharp.zip!**=&gt;Binaries\FSharp" />
+        <artifact sourcePath="Binaries.zip!**=&gt;Binaries&#xD;&#xA;ScriptCS.zip!**=&gt;Binaries\ScriptCS" />
       </dependency>
     </artifact-dependencies>
     <dependencies>
