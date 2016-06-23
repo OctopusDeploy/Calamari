@@ -510,6 +510,9 @@
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Fixtures\Substitutions\Samples\ANSIorUTF8.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Substitutions\Samples\ANSI.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<build-type xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uuid="eccd88d2-b1f6-46a2-a613-ee7417a6f07e" xsi:noNamespaceSchemaLocation="http://www.jetbrains.com/teamcity/schemas/9.0/project-config.xsd">
+  <name>Test: Ubuntu 12.02 LTS</name>
+  <description />
+  <settings>
+    <options>
+      <option name="buildNumberPattern" value="%dep.OctopusDeploy_BuildCalamari.build.number%" />
+    </options>
+    <disabled-settings>
+      <setting-ref ref="RUNNER_102" />
+    </disabled-settings>
+    <parameters />
+    <build-runners>
+      <runner id="RUNNER_101" name="Enable Executables" type="simpleRunner">
+        <parameters>
+          <param name="script.content"><![CDATA[chmod +x Binaries/*.exe
+chmod +x Binaries/NuGet/*.exe
+chmod +x Binaries/ScriptCS/*.exe]]></param>
+          <param name="teamcity.step.mode" value="default" />
+          <param name="use.custom.script" value="true" />
+        </parameters>
+      </runner>
+      <runner id="RUNNER_102" name="" type="NUnit">
+        <parameters>
+          <param name="dotNetCoverage.NCover.HTMLReport.File.Sort" value="0" />
+          <param name="dotNetCoverage.NCover.HTMLReport.File.Type" value="1" />
+          <param name="dotNetCoverage.NCover.Reg" value="selected" />
+          <param name="dotNetCoverage.NCover.platformBitness" value="x86" />
+          <param name="dotNetCoverage.NCover.platformVersion" value="v2.0" />
+          <param name="dotNetCoverage.NCover3.Reg" value="selected" />
+          <param name="dotNetCoverage.NCover3.args" value="//ias .*" />
+          <param name="dotNetCoverage.NCover3.platformBitness" value="x86" />
+          <param name="dotNetCoverage.NCover3.platformVersion" value="v2.0" />
+          <param name="dotNetCoverage.NCover3.reporter.executable.args" value="//or FullCoverageReport:Html:{teamcity.report.path}" />
+          <param name="dotNetCoverage.PartCover.Reg" value="selected" />
+          <param name="dotNetCoverage.PartCover.includes" value="[*]*" />
+          <param name="dotNetCoverage.PartCover.platformBitness" value="x86" />
+          <param name="dotNetCoverage.PartCover.platformVersion" value="v2.0" />
+          <param name="dotNetTestRunner.Type" value="NUnit" />
+          <param name="nunit_enabled" value="checked" />
+          <param name="nunit_environment" value="v4.0" />
+          <param name="nunit_exclude" value="Windows" />
+          <param name="nunit_include" value="Binaries/*.Tests.dll" />
+          <param name="nunit_platform" value="MSIL" />
+          <param name="nunit_version" value="NUnit-2.6.4" />
+          <param name="teamcity.step.mode" value="default" />
+        </parameters>
+      </runner>
+      <runner id="RUNNER_103" name="NUnit Manual" type="simpleRunner">
+        <parameters>
+          <param name="script.content" value="nunit-console  Binaries/Calamari.Tests.dll -exclude=Windows -labels" />
+          <param name="teamcity.step.mode" value="default" />
+          <param name="use.custom.script" value="true" />
+        </parameters>
+      </runner>
+    </build-runners>
+    <vcs-settings />
+    <requirements>
+      <equals name="system.agent.name" value="TEST09" />
+      <equals name="env.USER" value="agentuser" />
+    </requirements>
+    <build-triggers>
+      <build-trigger id="TRIGGER_16" type="buildDependencyTrigger">
+        <parameters>
+          <param name="afterSuccessfulBuildOnly" value="true" />
+          <param name="dependsOn" value="OctopusDeploy_BuildCalamari" />
+        </parameters>
+      </build-trigger>
+    </build-triggers>
+    <build-extensions>
+      <extension id="BUILD_EXT_5" type="xml-report-plugin">
+        <parameters>
+          <param name="xmlReportParsing.reportDirs" value="TestResult.xml" />
+          <param name="xmlReportParsing.reportType" value="nunit" />
+          <param name="xmlReportParsing.verboseOutput" value="true" />
+        </parameters>
+      </extension>
+    </build-extensions>
+    <artifact-dependencies>
+      <dependency sourceBuildTypeId="OctopusDeploy_BuildCalamari" cleanDestination="true">
+        <revisionRule name="sameChainOrLastFinished" revision="latest.sameChainOrLastFinished" />
+        <artifact sourcePath="Binaries.zip!**=&gt;Binaries&#xD;&#xA;ScriptCS.zip!**=&gt;Binaries\ScriptCS" />
+      </dependency>
+    </artifact-dependencies>
+    <dependencies>
+      <depend-on sourceBuildTypeId="OctopusDeploy_BuildCalamari">
+        <options>
+          <option name="run-build-if-dependency-failed" value="RUN_ADD_PROBLEM" />
+          <option name="take-started-build-with-same-revisions" value="true" />
+          <option name="take-successful-builds-only" value="true" />
+        </options>
+      </depend-on>
+    </dependencies>
+    <cleanup />
+  </settings>
+</build-type>
+
