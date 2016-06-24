@@ -20,7 +20,7 @@ let tryFindVariable name =
 let findVariable name =
     match name |> tryFindVariable with
     | Some x -> x
-    | None -> raise (System.Collections.Generic.KeyNotFoundException(name + "variable has not been found."))     
+    | None -> raise (System.Collections.Generic.KeyNotFoundException(name + " variable has not been found."))     
 
 let decryptString encrypted iv =
     let key =  fsi.CommandLineArgs.[fsi.CommandLineArgs.Length - 1]
