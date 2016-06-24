@@ -51,7 +51,8 @@ namespace Calamari.Integration.Scripting.FSharp
             using (var writer = new StreamWriter(bootstrapFile, false, Encoding.UTF8))
             {
                 writer.WriteLine("#load \"" + configurationFile.Replace("\\", "\\\\") + "\"");
-                writer.WriteLine("open Bootstrap");
+                writer.WriteLine("open Octopus");
+                writer.WriteLine("Octopus.initializeProxy()");
                 writer.WriteLine("#load \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
                 writer.Flush();
             }
