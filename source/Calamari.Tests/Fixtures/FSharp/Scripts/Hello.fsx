@@ -1,6 +1,5 @@
-﻿let tryFindVariable = Octopus.tryFindVariable Octopus.variables
-let value = 
-    match "Name" |> tryFindVariable with
+﻿let value = 
+    match "Name" |> Octopus.tryFindVariable with
         | Some x -> x
         | None -> "not available"
 

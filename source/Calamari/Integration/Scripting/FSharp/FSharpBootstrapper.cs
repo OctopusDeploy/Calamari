@@ -66,7 +66,7 @@ namespace Calamari.Integration.Scripting.FSharp
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".fsx");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{VariableDeclarations}}", WriteVariableDictionary(variables));
+            builder.Replace("{{VariableDeclarations}}", WritePatternMatching(variables));
 
             using (var writer = new StreamWriter(configurationFile, false, Encoding.UTF8))
             {
@@ -78,26 +78,28 @@ namespace Calamari.Integration.Scripting.FSharp
             return configurationFile;
         }
             
-        static string WriteVariableDictionary(CalamariVariableDictionary variables)
+        static string WritePatternMatching(CalamariVariableDictionary variables)
         {
             var builder = new StringBuilder();
-            foreach (var variable in variables.GetNames())
+            foreach (var variableName in variables.GetNames())
             {
-                var variableValue = variables.IsSensitive(variable)
-                    ? EncryptVariable(variables.Get(variable))
-                    : EncodeValue(variables.Get(variable));
-                builder.AppendFormat("({0}, {1});", EncodeValue(variable), variableValue);
+                var variableValue = variables.IsSensitive(variableName)
+                    ? EncryptVariable(variables.Get(variableName))
+                    : EncodeValue(variables.Get(variableName));
+                builder.AppendFormat("        | \"{0}\" -> \"{1}\" |> decode |> Some", EncodeValue(variableName), variableValue);
+                builder.Append(Environment.NewLine);
             }
+            builder.Append("        | _ -> None");
+
             return builder.ToString();
         }
 
         static string EncodeValue(string value)
         {
-            if (value == null)
-                return "null;";
+            if (value == null) return "null;";
 
             var bytes = Encoding.UTF8.GetBytes(value);
-            return string.Format("System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{0}\"))", Convert.ToBase64String(bytes));
+            return Convert.ToBase64String(bytes);
         }
 
         static string EncryptVariable(string value)

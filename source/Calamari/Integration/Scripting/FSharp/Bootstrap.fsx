@@ -7,16 +7,20 @@ open System.Text
 open System.Net
 open System.Security.Cryptography
 
-let private encodeServiceMessageValue (value:string) = System.Text.Encoding.UTF8.GetBytes(value) |> Convert.ToBase64String
+let private encode (value:string) = System.Text.Encoding.UTF8.GetBytes(value) |> Convert.ToBase64String
+let private decode (value:string) = Convert.FromBase64String(value) |> System.Text.Encoding.UTF8.GetString
 
 let private writeServiceMessage name content = 
     printfn "##octopus[%s %s]" name content
 
-let variables  = [{{VariableDeclarations}}] |> Map.ofSeq
+let tryFindVariable name =
+    match name |> encode with
+{{VariableDeclarations}}
 
-let tryFindVariable variables name = Map.tryFind name variables
-
-let findVariable variables name = Map.find name variables
+let findVariable name =
+    match name |> tryFindVariable with
+    | Some x -> x
+    | None -> raise (System.Collections.Generic.KeyNotFoundException(name + "variable has not been found."))     
 
 let decryptString encrypted iv =
     let key =  fsi.CommandLineArgs.[fsi.CommandLineArgs.Length - 1]
@@ -38,19 +42,19 @@ let initializeProxy () =
     WebRequest.DefaultWebProxy.Credentials <- credentials
         
 let setVariable name value = 
-    let encodedName = encodeServiceMessageValue name
-    let encodedValue = encodeServiceMessageValue value
+    let encodedName = encode name
+    let encodedValue = encode value
     let content = sprintf "name='%s' value='%s'" encodedName encodedValue
     writeServiceMessage "setVariable" content  
 
 let createArtifact path fileName =
     let encodedFileName = match fileName with
-                            | Some value -> value |> encodeServiceMessageValue
-                            | None -> System.IO.Path.GetFileName(path) |> encodeServiceMessageValue
+                            | Some value -> value |> encode
+                            | None -> System.IO.Path.GetFileName(path) |> encode
 
-    let encodedPath = System.IO.Path.GetFullPath(path) |> encodeServiceMessageValue
+    let encodedPath = System.IO.Path.GetFullPath(path) |> encode
 
-    let encodedLength = (if System.IO.File.Exists(path) then (new System.IO.FileInfo(path)).Length else 0L) |> string |> encodeServiceMessageValue
+    let encodedLength = (if System.IO.File.Exists(path) then (new System.IO.FileInfo(path)).Length else 0L) |> string |> encode
 
     let content = sprintf "path='%s' name='%s' length='%s'"  encodedPath encodedFileName encodedLength
     writeServiceMessage "createArtifact" content  
