@@ -58,6 +58,38 @@ namespace Calamari.Tests.Fixtures.FSharp
         }
 
         [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloDirectValue()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", "direct value");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.fsx"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello direct value");
+            }
+        }
+
+        [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloDefaultValue()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "HelloDefaultvalue.fsx")));
+
+            output.AssertSuccess();
+            output.AssertOutput("Hello default value");
+        }
+
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldConsumeParametersWithQuotes()
         {
             var output = Invoke(Calamari()

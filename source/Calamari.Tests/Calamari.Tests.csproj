@@ -454,6 +454,12 @@
     <Content Include="Fixtures\FSharp\Scripts\CreateArtifact.fsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="Fixtures\FSharp\Scripts\Hello.fsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
