@@ -26,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldAddVariablesIfPreviousInstallation()
         {
-            previous = new JournalEntry("123", "env", "proj", "pkg", "0.0.9", "rp01", DateTime.Now, "C:\\PackageOld.nupkg", "C:\\App", "C:\\MyApp", true);
+            previous = new JournalEntry("123", "tenant", "env", "proj", "pkg", "0.0.9", "rp01", DateTime.Now, "C:\\PackageOld.nupkg", "C:\\App", "C:\\MyApp", true);
             RunConvention();
             Assert.That(variables.Get(SpecialVariables.Tentacle.PreviousInstallation.OriginalInstalledPath), Is.EqualTo("C:\\App"));
         }

@@ -4,12 +4,12 @@ When the solution is built, a new Calamari package is created in the `built-pack
 
 To use your own Calamari package with an Octopus 3.0 server, run the following commands
 ```
-Octopus.Server.exe service --instance <instance> --stop --nologo --console}
-Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory <directory> --nologo --console}
-Octopus.Server.exe service --instance <instance> --start --nologo --console}
+Octopus.Server.exe service --instance <instance> --stop --nologo --console
+Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory <directory> --nologo --console
+Octopus.Server.exe service --instance <instance> --start --nologo --console
 ```
 
-where `<directory>` is the directory containing the `Calamari.*.nupkg` files.
+where `<directory>` is the directory containing the `Calamari.*.nupkg` files. If your server is setup as the default instance, you may ommit the `--instance <instance>` parameter.
 
 This will add the following setting to your Octopus Server configuration file:
 
@@ -21,4 +21,11 @@ The exe and configuration file can normally be found at:
 
 ```
 C:\Octopus\OctopusServer\OctopusServer.config
+```
+
+If you want to revert to the bundled package, run the following commands
+```
+Octopus.Server.exe service --instance <instance> --stop --nologo --console
+Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory= --nologo --console
+Octopus.Server.exe service --instance <instance> --start --nologo --console
 ```

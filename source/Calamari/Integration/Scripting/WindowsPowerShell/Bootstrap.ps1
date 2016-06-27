@@ -113,15 +113,38 @@ function Initialize-ProxySettings()
 {
 	$proxyUsername = $env:TentacleProxyUsername
 	$proxyPassword = $env:TentacleProxyPassword
+	$proxyHost = $env:TentacleProxyHost
+	[int]$proxyPort = $env:TentacleProxyPort
+	
+	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost) 
+	
+	if($useSystemProxy)
+	{
+		$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+	}	
+	else
+	{
+		$proxyUri = [System.Uri]"http://${proxyHost}:$proxyPort"
+		$proxy = New-Object System.Net.WebProxy($proxyUri)
+	}
 
 	if ([string]::IsNullOrEmpty($proxyUsername)) 
 	{
-		[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
+		if($useSystemProxy)
+		{
+			$proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
+		}
+		else
+		{
+            $proxy.Credentials = New-Object System.Net.NetworkCredential("","")
+		}
 	}
 	else 
 	{
-		[System.Net.WebRequest]::DefaultWebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
+		$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 	}
+
+	[System.Net.WebRequest]::DefaultWebProxy = $proxy
 }
 
 Write-VersionTable
