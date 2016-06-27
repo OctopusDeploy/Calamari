@@ -10,8 +10,24 @@ open System.Security.Cryptography
 let private encode (value:string) = System.Text.Encoding.UTF8.GetBytes(value) |> Convert.ToBase64String
 let private decode (value:string) = Convert.FromBase64String(value) |> System.Text.Encoding.UTF8.GetString
 
-let private writeServiceMessage name content = 
-    printfn "##octopus[%s %s]" name content
+let private writeServiceMessage name content =  printfn "##octopus[%s %s]" name content
+
+let private getEnvironmentVariable name =
+    let value = Environment.GetEnvironmentVariable name
+    if String.IsNullOrWhiteSpace value then None else Some value
+
+let private getCustomProxy proxyHost = 
+    let proxyPort = match "TentacleProxyPort" |> getEnvironmentVariable with
+                    | Some x -> Int32.Parse(x)
+                    | None -> 0
+    (new WebProxy((new UriBuilder("http", proxyHost, proxyPort)).Uri)) :> IWebProxy
+
+let private getCustomCredentials proxyUserName = 
+    let proxyPassword = match "TentacleProxyPassword" |> getEnvironmentVariable with
+                        | Some x -> x
+                        | None -> raise (new System.Exception("Password for proxy is required"))
+
+    new NetworkCredential(proxyUserName, proxyPassword)
 
 let tryFindVariable name =
     match name |> encode with
@@ -37,23 +53,25 @@ let decryptString encrypted iv =
     streamReader.ReadToEnd();
 
 let initializeProxy () =
-    let (|Empty|NonEmpty|) value = if String.IsNullOrWhiteSpace value then Empty else NonEmpty value
+    let proxyHost = "TentacleProxyHost" |> getEnvironmentVariable 
+    let proxy = match proxyHost with
+                | Some x -> getCustomProxy x
+                | None -> WebRequest.GetSystemWebProxy()
 
-    let proxyUsername = Environment.GetEnvironmentVariable "TentacleProxyUsername"
-    let proxyPassword = Environment.GetEnvironmentVariable "TentacleProxyPassword"
-
-    let credentials = 
-        match proxyUsername with
-        | Empty -> CredentialCache.DefaultCredentials
-        | NonEmpty u -> new NetworkCredential(u, proxyPassword) :> ICredentials
-
-    WebRequest.DefaultWebProxy.Credentials <- credentials
+    let proxyUserName  = getEnvironmentVariable "TentacleProxyUsername" 
+    let credentials = match proxyUserName with
+                        | Some x -> getCustomCredentials x
+                        | None -> match proxyHost with
+                                    | Some x -> new NetworkCredential() 
+                                    | None -> CredentialCache.DefaultNetworkCredentials
+    proxy.Credentials <- (credentials :> ICredentials)
+    WebRequest.DefaultWebProxy <- proxy
         
 let setVariable name value = 
     let encodedName = encode name
     let encodedValue = encode value
     let content = sprintf "name='%s' value='%s'" encodedName encodedValue
-    writeServiceMessage "setVariable" content  
+    writeServiceMessage "setVariable" content
 
 let createArtifact path fileName =
     let encodedFileName = match fileName with
@@ -65,4 +83,4 @@ let createArtifact path fileName =
     let encodedLength = (if System.IO.File.Exists(path) then (new System.IO.FileInfo(path)).Length else 0L) |> string |> encode
 
     let content = sprintf "path='%s' name='%s' length='%s'"  encodedPath encodedFileName encodedLength
-    writeServiceMessage "createArtifact" content  
+    writeServiceMessage "createArtifact" content
