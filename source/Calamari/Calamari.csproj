@@ -186,6 +186,7 @@
     <Compile Include="Integration\Packages\TarPackageExtractor.cs" />
     <Compile Include="Integration\Packages\ZipPackageExtractor.cs" />
     <Compile Include="Integration\Scripting\InvalidScriptException.cs" />
+    <Compile Include="Integration\Scripting\MonoVersionCanNotBeDeterminedException.cs" />
     <Compile Include="Integration\Scripting\PackagedScriptRunner.cs" />
     <Compile Include="Deployment\Conventions\RollbackScriptConvention.cs" />
     <Compile Include="Deployment\DeploymentStages.cs" />
@@ -217,12 +218,9 @@
     <Compile Include="Integration\Scripting\FileExtensionAttribute.cs" />
     <Compile Include="Integration\Scripting\IScriptEngine.cs" />
     <Compile Include="Integration\Scripting\CombinedScriptEngine.cs" />
-    <Compile Include="Integration\Scripting\ScriptCS\MonoVersionCanNotBeDeterminedException.cs" />
-    <Compile Include="Integration\Scripting\ScriptCS\ScriptingEnvironment.cs" />
     <Compile Include="Integration\Scripting\Script.cs" />
     <Compile Include="Integration\Scripting\FSharp\FSharpBootstrapper.cs" />
     <Compile Include="Integration\Scripting\FSharp\FSharpEngine.cs" />
-    <Compile Include="Integration\Scripting\ScriptCS\MonoVersionCanNotBeDeterminedException.cs" />
     <Compile Include="Integration\Scripting\ScriptingEnvironment.cs" />
     <Compile Include="Integration\Scripting\ScriptEngineRegistry.cs" />
     <Compile Include="Integration\Scripting\ScriptType.cs" />

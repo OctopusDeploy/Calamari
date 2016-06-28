@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.Integration.Scripting.ScriptCS
+namespace Calamari.Integration.Scripting
 {
     public class MonoVersionCanNotBeDeterminedException : Exception
     {

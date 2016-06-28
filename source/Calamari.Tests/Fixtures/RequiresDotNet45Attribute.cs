@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Integration.Scripting;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures

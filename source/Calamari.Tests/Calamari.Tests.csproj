@@ -150,7 +150,6 @@
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
     <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
-    <Compile Include="Fixtures\ScriptCS\RequiresMono4Attribute.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
     <Compile Include="Fixtures\RequiresMono4Attribute.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
