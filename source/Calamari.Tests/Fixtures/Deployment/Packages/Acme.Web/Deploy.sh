@@ -1,2 +1,2 @@
 #!/bin/bash
-echo $(get_octopusvariable "PreDeployGreeting") "from Deploy.sh"
+echo "Hello from Deploy.sh"

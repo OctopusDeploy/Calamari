@@ -4,7 +4,7 @@
   <description>Build the open source Calamari package</description>
   <settings>
     <options>
-      <option name="artifactRules" value="built-packages/Calamari*.nupkg&#xA;source/Calamari.Tests/bin/**/*=&gt;Binaries.zip&#xA;source/packages/scriptcs.0.16.1/tools/**/*=&gt;ScriptCS.zip" />
+      <option name="artifactRules" value="built-packages/Calamari*.nupkg&#xA;source/Calamari.Tests/bin/**/*=&gt;Binaries.zip&#xA;source/packages/scriptcs.0.16.1/tools/**/*=&gt;ScriptCS.zip&#xA;source/packages/FSharp.Compiler.Tools.4.0.0.1/tools/**/*=&gt;FSharp.zip" />
       <option name="checkoutMode" value="ON_AGENT" />
       <option name="showDependenciesChanges" value="true" />
     </options>

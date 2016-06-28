@@ -1,7 +1,7 @@
-﻿using Calamari.Integration.Scripting.ScriptCS;
+﻿using System;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.ScriptCS
+namespace Calamari.Tests.Fixtures
 {
     public class RequiresDotNet45Attribute : TestAttribute, ITestAction
     {
