@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.FSharp
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "HelloDefaultvalue.fsx")));
+                .Argument("script", GetFixtureResouce("Scripts", "HelloDefaultValue.fsx")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello default value");
