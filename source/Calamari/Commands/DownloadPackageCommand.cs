@@ -2,8 +2,8 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
-using Calamari.Integration.PackageDownload;
-using PackageDownloader = Calamari.Integration.PackageDownload.PackageDownloader;
+using NuGet.Versioning;
+using PackageDownloader = Calamari.Integration.Packages.Download.PackageDownloader;
 
 namespace Calamari.Commands
 {
@@ -40,8 +40,6 @@ namespace Calamari.Commands
                 Uri uri;
                 CheckArguments(packageId, packageVersion, feedId, feedUri, feedUsername, feedPassword, out version, out uri);
 
-                SetFeedCredentials(feedUsername, feedPassword, uri);
-
                 string downloadedTo;
                 string hash;
                 long size;
@@ -50,6 +48,7 @@ namespace Calamari.Commands
                     version,
                     feedId,
                     uri,
+                    GetFeedCredentials(feedUsername, feedPassword),
                     forcePackageDownload,
                     out downloadedTo,
                     out hash,
@@ -71,13 +70,6 @@ namespace Calamari.Commands
             return 0;
         }
 
-        static void SetFeedCredentials(string feedUsername, string feedPassword, Uri uri)
-        {
-            var credentials = GetFeedCredentials(feedUsername, feedPassword);
-            FeedCredentialsProvider.Instance.SetCredentials(uri, credentials);
-            HttpClient.DefaultCredentialProvider = FeedCredentialsProvider.Instance;
-        }
-
         static ICredentials GetFeedCredentials(string feedUsername, string feedPassword)
         {
             ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
@@ -89,14 +81,14 @@ namespace Calamari.Commands
         }
 
         // ReSharper disable UnusedParameter.Local
-        static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, out SemanticVersion version, out Uri uri)
+        static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, out NuGetVersion version, out Uri uri)
         {
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
-            if (!SemanticVersion.TryParse(packageVersion, out version))
+            if (!NuGetVersion.TryParse(packageVersion, out version))
                 throw new CommandException(String.Format("Package version '{0}' specified is not a valid semantic version", packageVersion));
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))

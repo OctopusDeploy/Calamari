@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -22,7 +23,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("tar.bz2", typeof(TarBzipPackageExtractor))]
         [TestCase("tar", typeof(TarPackageExtractor))]
         [TestCase("zip", typeof(ZipPackageExtractor))]
-        [TestCase("nupkg", typeof(OpenPackagingConventionExtractor))]
+        [TestCase("nupkg", typeof(NupkgExtractor))]
         public void GettingFileByExtension(string extension, Type expectedType)
         {
             var extractor = this.extractor.GetExtractor("foo."+ extension);

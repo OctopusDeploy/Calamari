@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using NuGet;
 
-namespace Calamari.Integration.PackageDownload
+namespace Calamari.Integration.Packages.Download
 {
     public class FeedCredentialsProvider : ICredentialProvider
     {

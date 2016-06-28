@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.Packages;
 using Calamari.Util;
-using NuGet;
+using NuGet.Versioning;
 
 namespace Calamari.Integration.FileSystem
 {
@@ -80,13 +80,13 @@ namespace Calamari.Integration.FileSystem
             return fileSystem.EnumerateFilesRecursively(rootDirectory, patterns);
         }
 
-        public IEnumerable<StoredPackage> GetNearestPackages(string packageId, SemanticVersion version, int take = 5)
+        public IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version, int take = 5)
         {
             fileSystem.EnsureDirectoryExists(rootDirectory);
             var zipPackages =
                 from filePath in PackageFiles(packageId +"*")
                 let zip = PackageMetadata(filePath)
-                where zip != null && zip.Id == packageId && new SemanticVersion(zip.Version) <= version
+                where zip != null && zip.Id == packageId && new NuGetVersion(zip.Version) <= version
                 orderby zip.Version descending
                 select new {zip, filePath};
 

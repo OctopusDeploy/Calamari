@@ -4,7 +4,7 @@ using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
-using NuGet;
+using NuGet.Versioning;
 using NUnit.Framework;
 using PackageBuilder = Calamari.Tests.Fixtures.Deployment.Packages.PackageBuilder;
 
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             {
                 var store = new PackageStore(new GenericPackageExtractor());
 
-                var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion(1, 1, 1, 1));
+                var packages = store.GetNearestPackages("Acme.Web", new NuGetVersion(1, 1, 1, 1));
 
                 CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()), new[] { "1.0.0.1", "1.0.0.2" });
             }
@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             {
                 var store = new PackageStore(new GenericPackageExtractor());
 
-                var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion(1, 1, 1, 1));
+                var packages = store.GetNearestPackages("Acme.Web", new NuGetVersion(1, 1, 1, 1));
 
                 CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()), new[] { "1.0.0.1" });
             }
