@@ -12,7 +12,10 @@ namespace Calamari.Integration.Scripting
         ScriptCS,
 
         [FileExtension("sh")]
-        Bash
+        Bash,
+
+        [FileExtension("fsx")]
+        FSharp
     }
 
     public static class ScriptTypeExtensions
