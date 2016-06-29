@@ -57,6 +57,28 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             }
         }
 
+        [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloWithSensitiveVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", "NameToEncrypt");
+            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.csx"))
+                    .Argument("sensitiveVariables", variablesFile)
+                    .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello NameToEncrypt");
+            }
+        }
+
         [Test, RequiresDotNet45]
         public void ShouldConsumeParametersWithQuotes()
         {

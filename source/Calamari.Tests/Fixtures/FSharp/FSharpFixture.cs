@@ -63,10 +63,9 @@ namespace Calamari.Tests.Fixtures.FSharp
         {
             var variablesFile = Path.GetTempFileName();
 
-            var sensitiveVariables = new VariableDictionary();
-            sensitiveVariables.Set("Name", "NameToEncrypt");
-            var encryptedContent = new AesEncryption("5XETGOgqYR2bRhlfhDruEg==").Encrypt(sensitiveVariables.SaveAsString());
-            File.WriteAllBytes(variablesFile, encryptedContent);
+            var variables = new VariableDictionary();
+            variables.Set("Name", "NameToEncrypt");
+            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {

@@ -202,6 +202,7 @@
     <Compile Include="Helpers\TarGzBuilder.cs" />
     <Compile Include="Helpers\TestEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VariableDictionaryExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -406,6 +407,9 @@
     <None Include="Fixtures\PowerShell\Packages\PackagedScript.1.0.0.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <None Include="Fixtures\PowerShell\Scripts\Parameters.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

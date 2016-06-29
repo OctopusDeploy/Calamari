@@ -51,6 +51,29 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldCallHelloWithSensitiveVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", "NameToEncrypt");
+            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "HelloWithVariable.ps1"))
+                    .Argument("sensitiveVariables", variablesFile)
+                    .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello NameToEncrypt");
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldConsumeParametersWithQuotes()
         {
             var output = Invoke(Calamari()

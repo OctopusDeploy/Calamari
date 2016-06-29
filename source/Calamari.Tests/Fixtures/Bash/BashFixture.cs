@@ -71,6 +71,30 @@ namespace Calamari.Tests.Fixtures.Bash
             }
         }
 
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void ShouldCallHelloWithSensitiveVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", "NameToEncrypt");
+            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "hello.sh"))
+                    .Argument("sensitiveVariables", variablesFile)
+                    .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello NameToEncrypt");
+            }
+        }
+
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ThrowsExceptionOnNix()
