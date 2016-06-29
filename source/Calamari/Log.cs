@@ -7,6 +7,62 @@ using Octostache;
 
 namespace Calamari
 {
+    public class LogWrapper : ILog
+    {
+        public void Verbose(string message)
+        {
+            Log.Verbose(message);
+        }
+
+        public void VerboseFormat(string message, params object[] args)
+        {
+            Log.VerboseFormat(message, args);
+        }
+
+        public void Info(string message)
+        {
+            Log.Info(message);
+        }
+
+        public void InfoFormat(string message, params object[] args)
+        {
+            Log.Info(message, args);
+        }
+
+        public void Warn(string message)
+        {
+            Log.Warn(message);
+        }
+
+        public void WarnFormat(string message, params object[] args)
+        {
+            Log.WarnFormat(message, args);
+        }
+
+        public void Error(string message)
+        {
+            Log.Error(message);
+        }
+
+        public void ErrorFormat(string message, params object[] args)
+        {
+            Log.ErrorFormat(message, args);
+        }
+
+    }
+
+    public interface ILog
+    {
+        void Verbose(string message);
+        void VerboseFormat(string message, params object[] args);
+        void Info(string message);
+        void InfoFormat(string message, params object[] args);
+        void Warn(string message);
+        void WarnFormat(string message, params object[] args);
+        void Error(string message);
+        void ErrorFormat(string message, params object[] args);
+    }
+
     public class Log
     {
         static string stdOutMode;
@@ -21,7 +77,7 @@ namespace Calamari
             StdOut = new IndentedTextWriter(Console.Out, "  ");
             StdErr = new IndentedTextWriter(Console.Error, "  ");
         }
-        
+
 
         static void SetMode(string mode)
         {
