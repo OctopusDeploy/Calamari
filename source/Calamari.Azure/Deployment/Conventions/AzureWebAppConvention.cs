@@ -201,7 +201,7 @@ namespace Calamari.Azure.Deployment.Conventions
         /// <summary>
         /// For azure operations, try again after 1s then 2s, 4s etc...
         /// </summary>
-        static readonly RetryInterval RetryIntervalForAzureOperations = new RetryInterval(1000, 30000, 2);
+        static readonly RetryInterval RetryIntervalForAzureOperations = new RetryInterval(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30));
 
         static RetryTracker GetRetryTracker()
         {

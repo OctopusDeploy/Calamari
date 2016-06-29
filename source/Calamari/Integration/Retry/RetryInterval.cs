@@ -3,7 +3,7 @@
 namespace Calamari.Integration.Retry
 {
     /// <summary>
-    /// Implements linear or exponential backoff timing for retry trackers
+    /// Implements exponential backoff timing for retry trackers
     /// </summary>
     /// <remarks>
     /// e.g. For network operations, try again after 100ms, then double interval up to 5 seconds
@@ -11,22 +11,21 @@ namespace Calamari.Integration.Retry
     ///</remarks>
     public class RetryInterval
     {
-        readonly int retryInterval;
-        readonly int maxInterval;
-        readonly double multiplier;
+        readonly TimeSpan retryInterval;
+        readonly TimeSpan maxInterval;
 
-        public RetryInterval(int retryInterval, int maxInterval, double multiplier)
+        public RetryInterval(TimeSpan retryInterval, TimeSpan maxInterval)
         {
             this.retryInterval = retryInterval;
             this.maxInterval = maxInterval;
-            this.multiplier = multiplier;
         }
 
-        public int GetInterval(int retryCount)
+        public TimeSpan GetInterval(int retryCount)
         {
-            double delayTime = retryInterval * Math.Pow(multiplier, retryCount);
-            if (delayTime > maxInterval) return maxInterval;
-            return (int)delayTime;
+            var delayTime = TimeSpan.FromMilliseconds(retryInterval.Milliseconds*Math.Pow(2, retryCount));
+            return delayTime > maxInterval 
+                ? maxInterval 
+                : delayTime;
         }
     }
 }

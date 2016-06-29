@@ -23,22 +23,21 @@ namespace Calamari.Integration.Retry
     /// </remarks>
     public class RetryTracker
     {
-        readonly int? maxRetries;
-        readonly TimeSpan? timeLimit;
-        readonly Lazy<Stopwatch> stopWatch = new Lazy<Stopwatch>(Stopwatch.StartNew);
+        readonly int maxRetries;
+        readonly TimeSpan timeLimit;
+        private readonly Stopwatch stopWatch = new Stopwatch();
         readonly RetryInterval retryInterval;
 
         public bool ThrowOnFailure { get; private set; }
 
-        int currentTry = 0;
-        TimeSpan lastTry = TimeSpan.Zero;
+        public int CurrentTry { get; private set; }
+        public bool IsNotFirstAttempt => CurrentTry > 1;
 
-        public int CurrentTry { get { return currentTry; } }
-
-        public RetryTracker(int? maxRetries, TimeSpan? timeLimit, RetryInterval retryInterval, bool throwOnFailure = true)
+        public RetryTracker(int maxRetries, TimeSpan timeLimit, RetryInterval retryInterval, bool throwOnFailure = true)
         {
+            if (maxRetries < 1)
+                throw new ArgumentException("maxretries must be 1 or more");
             this.maxRetries = maxRetries;
-            if (maxRetries.HasValue && maxRetries.Value < 1) throw new ArgumentException("maxretries must be 1 or more if set");
             this.timeLimit = timeLimit;
             this.retryInterval = retryInterval;
             ThrowOnFailure = throwOnFailure;
@@ -47,36 +46,32 @@ namespace Calamari.Integration.Retry
         public bool Try()
         {
             var canRetry = CanRetry();
-            currentTry++;
-            lastTry = stopWatch.Value.Elapsed;
+            CurrentTry++;
             return canRetry;
         }
 
-        public int Sleep()
+        public TimeSpan Sleep()
         {
-            return retryInterval.GetInterval(currentTry);
+            return retryInterval.GetInterval(CurrentTry);
         }
 
         public bool CanRetry()
         {
-            bool noRetry = (maxRetries.HasValue && currentTry > maxRetries.Value) ||
-                (timeLimit != null && lastTry.TotalMilliseconds + retryInterval.GetInterval(currentTry) > timeLimit.Value.TotalMilliseconds);
-            return !noRetry;
+            if (!stopWatch.IsRunning)
+                stopWatch.Start();
+
+            return CurrentTry <= maxRetries && stopWatch.Elapsed <= timeLimit;
         }
 
         TimeSpan nextWarning = TimeSpan.Zero;
         public bool ShouldLogWarning()
         {
-            var warn = currentTry < 5 || (stopWatch.Value.Elapsed > nextWarning);
+            var warn = CurrentTry < 5 || (stopWatch.Elapsed > nextWarning);
             if (warn)
             {
-                nextWarning = stopWatch.Value.Elapsed.Add(TimeSpan.FromSeconds(10));
+                nextWarning = stopWatch.Elapsed.Add(TimeSpan.FromSeconds(10));
             }
             return warn;
         }
-
-        public bool IsFirstAttempt { get { return currentTry == 1; } }
-        public bool IsSecondAttempt { get { return currentTry == 2; } }
-        public bool IsNotFirstAttempt { get { return currentTry != 1; } }
     }
 }
