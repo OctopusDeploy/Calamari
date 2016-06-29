@@ -60,7 +60,8 @@ namespace Calamari.Integration.Retry
             if (!stopWatch.IsRunning)
                 stopWatch.Start();
 
-            return CurrentTry <= maxRetries && stopWatch.Elapsed <= timeLimit;
+            var elapsedByNextRetry = stopWatch.Elapsed + retryInterval.GetInterval(CurrentTry);
+            return CurrentTry <= maxRetries && elapsedByNextRetry <= timeLimit;
         }
 
         TimeSpan nextWarning = TimeSpan.Zero;
