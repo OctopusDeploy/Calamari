@@ -318,7 +318,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Integration\Scripting\FSharp\Bootstrap.fsi" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y</PostBuildEvent>

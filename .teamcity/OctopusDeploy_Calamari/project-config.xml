@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" parent-id="OctopusDeploy" uuid="5e4657c3-8f4c-4953-b5d4-b3c18357fd5f" xsi:noNamespaceSchemaLocation="http://www.jetbrains.com/teamcity/schemas/9.0/project-config.xsd">
-  <name>Calamari</name>
-  <parameters />
-  <cleanup />
-  <buildTypesOrder order="OctopusDeploy_BuildCalamari,OctopusDeploy_Calamari_TestBuildCalamari,OctopusDeploy_Calamari_TestRedhat67CentOS,OctopusDeploy_Calamari_TestUbuntu1202lts,OctopusDeploy_Calamari_TestUbuntu1404lts,OctopusDeploy_Calamari_TestWindows2008r1sp2,OctopusDeploy_Calamari_TestWindows2008r2,OctopusDeploy_Calamari_TestWindows2012,OctopusDeploy_Calamari_TestWindows2012r2,OctopusDeploy_Calamari_ReleasePublishNuGetPackages" />
-</project>
-
