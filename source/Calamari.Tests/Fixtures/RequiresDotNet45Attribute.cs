@@ -1,5 +1,5 @@
-﻿using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.ScriptCS;
+﻿using System;
+using Calamari.Integration.Scripting;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures

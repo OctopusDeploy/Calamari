@@ -5,6 +5,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -25,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             }
         }
 
-        [Test]
+        [Test, RequiresMono4, RequiresDotNet45]
         public void CSharpDecryptsSensitiveVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
