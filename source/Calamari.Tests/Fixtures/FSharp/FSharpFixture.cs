@@ -81,7 +81,27 @@ namespace Calamari.Tests.Fixtures.FSharp
             }
         }
 
-        // Add test with variable substitution
+        [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloWithVariableSubstitution()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", "SubstitutedValue");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "HelloVariableSubstitution.fsx"))
+                    .Argument("variables", variablesFile)
+                    .Flag("substituteVariables"));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello SubstitutedValue");
+            }
+        }
 
         [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldCallHelloDirectValue()
