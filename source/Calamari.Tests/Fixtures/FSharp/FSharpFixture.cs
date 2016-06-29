@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
 using Octostache;
 
@@ -56,6 +57,31 @@ namespace Calamari.Tests.Fixtures.FSharp
                 output.AssertOutput("Hello Paul");
             }
         }
+
+        [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloWithSensitiveVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var sensitiveVariables = new VariableDictionary();
+            sensitiveVariables.Set("Name", "NameToEncrypt");
+            var encryptedContent = new AesEncryption("5XETGOgqYR2bRhlfhDruEg==").Encrypt(sensitiveVariables.SaveAsString());
+            File.WriteAllBytes(variablesFile, encryptedContent);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.fsx"))
+                    .Argument("sensitiveVariables", variablesFile)
+                    .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello NameToEncrypt");
+            }
+        }
+
+        // Add test with variable substitution
 
         [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldCallHelloDirectValue()

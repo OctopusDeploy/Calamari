@@ -83,10 +83,18 @@ namespace Calamari.Integration.Scripting.FSharp
             var builder = new StringBuilder();
             foreach (var variableName in variables.GetNames())
             {
-                var variableValue = variables.IsSensitive(variableName)
-                    ? EncryptVariable(variables.Get(variableName))
-                    : EncodeValue(variables.Get(variableName));
-                builder.AppendFormat("        | \"{0}\" -> \"{1}\" |> decode |> Some", EncodeValue(variableName), variableValue);
+                var variableValue = variables.Get(variableName);
+                if (variables.IsSensitive(variableName))
+                {
+                    builder.AppendFormat("        | \"{0}\" -> {1} |> Some", EncodeValue(variableName),
+                                                                                        EncryptVariable(variableValue));                    
+                }
+                else
+                {
+                    builder.AppendFormat("        | \"{0}\" -> \"{1}\" |> decode |> Some", EncodeValue(variableName),
+                                                                                            EncodeValue(variableValue));
+                }
+
                 builder.Append(Environment.NewLine);
             }
             builder.Append("        | _ -> None");
@@ -111,7 +119,7 @@ namespace Calamari.Integration.Scripting.FSharp
             byte[] iv;
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
 
-            return string.Format("DecryptString(\"{0}\", \"{1}\")", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
+            return string.Format("decryptString \"{0}\" \"{1}\"", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
         }
     }
 }

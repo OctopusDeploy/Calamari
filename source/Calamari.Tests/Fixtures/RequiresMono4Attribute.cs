@@ -1,6 +1,5 @@
 ﻿using System;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.ScriptCS;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures
