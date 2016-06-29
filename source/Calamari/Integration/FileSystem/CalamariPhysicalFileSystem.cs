@@ -258,11 +258,6 @@ namespace Calamari.Integration.FileSystem
             return File.ReadAllBytes(path);
         }
 
-        public void AppendToFile(string path, string contents)
-        {
-            RetryTrackerFileAction(() => File.AppendAllText(path, contents), path, "append");
-        }
-
         public void OverwriteFile(string path, string contents)
         {
             RetryTrackerFileAction(() => File.WriteAllText(path, contents), path, "overwrite");
