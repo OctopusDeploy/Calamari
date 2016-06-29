@@ -23,11 +23,6 @@ namespace Calamari.Integration.FileSystem
         }
 
         /// <summary>
-        /// For file operations, try again after 100ms and again every 200ms after that
-        /// </summary>
-        static readonly RetryInterval RetryIntervalForFileOperations = new RetryInterval(100, 200, 2);
-
-        /// <summary>
         /// For file operations, retry constantly up to one minute
         /// </summary>
         /// <remarks>
@@ -36,9 +31,10 @@ namespace Calamari.Integration.FileSystem
         /// </remarks>
         static RetryTracker GetRetryTracker()
         {
-            return new RetryTracker(maxRetries:10000, 
+            return new RetryTracker(maxRetries:1000, 
                 timeLimit: TimeSpan.FromMinutes(1), 
-                retryInterval: RetryIntervalForFileOperations);
+                retryInterval: new RetryInterval(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200))
+            );
         }
 
         public bool FileExists(string path)
