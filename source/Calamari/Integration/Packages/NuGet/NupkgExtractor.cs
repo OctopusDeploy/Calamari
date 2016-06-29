@@ -48,10 +48,18 @@ namespace Calamari.Integration.Packages.NuGet
             {
                 while (reader.MoveToNextEntry())
                 {
+                    var targetDirectory = Path.Combine(directory, UnescapePath(Path.GetDirectoryName(reader.Entry.Key)));
+
+                    if (!Directory.Exists(targetDirectory))
+                    {
+                        Directory.CreateDirectory(targetDirectory);
+                    }
+
                     if (reader.Entry.IsDirectory || !IsPackageFile(reader.Entry.Key))
                         continue;
 
-                    reader.WriteEntryToDirectory(directory, ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime);
+                    var targetFile = UnescapePath(Path.GetFileName(reader.Entry.Key));
+                    reader.WriteEntryToFile(Path.Combine(targetDirectory, targetFile), ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime);
                     filesExtracted++;
 
                     if (!suppressNestedScriptWarning)
@@ -81,6 +89,17 @@ namespace Calamari.Integration.Packages.NuGet
         static bool IsManifest(string path)
         {
             return Path.GetExtension(path).Equals(global::NuGet.Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string UnescapePath(string path)
+        {
+            if (path != null
+                && path.IndexOf('%') > -1)
+            {
+                return Uri.UnescapeDataString(path);
+            }
+
+            return path;
         }
 
         static readonly string[] ExcludePaths = new[]

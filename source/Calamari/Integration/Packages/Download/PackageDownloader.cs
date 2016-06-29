@@ -112,11 +112,12 @@ namespace Calamari.Integration.Packages.Download
 
         private void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string cacheDirectory, out IPackage downloaded, out string downloadedTo)
         {
+            Log.Info("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            var fullPathToDownloadTo = GetFilePathToDownloadPackageTo(cacheDirectory, packageId, version.ToNormalizedString());
+            var fullPathToDownloadTo = GetFilePathToDownloadPackageTo(cacheDirectory, packageId, version.ToString());
 
            NuGetPackageDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo); 
 

@@ -27,7 +27,7 @@ namespace Calamari.Integration.Packages.NuGet
                     }
                     else // V2 feed
                     {
-                        NuGetV2Downloader.DownloadPackage(packageId, version.ToNormalizedString(), feedUri, feedCredentials, targetFilePath);
+                        NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
                     }
 
                     return;
