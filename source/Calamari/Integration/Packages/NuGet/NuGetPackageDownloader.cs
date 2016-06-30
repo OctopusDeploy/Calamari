@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
-using Calamari.Integration.FileSystem;
+using Calamari.Integration.Retry;
 using NuGet.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
