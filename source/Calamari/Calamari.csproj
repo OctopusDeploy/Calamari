@@ -201,6 +201,7 @@
     <Compile Include="Integration\Packages\TarPackageExtractor.cs" />
     <Compile Include="Integration\Packages\ZipPackageExtractor.cs" />
     <Compile Include="Integration\Scripting\InvalidScriptException.cs" />
+    <Compile Include="Integration\Scripting\MonoVersionCanNotBeDeterminedException.cs" />
     <Compile Include="Integration\Scripting\PackagedScriptRunner.cs" />
     <Compile Include="Deployment\Conventions\RollbackScriptConvention.cs" />
     <Compile Include="Deployment\DeploymentStages.cs" />
@@ -222,8 +223,8 @@
     <Compile Include="Integration\ConfigurationTransforms\WarningDelegateArgs.cs" />
     <Compile Include="Guard.cs" />
     <Compile Include="Integration\FileSystem\NixPhysicalFileSystem.cs" />
-    <Compile Include="Integration\FileSystem\RetryInterval.cs" />
-    <Compile Include="Integration\FileSystem\RetryTracker.cs" />
+    <Compile Include="Integration\Retry\RetryInterval.cs" />
+    <Compile Include="Integration\Retry\RetryTracker.cs" />
     <Compile Include="Integration\FileSystem\WindowsPhysicalFileSystem.cs" />
     <Compile Include="Integration\Processes\CalamariVariableDictionary.cs" />
     <Compile Include="Integration\Proxies\ProxyInitializer.cs" />
@@ -233,6 +234,9 @@
     <Compile Include="Integration\Scripting\IScriptEngine.cs" />
     <Compile Include="Integration\Scripting\CombinedScriptEngine.cs" />
     <Compile Include="Integration\Scripting\Script.cs" />
+    <Compile Include="Integration\Scripting\FSharp\FSharpBootstrapper.cs" />
+    <Compile Include="Integration\Scripting\FSharp\FSharpEngine.cs" />
+    <Compile Include="Integration\Scripting\ScriptingEnvironment.cs" />
     <Compile Include="Integration\Scripting\ScriptEngineRegistry.cs" />
     <Compile Include="Integration\Scripting\ScriptType.cs" />
     <Compile Include="Util\AssemblyExtensions.cs" />
@@ -315,6 +319,7 @@
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
     <None Include="app.config" />
+    <EmbeddedResource Include="Integration\Scripting\FSharp\Bootstrap.fsx" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -327,7 +332,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Octopus.Features.HelloWorld_BeforePreDeploy.ps1" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Integration\Scripting\FSharp\Bootstrap.fsi" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y</PostBuildEvent>

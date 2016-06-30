@@ -10,8 +10,8 @@ namespace Calamari.Integration.Scripting
         public string[] GetSupportedExtensions()
         {
             return CalamariEnvironment.IsRunningOnNix
-                ? new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Bash.FileExtension()}
-                : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension()};
+                ? new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Bash.FileExtension(), ScriptType.FSharp.FileExtension()}
+                : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension(), ScriptType.FSharp.FileExtension()};
         }
 
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)

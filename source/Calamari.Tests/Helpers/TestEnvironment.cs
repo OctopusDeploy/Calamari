@@ -24,7 +24,6 @@ namespace Calamari.Tests.Helpers
 
             public const string Windows = "Windows";
         }
-
     }
 }
 

@@ -72,6 +72,15 @@
             }
         }
 
+        public static class Deployment
+        {
+            public static class Tenant
+            {
+                public static string Id = "Octopus.Deployment.Tenant.Id";
+                public static string Name = "Octopus.Deployment.Tenant.Name";
+            }
+        }
+
         public static class Package
         {
             public static readonly string NuGetPackageId = "Octopus.Action.Package.NuGetPackageId";

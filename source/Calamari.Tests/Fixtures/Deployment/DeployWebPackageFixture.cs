@@ -19,8 +19,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     {
         // Fixture Depedencies
         TemporaryFile nupkgFile;
-        TemporaryFile tarFile;
-     
+        TemporaryFile tarFile;     
 
         [SetUp]
         public override void SetUp()
@@ -44,15 +43,26 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void ShouldDeployPackage()
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldDeployPackageOnWindows()
         {
             var result = DeployPackage();
             result.AssertSuccess();
 
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
-            result.AssertOutput("Extracted 12 files");
-            result.AssertOutput("Bonjour from PreDeploy");
+            result.AssertOutput("Extracted 14 files");
+            result.AssertOutput("Hello from Deploy.ps1");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void ShouldDeployPackageOnNix()
+        {
+            var result = DeployPackage();
+            result.AssertSuccess();
+
+            result.AssertOutput("Hello from Deploy.sh");
         }
 
         [Test]
@@ -126,6 +136,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
             result.AssertOutput("I have failed! DeployFailed.ps1");
+            result.AssertOutput("I have failed! DeployFailed.fsx");
+            result.AssertOutput("I have failed! DeployFailed.csx");
         }
 
         [Test]
@@ -302,7 +314,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                     result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                    result.AssertOutput("Extracted 12 files");
+                    result.AssertOutput("Extracted 14 files");
 
                     lock (extractionDirectories)
                     {

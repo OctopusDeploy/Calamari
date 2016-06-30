@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Integration.Retry
 {
     /// <summary>
     /// Implements linear or exponential backoff timing for retry trackers

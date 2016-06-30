@@ -1,20 +1,21 @@
 ﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Fixtures.ScriptCS
+namespace Calamari.Tests.Fixtures.FSharp
 {
     [TestFixture]
-    public class ScriptCSFixture : CalamariFixture
+    public class FSharpFixture : CalamariFixture
     {
         [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.csx")));
+                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.fsx")));
 
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
@@ -25,7 +26,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "CreateArtifact.csx")));
+                .Argument("script", GetFixtureResouce("Scripts", "CreateArtifact.fsx")));
 
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact");
@@ -49,7 +50,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             {
                 var output = Invoke(Calamari()
                     .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Hello.csx"))
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.fsx"))
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
@@ -70,7 +71,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             {
                 var output = Invoke(Calamari()
                     .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Hello.csx"))
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.fsx"))
                     .Argument("sensitiveVariables", variablesFile)
                     .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
 
@@ -79,28 +80,70 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             }
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloWithVariableSubstitution()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", "SubstitutedValue");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "HelloVariableSubstitution.fsx"))
+                    .Argument("variables", variablesFile)
+                    .Flag("substituteVariables"));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello SubstitutedValue");
+            }
+        }
+
+        [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloDirectValue()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", "direct value");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.fsx"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello direct value");
+            }
+        }
+
+        [Test, RequiresDotNet45, RequiresMono4]
+        public void ShouldCallHelloDefaultValue()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "HelloDefaultValue.fsx")));
+
+            output.AssertSuccess();
+            output.AssertOutput("Hello default value");
+        }
+
+        [Test, RequiresDotNet45, RequiresMono4]
         public void ShouldConsumeParametersWithQuotes()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Parameters.csx"))
-                .Argument("scriptParameters", "-- \"Para meter0\" Parameter1")); ;
+                .Argument("script", GetFixtureResouce("Scripts", "Parameters.fsx"))
+                .Argument("scriptParameters", "\"Para meter0\" Parameter1")); ;
 
             output.AssertSuccess();
-            output.AssertOutput("Parameters Para meter0Parameter1");
-        }
-
-        [Test, RequiresDotNet45]
-        public void ShouldConsumeParametersWithoutParametersPrefix()
-        {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Parameters.csx"))
-                .Argument("scriptParameters", "Parameter0 Parameter1")); ;
-
-            output.AssertSuccess();
-            output.AssertOutput("Parameters Parameter0Parameter1");
+            output.AssertOutput("Parameters Para meter0-Parameter1");
         }
     }
 }

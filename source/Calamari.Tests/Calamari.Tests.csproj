@@ -145,7 +145,9 @@
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
+    <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
+    <Compile Include="Fixtures\RequiresMono4Attribute.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
     <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
@@ -181,7 +183,7 @@
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
     <Compile Include="Fixtures\Retention\RetentionPolicyFixture.cs" />
     <Compile Include="Fixtures\Processes\SemaphoreFixture.cs" />
-    <Compile Include="Fixtures\ScriptCS\RequiresDotNet45Attribute.cs" />
+    <Compile Include="Fixtures\RequiresDotNet45Attribute.cs" />
     <Compile Include="Fixtures\Bash\BashFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />
     <Compile Include="Fixtures\Integration\Process\CalamariVariableDictionaryFixture.cs" />
@@ -196,6 +198,7 @@
     <Compile Include="Helpers\TarGzBuilder.cs" />
     <Compile Include="Helpers\TestEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VariableDictionaryExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -204,6 +207,9 @@
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Service\Acme.Service.nuspec">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.csx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.existing-expected.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -397,6 +403,9 @@
     <None Include="Fixtures\PowerShell\Packages\PackagedScript.1.0.0.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <None Include="Fixtures\PowerShell\Scripts\Parameters.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -439,6 +448,30 @@
     <None Include="Fixtures\PowerShell\Scripts\PrintVariables.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Content Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\FSharp\Scripts\CreateArtifact.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloVariableSubstitution.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <Content Include="Fixtures\FSharp\Scripts\Hello.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\FSharp\Scripts\Parameters.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fixtures\FSharp\Scripts\PrintEncodedVariable.fsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="Fixtures\ScriptCS\Scripts\CreateArtifact.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -506,6 +539,9 @@
     <Content Include="Fixtures\Deployment\Packages\Acme.Web\assets\styles.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Fixtures\Substitutions\Samples\ANSIorUTF8.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Substitutions\Samples\ANSI.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -98,6 +98,17 @@ namespace Calamari.Tests.Fixtures.Substitutions
         }
 
         [Test]
+        public void ShouldDetectValidAsUTF8orANSIasANSI()
+        {
+            var filePath = GetFixtureResouce("Samples", "ANSIorUTF8.txt");
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.Default, encoding);
+        }
+
+
+        [Test]
         public void ShouldFallBackToDefaultCodePage()
         {
             var filePath = GetFixtureResouce("Samples", "ANSI.txt");
