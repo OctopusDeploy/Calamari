@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -18,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(TarPackageExtractor), "tar")]
         [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2")]
         [TestCase(typeof(ZipPackageExtractor), "zip")]
-        [TestCase(typeof(OpenPackagingConventionExtractor), "nupkg")]
+        [TestCase(typeof(NupkgExtractor), "nupkg")]
         //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
         public void GetMetadataReturnsPackageDetails(Type extractorType, string extension)
         {
@@ -36,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(TarPackageExtractor), "tar", true)]
         [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
         [TestCase(typeof(ZipPackageExtractor), "zip", true)]
-        [TestCase(typeof(OpenPackagingConventionExtractor), "nupkg", false)]
+        [TestCase(typeof(NupkgExtractor), "nupkg", false)]
         //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
         public void ExtractPumpsFilesToFilesystem(Type extractorType, string extension, bool preservesTimestamp)
         {

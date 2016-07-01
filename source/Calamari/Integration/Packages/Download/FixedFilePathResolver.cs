@@ -2,7 +2,7 @@
 using System.IO;
 using NuGet;
 
-namespace Calamari.Integration.PackageDownload
+namespace Calamari.Integration.Packages.Download
 {
     public class FixedFilePathResolver : IPackagePathResolver
     {
