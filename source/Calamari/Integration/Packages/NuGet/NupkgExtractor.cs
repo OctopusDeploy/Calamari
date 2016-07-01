@@ -79,7 +79,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static void SetFileLastModifiedTime(IEntry entry, string targetFile)
         {
-            // Using the SharpCompress PreserveFileTimestamps options caused an exception when unpacking
+            // Using the SharpCompress PreserveFileTime option caused an exception when unpacking
             // NuGet packages on Linux. So we set the LastModifiedTime ourselves.
             if (entry.LastModifiedTime.HasValue &&
                 entry.LastModifiedTime.Value != DateTime.MinValue &&
