@@ -62,8 +62,11 @@ namespace Calamari.Integration.Packages.NuGet
                     if (reader.Entry.IsDirectory || !IsPackageFile(reader.Entry.Key))
                         continue;
 
-                    var targetFile = UnescapePath(Path.GetFileName(reader.Entry.Key));
-                    reader.WriteEntryToFile(Path.Combine(targetDirectory, targetFile), ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime);
+                    var targetFile = Path.Combine(targetDirectory, UnescapePath(Path.GetFileName(reader.Entry.Key)));
+                    reader.WriteEntryToFile(targetFile, ExtractOptions.Overwrite);
+
+                    SetFileLastModifiedTime(reader.Entry, targetFile);
+
                     filesExtracted++;
 
                     if (!suppressNestedScriptWarning)
@@ -71,6 +74,25 @@ namespace Calamari.Integration.Packages.NuGet
                 }
 
                 return filesExtracted;
+            }
+        }
+
+        static void SetFileLastModifiedTime(IEntry entry, string targetFile)
+        {
+            // Using the SharpCompress PreserveFileTimestamps options caused an exception when unpacking
+            // NuGet packages on Linux. So we set the LastModifiedTime ourselves.
+            if (entry.LastModifiedTime.HasValue &&
+                entry.LastModifiedTime.Value != DateTime.MinValue &&
+                entry.LastModifiedTime.Value.ToUniversalTime() <= DateTime.UtcNow)
+            {
+                try
+                {
+                    File.SetLastWriteTimeUtc(targetFile, entry.LastModifiedTime.Value.ToUniversalTime());
+                }
+                catch (Exception ex)
+                {
+                    Log.Verbose($"Unable to set LastWriteTime attribute on file '{targetFile}':  {ex.Message}");
+                }
             }
         }
 
