@@ -51,6 +51,18 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldRetrieveCustomReturnValue()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "Exit2.ps1")));
+
+            output.AssertNonZero(2);
+            output.AssertOutput("Hello!");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldConsumeParametersWithQuotes()
         {
             var output = Invoke(Calamari()
@@ -236,6 +248,29 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello from module!");
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldFailIfAModuleHasASyntaxError()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Octopus.Script.Module[Foo]", "function SayHello() { Write-Host \"Hello from module! }");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                   .Action("run-script")
+                   .Argument("script", GetFixtureResouce("Scripts", "UseModule.ps1"))
+                   .Argument("variables", variablesFile));
+
+                output.AssertNonZero();
+                output.AssertErrorOutput("ParserError");
+                output.AssertErrorOutput("The string is missing the terminator: \".");
             }
         }
 
