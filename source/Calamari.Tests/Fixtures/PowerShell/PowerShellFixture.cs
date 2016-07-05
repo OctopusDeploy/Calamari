@@ -39,6 +39,56 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        [TestCase("true", true)]
+        [TestCase("false", false)]
+        [TestCase("", false)]
+        [TestCase(null, false)]
+        public void ShouldCallWithNoProfileWhenVariableSet(string executeWithoutProfile, bool calledWithNoProfile)
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            if(executeWithoutProfile != null)
+                variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, executeWithoutProfile);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Profile.ps1"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                var allOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
+                Assert.That(allOutput.Contains("-NoProfile") == calledWithNoProfile);
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldNotCallWithNoProfileWhenVariableNotSet()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, "true");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Profile.ps1"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("-NoProfile");
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCallHello()
         {
             var output = Invoke(Calamari()

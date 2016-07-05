@@ -416,6 +416,9 @@
     <None Include="Fixtures\PowerShell\Scripts\Exit2.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\PowerShell\Scripts\Profile.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\PowerShell\Scripts\Parameters.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

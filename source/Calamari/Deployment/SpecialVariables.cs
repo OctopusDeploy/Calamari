@@ -179,6 +179,7 @@
             public static class PowerShell
             {
                 public static readonly string CustomPowerShellVersion = "Octopus.Action.PowerShell.CustomPowerShellVersion";
+                public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile ";
             }
         }
 
