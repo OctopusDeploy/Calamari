@@ -205,8 +205,8 @@ namespace Calamari.Azure.Deployment.Conventions
 
         static RetryTracker GetRetryTracker()
         {
-            return new RetryTracker(maxRetries: 5,
-                timeLimit: TimeSpan.FromMinutes(1),
+            return new RetryTracker(maxRetries: 3,
+                timeLimit: TimeSpan.MaxValue,
                 retryInterval: RetryIntervalForAzureOperations);
         }
     }
