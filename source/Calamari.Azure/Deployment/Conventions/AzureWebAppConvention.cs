@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
@@ -18,9 +17,13 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var variables = deployment.Variables;
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
+            var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
-            Log.Info("Deploying to Azure WebApp '{0}' using subscription-id '{1}'", siteName, subscriptionId);
+            Log.Info("Deploying to Azure WebApp '{0}'{1}, using subscription-id '{2}'", 
+                siteName, 
+                string.IsNullOrEmpty(resourceGroupName) ? string.Empty : $" in Resource Group {resourceGroupName}", 
+                subscriptionId);
 
             var publishProfile = GetPublishProfile(variables);
 
@@ -71,7 +74,9 @@ namespace Calamari.Azure.Deployment.Conventions
             switch (accountType)
             {
                 case AzureAccountTypes.ServicePrincipalAccountType:
-                    return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId, siteName,
+                    return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
+                        variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
+                        siteName,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
                         variables.Get(SpecialVariables.Action.Azure.Password));

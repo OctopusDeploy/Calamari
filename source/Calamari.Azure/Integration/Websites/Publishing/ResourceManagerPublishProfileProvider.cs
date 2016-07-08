@@ -16,7 +16,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string siteName, string tenantId, string applicationId, string password)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string tenantId, string applicationId, string password)
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password);
 
@@ -24,8 +24,9 @@ namespace Calamari.Azure.Integration.Websites.Publishing
             using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token)))
             using (var webSiteClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
-                // Because we only know the site name, we need to search the ResourceGroups to find it 
-                var resourceGroups = resourcesClient.ResourceGroups.List(new ResourceGroupListParameters()).ResourceGroups.Select(rg => rg.Name).ToList();
+                // We may need to search all ResourceGroups, if one isn't specified.  New Step template will always provide the Resource Group, it is currently treated as optional here
+                // for backward compatibility.
+                var resourceGroups = resourcesClient.ResourceGroups.List(new ResourceGroupListParameters()).ResourceGroups.Where(rg => string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(rg.Name, resourceGroupName, StringComparison.InvariantCultureIgnoreCase)).Select(rg => rg.Name).ToList();
 
                 foreach (var resourceGroup in resourceGroups)
                 {
