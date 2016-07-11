@@ -39,6 +39,12 @@ namespace Calamari.Tests.Helpers
             Assert.That(ExitCode, Is.Not.EqualTo(0), "Expected a non-zero exit code");
         }
 
+
+        public void AssertNonZero(int code)
+        {
+            Assert.That(ExitCode, Is.EqualTo(code), $"Expected an exit code of {code}");
+        }
+
         public void AssertOutput(string expectedOutputFormat, params object[] args)
         {
             AssertOutput(String.Format(expectedOutputFormat, args));

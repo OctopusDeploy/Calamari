@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Xml;
 using Calamari.Commands.Support;
 using Microsoft.Web.XmlTransform;
 
@@ -11,11 +13,13 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         bool transformFailed;
         string transformWarning;
+        readonly ILog log;
 
-        public ConfigurationTransformer(bool suppressTransformationErrors = false, bool suppressTransformationLogging = false)
+        public ConfigurationTransformer(bool suppressTransformationErrors = false, bool suppressTransformationLogging = false, ILog log = null)
         {
             this.suppressTransformationErrors = suppressTransformationErrors;
             this.suppressTransformationLogging = suppressTransformationLogging;
+            this.log = log ?? new LogWrapper();
         }
 
         public void PerformTransform(string configFile, string transformFile, string destinationFile)
@@ -29,8 +33,8 @@ namespace Calamari.Integration.ConfigurationTransforms
             {
                 if (suppressTransformationErrors)
                 {
-                    Log.Warn(ex.Message);
-                    Log.Warn(ex.StackTrace);
+                    log.Warn(ex.Message);
+                    log.Warn(ex.StackTrace);
                 }                    
                 else throw;
             }
@@ -49,7 +53,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             };
             if (suppressTransformationErrors)
             {
-                Log.Info("XML Transformation warnings will be suppressed.");
+                log.Info("XML Transformation warnings will be suppressed.");
             }
 
             return logger;
@@ -68,8 +72,13 @@ namespace Calamari.Integration.ConfigurationTransforms
             var success = transformation.Apply(configurationFileDocument);
             if (!suppressTransformationErrors && (!success || transformFailed))
             {
-                Log.ErrorFormat("The XML configuration file {0} failed with transformation file {1}.", configFile, transformFile);
+                log.ErrorFormat("The XML configuration file {0} failed with transformation file {1}.", configFile, transformFile);
                 throw new CommandException(transformWarning);
+            }
+
+            if (!configurationFileDocument.ChildNodes.OfType<XmlElement>().Any())
+            {
+                log.WarnFormat("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}", configFile, transformFile);
             }
 
             configurationFileDocument.Save(destinationFile);

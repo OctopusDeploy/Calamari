@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Octostache;
@@ -16,6 +17,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static PowerShellBootstrapper()
         {
@@ -56,11 +58,17 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             {
                 commandArguments.Append($"-Version {customPowerShellVersion} ");
             }
+            var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
+            bool noProfile;
+            if (bool.TryParse(executeWithoutProfile, out noProfile) && noProfile)
+            {
+                commandArguments.Append("-NoProfile ");
+            }
             commandArguments.Append("-NoLogo ");
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
             var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
-            commandArguments.AppendFormat("-Command \". {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}}\"", escapedBootstrapFile, encryptionKey);
+            commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", escapedBootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
 
@@ -76,11 +84,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     .Replace("{{VariableDeclarations}}", DeclareVariables(variables))
                     .Replace("{{ScriptModules}}", DeclareScriptModules(variables));
 
-            using (var writer = new StreamWriter(bootstrapFile, false, new UTF8Encoding(true)))
-            {
-                writer.WriteLine(builder.ToString());
-                writer.Flush();
-            }
+            CalamariFileSystem.OverwriteFile(bootstrapFile, builder.ToString(), new UTF8Encoding(true));
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             return bootstrapFile;

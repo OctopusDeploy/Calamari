@@ -22,7 +22,6 @@ namespace Calamari.Integration.FileSystem
         long GetFileSize(string path);
         string ReadFile(string path);
         string ReadFile(string path, out Encoding encoding);
-        void AppendToFile(string path, string contents);
         void OverwriteFile(string path, string contents);
         void OverwriteFile(string path, string contents, Encoding encoding);
         Stream OpenFile(string path, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);

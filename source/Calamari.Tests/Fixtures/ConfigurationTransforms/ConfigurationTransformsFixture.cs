@@ -4,6 +4,7 @@ using System.Xml.Linq;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
@@ -11,24 +12,28 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
     [TestFixture]
     public class ConfigurationTransformsFixture : CalamariFixture
     {
+        InMemoryLog log;
         ConfigurationTransformer configurationTransformer;
 
         [SetUp]
         public void SetUp()
         {
-            configurationTransformer = new ConfigurationTransformer();
+            log = new InMemoryLog();
+            configurationTransformer = new ConfigurationTransformer(log: log);
         }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
         public void WebReleaseConfig()
         {
-            var text = PerformTest(GetFixtureResouce("Samples","Web.config"), GetFixtureResouce("Samples","Web.Release.config"));
+            var text = PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Release.config"));
             var contents = XDocument.Parse(text);
 
             Assert.IsNull(GetDebugAttribute(contents));
             Assert.AreEqual(GetAppSettingsValue(contents).Value, "Release!");
             Assert.IsNull(GetCustomErrors(contents));
+            log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error, "Should not log errors");
+            log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Warn, "Should not log warnings");
         }
 
         [Test]
@@ -47,11 +52,22 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
         }
 
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        public void ShouldShowMessageWhenResultIsInvalidXml()
+        {
+            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Empty.config"));
+            log.Messages.Where(m => m.Level == InMemoryLog.Level.Warn)
+                .Select(m => m.MessageFormat)
+                .Should()
+                .Contain("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}");
+        }
+
         string PerformTest(string configurationFile, string transformFile)
         {
             var temp = Path.GetTempFileName();
             File.Copy(configurationFile, temp, true);
-            
+
             using (new TemporaryFile(temp))
             {
                 configurationTransformer.PerformTransform(temp, transformFile, temp);
