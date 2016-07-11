@@ -210,8 +210,7 @@
     <Compile Include="Deployment\Conventions\SwapAzureDeploymentConvention.cs" />
     <Compile Include="Deployment\Conventions\RePackageCloudServiceConvention.cs" />
     <Compile Include="Deployment\Conventions\UploadAzureCloudServicePackageConvention.cs" />
-    <Compile Include="Deployment\Integration\ResourceGroups\ResourceGroupTemplateParameter.cs" />
-    <Compile Include="Deployment\Integration\ResourceGroups\ResourceGroupTemplateParameterParser.cs" />
+    <Compile Include="Deployment\Integration\ResourceGroups\ResourceGroupTemplateNormalizer.cs" />
     <Compile Include="Integration\AzureCloudServiceConfigurationRetriever.cs" />
     <Compile Include="Integration\AzurePackageUploader.cs" />
     <Compile Include="Integration\AzurePowershellContext.cs" />
