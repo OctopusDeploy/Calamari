@@ -1,7 +1,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using NuGet;
+using NuGet.Versioning;
 
 namespace Calamari.Integration.Packages
 {
@@ -18,36 +18,16 @@ namespace Calamari.Integration.Packages
                 throw new FileFormatException(string.Format("Unable to determine filetype of file \"{0}\"", packageFile));
             }
 
-            ExtractIdAndVersion(metaDataSection, pkg);
-
-
-            SemanticVersion version;
-            if (string.IsNullOrEmpty(pkg.Version) || !SemanticVersion.TryParse(pkg.Version, out version))
+            string packageId;
+            NuGetVersion version;
+            if (!PackageIdentifier.TryParsePackageIdAndVersion(metaDataSection, out packageId, out version))
             {
-                throw new FileFormatException(string.Format("Unable to extract the package version from file \"{0}\"", packageFile));
+                throw new FileFormatException(string.Format("Unable to extract the package ID and version from file \"{0}\"", packageFile));
             }
 
-            if (string.IsNullOrEmpty(pkg.Id))
-            {
-                throw new FileFormatException(string.Format("Unable to extract the package Id from file \"{0}\"", packageFile));
-            }
-
+            pkg.Id = packageId;
+            pkg.Version = version.ToString();
             return pkg;
-        }
-
-        private static void ExtractIdAndVersion(string metaDataSection, PackageMetadata pkg)
-        {
-            var nameParts = metaDataSection.Split('.');
-            for (var i = 0; i < nameParts.Length; i++)
-            {
-                int num;
-                if (int.TryParse(nameParts[i], out num))
-                {
-                    pkg.Id = string.Join(".", nameParts.Take(i));
-                    pkg.Version = string.Join(".", nameParts.Skip(i));
-                    break;
-                }
-            }
         }
 
         private string ExtractMatchingExtension(string packageFile, PackageMetadata pkg)

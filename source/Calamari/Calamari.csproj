@@ -194,6 +194,7 @@
     <Compile Include="Integration\Packages\NuGet\Versioning\VersionComparer.cs" />
     <Compile Include="Integration\Packages\NuGet\Versioning\VersionComparison.cs" />
     <Compile Include="Integration\Packages\NuGet\Versioning\VersionFormatter.cs" />
+    <Compile Include="Integration\Packages\PackageIdentifier.cs" />
     <Compile Include="Integration\Packages\SimplePackageExtractor.cs" />
     <Compile Include="Integration\Packages\TarBzipPackageExtractor.cs" />
     <Compile Include="Integration\Packages\TarLzwPackageExtractor.cs" />
