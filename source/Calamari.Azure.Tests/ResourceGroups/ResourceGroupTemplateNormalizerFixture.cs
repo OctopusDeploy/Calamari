@@ -48,9 +48,17 @@ namespace Calamari.Azure.Tests.ResourceGroups
         private string GetParameter()
         {
             return @"{
-                      'lifeTheUniverseAndEverything': {
-                          'value': '42'
-                      }
+                        'lifeTheUniverseAndEverything': {
+                            'value': '42'
+                        },
+                        'password': {
+                            'reference': {
+                                'keyVault': {
+                                    'id': 'id/othervalue/test'
+                                },
+                                'secretName': 'secretName'
+                            }
+                        }
                     }".Replace("'", "\"");
         }
     }
