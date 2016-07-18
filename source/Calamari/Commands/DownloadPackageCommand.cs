@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Integration.Processes;
 using NuGet.Versioning;
 using PackageDownloader = Calamari.Integration.Packages.Download.PackageDownloader;
 
@@ -11,6 +12,7 @@ namespace Calamari.Commands
     public class DownloadPackageCommand : Command
     {
         readonly static PackageDownloader PackageDownloader = new PackageDownloader();
+        readonly SystemSemaphore semaphore = new SystemSemaphore();
         string packageId;
         string packageVersion;
         bool forcePackageDownload;
@@ -43,17 +45,21 @@ namespace Calamari.Commands
                 string downloadedTo;
                 string hash;
                 long size;
-                PackageDownloader.DownloadPackage(
-                    packageId,
-                    version,
-                    feedId,
-                    uri,
-                    GetFeedCredentials(feedUsername, feedPassword),
-                    forcePackageDownload,
-                    out downloadedTo,
-                    out hash,
-                    out size);
-
+                using (semaphore.Acquire(
+                    $"{feedId}:{packageId}:{packageVersion}",
+                    $"Another process is currently downloading {packageId} version {packageVersion} from {feedUri}"))
+                {
+                    PackageDownloader.DownloadPackage(
+                        packageId,
+                        version,
+                        feedId,
+                        uri,
+                        GetFeedCredentials(feedUsername, feedPassword),
+                        forcePackageDownload,
+                        out downloadedTo,
+                        out hash,
+                        out size);
+                }
                 Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
                     feedUri);
 
