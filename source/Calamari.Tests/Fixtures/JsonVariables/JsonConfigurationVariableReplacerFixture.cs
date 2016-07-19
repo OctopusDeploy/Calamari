@@ -68,28 +68,6 @@ namespace Calamari.Tests.Fixtures.JsonVariables
         }
 
         [Test]
-        public void ShouldWarnAndIgnoreAmbiguousSettings()
-        {
-            const string expected =
-                @"{" +
-                "  \"EmailSettings\": {" +
-                "    \"DefaultRecipients\": \"henrik@octopus.com\"" +
-                "  }" +
-                "}";
-
-            var variables = new VariableDictionary();
-            variables.Set("EmailSettings:DefaultRecipients:To", "paul@octopus.com");
-            variables.Set("EmailSettings:DefaultRecipients", "henrik@octopus.com");
-
-            using (var proxyLog = new ProxyLog())
-            {
-                var replaced = Replace(variables, existingFile: "appsettings.ambiguous.json");
-                AssertJsonEquivalent(replaced, expected);
-                proxyLog.AssertContains("Unable to set value for EmailSettings:DefaultRecipients:To. The property at EmailSettings.DefaultRecipients is a String.");
-            }
-        }
-
-        [Test]
         public void ShouldKeepExistingValues()
         {
             const string expected =
@@ -138,6 +116,143 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             variables.Set("EmailSettings:defaultRecipients:Cc", "henrik@octopus.com");
 
             var replaced = Replace(variables, existingFile: "appsettings.simple.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceWithColonInName()
+        {
+            const string expected =
+                @"{" +
+                "  \"commandName\": \"web\"," +
+                "  \"environmentVariables\": {" +
+                "    \"Hosting:Environment\": \"Production\"," +
+                "  }" +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("EnvironmentVariables:Hosting:Environment", "Production");
+
+            var replaced = Replace(variables, existingFile: "appsettings.colon-in-name.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceWholeObject()
+        {
+            const string expected =
+                @"{" +
+                "  \"MyMessage\": \"Hello world\"," +
+                "  \"EmailSettings\": {" +
+                "    \"SmtpPort\": \"23\"," +
+                "    \"SmtpHost\": \"localhost\"," +
+                "    \"DefaultRecipients\": {" +
+                "      \"To\": \"rob@octopus.com\"," +
+                "      \"Cc\": \"henrik@octopus.com\"" +
+                "    }" +
+                "  }" +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("EmailSettings:DefaultRecipients", @"{""To"": ""rob@octopus.com"", ""Cc"": ""henrik@octopus.com""}");
+
+            var replaced = Replace(variables, existingFile: "appsettings.simple.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceElementInArray()
+        {
+            const string expected =
+                @"{" +
+                "  \"MyMessage\": \"Hello world\"," +
+                "  \"EmailSettings\": {" +
+                "    \"SmtpPort\": 23," +
+                "    \"UseProxy\": false," +
+                "    \"SmtpHost\": \"localhost\"," +
+                "    \"DefaultRecipients\": [" +
+                "      \"paul@octopus.com\"," +
+                "      \"henrik@octopus.com\"" +
+                "    ]" +
+                "  }" +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("EmailSettings:DefaultRecipients:1", "henrik@octopus.com");
+
+            var replaced = Replace(variables, existingFile: "appsettings.array.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceEntireArray()
+        {
+            const string expected =
+                @"{" +
+                "  \"MyMessage\": \"Hello world\"," +
+                "  \"EmailSettings\": {" +
+                "    \"SmtpPort\": 23," +
+                "    \"UseProxy\": false," +
+                "    \"SmtpHost\": \"localhost\"," +
+                "    \"DefaultRecipients\": [" +
+                "      \"mike@octopus.com\"," +
+                "      \"henrik@octopus.com\"" +
+                "    ]" +
+                "  }" +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("EmailSettings:DefaultRecipients", @"[""mike@octopus.com"", ""henrik@octopus.com""]");
+
+            var replaced = Replace(variables, existingFile: "appsettings.array.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceNumber()
+        {
+            const string expected =
+                @"{" +
+                "  \"MyMessage\": \"Hello world\"," +
+                "  \"EmailSettings\": {" +
+                "    \"SmtpPort\": 8023," +
+                "    \"UseProxy\": false," +
+                "    \"SmtpHost\": \"localhost\"," +
+                "    \"DefaultRecipients\": [" +
+                "      \"paul@octopus.com\"," +
+                "      \"mike@octopus.com\"" +
+                "    ]" +
+                "  }" +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("EmailSettings:SmtpPort", "8023");
+
+            var replaced = Replace(variables, existingFile: "appsettings.array.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceBoolean()
+        {
+            const string expected =
+                @"{" +
+                "  \"MyMessage\": \"Hello world\"," +
+                "  \"EmailSettings\": {" +
+                "    \"SmtpPort\": 23," +
+                "    \"UseProxy\": true," +
+                "    \"SmtpHost\": \"localhost\"," +
+                "    \"DefaultRecipients\": [" +
+                "      \"paul@octopus.com\"," +
+                "      \"mike@octopus.com\"" +
+                "    ]" +
+                "  }" +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("EmailSettings:UseProxy", "true");
+
+            var replaced = Replace(variables, existingFile: "appsettings.array.json");
             AssertJsonEquivalent(replaced, expected);
         }
 
