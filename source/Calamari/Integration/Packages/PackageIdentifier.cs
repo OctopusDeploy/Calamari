@@ -19,7 +19,7 @@ namespace Calamari.Integration.Packages
             version = null;
 
             const string packageIdPattern = @"(?<packageId>(\w+([_.-]\w+)*?))";
-            const string semanticVersionPattern = @"(?<semanticVersion>(\d+(\.\d+){2,3}(-[0-9A-Za-z-]*(\.[0-9A-Za-z-]*)*)?)(\+[0-9A-Za-z-]*)?)";
+            const string semanticVersionPattern = @"(?<semanticVersion>(\d+(\.\d+){0,3}(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)";
 
             var match = Regex.Match(idAndVersion, $@"^{packageIdPattern}\.{semanticVersionPattern}$");
             var packageIdMatch = match.Groups["packageId"];
