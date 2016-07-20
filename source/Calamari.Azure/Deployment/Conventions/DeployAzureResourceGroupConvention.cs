@@ -28,16 +28,16 @@ namespace Calamari.Azure.Deployment.Conventions
         readonly string templateParametersFile;
         private readonly bool filesInPackage;
         readonly ICalamariFileSystem fileSystem;
-        readonly IResourceGroupTemplateParameterParser parameterParser;
+        readonly IResourceGroupTemplateNormalizer parameterNormalizer;
 
         public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, bool filesInPackage, 
-            ICalamariFileSystem fileSystem, IResourceGroupTemplateParameterParser parameterParser)
+            ICalamariFileSystem fileSystem, IResourceGroupTemplateNormalizer parameterNormalizer)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
             this.filesInPackage = filesInPackage;
             this.fileSystem = fileSystem;
-            this.parameterParser = parameterParser;
+            this.parameterNormalizer = parameterNormalizer;
         }
 
         public void Install(RunningDeployment deployment)
@@ -55,7 +55,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
             var template = ResolveAndSubstituteFile(templateFile, filesInPackage, variables); 
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
-                ? parameterParser.ParseParameters(ResolveAndSubstituteFile(templateParametersFile, filesInPackage, variables))
+                ? parameterNormalizer.Normalize(ResolveAndSubstituteFile(templateParametersFile, filesInPackage, variables))
                 : null;
 
             Log.Info(
@@ -82,14 +82,12 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         static void CreateDeployment(Func<IResourceManagementClient> createArmClient, string resourceGroupName, string deploymentName,
-            DeploymentMode deploymentMode, string template, IDictionary<string, ResourceGroupTemplateParameter> parameters)
+            DeploymentMode deploymentMode, string template, string parameters)
         {
-            var parameterJson = parameters != null ? JsonConvert.SerializeObject(parameters, Formatting.Indented) : null;
-
             Log.Verbose($"Template:\n{template}\n");
-            if (parameterJson != null)
+            if (parameters != null)
             {
-               Log.Verbose($"Parameters:\n{parameterJson}\n"); 
+               Log.Verbose($"Parameters:\n{parameters}\n"); 
             }
 
             using (var armClient = createArmClient())
@@ -101,7 +99,7 @@ namespace Calamari.Azure.Deployment.Conventions
                         {
                             Mode = deploymentMode,
                             Template = template,
-                            Parameters = parameterJson
+                            Parameters = parameters
                         }
                     });
 

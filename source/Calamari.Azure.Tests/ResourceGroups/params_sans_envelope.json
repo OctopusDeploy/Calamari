@@ -1,5 +1,13 @@
 ﻿{
-  "lifeTheUniverseAndEverything": {
-      "value": "42"
-  }
+    "lifeTheUniverseAndEverything": {
+        "value": "42"
+    },
+    "password": {
+        "reference": {
+            "keyVault": {
+                "id": "id/othervalue/test"
+            },
+            "secretName": "secretName"
+        }
+    }
 }

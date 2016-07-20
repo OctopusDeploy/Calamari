@@ -101,8 +101,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.28, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octostache.1.0.2.28\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.32, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.32\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache, Version=2.0.0.45, Culture=neutral, processorArchitecture=MSIL">
@@ -233,6 +233,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.ambiguous.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.colon-in-name.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.array.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.simple.json">
