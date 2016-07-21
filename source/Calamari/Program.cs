@@ -2,7 +2,7 @@
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
- 
+
 namespace Calamari
 {
     public class Program
