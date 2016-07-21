@@ -84,7 +84,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(Encoding.UTF8, encoding);
+            Assert.AreNotEqual(Encoding.UTF8, encoding); //not the static encoder (which does bom)
+            Assert.AreEqual(Encoding.UTF8.EncodingName, encoding.EncodingName); //but are both utf-8
         }
 
         [Test]
@@ -98,13 +99,13 @@ namespace Calamari.Tests.Fixtures.Substitutions
         }
 
         [Test]
-        public void ShouldDetectValidAsUTF8orANSIasANSI()
+        public void ShouldDetectASCII()
         {
-            var filePath = GetFixtureResouce("Samples", "ANSIorUTF8.txt");
+            var filePath = GetFixtureResouce("Samples", "ASCII.txt");
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(Encoding.Default, encoding);
+            Assert.AreEqual(Encoding.ASCII, encoding);
         }
 
 
@@ -116,6 +117,68 @@ namespace Calamari.Tests.Fixtures.Substitutions
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
             Assert.AreEqual(Encoding.Default, encoding);
+        }
+
+        [Test]
+        public void RetainANSI()
+        {
+            var filePath = GetFixtureResouce("Samples", "ANSI.txt");
+            var variables = new VariableDictionary();
+            variables["LocalCacheFolderName"] = "SpongeBob";
+
+            var result = PerformTest(filePath, variables);
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.Default, encoding);
+            Assert.AreEqual(Encoding.Default, result.Encoding);
+        }
+
+        [Test]
+        public void RetainASCII()
+        {
+            var filePath = GetFixtureResouce("Samples", "ASCII.txt");
+            var variables = new VariableDictionary();
+            variables["LocalCacheFolderName"] = "SpongeBob";
+
+            var result = PerformTest(filePath, variables);
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.ASCII, encoding);
+            Assert.AreEqual(Encoding.ASCII, result.Encoding);
+        }
+
+        [Test]
+        public void RetainUTF8()
+        {
+            var filePath = GetFixtureResouce("Samples", "UTF8.txt");
+            var variables = new VariableDictionary();
+            variables["LocalCacheFolderName"] = "SpongeBob";
+
+            var result = PerformTest(filePath, variables);
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreNotEqual(Encoding.UTF8, encoding); //not the static encoder (which does bom)
+            Assert.AreEqual(Encoding.UTF8.EncodingName, encoding.EncodingName); //but are both utf-8
+            Assert.AreNotEqual(Encoding.UTF8, result.Encoding); //not the static encoder (which does bom)
+            Assert.AreEqual(Encoding.UTF8.EncodingName, result.Encoding.EncodingName); //but are both utf-8
+        }
+
+        [Test]
+        public void RetainUTF8Bom()
+        {
+            var filePath = GetFixtureResouce("Samples", "UTF8BOM.txt");
+            var variables = new VariableDictionary();
+            variables["LocalCacheFolderName"] = "SpongeBob";
+
+            var result = PerformTest(filePath, variables);
+
+            Encoding encoding;
+            FileSystem.ReadFile(filePath, out encoding);
+            Assert.AreEqual(Encoding.UTF8, encoding);
+            Assert.AreEqual(Encoding.UTF8, result.Encoding);
         }
 
         dynamic PerformTest(string sampleFile, VariableDictionary variables)
