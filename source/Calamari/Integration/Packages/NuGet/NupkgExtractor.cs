@@ -18,29 +18,14 @@ namespace Calamari.Integration.Packages.NuGet
 
         public PackageMetadata GetMetadata(string packageFile)
         {
-            using (var packageStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
-            using (var reader = ZipReader.Open(packageStream))
+            var package = new LocalNuGetPackage(packageFile);
+            var packageMetadata = package.Metadata;
+            return new PackageMetadata
             {
-                while (reader.MoveToNextEntry())
-                {
-                    if (reader.Entry.IsDirectory || !IsManifest(reader.Entry.Key))
-                        continue;
-
-                    using (var manifestStream = reader.OpenEntryStream())
-                    {
-                        var manifest = Manifest.ReadFrom(manifestStream, validateSchema: false);
-                        var packageMetadata = (IPackageMetadata)manifest.Metadata;
-                        return new PackageMetadata
-                        {
-                            Id = packageMetadata.Id,
-                            Version = packageMetadata.Version.ToString(),
-                            FileExtension = Extensions.First()
-                        };
-                    }
-                }
-
-                throw new InvalidOperationException("Package does not contain a manifest");
-            }
+                Id = packageMetadata.Id,
+                Version = packageMetadata.Version,
+                FileExtension = Extensions.First()
+            };
         }
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)

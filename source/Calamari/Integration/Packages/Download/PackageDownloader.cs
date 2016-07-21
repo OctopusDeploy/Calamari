@@ -34,7 +34,7 @@ namespace Calamari.Integration.Packages.Download
         {
             var cacheDirectory = GetPackageRoot(feedId);
             
-            IPackage downloaded = null;
+            LocalNuGetPackage downloaded = null;
             downloadedTo = null;
             if (!forcePackageDownload)
             {
@@ -51,10 +51,12 @@ namespace Calamari.Integration.Packages.Download
             }
 
             size = fileSystem.GetFileSize(downloadedTo);
-            hash = HashCalculator.Hash(downloaded.GetStream());
+            string packageHash = null;
+            downloaded.GetStream(stream=>  packageHash = HashCalculator.Hash(stream));
+            hash = packageHash;
         }
 
-        private void AttemptToGetPackageFromCache(string packageId, NuGetVersion version, string feedId, string cacheDirectory, out IPackage downloaded, out string downloadedTo)
+        private void AttemptToGetPackageFromCache(string packageId, NuGetVersion version, string feedId, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
         {
             downloaded = null;
             downloadedTo = null;
@@ -72,7 +74,7 @@ namespace Calamari.Integration.Packages.Download
                 if (package == null)
                     continue;
 
-                if (!string.Equals(package.Id, packageId, StringComparison.OrdinalIgnoreCase) || !string.Equals(package.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase) || !string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 downloaded = package;
@@ -80,11 +82,11 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        private IPackage ReadPackageFile(string filePath)
+        private LocalNuGetPackage ReadPackageFile(string filePath)
         {
             try
             {
-                return new ZipPackage(filePath);
+                return new LocalNuGetPackage(filePath);
             }
             catch (FileNotFoundException)
             {
@@ -110,7 +112,7 @@ namespace Calamari.Integration.Packages.Download
             return String.Format("{0}.{1}_", packageId, version);
         }
 
-        private void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string cacheDirectory, out IPackage downloaded, out string downloadedTo)
+        private void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
         {
             Log.Info("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
@@ -121,9 +123,9 @@ namespace Calamari.Integration.Packages.Download
 
            NuGetPackageDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo); 
 
-            downloaded = new ZipPackage(fullPathToDownloadTo);
+            downloaded = new LocalNuGetPackage(fullPathToDownloadTo);
             downloadedTo = fullPathToDownloadTo; 
-            CheckWhetherThePackageHasDependencies(downloaded);
+            CheckWhetherThePackageHasDependencies(downloaded.Metadata);
         }
 
 
