@@ -52,6 +52,9 @@ namespace Calamari.Integration.Packages.NuGet
             {
                 while (reader.MoveToNextEntry())
                 {
+                    if (IsExcludedPath(reader.Entry.Key))
+                        continue;
+
                     var targetDirectory = Path.Combine(directory, UnescapePath(Path.GetDirectoryName(reader.Entry.Key)));
 
                     if (!Directory.Exists(targetDirectory))
@@ -108,8 +111,13 @@ namespace Calamari.Integration.Packages.NuGet
             if (IsManifest(packageFileName))
                 return false;
 
-            return !ExcludePaths.Any(p => packageFileName.StartsWith(p, StringComparison.OrdinalIgnoreCase)) &&
-                !packageFileName.EndsWith(ExcludeExtension, StringComparison.OrdinalIgnoreCase);
+            return !IsExcludedPath(packageFileName);
+        }
+
+        static bool IsExcludedPath(string path)
+        {
+            return ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)) || 
+                path.EndsWith(ExcludeExtension, StringComparison.OrdinalIgnoreCase);
         }
 
         static bool IsManifest(string path)
