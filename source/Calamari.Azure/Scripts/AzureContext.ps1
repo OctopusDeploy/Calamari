@@ -19,20 +19,15 @@
 ##   $OctopusAzureADPassword = "...."
 
 if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
+	# Add bundled Azure modules to PSModulePath
 	$StorageModulePath = ([IO.Path]::Combine("$OctopusAzureModulePath", "Storage"))
 	$ServiceManagementModulePath = ([IO.Path]::Combine("$OctopusAzureModulePath", "ServiceManagement"))
-	Write-Verbose "Adding Azure Storage and Service Management modules to PSModulePath"
-	$env:PSModulePath = $StorageModulePath + ";" + $ServiceManagementModulePath + ";" + $env:PSModulePath
+	$ResourceManagerModulePath = [IO.Path]::Combine("$OctopusAzureModulePath", "ResourceManager", "AzureResourceManager")
+	Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
+	$env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
 }
 
 If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
-	if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-		# Import Resource Manager modules
-		Write-Verbose "Adding Azure Resource Manager modules to PSModulePath"
-		$ResourceManagerModulePath = [IO.Path]::Combine("$OctopusAzureModulePath", "ResourceManager", "AzureResourceManager")
-		$env:PSModulePath = $ResourceManagerModulePath + ";" + $env:PSModulePath
-	}
-
 	# Authenticate via Service Principal
 	$securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
 	$creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
