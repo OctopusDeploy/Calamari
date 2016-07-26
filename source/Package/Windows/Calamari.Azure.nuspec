@@ -13,6 +13,6 @@
   <files>
     <file src="..\Calamari.Azure\bin\**\*.*" target="" exclude="*.vshost*;**\*.xml" />
     <file src="..\packages\ScriptCS.0.16.1\tools\*.*" target="ScriptCS" exclude="**\*.xml;**\*.ps1" />
-    <file src="..\packages\Octopus.Dependencies.AzureCmdlets.1.0.1\PowerShell\**\*.*" target="AzurePowershell" exclude="**\*.xml" />
+    <file src="..\packages\Octopus.Dependencies.AzureCmdlets.1.6.0\PowerShell\**\*.*" target="AzurePowershell" exclude="**\*.xml" />
   </files>
 </package>

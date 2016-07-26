@@ -18,50 +18,19 @@
 ##   $OctopusAzureADClientId = "...."
 ##   $OctopusAzureADPassword = "...."
 
-$AzureRMModules = @(
-  "AzureRM.ApiManagement",
-  "AzureRM.Automation",
-  "AzureRM.Backup",
-  "AzureRM.Batch",
-  "AzureRM.Compute",
-  "AzureRM.DataFactories",
-  "AzureRM.DataLakeAnalytics",
-  "AzureRM.DataLakeStore",
-  "AzureRM.Dns",
-  "AzureRM.HDInsight",
-  "AzureRM.Insights",
-  "AzureRM.KeyVault",
-  "AzureRM.Network",
-  "AzureRM.NotificationHubs",
-  "AzureRM.OperationalInsights",
-  "AzureRM.RecoveryServices",
-  "AzureRM.RedisCache",
-  "AzureRM.Resources",
-  "AzureRM.SiteRecovery",
-  "AzureRM.Sql",
-  "AzureRM.Storage",
-  "AzureRM.StreamAnalytics",
-  "AzureRM.Tags",
-  "AzureRM.TrafficManager",
-  "AzureRM.UsageAggregates",
-  "AzureRM.Websites"
-)
-
 if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-	Write-Verbose "Importing Azure Service Management PowerShell module"
-	Import-Module -Name ([IO.Path]::Combine("$OctopusAzureModulePath", "ServiceManagement", "Azure")) 
+	$StorageModulePath = ([IO.Path]::Combine("$OctopusAzureModulePath", "Storage"))
+	$ServiceManagementModulePath = ([IO.Path]::Combine("$OctopusAzureModulePath", "ServiceManagement"))
+	Write-Verbose "Adding Azure Storage and Service Management modules to PSModulePath"
+	$env:PSModulePath = $StorageModulePath + ";" + $ServiceManagementModulePath + ";" + $env:PSModulePath
 }
 
 If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 	if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
 		# Import Resource Manager modules
-		Write-Verbose "Importing Azure Resource Manager PowerShell modules"
+		Write-Verbose "Adding Azure Resource Manager modules to PSModulePath"
 		$ResourceManagerModulePath = [IO.Path]::Combine("$OctopusAzureModulePath", "ResourceManager", "AzureResourceManager")
-		Import-Module -Name ([IO.Path]::Combine($ResourceManagerModulePath, "AzureRM.Profile")) 
-		Import-Module -Name ([IO.Path]::Combine($ResourceManagerModulePath, "Azure.Storage")) 
-		$AzureRMModules | ForEach {
-			Import-Module -Name ([IO.Path]::Combine($ResourceManagerModulePath, $_)) 
-		} 
+		$env:PSModulePath = $ResourceManagerModulePath + ";" + $env:PSModulePath
 	}
 
 	# Authenticate via Service Principal
