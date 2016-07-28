@@ -17,6 +17,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         ICalamariFileSystem fileSystem;
         IConfigurationTransformer configurationTransformer;
+        ITransformFileLocator transformFileLocator;
         RunningDeployment deployment;
         CalamariVariableDictionary variables;
         ProxyLog logs;
@@ -26,7 +27,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             fileSystem = new WindowsPhysicalFileSystem();
             configurationTransformer = Substitute.For<IConfigurationTransformer>();
-
+            transformFileLocator = new TransformFileLocator(fileSystem);
+            
             var deployDirectory = BuildConfigPath(null);
 
             variables = new CalamariVariableDictionary();
@@ -159,7 +161,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private ConfigurationTransformsConvention CreateConvention()
         {
-            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer);
+            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator);
         }
 
         private void AssertTransformRun(string configFile, string transformFile)

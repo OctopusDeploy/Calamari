@@ -58,6 +58,7 @@ namespace Calamari.Commands
             var generator = new JsonConfigurationVariableReplacer();
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
+            var transformFileLocator = new TransformFileLocator(fileSystem);
             var embeddedResources = new CallingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
@@ -76,7 +77,7 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterPreDeploy, fileSystem, embeddedResources, scriptCapability, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
+                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(generator, fileSystem),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
