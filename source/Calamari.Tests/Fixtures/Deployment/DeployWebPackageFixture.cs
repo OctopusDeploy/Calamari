@@ -281,6 +281,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Category(TestEnvironment.CompatibleOS.Windows)] // Re-enable when deployments enabled again.
         public void ShouldDeployInParallel()
         {
+            var locker = new object();
             var extractionDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             var errors = new List<Exception>();
@@ -292,7 +293,10 @@ namespace Calamari.Tests.Fixtures.Deployment
                     CalamariResult result;
                     using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
                     {
-                        Variables.Save(variablesFile.FilePath);
+                        lock (locker) // this save method isn't thread safe
+                        {
+                            Variables.Save(variablesFile.FilePath);
+                        }
 
                         result = Invoke(Calamari()
                             .Action("deploy-package")
@@ -304,7 +308,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
                     result.AssertOutput("Extracted 12 files");
 
-                    lock (extractionDirectories)
+                    lock (locker)
                     {
                         if (!extractionDirectories.Contains(extracted))
                         {
