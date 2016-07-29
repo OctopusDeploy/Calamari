@@ -22,9 +22,17 @@ namespace Calamari.Integration.ConfigurationTransforms
             var defaultTransformFileName = DetermineTransformFileName(sourceFile, transformation, true);
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
 
-            var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
-            var fullTransformPath = Path.GetFullPath(Path.Combine(GetDirectoryName(sourceFile), GetDirectoryName(relativeTransformPath)));
-
+            string fullTransformPath;
+            if (Path.IsPathRooted(transformFileName))
+            {
+                fullTransformPath = Path.GetFullPath(GetDirectoryName(transformFileName));
+            }
+            else
+            {
+                var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
+                fullTransformPath = Path.GetFullPath(Path.Combine(GetDirectoryName(sourceFile), GetDirectoryName(relativeTransformPath)));
+            }
+            
             if (!fileSystem.DirectoryExists(fullTransformPath))
                 yield break;
 

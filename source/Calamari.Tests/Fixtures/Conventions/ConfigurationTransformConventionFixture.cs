@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
+using System.Reflection;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
@@ -141,6 +142,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             get
             {
+                //get absolute path and test against that too
+                var directory = BuildConfigPath("") + Path.DirectorySeparatorChar;
                 yield return new TestCaseData("bar.sitemap", "config\\fizz.sitemap.config=>bar.sitemap", "config\\fizz.sitemap.config");
                 yield return new TestCaseData("bar.config", "config\\fizz.buzz.config=>bar.config", "config\\fizz.buzz.config");
                 yield return new TestCaseData("bar.config", "foo.config=>bar.config", "foo.config");
@@ -156,6 +159,21 @@ namespace Calamari.Tests.Fixtures.Conventions
                 yield return new TestCaseData("config\\fizz.xml", "transform\\fizz.buzz.xml=>config\\fizz.xml", "transform\\fizz.buzz.xml");
                 yield return new TestCaseData("config\\fizz.xml", "transform\\*.xml=>config\\*.xml", "transform\\fizz.xml");
                 yield return new TestCaseData("foo.config", "transform\\*.config=>foo.config", "transform\\fizz.config");
+                yield return new TestCaseData("bar.sitemap", directory + "config\\fizz.sitemap.config=>bar.sitemap", "config\\fizz.sitemap.config");
+                yield return new TestCaseData("bar.config", directory + "config\\fizz.buzz.config=>bar.config", "config\\fizz.buzz.config");
+                yield return new TestCaseData("bar.config", directory + "foo.config=>bar.config", "foo.config");
+                yield return new TestCaseData("bar.blah", directory + "foo.baz=>bar.blah", "foo.baz");
+                yield return new TestCaseData("bar.config", directory + "foo.xml=>bar.config", "foo.xml");
+                yield return new TestCaseData("xyz.bar.blah", directory + "*.foo.blah=>*.bar.blah", "xyz.foo.blah");
+                yield return new TestCaseData("foo.bar.config", directory + "foo.config=>*.bar.config", "foo.config");
+                yield return new TestCaseData("bar.blah", directory + "*.bar.config=>bar.blah", "foo.bar.config");
+                yield return new TestCaseData("foo.config", directory + "foo.bar.additional.config=>foo.config", "foo.bar.additional.config");
+                yield return new TestCaseData("foo.config", directory + "*.bar.config=>*.config", "foo.bar.config");
+                yield return new TestCaseData("foo.xml", directory + "*.bar.xml=>*.xml", "foo.bar.xml");
+                yield return new TestCaseData("config\\fizz.xml", directory + "foo.bar.xml=>config\\fizz.xml", "foo.bar.xml");
+                yield return new TestCaseData("config\\fizz.xml", directory + "transform\\fizz.buzz.xml=>config\\fizz.xml", "transform\\fizz.buzz.xml");
+                yield return new TestCaseData("config\\fizz.xml", directory + "transform\\*.xml=>config\\*.xml", "transform\\fizz.xml");
+                yield return new TestCaseData("foo.config", directory + "transform\\*.config=>foo.config", "transform\\fizz.config");
             }
         }
 
@@ -174,9 +192,9 @@ namespace Calamari.Tests.Fixtures.Conventions
             configurationTransformer.DidNotReceive().PerformTransform(BuildConfigPath(configFile), BuildConfigPath(transformFile), BuildConfigPath(configFile));
         }
 
-        private string BuildConfigPath(string filename)
+        private static string BuildConfigPath(string filename)
         {
-            var path = GetType().Namespace.Replace("Calamari.Tests.", String.Empty);
+            var path = typeof(ConfigurationTransformConventionFixture).Namespace.Replace("Calamari.Tests.", string.Empty);
             path = path.Replace('.', Path.DirectorySeparatorChar);
             var workingDirectory = Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, "ConfigTransforms");
 
