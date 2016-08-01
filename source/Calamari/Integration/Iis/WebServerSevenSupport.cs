@@ -55,7 +55,22 @@ namespace Calamari.Integration.Iis
                 var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
                 if (existing == null)
                 {
-                    throw new Exception("The site does not exist");
+                    throw new Exception($"The site '{webSiteName}'  does not exist.");
+                }
+
+                existing.Delete();
+                serverManager.CommitChanges();
+            }
+        }
+
+        public void DeleteApplicationPool(string applicationPoolName)
+        {
+            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            {
+                var existing = serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));
+                if (existing == null)
+                {
+                    throw new Exception($"The application pool '{applicationPoolName}' does not exist");
                 }
 
                 existing.Delete();
@@ -137,6 +152,34 @@ namespace Calamari.Integration.Iis
         {
             public string FullVirtualPath { get; set; }
             public VirtualDirectory VirtualDirectory { get; set; }
+        }
+
+        public Site GetWebSite(string webSiteName)
+        {
+            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            {
+                var site = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
+                if (site == null)
+                {
+                    throw new Exception($"The site '{webSiteName}'  does not exist.");
+                }
+
+                return site;
+            }
+        }
+
+        public ApplicationPool GetApplicationPool(string applicationPoolName)
+        {
+            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            {
+                var site = serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));
+                if (site == null)
+                {
+                    throw new Exception($"The application pool '{applicationPoolName}'  does not exist.");
+                }
+
+                return site;
+            }
         }
     }
 }
