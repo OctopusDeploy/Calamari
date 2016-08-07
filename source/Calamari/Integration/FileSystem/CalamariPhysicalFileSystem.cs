@@ -216,7 +216,7 @@ namespace Calamari.Integration.FileSystem
         }
 
         //Read a file and detect different encodings. Based on answer from http://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp
-        //but don't try to handle UTF16 without BOM or non-default ANSI codepage. We also take utf8 if all bytes are below 0x80 rather than using Default
+        //but don't try to handle UTF16 without BOM or non-default ANSI codepage.
         public string ReadFile(string filename, out Encoding encoding)
         {
             var b = File.ReadAllBytes(filename);
@@ -234,21 +234,28 @@ namespace Calamari.Integration.FileSystem
             // the top answer at: http://stackoverflow.com/questions/6555015/check-for-invalid-utf8
             var i = 0;
             var utf8 = false;
+            var ascii = true;
             while (i < b.Length - 4)
             {
                 if (b[i] <= 0x7F) { i += 1; continue; }     // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required' 
-                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0) { i += 2; utf8 = true; continue; }
-                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0) { i += 3; utf8 = true; continue; }
-                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0) { i += 4; utf8 = true; continue; }
-                utf8 = false; break;
+                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0) { i += 2; utf8 = true; ascii = false; continue; }
+                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0) { i += 3; utf8 = true; ascii = false; continue; }
+                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0) { i += 4; utf8 = true; ascii = false; continue; }
+                ascii = false; utf8 = false; break;
             }
-            if (utf8 == true)
+            if (ascii)
             {
-                encoding = Encoding.UTF8;
+                encoding = Encoding.ASCII;
+                return Encoding.ASCII.GetString(b);
+            }
+            if (utf8)
+            {
+                encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false); //UTF8 with no BOM
                 return Encoding.UTF8.GetString(b);
             }
 
             // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage! 
+            // this probably something like Windows 1252 on Windows, but is Encoding.Default is UTF8 on Linux so this probably isn't right in Linux.
             encoding = Encoding.Default;
             return Encoding.Default.GetString(b);
         }
