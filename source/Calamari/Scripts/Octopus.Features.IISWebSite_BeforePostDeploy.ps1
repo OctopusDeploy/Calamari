@@ -21,8 +21,8 @@ try {
     }
 }
 
-$WebSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
-$ApplicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
+$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
+$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
 $bindingString = $OctopusParameters["Octopus.Action.IISWebSite.Bindings"]
 $appPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
 $webRoot = $OctopusParameters["Octopus.Action.IISWebSite.WebRoot"]
@@ -281,7 +281,7 @@ $wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 
 pushd IIS:\
 
-$appPoolPath = ("IIS:\AppPools\" + $ApplicationPoolName)
+$appPoolPath = ("IIS:\AppPools\" + $applicationPoolName)
 $sitePath = ("IIS:\Sites\" + $webSiteName)
 
 # Set App Pool
@@ -289,11 +289,11 @@ Execute-WithRetry {
 	Write-Verbose "Loading Application pool"
 	$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
 	if (!$pool) { 
-		Write-Host "Application pool `"$ApplicationPoolName`" does not exist, creating..." 
+		Write-Host "Application pool `"$applicationPoolName`" does not exist, creating..." 
 		new-item $appPoolPath -confirm:$false
 		$pool = Get-Item $appPoolPath
 	} else {
-		Write-Host "Application pool `"$ApplicationPoolName`" already exists"
+		Write-Host "Application pool `"$applicationPoolName`" already exists"
 	}
 }
 
@@ -325,11 +325,11 @@ Execute-WithRetry {
 	Write-Verbose "Loading Site"
 	$site = Get-Item $sitePath -ErrorAction SilentlyContinue
 	if (!$site) { 
-		Write-Host "Site `"$WebSiteName`" does not exist, creating..." 
+		Write-Host "Site `"$webSiteName`" does not exist, creating..." 
 		$id = (dir iis:\sites | foreach {$_.id} | sort -Descending | select -first 1) + 1
 		new-item $sitePath -bindings @{protocol="http";bindingInformation=":81:od-temp.example.com"} -id $id -physicalPath $webRoot -confirm:$false
 	} else {
-		Write-Host "Site `"$WebSiteName`" already exists"
+		Write-Host "Site `"$webSiteName`" already exists"
 	}
 }
 
@@ -337,11 +337,11 @@ Execute-WithRetry {
 Execute-WithRetry { 
 	Write-Verbose "Loading Site"
 	$pool = Get-ItemProperty $sitePath -name applicationPool
-	if ($ApplicationPoolName -ne $pool) {
-		Write-Host "Assigning website `"$sitePath`" to application pool `"$ApplicationPoolName`"..."
-		Set-ItemProperty $sitePath -name applicationPool -value $ApplicationPoolName
+	if ($applicationPoolName -ne $pool) {
+		Write-Host "Assigning website `"$sitePath`" to application pool `"$applicationPoolName`"..."
+		Set-ItemProperty $sitePath -name applicationPool -value $applicationPoolName
 	} else {
-		Write-Host "Application pool `"$ApplicationPoolName`" already assigned to website `"$sitePath`""
+		Write-Host "Application pool `"$applicationPoolName`" already assigned to website `"$sitePath`""
 	}
 }
 
@@ -413,7 +413,7 @@ if ((Test-Path $appCmdPath) -eq $false) {
 try {
 	Execute-WithRetry { 
 		Write-Host "Anonymous authentication enabled: $enableAnonymous"
-		& $appCmdPath set config "$WebSiteName" -section:"system.webServer/security/authentication/anonymousAuthentication" /enabled:"$enableAnonymous" /commit:apphost
+		& $appCmdPath set config "$webSiteName" -section:"system.webServer/security/authentication/anonymousAuthentication" /enabled:"$enableAnonymous" /commit:apphost
 		if ($LastExitCode -ne 0 ){
 			throw
 		}		
@@ -421,7 +421,7 @@ try {
 
 	Execute-WithRetry { 
 		Write-Host "Basic authentication enabled: $enableBasic"
-		& $appCmdPath set config "$WebSiteName" -section:"system.webServer/security/authentication/basicAuthentication" /enabled:"$enableBasic" /commit:apphost
+		& $appCmdPath set config "$webSiteName" -section:"system.webServer/security/authentication/basicAuthentication" /enabled:"$enableBasic" /commit:apphost
 		if ($LastExitCode -ne 0 ){
 			throw
 		}		
@@ -429,7 +429,7 @@ try {
 
 	Execute-WithRetry { 
 		Write-Host "Windows authentication enabled: $enableWindows"
-		& $appCmdPath set config "$WebSiteName" -section:"system.webServer/security/authentication/windowsAuthentication" /enabled:"$enableWindows" /commit:apphost
+		& $appCmdPath set config "$webSiteName" -section:"system.webServer/security/authentication/windowsAuthentication" /enabled:"$enableWindows" /commit:apphost
 		if ($LastExitCode -ne 0 ){
 			throw
 		}		
@@ -445,19 +445,19 @@ Start-Sleep -s 1
 
 # Start App Pool
 Execute-WithRetry { 
-	$state = Get-WebAppPoolState $ApplicationPoolName
+	$state = Get-WebAppPoolState $applicationPoolName
 	if ($state.Value -eq "Stopped") {
 		Write-Host "Application pool is stopped. Attempting to start..."
-		Start-WebAppPool $ApplicationPoolName
+		Start-WebAppPool $applicationPoolName
 	}
 }
 
 # Start Website
 Execute-WithRetry { 
-	$state = Get-WebsiteState $WebSiteName
+	$state = Get-WebsiteState $webSiteName
 	if ($state.Value -eq "Stopped") {
 		Write-Host "Web site is stopped. Attempting to start..."
-		Start-Website $WebSiteName
+		Start-Website $webSiteName
 	}
 }
 

@@ -52,13 +52,21 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
             Variables["Octopus.Action.IISWebSite.Bindings"] = "[{\"protocol\":\"http\",\"port\":1082,\"host\":\"\",\"thumbprint\":\"\",\"requireSni\":false,\"enabled\":true}]";
-            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
-            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
             Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
             Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
             Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
             Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
             Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            $applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolUsername"]
+$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
+
+            //Fail the test firs
+            Variables["Octopus.Action.IISWebSite.VirtualFolder.Path"] = $"/{uniqueValue}";
+            Variables["Octopus.Action.IISWebSite.VirtualFolder.IsApplication"] = $"/{uniqueValue}";
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
@@ -75,9 +83,12 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var applicationPool = iis.GetApplicationPool(uniqueValue);
 
+            Assert.AreEqual(uniqueValue, applicationPool.Name);
             Assert.AreEqual(ObjectState.Started, applicationPool.State);
             Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
             Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
+
+            applicationPool.
         }
     }
 }
