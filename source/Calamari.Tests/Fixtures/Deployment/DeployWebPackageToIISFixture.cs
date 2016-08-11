@@ -88,13 +88,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldDeployAsVirtualDirectory()
         {
-            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1082);
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1083);
 
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
 
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = $"/${uniqueValue}";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "False";
 
@@ -108,23 +108,45 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.IsFalse(applicationPoolExists);
 
-            var virtualDirectory = iis.FindVirtualDirectory(uniqueValue, $"/${uniqueValue}");
+            var virtualDirectory = iis.FindVirtualDirectory(uniqueValue, ToFirstLevelPath(uniqueValue));
 
-            Assert.AreEqual(uniqueValue, virtualDirectory.Path);
+            Assert.AreEqual(ToFirstLevelPath(uniqueValue), virtualDirectory.Path);
             Assert.NotNull(virtualDirectory.PhysicalPath);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldNotAllowNonExistingParentSegments()
+        {
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1084);
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue) + "/" + uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "False";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(package.FilePath);
+
+            result.AssertNonZero();
+            result.AssertErrorOutput($"Virtual path \"IIS:\\Sites\\{uniqueValue}\\{uniqueValue}\" doesn't exist.");
         }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldDeployAsWebApplication()
         {
-            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1082);
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1085);
 
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
 
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "True";
 
@@ -146,11 +168,16 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
             Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
 
-            var webApplication = iis.GetWebSite(uniqueValue).Applications.Single(ap => ap.Path == uniqueValue);
+            var webApplication = iis.GetWebSite(uniqueValue).Applications.Single(ap => ap.Path == ToFirstLevelPath(uniqueValue));
 
-            Assert.AreEqual(uniqueValue, webApplication.Path);
+            Assert.AreEqual(ToFirstLevelPath(uniqueValue), webApplication.Path);
             Assert.NotNull(uniqueValue, webApplication.ApplicationPoolName);
             Assert.NotNull(uniqueValue, webApplication.VirtualDirectories.Single().Path);
+        }
+
+        private string ToFirstLevelPath(string value)
+        {
+            return $"/{value}";
         }
     }
 }

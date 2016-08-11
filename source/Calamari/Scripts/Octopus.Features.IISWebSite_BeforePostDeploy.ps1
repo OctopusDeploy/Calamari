@@ -2,12 +2,12 @@
 ## Configuration
 ## --------------------------------------------------------------------------------------
 
-function Is-DeploymentTypeEnabled($value) {
-	return $value -or [Bool]::Parse($value)
+function Is-DeploymentTypeDisabled($value) {
+	return !$value -or ![Bool]::Parse($value)
 }
 
-if (!(Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])) -and `
-	!(Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])))
+if ((Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"]) -and  `
+	(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"]))
 {
    Write-Host "Skipping IIS deployment. Neither Web Site nor Virtual Directory deployment type has been enabled." 
    exit 0
@@ -27,7 +27,7 @@ try {
 }
 
 
-function Resolve-Path($path) {
+function Determine-Path($path) {
 	if (! $path) {
 		$path = "."
 	}
@@ -83,7 +83,8 @@ function Execute-WithRetry([ScriptBlock] $command) {
 
 function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityType, 
 								$applicationPoolUsername, $applicationPoolPassword,
-								$applicationPoolFrameworkVersion) {
+								$applicationPoolFrameworkVersion) 
+{
 
 	$appPoolPath = ("IIS:\AppPools\" + $applicationPoolName)
 
@@ -125,7 +126,7 @@ function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityTyp
 
 }
 
-function Assing-ToApplicationPool($iisPath, $applicationPoolName) {
+function Assign-ToApplicationPool($iisPath, $applicationPoolName) {
 	Execute-WithRetry { 
 		Write-Verbose "Loading Site"
 		$pool = Get-ItemProperty $iisPath -name applicationPool
@@ -152,14 +153,19 @@ function Start-ApplicationPool($applicationPoolName) {
 	}
 }
 
+function Get-FullPath($root, $segments)
+{
+	return $root +  "\" + ($virtualPathSegments -join "\")
+}
+
 function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 	$fullPathToVirtualPathSegment = $sitePath
-
 	for($i = 0; $i -lt $virtualPathSegments.Length - 1; $i++) {
 		$fullPathToVirtualPathSegment = $fullPathToVirtualPathSegment + "\" + $virtualPathSegments[$i]
 		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
 		if (!$segment) {
-			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Please make sure it exists before the application is deployed."
+			$fullPath = Get-FullPath -root $sitePath -segments $virtualPathSegments
+			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Please make sure all parent segments of $fullPath exist."
 		}
 	}
 }
@@ -171,20 +177,19 @@ if ($deployToWebSite) {
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
 	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
 	$bindingString = $OctopusParameters["Octopus.Action.IISWebSite.Bindings"]
-	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
-	$webRoot =  Resolve-Path $OctopusParameters["Octopus.Action.IISWebSite.WebRoot"]
+	$webRoot =  Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.WebRoot"]
 	$enableWindows = $OctopusParameters["Octopus.Action.IISWebSite.EnableWindowsAuthentication"]
 	$enableBasic = $OctopusParameters["Octopus.Action.IISWebSite.EnableBasicAuthentication"]
 	$enableAnonymous = $OctopusParameters["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"]
 	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"]
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolUsername"]
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
+	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
 
 	#Assess SNI support (IIS 8 or greater)
 	$iis = get-itemproperty HKLM:\SOFTWARE\Microsoft\InetStp\  | select setupstring 
 	$iisVersion = ($iis.SetupString.Substring(4)) -as [double]
 	$supportsSNI = $iisVersion -ge 8
-
 
 	$wsbindings = new-object System.Collections.ArrayList
 
@@ -375,8 +380,7 @@ if ($deployToWebSite) {
 
 	pushd IIS:\
 	
-	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType ` 
-							-applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
+	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword 
 
 	$sitePath = ("IIS:\Sites\" + $webSiteName)
 
@@ -431,7 +435,6 @@ if ($deployToWebSite) {
 			}
 		}
 		Write-Host "Looks OK"
-
 
 		return $true
 	}
@@ -504,13 +507,14 @@ if ($deployToWebSite) {
 	popd
 }
 else {
+	
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"]
-	$physicalPath = Resolve-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
+	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"]
 
 	$createAsWebApplication = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] -eq 'True'
 
-	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.ApplicationPoolName"]
+	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolName"]
 	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"]
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolUsername"]
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolPassword"]
@@ -531,25 +535,24 @@ else {
 	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
 
 	$type = if ($createAsWebApplication)  { "Application" } else { "VirtualDirectory" } 
-	$fullPathToLastVirtualPathSegment = $sitePath + ($virtualPathSegments -join "\")
+	$fullPathToLastVirtualPathSegment = Get-FullPath -root $sitePath -segments $virtualPathSegments
 	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
 
 	if (!$lastSegment) {
-		Write-Host "`"$virtualPath`" does not exist. Creating ..."
-		New-Item $fullPathToLastVirtualPathSegment -type $type -physicalPath $physicalPath
+		Write-Host "`"$virtualPath`" does not exist. Creating $fullPathToLastVirtualPathSegment of type $type ..."
+		Execute-WithRetry { 
+			New-Item $fullPathToLastVirtualPathSegment -type $type -physicalPath $physicalPath
+		}
 	} else {
 		Write-Host "`"$virtualPath`" already exists."
 	}
 
 	if ($createAsWebApplication) {
-
 		Write-Host "`"$virtualPath`" requested to be hosted as as a web application."
-		SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType ` 
-							-applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
+		SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
+		Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
+		Start-ApplicationPool $applicationPoolName
 	}	
-
-	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
-	Start-ApplicationPool $applicationPoolName
 
 	popd
 }
