@@ -213,12 +213,10 @@ namespace Calamari.Integration.Iis
 
         private TResult Execute<TResult>(Func<ServerManager, TResult> func)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
-            {
-                var result = default(TResult);
-                Execute(sm => result = func(serverManager));
-                return result;
-            }
+            var result = default(TResult);
+            Action<ServerManager> action = serverManager => result = func(serverManager);
+            Execute(action);
+            return result;
         }
     }
 }
