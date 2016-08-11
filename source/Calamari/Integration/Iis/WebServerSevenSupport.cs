@@ -13,7 +13,7 @@ namespace Calamari.Integration.Iis
         {
             var virtualParts = (virtualDirectoryPath ?? String.Empty).Split('/', '\\').Select(x => x.Trim()).Where(x => x.Length > 0).ToArray();
 
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            Execute(serverManager =>
             {
                 var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
                 if (existing == null)
@@ -28,7 +28,7 @@ namespace Calamari.Integration.Iis
                 }
                 
                 serverManager.CommitChanges();
-            }
+            });
         }
 
         public override string GetHomeDirectory(string webSiteName, string virtualDirectoryPath)
@@ -50,7 +50,7 @@ namespace Calamari.Integration.Iis
 
         public override void DeleteWebSite(string webSiteName)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            Execute(serverManager =>
             {
                 var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
                 if (existing == null)
@@ -60,12 +60,12 @@ namespace Calamari.Integration.Iis
 
                 existing.Delete();
                 serverManager.CommitChanges();
-            }
+            });
         }
 
         public void DeleteApplicationPool(string applicationPoolName)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            Execute(serverManager =>
             {
                 var existing = serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));
                 if (existing == null)
@@ -75,7 +75,7 @@ namespace Calamari.Integration.Iis
 
                 existing.Delete();
                 serverManager.CommitChanges();
-            }
+            });
         }
 
         public override bool ChangeHomeDirectory(string webSiteName, string virtualDirectoryPath, string newWebRootPath)
@@ -91,9 +91,9 @@ namespace Calamari.Integration.Iis
             return result;
         }
 
-        static void FindVirtualDirectory(string webSiteName, string virtualDirectoryPath, Action<VirtualDirectory> found)
+        void FindVirtualDirectory(string webSiteName, string virtualDirectoryPath, Action<VirtualDirectory> found)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            Execute(serverManager => 
             {
                 var site = serverManager.Sites.FirstOrDefault(s => s.Name.ToLowerInvariant() == webSiteName.ToLowerInvariant());
                 if (site == null) 
@@ -108,7 +108,7 @@ namespace Calamari.Integration.Iis
                     found(vdir.VirtualDirectory);
                     serverManager.CommitChanges();
                 }
-            }
+            });
         }
 
         static string Normalize(string fullVirtualPath)
@@ -174,10 +174,7 @@ namespace Calamari.Integration.Iis
 
         public Site FindWebSite(string webSiteName)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
-            {
-                return serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
-            }
+            return Execute(serverManager => serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase)));
         }
 
         public bool WebSiteExists(string webSiteName)
@@ -198,15 +195,30 @@ namespace Calamari.Integration.Iis
 
         public ApplicationPool FindApplicationPool(string applicationPoolName)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
-            {
-                return serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));              
-            }
+            return Execute(serverManager => serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase)));              
         }
 
         public bool ApplicationPoolExists(string applicationPool)
         {
             return FindApplicationPool(applicationPool) != null;
+        }
+
+        private void Execute(Action<ServerManager> action)
+        {
+            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            {
+                action(serverManager);
+            }
+        }
+
+        private TResult Execute<TResult>(Func<ServerManager, TResult> func)
+        {
+            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            {
+                var result = default(TResult);
+                Execute(sm => result = func(serverManager));
+                return result;
+            }
         }
     }
 }
