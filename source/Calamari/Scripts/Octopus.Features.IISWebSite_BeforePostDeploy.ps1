@@ -2,6 +2,10 @@
 ## Configuration
 ## --------------------------------------------------------------------------------------
 
+function Is-DeploymentTypeEnabled($value) {
+	return $value -or [Bool]::Parse($value)
+}
+
 if (!(Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])) -and `
 	!(Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])))
 {
@@ -22,10 +26,6 @@ try {
     }
 }
 
-function Is-DeploymentTypeEnabled($value) {
-	$isEnabled = $value;
-	return $isEnabled -or [Bool]::Parse($isEnabled)
-}
 
 function Resolve-Path($path) {
 	if (! $path) {
@@ -152,6 +152,17 @@ function Start-ApplicationPool($applicationPoolName) {
 	}
 }
 
+function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
+	$fullPathToVirtualPathSegment = $sitePath
+
+	for($i = 0; $i -lt $virtualPathSegments.Length - 1; $i++) {
+		$fullPathToVirtualPathSegment = $fullPathToVirtualPathSegment + "\" + $virtualPathSegments[$i]
+		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
+		if (!$segment) {
+			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Please make sure it exists before the application is deployed."
+		}
+	}
+}
 
 $deployToWebSite = $OctopusParameters["Octopus.Action.IISWebSite.DeploymentType"] -eq "webSite" 
 
@@ -541,18 +552,6 @@ else {
 	Start-ApplicationPool $applicationPoolName
 
 	popd
-}
-
-funtion Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
-	$fullPathToVirtualPathSegment = $sitePath
-
-	for($i = 0; $i -lt $virtualPathSegments.Length - 1; $i++) {
-		$fullPathToVirtualPathSegment = $fullPathToVirtualPathSegment + "\" + $virtualPathSegments[$i]
-		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
-		if (!$segment) {
-			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Please make sure it exists before the application is deployed."
-		}
-	}
 }
 
 Write-Host "IIS configuration complete"
