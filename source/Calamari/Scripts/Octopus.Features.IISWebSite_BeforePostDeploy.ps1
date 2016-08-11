@@ -2,8 +2,8 @@
 ## Configuration
 ## --------------------------------------------------------------------------------------
 
-if ((!IsDeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])) -and `
-	(!IsDeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])))
+if ((!Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])) -and `
+	(!Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])))
 {
    Write-Host "Skipping IIS deployment. Neither Web Site nor Virtual Directory deployment type has been enabled." 
    exit 0
@@ -22,10 +22,136 @@ try {
     }
 }
 
-function IsDeploymentTypeEnabled($value) {
+function Is-DeploymentTypeEnabled($value) {
 	$isEnabled = $value;
 	return $isEnabled -or [Bool]::Parse($isEnabled)
 }
+
+function Resolve-Path($path) {
+	if (! $path) {
+		$path = "."
+	}
+
+	return (resolve-path $path).ProviderPath
+}
+
+$maxFailures = $OctopusParameters["Octopus.Action.IISWebSite.MaxRetryFailures"]
+if ($maxFailures -Match "^\d+$") {
+	$maxFailures = [int]$maxFailures
+} else {
+	$maxFailures = 5
+}
+
+$sleepBetweenFailures = $OctopusParameters["Octopus.Action.IISWebSite.SleepBetweenRetryFailuresInSeconds"]
+if ($sleepBetweenFailures -Match "^\d+$") {
+	$sleepBetweenFailures = [int]$sleepBetweenFailures
+} else {
+	$sleepBetweenFailures = Get-Random -minimum 1 -maximum 4
+}
+
+if ($sleepBetweenFailures -gt 60) {
+	Write-Host "Invalid Sleep time between failures.  Setting to max of 60 seconds"
+	$sleepBetweenFailures = 60
+}
+
+function Execute-WithRetry([ScriptBlock] $command) {
+	$attemptCount = 0
+	$operationIncomplete = $true
+
+	while ($operationIncomplete -and $attemptCount -lt $maxFailures) {
+		$attemptCount = ($attemptCount + 1)
+
+		if ($attemptCount -ge 2) {
+			Write-Host "Waiting for $sleepBetweenFailures seconds before retrying..."
+			Start-Sleep -s $sleepBetweenFailures
+			Write-Host "Retrying..."
+		}
+
+		try {
+			& $command
+
+			$operationIncomplete = $false
+		} catch [System.Exception] {
+			if ($attemptCount -lt ($maxFailures)) {
+				Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
+			} else {
+				throw
+			}
+		}
+	}
+}
+
+function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityType, 
+								$applicationPoolUsername, $applicationPoolPassword,
+								$applicationPoolFrameworkVersion) {
+
+	$appPoolPath = ("IIS:\AppPools\" + $applicationPoolName)
+
+	# Set App Pool
+	Execute-WithRetry { 
+		Write-Verbose "Loading Application pool"
+		$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
+		if (!$pool) { 
+			Write-Host "Application pool `"$applicationPoolName`" does not exist, creating..." 
+			new-item $appPoolPath -confirm:$false
+			$pool = Get-Item $appPoolPath
+		} else {
+			Write-Host "Application pool `"$applicationPoolName`" already exists"
+		}
+	}
+
+	# Set App Pool Identity
+	Execute-WithRetry { 
+		Write-Host "Set application pool identity: $applicationPoolIdentityType"
+		if ($applicationPoolIdentityType -eq "SpecificUser") {
+			Set-ItemProperty $appPoolPath -name processModel -value @{identitytype="SpecificUser"; username="$applicationPoolUsername"; password="$applicationPoolPassword"}
+		} else {
+			Set-ItemProperty $appPoolPath -name processModel -value @{identitytype="$applicationPoolIdentityType"}
+		}
+	}
+
+	# Set .NET Framework
+	Execute-WithRetry { 
+		Write-Host "Set .NET framework version: $applicationPoolFrameworkVersion" 
+		if($applicationPoolFrameworkVersion -eq "No Managed Code")
+		{
+			Set-ItemProperty $appPoolPath managedRuntimeVersion ""
+		}
+		else
+		{
+			Set-ItemProperty $appPoolPath managedRuntimeVersion $applicationPoolFrameworkVersion
+		}
+	}
+
+}
+
+function Assing-ToApplicationPool($iisPath, $applicationPoolName) {
+	Execute-WithRetry { 
+		Write-Verbose "Loading Site"
+		$pool = Get-ItemProperty $iisPath -name applicationPool
+		if ($applicationPoolName -ne $pool) {
+			Write-Host "Assigning `"$iisPath`" to application pool `"$applicationPoolName`"..."
+			Set-ItemProperty $iisPath -name applicationPool -value $applicationPoolName
+		} else {
+			Write-Host "Application pool `"$applicationPoolName`" already assigned to `"$iisPath`""
+		}
+	}
+}
+
+function Start-ApplicationPool($applicationPoolName) {
+	# It can take a while for the App Pool to come to life (#490)
+	Start-Sleep -s 1
+
+	# Start App Pool
+	Execute-WithRetry { 
+		$state = Get-WebAppPoolState $applicationPoolName
+		if ($state.Value -eq "Stopped") {
+			Write-Host "Application pool is stopped. Attempting to start..."
+			Start-WebAppPool $applicationPoolName
+		}
+	}
+}
+
 
 $deployToWebSite = $OctopusParameters["Octopus.Action.IISWebSite.DeploymentType"] -eq "webSite" 
 
@@ -34,67 +160,14 @@ if ($deployToWebSite) {
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
 	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
 	$bindingString = $OctopusParameters["Octopus.Action.IISWebSite.Bindings"]
-	$appPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
-	$webRoot = $OctopusParameters["Octopus.Action.IISWebSite.WebRoot"]
+	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
+	$webRoot =  Resolve-Path $OctopusParameters["Octopus.Action.IISWebSite.WebRoot"]
 	$enableWindows = $OctopusParameters["Octopus.Action.IISWebSite.EnableWindowsAuthentication"]
 	$enableBasic = $OctopusParameters["Octopus.Action.IISWebSite.EnableBasicAuthentication"]
 	$enableAnonymous = $OctopusParameters["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"]
 	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"]
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolUsername"]
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
-
-	if (! $webRoot) {
-		$webRoot = "."
-	}
-
-	$maxFailures = $OctopusParameters["Octopus.Action.IISWebSite.MaxRetryFailures"]
-	if ($maxFailures -Match "^\d+$") {
-		$maxFailures = [int]$maxFailures
-	} else {
-		$maxFailures = 5
-	}
-
-	$sleepBetweenFailures = $OctopusParameters["Octopus.Action.IISWebSite.SleepBetweenRetryFailuresInSeconds"]
-	if ($sleepBetweenFailures -Match "^\d+$") {
-		$sleepBetweenFailures = [int]$sleepBetweenFailures
-	} else {
-		$sleepBetweenFailures = Get-Random -minimum 1 -maximum 4
-	}
-
-	if ($sleepBetweenFailures -gt 60) {
-		Write-Host "Invalid Sleep time between failures.  Setting to max of 60 seconds"
-		$sleepBetweenFailures = 60
-	}
-
-	# Helper to run a block with a retry if things go wrong
-	function Execute-WithRetry([ScriptBlock] $command) {
-		$attemptCount = 0
-		$operationIncomplete = $true
-
-		while ($operationIncomplete -and $attemptCount -lt $maxFailures) {
-			$attemptCount = ($attemptCount + 1)
-
-			if ($attemptCount -ge 2) {
-				Write-Host "Waiting for $sleepBetweenFailures seconds before retrying..."
-				Start-Sleep -s $sleepBetweenFailures
-				Write-Host "Retrying..."
-			}
-
-			try {
-				& $command
-
-				$operationIncomplete = $false
-			} catch [System.Exception] {
-				if ($attemptCount -lt ($maxFailures)) {
-					Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
-				} else {
-					throw
-				}
-			}
-		}
-	}
-
-	$webRoot = (resolve-path $webRoot).ProviderPath
 
 	#Assess SNI support (IIS 8 or greater)
 	$iis = get-itemproperty HKLM:\SOFTWARE\Microsoft\InetStp\  | select setupstring 
@@ -290,45 +363,11 @@ if ($deployToWebSite) {
 	## --------------------------------------------------------------------------------------
 
 	pushd IIS:\
+	
+	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType ` 
+							-applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
 
-	$appPoolPath = ("IIS:\AppPools\" + $applicationPoolName)
 	$sitePath = ("IIS:\Sites\" + $webSiteName)
-
-	# Set App Pool
-	Execute-WithRetry { 
-		Write-Verbose "Loading Application pool"
-		$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
-		if (!$pool) { 
-			Write-Host "Application pool `"$applicationPoolName`" does not exist, creating..." 
-			new-item $appPoolPath -confirm:$false
-			$pool = Get-Item $appPoolPath
-		} else {
-			Write-Host "Application pool `"$applicationPoolName`" already exists"
-		}
-	}
-
-	# Set App Pool Identity
-	Execute-WithRetry { 
-		Write-Host "Set application pool identity: $applicationPoolIdentityType"
-		if ($applicationPoolIdentityType -eq "SpecificUser") {
-			Set-ItemProperty $appPoolPath -name processModel -value @{identitytype="SpecificUser"; username="$applicationPoolUsername"; password="$applicationPoolPassword"}
-		} else {
-			Set-ItemProperty $appPoolPath -name processModel -value @{identitytype="$applicationPoolIdentityType"}
-		}
-	}
-
-	# Set .NET Framework
-	Execute-WithRetry { 
-		Write-Host "Set .NET framework version: $appPoolFrameworkVersion" 
-		if($appPoolFrameworkVersion -eq "No Managed Code")
-		{
-			Set-ItemProperty $appPoolPath managedRuntimeVersion ""
-		}
-		else
-		{
-			Set-ItemProperty $appPoolPath managedRuntimeVersion $appPoolFrameworkVersion
-		}
-	}
 
 	# Create Website
 	Execute-WithRetry { 
@@ -343,17 +382,7 @@ if ($deployToWebSite) {
 		}
 	}
 
-	# Assign Website to App Pool
-	Execute-WithRetry { 
-		Write-Verbose "Loading Site"
-		$pool = Get-ItemProperty $sitePath -name applicationPool
-		if ($applicationPoolName -ne $pool) {
-			Write-Host "Assigning website `"$sitePath`" to application pool `"$applicationPoolName`"..."
-			Set-ItemProperty $sitePath -name applicationPool -value $applicationPoolName
-		} else {
-			Write-Host "Application pool `"$applicationPoolName`" already assigned to website `"$sitePath`""
-		}
-	}
+	Assign-ToApplicationPool -iisPath $sitePath -applicationPoolName $applicationPoolName
 
 	# Set Path
 	Execute-WithRetry { 
@@ -450,17 +479,7 @@ if ($deployToWebSite) {
 		throw
 	}
 
-	# It can take a while for the App Pool to come to life (#490)
-	Start-Sleep -s 1
-
-	# Start App Pool
-	Execute-WithRetry { 
-		$state = Get-WebAppPoolState $applicationPoolName
-		if ($state.Value -eq "Stopped") {
-			Write-Host "Application pool is stopped. Attempting to start..."
-			Start-WebAppPool $applicationPoolName
-		}
-	}
+	Start-ApplicationPool $applicationPoolName
 
 	# Start Website
 	Execute-WithRetry { 
@@ -474,7 +493,59 @@ if ($deployToWebSite) {
 	popd
 }
 else {
-	
+	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"]
+	$physicalPath = Resolve-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
+	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"]
+
+	$createAsWebApplication = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] -eq 'True'
+
+	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.ApplicationPoolName"]
+	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"]
+	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolUsername"]
+	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolPassword"]
+	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
+
+	pushd IIS:\
+
+	$sitePath = ("IIS:\Sites\" + $webSiteName)
+
+	Write-Verbose "Searching for $webSiteName Web Site."
+	$site = Get-Item $sitePath -ErrorAction SilentlyContinue
+	if (!$site) { 
+		throw "Site `"$webSiteName`" does not exist. Please make sure the site exists before deploying to Virtual Directory." 
+	}
+
+	Assert-ParentSegmentsExist -sitePath $sitePath $virtualPath -virtualPath
+
+	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
+	if (!$lastSegment) {
+		$type = if ($createAsWebApplication)  { "Application" } else { "VirtualDirectory" } 
+		New-Item $fullPathToVirtualPathSegment -type $type -physicalPath $physicalPath
+	}
+
+	if ($createAsWebApplication) {
+		SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType ` 
+							-applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
+		Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
+		Start-ApplicationPool $applicationPoolName
+	}	
+
+	popd
+}
+
+funtion Assert-ParentSegmentsExist($sitePath, $virtualPath) {
+	$virtualPathSegments= $virtualPath.Split(@('\', '/'), [System.StringSplitOptions]::RemoveEmptyEntries)
+	$fullPathToVirtualPathSegment = $sitePath
+	$fullPathToLastVirtualPathSegment = $sitePath + ($virtualPathSegments -join "\")
+
+	for($i = 0; $i -lt $virtualPathSegments.Length - 1; $i++) {
+		$fullPathToVirtualPathSegment = $fullPathToVirtualPathSegment + "\" + $virtualPathSegments[$i]
+		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
+		if (!$segment) {
+			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Every segment of `"$fullPathToLastVirtualPathSegment`", with the exception of the last one, has to already exist."
+		}
+	}
+
 }
 
 Write-Host "IIS configuration complete"
