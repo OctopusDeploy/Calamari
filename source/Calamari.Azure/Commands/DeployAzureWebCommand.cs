@@ -58,6 +58,7 @@ namespace Calamari.Azure.Commands
                 new ConfigurationTransformer(
                     variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors),
                     variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
+            var transformFileLocator = new TransformFileLocator(fileSystem);
 
             var conventions = new List<IConvention>
             {
@@ -67,7 +68,7 @@ namespace Calamari.Azure.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, scriptEngine, fileSystem, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer),
+                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),

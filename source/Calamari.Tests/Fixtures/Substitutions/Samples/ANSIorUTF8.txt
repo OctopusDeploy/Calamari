@@ -1,1 +1,0 @@
-Valid UTF8 with no BOM or ANSI
