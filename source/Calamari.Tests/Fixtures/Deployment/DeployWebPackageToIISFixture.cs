@@ -132,7 +132,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var result = DeployPackage(package.FilePath);
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput($"Virtual path \"IIS:\\Sites\\{uniqueValue}\\{uniqueValue}\" doesn't exist.");
         }
 

@@ -34,13 +34,13 @@ namespace Calamari.Tests.Helpers
             Assert.That(ExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0{0}{0}Output:{0}{1}", Environment.NewLine, capturedErrors));
         }
 
-        public void AssertNonZero()
+        public void AssertFailure()
         {
             Assert.That(ExitCode, Is.Not.EqualTo(0), "Expected a non-zero exit code");
         }
 
 
-        public void AssertNonZero(int code)
+        public void AssertFailure(int code)
         {
             Assert.That(ExitCode, Is.EqualTo(code), $"Expected an exit code of {code}");
         }
