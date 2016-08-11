@@ -148,6 +148,13 @@ namespace Calamari.Integration.Iis
             }
         }
 
+        public VirtualDirectory FindVirtualDirectory(string webSiteName, string virtualDirectoryPath)
+        {
+            VirtualDirectory virtualDirectory = null;
+            FindVirtualDirectory(webSiteName, virtualDirectoryPath, vd => virtualDirectory = vd);
+            return virtualDirectory;
+        }
+
         public class VirtualDirectoryNode
         {
             public string FullVirtualPath { get; set; }
@@ -156,30 +163,50 @@ namespace Calamari.Integration.Iis
 
         public Site GetWebSite(string webSiteName)
         {
+            var site = FindWebSite(webSiteName);
+            if (site == null)
+            {
+                throw new Exception($"The site '{webSiteName}'  does not exist.");
+            }
+
+            return site;
+        }
+
+        public Site FindWebSite(string webSiteName)
+        {
             using (var serverManager = ServerManager.OpenRemote(Localhost))
             {
-                var site = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
-                if (site == null)
-                {
-                    throw new Exception($"The site '{webSiteName}'  does not exist.");
-                }
-
-                return site;
+                return serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
             }
+        }
+
+        public bool WebSiteExists(string webSiteName)
+        {
+            return FindWebSite(webSiteName) != null;
         }
 
         public ApplicationPool GetApplicationPool(string applicationPoolName)
         {
+            var applicationPool = FindApplicationPool(applicationPoolName);
+            if (applicationPool == null)
+            {
+                throw new Exception($"The application pool '{applicationPoolName}'  does not exist.");
+            }
+
+            return applicationPool;
+        }
+
+        public ApplicationPool FindApplicationPool(string applicationPoolName)
+        {
             using (var serverManager = ServerManager.OpenRemote(Localhost))
             {
-                var site = serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));
-                if (site == null)
-                {
-                    throw new Exception($"The application pool '{applicationPoolName}'  does not exist.");
-                }
-
-                return site;
+                return serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));              
             }
+        }
+
+        public bool ApplicationPoolExists(string applicationPool)
+        {
+            return FindApplicationPool(applicationPool) != null;
         }
     }
 }

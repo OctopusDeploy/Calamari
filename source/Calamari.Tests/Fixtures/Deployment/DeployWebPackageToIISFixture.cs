@@ -40,17 +40,19 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TearDown]
         public override void CleanUp()
         {
-            iis.DeleteWebSite(uniqueValue);
-            iis.DeleteApplicationPool(uniqueValue);
+            if (iis.WebSiteExists(uniqueValue)) iis.DeleteWebSite(uniqueValue);
+            if (iis.ApplicationPoolExists(uniqueValue)) iis.DeleteApplicationPool(uniqueValue);
 
             base.CleanUp();
         }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldDeployWebApplicationToIIS()
+        public void ShouldDeployAsWebSite()
         {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
             Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
             Variables["Octopus.Action.IISWebSite.Bindings"] = "[{\"protocol\":\"http\",\"port\":1082,\"host\":\"\",\"thumbprint\":\"\",\"requireSni\":false,\"enabled\":true}]";
             Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
             Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
@@ -60,13 +62,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
-
-            $applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolUsername"]
-$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
-
-            //Fail the test firs
-            Variables["Octopus.Action.IISWebSite.VirtualFolder.Path"] = $"/{uniqueValue}";
-            Variables["Octopus.Action.IISWebSite.VirtualFolder.IsApplication"] = $"/{uniqueValue}";
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
@@ -87,8 +82,75 @@ $applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.Applica
             Assert.AreEqual(ObjectState.Started, applicationPool.State);
             Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
             Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
+        }
 
-            applicationPool.
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldDeployAsVirtualDirectory()
+        {
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1082);
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = $"/${uniqueValue}";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "False";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(package.FilePath);
+
+            result.AssertSuccess();
+
+            var applicationPoolExists = iis.ApplicationPoolExists(uniqueValue);
+
+            Assert.IsFalse(applicationPoolExists);
+
+            var virtualDirectory = iis.FindVirtualDirectory(uniqueValue, $"/${uniqueValue}");
+
+            Assert.AreEqual(uniqueValue, virtualDirectory.Path);
+            Assert.NotNull(virtualDirectory.PhysicalPath);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldDeployAsWebApplication()
+        {
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1082);
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(package.FilePath);
+
+            result.AssertSuccess();
+
+            var applicationPool = iis.GetApplicationPool(uniqueValue);
+
+            Assert.AreEqual(uniqueValue, applicationPool.Name);
+            Assert.AreEqual(ObjectState.Started, applicationPool.State);
+            Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
+            Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
+
+            var webApplication = iis.GetWebSite(uniqueValue).Applications.Single(ap => ap.Path == uniqueValue);
+
+            Assert.AreEqual(uniqueValue, webApplication.Path);
+            Assert.NotNull(uniqueValue, webApplication.ApplicationPoolName);
+            Assert.NotNull(uniqueValue, webApplication.VirtualDirectories.Single().Path);
         }
     }
 }

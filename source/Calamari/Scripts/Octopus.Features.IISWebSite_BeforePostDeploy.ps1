@@ -2,8 +2,8 @@
 ## Configuration
 ## --------------------------------------------------------------------------------------
 
-if ((!Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])) -and `
-	(!Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])))
+if (!(Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])) -and `
+	!(Is-DeploymentTypeEnabled($OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])))
 {
    Write-Host "Skipping IIS deployment. Neither Web Site nor Virtual Directory deployment type has been enabled." 
    exit 0
@@ -503,7 +503,7 @@ else {
 	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"]
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolUsername"]
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolPassword"]
-	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
+	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolFrameworkVersion"]
 
 	pushd IIS:\
 
@@ -515,37 +515,44 @@ else {
 		throw "Site `"$webSiteName`" does not exist. Please make sure the site exists before deploying to Virtual Directory." 
 	}
 
-	Assert-ParentSegmentsExist -sitePath $sitePath $virtualPath -virtualPath
+	$virtualPathSegments= $virtualPath.Split(@('\', '/'), [System.StringSplitOptions]::RemoveEmptyEntries)
 
+	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
+
+	$type = if ($createAsWebApplication)  { "Application" } else { "VirtualDirectory" } 
+	$fullPathToLastVirtualPathSegment = $sitePath + ($virtualPathSegments -join "\")
 	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
+
 	if (!$lastSegment) {
-		$type = if ($createAsWebApplication)  { "Application" } else { "VirtualDirectory" } 
-		New-Item $fullPathToVirtualPathSegment -type $type -physicalPath $physicalPath
+		Write-Host "`"$virtualPath`" does not exist. Creating ..."
+		New-Item $fullPathToLastVirtualPathSegment -type $type -physicalPath $physicalPath
+	} else {
+		Write-Host "`"$virtualPath`" already exists."
 	}
 
 	if ($createAsWebApplication) {
+
+		Write-Host "`"$virtualPath`" requested to be hosted as as a web application."
 		SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType ` 
 							-applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
-		Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
-		Start-ApplicationPool $applicationPoolName
 	}	
+
+	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
+	Start-ApplicationPool $applicationPoolName
 
 	popd
 }
 
-funtion Assert-ParentSegmentsExist($sitePath, $virtualPath) {
-	$virtualPathSegments= $virtualPath.Split(@('\', '/'), [System.StringSplitOptions]::RemoveEmptyEntries)
+funtion Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 	$fullPathToVirtualPathSegment = $sitePath
-	$fullPathToLastVirtualPathSegment = $sitePath + ($virtualPathSegments -join "\")
 
 	for($i = 0; $i -lt $virtualPathSegments.Length - 1; $i++) {
 		$fullPathToVirtualPathSegment = $fullPathToVirtualPathSegment + "\" + $virtualPathSegments[$i]
 		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
 		if (!$segment) {
-			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Every segment of `"$fullPathToLastVirtualPathSegment`", with the exception of the last one, has to already exist."
+			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Please make sure it exists before the application is deployed."
 		}
 	}
-
 }
 
 Write-Host "IIS configuration complete"
