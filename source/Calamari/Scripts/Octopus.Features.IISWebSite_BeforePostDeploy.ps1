@@ -7,9 +7,9 @@ function Is-DeploymentTypeDisabled($value) {
 }
 
 $deployToVirtualFolder = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])
-$deployToWebSiste = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])
+$deployToWebSite = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])
 
-if (!$deployToVirtualFolder -and !$deployToWebSiste)
+if (!$deployToVirtualFolder -and !$deployToWebSite)
 {
    Write-Host "Skipping IIS deployment. Neither Web Site nor Virtual Directory deployment type has been enabled." 
    exit 0
