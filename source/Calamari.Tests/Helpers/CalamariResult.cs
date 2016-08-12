@@ -154,9 +154,10 @@ namespace Calamari.Tests.Helpers
             AssertErrorOutput(String.Format(expectedOutputFormat, args));
         }
 
-        public void AssertErrorOutput(string expectedOutput)
+        public void AssertErrorOutput(string expectedOutput, bool noNewLines = false)
         {
-            var allOutput = string.Join(Environment.NewLine, captured.Errors);
+            var separator = noNewLines ? String.Empty : Environment.NewLine;
+            var allOutput = string.Join(separator, captured.Errors);
             Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
         }
 
