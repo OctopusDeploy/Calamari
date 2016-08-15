@@ -7,6 +7,7 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using Microsoft.Web.Administration;
 using NUnit.Framework;
+using Polly;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -69,14 +70,14 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertSuccess();
 
-            var website = iis.GetWebSite(uniqueValue);
+            var website = GetWebSite(uniqueValue);
 
             Assert.AreEqual(uniqueValue, website.Name);
             Assert.AreEqual(ObjectState.Started, website.State);
             Assert.AreEqual(1082, website.Bindings.Single().EndPoint.Port);
             Assert.AreEqual(uniqueValue, website.Applications.First().ApplicationPoolName);
 
-            var applicationPool = iis.GetApplicationPool(uniqueValue);
+            var applicationPool = GetApplicationPool(uniqueValue);
 
             Assert.AreEqual(uniqueValue, applicationPool.Name);
             Assert.AreEqual(ObjectState.Started, applicationPool.State);
@@ -104,11 +105,11 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertSuccess();
 
-            var applicationPoolExists = iis.ApplicationPoolExists(uniqueValue);
+            var applicationPoolExists = ApplicationPoolExists(uniqueValue);
 
             Assert.IsFalse(applicationPoolExists);
 
-            var virtualDirectory = iis.FindVirtualDirectory(uniqueValue, ToFirstLevelPath(uniqueValue));
+            var virtualDirectory = FindVirtualDirectory(uniqueValue, ToFirstLevelPath(uniqueValue));
 
             Assert.AreEqual(ToFirstLevelPath(uniqueValue), virtualDirectory.Path);
             Assert.NotNull(virtualDirectory.PhysicalPath);
@@ -148,7 +149,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "True";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateAsWebApplication"] = "True";
 
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolFrameworkVersion"] = "v4.0";
@@ -161,14 +162,14 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertSuccess();
 
-            var applicationPool = iis.GetApplicationPool(uniqueValue);
+            var applicationPool = GetApplicationPool(uniqueValue);
 
             Assert.AreEqual(uniqueValue, applicationPool.Name);
             Assert.AreEqual(ObjectState.Started, applicationPool.State);
             Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
             Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
 
-            var webApplication = iis.GetWebSite(uniqueValue).Applications.Single(ap => ap.Path == ToFirstLevelPath(uniqueValue));
+            var webApplication = GetWebSite(uniqueValue).Applications.Single(ap => ap.Path == ToFirstLevelPath(uniqueValue));
 
             Assert.AreEqual(ToFirstLevelPath(uniqueValue), webApplication.Path);
             Assert.NotNull(uniqueValue, webApplication.ApplicationPoolName);
@@ -179,5 +180,36 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             return $"/{value}";
         }
+
+        private Site GetWebSite(string webSiteName)
+        {
+            return Retry(() => iis.GetWebSite(webSiteName));
+        }
+
+        private ApplicationPool GetApplicationPool(string applicationPoolNae)
+        {
+            return Retry(() => iis.GetApplicationPool(applicationPoolNae));
+        }
+
+        private VirtualDirectory FindVirtualDirectory(string webSiteName, string path)
+        {
+            return Retry(() => iis.FindVirtualDirectory(webSiteName, path));
+        }
+
+        private bool ApplicationPoolExists(string applicationPoolName)
+        {
+            return Retry(() => iis.ApplicationPoolExists(applicationPoolName));
+        }
+
+        private TResult Retry<TResult>(Func<TResult> func)
+        {
+            return Policy.Handle<Exception>()
+                        .WaitAndRetry(5, retry => TimeSpan.FromSeconds(retry), (e, _) =>
+                        {
+                            Console.WriteLine("Retry failed.");
+                        })
+                        .Execute(func);
+        }
+
     }
 }
