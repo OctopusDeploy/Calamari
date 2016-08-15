@@ -180,7 +180,7 @@ if ($deployToVirtualFolder) {
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"]
 
-	$createAsWebApplication = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] -eq 'True'
+	$createAsWebApplication = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateAsWebApplication"] -eq 'True'
 
 	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolName"]
 	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"]
