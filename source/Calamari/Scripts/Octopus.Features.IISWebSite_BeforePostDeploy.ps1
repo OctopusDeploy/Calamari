@@ -24,7 +24,7 @@ try {
 		Write-Warning "We failed to load the WebAdministration module. This usually resolved by doing one of the following:"
 		Write-Warning "1. Install .NET Framework 3.5.1"
 		Write-Warning "2. Upgrade to PowerShell 3.0 (or greater)"
-		Write-Warning "3. On Windows 2008 you might need to install PowerShell SnapIn for IIS from http://www.iis.net/downloads/microsoft/powershell#additionalDownloads."
+		Write-Warning "3. On Windows 2008 you might need to install PowerShell SnapIn for IIS from http://www.iis.net/downloads/microsoft/powershell#additionalDownloads"
         throw ($error | Select-Object -First 1)
     }
 }
@@ -163,7 +163,7 @@ function Get-FullPath($root, $segments)
 
 function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 	$fullPathToVirtualPathSegment = $sitePath
-	for($i = 0; $i -lt $virtualPathSegments.Length - 1; $i++) {power
+	for($i = 0; $i -lt $virtualPathSegments.Length - 1; $i++) {
 		$fullPathToVirtualPathSegment = $fullPathToVirtualPathSegment + "\" + $virtualPathSegments[$i]
 		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
 		if (!$segment) {
