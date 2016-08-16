@@ -61,7 +61,7 @@ namespace Calamari.Integration.FileSystem
                 if (storedPackage == null)
                     continue;
 
-                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || !string.Equals(storedPackage.Metadata.Version.ToString(), metadata.Version.ToString(), StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || NuGetVersion.Parse(storedPackage.Metadata.Version) != NuGetVersion.Parse(metadata.Version))
                     continue;
 
                 if (string.IsNullOrWhiteSpace(metadata.Hash))
@@ -132,7 +132,7 @@ namespace Calamari.Integration.FileSystem
 
         static string GetNameOfPackage(PackageMetadata metadata)
         {
-            return metadata.Id + "." + metadata.Version;
+            return metadata.Id + "." + metadata.Version + "*";
         }
     }
 }
