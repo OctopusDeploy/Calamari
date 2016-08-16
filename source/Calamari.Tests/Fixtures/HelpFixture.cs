@@ -10,7 +10,7 @@ namespace Calamari.Tests.Fixtures
         public void NoArgumentsShouldPrintHelp()
         {
             var output = Invoke(Calamari());
-            output.AssertNonZero();
+            output.AssertFailure();
             output.AssertOutput("Usage: Calamari");
         }
 
@@ -18,7 +18,7 @@ namespace Calamari.Tests.Fixtures
         public void UnknownArgumentShouldPrintHelp()
         {
             var output = Invoke(Calamari().Action("whatever"));
-            output.AssertNonZero();
+            output.AssertFailure();
             output.AssertOutput("Command 'whatever' is not supported");
             output.AssertOutput("Usage: Calamari");
         }
