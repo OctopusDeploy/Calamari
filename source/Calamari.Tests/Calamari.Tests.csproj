@@ -49,10 +49,6 @@
       <HintPath>..\packages\FluentAssertions.4.9.1\lib\net40\FluentAssertions.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
-      <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="MarkdownSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\MarkdownSharp.1.13.0.0\lib\35\MarkdownSharp.dll</HintPath>
@@ -103,6 +99,10 @@
     </Reference>
     <Reference Include="Octostache, Version=1.0.2.32, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Octostache.1.0.2.32\lib\net40\Octostache.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="SharpCompress, Version=0.12.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpCompress.0.12.4\lib\net40\SharpCompress.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Sprache, Version=2.0.0.45, Culture=neutral, processorArchitecture=MSIL">
