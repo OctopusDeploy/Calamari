@@ -22,6 +22,9 @@ namespace Calamari.Azure.Tests.Conventions
         const string certificateThumbprint = "86B5C8E5553981FED961769B2DA3028C619596AC";
         const string certificateBytes = "ThisIsNotAValidCertificate";
         const string storageAccountName = "AcmeStorage";
+        const string DefaultStorageEndpointSuffix = "core.windows.net";
+        const string DefaultServiceManagementEndpoint = "https://management.core.windows.net/";
+
         ICalamariFileSystem fileSystem;
         IAzurePackageUploader packageUploader;
         CalamariVariableDictionary variables;
@@ -65,7 +68,7 @@ namespace Calamari.Azure.Tests.Conventions
 
             packageUploader.Upload(
                 Arg.Is<SubscriptionCloudCredentials>(cred => cred.SubscriptionId == azureSubscriptionId),
-                storageAccountName, packageFilePath, Arg.Any<string>()) 
+                storageAccountName, packageFilePath, Arg.Any<string>(), DefaultStorageEndpointSuffix,DefaultServiceManagementEndpoint) 
             .Returns(uploadedUri);
 
             convention.Install(deployment);

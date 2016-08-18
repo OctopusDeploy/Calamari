@@ -67,15 +67,17 @@ If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 	# Authenticate via Service Principal
 	$securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
 	$creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+	$azureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $AzureEnvironment}
 	Write-Verbose "Authenticating with Service Principal"
-	Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -ServicePrincipal
+	Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -ServicePrincipal -Environment $azureEnvironment
 	Set-AzureRmContext -SubscriptionId $OctopusAzureSubscriptionId -TenantId $OctopusAzureADTenantId  
 } Else {
 	# Authenticate via Management Certificate
 	Write-Verbose "Loading the management certificate"
 	Add-Type -AssemblyName "System"
 	$certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
-	$azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Certificate $certificate
+	$azureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $AzureEnvironment}
+	$azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Certificate $certificate -Environment $azureEnvironment
 	$azureProfile.Save(".\AzureProfile.json")
 	Select-AzureProfile -Profile $azureProfile | Out-Null
 } 
