@@ -30,6 +30,17 @@ namespace Calamari.Tests.Fixtures.Substitutions
         }
 
         [Test]
+        public void ShouldIgnoreParserErrors()
+        {
+            var variables = new VariableDictionary();
+            variables["fox"] = "replaced fox";
+
+            var text = PerformTest(GetFixtureResouce("Samples", "ParserErrors.txt"), variables).Text;
+
+            Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\r\nthe quick brown replaced fox jumps over the lazy #{dog #{", text);
+        }
+
+        [Test]
         public void ShouldRetainEncodingIfNoneSet()
         {
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");

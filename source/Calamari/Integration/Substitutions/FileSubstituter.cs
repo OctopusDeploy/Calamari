@@ -27,7 +27,7 @@ namespace Calamari.Integration.Substitutions
             var encoding = GetEncoding(variables, sourceFileEncoding);
 
             string error;
-            var result = variables.Evaluate(source, out error);
+            var result = variables.Evaluate(source, out error, haltOnError: false);
 
             if (!string.IsNullOrEmpty(error))
                 Log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
@@ -51,7 +51,6 @@ namespace Calamari.Integration.Substitutions
             {
                 return fileEncoding;
             }
-            
         }
     }
 }
