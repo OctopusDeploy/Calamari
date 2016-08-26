@@ -28,7 +28,7 @@ namespace Calamari.Deployment.Conventions
 
             Log.Verbose("Extracting package to: " + targetPath);
 
-            var filesExtracted = extractor.Extract(deployment.PackageFilePath, targetPath, false);
+            var filesExtracted = extractor.Extract(deployment.PackageFilePath, targetPath, deployment.Variables.GetFlag(SpecialVariables.Package.SuppressNestedScriptWarning, false));
 
             Log.Verbose("Extracted " + filesExtracted + " files");
 
