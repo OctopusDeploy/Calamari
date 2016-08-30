@@ -166,6 +166,7 @@
                 public static readonly string CloudServicePackageExtractionDisabled = "Octopus.Action.Azure.CloudServicePackageExtractionDisabled";
                 public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg";
                 public static readonly string CloudServiceConfigurationFileRelativePath = "Octopus.Action.Azure.CloudServiceConfigurationFileRelativePath";
+                public static readonly string UseReleaseNumberAsStoragePackageVersion = "Octopus.Action.Azure.UseReleaseNumberAsStoragePackageVersion";
 
                 public static readonly string ResourceGroupName = "Octopus.Action.Azure.ResourceGroupName";
                 public static readonly string ResourceGroupDeploymentName = "Octopus.Action.Azure.ResourceGroupDeploymentName";

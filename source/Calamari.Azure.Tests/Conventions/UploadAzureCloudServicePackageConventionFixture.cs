@@ -72,5 +72,32 @@ namespace Calamari.Azure.Tests.Conventions
 
             Assert.AreEqual(uploadedUri.ToString(), variables.Get(SpecialVariables.Action.Azure.UploadedPackageUri));
         }
+
+        [Test]
+        public void ShouldUploadPackageWithReleaseNumber()
+        {
+            const string packageFileName = "Acme.cspkg";
+            var packageFilePath = Path.Combine(stagingDirectory, packageFileName);
+            variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
+            variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, packageFilePath);
+            variables.Set(SpecialVariables.Action.Azure.UseReleaseNumberAsStoragePackageVersion, "true");
+            variables.Set(SpecialVariables.Release.Number, "1.1.1");
+
+            fileSystem.EnumerateFiles(stagingDirectory, "*.cspkg")
+                .Returns(new[] { packageFilePath });
+            fileSystem.OpenFile(packageFilePath, Arg.Any<FileMode>())
+                .Returns(new MemoryStream(Encoding.UTF8.GetBytes("blah blah blah")));
+
+            var uploadedUri = new Uri("http://azure.com/wherever/my-package.cspkg");
+
+            packageUploader.Upload(
+                Arg.Is<SubscriptionCloudCredentials>(cred => cred.SubscriptionId == azureSubscriptionId),
+                storageAccountName, packageFilePath, Arg.Any<string>())
+            .Returns(uploadedUri);
+
+            convention.Install(deployment);
+
+            Assert.AreEqual(uploadedUri.ToString(), variables.Get(SpecialVariables.Action.Azure.UploadedPackageUri));
+        }
     }
 }
