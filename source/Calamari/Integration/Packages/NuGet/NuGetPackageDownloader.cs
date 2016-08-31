@@ -20,12 +20,20 @@ namespace Calamari.Integration.Packages.NuGet
 
                 try
                 {
-                    // If NuGet V3 feed 
-                    if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                    // FileSystem feed 
+                    if (feedUri.IsFile)
+                    {
+                        NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath);
+                    }
+
+                    // NuGet V3 feed 
+                    else if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                     {
                         NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
                     }
-                    else // V2 feed
+
+                    // V2 feed
+                    else 
                     {
                         NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
                     }

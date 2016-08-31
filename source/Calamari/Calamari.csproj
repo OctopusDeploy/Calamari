@@ -182,6 +182,7 @@
     <Compile Include="Integration\Packages\IGenericPackageExtractor.cs" />
     <Compile Include="Integration\Packages\GenericPackageExtractor.cs" />
     <Compile Include="Integration\Packages\NuGet\LocalNuGetPackage.cs" />
+    <Compile Include="Integration\Packages\NuGet\NuGetFileSystemDownloader.cs" />
     <Compile Include="Integration\Packages\NuGet\NuGetPackageDownloader.cs" />
     <Compile Include="Integration\Packages\NuGet\NuGetServiceTypes.cs" />
     <Compile Include="Integration\Packages\NuGet\NuGetV2Downloader.cs" />
