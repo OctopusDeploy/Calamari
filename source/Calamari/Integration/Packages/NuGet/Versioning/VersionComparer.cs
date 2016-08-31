@@ -81,7 +81,7 @@ namespace NuGet.Versioning
                 }
             }
 
-            if (_mode == VersionComparison.VersionReleaseMetadata)
+            if (_mode == VersionComparison.Default || _mode == VersionComparison.VersionReleaseMetadata)
             {
                 if (version.HasMetadata)
                 {
@@ -166,7 +166,7 @@ namespace NuGet.Versioning
                 }
 
                 // compare the metadata
-                if (_mode == VersionComparison.VersionReleaseMetadata)
+                if (_mode == VersionComparison.Default || _mode == VersionComparison.VersionReleaseMetadata)
                 {
                     result = StringComparer.OrdinalIgnoreCase.Compare(x.Metadata ?? string.Empty, y.Metadata ?? string.Empty);
                     if (result != 0)
