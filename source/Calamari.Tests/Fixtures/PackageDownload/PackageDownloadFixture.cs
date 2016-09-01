@@ -237,7 +237,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertNonZero();
 
                 result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(invalidFileShareUri));
-                result.AssertErrorOutput("Unable to download package: Could not find package {0} {1} in feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(invalidFileShareUri));
+                result.AssertErrorOutput("Unable to download package: Path does not exist: '{0}'", new Uri(invalidFileShareUri));
                 result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
             }
         }

@@ -13,6 +13,9 @@ namespace Calamari.Integration.Packages.NuGet
     {
         public static void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, string targetFilePath)
         {
+            if (!Directory.Exists(feedUri.LocalPath))
+                throw new Exception($"Path does not exist: '{feedUri}'");
+
             // Lookup files which start with the name "<Id>." and attempt to match it with all possible version string combinations (e.g. 1.2.0, 1.2.0.0)
             // before opening the package. To avoid creating file name strings, we attempt to specifically match everything after the last path separator
             // which would be the file name and extension.
@@ -22,7 +25,10 @@ namespace Calamari.Integration.Packages.NuGet
                     select p).FirstOrDefault();
 
             if (package == null)
-                throw new CommandException($"Could not find package {packageId}.{version} in feed '{feedUri}'");
+                throw new Exception($"Could not find package {packageId} {version} in feed: '{feedUri}'");
+
+            Log.VerboseFormat("Found package {0} version {1}", package.Metadata.Id, package.Metadata.Version);
+            Log.Verbose("Downloading to: " + targetFilePath);
 
             using (var targetFile = File.Open(targetFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
             {
