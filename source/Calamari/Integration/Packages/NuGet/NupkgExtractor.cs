@@ -37,10 +37,12 @@ namespace Calamari.Integration.Packages.NuGet
             {
                 while (reader.MoveToNextEntry())
                 {
-                    if (IsExcludedPath(reader.Entry.Key))
+                    var unescapedKey = UnescapePath(reader.Entry.Key);
+
+                    if (IsExcludedPath(unescapedKey))
                         continue;
 
-                    var targetDirectory = Path.Combine(directory, UnescapePath(Path.GetDirectoryName(reader.Entry.Key)));
+                    var targetDirectory = Path.Combine(directory, Path.GetDirectoryName(unescapedKey));
 
                     if (!Directory.Exists(targetDirectory))
                     {
@@ -50,7 +52,7 @@ namespace Calamari.Integration.Packages.NuGet
                     if (reader.Entry.IsDirectory || !IsPackageFile(reader.Entry.Key))
                         continue;
 
-                    var targetFile = Path.Combine(targetDirectory, UnescapePath(Path.GetFileName(reader.Entry.Key)));
+                    var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
                     reader.WriteEntryToFile(targetFile, ExtractOptions.Overwrite);
 
                     SetFileLastModifiedTime(reader.Entry, targetFile);
@@ -58,7 +60,7 @@ namespace Calamari.Integration.Packages.NuGet
                     filesExtracted++;
 
                     if (!suppressNestedScriptWarning)
-                        GenericPackageExtractor.WarnIfScriptInSubFolder(reader.Entry.Key);
+                        GenericPackageExtractor.WarnIfScriptInSubFolder(unescapedKey);
                 }
 
                 return filesExtracted;
