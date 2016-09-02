@@ -115,7 +115,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldNotAllowNonExistingParentSegments()
+        public void ShouldNotAllowMissingParentSegments()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1084);
 
@@ -132,7 +132,25 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage(package.FilePath);
 
             result.AssertFailure();
-            result.AssertErrorOutput($"Virtual path \"IIS:\\Sites\\{uniqueValue}\\{uniqueValue}\" doesn't exist.", true);
+            result.AssertErrorOutput($"Virtual path \"IIS:\\Sites\\{uniqueValue}\\{uniqueValue}\" does not exist.", true);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldNotAllowMissingWebSiteForVirtualFolders()
+        {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(package.FilePath);
+
+            result.AssertFailure();
+            result.AssertErrorOutput($"Site \"{uniqueValue}\" does not exist.", true);
         }
 
         [Test]

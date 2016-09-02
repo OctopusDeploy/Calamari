@@ -171,15 +171,16 @@ function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
 		if (!$segment) {
 			$fullPath = Get-FullPath -root $sitePath -segments $virtualPathSegments
-			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Please make sure all parent segments of $fullPath exist."
+			throw "Virtual path `"$fullPathToVirtualPathSegment`" does not exist. Please make sure all parent segments of $fullPath exist."
 		}
 	}
 }
 
-function Get-Website($SitePath, $SiteName)
+function Assert-WebsiteExists($SitePath, $SiteName)
 {
 	$site = Get-Item $SitePath -ErrorAction SilentlyContinue
-	if (!$site) { 
+	if (!$site) 
+	{ 
 		throw "Site `"$SiteName`" does not exist." 
 	}
 }
@@ -203,7 +204,7 @@ if ($deployAsVirtualFolder)
 
 	Write-Verbose "Searching for $webSiteName Web Site."
 	
-	$site = Get-Website -SitePath $sitePath -SiteName $webSiteName
+	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
 
 	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
 	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
@@ -229,8 +230,6 @@ if ($deployAsWebApplication)
 
 	Write-Host "Creating Web Application $virtualPath ..."
 
-	$createAsWebApplication = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.CreateAsWebApplication"] -eq 'True'
-
 	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName"]
 	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"]
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolUsername"]
@@ -241,7 +240,7 @@ if ($deployAsWebApplication)
 
 	Write-Verbose "Searching for $webSiteName Web Site."
 	
-	$site = Get-Website -SitePath $sitePath -SiteName $webSiteName
+	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
 
 	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
 	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
