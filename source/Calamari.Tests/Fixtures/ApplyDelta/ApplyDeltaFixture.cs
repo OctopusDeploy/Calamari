@@ -92,7 +92,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("", "Hash", "Delta", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
         }
 
@@ -101,7 +101,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("Basis", "", "Delta", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No file hash was specified. Please pass --fileHash MyFileHash");
         }
         [Test]
@@ -109,7 +109,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("Basis", "Hash", "", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
         }
 
@@ -118,7 +118,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("Basis", "Hash", "Delta", "");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
         }
 
@@ -128,7 +128,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var basisFile = Path.Combine(DownloadPath, "MyPackage.1.0.0.0.nupkg");
             var result = ApplyDelta(basisFile, "Hash", "Delta", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("Could not find basis file: " + basisFile);
         }
 
@@ -140,7 +140,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 var deltaFilePath = Path.Combine(DownloadPath, "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, "New");
 
-                result.AssertNonZero();
+                result.AssertFailure();
                 result.AssertErrorOutput("Could not find delta file: " + deltaFilePath);
             }
         }
@@ -161,7 +161,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
                 var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName);
 
-                result.AssertNonZero();
+                result.AssertFailure();
                 result.AssertErrorOutput("Basis file hash {0} does not match the file hash specified {1}", basisFile.Hash, otherBasisFileHash);
             }
         }
@@ -181,7 +181,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, NewFileName);
 
-                result.AssertNonZero();
+                result.AssertFailure();
                 result.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}",
                     basisFile.FilePath,
                     basisFile.Hash,
