@@ -10,11 +10,13 @@ $deployAsWebSite = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Actio
 $deployAsWebApplication = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"])
 $deployAsVirtualFolder = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])
 
+
 if (!$deployAsVirtualFolder -and !$deployAsWebSite -and !$deployAsWebApplication)
 {
    Write-Host "Skipping IIS deployment. Neither Website nor Virtual Directory nor Web Application deployment type has been enabled." 
    exit 0
 }
+
 
 try {
 	Add-PSSnapin WebAdministration
@@ -203,7 +205,7 @@ if ($deployAsVirtualFolder)
 	
 	$site = Get-Website -SitePath $sitePath -SiteName $webSiteName
 
-	$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
+	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
 	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
 
 	$fullPathToLastVirtualPathSegment = Get-FullPath -root $sitePath -segments $virtualPathSegments
@@ -241,7 +243,7 @@ if ($deployAsWebApplication)
 	
 	$site = Get-Website -SitePath $sitePath -SiteName $webSiteName
 
-	$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
+	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
 	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
 
 	$fullPathToLastVirtualPathSegment = Get-FullPath -root $sitePath -segments $virtualPathSegments
