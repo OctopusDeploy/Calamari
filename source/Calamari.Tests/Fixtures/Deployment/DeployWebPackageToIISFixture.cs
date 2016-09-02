@@ -97,8 +97,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "False";
-
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(package.FilePath);
@@ -143,17 +141,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1085);
 
-            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
-
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
-
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateAsWebApplication"] = "True";
-
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolName"] = uniqueValue;
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolFrameworkVersion"] = "v4.0";
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webApplication";
+            Variables["Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"] = "True";
+                                                 
+            Variables["Octopus.Action.IISWebSite.WebApplication.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.WebApplication.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+                                                 
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
