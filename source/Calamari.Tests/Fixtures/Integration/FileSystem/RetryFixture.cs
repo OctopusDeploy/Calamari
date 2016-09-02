@@ -1,5 +1,4 @@
 ﻿using System;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Retry;
 using NUnit.Framework;
 
