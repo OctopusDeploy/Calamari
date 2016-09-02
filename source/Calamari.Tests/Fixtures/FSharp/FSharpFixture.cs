@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
-using Calamari.Util;
 using NUnit.Framework;
 using Octostache;
 
