@@ -34,7 +34,7 @@ try {
 
 
 function Determine-Path($path) {
-	if (! $path) {
+	if (!$path) {
 		$path = "."
 	}
 
