@@ -190,7 +190,6 @@ function Convert-ToPathSegments($VirtualPath)
 	return $VirtualPath.Split(@('\', '/'), [System.StringSplitOptions]::RemoveEmptyEntries)
 }
 
-pushd IIS:\
 
 if ($deployAsVirtualFolder) 
 {
@@ -199,8 +198,10 @@ if ($deployAsVirtualFolder)
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"]
 
 	Write-Host "Creating Virtual Directory $virtualPath ..."
+    
+    pushd IIS:\
 
-	$sitePath = ("IIS:\Sites\" + $webSiteName)
+	$sitePath = "IIS:\Sites\$webSiteName"
 
 	Write-Verbose "Searching for $webSiteName Web Site."
 	
@@ -219,7 +220,9 @@ if ($deployAsVirtualFolder)
 		}
 	} else {
 		Write-Host "Virtual Directory `"$virtualPath`" already exists."
-	}	
+	}
+
+    popd	
 } 
 
 if ($deployAsWebApplication)
@@ -229,6 +232,8 @@ if ($deployAsWebApplication)
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.VirtualPath"]
 
 	Write-Host "Creating Web Application $virtualPath ..."
+    
+    pushd IIS:\
 
 	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName"]
 	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"]
@@ -260,6 +265,8 @@ if ($deployAsWebApplication)
 	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
 	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
 	Start-ApplicationPool $applicationPoolName
+    
+    popd
 }
 
 
@@ -596,8 +603,9 @@ if ($deployAsWebSite)
 			Start-Website $webSiteName
 		}
 	}
+
+    popd
 }
 
-popd
 
 Write-Host "IIS configuration complete"

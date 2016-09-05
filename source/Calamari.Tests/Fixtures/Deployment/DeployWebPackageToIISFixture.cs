@@ -75,7 +75,9 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(uniqueValue, website.Name);
             Assert.AreEqual(ObjectState.Started, website.State);
             Assert.AreEqual(1082, website.Bindings.Single().EndPoint.Port);
-            Assert.AreEqual(uniqueValue, website.Applications.First().ApplicationPoolName);
+            var application = website.Applications.First();
+            Assert.AreEqual(uniqueValue, application.ApplicationPoolName);
+            Assert.IsTrue(application.VirtualDirectories.First().PhysicalPath.Contains("Acme.Web"));
 
             var applicationPool = GetApplicationPool(uniqueValue);
 
