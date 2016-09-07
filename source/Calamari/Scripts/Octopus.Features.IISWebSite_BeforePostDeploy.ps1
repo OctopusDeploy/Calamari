@@ -6,14 +6,17 @@ function Is-DeploymentTypeDisabled($value) {
 	return !$value -or ![Bool]::Parse($value)
 }
 
-$deployToVirtualFolder = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])
-$deployToWebSite = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])
+$deployAsWebSite = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])
+$deployAsWebApplication = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"])
+$deployAsVirtualFolder = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])
 
-if (!$deployToVirtualFolder -and !$deployToWebSite)
+
+if (!$deployAsVirtualFolder -and !$deployAsWebSite -and !$deployAsWebApplication)
 {
-   Write-Host "Skipping IIS deployment. Neither Web Site nor Virtual Directory deployment type has been enabled." 
+   Write-Host "Skipping IIS deployment. Neither Website nor Virtual Directory nor Web Application deployment type has been enabled." 
    exit 0
 }
+
 
 try {
 	Add-PSSnapin WebAdministration
@@ -31,7 +34,7 @@ try {
 
 
 function Determine-Path($path) {
-	if (! $path) {
+	if (!$path) {
 		$path = "."
 	}
 
@@ -168,64 +171,107 @@ function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 		$segment = Get-Item $fullPathToVirtualPathSegment -ErrorAction SilentlyContinue
 		if (!$segment) {
 			$fullPath = Get-FullPath -root $sitePath -segments $virtualPathSegments
-			throw "Virtual path `"$fullPathToVirtualPathSegment`" doesn't exist. Please make sure all parent segments of $fullPath exist."
+			throw "Virtual path `"$fullPathToVirtualPathSegment`" does not exist. Please make sure all parent segments of $fullPath exist."
 		}
 	}
 }
 
+function Assert-WebsiteExists($SitePath, $SiteName)
+{
+	$site = Get-Item $SitePath -ErrorAction SilentlyContinue
+	if (!$site) 
+	{ 
+		throw "Site `"$SiteName`" does not exist." 
+	}
+}
 
-if ($deployToVirtualFolder) {
+function Convert-ToPathSegments($VirtualPath)
+{
+	return $VirtualPath.Split(@('\', '/'), [System.StringSplitOptions]::RemoveEmptyEntries)
+}
 
+
+if ($deployAsVirtualFolder) 
+{
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"]
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"]
 
-	$createAsWebApplication = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateAsWebApplication"] -eq 'True'
+	Write-Host "Creating Virtual Directory $virtualPath ..."
+    
+    pushd IIS:\
 
-	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolName"]
-	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"]
-	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolUsername"]
-	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolPassword"]
-	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolFrameworkVersion"]
-
-	pushd IIS:\
-
-	$sitePath = ("IIS:\Sites\" + $webSiteName)
+	$sitePath = "IIS:\Sites\$webSiteName"
 
 	Write-Verbose "Searching for $webSiteName Web Site."
-	$site = Get-Item $sitePath -ErrorAction SilentlyContinue
-	if (!$site) { 
-		throw "Site `"$webSiteName`" does not exist. Please make sure the site exists before deploying to Virtual Directory." 
-	}
+	
+	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
 
-	$virtualPathSegments= $virtualPath.Split(@('\', '/'), [System.StringSplitOptions]::RemoveEmptyEntries)
-
+	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
 	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
 
-	$type = if ($createAsWebApplication)  { "Application" } else { "VirtualDirectory" } 
 	$fullPathToLastVirtualPathSegment = Get-FullPath -root $sitePath -segments $virtualPathSegments
 	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
 
 	if (!$lastSegment) {
-		Write-Host "`"$virtualPath`" does not exist. Creating $fullPathToLastVirtualPathSegment of type $type ..."
+		Write-Host "`"$virtualPath`" does not exist. Creating Virtual Folder pointing to $fullPathToLastVirtualPathSegment ..."
 		Execute-WithRetry { 
-			New-Item $fullPathToLastVirtualPathSegment -type $type -physicalPath $physicalPath
+			New-Item $fullPathToLastVirtualPathSegment -type VirtualDirectory -physicalPath $physicalPath
 		}
 	} else {
-		Write-Host "`"$virtualPath`" already exists."
+		Write-Host "Virtual Directory `"$virtualPath`" already exists."
 	}
 
-	if ($createAsWebApplication) {
-		Write-Host "`"$virtualPath`" requested to be hosted as as a web application."
-		SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
-		Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
-		Start-ApplicationPool $applicationPoolName
-	}	
+    popd	
+} 
 
-	popd
+if ($deployAsWebApplication)
+{
+	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.WebSiteName"]
+	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.PhysicalPath"]
+	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.VirtualPath"]
 
-} else {
+	Write-Host "Creating Web Application $virtualPath ..."
+    
+    pushd IIS:\
+
+	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName"]
+	$applicationPoolIdentityType = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"]
+	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolUsername"]
+	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolPassword"]
+	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion"]
+
+	$sitePath = ("IIS:\Sites\" + $webSiteName)
+
+	Write-Verbose "Searching for $webSiteName Web Site."
 	
+	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
+
+	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
+	Assert-ParentSegmentsExist -sitePath $sitePath -virtualPathSegments $virtualPathSegments
+
+	$fullPathToLastVirtualPathSegment = Get-FullPath -root $sitePath -segments $virtualPathSegments
+	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
+
+	if (!$lastSegment) {
+		Write-Host "`"$virtualPath`" does not exist. Creating Web Application pointing to $fullPathToLastVirtualPathSegment ..."
+		Execute-WithRetry { 
+			New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
+		}
+	} else {
+		Write-Host "Web Application `"$virtualPath`" already exists."
+	}
+
+	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
+	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
+	Start-ApplicationPool $applicationPoolName
+    
+    popd
+}
+
+
+if ($deployAsWebSite)
+{	
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
 	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
 	$bindingString = $OctopusParameters["Octopus.Action.IISWebSite.Bindings"]
@@ -237,6 +283,8 @@ if ($deployToVirtualFolder) {
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolUsername"]
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
 	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
+
+	Write-Host "Creating Website $webSiteName"
 
 	#Assess SNI support (IIS 8 or greater)
 	$iis = get-itemproperty HKLM:\SOFTWARE\Microsoft\InetStp\  | select setupstring 
@@ -556,7 +604,8 @@ if ($deployToVirtualFolder) {
 		}
 	}
 
-	popd
+    popd
 }
+
 
 Write-Host "IIS configuration complete"

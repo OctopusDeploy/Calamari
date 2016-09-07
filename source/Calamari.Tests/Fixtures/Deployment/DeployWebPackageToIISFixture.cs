@@ -75,7 +75,9 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(uniqueValue, website.Name);
             Assert.AreEqual(ObjectState.Started, website.State);
             Assert.AreEqual(1082, website.Bindings.Single().EndPoint.Port);
-            Assert.AreEqual(uniqueValue, website.Applications.First().ApplicationPoolName);
+            var application = website.Applications.First();
+            Assert.AreEqual(uniqueValue, application.ApplicationPoolName);
+            Assert.IsTrue(application.VirtualDirectories.First().PhysicalPath.Contains("Acme.Web"));
 
             var applicationPool = GetApplicationPool(uniqueValue);
 
@@ -97,8 +99,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "False";
-
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(package.FilePath);
@@ -117,7 +117,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldNotAllowNonExistingParentSegments()
+        public void ShouldNotAllowMissingParentSegments()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1084);
 
@@ -134,7 +134,25 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage(package.FilePath);
 
             result.AssertFailure();
-            result.AssertErrorOutput($"Virtual path \"IIS:\\Sites\\{uniqueValue}\\{uniqueValue}\" doesn't exist.", true);
+            result.AssertErrorOutput($"Virtual path \"IIS:\\Sites\\{uniqueValue}\\{uniqueValue}\" does not exist.", true);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldNotAllowMissingWebSiteForVirtualFolders()
+        {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(package.FilePath);
+
+            result.AssertFailure();
+            result.AssertErrorOutput($"Site \"{uniqueValue}\" does not exist.", true);
         }
 
         [Test]
@@ -143,17 +161,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1085);
 
-            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
-
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
-
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateAsWebApplication"] = "True";
-
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolName"] = uniqueValue;
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolFrameworkVersion"] = "v4.0";
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webApplication";
+            Variables["Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"] = "True";
+                                                 
+            Variables["Octopus.Action.IISWebSite.WebApplication.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.WebApplication.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+                                                 
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
