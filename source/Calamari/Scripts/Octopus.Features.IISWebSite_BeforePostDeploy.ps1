@@ -190,6 +190,13 @@ function Convert-ToPathSegments($VirtualPath)
 	return $VirtualPath.Split(@('\', '/'), [System.StringSplitOptions]::RemoveEmptyEntries)
 }
 
+function Set-Path($virtualPath, $physicalPath)
+{
+	Execute-WithRetry { 
+		Write-Host ("Setting physical path of $virtualPath to $physicalPath")
+		Set-ItemProperty $virtualPath -name physicalPath -value $physicalPath
+	}
+}
 
 if ($deployAsVirtualFolder) 
 {
@@ -220,6 +227,7 @@ if ($deployAsVirtualFolder)
 		}
 	} else {
 		Write-Host "Virtual Directory `"$virtualPath`" already exists."
+		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
 	}
 
     popd	
@@ -261,7 +269,6 @@ if ($deployAsWebApplication)
 			New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
 		}
 	} else {
-
 		if ($lastSegment.ElementTagName -eq 'virtualDirectory')
 		{
 			Write-Host "`"$virtualPath`" already exists and points to a virtual directory. It will be converted to a web application."
@@ -269,6 +276,8 @@ if ($deployAsWebApplication)
 		} else {
 			Write-Host "Web Application `"$virtualPath`" already exists."
 		}
+
+		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
 	}
 
 	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
@@ -506,12 +515,7 @@ if ($deployAsWebSite)
 	}
 
 	Assign-ToApplicationPool -iisPath $sitePath -applicationPoolName $applicationPoolName
-
-	# Set Path
-	Execute-WithRetry { 
-		Write-Host ("Home directory: " + $webRoot)
-		Set-ItemProperty $sitePath -name physicalPath -value "$webRoot"
-	}
+	Set-Path -virtualPath $sitePath -physicalPath $webRoot
 
 	function Bindings-AreEqual($bindingA, $bindingB) {
 		return ($bindingA.protocol -eq $bindingB.protocol) -and ($bindingA.bindingInformation -eq $bindingB.bindinginformation) -and ($bindingA.sslFlags -eq $bindingB.sslFlags)

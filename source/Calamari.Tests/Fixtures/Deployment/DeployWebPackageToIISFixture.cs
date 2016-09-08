@@ -14,20 +14,24 @@ namespace Calamari.Tests.Fixtures.Deployment
     [TestFixture]
     public class DeployWebPackageToIISFixture : DeployPackageFixture
     {
-        TemporaryFile package;
+        TemporaryFile packageV1;
+        TemporaryFile packageV2;
         private string uniqueValue;
         private WebServerSevenSupport iis;
+      
 
         [TestFixtureSetUp]
         public void Init()
         {
-            package = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0"));
+            packageV1 = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0"));
+            packageV2 = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "2.0.0"));
         }
 
         [TestFixtureTearDown]
         public void Dispose()
         {
-            package.Dispose();
+            packageV1.Dispose();
+            packageV2.Dispose();
         }
 
         [SetUp]
@@ -66,7 +70,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            var result = DeployPackage(package.FilePath);
+            var result = DeployPackage(packageV1.FilePath);
 
             result.AssertSuccess();
 
@@ -77,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(1082, website.Bindings.Single().EndPoint.Port);
             var application = website.Applications.First();
             Assert.AreEqual(uniqueValue, application.ApplicationPoolName);
-            Assert.IsTrue(application.VirtualDirectories.First().PhysicalPath.Contains("Acme.Web"));
+            Assert.IsTrue(application.VirtualDirectories.Single().PhysicalPath.Contains("1.0.0"));
 
             var applicationPool = GetApplicationPool(uniqueValue);
 
@@ -101,7 +105,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            var result = DeployPackage(package.FilePath);
+            var result = DeployPackage(packageV1.FilePath);
 
             result.AssertSuccess();
 
@@ -112,7 +116,34 @@ namespace Calamari.Tests.Fixtures.Deployment
             var virtualDirectory = FindVirtualDirectory(uniqueValue, ToFirstLevelPath(uniqueValue));
 
             Assert.AreEqual(ToFirstLevelPath(uniqueValue), virtualDirectory.Path);
-            Assert.NotNull(virtualDirectory.PhysicalPath);
+            Assert.IsTrue(virtualDirectory.PhysicalPath.Contains("1.0.0"));
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldDeployNewVersion()
+        {
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1083);
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            result = DeployPackage(packageV2.FilePath);
+
+            result.AssertSuccess();
+
+            var virtualDirectory = FindVirtualDirectory(uniqueValue, ToFirstLevelPath(uniqueValue));
+
+            Assert.IsTrue(virtualDirectory.PhysicalPath.Contains("2.0.0"));
         }
 
         [Test]
@@ -131,7 +162,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            var result = DeployPackage(package.FilePath);
+            var result = DeployPackage(packageV1.FilePath);
 
             result.AssertFailure();
             result.AssertErrorOutput($"Virtual path \"IIS:\\Sites\\{uniqueValue}\\{uniqueValue}\" does not exist.", true);
@@ -149,7 +180,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            var result = DeployPackage(package.FilePath);
+            var result = DeployPackage(packageV1.FilePath);
 
             result.AssertFailure();
             result.AssertErrorOutput($"Site \"{uniqueValue}\" does not exist.", true);
@@ -174,7 +205,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            var result = DeployPackage(package.FilePath);
+            var result = DeployPackage(packageV1.FilePath);
 
             result.AssertSuccess();
 
@@ -189,6 +220,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.AreEqual(ToFirstLevelPath(uniqueValue), webApplication.Path);
             Assert.AreEqual(uniqueValue, webApplication.ApplicationPoolName);
+            Assert.IsTrue(webApplication.VirtualDirectories.Single().PhysicalPath.Contains("1.0.0"));
         }
 
         [Test]
@@ -209,7 +241,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            var result = DeployPackage(package.FilePath);
+            var result = DeployPackage(packageV1.FilePath);
 
             result.AssertSuccess();
 
