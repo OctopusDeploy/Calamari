@@ -185,11 +185,37 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
             Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
 
-            var webApplication = GetWebSite(uniqueValue).Applications.Single(ap => ap.Path == ToFirstLevelPath(uniqueValue));
+            var webApplication = FindWebApplication(uniqueValue, ToFirstLevelPath(uniqueValue));
 
             Assert.AreEqual(ToFirstLevelPath(uniqueValue), webApplication.Path);
-            Assert.NotNull(uniqueValue, webApplication.ApplicationPoolName);
-            Assert.NotNull(uniqueValue, webApplication.VirtualDirectories.Single().Path);
+            Assert.AreEqual(uniqueValue, webApplication.ApplicationPoolName);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldConvertVirtualDirectoryToWebApplication()
+        {
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, $"/{uniqueValue}", ".", 1086);
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webApplication";
+            Variables["Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.WebApplication.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.WebApplication.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(package.FilePath);
+
+            result.AssertSuccess();
+
+            var webApplication = FindWebApplication(uniqueValue, ToFirstLevelPath(uniqueValue));
+
+            Assert.AreEqual(uniqueValue, webApplication.ApplicationPoolName);
         }
 
         private string ToFirstLevelPath(string value)
@@ -227,5 +253,9 @@ namespace Calamari.Tests.Fixtures.Deployment
                         .Execute(func);
         }
 
+        private Application FindWebApplication(string websiteName, string virtualPath)
+        {
+            return GetWebSite(websiteName).Applications.Single(ap => ap.Path == virtualPath);
+        }
     }
 }

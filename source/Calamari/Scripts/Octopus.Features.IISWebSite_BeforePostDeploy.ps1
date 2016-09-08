@@ -161,7 +161,7 @@ function Start-ApplicationPool($applicationPoolName) {
 
 function Get-FullPath($root, $segments)
 {
-	return $root +  "\" + ($virtualPathSegments -join "\")
+	return $root +  "\" + ($segments -join "\")
 }
 
 function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
@@ -253,16 +253,24 @@ if ($deployAsWebApplication)
 	$fullPathToLastVirtualPathSegment = Get-FullPath -root $sitePath -segments $virtualPathSegments
 	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
 
+	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
+
 	if (!$lastSegment) {
 		Write-Host "`"$virtualPath`" does not exist. Creating Web Application pointing to $fullPathToLastVirtualPathSegment ..."
 		Execute-WithRetry { 
 			New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
 		}
 	} else {
-		Write-Host "Web Application `"$virtualPath`" already exists."
+
+		if ($lastSegment.ElementTagName -eq 'virtualDirectory')
+		{
+			Write-Host "`"$virtualPath`" already exists and points to a virtual directory. It will be converted to a web application."
+			ConvertTo-WebApplication -PSPath $fullPathToLastVirtualPathSegment -ApplicationPool $applicationPoolName
+		} else {
+			Write-Host "Web Application `"$virtualPath`" already exists."
+		}
 	}
 
-	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
 	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
 	Start-ApplicationPool $applicationPoolName
     

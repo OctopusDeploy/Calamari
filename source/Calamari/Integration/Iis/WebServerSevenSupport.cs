@@ -23,8 +23,7 @@ namespace Calamari.Integration.Iis
 
                 if (virtualParts.Length > 0)
                 {
-                    var app = existing.Applications.Add(virtualDirectoryPath, webRootPath);
-                    //var vd = app.VirtualDirectories.Add(virtualDirectoryPath, webRootPath);
+                    var vd = existing.Applications.Single().VirtualDirectories.Add(virtualDirectoryPath, webRootPath);
                 }
                 
                 serverManager.CommitChanges();
