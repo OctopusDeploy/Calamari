@@ -225,7 +225,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldConvertVirtualDirectoryToWebApplication()
+        public void ShouldDetectAttemptedConversionFromVirtualDirectoryToWebApplication()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, $"/{uniqueValue}", ".", 1086);
 
@@ -243,11 +243,9 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var result = DeployPackage(packageV1.FilePath);
 
-            result.AssertSuccess();
+            result.AssertFailure();
 
-            var webApplication = FindWebApplication(uniqueValue, ToFirstLevelPath(uniqueValue));
-
-            Assert.AreEqual(uniqueValue, webApplication.ApplicationPoolName);
+            result.AssertErrorOutput("Please delete", true);
         }
 
         private string ToFirstLevelPath(string value)
