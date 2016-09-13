@@ -129,7 +129,6 @@ function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityTyp
 			Set-ItemProperty $appPoolPath managedRuntimeVersion $applicationPoolFrameworkVersion
 		}
 	}
-
 }
 
 function Assign-ToApplicationPool($iisPath, $applicationPoolName) {
@@ -194,7 +193,7 @@ function Set-Path($virtualPath, $physicalPath)
 {
 	Execute-WithRetry { 
 		Write-Host ("Setting physical path of $virtualPath to $physicalPath")
-		Set-ItemProperty $virtualPath -name physicalPath -value $physicalPath
+		Set-ItemProperty $virtualPath -name physicalPath -value "$physicalPath"
 	}
 }
 
