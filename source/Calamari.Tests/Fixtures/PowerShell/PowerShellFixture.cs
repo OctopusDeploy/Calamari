@@ -343,7 +343,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertFailure();
                 output.AssertErrorOutput("ParserError", true);
-                output.AssertErrorOutput("The string is missing the terminator: \".", true);
+                output.AssertErrorOutput("is missing the terminator", true);
             }
         }
 
