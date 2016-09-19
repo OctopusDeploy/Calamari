@@ -155,6 +155,7 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
+    <Compile Include="Fixtures\Deployment\Certificates\AcmeSelfSignedCertificate.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWebPackageToIISFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
@@ -220,6 +221,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\ConfigurationTransforms\Samples\Web.Empty.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Certificates\acme_self_signed.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Service\Acme.Service.nuspec">
