@@ -8,7 +8,7 @@ namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetPackageDownloader
     {
-        private static int NumberOfTimesToAttemptToDownloadPackage = 3;
+        const int NumberOfTimesToAttemptToDownloadPackage = 5;
 
         public static void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
         {
@@ -67,7 +67,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static RetryTracker GetRetryTracker()
         {
-            return new RetryTracker(maxRetries: NumberOfTimesToAttemptToDownloadPackage, timeLimit: null, retryInterval: new RetryInterval(1000, 1000, 1));
+            return new RetryTracker(maxRetries: NumberOfTimesToAttemptToDownloadPackage, timeLimit: null, retryInterval: new RetryInterval(1000, 15000, 2));
         }
     }
 }
