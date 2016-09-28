@@ -5,9 +5,9 @@ namespace Calamari.Integration.FileSystem
 {
     public class FileInfoAdapter : IFileInfo
     {
-        readonly FileInfo info;
+        readonly FileSystemInfo info;
 
-        public FileInfoAdapter(FileInfo info)
+        public FileInfoAdapter(FileSystemInfo info)
         {
             this.info = info;
         }
@@ -16,5 +16,6 @@ namespace Calamari.Integration.FileSystem
         public string Extension { get { return info.Extension; } }
         public DateTime LastAccessTimeUtc { get { return info.LastAccessTimeUtc; } }
         public DateTime LastWriteTimeUtc { get { return info.LastWriteTimeUtc; } }
+        public bool IsDirectory { get { return info.Attributes.HasFlag(FileAttributes.Directory); } }
     }
 }

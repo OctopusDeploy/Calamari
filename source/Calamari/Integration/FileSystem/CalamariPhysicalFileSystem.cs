@@ -342,8 +342,8 @@ namespace Calamari.Integration.FileSystem
 
                 if (include != null)
                 {
-                    var info = new FileInfoAdapter(new FileInfo(file));
-                    if (!include(info))
+                    var includeInfo = new FileInfoAdapter(new FileInfo(file));
+                    if (!include(includeInfo))
                     {
                         continue;
                     }
@@ -357,6 +357,16 @@ namespace Calamari.Integration.FileSystem
                 cancel.ThrowIfCancellationRequested();
 
                 var info = new DirectoryInfo(directory);
+
+                if (include != null)
+                {
+                    var includeInfo = new FileInfoAdapter(info);
+                    if (!include(includeInfo))
+                    {
+                        continue;
+                    }
+                }
+
                 if ((info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
                 {
                     Directory.Delete(directory);
