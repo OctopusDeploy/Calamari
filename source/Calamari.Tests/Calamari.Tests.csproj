@@ -246,6 +246,9 @@
     <None Include="Fixtures\JsonVariables\Samples\appsettings.array.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.single.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.simple.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

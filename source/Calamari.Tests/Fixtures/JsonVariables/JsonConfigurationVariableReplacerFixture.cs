@@ -97,25 +97,53 @@ namespace Calamari.Tests.Fixtures.JsonVariables
         {
             const string expected =
                 @"{" +
-                "  \"MyMessage\": \"Hello world\"," +
+                "  \"MyMessage\": \"Hello! world!\"," +
                 "  \"EmailSettings\": {" +
                 "    \"SmtpPort\": \"23\"," +
                 "    \"SmtpHost\": \"localhost\"," +
                 "    \"DefaultRecipients\": {" +
-                "      \"To\": \"paul@octopus.com\"," +
+                "      \"To\": \"mark@octopus.com\"," +
                 "      \"Cc\": \"henrik@octopus.com\"" +
                 "    }" +
                 "  }" +
                 "}";
 
             var variables = new VariableDictionary();
-            variables.Set("mymessage", "Hello world");
-            variables.Set("EmailSettings:SmtpHost", "localhost");
-            variables.Set("EmailSettings:SmtpPort", "23");
-            variables.Set("EmailSettings:Defaultrecipients:To", "paul@octopus.com");
+            variables.Set("mymessage", "Hello! world!");
+            variables.Set("EmailSettings:Defaultrecipients:To", "mark@octopus.com");
             variables.Set("EmailSettings:defaultRecipients:Cc", "henrik@octopus.com");
 
             var replaced = Replace(variables, existingFile: "appsettings.simple.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceWithAnEmptyString()
+        {
+            const string expected =
+                "{" +
+                "  \"MyMessage\": \"\"," +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("MyMessage", "");
+
+            var replaced = Replace(variables, existingFile: "appsettings.single.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
+        public void ShouldReplaceWithNull()
+        {
+            const string expected =
+                "{" +
+                "  \"MyMessage\": null," +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("MyMessage", null);
+
+            var replaced = Replace(variables, existingFile: "appsettings.single.json");
             AssertJsonEquivalent(replaced, expected);
         }
 
@@ -159,6 +187,8 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             var replaced = Replace(variables, existingFile: "appsettings.simple.json");
             AssertJsonEquivalent(replaced, expected);
         }
+
+
 
         [Test]
         public void ShouldReplaceElementInArray()
