@@ -13,9 +13,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         RunningDeployment deployment;
         ICalamariFileSystem fileSystem;
         CalamariVariableDictionary variables;
-        readonly string customInstallationDirectory = CalamariEnvironment.IsRunningOnNix ? "~/myCustomInstallDir" : "C:\\myCustomInstallDir";
-        readonly string stagingDirectory = CalamariEnvironment.IsRunningOnNix ? "~/applications/Acme/1.0.0" : "C:\\applications\\Acme\\1.0.0";
-        readonly string packageFilePath = CalamariEnvironment.IsRunningOnNix ? "~/packages" : "C:\\packages";
+        readonly string customInstallationDirectory = CalamariEnvironment.IsRunningOnNix ? "/var/tmp/myCustomInstallDir" : "C:\\myCustomInstallDir";
+        readonly string stagingDirectory = CalamariEnvironment.IsRunningOnNix ? "/var/tmp/applications/Acme/1.0.0" : "C:\\applications\\Acme\\1.0.0";
+        readonly string packageFilePath = CalamariEnvironment.IsRunningOnNix ? "/var/tmp/packages" : "C:\\packages";
 
         [SetUp]
         public void SetUp()
