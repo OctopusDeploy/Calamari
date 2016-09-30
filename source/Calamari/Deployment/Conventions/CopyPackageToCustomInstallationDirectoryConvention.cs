@@ -37,7 +37,8 @@ namespace Calamari.Deployment.Conventions
                 throw new CommandException(
                     $"An error occurred when evaluating the value for the custom install directory. {errorString}");
             }
-            if (!Path.IsPathRooted(customInstallationDirectory))
+
+            if (string.IsNullOrEmpty(Path.GetPathRoot(customInstallationDirectory)))
             {
                 throw new CommandException(
                     $"The custom install directory '{customInstallationDirectory}' is a relative path, please specify the path as an absolute path or a UNC path.");

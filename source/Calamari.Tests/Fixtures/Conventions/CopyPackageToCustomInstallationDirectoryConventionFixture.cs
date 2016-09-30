@@ -13,9 +13,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         RunningDeployment deployment;
         ICalamariFileSystem fileSystem;
         CalamariVariableDictionary variables;
-        const string customInstallationDirectory = "C:\\myCustomInstallDir";
-        const string stagingDirectory = "C:\\applications\\Acme\\1.0.0";
-        const string packageFilePath = "C:\\packages";
+        readonly string customInstallationDirectory = CalamariEnvironment.IsRunningOnNix ? "~/myCustomInstallDir" : "C:\\myCustomInstallDir";
+        readonly string stagingDirectory = CalamariEnvironment.IsRunningOnNix ? "~/applications/Acme/1.0.0" : "C:\\applications\\Acme\\1.0.0";
+        readonly string packageFilePath = CalamariEnvironment.IsRunningOnNix ? "~/packages" : "C:\\packages";
 
         [SetUp]
         public void SetUp()
@@ -84,10 +84,10 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
-        [ExpectedException(ExpectedMessage = "The custom install directory 'relative\\path\\to\\folder' is a relative path, please specify the path as an absolute path or a UNC path.")]
+        [ExpectedException(ExpectedMessage = "The custom install directory 'relative/path/to/folder' is a relative path, please specify the path as an absolute path or a UNC path.")]
         public void ShouldFailIfCustomInstallationDirectoryIsRelativePath()
         {
-            const string relativeInstallDirectory = "relative\\path\\to\\folder";
+            const string relativeInstallDirectory = "relative/path/to/folder";
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, relativeInstallDirectory);
 
             CreateConvention().Install(deployment);
