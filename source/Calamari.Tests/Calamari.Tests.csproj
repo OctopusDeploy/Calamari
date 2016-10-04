@@ -158,6 +158,7 @@
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWebPackageToIISFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
+    <Compile Include="Fixtures\Integration\Packages\NuGetPackageDownloaderFixture.cs" />
     <Compile Include="Helpers\InMemoryLog.cs" />
     <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />

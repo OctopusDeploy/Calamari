@@ -8,45 +8,42 @@ namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetPackageDownloader
     {
-        const int NumberOfTimesToAttemptToDownloadPackage = 5;
+        private RetryTracker retry;
+        internal const int NumberOfTimesToRetryOnFailure = 4;
+        internal const int NumberOfTimesToAttemptToDownloadPackage = NumberOfTimesToRetryOnFailure + 1;
 
-        public static void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        public NuGetPackageDownloader() : this(GetRetryTracker())
         {
-            var retry = GetRetryTracker();
+        }
 
+        public NuGetPackageDownloader(RetryTracker retry)
+        {
+            this.retry = retry;
+        }
+
+        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        {
+            DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, DownloadPackageAction);
+        }
+
+        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, Action<string, NuGetVersion, Uri, ICredentials, string> action)
+        {
             while (retry.Try())
             {
                 Log.Verbose($"Downloading package (attempt {retry.CurrentTry} of {NumberOfTimesToAttemptToDownloadPackage})");
 
                 try
                 {
-                    // FileSystem feed 
-                    if (feedUri.IsFile)
-                    {
-                        NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath);
-                    }
-
-                    // NuGet V3 feed 
-                    else if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                    {
-                        NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
-                    }
-
-                    // V2 feed
-                    else 
-                    {
-                        NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
-                    }
-
+                    action(packageId, version, feedUri, feedCredentials, targetFilePath);
                     return;
                 }
                 catch (Exception ex)
                 {
+                    Log.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", retry.CurrentTry,
+                        NumberOfTimesToAttemptToDownloadPackage, ex.ToString());
+
                     if (retry.CanRetry())
                     {
-                        Log.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", retry.CurrentTry,
-                            NumberOfTimesToAttemptToDownloadPackage, ex.ToString());
-
                         Thread.Sleep(retry.Sleep());
                     }
                     else
@@ -59,7 +56,28 @@ namespace Calamari.Integration.Packages.NuGet
             }
         }
 
-        static bool IsHttp(string uri)
+        private void DownloadPackageAction(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        {
+            // FileSystem feed 
+            if (feedUri.IsFile)
+            {
+                NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath);
+            }
+
+            // NuGet V3 feed 
+            else if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
+            }
+
+            // V2 feed
+            else
+            {
+                NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
+            }
+        }
+
+        bool IsHttp(string uri)
         {
             return uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                    uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
@@ -67,7 +85,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static RetryTracker GetRetryTracker()
         {
-            return new RetryTracker(maxRetries: NumberOfTimesToAttemptToDownloadPackage, timeLimit: null, retryInterval: new RetryInterval(1000, 15000, 2));
+            return new RetryTracker(maxRetries: NumberOfTimesToRetryOnFailure, timeLimit: null, retryInterval: new RetryInterval(1000, 15000, 2));
         }
     }
 }
