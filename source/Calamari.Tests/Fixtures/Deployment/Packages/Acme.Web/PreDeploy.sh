@@ -1,6 +1,5 @@
 #!/bin/bash
-shouldFail = get_octopusvariable "ShouldFail"
-if [ $shouldFail = 'yes' ]; then
+if [ $(get_octopusvariable "ShouldFail") = 'yes' ]; then
     echo "You want me to fail"
 	exit 1
 fi
