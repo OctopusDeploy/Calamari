@@ -23,6 +23,8 @@ namespace Calamari.Tests.Helpers
             public const string Nix = "Nix";
 
             public const string Windows = "Windows";
+
+            public const string Mac = "macOS";
         }
     }
 }

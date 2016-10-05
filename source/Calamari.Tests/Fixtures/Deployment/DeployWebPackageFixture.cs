@@ -57,7 +57,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
-        public void ShouldDeployPackageOnNix()
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldDeployPackageOnMacOrNix()
         {
             var result = DeployPackage();
             result.AssertSuccess();
