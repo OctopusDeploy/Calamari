@@ -231,6 +231,7 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.sh" />
     <None Include="Fixtures\JsonVariables\Samples\appsettings.existing-expected.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
