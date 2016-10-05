@@ -116,7 +116,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresMono4] //Bug in mono < 4.something https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [RequiresMono4] //Bug in mono < 4.something https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
@@ -141,7 +141,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresMono4] //Bug in mono < 4.something https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldNotInvokeDeployFailedWhenNoError()
         {
             var result = DeployPackage();
