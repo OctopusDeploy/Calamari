@@ -116,7 +116,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMono4] //Bug in mono < 4.something https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMono4] //Bug in mono < 4.something https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
@@ -141,8 +141,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
-        public void ShouldNotInvokeDeployWhenNoError()
+        [RequiresMono4] //Bug in mono < 4.something https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        public void ShouldNotInvokeDeployFailedWhenNoError()
         {
             var result = DeployPackage();
             result.AssertNoOutput("I have failed! DeployFailed.ps1");
@@ -290,7 +290,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] // Re-enable when deployments enabled again.
         public void ShouldDeployInParallel()
         {
             var locker = new object();
