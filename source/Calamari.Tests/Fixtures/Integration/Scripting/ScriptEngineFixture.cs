@@ -26,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             }
         }
 
-        [Test, RequiresMono4, RequiresDotNet45]
+        [Test, RequiresMonoVersion400OrAbove, RequiresDotNet45]
         public void CSharpDecryptsSensitiveVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))

@@ -164,7 +164,7 @@
     <Compile Include="Helpers\InMemoryLog.cs" />
     <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
-    <Compile Include="Fixtures\RequiresMono4Attribute.cs" />
+    <Compile Include="Fixtures\RequiresMonoVersion400OrAboveAttribute.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
     <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
