@@ -8,6 +8,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
+using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -116,7 +117,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -130,22 +131,28 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
-            result.AssertOutput("I have failed! DeployFailed.ps1");
+            if (ScriptingEnvironment.IsRunningOnMono())
+                result.AssertOutput("I have failed! DeployFailed.sh");
+            else
+                result.AssertOutput("I have failed! DeployFailed.ps1");
             result.AssertOutput("I have failed! DeployFailed.fsx");
             result.AssertOutput("I have failed! DeployFailed.csx");
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
-        public void ShouldNotInvokeDeployWhenNoError()
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        public void ShouldNotInvokeDeployFailedWhenNoError()
         {
             var result = DeployPackage();
             result.AssertNoOutput("I have failed! DeployFailed.ps1");
+            result.AssertNoOutput("I have failed! DeployFailed.sh");
+            result.AssertNoOutput("I have failed! DeployFailed.fsx");
+            result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
         [Test]
@@ -290,7 +297,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] // Re-enable when deployments enabled again.
         public void ShouldDeployInParallel()
         {
             var locker = new object();
@@ -318,7 +324,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                     result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                    result.AssertOutput("Extracted 14 files");
+                    result.AssertOutput("Extracted 15 files");
 
                     lock (locker)
                     {

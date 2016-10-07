@@ -159,10 +159,12 @@
     <Compile Include="Fixtures\Deployment\DeployWebPackageToIISFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\NuGetPackageDownloaderFixture.cs" />
+    <Compile Include="Fixtures\RequiresMinimumMonoVersionAttribute.cs" />
+    <Compile Include="Fixtures\RequiresMonoVersion423OrAboveAttribute.cs" />
     <Compile Include="Helpers\InMemoryLog.cs" />
     <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
-    <Compile Include="Fixtures\RequiresMono4Attribute.cs" />
+    <Compile Include="Fixtures\RequiresMonoVersion400OrAboveAttribute.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
     <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
@@ -227,6 +229,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.csx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.existing-expected.json">
