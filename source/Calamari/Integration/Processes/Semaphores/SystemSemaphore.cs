@@ -3,7 +3,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Integration.Processes.Semaphores
 {
     public class SystemSemaphore : ISemaphore
     {

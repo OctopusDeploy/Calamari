@@ -205,6 +205,15 @@
     <Compile Include="Integration\Packages\TarGzipPackageExtractor.cs" />
     <Compile Include="Integration\Packages\TarPackageExtractor.cs" />
     <Compile Include="Integration\Packages\ZipPackageExtractor.cs" />
+    <Compile Include="Integration\Processes\Semaphores\FileBasedSempahore.cs" />
+    <Compile Include="Integration\Processes\Semaphores\SemaphoreFactory.cs" />
+    <Compile Include="Integration\Processes\Semaphores\FileLockContent.cs" />
+    <Compile Include="Integration\Processes\Semaphores\LockFileBasedSemaphore.cs" />
+    <Compile Include="Integration\Processes\Semaphores\LockIo.cs" />
+    <Compile Include="Integration\Processes\Semaphores\MissingFileLock.cs" />
+    <Compile Include="Integration\Processes\Semaphores\OtherProcessHasExclusiveLockOnFileLock.cs" />
+    <Compile Include="Integration\Processes\Semaphores\OtherProcessOwnsFileLock.cs" />
+    <Compile Include="Integration\Processes\Semaphores\UnableToDeserialiseLockFile.cs" />
     <Compile Include="Integration\Scripting\InvalidScriptException.cs" />
     <Compile Include="Integration\Scripting\MonoVersionCanNotBeDeterminedException.cs" />
     <Compile Include="Integration\Scripting\PackagedScriptRunner.cs" />
@@ -264,8 +273,8 @@
     <Compile Include="Integration\Processes\ConsoleCommandOutput.cs" />
     <Compile Include="Deployment\Journal\IDeploymentJournal.cs" />
     <Compile Include="Deployment\Journal\JournalEntry.cs" />
-    <Compile Include="Integration\Processes\ISemaphore.cs" />
-    <Compile Include="Integration\Processes\SystemSemaphore.cs" />
+    <Compile Include="Integration\Processes\Semaphores\ISemaphore.cs" />
+    <Compile Include="Integration\Processes\Semaphores\SystemSemaphore.cs" />
     <Compile Include="Integration\FileSystem\PackageStore.cs" />
     <Compile Include="Integration\Packages\StoredPackage.cs" />
     <Compile Include="Integration\ServiceMessages\ServiceMessage.cs" />

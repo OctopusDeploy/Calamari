@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Integration.Processes.Semaphores
 {
     public interface ISemaphore
     {

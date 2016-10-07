@@ -297,6 +297,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [Category("FileBasedSemaphore")]
         public void ShouldDeployInParallel()
         {
             var locker = new object();
@@ -348,7 +349,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             foreach (var thread in threads) thread.Join();
 
             var allErrors = string.Join(Environment.NewLine, errors.Select(e => e.ToString()));
-            Assert.That(allErrors, Is.EqualTo(""), allErrors);
+            Assert.That(allErrors, Is.EqualTo(""));
+            Assert.That(allErrors, Is.Not.StringContaining("Forcibly taking lock from process"));
         }
 
         CalamariResult DeployPackage(DeploymentType deploymentType = DeploymentType.Nupkg)

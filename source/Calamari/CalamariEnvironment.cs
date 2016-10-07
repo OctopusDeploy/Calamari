@@ -25,5 +25,15 @@ namespace Calamari
             }
         }
 
+        public static bool IsRunningOnWindows
+        {
+            get
+            {
+                return Environment.OSVersion.Platform == PlatformID.Win32NT ||
+                       Environment.OSVersion.Platform == PlatformID.Win32S ||
+                       Environment.OSVersion.Platform == PlatformID.Win32Windows ||
+                       Environment.OSVersion.Platform == PlatformID.WinCE;
+            }
+        }
     }
 }
