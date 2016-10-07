@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
-            result.AssertOutput("Extracted 14 files");
+            result.AssertOutput("Extracted 15 files");
             result.AssertOutput("Hello from Deploy.ps1");
         }
 
