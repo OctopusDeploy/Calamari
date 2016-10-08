@@ -108,7 +108,17 @@ namespace Calamari.Integration.Processes.Semaphores
             // borrowed from https://github.com/sillsdev/libpalaso/blob/7c7e5eed0a3d9c8a961b01887cbdebbf1b63b899/SIL.Core/IO/FileLock/SimpleFileLock.cs
             // (Apache 2.0 license)
             // First, look for a process with this processId
-            var process = Process.GetProcesses().FirstOrDefault(x => x.Id == processId);
+            Process process;
+            try
+            {
+                process = Process.GetProcesses().FirstOrDefault(x => x.Id == processId);
+            }
+            catch (NotSupportedException)
+            {
+                //FreeBSD does not support EnumProcesses
+                //assume that the process is running
+                return true;
+            }
 
             // If there is no process with this processId, it is not running.
             if (process == null)
