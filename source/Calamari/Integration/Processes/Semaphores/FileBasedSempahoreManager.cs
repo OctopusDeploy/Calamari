@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
@@ -27,17 +25,13 @@ namespace Calamari.Integration.Processes.Semaphores
 
         public IDisposable Acquire(string name, string waitMessage)
         {
-            Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Getting file based semaphore '{name}'");
             var semaphore = semaphoreCreator.Create(name, TimeSpan.FromMinutes(2));
 
             if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - waiting for file based semaphore '{name}'");
-
                 log.Verbose(waitMessage);
                 semaphore.WaitOne();
             }
-            Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got file based semaphore \'{name}\'");
 
             return new LockFileBasedSemaphoreReleaser(semaphore);
         }
@@ -53,7 +47,6 @@ namespace Calamari.Integration.Processes.Semaphores
 
             public void Dispose()
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Releasing file based semaphore \'{semaphore.Name}\'");
                 semaphore.ReleaseLock();
             }
         }

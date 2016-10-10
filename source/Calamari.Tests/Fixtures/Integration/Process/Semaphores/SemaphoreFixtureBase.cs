@@ -48,12 +48,9 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
                 {
                     threadTwoShouldGetSemaphore = false;
                     autoEvent.Set();
-                    Console.WriteLine("Thread 1 has the semaphore");
                     Thread.Sleep(200);
-                    Console.WriteLine("Thread 1 has finished with the semaphore");
                     threadTwoShouldGetSemaphore = true;
                 }
-                Console.WriteLine("Thread 1 has released the semaphore");
             });
 
             var threadTwo = new Thread(() =>
@@ -62,9 +59,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
                 using (semaphore.Acquire("Octopus.Calamari.TestSemaphore", "Another process has the semaphore..."))
                 {
                     Assert.That(threadTwoShouldGetSemaphore, Is.True);
-                    Console.WriteLine("Thread 2 has the semaphore");
                 }
-                Console.WriteLine("Thread 2 has release the semaphore");
             });
 
             threadOne.Start();

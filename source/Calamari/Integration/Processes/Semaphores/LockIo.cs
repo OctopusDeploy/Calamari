@@ -1,9 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
-using System.Threading;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.Processes.Semaphores
@@ -41,10 +39,8 @@ namespace Calamari.Integration.Processes.Semaphores
                         var lockContent = (FileLock) obj;
                         if (lockContent.BelongsToCurrentProcessAndThread())
                         {
-                            Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Reading lock {lockFilePath} - it belongs to me");
                             return lockContent;
                         }
-                        Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Reading lock {lockFilePath} - it belongs to someone else ({lockContent.ProcessId}/{lockContent.ThreadId}).");
                         return new OtherProcessOwnsFileLock(lockContent);
                     }
                     return new MissingFileLock();
@@ -52,22 +48,18 @@ namespace Calamari.Integration.Processes.Semaphores
             }
             catch (FileNotFoundException)
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got FileNotFoundException");
                 return new MissingFileLock();
             }
-            catch (IOException ex)
+            catch (IOException)
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got IOException: {ex.Message}");
                 return new OtherProcessHasExclusiveLockOnFileLock();
             }
-            catch (SerializationException ex)
+            catch (SerializationException)
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got SerializationException: {ex.Message}");
                 return new UnableToDeserialiseLockFile(fileSystem.GetCreationTime(lockFilePath));
             }
-            catch (Exception ex) //We have no idea what went wrong - reacquire this lock
+            catch (Exception) //We have no idea what went wrong - reacquire this lock
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got unknown exception: {ex}");
                 return new OtherProcessHasExclusiveLockOnFileLock();
             }
         }
@@ -83,11 +75,7 @@ namespace Calamari.Integration.Processes.Semaphores
                     if (Equals(currentContent, fileLock))
                     {
                         if (currentContent.Timestamp == fileLock.Timestamp)
-                        {
-                            Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Attempted to write lock but we already owned it");
                             return true;
-                        }
-                        Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - We already owned the lock - updating the timestamp");
                         fileMode = FileMode.Create;
                     }
                     else if (currentContent.GetType() == typeof(UnableToDeserialiseLockFile))
@@ -95,7 +83,6 @@ namespace Calamari.Integration.Processes.Semaphores
                         DeleteLock(lockFilePath);
                     }
                 }
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Writing lock {lockFilePath}");
                 using (var stream = fileSystem.OpenFileExclusively(lockFilePath, fileMode, FileAccess.Write))
                 {
                     jsonSerializer.WriteObject(stream, fileLock);
@@ -103,15 +90,8 @@ namespace Calamari.Integration.Processes.Semaphores
                 var writtenContent = ReadLock(lockFilePath);
                 return Equals(writtenContent, fileLock);
             }
-            catch (IOException)
+            catch (Exception)
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got IOException while writing lock file");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got unknown exception while writing lock file: {ex}");
-
                 return false;
             }
         }
@@ -122,9 +102,9 @@ namespace Calamari.Integration.Processes.Semaphores
             {
                 fileSystem.DeleteFile(lockFilePath);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got unknown exception while deleting: {ex}");
+                // ignored - handled in create
             }
         }
     }

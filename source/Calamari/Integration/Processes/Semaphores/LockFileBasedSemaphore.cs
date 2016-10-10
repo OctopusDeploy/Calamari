@@ -58,7 +58,6 @@ namespace Calamari.Integration.Processes.Semaphores
                         log.Warn("Lock file existed but was not readable, and has existed for longer than lock timeout. Taking lock.");
                         return AquireLockAction.AquireLock;
                     }
-                    Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Lock file existed, but was not readable. Giving up in {(LockTimeout.TotalSeconds - (Math.Abs((DateTime.Now - nonDeserialisedLockFile.CreationTime).TotalSeconds))):##} seconds.");
                     return AquireLockAction.DontAquireLock;
                 }
 
@@ -85,11 +84,9 @@ namespace Calamari.Integration.Processes.Semaphores
                 //The lock has not timed out - we can't acquire it
                 if (!(Math.Abs((DateTime.Now - lockWriteTime).TotalSeconds) > LockTimeout.TotalSeconds))
                 {
-                    Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Lock times out in {(LockTimeout.TotalSeconds - (Math.Abs((DateTime.Now - lockWriteTime).TotalSeconds))):##} seconds");
                     return AquireLockAction.DontAquireLock;
                 }
 
-                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Force deleting file based semaphore (timeout)");
                 log.Warn($"Forcibly taking lock from process {fileLock.ProcessId}, thread {fileLock.ThreadId} as lock has timed out. If this happens regularly, please contact Octopus Support.");
 
                 return AquireLockAction.ForciblyAquireLock;
