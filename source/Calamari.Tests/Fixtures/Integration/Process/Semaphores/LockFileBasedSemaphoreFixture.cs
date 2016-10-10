@@ -282,7 +282,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             };
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(false, false, true);
+            lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(false, false, false, true);
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
