@@ -297,7 +297,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category("FileBasedSemaphore")]
         public void ShouldDeployInParallel()
         {
             var locker = new object();

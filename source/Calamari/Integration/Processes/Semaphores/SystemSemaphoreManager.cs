@@ -5,8 +5,23 @@ using System.Threading;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
-    public class SystemSemaphore : ISemaphore
+    public class SystemSemaphoreManager : ISemaphoreFactory
     {
+        private readonly ILog log;
+        private readonly int initialWaitBeforeShowingLogMessage;
+
+        public SystemSemaphoreManager()
+        {
+            this.log = new LogWrapper();
+            this.initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
+        }
+
+        public SystemSemaphoreManager(ILog log, TimeSpan initialWaitBeforeShowingLogMessage)
+        {
+            this.log = log;
+            this.initialWaitBeforeShowingLogMessage = (int)initialWaitBeforeShowingLogMessage.TotalMilliseconds;
+        }
+
         public IDisposable Acquire(string name, string waitMessage)
         {
             Semaphore semaphore;
@@ -19,13 +34,13 @@ namespace Calamari.Integration.Processes.Semaphores
             {
                 semaphore = new Semaphore(1, 1, globalName);
             }
-            if (!semaphore.WaitOne(3000))
+            if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
             {
-                Log.Verbose(waitMessage);
+                log.Verbose(waitMessage);
                 semaphore.WaitOne();
             }
 
-            return new SemaphoreReleaser(semaphore);
+            return new SystemSemaphoreReleaser(semaphore);
         }
 
         static Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
@@ -41,11 +56,11 @@ namespace Calamari.Integration.Processes.Semaphores
             return semaphore;
         }
 
-        class SemaphoreReleaser : IDisposable
+        class SystemSemaphoreReleaser : IDisposable
         {
             readonly Semaphore semaphore;
 
-            public SemaphoreReleaser(Semaphore semaphore)
+            public SystemSemaphoreReleaser(Semaphore semaphore)
             {
                 this.semaphore = semaphore;
             }

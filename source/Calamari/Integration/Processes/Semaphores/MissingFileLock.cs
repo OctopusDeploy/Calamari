@@ -1,6 +1,6 @@
 namespace Calamari.Integration.Processes.Semaphores
 {
-    public class MissingFileLock : FileLockContent
+    public class MissingFileLock : FileLock
     {
     }
 }

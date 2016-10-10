@@ -4,45 +4,45 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Threading;
+using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
-    internal static class LockIo
+    internal class LockIo : ILockIo
     {
-        private static readonly DataContractJsonSerializer JsonSerializer;
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly DataContractJsonSerializer jsonSerializer;
 
-        static LockIo()
+        internal LockIo(ICalamariFileSystem fileSystem)
         {
-            JsonSerializer = new DataContractJsonSerializer(typeof(FileLockContent), new[] { typeof(FileLockContent) }, int.MaxValue, true, null, true);
+            this.fileSystem = fileSystem;
+            jsonSerializer = new DataContractJsonSerializer(typeof(FileLock), new[] { typeof(FileLock) }, int.MaxValue, true, null, true);
         }
 
-        public static string GetFilePath(string lockName)
+        public string GetFilePath(string lockName)
         {
             return Path.Combine(Path.GetTempPath(), lockName + ".lck");
         }
 
-        public static bool LockExists(string lockFilePath)
+        public bool LockExists(string lockFilePath)
         {
-            return File.Exists(lockFilePath);
+            return fileSystem.FileExists(lockFilePath);
         }
 
-        public static FileLockContent ReadLock(string lockFilePath)
+        public FileLock ReadLock(string lockFilePath)
         {
             try
             {
-                using (var stream = File.Open(lockFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                using (var stream = fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read))
                 {
-                    var obj = JsonSerializer.ReadObject(stream);
-                    if ((FileLockContent)obj != null)
+                    var obj = jsonSerializer.ReadObject(stream);
+                    if ((FileLock)obj != null)
                     {
-                        var lockContent = (FileLockContent) obj;
-                        if (lockContent.ProcessId == Process.GetCurrentProcess().Id)
+                        var lockContent = (FileLock) obj;
+                        if (lockContent.BelongsToCurrentProcessAndThread())
                         {
-                            if (lockContent.ThreadId == Thread.CurrentThread.ManagedThreadId)
-                            {
-                                Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Reading lock {lockFilePath} - it belongs to me");
-                                return lockContent;
-                            }
+                            Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Reading lock {lockFilePath} - it belongs to me");
+                            return lockContent;
                         }
                         Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Reading lock {lockFilePath} - it belongs to someone else ({lockContent.ProcessId}/{lockContent.ThreadId}).");
                         return new OtherProcessOwnsFileLock(lockContent);
@@ -63,7 +63,7 @@ namespace Calamari.Integration.Processes.Semaphores
             catch (SerializationException ex)
             {
                 Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got SerializationException: {ex.Message}");
-                return new UnableToDeserialiseLockFile(File.GetCreationTime(lockFilePath));
+                return new UnableToDeserialiseLockFile(fileSystem.GetCreationTime(lockFilePath));
             }
             catch (Exception ex) //We have no idea what went wrong - reacquire this lock
             {
@@ -72,39 +72,36 @@ namespace Calamari.Integration.Processes.Semaphores
             }
         }
 
-        public static bool WriteLock(string lockFilePath, FileLockContent lockContent)
+        public bool WriteLock(string lockFilePath, FileLock fileLock)
         {
             try
             {
+                var fileMode = FileMode.CreateNew;
                 if (LockExists(lockFilePath))
                 {
                     var currentContent = ReadLock(lockFilePath);
-                    if (Equals(currentContent, lockContent))
+                    if (Equals(currentContent, fileLock))
                     {
-                        if (currentContent.Timestamp != lockContent.Timestamp)
+                        if (currentContent.Timestamp == fileLock.Timestamp)
                         {
-                            Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - We already owned the lock - updating the timestamp");
-                            using (var stream = File.Open(lockFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
-                            {
-                                JsonSerializer.WriteObject(stream, lockContent);
-                            }
+                            Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Attempted to write lock but we already owned it");
                             return true;
                         }
-                        Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Attempted to write lock but we already owned it");
-                        return true;
+                        Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - We already owned the lock - updating the timestamp");
+                        fileMode = FileMode.Create;
                     }
-                    if (currentContent.GetType() == typeof(UnableToDeserialiseLockFile))
+                    else if (currentContent.GetType() == typeof(UnableToDeserialiseLockFile))
                     {
                         DeleteLock(lockFilePath);
                     }
                 }
                 Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Writing lock {lockFilePath}");
-                using (var stream = File.Open(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                using (var stream = fileSystem.OpenFileExclusively(lockFilePath, fileMode, FileAccess.Write))
                 {
-                    JsonSerializer.WriteObject(stream, lockContent);
+                    jsonSerializer.WriteObject(stream, fileLock);
                 }
                 var writtenContent = ReadLock(lockFilePath);
-                return Equals(writtenContent, lockContent);
+                return Equals(writtenContent, fileLock);
             }
             catch (IOException)
             {
@@ -119,11 +116,11 @@ namespace Calamari.Integration.Processes.Semaphores
             }
         }
 
-        public static void DeleteLock(string lockFilePath)
+        public void DeleteLock(string lockFilePath)
         {
             try
             {
-                File.Delete(lockFilePath);
+                fileSystem.DeleteFile(lockFilePath);
             }
             catch (Exception ex)
             {

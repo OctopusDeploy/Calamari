@@ -1,30 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Processes
+namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 {
-    [TestFixture]
-    public class SemaphoreFixture
+    public abstract class SemaphoreFixtureBase
     {
-        [Test]
-        [Category("SystemSemaphore")]
-        public void SystemSemaphoreShouldIsolate()
-        {
-            ShouldIsolate(new SystemSemaphore());
-        }
-
-        [Test]
-        [Category("FileBasedSemaphore")]
-        public void FileBasedSempahoreShouldIsolate()
-        {
-            ShouldIsolate(new FileBasedSempahore());
-        }
-
-        public void ShouldIsolate(ISemaphore semaphore)
+        protected void ShouldIsolate(ISemaphoreFactory semaphore)
         {
             var result = 0;
             var threads = new List<Thread>();
@@ -53,22 +37,7 @@ namespace Calamari.Tests.Fixtures.Processes
             Assert.That(result, Is.EqualTo(3));
         }
 
-
-        [Test]
-        [Category("SystemSemaphore")]
-        public void SystemSemaphoreWorksProperly()
-        {
-            SemaphoreWorksProperly(new SystemSemaphore());
-        }
-
-        [Test]
-        [Category("FileBasedSemaphore")]
-        public void FileBasedSempahoreWorksProperly()
-        {
-            SemaphoreWorksProperly(new FileBasedSempahore());
-        }
-
-        public void SemaphoreWorksProperly(ISemaphore semaphore)
+        protected void SecondSemaphoreWaitsUntilFirstSemaphoreIsReleased(ISemaphoreFactory semaphore)
         {
             AutoResetEvent autoEvent = new AutoResetEvent(false);
             var threadTwoShouldGetSemaphore = true;

@@ -159,6 +159,14 @@
     <Compile Include="Fixtures\Deployment\DeployWebPackageToIISFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\NuGetPackageDownloaderFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\FileBasedSempahoreManagerFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\FileLockFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\LockFileBasedSemaphoreFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\LockFileBasedSemaphoreCreatorFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\LockIoTests.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\ProcessFinderFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\SemaphoreFactoryFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\SystemSemaphoreFixture.cs" />
     <Compile Include="Fixtures\RequiresMinimumMonoVersionAttribute.cs" />
     <Compile Include="Fixtures\RequiresMonoVersion423OrAboveAttribute.cs" />
     <Compile Include="Helpers\InMemoryLog.cs" />
@@ -199,7 +207,7 @@
     <Compile Include="Fixtures\PackageDownload\AuthenticatedTestAttribute.cs" />
     <Compile Include="Fixtures\PackageDownload\PackageDownloadFixture.cs" />
     <Compile Include="Fixtures\Retention\RetentionPolicyFixture.cs" />
-    <Compile Include="Fixtures\Processes\SemaphoreFixture.cs" />
+    <Compile Include="Fixtures\Integration\Process\Semaphores\SemaphoreFixtureBase.cs" />
     <Compile Include="Fixtures\RequiresDotNet45Attribute.cs" />
     <Compile Include="Fixtures\Bash\BashFixture.cs" />
     <Compile Include="Fixtures\ScriptCS\ScriptCSFixture.cs" />

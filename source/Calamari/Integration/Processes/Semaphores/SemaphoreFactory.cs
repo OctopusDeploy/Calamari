@@ -2,11 +2,11 @@ namespace Calamari.Integration.Processes.Semaphores
 {
     public static class SemaphoreFactory
     {
-        public static ISemaphore Get()
+        public static ISemaphoreFactory Get()
         {
             if (CalamariEnvironment.IsRunningOnMono)
-                return new FileBasedSempahore();
-            return new SystemSemaphore();
+                return new FileBasedSempahoreManager();
+            return new SystemSemaphoreManager();
         }
     }
 }

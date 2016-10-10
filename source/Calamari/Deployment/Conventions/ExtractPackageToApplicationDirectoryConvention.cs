@@ -10,9 +10,9 @@ namespace Calamari.Deployment.Conventions
 {
     public class ExtractPackageToApplicationDirectoryConvention : ExtractPackageConvention 
     {
-        readonly ISemaphore semaphore;
+        readonly ISemaphoreFactory semaphore;
 
-        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ISemaphore semaphore) : base(extractor, fileSystem)
+        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore) : base(extractor, fileSystem)
         {
             this.semaphore = semaphore;
         }

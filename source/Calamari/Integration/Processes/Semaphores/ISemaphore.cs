@@ -1,9 +1,10 @@
-﻿using System;
-
 namespace Calamari.Integration.Processes.Semaphores
 {
     public interface ISemaphore
     {
-        IDisposable Acquire(string name, string waitMessage);
+        string Name { get; }
+        void ReleaseLock();
+        bool WaitOne();
+        bool WaitOne(int millisecondsToWait);
     }
 }

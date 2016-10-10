@@ -5,18 +5,36 @@ using System.Threading;
 namespace Calamari.Integration.Processes.Semaphores
 {
     //Originally based on https://github.com/markedup-mobi/file-lock (MIT license)
-    public class FileBasedSempahore : ISemaphore
+    public class FileBasedSempahoreManager : ISemaphoreFactory
     {
+        private readonly ILog log;
+        private readonly ICreateSemaphores semaphoreCreator;
+        private readonly int initialWaitBeforeShowingLogMessage;
+
+        public FileBasedSempahoreManager()
+        {
+            this.log = new LogWrapper();
+            this.initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
+            this.semaphoreCreator = new LockFileBasedSemaphoreCreator();
+        }
+
+        public FileBasedSempahoreManager(ILog log, TimeSpan initialWaitBeforeShowingLogMessage, ICreateSemaphores semaphoreCreator)
+        {
+            this.log = log;
+            this.semaphoreCreator = semaphoreCreator;
+            this.initialWaitBeforeShowingLogMessage = (int)initialWaitBeforeShowingLogMessage.TotalMilliseconds;
+        }
+
         public IDisposable Acquire(string name, string waitMessage)
         {
             Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Getting file based semaphore '{name}'");
-            var semaphore = LockFileBasedSemaphore.Create(name, TimeSpan.FromMinutes(2));
+            var semaphore = semaphoreCreator.Create(name, TimeSpan.FromMinutes(2));
 
-            if (!semaphore.WaitOne(3000))
+            if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
             {
                 Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - waiting for file based semaphore '{name}'");
 
-                Log.Verbose(waitMessage);
+                log.Verbose(waitMessage);
                 semaphore.WaitOne();
             }
             Console.WriteLine($"{Process.GetCurrentProcess().Id}/{Thread.CurrentThread.ManagedThreadId} - Got file based semaphore \'{name}\'");
@@ -26,9 +44,9 @@ namespace Calamari.Integration.Processes.Semaphores
 
         private class LockFileBasedSemaphoreReleaser : IDisposable
         {
-            private readonly LockFileBasedSemaphore semaphore;
+            private readonly ISemaphore semaphore;
 
-            public LockFileBasedSemaphoreReleaser(LockFileBasedSemaphore semaphore)
+            public LockFileBasedSemaphoreReleaser(ISemaphore semaphore)
             {
                 this.semaphore = semaphore;
             }

@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using System.Runtime.Serialization;
+using System.Threading;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
     [DataContract]
-    public class FileLockContent
+    public class FileLock
     {
 
         [DataMember]
@@ -18,7 +20,7 @@ namespace Calamari.Integration.Processes.Semaphores
         [DataMember]
         public int ThreadId { get; set; }
 
-        protected bool Equals(FileLockContent other)
+        protected bool Equals(FileLock other)
         {
             return ProcessId == other.ProcessId && 
                    string.Equals(ProcessName, other.ProcessName) && 
@@ -30,7 +32,7 @@ namespace Calamari.Integration.Processes.Semaphores
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((FileLockContent)obj);
+            return Equals((FileLock)obj);
         }
 
         public override int GetHashCode()
@@ -44,5 +46,9 @@ namespace Calamari.Integration.Processes.Semaphores
             }
         }
 
+        public virtual bool BelongsToCurrentProcessAndThread()
+        {
+            return ProcessId == Process.GetCurrentProcess().Id && ThreadId == Thread.CurrentThread.ManagedThreadId;
+        }
     }
 }

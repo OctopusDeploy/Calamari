@@ -13,11 +13,11 @@ namespace Calamari.Deployment.Journal
     public class DeploymentJournal : IDeploymentJournal
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly ISemaphore semaphore;
+        readonly ISemaphoreFactory semaphore;
         readonly VariableDictionary variables;
         const string SemaphoreName = "Octopus.Calamari.DeploymentJournal";
 
-        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphore semaphore, VariableDictionary variables)
+        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore, VariableDictionary variables)
         {
             this.fileSystem = fileSystem;
             this.semaphore = semaphore;

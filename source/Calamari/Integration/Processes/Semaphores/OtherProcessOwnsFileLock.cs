@@ -1,13 +1,13 @@
 namespace Calamari.Integration.Processes.Semaphores
 {
-    public class OtherProcessOwnsFileLock : FileLockContent
+    public class OtherProcessOwnsFileLock : FileLock
     {
-        public OtherProcessOwnsFileLock(FileLockContent lockContent)
+        public OtherProcessOwnsFileLock(FileLock fileLock)
         {
-            ThreadId = lockContent.ThreadId;
-            ProcessId = lockContent.ProcessId;
-            ProcessName = lockContent.ProcessName;
-            Timestamp = lockContent.Timestamp;
+            ThreadId = fileLock.ThreadId;
+            ProcessId = fileLock.ProcessId;
+            ProcessName = fileLock.ProcessName;
+            Timestamp = fileLock.Timestamp;
         }
     }
 }
