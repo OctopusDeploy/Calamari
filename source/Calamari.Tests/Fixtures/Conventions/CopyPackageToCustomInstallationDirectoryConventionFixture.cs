@@ -13,9 +13,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         RunningDeployment deployment;
         ICalamariFileSystem fileSystem;
         CalamariVariableDictionary variables;
-        const string customInstallationDirectory = "C:\\myCustomInstallDir";
-        const string stagingDirectory = "C:\\applications\\Acme\\1.0.0";
-        const string packageFilePath = "C:\\packages";
+        readonly string customInstallationDirectory = CalamariEnvironment.IsRunningOnNix ? "/var/tmp/myCustomInstallDir" : "C:\\myCustomInstallDir";
+        readonly string stagingDirectory = CalamariEnvironment.IsRunningOnNix ? "/var/tmp/applications/Acme/1.0.0" : "C:\\applications\\Acme\\1.0.0";
+        readonly string packageFilePath = CalamariEnvironment.IsRunningOnNix ? "/var/tmp/packages" : "C:\\packages";
 
         [SetUp]
         public void SetUp()
@@ -73,6 +73,25 @@ namespace Calamari.Tests.Fixtures.Conventions
             Assert.AreEqual(variables.Get(SpecialVariables.Package.CustomInstallationDirectory), customInstallationDirectory);
         }
 
+        [Test]
+        [ExpectedException(ExpectedMessage = "An error occurred when evaluating the value for the custom install directory. The following tokens were unable to be evaluated: '#{CustomInstalDirectory}'")]
+        public void ShouldFailIfCustomInstallationDirectoryVariableIsNotEvaluated()
+        {
+            variables.Set("CustomInstallDirectory", customInstallationDirectory);
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, "#{CustomInstalDirectory}");
+
+            CreateConvention().Install(deployment);
+        }
+
+        [Test]
+        [ExpectedException(ExpectedMessage = "The custom install directory 'relative/path/to/folder' is a relative path, please specify the path as an absolute path or a UNC path.")]
+        public void ShouldFailIfCustomInstallationDirectoryIsRelativePath()
+        {
+            const string relativeInstallDirectory = "relative/path/to/folder";
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, relativeInstallDirectory);
+
+            CreateConvention().Install(deployment);
+        }
 
         private CopyPackageToCustomInstallationDirectoryConvention CreateConvention()
         {

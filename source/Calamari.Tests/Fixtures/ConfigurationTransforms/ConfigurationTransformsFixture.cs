@@ -23,7 +23,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void WebReleaseConfig()
         {
             var text = PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Release.config"));
@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         [ExpectedException(typeof(System.Xml.XmlException))]
         public void ShouldThrowExceptionForBadConfig()
         {
@@ -45,7 +45,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
             configurationTransformer = new ConfigurationTransformer(true);
@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldShowMessageWhenResultIsInvalidXml()
         {
             PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Empty.config"));

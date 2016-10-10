@@ -97,8 +97,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\tools\Octodiff\Octodiff.exe</HintPath>
     </Reference>
-    <Reference Include="Octostache, Version=1.0.2.41, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octostache.1.0.2.41\lib\net40\Octostache.dll</HintPath>
+    <Reference Include="Octostache, Version=1.0.2.46, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Octostache.1.0.2.46\lib\net40\Octostache.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="SharpCompress, Version=0.12.4.0, Culture=neutral, processorArchitecture=MSIL">
@@ -159,10 +159,13 @@
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWebPackageToIISFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
+    <Compile Include="Fixtures\Integration\Packages\NuGetPackageDownloaderFixture.cs" />
+    <Compile Include="Fixtures\RequiresMinimumMonoVersionAttribute.cs" />
+    <Compile Include="Fixtures\RequiresMonoVersion423OrAboveAttribute.cs" />
     <Compile Include="Helpers\InMemoryLog.cs" />
     <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
-    <Compile Include="Fixtures\RequiresMono4Attribute.cs" />
+    <Compile Include="Fixtures\RequiresMonoVersion400OrAboveAttribute.cs" />
     <Compile Include="Helpers\ProxyLog.cs" />
     <Compile Include="Fixtures\JsonVariables\JsonConfigurationVariableReplacerFixture.cs" />
     <Compile Include="Fixtures\Conventions\JsonConfigurationVariablesConventionFixture.cs" />
@@ -232,6 +235,9 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\DeployFailed.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.existing-expected.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -248,6 +254,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.array.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\JsonVariables\Samples\appsettings.single.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\JsonVariables\Samples\appsettings.simple.json">

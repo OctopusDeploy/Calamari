@@ -33,7 +33,7 @@ namespace Calamari.Azure.Integration
         public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-            variables.Set("OctopusAzureTargetScript", script.File);
+            variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
             SetAzureModuleLoadingMethod(variables);

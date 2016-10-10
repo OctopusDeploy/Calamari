@@ -124,22 +124,21 @@ namespace Calamari.Tests.Helpers
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) == -1, string.Format("Expected not to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+            Assert.That(allOutput, Is.Not.StringContaining(expectedOutput));
         }
 
         public void AssertOutput(string expectedOutput)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+            Assert.That(allOutput, Is.StringContaining(expectedOutput));
         }
 
-        public void AssertOutput(Regex regex)
+        public void AssertOutputMatches(string regex)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(regex.IsMatch(allOutput),
-                string.Format("Output did not match: {0}. Output:\r\n{1}", regex.ToString(), allOutput) );
+            Assert.That(allOutput, Is.StringMatching(regex));
         }
 
         public string GetOutputForLineContaining(string expectedOutput)
@@ -158,7 +157,7 @@ namespace Calamari.Tests.Helpers
         {
             var separator = noNewLines ? String.Empty : Environment.NewLine;
             var allOutput = string.Join(separator, captured.Errors);
-            Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+            Assert.That(allOutput, Is.StringContaining(expectedOutput));
         }
 
         public void ApproveOutput()

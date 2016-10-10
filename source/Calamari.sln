@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Package", "Package\Package.csproj", "{D44DC6C3-1192-48AB-AF34-96D918742EF3}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -18,8 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{5F1E9F19-2FE4-40DE-AA15-12E2C77634BF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure", "Calamari.Azure\Calamari.Azure.csproj", "{E58A81EC-2C83-49E4-8DD4-877E68E0759B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure.Tests", "Calamari.Azure.Tests\Calamari.Azure.Tests.csproj", "{AB640580-250C-4B6B-AA87-74204D06D4F3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4D40F650-1ABE-41E8-A99C-45C9A8D89B20}"
 	ProjectSection(SolutionItems) = preProject
@@ -49,10 +47,6 @@ Global
 		{E58A81EC-2C83-49E4-8DD4-877E68E0759B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E58A81EC-2C83-49E4-8DD4-877E68E0759B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E58A81EC-2C83-49E4-8DD4-877E68E0759B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AB640580-250C-4B6B-AA87-74204D06D4F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AB640580-250C-4B6B-AA87-74204D06D4F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AB640580-250C-4B6B-AA87-74204D06D4F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AB640580-250C-4B6B-AA87-74204D06D4F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

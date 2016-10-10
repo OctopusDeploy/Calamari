@@ -107,7 +107,7 @@ namespace Calamari.Integration.JsonVariables
 
         private void MapDefault(JToken value)
         {
-            map[key] = t => value.Replace(JToken.FromObject(t));
+            map[key] = t => value.Replace(t == null ? null : JToken.FromObject(t));
         }
 
         private void MapNumber(JToken value)

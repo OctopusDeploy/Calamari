@@ -8,10 +8,10 @@ function Is-DeploymentTypeDisabled($value) {
 
 $deployAsWebSite = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"])
 $deployAsWebApplication = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"])
-$deployAsVirtualFolder = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])
+$deployAsVirtualDirectory = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"])
 
 
-if (!$deployAsVirtualFolder -and !$deployAsWebSite -and !$deployAsWebApplication)
+if (!$deployAsVirtualDirectory -and !$deployAsWebSite -and !$deployAsWebApplication)
 {
    Write-Host "Skipping IIS deployment. Neither Website nor Virtual Directory nor Web Application deployment type has been enabled." 
    exit 0
@@ -129,7 +129,6 @@ function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityTyp
 			Set-ItemProperty $appPoolPath managedRuntimeVersion $applicationPoolFrameworkVersion
 		}
 	}
-
 }
 
 function Assign-ToApplicationPool($iisPath, $applicationPoolName) {
@@ -194,11 +193,11 @@ function Set-Path($virtualPath, $physicalPath)
 {
 	Execute-WithRetry { 
 		Write-Host ("Setting physical path of $virtualPath to $physicalPath")
-		Set-ItemProperty $virtualPath -name physicalPath -value $physicalPath
+		Set-ItemProperty $virtualPath -name physicalPath -value "$physicalPath"
 	}
 }
 
-if ($deployAsVirtualFolder) 
+if ($deployAsVirtualDirectory) 
 {
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"]
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
