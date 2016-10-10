@@ -24,7 +24,21 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var processFinder = new ProcessFinder();
             var result = processFinder.ProcessIsRunning(-1, Guid.NewGuid().ToString());
-            Assert.That(result, Is.False);
+            Assert.That(result, Is.EqualTo(GetExpectedResult()));
+        }
+
+        private bool GetExpectedResult()
+        {
+            try
+            {
+                var processes = System.Diagnostics.Process.GetProcesses();
+                return false;
+            }
+            catch (NotSupportedException)
+            {
+                //not supported on FreeBSD. Probably a nicer way to do this.
+                return true;
+            }
         }
     }
 }
