@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Calamari.Util;
 using NuGet;
 using SharpCompress.Common;
 using SharpCompress.Reader;
@@ -14,7 +15,7 @@ namespace Calamari.Integration.Packages.NuGet
 {
     public class NupkgExtractor : IPackageExtractor
     {
-        public string[] Extensions => new[] {global::NuGet.Constants.PackageExtension};
+        public string[] Extensions => new[] {CrossPlatform.GetPackageExtension()};
 
         public PackageMetadata GetMetadata(string packageFile)
         {
@@ -23,7 +24,7 @@ namespace Calamari.Integration.Packages.NuGet
             return new PackageMetadata
             {
                 Id = packageMetadata.Id,
-                Version = packageMetadata.Version,
+                Version = packageMetadata.Version.ToString(),
                 FileExtension = Extensions.First()
             };
         }
@@ -109,7 +110,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static bool IsManifest(string path)
         {
-            return Path.GetExtension(path).Equals(global::NuGet.Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase);
+            return Path.GetExtension(path).Equals(CrossPlatform.GetManifestExtension(), StringComparison.OrdinalIgnoreCase);
         }
 
         private static string UnescapePath(string path)

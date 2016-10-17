@@ -18,13 +18,13 @@ namespace Calamari.Tests.Fixtures.FindPackage
         readonly string packageVersion = "1.0.0.0";
         readonly string newpackageVersion = "1.0.0.1";
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
             Environment.SetEnvironmentVariable("TentacleHome", tentacleHome);
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TestFixtureTearDown()
         {
             Environment.SetEnvironmentVariable("TentacleHome", null);
@@ -172,7 +172,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             var result = FindPackages("", "1.0.0.0", "Hash");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No package ID was specified. Please pass --packageId YourPackage");
         }
 
@@ -181,7 +181,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             var result = FindPackages("Calamari", "", "Hash");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No package version was specified. Please pass --packageVersion 1.0.0.0");
         }
 
@@ -190,7 +190,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             var result = FindPackages("Calamari", "1.0.0.*", "Hash");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("Package version '1.0.0.*' is not a valid Semantic Version");
         }
 
@@ -199,7 +199,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             var result = FindPackages("Calamari", "1.0.0.0", "");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No package hash was specified. Please pass --packageHash YourPackageHash");
         }
 

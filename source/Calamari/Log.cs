@@ -1,8 +1,8 @@
 ﻿using System;
-using System.CodeDom.Compiler;
 using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
+using Calamari.Util;
 using Octostache;
 
 namespace Calamari
@@ -109,7 +109,7 @@ namespace Calamari
 
         static string ConvertServiceMessageValue(string value)
         {
-            return Convert.ToBase64String(Encoding.Default.GetBytes(value));
+            return Convert.ToBase64String(CrossPlatform.GetDefaultEncoding().GetBytes(value));
         }
 
         public static void VerboseFormat(string messageFormat, params object[] args)
@@ -164,7 +164,7 @@ namespace Calamari
         {
             public static string ConvertServiceMessageValue(string value)
             {
-                return Convert.ToBase64String(Encoding.Default.GetBytes(value));
+                return Convert.ToBase64String(CrossPlatform.GetDefaultEncoding().GetBytes(value));
             }
 
             public static void PackageFound(string packageId, string packageVersion, string packageHash,

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;

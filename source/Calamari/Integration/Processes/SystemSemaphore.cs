@@ -9,51 +9,53 @@ namespace Calamari.Integration.Processes
     {
         public IDisposable Acquire(string name, string waitMessage)
         {
-            Semaphore semaphore;
+            Mutex mutex;
             var globalName = $"Global\\{name}";
             try
             {
-                semaphore = CreateGlobalSemaphoreAccessibleToEveryone(globalName);
+                mutex = CreateGlobalMutexAccessibleToEveryone(globalName);
             }
             catch (Exception)
             {
-                semaphore = new Semaphore(1, 1, globalName);
+                mutex = new Mutex(false, globalName);
             }
-            if (!semaphore.WaitOne(3000))
+            if (!mutex.WaitOne(3000))
             {
                 Log.Verbose(waitMessage);
-                semaphore.WaitOne();
+                mutex.WaitOne();
             }
 
-            return new SemaphoreReleaser(semaphore);
+            return new MutexReleaser(mutex);
         }
 
-        static Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
+        static Mutex CreateGlobalMutexAccessibleToEveryone(string name)
         {
-            var semaphoreSecurity = new SemaphoreSecurity();
+            var semaphoreSecurity = new MutexSecurity();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-            var rule = new SemaphoreAccessRule(everyone, SemaphoreRights.FullControl, AccessControlType.Allow);
+            var rule = new MutexAccessRule(everyone, MutexRights.FullControl, AccessControlType.Allow);
 
             semaphoreSecurity.AddAccessRule(rule);
+
             bool createdNew;
 
-            var semaphore = new Semaphore(1, 1, name, out createdNew, semaphoreSecurity);
-            return semaphore;
+            var mutex = new Mutex(false, name, out createdNew);
+            mutex.SetAccessControl(semaphoreSecurity);
+            return mutex;
         }
 
-        class SemaphoreReleaser : IDisposable
+        class MutexReleaser : IDisposable
         {
-            readonly Semaphore semaphore;
+            readonly Mutex mutex;
 
-            public SemaphoreReleaser(Semaphore semaphore)
+            public MutexReleaser(Mutex mutex)
             {
-                this.semaphore = semaphore;
+                this.mutex = mutex;
             }
 
             public void Dispose()
             {
-                semaphore.Release();
-                semaphore.Dispose();
+                mutex.ReleaseMutex();
+                mutex.Dispose();
             }
         }
     }

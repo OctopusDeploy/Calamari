@@ -1,18 +1,34 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Calamari.Util;
 
 namespace Calamari.Integration.Processes
 {
     public class CommandLine
     {
         readonly string executable;
+        readonly Func<string[], int> func;
         string action;
         readonly List<string> arguments = new List<string>();
-        
+        bool dotnet;
+        bool rawArgList;
+        bool doubleDash;
+
         public static CommandLine Execute(string executable)
         {
             return new CommandLine(executable);
+        }
+
+        public static CommandLine Execute(Func<string[], int> func)
+        {
+            return new CommandLine(func);
+        }
+
+        private CommandLine(Func<string[], int> func)
+        {
+            this.func = func;
+            rawArgList = true;
         }
 
         public CommandLine(string executable)
@@ -35,6 +51,18 @@ namespace Calamari.Integration.Processes
             return this;
         }
 
+        public CommandLine DotNet()
+        {
+            dotnet = true;
+            return this;
+        }
+
+        public CommandLine DoubleDash()
+        {
+            doubleDash = true;
+            return this;
+        }
+
         public CommandLine Flag(string flagName)
         {
             arguments.Add(MakeFlag(flagName));
@@ -43,7 +71,12 @@ namespace Calamari.Integration.Processes
 
         string MakeFlag(string flagName)
         {
-            return "-" + Normalize(flagName);
+            return GetDash() + Normalize(flagName);
+        }
+
+        string GetDash()
+        {
+            return doubleDash ? "--" : "-";
         }
 
         public CommandLine PositionalArgument(object argValue)
@@ -58,7 +91,7 @@ namespace Calamari.Integration.Processes
             return this;
         }
 
-        static string MakePositionalArg(object argValue)
+        string MakePositionalArg(object argValue)
         {
             var sval = "";
             var f = argValue as IFormattable;
@@ -69,7 +102,8 @@ namespace Calamari.Integration.Processes
 
             return Escape(sval);
         }
-        static string MakeArg(string argName, object argValue)
+
+        string MakeArg(string argName, object argValue)
         {
             var sval = "";
             var f = argValue as IFormattable;
@@ -78,12 +112,14 @@ namespace Calamari.Integration.Processes
             else if (argValue != null)
                 sval = argValue.ToString();
 
-            return string.Format("-{0} {1}", Normalize(argName), Escape(sval));
+            return string.Format("{2}{0} {1}", Normalize(argName), Escape(sval), GetDash());
         }
 
-        public static string Escape(string argValue)
+        string Escape(string argValue)
         {
             if (argValue == null) throw new ArgumentNullException("argValue");
+            if (rawArgList)
+                return argValue;
 
             // Though it isn't aesthetically pleasing, we always return a double-quoted
             // value.
@@ -111,6 +147,13 @@ namespace Calamari.Integration.Processes
                 last -= 1;
             }
 
+            #if NET40
+            #else
+            // linux under bash on netcore empty "" gets eaten, hand "\0"
+            // which gets through as a null string
+            if(argValue == "")
+                argValue = "\0";
+            #endif
             // Double-quotes are always escaped.
             return "\"" + argValue.Replace("\"", "\\\"") + "\"";
         }
@@ -124,11 +167,32 @@ namespace Calamari.Integration.Processes
         public CommandLineInvocation Build()
         {
             var argLine = new List<string>();
+            #if NET40
+            #else
+            if(dotnet && !CrossPlatform.IsWindows())
+            {
+                argLine.Add(executable);
+                if (action != null)
+                    argLine.Add(action);
+                argLine.AddRange(arguments);
+
+                return new CommandLineInvocation("dotnet", string.Join(" ", argLine));
+            }
+            #endif
             if (action != null)
                 argLine.Add(action);
             argLine.AddRange(arguments);
 
             return new CommandLineInvocation(executable, string.Join(" ", argLine));
+        }
+
+        public LibraryCallInvocation BuildLibraryCall()
+        {
+            var argLine = new List<string>();
+            if (action != null)
+                argLine.Add(action);
+            argLine.AddRange(arguments);
+            return new LibraryCallInvocation(func, argLine.ToArray());
         }
     }
 }

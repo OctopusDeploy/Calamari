@@ -2,8 +2,11 @@
 using System.Linq;
 using System.Xml;
 using Calamari.Commands.Support;
+#if USE_OCTOPUS_XMLT
+using Octopus.Web.XmlTransform;
+#else
 using Microsoft.Web.XmlTransform;
-
+#endif
 namespace Calamari.Integration.ConfigurationTransforms
 {
     public class ConfigurationTransformer : IConfigurationTransformer

@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using ApprovalTests;
 using Calamari.Integration.ServiceMessages;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
+#if APPROVAL_TESTS
+using ApprovalTests;
+#endif
 
 namespace Calamari.Tests.Helpers
 {
@@ -34,13 +36,13 @@ namespace Calamari.Tests.Helpers
             Assert.That(ExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0{0}{0}Output:{0}{1}", Environment.NewLine, capturedErrors));
         }
 
-        public void AssertNonZero()
+        public void AssertFailure()
         {
             Assert.That(ExitCode, Is.Not.EqualTo(0), "Expected a non-zero exit code");
         }
 
 
-        public void AssertNonZero(int code)
+        public void AssertFailure(int code)
         {
             Assert.That(ExitCode, Is.EqualTo(code), $"Expected an exit code of {code}");
         }
@@ -124,22 +126,21 @@ namespace Calamari.Tests.Helpers
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) == -1, string.Format("Expected not to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+            Assert.That(allOutput, Is.Not.StringContaining(expectedOutput));
         }
 
         public void AssertOutput(string expectedOutput)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+            Assert.That(allOutput, Is.StringContaining(expectedOutput));
         }
 
-        public void AssertOutput(Regex regex)
+        public void AssertOutputMatches(string regex)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(regex.IsMatch(allOutput),
-                string.Format("Output did not match: {0}. Output:\r\n{1}", regex.ToString(), allOutput) );
+            Assert.That(allOutput, Is.StringMatching(regex));
         }
 
         public string GetOutputForLineContaining(string expectedOutput)
@@ -154,15 +155,18 @@ namespace Calamari.Tests.Helpers
             AssertErrorOutput(String.Format(expectedOutputFormat, args));
         }
 
-        public void AssertErrorOutput(string expectedOutput)
+        public void AssertErrorOutput(string expectedOutput, bool noNewLines = false)
         {
-            var allOutput = string.Join(Environment.NewLine, captured.Errors);
-            Assert.That(allOutput.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, allOutput));
+            var separator = noNewLines ? String.Empty : Environment.NewLine;
+            var allOutput = string.Join(separator, captured.Errors);
+            Assert.That(allOutput, Is.StringContaining(expectedOutput));
         }
 
+#if APPROVAL_TESTS
         public void ApproveOutput()
         {
             Approvals.Verify(captured.ToApprovalString());
         }
+#endif
     }
 }

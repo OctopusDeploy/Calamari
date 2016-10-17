@@ -8,6 +8,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
+using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -27,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             base.SetUp();
         }
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void Init()
         {
             nupkgFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0"));
@@ -35,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
             nupkgFile.Dispose();
@@ -51,7 +52,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
-            result.AssertOutput("Extracted 14 files");
+            result.AssertOutput("Extracted 15 files");
             result.AssertOutput("Hello from Deploy.ps1");
         }
 
@@ -116,7 +117,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -130,8 +131,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
-        public void ShouldInvokeDeployFailedOnError()
+        [Category(TestEnvironment.CompatibleOS.Windows)] 
+        public void ShouldInvokeDeployFailedOnErrorWindows()
         {
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
@@ -141,11 +142,28 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] //Problem with XML on Linux
-        public void ShouldNotInvokeDeployWhenNoError()
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.ScriptingSupport.FSharp)]
+        [Category(TestEnvironment.ScriptingSupport.ScriptCS)]
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        public void ShouldInvokeDeployFailedOnErrorNix()
+        {
+            Variables.Set("ShouldFail", "yes");
+            var result = DeployPackage();
+            result.AssertOutput("I have failed! DeployFailed.sh");
+            result.AssertOutput("I have failed! DeployFailed.fsx");
+            result.AssertOutput("I have failed! DeployFailed.csx");
+        }
+
+        [Test]
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        public void ShouldNotInvokeDeployFailedWhenNoError()
         {
             var result = DeployPackage();
             result.AssertNoOutput("I have failed! DeployFailed.ps1");
+            result.AssertNoOutput("I have failed! DeployFailed.sh");
+            result.AssertNoOutput("I have failed! DeployFailed.fsx");
+            result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
         [Test]
@@ -176,6 +194,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("Hello World!");
         }
 
+#if IIS_SUPPORT
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldModifyIisWebsiteRoot()
@@ -202,6 +221,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             webServer.DeleteWebSite(siteName);
             FileSystem.DeleteDirectory(originalWebRootPath);
         }
+#endif
 
         [Test]
         public void ShouldRunConfiguredScripts()
@@ -290,7 +310,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] // Re-enable when deployments enabled again.
         public void ShouldDeployInParallel()
         {
             var locker = new object();
@@ -318,7 +337,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                     result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                    result.AssertOutput("Extracted 14 files");
+                    result.AssertOutput("Extracted 15 files");
 
                     lock (locker)
                     {

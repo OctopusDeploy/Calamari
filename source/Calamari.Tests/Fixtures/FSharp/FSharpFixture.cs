@@ -1,16 +1,16 @@
 ﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
-using Calamari.Util;
 using NUnit.Framework;
 using Octostache;
 
 namespace Calamari.Tests.Fixtures.FSharp
 {
     [TestFixture]
+    [Category(TestEnvironment.ScriptingSupport.FSharp)]
     public class FSharpFixture : CalamariFixture
     {
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCreateArtifact()
         {
             var output = Invoke(Calamari()
@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
 
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();
@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             }
         }
 
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var variablesFile = Path.GetTempFileName();
@@ -80,7 +80,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             }
         }
 
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHelloWithVariableSubstitution()
         {
             var variablesFile = Path.GetTempFileName();
@@ -102,7 +102,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             }
         }
 
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHelloDirectValue()
         {
             var variablesFile = Path.GetTempFileName();
@@ -123,7 +123,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             }
         }
 
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHelloDefaultValue()
         {
             var output = Invoke(Calamari()
@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertOutput("Hello default value");
         }
 
-        [Test, RequiresDotNet45, RequiresMono4]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldConsumeParametersWithQuotes()
         {
             var output = Invoke(Calamari()

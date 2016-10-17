@@ -2,7 +2,11 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
 using NuGet.Versioning;
+#endif
 using PackageDownloader = Calamari.Integration.Packages.Download.PackageDownloader;
 
 namespace Calamari.Commands

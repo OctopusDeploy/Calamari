@@ -3,7 +3,11 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
 using NuGet.Versioning;
+#endif
 
 namespace Calamari.Commands
 {

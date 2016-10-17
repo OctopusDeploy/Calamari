@@ -6,6 +6,8 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Util;
+using System.Reflection;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -18,8 +20,8 @@ namespace Calamari.Deployment.Conventions
         readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
 
-        public FeatureScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
-            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public FeatureScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, 
+            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
         {
             this.deploymentStage = deploymentStage;
             this.fileSystem = fileSystem;
@@ -35,7 +37,8 @@ namespace Calamari.Deployment.Conventions
             if (!features.Any())
                 return;
 
-            var embeddedResourceNames = new HashSet<string>(embeddedResources.GetEmbeddedResourceNames());
+            var assembly = typeof(FeatureScriptConvention).GetTypeInfo().Assembly;
+            var embeddedResourceNames = new HashSet<string>(embeddedResources.GetEmbeddedResourceNames(assembly));
 
             foreach (var featureScript in features.SelectMany(GetScriptNames))
             {
@@ -54,7 +57,7 @@ namespace Calamari.Deployment.Conventions
                 if (!fileSystem.FileExists(scriptFile))
                 {
                     Log.VerboseFormat("Creating '{0}' from embedded resource", scriptFile);
-                    fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(scriptEmbeddedResource));
+                    fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(assembly, scriptEmbeddedResource));
                 }
                 else
                 {

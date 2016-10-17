@@ -58,7 +58,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", PublicFeed.DownloadFolder);
+#if USE_NUGET_V2_LIBS
             result.AssertOutput("Found package {0} version {1}", PublicFeed.PackageId, PublicFeed.Version);
+#endif
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, PublicFeed.File);
@@ -92,7 +94,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", PublicFeed.DownloadFolder);
+#if USE_NUGET_V2_LIBS
             result.AssertOutput("Found package {0} version {1}", PublicFeed.PackageId, PublicFeed.Version);
+#endif
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, PublicFeed.File);
@@ -159,7 +163,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             var result = DownloadPackage(AuthFeed.PackageId, AuthFeed.Version, AuthFeed.Id, AuthFeedUri, "fake-feed-username", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", AuthFeed.DownloadFolder);
@@ -234,7 +238,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 var invalidFileShareUri = Path.Combine(acmeWeb.DirectoryPath, "InvalidPath");
 
                 var result = DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, invalidFileShareUri);
-                result.AssertNonZero();
+                result.AssertFailure();
 
                 result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(invalidFileShareUri));
                 result.AssertErrorOutput("Unable to download package: Path does not exist: '{0}'", new Uri(invalidFileShareUri));
@@ -258,7 +262,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenNoPackageId()
         {
             var result = DownloadPackage("", PublicFeed.Version, PublicFeed.Id, PublicFeedUri);
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("No package ID was specified");
         }
@@ -268,7 +272,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             var invalidPackageId = string.Format("X{0}X", PublicFeed.PackageId);
             var result = DownloadPackage(invalidPackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri);
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'", invalidPackageId, PublicFeed.Version, PublicFeedUri);
         }
@@ -277,7 +281,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenNoFeedVersion()
         {
             var result = DownloadPackage(PublicFeed.PackageId, "", PublicFeed.Id, PublicFeedUri);
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("No package version was specified");
         }
@@ -287,7 +291,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             const string invalidFeedVersion = "1.0.x";
             var result = DownloadPackage(PublicFeed.PackageId, invalidFeedVersion, PublicFeed.Id, PublicFeedUri);
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("Package version '{0}' specified is not a valid semantic version", invalidFeedVersion);
         }
@@ -296,7 +300,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenNoFeedId()
         {
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, "", PublicFeedUri);
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("No feed ID was specified");
         }
@@ -305,7 +309,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenNoFeedUri()
         {
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, "");
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("No feed URI was specified");
         }
@@ -314,7 +318,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenInvalidFeedUri()
         {
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, "www.myget.org/F/octopusdeploy-tests");
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("URI specified 'www.myget.org/F/octopusdeploy-tests' is not a valid URI");
         }
@@ -324,7 +328,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenUsernameIsSpecifiedButNoPassword()
         {
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri, FeedUsername);
-            result.AssertNonZero();
+            result.AssertFailure();
 
             result.AssertErrorOutput("A username was specified but no password was provided");
         }
@@ -354,7 +358,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 calamari.Flag("forcePackageDownload");
 
             return Invoke(calamari);
-
         }
 
         static void AssertPackageHashMatchesExpected(CalamariResult result, string expectedHash)
@@ -369,7 +372,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         static void AssertStagePackageOutputVariableSet(CalamariResult result, string filePath)
         {
-            result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine", Is.StringStarting(filePath));
+            result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine", Does.StartWith(filePath));
         }
 
         class Feed

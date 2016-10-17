@@ -11,7 +11,8 @@ namespace Calamari.Util
             {
                 return new XmlReaderSettings()
                 {
-                    DtdProcessing = DtdProcessing.Parse,
+                    //DtdProcessing = DtdProcessing.Parse, //Bug in netcore causes this to not build at 1/9/2016
+                    DtdProcessing = (DtdProcessing)2,
                     MaxCharactersInDocument = MaxCharactersInDocument
                 };
             }

@@ -1,7 +1,12 @@
 ﻿using System;
 using System.IO;
-using NuGet;
+using Calamari.Util;
 using SharpCompress.Reader.Zip;
+#if USE_NUGET_V3_LIBS
+using NuGet.Packaging;
+#else
+using NuGet;
+#endif
 
 namespace Calamari.Integration.Packages.NuGet
 {
@@ -54,7 +59,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static bool IsManifest(string path)
         {
-            return Path.GetExtension(path).Equals(global::NuGet.Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase);
+            return Path.GetExtension(path).Equals(CrossPlatform.GetManifestExtension(), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

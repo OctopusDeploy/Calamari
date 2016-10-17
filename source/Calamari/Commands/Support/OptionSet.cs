@@ -134,6 +134,8 @@ using System.Text.RegularExpressions;
 
 namespace Calamari.Commands.Support
 {
+    public delegate TOutput Converter<in TInput, out TOutput>(TInput input);
+
     public class OptionSet : KeyedCollection<string, Option>
     {
         Action<string[]> leftovers;
@@ -439,7 +441,7 @@ namespace Calamari.Commands.Support
             if (!GetOptionParts(argument, out f, out n, out s, out v))
                 return false;
 
-            var p = this.FirstOrDefault(x => x.Names.Any(y => string.Equals(y, n, StringComparison.InvariantCultureIgnoreCase)));
+            var p = this.FirstOrDefault(x => x.Names.Any(y => string.Equals(y, n, StringComparison.OrdinalIgnoreCase)));
             if (p != null)
             {
                 c.OptionName = f + n;
@@ -520,7 +522,7 @@ namespace Calamari.Commands.Support
             {
                 Option p;
                 var opt = f + n[i];
-                var rn = n[i].ToString(CultureInfo.InvariantCulture);
+                var rn = n[i].ToString();
                 if (!Contains(rn))
                 {
                     if (i == 0)

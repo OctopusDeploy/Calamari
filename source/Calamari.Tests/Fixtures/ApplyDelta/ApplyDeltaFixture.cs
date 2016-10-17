@@ -26,13 +26,13 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 .Argument("newFileName", newFile));
         }
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
             Environment.SetEnvironmentVariable("TentacleHome", TentacleHome);
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TestFixtureTearDown()
         {
             Environment.SetEnvironmentVariable("TentacleHome", null);
@@ -58,17 +58,23 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
             using (var signatureFile = new TemporaryFile(basisFile.FilePath + ".octosig"))
             {
+#if USE_OCTODIFF_EXE
                 var signatureResult = Invoke(OctoDiff()
                     .Action("signature")
                     .PositionalArgument(basisFile.FilePath)
                     .PositionalArgument(signatureFile.FilePath));
-                
+
                 signatureResult.AssertSuccess();
+#else
+                var exitCode = Octodiff.Program.Main(new[] {"signature", basisFile.FilePath, signatureFile.FilePath});
+                Assert.That(exitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0, received {0}", exitCode));
+#endif
                 Assert.That(File.Exists(signatureFile.FilePath));
 
                 using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.1", true)))
                 using (var deltaFile = new TemporaryFile(basisFile.FilePath + "_to_" + NewFileName + ".octodelta"))
                 {
+#if USE_OCTODIFF_EXE
                     var deltaResult = Invoke(OctoDiff()
                         .Action("delta")
                         .PositionalArgument(signatureFile.FilePath)
@@ -76,6 +82,10 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                         .PositionalArgument(deltaFile.FilePath));
 
                     deltaResult.AssertSuccess();
+#else
+                    var deltaExitCode = Octodiff.Program.Main(new[] { "delta", signatureFile.FilePath, newFile.FilePath, deltaFile.FilePath });
+                    Assert.That(deltaExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0, received {0}", exitCode));
+#endif
                     Assert.That(File.Exists(deltaFile.FilePath));
 
                     var patchResult = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, NewFileName);
@@ -92,7 +102,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("", "Hash", "Delta", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
         }
 
@@ -101,7 +111,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("Basis", "", "Delta", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No file hash was specified. Please pass --fileHash MyFileHash");
         }
         [Test]
@@ -109,7 +119,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("Basis", "Hash", "", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
         }
 
@@ -118,7 +128,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         {
             var result = ApplyDelta("Basis", "Hash", "Delta", "");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
         }
 
@@ -128,7 +138,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var basisFile = Path.Combine(DownloadPath, "MyPackage.1.0.0.0.nupkg");
             var result = ApplyDelta(basisFile, "Hash", "Delta", "New");
 
-            result.AssertNonZero();
+            result.AssertFailure();
             result.AssertErrorOutput("Could not find basis file: " + basisFile);
         }
 
@@ -140,7 +150,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 var deltaFilePath = Path.Combine(DownloadPath, "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, "New");
 
-                result.AssertNonZero();
+                result.AssertFailure();
                 result.AssertErrorOutput("Could not find delta file: " + deltaFilePath);
             }
         }
@@ -161,7 +171,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
                 var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName);
 
-                result.AssertNonZero();
+                result.AssertFailure();
                 result.AssertErrorOutput("Basis file hash {0} does not match the file hash specified {1}", basisFile.Hash, otherBasisFileHash);
             }
         }
@@ -181,7 +191,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, NewFileName);
 
-                result.AssertNonZero();
+                result.AssertFailure();
                 result.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}",
                     basisFile.FilePath,
                     basisFile.Hash,

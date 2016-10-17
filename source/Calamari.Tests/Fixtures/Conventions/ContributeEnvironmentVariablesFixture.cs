@@ -39,13 +39,12 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private void WindowsEnvironmentVariableTest(VariableDictionary variables)
         {
-            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Is.StringStarting("My OS is Windows"));
+            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Does.StartWith("My OS is Windows"));
         }
 
         private void LinuxEnvironmentVariableTest(VariableDictionary variables)
         {
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /home"));
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home"));
         }
-
     }
 }

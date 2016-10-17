@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -29,7 +30,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("DatabaseConnection", null);
 
             var text = PerformTest(GetFixtureResouce("Samples", "NoHeader.config"), variables);
-            Assert.That(text, Is.StringStarting("<configuration"));
+            Assert.That(text, Does.StartWith("<configuration"));
         }
 
         [Test]

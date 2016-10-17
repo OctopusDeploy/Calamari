@@ -88,7 +88,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private ConfiguredScriptConvention CreateConvention(string deployStage)
         {
-            return new ConfiguredScriptConvention(deployStage, scriptEngine, fileSystem, commandLineRunner);
+            return new ConfiguredScriptConvention(deployStage, fileSystem, scriptEngine, commandLineRunner);
         }
     }
 }

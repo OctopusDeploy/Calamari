@@ -1,12 +1,13 @@
 ﻿using System;
 using Calamari.Integration.Scripting;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace Calamari.Tests.Fixtures
 {
     public class RequiresDotNet45Attribute : TestAttribute, ITestAction
     {
-        public void BeforeTest(TestDetails testDetails)
+        public void BeforeTest(ITest testDetails)
         {
             if (!ScriptingEnvironment.IsNet45OrNewer())
             {
@@ -14,7 +15,7 @@ namespace Calamari.Tests.Fixtures
             }
         }
 
-        public void AfterTest(TestDetails testDetails)
+        public void AfterTest(ITest testDetails)
         {
         }
 

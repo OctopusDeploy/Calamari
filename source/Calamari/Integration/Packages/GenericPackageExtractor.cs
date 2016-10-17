@@ -80,7 +80,7 @@ namespace Calamari.Integration.Packages
         {
             return extractors.FirstOrDefault(
                 p => p.Extensions.Any(ext =>
-                    packageFile.EndsWith(ext, StringComparison.InvariantCultureIgnoreCase)));
+                    packageFile.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
         }
     }
 }

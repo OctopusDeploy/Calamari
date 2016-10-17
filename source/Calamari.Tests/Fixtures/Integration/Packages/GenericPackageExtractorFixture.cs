@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

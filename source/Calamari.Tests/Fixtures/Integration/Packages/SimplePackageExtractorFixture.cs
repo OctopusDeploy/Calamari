@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Calamari.Integration.Packages;
+using Calamari.Tests.Fixtures.Util;
 using NSubstitute;
 using NUnit.Framework;
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if IIS_SUPPORT
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Web.Administration;
@@ -13,7 +14,7 @@ namespace Calamari.Integration.Iis
         {
             var virtualParts = (virtualDirectoryPath ?? String.Empty).Split('/', '\\').Select(x => x.Trim()).Where(x => x.Length > 0).ToArray();
 
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            Execute(serverManager =>
             {
                 var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
                 if (existing == null)
@@ -23,12 +24,11 @@ namespace Calamari.Integration.Iis
 
                 if (virtualParts.Length > 0)
                 {
-                    var app = existing.Applications.Add(virtualDirectoryPath, webRootPath);
-                    //var vd = app.VirtualDirectories.Add(virtualDirectoryPath, webRootPath);
+                    var vd = existing.Applications.Single().VirtualDirectories.Add(virtualDirectoryPath, webRootPath);
                 }
                 
                 serverManager.CommitChanges();
-            }
+            });
         }
 
         public override string GetHomeDirectory(string webSiteName, string virtualDirectoryPath)
@@ -50,17 +50,32 @@ namespace Calamari.Integration.Iis
 
         public override void DeleteWebSite(string webSiteName)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            Execute(serverManager =>
             {
                 var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
                 if (existing == null)
                 {
-                    throw new Exception("The site does not exist");
+                    throw new Exception($"The site '{webSiteName}'  does not exist.");
                 }
 
                 existing.Delete();
                 serverManager.CommitChanges();
-            }
+            });
+        }
+
+        public void DeleteApplicationPool(string applicationPoolName)
+        {
+            Execute(serverManager =>
+            {
+                var existing = serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));
+                if (existing == null)
+                {
+                    throw new Exception($"The application pool '{applicationPoolName}' does not exist");
+                }
+
+                existing.Delete();
+                serverManager.CommitChanges();
+            });
         }
 
         public override bool ChangeHomeDirectory(string webSiteName, string virtualDirectoryPath, string newWebRootPath)
@@ -76,9 +91,9 @@ namespace Calamari.Integration.Iis
             return result;
         }
 
-        static void FindVirtualDirectory(string webSiteName, string virtualDirectoryPath, Action<VirtualDirectory> found)
+        void FindVirtualDirectory(string webSiteName, string virtualDirectoryPath, Action<VirtualDirectory> found)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            Execute(serverManager => 
             {
                 var site = serverManager.Sites.FirstOrDefault(s => s.Name.ToLowerInvariant() == webSiteName.ToLowerInvariant());
                 if (site == null) 
@@ -93,7 +108,7 @@ namespace Calamari.Integration.Iis
                     found(vdir.VirtualDirectory);
                     serverManager.CommitChanges();
                 }
-            }
+            });
         }
 
         static string Normalize(string fullVirtualPath)
@@ -133,10 +148,76 @@ namespace Calamari.Integration.Iis
             }
         }
 
+        public VirtualDirectory FindVirtualDirectory(string webSiteName, string virtualDirectoryPath)
+        {
+            VirtualDirectory virtualDirectory = null;
+            FindVirtualDirectory(webSiteName, virtualDirectoryPath, vd => virtualDirectory = vd);
+            return virtualDirectory;
+        }
+
         public class VirtualDirectoryNode
         {
             public string FullVirtualPath { get; set; }
             public VirtualDirectory VirtualDirectory { get; set; }
         }
+
+        public Site GetWebSite(string webSiteName)
+        {
+            var site = FindWebSite(webSiteName);
+            if (site == null)
+            {
+                throw new Exception($"The site '{webSiteName}'  does not exist.");
+            }
+
+            return site;
+        }
+
+        public Site FindWebSite(string webSiteName)
+        {
+            return Execute(serverManager => serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase)));
+        }
+
+        public bool WebSiteExists(string webSiteName)
+        {
+            return FindWebSite(webSiteName) != null;
+        }
+
+        public ApplicationPool GetApplicationPool(string applicationPoolName)
+        {
+            var applicationPool = FindApplicationPool(applicationPoolName);
+            if (applicationPool == null)
+            {
+                throw new Exception($"The application pool '{applicationPoolName}'  does not exist.");
+            }
+
+            return applicationPool;
+        }
+
+        public ApplicationPool FindApplicationPool(string applicationPoolName)
+        {
+            return Execute(serverManager => serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase)));              
+        }
+
+        public bool ApplicationPoolExists(string applicationPool)
+        {
+            return FindApplicationPool(applicationPool) != null;
+        }
+
+        private void Execute(Action<ServerManager> action)
+        {
+            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            {
+                action(serverManager);
+            }
+        }
+
+        private TResult Execute<TResult>(Func<ServerManager, TResult> func)
+        {
+            var result = default(TResult);
+            Action<ServerManager> action = serverManager => result = func(serverManager);
+            Execute(action);
+            return result;
+        }
     }
 }
+#endif

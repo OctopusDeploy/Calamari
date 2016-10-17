@@ -61,7 +61,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 var allOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
-                Assert.That(allOutput.Contains("-NoProfile") == calledWithNoProfile);
+                // Need to check for "-NoProfile -NoLogo" not just "-NoProfile" because when
+                // run via Cake we end up with the outer Powershell call included in the
+                // output too, which has a -NoProfile flag.
+                Assert.That(allOutput.Contains("-NoProfile -NoLogo") == calledWithNoProfile);
             }
         }
 
@@ -107,7 +110,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Exit2.ps1")));
 
-            output.AssertNonZero(2);
+            output.AssertFailure(2);
             output.AssertOutput("Hello!");
         }
 
@@ -155,7 +158,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Output.ps1")));
 
-            output.AssertNonZero();
+            output.AssertFailure();
             output.AssertOutput("Hello, write-host!");
             output.AssertOutput("Hello, write-output!");
             output.AssertOutput("Hello, write-verbose!");
@@ -256,7 +259,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Invalid.ps1")));
 
-            output.AssertNonZero();
+            output.AssertFailure();
             output.AssertErrorOutput("A positional parameter cannot be found that accepts");
         }
 
@@ -268,7 +271,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "InvalidSyntax.ps1")));
 
-            output.AssertNonZero();
+            output.AssertFailure();
             output.AssertErrorOutput("ParserError");
         }
 
@@ -341,9 +344,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
                    .Argument("script", GetFixtureResouce("Scripts", "UseModule.ps1"))
                    .Argument("variables", variablesFile));
 
-                output.AssertNonZero();
-                output.AssertErrorOutput("ParserError");
-                output.AssertErrorOutput("The string is missing the terminator: \".");
+                output.AssertFailure();
+                output.AssertErrorOutput("ParserError", true);
+                output.AssertErrorOutput("is missing the terminator", true);
             }
         }
 
