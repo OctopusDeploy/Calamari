@@ -44,5 +44,17 @@ namespace Calamari
 #endif
             }
         }
+
+        public static bool IsRunningOnMac
+        {
+            get
+            {
+#if NET40
+                return Environment.OSVersion.Platform == PlatformID.MacOSX;
+#else
+                return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+#endif
+            }
+        }
     }
 }
