@@ -19,7 +19,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         public void BeforeTest(TestDetails testDetails)
         {
-            Console.WriteLine($"Environment.GetEnvironmentVariable(\"{feedUri}\") = \"{Environment.GetEnvironmentVariable(feedUri)}\"");
             if (String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(feedUri)) ||
                 String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(feedUsernameVariable)) ||
                 String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(feedPasswordVariable)))
