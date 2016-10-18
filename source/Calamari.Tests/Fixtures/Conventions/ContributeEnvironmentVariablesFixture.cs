@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldAddWindowsEnvironmentVariables()
         {
             var variables = AddEnvironmentVariables();
-            WindowsEnvironmentVariableTest(variables);
+            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Is.StringStarting("My OS is Windows"));
         }
 
         [Test]
@@ -23,7 +23,15 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldAddLinuxEnvironmentVariables()
         {
             var variables = AddEnvironmentVariables();
-            LinuxEnvironmentVariableTest(variables);
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /home/"));
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldAddMacEnvironmentVariables()
+        {
+            var variables = AddEnvironmentVariables();
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /Users/"));
         }
 
         private VariableDictionary AddEnvironmentVariables()
@@ -35,16 +43,6 @@ namespace Calamari.Tests.Fixtures.Conventions
             Assert.That(variables.GetNames().Count, Is.GreaterThan(3));
             Assert.That(variables.GetRaw(SpecialVariables.Tentacle.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));
             return variables;
-        }
-
-        private void WindowsEnvironmentVariableTest(VariableDictionary variables)
-        {
-            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Does.StartWith("My OS is Windows"));
-        }
-
-        private void LinuxEnvironmentVariableTest(VariableDictionary variables)
-        {
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home"));
         }
     }
 }
