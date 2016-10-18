@@ -39,6 +39,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void BashDecryptsSensitiveVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))

@@ -11,6 +11,7 @@ namespace Calamari.Tests.Fixtures.Bash
     {
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldPrintEncodedVariable()
         {
             var output = Invoke(Calamari()
@@ -23,6 +24,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldCreateArtifact()
         {
             var output = Invoke(Calamari()
@@ -35,6 +37,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldConsumeParametersWithQuotes()
         {
             var output = Invoke(Calamari()
@@ -48,6 +51,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldCallHello()
         {
             var variablesFile = Path.GetTempFileName();
@@ -74,6 +78,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var variablesFile = Path.GetTempFileName();
