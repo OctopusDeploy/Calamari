@@ -571,5 +571,15 @@ namespace Calamari.Integration.FileSystem
 
             return relativePath.ToString();
         }
+
+        public DateTime GetCreationTime(string filePath)
+        {
+            return File.GetCreationTime(filePath);
+        }
+
+        public Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess)
+        {
+            return File.Open(filePath, fileMode, fileAccess, FileShare.None);
+        }
     }
 }

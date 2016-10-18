@@ -5,6 +5,7 @@ using System.Xml.Linq;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Processes.Semaphores;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -39,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             variables = new VariableDictionary();
             variables.EnrichWithEnvironmentVariables();
 
-            deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphore(), variables);
+            deploymentJournal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
 
             packagesDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
             fileSystem.EnsureDirectoryExists(packagesDirectory);
