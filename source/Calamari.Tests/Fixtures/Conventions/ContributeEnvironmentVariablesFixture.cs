@@ -14,6 +14,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldAddWindowsEnvironmentVariables()
         {
+            if (!CalamariEnvironment.IsRunningOnWindows)
+                Assert.Ignore("This test is designed to run on windows");
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My OS is #{env:OS}"), Is.StringStarting("My OS is Windows"));
         }
@@ -22,6 +24,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Category(TestEnvironment.CompatibleOS.Nix)]
         public void ShouldAddLinuxEnvironmentVariables()
         {
+            if (!CalamariEnvironment.IsRunningOnNix)
+                Assert.Ignore("This test is designed to run on *nix");
+
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /home/"));
         }
@@ -30,6 +35,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldAddMacEnvironmentVariables()
         {
+            if (!CalamariEnvironment.IsRunningOnMac)
+                Assert.Ignore("This test is designed to run on Mac");
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /Users/"));
         }
