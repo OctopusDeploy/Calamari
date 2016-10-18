@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
+using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -40,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         }
 
         [Test]
-        public void ReadLockReturnsUnableToDeserialiseOnSerialisationException()
+        public void ReadLockReturnsUnableToDeserialiseWhenDeserialisationFails()
         {
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             var lockFilePath = "fake path";
@@ -49,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 
             var lockIo = new LockIo(fileSystem);
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read)
-                      .Returns(x => { throw new SerializationException(); });
+                      .Returns(x => { throw new JsonReaderException(); });
             var result = lockIo.ReadLock(lockFilePath);
             Assert.That(result, Is.InstanceOf<UnableToDeserialiseLockFile>());
             Assert.That(((UnableToDeserialiseLockFile)result).CreationTime, Is.EqualTo(fileCreationTime));

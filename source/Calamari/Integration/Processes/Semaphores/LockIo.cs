@@ -57,10 +57,10 @@ namespace Calamari.Integration.Processes.Semaphores
             {
                 return new OtherProcessHasExclusiveLockOnFileLock();
             }
-//            catch (SerializationException)
-//            {
-//                return new UnableToDeserialiseLockFile(fileSystem.GetCreationTime(lockFilePath));
-//            }
+            catch (JsonReaderException)
+            {
+                return new UnableToDeserialiseLockFile(fileSystem.GetCreationTime(lockFilePath));
+            }
             catch (Exception) //We have no idea what went wrong - reacquire this lock
             {
                 return new OtherProcessHasExclusiveLockOnFileLock();
