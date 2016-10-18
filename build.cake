@@ -29,9 +29,6 @@ var gitVersionInfo = GitVersion(new GitVersionSettings {
 
 var nugetVersion = isContinuousIntegrationBuild ? gitVersionInfo.NuGetVersion : "0.0.0";
 
-if(BuildSystem.IsRunningOnTeamCity)
-    BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
-
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,7 +130,7 @@ Task("__TestTeamCity")
 
     settings.ArgumentCustomization = f => {
         f.Append("-where");
-        f.AppendQuoted("cat != Nix");
+        f.AppendQuoted("cat != Nix && cat != macOS");
         return f;
     };
 
@@ -234,7 +231,13 @@ Task("TeamCity")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__Build")
     .IsDependentOn("__TestTeamCity")
-    .IsDependentOn("__Pack");    
+    .IsDependentOn("__Pack");   
+
+Task("SetTeamCityVersion")
+    .Does(() => {
+        if(BuildSystem.IsRunningOnTeamCity)
+            BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
+    });
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
