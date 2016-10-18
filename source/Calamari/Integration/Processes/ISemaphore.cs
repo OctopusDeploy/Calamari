@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Integration.Processes
 {
-    public interface ISemaphoreFactory
+    public interface ISemaphore
     {
         IDisposable Acquire(string name, string waitMessage);
     }

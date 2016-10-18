@@ -3,7 +3,6 @@ using Calamari.Deployment.Journal;
 using Calamari.Deployment.Retention;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Time;
 
 namespace Calamari.Commands
@@ -35,7 +34,7 @@ namespace Calamari.Commands
             variables.EnrichWithEnvironmentVariables();
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var deploymentJournal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
+            var deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphore(), variables);
             var clock = new SystemClock();
 
             var retentionPolicy = new RetentionPolicy(fileSystem, deploymentJournal, clock);

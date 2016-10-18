@@ -3,25 +3,10 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Integration.Processes
 {
-    public class SystemSemaphoreManager : ISemaphoreFactory
+    public class SystemSemaphore : ISemaphore
     {
-        private readonly ILog log;
-        private readonly int initialWaitBeforeShowingLogMessage;
-
-        public SystemSemaphoreManager()
-        {
-            this.log = new LogWrapper();
-            this.initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
-        }
-
-        public SystemSemaphoreManager(ILog log, TimeSpan initialWaitBeforeShowingLogMessage)
-        {
-            this.log = log;
-            this.initialWaitBeforeShowingLogMessage = (int)initialWaitBeforeShowingLogMessage.TotalMilliseconds;
-        }
-
         public IDisposable Acquire(string name, string waitMessage)
         {
             Semaphore semaphore;
@@ -34,13 +19,13 @@ namespace Calamari.Integration.Processes.Semaphores
             {
                 semaphore = new Semaphore(1, 1, globalName);
             }
-            if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
+            if (!semaphore.WaitOne(3000))
             {
-                log.Verbose(waitMessage);
+                Log.Verbose(waitMessage);
                 semaphore.WaitOne();
             }
 
-            return new SystemSemaphoreReleaser(semaphore);
+            return new SemaphoreReleaser(semaphore);
         }
 
         static Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
@@ -56,11 +41,11 @@ namespace Calamari.Integration.Processes.Semaphores
             return semaphore;
         }
 
-        class SystemSemaphoreReleaser : IDisposable
+        class SemaphoreReleaser : IDisposable
         {
             readonly Semaphore semaphore;
 
-            public SystemSemaphoreReleaser(Semaphore semaphore)
+            public SemaphoreReleaser(Semaphore semaphore)
             {
                 this.semaphore = semaphore;
             }

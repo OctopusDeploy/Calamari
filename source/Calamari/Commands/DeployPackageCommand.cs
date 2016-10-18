@@ -13,7 +13,6 @@ using Calamari.Integration.Iis;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
@@ -63,7 +62,7 @@ namespace Calamari.Commands
             var embeddedResources = new CallingAssemblyEmbeddedResources();
             var iis = new InternetInformationServer();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var semaphore = SemaphoreFactory.Get();
+            var semaphore = new SystemSemaphore();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
             var conventions = new List<IConvention>

@@ -3,16 +3,15 @@ using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
 using Octostache;
 
 namespace Calamari.Deployment.Conventions
 {
     public class ExtractPackageToApplicationDirectoryConvention : ExtractPackageConvention 
     {
-        readonly ISemaphoreFactory semaphore;
+        readonly ISemaphore semaphore;
 
-        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore) : base(extractor, fileSystem)
+        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ISemaphore semaphore) : base(extractor, fileSystem)
         {
             this.semaphore = semaphore;
         }

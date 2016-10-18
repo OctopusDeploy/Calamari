@@ -4,7 +4,6 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
@@ -30,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));
 
             variables = new CalamariVariableDictionary();
-            convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem, SemaphoreFactory.Get());
+            convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem, new SystemSemaphore());
         }
 
         [Test]
