@@ -469,8 +469,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
-        public void ThrowsExceptionOnNixOrMac()
+        public void ThrowsExceptionOnNix()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
