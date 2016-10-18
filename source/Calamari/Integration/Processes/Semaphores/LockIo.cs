@@ -94,9 +94,12 @@ namespace Calamari.Integration.Processes.Semaphores
                     ["ProcessName"] = fileLock.ProcessName,
                     ["Timestamp"] = fileLock.Timestamp
                 };
-                using (var streamWriter = new StreamWriter(File.Create(lockFilePath)))
+                using (var stream = fileSystem.OpenFileExclusively(lockFilePath, fileMode, FileAccess.Write))
                 {
-                    obj.WriteTo(new JsonTextWriter(streamWriter));
+                    using (var streamWriter = new StreamWriter(stream))
+                    {
+                        obj.WriteTo(new JsonTextWriter(streamWriter));
+                    }
                 }
 
                 var writtenContent = ReadLock(lockFilePath);

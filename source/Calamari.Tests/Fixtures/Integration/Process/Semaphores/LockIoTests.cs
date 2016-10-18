@@ -61,8 +61,13 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             var lockFilePath = "fake path";
             var lockIo = new LockIo(fileSystem);
+#if NET40
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read)
                       .Returns(x => { throw new ApplicationException(); });
+#else
+            fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read)
+                      .Returns(x => { throw new Exception(); });
+#endif
             var result = lockIo.ReadLock(lockFilePath);
             Assert.That(result, Is.InstanceOf<OtherProcessHasExclusiveLockOnFileLock>());
         }
