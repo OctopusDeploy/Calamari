@@ -192,6 +192,23 @@
                 public static readonly string CustomPowerShellVersion = "Octopus.Action.PowerShell.CustomPowerShellVersion";
                 public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile";
             }
+
+            public static class Certificate
+            {
+                public static readonly string CertificateVariable = "Octopus.Action.Certificate.Variable";
+                public static readonly string PrivateKeyExportable = "Octopus.Action.Certificate.PrivateKeyExportable";
+                public static readonly string StoreLocation = "Octopus.Action.Certificate.StoreLocation";
+                public static readonly string StoreName = "Octopus.Action.Certificate.StoreName";
+                public static readonly string PrivateKeyAccessRules = "Octopus.Action.Certificate.PrivateKeyAccessRules";
+
+                public static string GetCertificateVariablePropertyName(string certificateVariable, string property)
+                {
+                   return certificateVariable + "." + property; 
+                }
+
+                public static readonly string PfxProperty = "Pfx";
+                public static readonly string PasswordProperty = "Password";
+            }
         }
 
         public static class Machine

@@ -153,6 +153,7 @@
     <Compile Include="Commands\ApplyDeltaCommand.cs" />
     <Compile Include="Commands\DownloadPackageCommand.cs" />
     <Compile Include="Commands\FindPackageCommand.cs" />
+    <Compile Include="Commands\ImportCertificateCommand.cs" />
     <Compile Include="Commands\RunScriptCommand.cs" />
     <Compile Include="Commands\DeployPackageCommand.cs" />
     <Compile Include="Commands\Support\Option.cs" />
@@ -163,6 +164,7 @@
     <Compile Include="Commands\Support\OptionValueType.cs" />
     <Compile Include="Deployment\Conventions\AlreadyInstalledConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationTransformsConvention.cs" />
+    <Compile Include="Deployment\Conventions\ImportCertificateConvention.cs" />
     <Compile Include="Deployment\Conventions\JsonConfigurationVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfigurationVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\ContributeEnvironmentVariablesConvention.cs" />
@@ -174,6 +176,14 @@
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
     <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
+    <Compile Include="Integration\Certificates\PrivateKeyAccessRule.cs" />
+    <Compile Include="Integration\Certificates\PrivateKeyRights.cs" />
+    <Compile Include="Integration\Certificates\WindowsNative\SafeCertContextHandle.cs" />
+    <Compile Include="Integration\Certificates\WindowsNative\SafeCertContextHandleExtensions.cs" />
+    <Compile Include="Integration\Certificates\WindowsNative\SafeCertStoreHandle.cs" />
+    <Compile Include="Integration\Certificates\WindowsNative\SafeCspHandle.cs" />
+    <Compile Include="Integration\Certificates\WindowsX509CertificateStore.cs" />
+    <Compile Include="Integration\Certificates\WindowsNative\WindowsX509Native.cs" />
     <Compile Include="Integration\ConfigurationTransforms\ITransformFileLocator.cs" />
     <Compile Include="Integration\ConfigurationTransforms\TransformFileLocator.cs" />
     <Compile Include="Integration\JsonVariables\JsonConfigurationVariableReplacer.cs" />
