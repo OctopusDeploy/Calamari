@@ -8,6 +8,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{7E2069
 	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari", "Calamari\Calamari.xproj", "{79CE5CFA-E3FF-4376-8B49-AC1005C3E189}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari", "Calamari\Calamari.csproj", "{79CE5CFA-E3FF-4376-8B49-AC1005C3E189}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{5F1E9F19-2FE4-40DE-AA15-12E2C77634BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure", "Calamari.Azure\Calamari.Azure.csproj", "{E58A81EC-2C83-49E4-8DD4-877E68E0759B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4D40F650-1ABE-41E8-A99C-45C9A8D89B20}"
 	ProjectSection(SolutionItems) = preProject

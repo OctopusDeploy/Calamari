@@ -25,10 +25,24 @@ namespace Calamari
                 return Environment.OSVersion.Platform == PlatformID.MacOSX ||
                        Environment.OSVersion.Platform == PlatformID.Unix;
 #else
-                return !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 #endif
             }
         }
 
+        public static bool IsRunningOnWindows
+        {
+            get
+            {
+#if NET40
+                return Environment.OSVersion.Platform == PlatformID.Win32NT ||
+                       Environment.OSVersion.Platform == PlatformID.Win32S ||
+                       Environment.OSVersion.Platform == PlatformID.Win32Windows ||
+                       Environment.OSVersion.Platform == PlatformID.WinCE;
+#else
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+#endif
+            }
+        }
     }
 }

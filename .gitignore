@@ -189,3 +189,4 @@ source/Octopus.Deploy.Scripts.Tests/Tests/Variables.vars
 **project.lock.json
 .vscode
 tools/
+*.DS_Store

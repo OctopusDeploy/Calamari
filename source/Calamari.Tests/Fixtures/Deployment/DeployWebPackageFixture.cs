@@ -131,31 +131,21 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)] 
-        public void ShouldInvokeDeployFailedOnErrorWindows()
-        {
-            Variables.Set("ShouldFail", "yes");
-            var result = DeployPackage();
-            result.AssertOutput("I have failed! DeployFailed.ps1");
-            result.AssertOutput("I have failed! DeployFailed.fsx");
-            result.AssertOutput("I have failed! DeployFailed.csx");
-        }
-
-        [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.ScriptingSupport.FSharp)]
         [Category(TestEnvironment.ScriptingSupport.ScriptCS)]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
-        public void ShouldInvokeDeployFailedOnErrorNix()
+        public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
-            result.AssertOutput("I have failed! DeployFailed.sh");
+            if (ScriptingEnvironment.IsRunningOnMono())
+                result.AssertOutput("I have failed! DeployFailed.sh");
+            else
+                result.AssertOutput("I have failed! DeployFailed.ps1");
             result.AssertOutput("I have failed! DeployFailed.fsx");
             result.AssertOutput("I have failed! DeployFailed.csx");
         }
 
-        [Test]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldNotInvokeDeployFailedWhenNoError()
         {
@@ -361,7 +351,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             foreach (var thread in threads) thread.Join();
 
             var allErrors = string.Join(Environment.NewLine, errors.Select(e => e.ToString()));
-            Assert.That(allErrors, Is.EqualTo(""), allErrors);
+            Assert.That(allErrors, Is.EqualTo(""));
+            Assert.That(allErrors, Is.Not.StringContaining("Forcibly taking lock from process"));
         }
 
         CalamariResult DeployPackage(DeploymentType deploymentType = DeploymentType.Nupkg)
