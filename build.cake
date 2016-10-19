@@ -97,6 +97,19 @@ Task("__Build")
     DotNetCoreBuild("**/project.json", settings);
 });
 
+Task("__BuildAndZipNET45TestProject")
+    .Does(() => {
+        var settings =  new DotNetCoreBuildSettings
+        {
+            Configuration = "Release",
+            Framework = "net451",
+            Runtime = "win7-x64"
+        };
+
+        DotNetCoreBuild("source/Calamari.Tests/project.json", settings);
+        Zip("source/Calamari.Tests/bin/Release/net451/win7-x64/", Path.Combine(artifactsDir, "Binaries.zip"));
+    });
+
 Task("__Test")
     .Does(() =>
 {
@@ -238,6 +251,11 @@ Task("SetTeamCityVersion")
         if(BuildSystem.IsRunningOnTeamCity)
             BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
     });
+
+Task("BuildAndZipTestBinaries")
+    .IsDependentOn("__Clean")
+    .IsDependentOn("__Restore")
+    .IsDependentOn("__BuildAndZipNET45TestProject");  
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
