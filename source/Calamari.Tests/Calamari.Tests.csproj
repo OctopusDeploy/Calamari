@@ -155,13 +155,14 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
-    <Compile Include="Fixtures\Deployment\Certificates\AcmeSelfSignedCertificate.cs" />
+    <Compile Include="Fixtures\Certificates\WindowsX509CertificateStoreFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWebPackageToIISFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWindowsServiceFixture.cs" />
     <Compile Include="Fixtures\Integration\Packages\NuGetPackageDownloaderFixture.cs" />
     <Compile Include="Fixtures\RequiresMinimumMonoVersionAttribute.cs" />
     <Compile Include="Fixtures\RequiresMonoVersion423OrAboveAttribute.cs" />
+    <Compile Include="Helpers\Certificates\SampleCertificate.cs" />
     <Compile Include="Helpers\InMemoryLog.cs" />
     <Compile Include="Fixtures\FSharp\FSharpFixture.cs" />
     <Compile Include="Helpers\CaptureCommandOutputExtensions.cs" />
@@ -223,10 +224,16 @@
     <None Include="Fixtures\Bash\Scripts\parameters.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Helpers\Certificates\SampleCertificateFiles\capi_self_signed_privatekey_password.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Helpers\Certificates\SampleCertificateFiles\cng_privatekey_password.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ConfigurationTransforms\Samples\Web.Empty.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\Deployment\Certificates\acme_self_signed.pfx">
+    <None Include="Helpers\Certificates\SampleCertificateFiles\capi_self_signed_privatekey_no_password.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Service\Acme.Service.nuspec">
@@ -531,6 +538,9 @@
     </None>
     <None Include="Fixtures\Substitutions\Samples\Servers.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Helpers\Certificates\SampleCertificateFiles\fabrikam_no_private_key_password.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
     <None Include="Fixtures\PowerShell\Scripts\Output.ps1">

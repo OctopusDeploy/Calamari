@@ -178,6 +178,7 @@
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
     <Compile Include="Integration\Certificates\PrivateKeyAccessRule.cs" />
     <Compile Include="Integration\Certificates\PrivateKeyRights.cs" />
+    <Compile Include="Integration\Certificates\WindowsNative\CertificatePal.cs" />
     <Compile Include="Integration\Certificates\WindowsNative\SafeCertContextHandle.cs" />
     <Compile Include="Integration\Certificates\WindowsNative\SafeCertContextHandleExtensions.cs" />
     <Compile Include="Integration\Certificates\WindowsNative\SafeCertStoreHandle.cs" />

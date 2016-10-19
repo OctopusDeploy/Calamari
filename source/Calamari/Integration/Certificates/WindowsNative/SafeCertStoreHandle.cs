@@ -9,9 +9,15 @@ namespace Calamari.Integration.Certificates.WindowsNative
         {
         }
 
-        private SafeCertStoreHandle(IntPtr handle) : base(true)
+        private SafeCertStoreHandle(IntPtr handle) 
+            : this(handle, true)
         {
-            base.SetHandle(handle);
+        }
+
+        public SafeCertStoreHandle(IntPtr handle, bool ownsHandle)
+            : base(ownsHandle)
+        {
+           SetHandle(handle); 
         }
 
         protected override bool ReleaseHandle()

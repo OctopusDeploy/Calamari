@@ -27,6 +27,12 @@ namespace Calamari.Integration.Certificates.WindowsNative
         {
         }
 
+        public SafeCertContextHandle(IntPtr handle, bool ownsHandle)
+            : base(false)
+        {
+            SetHandle(handle);
+        }
+
         [DllImport("crypt32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool CertFreeCertificateContext(IntPtr pCertContext);

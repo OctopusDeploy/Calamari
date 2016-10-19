@@ -1,13 +1,12 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
-using Calamari.Tests.Fixtures.Deployment.Certificates;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+using Calamari.Tests.Helpers.Certificates;
 using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
@@ -42,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             iis = new WebServerSevenSupport();
             uniqueValue = "Test_" + Guid.NewGuid().ToString("N");
-            AcmeSelfSignedCertificate.EnsureCertificateNotInStore();
+            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
             base.SetUp();
         }
 
@@ -51,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             if (iis.WebSiteExists(uniqueValue)) iis.DeleteWebSite(uniqueValue);
             if (iis.ApplicationPoolExists(uniqueValue)) iis.DeleteApplicationPool(uniqueValue);
-            AcmeSelfSignedCertificate.EnsureCertificateNotInStore();
+            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
 
             base.CleanUp();
         }
@@ -272,8 +271,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables["AcmeSelfSigned"] = "Certificates-1";
             Variables["AcmeSelfSigned.Type"] = "Certificate";
-            Variables["AcmeSelfSigned.Thumbprint"] = AcmeSelfSignedCertificate.Thumbprint;
-            Variables["AcmeSelfSigned.Pfx"] = AcmeSelfSignedCertificate.Base64Bytes();
+            Variables["AcmeSelfSigned.Thumbprint"] = SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint;
+            Variables["AcmeSelfSigned.Pfx"] = SampleCertificate.CapiWithPrivateKeyNoPassword.Base64Bytes();
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
@@ -286,7 +285,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.AreEqual(1083, binding.EndPoint.Port);
             Assert.AreEqual("https", binding.Protocol);
-            Assert.AreEqual(AcmeSelfSignedCertificate.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
             Assert.AreEqual("MY", binding.CertificateStoreName); 
 
             Assert.AreEqual(ObjectState.Started, website.State);
@@ -300,7 +299,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
 
             Variables["Octopus.Action.IISWebSite.Bindings"] =
-                $"[{{\"protocol\":\"https\",\"port\":1083,\"host\":\"\",\"thumbprint\":\"{AcmeSelfSignedCertificate.Thumbprint}\",\"requireSni\":false,\"enabled\":true}}]";
+                $"[{{\"protocol\":\"https\",\"port\":1083,\"host\":\"\",\"thumbprint\":\"{SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint}\",\"requireSni\":false,\"enabled\":true}}]";
             Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
             Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
             Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
@@ -312,7 +311,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            AcmeSelfSignedCertificate.EnsureCertificateIsInStore();
+            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -323,8 +322,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.AreEqual(1083, binding.EndPoint.Port);
             Assert.AreEqual("https", binding.Protocol);
-            Assert.AreEqual(AcmeSelfSignedCertificate.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.AreEqual("MY", binding.CertificateStoreName); 
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            Assert.True(binding.CertificateStoreName.Equals("MY", StringComparison.OrdinalIgnoreCase));
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }

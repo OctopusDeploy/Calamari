@@ -5,7 +5,6 @@ using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Integration.Certificates.WindowsNative;
-using Microsoft.Win32.SafeHandles;
 using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 
@@ -16,50 +15,87 @@ namespace Calamari.Integration.Certificates
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
             string storeName, bool privateKeyExportable, ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
-            using (var store = OpenCertStore(storeLocation, storeName))
+            var store = new X509Store(storeName, storeLocation);
+            store.Open(OpenFlags.ReadWrite);
+            var storeHandle = new SafeCertStoreHandle(store.StoreHandle, false);
+
+            var pfxImportFlags = storeLocation == StoreLocation.LocalMachine
+                ? PfxImportFlags.CRYPT_MACHINE_KEYSET
+                : PfxImportFlags.CRYPT_USER_KEYSET;
+
+            if (privateKeyExportable)
             {
-                var pfxImportFlags = storeLocation == StoreLocation.LocalMachine 
-                    ?  PfxImportFlags.CRYPT_MACHINE_KEYSET
-                    :  PfxImportFlags.CRYPT_USER_KEYSET;
-
-                if (privateKeyExportable)
-                {
-                    pfxImportFlags = pfxImportFlags | PfxImportFlags.CRYPT_EXPORTABLE;
-                }
-
-                var certificate = GetCertificateFromPfx(pfxBytes, password, pfxImportFlags);
-
-                AddCertificateToStore(store, certificate);
-
-                if (certificate.HasPrivateKey())
-                {
-                    SetPrivateKeySecurity(PrivateKeyAccessRule.CreateCryptoKeySecurity(privateKeyAccessRules), certificate);
-                }
+                pfxImportFlags = pfxImportFlags | PfxImportFlags.CRYPT_EXPORTABLE;
             }
+
+            var certificate = GetCertificateFromPfx(pfxBytes, password, pfxImportFlags);
+
+            AddCertificateToStore(storeHandle, certificate);
+
+            if (certificate.HasPrivateKey())
+            {
+                SetPrivateKeySecurity(PrivateKeyAccessRule.CreateCryptoKeySecurity(privateKeyAccessRules), certificate);
+            }
+
+            store.Close();
         }
 
-        static SafeCertStoreHandle OpenCertStore(StoreLocation location, string storeName)
+        public static void RemoveCertificateFromStore(string thumbprint, StoreLocation storeLocation, string storeName)
         {
-            try
-            {
-                var certStoreHandle =
-                    CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, 0,
-                        IntPtr.Zero,
-                        location == StoreLocation.CurrentUser
-                            ? OpenStoreFlags.CERT_SYSTEM_STORE_CURRENT_USER
-                            : OpenStoreFlags.CERT_SYSTEM_STORE_LOCAL_MACHINE,
-                        storeName
-                    );
+            var store = new X509Store(storeName, storeLocation);
+            store.Open(OpenFlags.ReadWrite);
 
-                if (certStoreHandle.IsInvalid)
-                    throw new CryptographicException(Marshal.GetLastWin32Error());
+            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
 
-                return certStoreHandle;
-            }
-            catch (Exception ex)
+            if (found.Count == 0)
+                return;
+
+            var certificate = found[0];
+            var certificateHandle = new SafeCertContextHandle(found[0].Handle, false);
+
+            // If the certificate has a private-key, remove it
+            if (certificateHandle.HasPrivateKey())
             {
-                throw new Exception($"Could not open certificate store {storeName} at location {location}", ex);
+                var keyProvInfo = certificateHandle.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
+
+                // If it is a CNG key
+                if (keyProvInfo.dwProvType == 0)
+                {
+                    try
+                    {
+                        var key = CertificatePal.GetCngPrivateKey(certificateHandle);
+                        CertificatePal.DeleteCngKey(key);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Exception while deleting CNG private key", ex);
+                    }
+                }
+                else // CAPI key
+                {
+                    try
+                    {
+                        IntPtr providerHandle;
+                        var acquireContextFlags = CryptAcquireContextFlags.Delete | CryptAcquireContextFlags.Silent;
+                        if (storeLocation == StoreLocation.LocalMachine)
+                            acquireContextFlags = acquireContextFlags | CryptAcquireContextFlags.MachineKeySet;
+
+                        var success = Native.CryptAcquireContext(out providerHandle, keyProvInfo.pwszContainerName,
+                            keyProvInfo.pwszProvName,
+                            keyProvInfo.dwProvType, acquireContextFlags);
+
+                        if (!success)
+                            throw new CryptographicException(Marshal.GetLastWin32Error());
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Exception while deleting CAPI private key", ex);
+                    }
+                }
             }
+
+            store.Remove(certificate);
+            store.Close();
         }
 
         static void AddCertificateToStore(SafeCertStoreHandle store, SafeCertContextHandle certificate)
@@ -75,7 +111,7 @@ namespace Calamari.Integration.Certificates
             }
             catch (Exception ex)
             {
-               throw new Exception("Could not add certificate to store", ex); 
+                throw new Exception("Could not add certificate to store", ex);
             }
         }
 
@@ -107,10 +143,7 @@ namespace Calamari.Integration.Certificates
                         // If the certificate has a private-key
                         if (currentCertificate.HasPrivateKey())
                         {
-                            if (chosenCertificate != null || chosenCertificate.IsInvalid || !chosenCertificate.HasPrivateKey())
-                            {
-                                return currentCertificate.Duplicate();
-                            }
+                            return currentCertificate.Duplicate();
                         }
                         else
                         {
@@ -161,29 +194,8 @@ namespace Calamari.Integration.Certificates
 
         static void SetCngPrivateKeySecurity(SafeCertContextHandle certificate, CryptoKeySecurity security)
         {
-            SafeNCryptKeyHandle key;
-            int keySpec;
-            var freeKey = true;
-
-            if (!CryptAcquireCertificatePrivateKey(certificate,
-                AcquireCertificateKeyOptions.AcquireOnlyNCryptKeys |
-                AcquireCertificateKeyOptions.AcquireSilent,
-                IntPtr.Zero, out key, out keySpec, out freeKey))
+            using (var key = CertificatePal.GetCngPrivateKey(certificate))
             {
-                throw new CryptographicException(Marshal.GetLastWin32Error());
-            }
-
-            if (key.IsInvalid)
-                throw new Exception("Could not acquire provide key");
-
-            using (key)
-            {
-                if (!freeKey)
-                {
-                    var addedRef = false;
-                    key.DangerousAddRef(ref addedRef);
-                }
-
                 var securityDescriptorBytes = security.GetSecurityDescriptorBinaryForm();
                 var gcHandle = GCHandle.Alloc(securityDescriptorBytes, GCHandleType.Pinned);
 
