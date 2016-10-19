@@ -219,16 +219,19 @@ if ($deployAsVirtualDirectory)
 	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
 
 	if (!$lastSegment) {
-		Write-Host "`"$virtualPath`" does not exist. Creating Virtual Folder pointing to $fullPathToLastVirtualPathSegment ..."
+		Write-Host "`"$virtualPath`" does not exist. Creating Virtual Directory pointing to $fullPathToLastVirtualPathSegment ..."
 		Execute-WithRetry { 
 			New-Item $fullPathToLastVirtualPathSegment -type VirtualDirectory -physicalPath $physicalPath
 		}
 	} else {
-		if ($lastSegment.ElementTagName -eq 'application')
-		{
-			throw "`"$virtualPath`" already exists and points to a web application. Please delete it and then re-deploy the project."
+		if ($lastSegment.ElementTagName -eq 'virtualDirectory') {
+			Write-Host "Virtual Directory `"$virtualPath`" already exists, no need to create it."
+		} elseif ($lastSegment.ElementTagName -eq 'application') {
+			# It looks like the only reliable way to do the conversion is to delete the exsting application and then create a new virtual directory. http://stackoverflow.com/questions/16738995/powershell-convertto-webapplication-on-iis
+			# We don't want to delete anything as the customer might have handcrafted the settings and has no way of retrieving them.
+			throw "`"$virtualPath`" already exists in IIS and points to a Web Application. We cannot automatically change this to a Virtual Directory on your behalf. Please delete it and then re-deploy the project."
 		} else {
-			Write-Host "Virtual Directory `"$virtualPath`" already exists."
+			throw "`"$virtualPath`" already exists in IIS and points to an unknown item, perhaps a directory or file with the same path. We cannot automatically change this to a Virtual Directory on your behalf. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Virtual Directory on your behalf."
 		}
 
 		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
@@ -271,13 +274,14 @@ if ($deployAsWebApplication)
 			New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
 		}
 	} else {
-		if ($lastSegment.ElementTagName -eq 'virtualDirectory')
-		{
-			# It looks like the only relaibe way to do the conversion is to delete the exsting virtual directory and then create a new web application. http://stackoverflow.com/questions/16738995/powershell-convertto-webapplication-on-iis
+		if ($lastSegment.ElementTagName -eq 'application') {
+			Write-Host "Web Application `"$virtualPath`" already exists, no need to create it."
+		} elseif ($lastSegment.ElementTagName -eq 'virtualDirectory') {
+			# It looks like the only reliable way to do the conversion is to delete the exsting web application and then create a new virtual directory. http://stackoverflow.com/questions/16738995/powershell-convertto-webapplication-on-iis
 			# We don't want to delete anything as the customer might have handcrafted the settings and has no way of retrieving them.
-			throw "`"$virtualPath`" already exists and points to a virtual directory. Please delete it and then re-deploy the project."
+			throw "`"$virtualPath`" already exists in IIS and points to a Virtual Directory. We cannot automatically change this to a Web Application on your behalf. Please delete it and then re-deploy the project."
 		} else {
-			Write-Host "Web Application `"$virtualPath`" already exists."
+			throw "`"$virtualPath`" already exists in IIS and points to an unknown item, perhaps a directory or file with the same path. We cannot automatically change this to a Web Application on your behalf. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Web Application on your behalf."
 		}
 
 		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
