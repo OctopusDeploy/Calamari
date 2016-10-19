@@ -9,7 +9,7 @@ namespace Calamari.Integration.Scripting
     {
         public string[] GetSupportedExtensions()
         {
-            return CalamariEnvironment.IsRunningOnNix
+            return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 ? new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Bash.FileExtension(), ScriptType.FSharp.FileExtension()}
                 : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension(), ScriptType.FSharp.FileExtension()};
         }

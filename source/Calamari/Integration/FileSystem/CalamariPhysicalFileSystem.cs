@@ -16,7 +16,7 @@ namespace Calamari.Integration.FileSystem
     {
         public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
         {
-            if (CalamariEnvironment.IsRunningOnNix)
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
                 return new NixCalamariPhysicalFileSystem();
             }

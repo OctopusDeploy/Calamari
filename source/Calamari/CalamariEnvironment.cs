@@ -22,8 +22,7 @@ namespace Calamari
             get
             {
 #if NET40
-                return Environment.OSVersion.Platform == PlatformID.MacOSX ||
-                       Environment.OSVersion.Platform == PlatformID.Unix;
+                return Environment.OSVersion.Platform == PlatformID.Unix;
 #else
                 return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 #endif

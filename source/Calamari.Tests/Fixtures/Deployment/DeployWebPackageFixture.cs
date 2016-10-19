@@ -219,7 +219,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
 
-            if (CalamariEnvironment.IsRunningOnNix)
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
                 Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "sh"), "echo 'The wheels on the bus go round...'");
             }
