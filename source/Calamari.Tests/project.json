@@ -20,7 +20,7 @@
         "Markdown": "2.1.0",
         "Newtonsoft.Json": "9.0.1",
         "Octopus.Web.XmlTransform": "1.0.0-ci0018",
-        "Octostache": "2.0.0-dnc0028",
+        "Octostache": "2.0.1",
         "SharpCompress": "0.12.4",
         "Sprache": "2.1.0",
         "System.IO.Packaging": "4.0.0",
@@ -57,7 +57,7 @@
          "Microsoft.Web.Administration": "7.0.0.0",
          "Microsoft.Web.Deployment": "3.6.0",
          "Microsoft.Web.Xdt": "2.1.1",
-         "Octostache": "1.0.2.41",
+         "Octostache": "2.0.0.51",
          "SharpCompress": "0.12.4",
          "Sprache": "2.0.0.45",
          "Polly": "4.3.0" 

@@ -37,7 +37,7 @@
         "Newtonsoft.Json": "6.0.8",
         "NuGet.CommandLine": "2.8.3",
         "NuGet.Core": "2.11.1",
-        "Octostache": "1.0.2.41",
+        "Octostache": "2.0.0.51",
         "SharpCompress": "0.12.4",
         "Sprache": "2.0.0.45",
         "System.Spatial": "5.6.2"
@@ -64,7 +64,7 @@
         "NuGet.Commands": "3.5.0-rc1-final",
         "NuGet.Protocol.Core.v3": "3.5.0-rc1-final",
         "Octopus.Web.XmlTransform": "1.0.0-ci0018",
-        "Octostache": "2.0.0-dnc0028",
+        "Octostache": "2.0.1",
         "SharpCompress": "0.12.4",
         "Sprache": "2.1.0",
         "System.ComponentModel.TypeConverter": "4.1.0",
