@@ -177,10 +177,11 @@ function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 
 function Assert-WebsiteExists($SitePath, $SiteName)
 {
+	Write-Verbose "Looking for the parent Site `"$SiteName`" at `"$SitePath`"..."
 	$site = Get-Item $SitePath -ErrorAction SilentlyContinue
 	if (!$site) 
 	{ 
-		throw "Site `"$SiteName`" does not exist." 
+		throw "The Web Site `"$SiteName`" does not exist in IIS and this step cannot create the Web Site because the necessary details are not available. Add a step which makes sure the parent Web Site exists before this step attempts to add a child to it." 
 	}
 }
 
@@ -203,14 +204,12 @@ if ($deployAsVirtualDirectory)
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"]
 
-	Write-Host "Creating Virtual Directory $virtualPath ..."
+	Write-Host "Making sure a Virtual Directory `"$virtualPath`" is configured as a child of `"$webSiteName`" at `"$physicalPath`"..."
     
     pushd IIS:\
 
 	$sitePath = "IIS:\Sites\$webSiteName"
 
-	Write-Verbose "Searching for $webSiteName Web Site."
-	
 	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
 
 	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
@@ -244,7 +243,7 @@ if ($deployAsWebApplication)
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.VirtualPath"]
 
-	Write-Host "Creating Web Application $virtualPath ..."
+	Write-Host "Making sure a Web Application `"$virtualPath`" is configured as a child of `"$webSiteName`" at `"$physicalPath`"..."
     
     pushd IIS:\
 
@@ -256,8 +255,6 @@ if ($deployAsWebApplication)
 
 	$sitePath = ("IIS:\Sites\" + $webSiteName)
 
-	Write-Verbose "Searching for $webSiteName Web Site."
-	
 	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
 
 	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
@@ -307,7 +304,7 @@ if ($deployAsWebSite)
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
 	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
 
-	Write-Host "Creating Website $webSiteName"
+	Write-Host "Making sure a Website `"$webSiteName`" is configured in IIS..."
 
 	#Assess SNI support (IIS 8 or greater)
 	$iis = get-itemproperty HKLM:\SOFTWARE\Microsoft\InetStp\  | select setupstring 
