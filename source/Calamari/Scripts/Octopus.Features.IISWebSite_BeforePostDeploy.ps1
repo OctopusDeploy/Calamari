@@ -198,6 +198,10 @@ function Set-Path($virtualPath, $physicalPath)
 	}
 }
 
+function Is-Directory($Path){
+	return Test-Path -Path $Path -PathType Container
+}
+
 if ($deployAsVirtualDirectory) 
 {
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"]
@@ -231,7 +235,14 @@ if ($deployAsVirtualDirectory)
 			# We don't want to delete anything as the customer might have handcrafted the settings and has no way of retrieving them.
 			throw "`"$virtualPath`" already exists in IIS and points to a Web Application. We cannot automatically change this to a Virtual Directory on your behalf. Please delete it and then re-deploy the project."
 		} else {
-			throw "`"$virtualPath`" already exists in IIS and points to an unknown item, perhaps a directory or file with the same path. We cannot automatically change this to a Virtual Directory on your behalf. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Virtual Directory on your behalf."
+			if (!(Is-Directory -Path $physicalPath)) {
+				throw "`"$virtualPath`" already exists in IIS and points to an unknown item which isn't a directory. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Virtual Directory on your behalf."
+			}
+			
+			Write-Host "`"$virtualPath`" already exists in IIS and points to an unknown item which seems to be a directory. We will try to convert it to a Virtual Directory. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Virtual Directory on your behalf."
+			Execute-WithRetry { 
+				New-Item $fullPathToLastVirtualPathSegment -type VirtualDirectory -physicalPath $physicalPath
+			}
 		}
 
 		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
@@ -281,7 +292,15 @@ if ($deployAsWebApplication)
 			# We don't want to delete anything as the customer might have handcrafted the settings and has no way of retrieving them.
 			throw "`"$virtualPath`" already exists in IIS and points to a Virtual Directory. We cannot automatically change this to a Web Application on your behalf. Please delete it and then re-deploy the project."
 		} else {
-			throw "`"$virtualPath`" already exists in IIS and points to an unknown item, perhaps a directory or file with the same path. We cannot automatically change this to a Web Application on your behalf. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Web Application on your behalf."
+			if (!(Is-Directory -Path $physicalPath)) {
+				throw "`"$virtualPath`" already exists in IIS and points to an unknown item which isn't a directory. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Web Application on your behalf."
+			}
+			
+			Write-Host "`"$virtualPath`" already exists in IIS and points to an unknown item which seems to be a directory. We will try to convert it to a Web Application. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Web Application on your behalf."
+			Execute-WithRetry { 
+				New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
+			}
+
 		}
 
 		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath

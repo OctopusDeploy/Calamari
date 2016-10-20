@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -246,6 +247,31 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertFailure();
 
             result.AssertErrorOutput("Please delete", true);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldDeployWhenVirtualPathAlreadyExistsAndPointsToPhysicalDirectory()
+        {
+            var webSitePhysicalPath = Path.Combine(Path.GetTempPath(), uniqueValue);
+            Directory.CreateDirectory(webSitePhysicalPath);
+
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, webSitePhysicalPath, 1087);
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+
+            Variables["Octopus.Action.Package.CustomInstallationDirectory"] = Path.Combine(webSitePhysicalPath, uniqueValue);
+            Variables["Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment"] = "True";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
         }
 
         private string ToFirstLevelPath(string value)
