@@ -39,7 +39,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             var text = PerformTest(GetFixtureResouce("Samples", "ParserErrors.txt"), variables).Text;
 
-            Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog" + Environment.NewLine + "the quick brown replaced fox jumps over the lazy #{dog #{", text);
+            // Environment.Newline returning \r\n when running tests on mono, but \n on dotnet core, just replace
+            Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\nthe quick brown replaced fox jumps over the lazy #{dog #{", text.Replace("\r\n", "\n"));
         }
 
         [Test]
