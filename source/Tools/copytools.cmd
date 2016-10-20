@@ -25,7 +25,7 @@ IF EXIST %ScriptCSFolder% GOTO SCRIPTCSEXISTS
    xcopy /E %userprofile%\.nuget\packages\ScriptCS\%ScriptCSVersion%\tools %ScriptCSFolder%
 :SCRIPTCSEXISTS
 
-SET NugetCommandlineFolder=%ToolsFolder%Nuget.%NugetCommandlineVersion%\
+SET NugetCommandlineFolder=%ToolsFolder%NuGet.%NugetCommandlineVersion%\
 IF EXIST %NugetCommandlineFolder% GOTO NUGETEXISTS
    echo Copying Nuget to Tools folder
    for /d %%G in (%ToolsFolder%Nuget.*) do rmdir /s /q "%%~G"
