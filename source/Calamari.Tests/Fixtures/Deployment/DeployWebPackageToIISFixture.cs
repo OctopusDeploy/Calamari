@@ -184,7 +184,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage(packageV1.FilePath);
 
             result.AssertFailure();
-            result.AssertErrorOutput($"Site \"{uniqueValue}\" does not exist.", true);
+            result.AssertErrorOutput($"The Web Site \"{uniqueValue}\" does not exist", true);
         }
 
         [Test]
