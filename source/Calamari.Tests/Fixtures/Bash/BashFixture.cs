@@ -102,7 +102,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ThrowsExceptionOnNix()
+        public void ThrowsExceptionOnWindows()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
