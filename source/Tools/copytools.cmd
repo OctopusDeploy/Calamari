@@ -2,7 +2,7 @@
 
 REM to update tools versions update the versions in project.json so that they
 REM are downloaded to the nuget folder, then update here and in copytools.sh
-SET FSharpVersion=4.0.1.10
+SET FSharpVersion=4.0.0.1
 SET ScriptCSVersion=0.16.1
 SET AzurePowershellVersion=1.6.0
 SET NugetCommandlineVersion=2.8.3
