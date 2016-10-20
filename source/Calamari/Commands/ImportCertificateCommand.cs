@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -38,19 +39,11 @@ namespace Calamari.Commands
 
         void ImportCertificate(CalamariVariableDictionary variables)
         {
-            var certificateVariable = variables[SpecialVariables.Action.Certificate.CertificateVariable];
-
-            if (string.IsNullOrWhiteSpace(certificateVariable))
-            {
-               throw new CommandException("Certificate variable was not supplied"); 
-            }
-
-            var pfxBytes =
-                Convert.FromBase64String(
-                    variables[
-                        SpecialVariables.Action.Certificate.GetCertificateVariablePropertyName(certificateVariable, SpecialVariables.Action.Certificate.PfxProperty)]);
-            var password =
-                variables.Get(SpecialVariables.Action.Certificate.GetCertificateVariablePropertyName(certificateVariable, SpecialVariables.Action.Certificate.PasswordProperty));
+            var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.CertificateVariable);
+            var pfxBytes = Convert.FromBase64String(GetMandatoryVariable(variables, $"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
+            var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
+            var storeName = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.StoreName); 
+            var privateKeyExportable = variables.GetFlag(SpecialVariables.Action.Certificate.PrivateKeyExportable, false);
 
             StoreLocation storeLocation;
             if (!Enum.TryParse(variables.Get(SpecialVariables.Action.Certificate.StoreLocation), out storeLocation))
@@ -58,15 +51,7 @@ namespace Calamari.Commands
                 throw new CommandException("Store location was not supplied");
             }
 
-            var storeName = variables.Get(SpecialVariables.Action.Certificate.StoreName);
-            if (string.IsNullOrWhiteSpace(storeName))
-            {
-                throw new CommandException("Store name was not supplied");
-            }
-
-            Log.Info($"Importing certificate from variable '{certificateVariable}' into store {storeLocation}/{storeName}");
-
-            var privateKeyExportable = variables.GetFlag(SpecialVariables.Action.Certificate.PrivateKeyExportable, false);
+            Log.Info($"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' into store '{storeLocation}\\{storeName}'");
 
             try
             {
@@ -84,7 +69,22 @@ namespace Calamari.Commands
         {
             var json = variables.Get(SpecialVariables.Action.Certificate.PrivateKeyAccessRules);
 
-            return string.IsNullOrWhiteSpace(json) ? new List<PrivateKeyAccessRule>() : PrivateKeyAccessRule.FromJson(json);
+            return string.IsNullOrWhiteSpace(json) 
+                ? new List<PrivateKeyAccessRule>() 
+                : PrivateKeyAccessRule.FromJson(json);
+        }
+
+
+        string GetMandatoryVariable(CalamariVariableDictionary variables, string variableName)
+        {
+            var value = variables.Get(variableName);
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new CommandException($"Variable {variableName} was not supplied");
+            }
+
+            return value;
         }
     }
 }

@@ -155,6 +155,7 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Fixtures\ApplyDelta\ApplyDeltaFixture.cs" />
+    <Compile Include="Fixtures\Certificates\PrivateKeyAccessRuleSerializationTestFixture.cs" />
     <Compile Include="Fixtures\Certificates\WindowsX509CertificateStoreFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployPackageFixture.cs" />
     <Compile Include="Fixtures\Deployment\DeployWebPackageToIISFixture.cs" />

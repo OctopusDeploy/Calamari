@@ -1,6 +1,6 @@
 ﻿namespace Calamari.Integration.Certificates
 {
-    public enum PrivateKeyRights
+    public enum PrivateKeyAccess
     {
        ReadOnly,
        FullControl 

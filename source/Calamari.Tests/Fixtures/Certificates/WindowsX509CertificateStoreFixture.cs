@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             var accessRules = new List<PrivateKeyAccessRule>
             {
-               new PrivateKeyAccessRule("BUILTIN\\Administrators", PrivateKeyRights.FullControl) 
+               new PrivateKeyAccessRule("BUILTIN\\Administrators", PrivateKeyAccess.FullControl) 
             }; 
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);

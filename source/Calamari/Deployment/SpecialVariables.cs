@@ -200,14 +200,6 @@
                 public static readonly string StoreLocation = "Octopus.Action.Certificate.StoreLocation";
                 public static readonly string StoreName = "Octopus.Action.Certificate.StoreName";
                 public static readonly string PrivateKeyAccessRules = "Octopus.Action.Certificate.PrivateKeyAccessRules";
-
-                public static string GetCertificateVariablePropertyName(string certificateVariable, string property)
-                {
-                   return certificateVariable + "." + property; 
-                }
-
-                public static readonly string PfxProperty = "Pfx";
-                public static readonly string PasswordProperty = "Password";
             }
         }
 
@@ -225,6 +217,16 @@
         public static class Release
         {
             public static readonly string Number = "Octopus.Release.Number";
+        }
+
+        public static class Certificate
+        {
+            public static class Properties
+            {
+                public static readonly string Pfx = "Pfx";
+                public static readonly string Password = "Password";
+                public static readonly string Subject = "Subject";
+            }
         }
     }
 }

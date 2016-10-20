@@ -2,23 +2,24 @@
 using System.Collections.Generic;
 using System.Security.AccessControl;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Calamari.Integration.Certificates
 {
     public class PrivateKeyAccessRule
     {
-        public PrivateKeyAccessRule(string identity, PrivateKeyRights rights)
+        public PrivateKeyAccessRule(string identity, PrivateKeyAccess access)
         {
             Identity = identity;
-            Rights = rights;
+            Access = access;
         } 
 
         public string Identity { get; }
-        public PrivateKeyRights Rights { get; }
+        public PrivateKeyAccess Access { get; }
 
         public static ICollection<PrivateKeyAccessRule> FromJson(string json)
         {
-            return JsonConvert.DeserializeObject<List<PrivateKeyAccessRule>>(json);
+            return JsonConvert.DeserializeObject<List<PrivateKeyAccessRule>>(json, JsonSerializerSettings);
         }
 
         public static CryptoKeySecurity CreateCryptoKeySecurity(ICollection<PrivateKeyAccessRule> rules)
@@ -30,12 +31,12 @@ namespace Calamari.Integration.Certificates
 
             foreach (var rule in rules)
             {
-                switch (rule.Rights)
+                switch (rule.Access)
                 {
-                    case PrivateKeyRights.ReadOnly:
+                    case PrivateKeyAccess.ReadOnly:
                         security.AddAccessRule(new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow));
                         break;
-                    case PrivateKeyRights.FullControl:
+                    case PrivateKeyAccess.FullControl:
                         // We use 'GenericAll' here rather than 'FullControl' as 'FullControl' doesn't correctly set the access for CNG keys
                         security.AddAccessRule(new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow));
                         break;
@@ -46,5 +47,14 @@ namespace Calamari.Integration.Certificates
 
             return security;
         }
+
+        private static JsonSerializerSettings JsonSerializerSettings => new JsonSerializerSettings
+        {
+            Converters = new List<JsonConverter>
+            {
+                new StringEnumConverter(),
+            }
+        };
+
     }
 }
