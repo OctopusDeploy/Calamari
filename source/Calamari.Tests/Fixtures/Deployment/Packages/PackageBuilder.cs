@@ -15,8 +15,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
 
 #if NET40
-            var nugetCommandLine = Path.GetFullPath(
-                Path.Combine(CrossPlatform.GetHomeFolder(), ".nuget", "packages", "NuGet.CommandLine", "2.8.3", "tools", "NuGet.exe"));
+            var nugetCommandLine = TestEnvironment.GetTestPath("NuGet", "NuGet.exe");
             Assert.That(File.Exists(nugetCommandLine), string.Format("NuGet.exe is not available (expected at {0}).", nugetCommandLine));
 
             var target = Path.Combine(packageDirectory, name + ".nuspec");

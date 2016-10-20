@@ -96,7 +96,8 @@
       ],
       "mappings": {
         "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
-        "ScriptCS/": "../Tools/ScriptCS**/"
+        "ScriptCS/": "../Tools/ScriptCS**/",
+        "Nuget/":  "../Tools/Nuget**/" 
       }
     }
   },
