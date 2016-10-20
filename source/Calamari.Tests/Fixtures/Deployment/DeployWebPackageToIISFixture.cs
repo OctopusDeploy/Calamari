@@ -255,23 +255,26 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             var webSitePhysicalPath = Path.Combine(Path.GetTempPath(), uniqueValue);
             Directory.CreateDirectory(webSitePhysicalPath);
+            using (new TemporaryDirectory(webSitePhysicalPath))
+            {
+                iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, webSitePhysicalPath, 1087);
 
-            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, webSitePhysicalPath, 1087);
+                Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+                Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
 
-            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+                Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+                Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
-            Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+                Variables["Octopus.Action.Package.CustomInstallationDirectory"] = Path.Combine(webSitePhysicalPath,
+                    uniqueValue);
+                Variables["Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment"] = "True";
 
-            Variables["Octopus.Action.Package.CustomInstallationDirectory"] = Path.Combine(webSitePhysicalPath, uniqueValue);
-            Variables["Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment"] = "True";
+                Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+                var result = DeployPackage(packageV1.FilePath);
 
-            var result = DeployPackage(packageV1.FilePath);
-
-            result.AssertSuccess();
+                result.AssertSuccess();
+            }
         }
 
         private string ToFirstLevelPath(string value)
