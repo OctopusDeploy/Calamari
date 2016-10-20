@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Retry;
 using NuGet.Versioning;
 
@@ -8,7 +9,8 @@ namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetPackageDownloader
     {
-        private RetryTracker retry;
+        private readonly RetryTracker retry;
+        private readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         internal const int NumberOfTimesToRetryOnFailure = 4;
         internal const int NumberOfTimesToAttemptToDownloadPackage = NumberOfTimesToRetryOnFailure + 1;
 
@@ -41,6 +43,8 @@ namespace Calamari.Integration.Packages.NuGet
                 {
                     Log.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", retry.CurrentTry,
                         NumberOfTimesToAttemptToDownloadPackage, ex.ToString());
+
+                    fileSystem.DeleteFile(targetFilePath, FailureOptions.IgnoreFailure);
 
                     if (retry.CanRetry())
                     {
