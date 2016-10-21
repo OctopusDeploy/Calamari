@@ -11,11 +11,24 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari", "Calamari\Calama
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4D40F650-1ABE-41E8-A99C-45C9A8D89B20}"
 	ProjectSection(SolutionItems) = preProject
+		..\.gitattributes = ..\.gitattributes
+		..\.gitignore = ..\.gitignore
+		..\LICENSE = ..\LICENSE
+		..\README.md = ..\README.md
 		Solution Items\SolutionInfo.cs = Solution Items\SolutionInfo.cs
 		Solution Items\VersionInfo.cs = Solution Items\VersionInfo.cs
 	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.xproj", "{5F1E9F19-2FE4-40DE-AA15-12E2C77634BF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{EEBCEA71-F5DB-4EE8-A80F-DA47C9B6762D}"
+	ProjectSection(SolutionItems) = preProject
+		..\build.cake = ..\build.cake
+		..\build.cmd = ..\build.cmd
+		..\build.ps1 = ..\build.ps1
+		..\build.sh = ..\build.sh
+		..\GitVersion.yaml = ..\GitVersion.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
