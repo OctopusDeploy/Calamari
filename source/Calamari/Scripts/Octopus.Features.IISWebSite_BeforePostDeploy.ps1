@@ -279,11 +279,16 @@ if ($deployAsWebApplication)
 			# It looks like the only relaibe way to do the conversion is to delete the exsting virtual directory and then create a new web application. http://stackoverflow.com/questions/16738995/powershell-convertto-webapplication-on-iis
 			# We don't want to delete anything as the customer might have handcrafted the settings and has no way of retrieving them.
 			throw "`"$virtualPath`" already exists and points to a virtual directory. Please delete it and then re-deploy the project."
+		} elseif ($lastSegment -is [System.IO.DirectoryInfo]) {
+			# We have a physical directory that is not a Web application yet, we need to convert it
+			Write-Host "Converting physical path `"$virtualPath`" into a web application."
+
+			New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
 		} else {
 			Write-Host "Web Application `"$virtualPath`" already exists."
-		}
 
-		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
+			Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
+		}
 	}
 
 	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
