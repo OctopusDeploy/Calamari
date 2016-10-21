@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Integration.Certificates;
 using Calamari.Tests.Helpers.Certificates;
@@ -22,15 +21,10 @@ namespace Calamari.Tests.Fixtures.Certificates
         {
             var sampleCertificate = SampleCertificate.SampleCertificates[sampleCertificateId];
 
-            var accessRules = new List<PrivateKeyAccessRule>
-            {
-               new PrivateKeyAccessRule("BUILTIN\\Administrators", PrivateKeyAccess.FullControl) 
-            }; 
-
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
             WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
-                storeLocation, storeName, sampleCertificate.HasPrivateKey, accessRules);
+                storeLocation, storeName, sampleCertificate.HasPrivateKey);
 
             sampleCertificate.AssertCertificateIsInStore(storeName, storeLocation);
 

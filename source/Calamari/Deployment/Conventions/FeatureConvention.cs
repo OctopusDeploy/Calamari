@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Deployment.Features;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -9,7 +11,7 @@ using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class FeatureScriptConvention : IInstallConvention
+    public class FeatureConvention : IInstallConvention
     {
         readonly string deploymentStage;
         readonly ICalamariFileSystem fileSystem;
@@ -17,8 +19,9 @@ namespace Calamari.Deployment.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
+        readonly ICollection<IFeature> featureClasses;
 
-        public FeatureScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
+        public FeatureConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources,
             IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.deploymentStage = deploymentStage;
@@ -26,6 +29,7 @@ namespace Calamari.Deployment.Conventions
             this.embeddedResources = embeddedResources;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
+            this.featureClasses = LoadFeatureClasses();
         }
 
         public void Install(RunningDeployment deployment)
@@ -37,7 +41,38 @@ namespace Calamari.Deployment.Conventions
 
             var embeddedResourceNames = new HashSet<string>(embeddedResources.GetEmbeddedResourceNames());
 
-            foreach (var featureScript in features.SelectMany(GetScriptNames))
+            foreach (var feature in features)
+            {
+                // Features can be implemented as either classes or scripts (or both)
+                ExecuteFeatureClasses(deployment, feature);
+                ExecuteFeatureScripts(deployment, feature, embeddedResourceNames);
+            }
+        }
+        static ICollection<IFeature> LoadFeatureClasses()
+        {
+            return new List<IFeature>
+            {
+               new IisWebSiteBeforeDeployFeature(),
+               new IisWebSiteAfterPostDeployFeature()
+            };
+        }
+
+        void ExecuteFeatureClasses(RunningDeployment deployment, string feature)
+        {
+            var compiledFeature = featureClasses.FirstOrDefault(f =>
+                f.Name.Equals(feature, StringComparison.OrdinalIgnoreCase) &&
+                f.DeploymentStage.Equals(deploymentStage, StringComparison.OrdinalIgnoreCase));
+
+            if (compiledFeature == null)
+                return;
+
+            Log.Verbose($"Executing feature-class '{compiledFeature.GetType()}'");
+            compiledFeature.Execute(deployment);
+        }
+
+        void ExecuteFeatureScripts(RunningDeployment deployment, string feature, HashSet<string> embeddedResourceNames)
+        {
+            foreach (var featureScript in GetScriptNames(feature))
             {
                 // Determine the embedded-resource name
                 var scriptEmbeddedResource = GetEmbeddedResourceName(featureScript);
@@ -84,7 +119,7 @@ namespace Calamari.Deployment.Conventions
 
         public static string GetScriptName(string feature, string suffix, string extension)
         {
-            return  feature + "_" + suffix + "." + extension;
+            return feature + "_" + suffix + "." + extension;
         }
 
         /// <summary>
@@ -92,8 +127,8 @@ namespace Calamari.Deployment.Conventions
         /// </summary>
         private IEnumerable<string> GetScriptNames(string feature)
         {
-            return scriptEngine.GetSupportedExtensions() 
-                .Select(extension => GetScriptName(feature, deploymentStage, extension ));
+            return scriptEngine.GetSupportedExtensions()
+                .Select(extension => GetScriptName(feature, deploymentStage, extension));
         }
 
     }

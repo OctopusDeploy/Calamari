@@ -42,6 +42,7 @@ namespace Calamari.Commands
             var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.CertificateVariable);
             var pfxBytes = Convert.FromBase64String(GetMandatoryVariable(variables, $"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
             var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
+            var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
             var storeName = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.StoreName); 
             var privateKeyExportable = variables.GetFlag(SpecialVariables.Action.Certificate.PrivateKeyExportable, false);
 
@@ -56,7 +57,12 @@ namespace Calamari.Commands
             try
             {
                 WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName,
-                    privateKeyExportable, GetPrivateKeyAccessRules(variables));
+                    privateKeyExportable);
+
+                var privateKeyAccessRules = GetPrivateKeyAccessRules(variables);
+
+                if (privateKeyAccessRules.Any())
+                    WindowsX509CertificateStore.SetPrivateKeySecurity(thumbprint, storeLocation, storeName, privateKeyAccessRules);
             }
             catch (Exception)
             {

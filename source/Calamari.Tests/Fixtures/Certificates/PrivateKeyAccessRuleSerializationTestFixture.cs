@@ -17,9 +17,9 @@ namespace Calamari.Tests.Fixtures.Certificates
             var result = PrivateKeyAccessRule.FromJson(json).ToList();
 
             Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("BUILTIN\\Administrators", result[0].Identity);
+            Assert.AreEqual("BUILTIN\\Administrators", result[0].Identity.ToString());
             Assert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
-            Assert.AreEqual("BUILTIN\\Users", result[1].Identity);
+            Assert.AreEqual("BUILTIN\\Users", result[1].Identity.ToString());
             Assert.AreEqual(PrivateKeyAccess.ReadOnly, result[1].Access);
         }
     }

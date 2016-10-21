@@ -136,6 +136,18 @@
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
 
+            public static class IisWebSite
+            {
+                public static readonly string DeployAsWebSite = "Octopus.Action.IISWebSite.CreateOrUpdateWebSite"; 
+                public static readonly string DeployAsWebApplication = "Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"; 
+                public static readonly string DeployAsVirtualDirectory = "Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate";
+
+                public static readonly string ApplicationPoolName = "Octopus.Action.IISWebSite.ApplicationPoolName";
+                public static readonly string ApplicationPoolUserName = "Octopus.Action.IISWebSite.ApplicationPoolUsername";
+                public static readonly string Bindings = "Octopus.Action.IISWebSite.Bindings";
+                public static readonly string ApplicationPoolIdentityType = "Octopus.Action.IISWebSite.ApplicationPoolIdentityType";
+            }
+
             public static class Azure
             {
                 public static readonly string UseBundledAzurePowerShellModules = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
@@ -223,6 +235,7 @@
         {
             public static class Properties
             {
+                public static readonly string Thumbprint = "Thumbprint";
                 public static readonly string Pfx = "Pfx";
                 public static readonly string Password = "Password";
                 public static readonly string Subject = "Subject";

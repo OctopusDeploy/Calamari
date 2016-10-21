@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.AccessControl;
+using System.Security.Principal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -8,13 +9,19 @@ namespace Calamari.Integration.Certificates
 {
     public class PrivateKeyAccessRule
     {
+        [JsonConstructor]
         public PrivateKeyAccessRule(string identity, PrivateKeyAccess access)
+            :this(new NTAccount(identity), access)
+        {
+        }
+
+        public PrivateKeyAccessRule(IdentityReference identity, PrivateKeyAccess access)
         {
             Identity = identity;
             Access = access;
-        } 
+        }
 
-        public string Identity { get; }
+        public IdentityReference Identity { get; }
         public PrivateKeyAccess Access { get; }
 
         public static ICollection<PrivateKeyAccessRule> FromJson(string json)
@@ -22,7 +29,7 @@ namespace Calamari.Integration.Certificates
             return JsonConvert.DeserializeObject<List<PrivateKeyAccessRule>>(json, JsonSerializerSettings);
         }
 
-        public static CryptoKeySecurity CreateCryptoKeySecurity(ICollection<PrivateKeyAccessRule> rules)
+        internal static CryptoKeySecurity CreateCryptoKeySecurity(ICollection<PrivateKeyAccessRule> rules)
         {
             if (rules == null)
                 return new CryptoKeySecurity();
@@ -44,6 +51,10 @@ namespace Calamari.Integration.Certificates
                         throw new ArgumentOutOfRangeException();
                 }
             }
+
+            // We will always grant full-control to machine admins
+            security.AddAccessRule(new CryptoKeyAccessRule(
+                new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), CryptoKeyRights.GenericAll, AccessControlType.Allow));
 
             return security;
         }

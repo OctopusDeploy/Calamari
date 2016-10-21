@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
@@ -13,7 +14,7 @@ namespace Calamari.Integration.Certificates
     public class WindowsX509CertificateStore
     {
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
-            string storeName, bool privateKeyExportable, ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
+            string storeName, bool privateKeyExportable)
         {
             var store = new X509Store(storeName, storeLocation);
             store.Open(OpenFlags.ReadWrite);
@@ -32,14 +33,33 @@ namespace Calamari.Integration.Certificates
 
             AddCertificateToStore(storeHandle, certificate);
 
-            if (certificate.HasPrivateKey())
-            {
-                SetPrivateKeySecurity(PrivateKeyAccessRule.CreateCryptoKeySecurity(privateKeyAccessRules), certificate);
-            }
+            store.Close();
+        }
+
+        public static void SetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName, 
+            ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
+        {
+            var store = new X509Store(storeName, storeLocation);
+            store.Open(OpenFlags.ReadWrite);
+
+            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+
+            if (found.Count == 0)
+                throw new Exception($"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
+
+            var certificate = new SafeCertContextHandle(found[0].Handle, false);
+
+            if (!certificate.HasPrivateKey())
+                throw new Exception("Certificate does not have a private-key");
+
+            SetPrivateKeySecurity(PrivateKeyAccessRule.CreateCryptoKeySecurity(privateKeyAccessRules), certificate);
 
             store.Close();
         }
 
+        /// <summary>
+        /// Unlike X509Store.Remove() this function also cleans up private-keys
+        /// </summary>
         public static void RemoveCertificateFromStore(string thumbprint, StoreLocation storeLocation, string storeName)
         {
             var store = new X509Store(storeName, storeLocation);

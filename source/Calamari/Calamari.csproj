@@ -173,8 +173,12 @@
     <Compile Include="Deployment\Conventions\ExtractPackageConvention.cs" />
     <Compile Include="Deployment\Conventions\ExtractPackageToStagingDirectoryConvention.cs" />
     <Compile Include="Deployment\Conventions\LogVariablesConvention.cs" />
-    <Compile Include="Deployment\Conventions\FeatureScriptConvention.cs" />
+    <Compile Include="Deployment\Conventions\FeatureConvention.cs" />
     <Compile Include="Deployment\Conventions\ConfiguredScriptConvention.cs" />
+    <Compile Include="Deployment\Features\IFeature.cs" />
+    <Compile Include="Deployment\Features\IisWebSiteAfterPostDeployFeature.cs" />
+    <Compile Include="Deployment\Features\IisWebSiteBeforeDeployFeature.cs" />
+    <Compile Include="Deployment\Features\IisWebSiteFeature.cs" />
     <Compile Include="Integration\Certificates\PrivateKeyAccessRule.cs" />
     <Compile Include="Integration\Certificates\PrivateKeyAccess.cs" />
     <Compile Include="Integration\Certificates\WindowsNative\CertificatePal.cs" />
@@ -186,6 +190,7 @@
     <Compile Include="Integration\Certificates\WindowsNative\WindowsX509Native.cs" />
     <Compile Include="Integration\ConfigurationTransforms\ITransformFileLocator.cs" />
     <Compile Include="Integration\ConfigurationTransforms\TransformFileLocator.cs" />
+    <Compile Include="Integration\Iis\ApplicationPoolIdentityType.cs" />
     <Compile Include="Integration\JsonVariables\JsonConfigurationVariableReplacer.cs" />
     <Compile Include="Integration\JsonVariables\IJsonConfigurationVariableReplacer.cs" />
     <Compile Include="Integration\Packages\ExtendedPackageMetadata.cs" />
@@ -350,6 +355,7 @@
   <ItemGroup>
     <Content Include="Integration\Scripting\FSharp\Bootstrap.fsi" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(SolutionDir)..\tools\Octodiff\Octodiff.exe" "$(TargetDir)" /y</PostBuildEvent>
