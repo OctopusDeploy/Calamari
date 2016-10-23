@@ -11,7 +11,10 @@ namespace Calamari.Integration.Processes
         readonly Func<string[], int> func;
         string action;
         readonly List<string> arguments = new List<string>();
+#if NET40
+#else
         bool dotnet;
+#endif
         bool rawArgList;
         bool doubleDash;
 
@@ -53,7 +56,10 @@ namespace Calamari.Integration.Processes
 
         public CommandLine DotNet()
         {
+#if NET40
+#else
             dotnet = true;
+#endif
             return this;
         }
 
@@ -147,13 +153,13 @@ namespace Calamari.Integration.Processes
                 last -= 1;
             }
 
-            #if NET40
-            #else
+#if NET40
+#else
             // linux under bash on netcore empty "" gets eaten, hand "\0"
             // which gets through as a null string
             if(argValue == "")
                 argValue = "\0";
-            #endif
+#endif
             // Double-quotes are always escaped.
             return "\"" + argValue.Replace("\"", "\\\"") + "\"";
         }
@@ -167,8 +173,8 @@ namespace Calamari.Integration.Processes
         public CommandLineInvocation Build()
         {
             var argLine = new List<string>();
-            #if NET40
-            #else
+#if NET40
+#else
             if(dotnet && !CrossPlatform.IsWindows())
             {
                 argLine.Add(executable);
@@ -178,7 +184,7 @@ namespace Calamari.Integration.Processes
 
                 return new CommandLineInvocation("dotnet", string.Join(" ", argLine));
             }
-            #endif
+#endif
             if (action != null)
                 argLine.Add(action);
             argLine.AddRange(arguments);

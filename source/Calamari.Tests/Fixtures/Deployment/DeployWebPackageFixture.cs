@@ -353,7 +353,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var allErrors = string.Join(Environment.NewLine, errors.Select(e => e.ToString()));
             Assert.That(allErrors, Is.EqualTo(""));
-            Assert.That(allErrors, Is.Not.StringContaining("Forcibly taking lock from process"));
+            Assert.That(allErrors, Does.Not.Contain("Forcibly taking lock from process"));
         }
 
         CalamariResult DeployPackage(DeploymentType deploymentType = DeploymentType.Nupkg)

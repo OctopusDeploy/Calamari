@@ -58,7 +58,6 @@
          "Microsoft.Web.Deployment": "3.6.0",
          "Microsoft.Web.Xdt": "2.1.1",
          "SharpCompress": "0.12.4",
-         "Sprache": "2.0.0.45",
          "Polly": "4.3.0" 
        },
       "buildOptions": {
@@ -67,6 +66,7 @@
     }
   },
   "buildOptions": {
+    "warningsAsErrors": true,
     "embed": {
       "include": [
         "Fixtures/PowerShell/Scripts/HelloWithVariable.ps1",
@@ -96,7 +96,7 @@
       "mappings": {
         "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
         "ScriptCS/": "../Tools/ScriptCS**/",
-        "NuGet/":  "../Tools/NuGet**/" 
+        "NuGet/": "../Tools/NuGet**/"
       }
     }
   },

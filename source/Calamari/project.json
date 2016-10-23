@@ -35,11 +35,10 @@
         "Microsoft.Web.Administration": "7.0.0.0",
         "Microsoft.Web.Deployment": "3.6.0",
         "Microsoft.Web.Xdt": "2.1.1",
-        "Newtonsoft.Json": "6.0.8",
+        "Newtonsoft.Json": "9.0.1",
         "NuGet.CommandLine": "2.8.3",
         "NuGet.Core": "2.11.1",
         "SharpCompress": "0.12.4",
-        "Sprache": "2.0.0.45",
         "System.Spatial": "5.6.2"
       },
       "buildOptions": {
@@ -96,6 +95,7 @@
   },
   "buildOptions": {
     "emitEntryPoint": true,
+    "warningsAsErrors": true,
     "embed": {
       "include": [
         "Integration\\Scripting\\Bash\\Bootstrap.sh",

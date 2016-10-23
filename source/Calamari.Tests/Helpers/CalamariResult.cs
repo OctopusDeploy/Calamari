@@ -126,21 +126,21 @@ namespace Calamari.Tests.Helpers
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput, Is.Not.StringContaining(expectedOutput));
+            Assert.That(allOutput, Does.Not.Contain(expectedOutput));
         }
 
         public void AssertOutput(string expectedOutput)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput, Is.StringContaining(expectedOutput));
+            Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 
         public void AssertOutputMatches(string regex)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput, Is.StringMatching(regex));
+            Assert.That(allOutput, Does.Match(regex));
         }
 
         public string GetOutputForLineContaining(string expectedOutput)
@@ -159,7 +159,7 @@ namespace Calamari.Tests.Helpers
         {
             var separator = noNewLines ? String.Empty : Environment.NewLine;
             var allOutput = string.Join(separator, captured.Errors);
-            Assert.That(allOutput, Is.StringContaining(expectedOutput));
+            Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 
 #if APPROVAL_TESTS

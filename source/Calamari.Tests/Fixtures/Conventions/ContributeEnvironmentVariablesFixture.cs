@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             if (!CalamariEnvironment.IsRunningOnWindows)
                 Assert.Ignore("This test is designed to run on windows");
             var variables = AddEnvironmentVariables();
-            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Is.StringStarting("My OS is Windows"));
+            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Does.StartWith("My OS is Windows"));
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 Assert.Ignore("This test is designed to run on *nix");
 
             var variables = AddEnvironmentVariables();
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /home/"));
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home/"));
         }
 
         [Test]
@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             if (!CalamariEnvironment.IsRunningOnMac)
                 Assert.Ignore("This test is designed to run on Mac");
             var variables = AddEnvironmentVariables();
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /Users/"));
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /Users/"));
         }
 
         private VariableDictionary AddEnvironmentVariables()
