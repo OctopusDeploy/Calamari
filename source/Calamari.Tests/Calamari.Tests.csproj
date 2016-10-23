@@ -213,6 +213,7 @@
     <Compile Include="Helpers\CalamariResult.cs" />
     <Compile Include="Helpers\CaptureCommandOutput.cs" />
     <Compile Include="Helpers\TarGzBuilder.cs" />
+    <Compile Include="Helpers\TemporaryDirectory.cs" />
     <Compile Include="Helpers\TestEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="VariableDictionaryExtensions.cs" />
