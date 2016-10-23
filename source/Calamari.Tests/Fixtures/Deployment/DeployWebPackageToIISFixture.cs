@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
@@ -21,7 +23,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         private string uniqueValue;
         private WebServerSevenSupport iis;
       
-
         [TestFixtureSetUp]
         public void Init()
         {
@@ -286,7 +287,11 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(1083, binding.EndPoint.Port);
             Assert.AreEqual("https", binding.Protocol);
             Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.AreEqual("MY", binding.CertificateStoreName); 
+            Assert.AreEqual("MY", binding.CertificateStoreName);
+
+            // Assert the application-pool account was granted access to the certificate private-key
+            var certificate = SampleCertificate.CapiWithPrivateKeyNoPassword.GetCertificateFromStore("MY", StoreLocation.LocalMachine); 
+            SampleCertificate.AssertIdentityHasPrivateKeyAccess(certificate, new NTAccount("IIS AppPool\\" + uniqueValue), CryptoKeyRights.GenericAll);
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }

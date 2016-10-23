@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security.AccessControl;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
 
@@ -108,6 +112,27 @@ namespace Calamari.Tests.Helpers.Certificates
             return foundCertificates.Count > 0
                 ? foundCertificates[0]
                 : null;
+        }
+
+        public static void AssertIdentityHasPrivateKeyAccess(X509Certificate2 certificate, IdentityReference identity, CryptoKeyRights rights)
+        {
+            if (!certificate.HasPrivateKey)
+                throw new Exception("Certificate does not have private key");
+
+            var cspAlgorithm = certificate.PrivateKey as ICspAsymmetricAlgorithm;
+
+            if (cspAlgorithm == null)
+                throw new Exception("Private key is not a CSP key");
+
+            var keySecurity = cspAlgorithm.CspKeyContainerInfo.CryptoKeySecurity;
+
+            foreach(var accessRule in keySecurity.GetAccessRules(true, false, identity.GetType()).Cast<CryptoKeyAccessRule>())
+            {
+                if (accessRule.IdentityReference.Equals(identity) && accessRule.CryptoKeyRights.HasFlag(rights))
+                    return;
+            }
+
+            throw new Exception($"Identity '{identity.ToString()}' does not have access right '{rights}' to private-key");
         }
 
         X509Certificate2 LoadAsX509Certificate2()
