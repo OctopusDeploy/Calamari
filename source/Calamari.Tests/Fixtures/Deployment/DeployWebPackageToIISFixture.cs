@@ -298,6 +298,51 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldFindAndUseExistingCertificateInStoreIfPresent()
+        {
+            const string certificateStoreName = "OctopusTest";
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = "[{\"protocol\":\"https\",\"port\":1084,\"host\":\"\",\"certificateVariable\":\"AcmeSelfSigned\",\"requireSni\":false,\"enabled\":true}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables["AcmeSelfSigned"] = "Certificates-1";
+            Variables["AcmeSelfSigned.Type"] = "Certificate";
+            Variables["AcmeSelfSigned.Thumbprint"] = SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint;
+            Variables["AcmeSelfSigned.Pfx"] = SampleCertificate.CapiWithPrivateKeyNoPassword.Base64Bytes();
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateIsInStore(certificateStoreName, StoreLocation.LocalMachine);
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            var binding = website.Bindings.Single();
+
+            Assert.AreEqual(1084, binding.EndPoint.Port);
+            Assert.AreEqual("https", binding.Protocol);
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            Assert.AreEqual(certificateStoreName, binding.CertificateStoreName);
+
+            Assert.AreEqual(ObjectState.Started, website.State);
+
+            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateNotInStore(certificateStoreName, StoreLocation.LocalMachine);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsThumbprint()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";

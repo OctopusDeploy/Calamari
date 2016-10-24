@@ -146,6 +146,11 @@
                 public static readonly string ApplicationPoolUserName = "Octopus.Action.IISWebSite.ApplicationPoolUsername";
                 public static readonly string Bindings = "Octopus.Action.IISWebSite.Bindings";
                 public static readonly string ApplicationPoolIdentityType = "Octopus.Action.IISWebSite.ApplicationPoolIdentityType";
+
+                public static class Output
+                {
+                    public static readonly string CertificateStoreName = "Octopus.Action.IISWebSite.CertificateStoreName";
+                }
             }
 
             public static class Azure

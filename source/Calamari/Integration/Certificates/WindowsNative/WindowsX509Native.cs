@@ -54,6 +54,16 @@ namespace Calamari.Integration.Certificates.WindowsNative
                                                                       [Out] out int dwKeySpec,
                                                                       [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
 
+        [DllImport("Crypt32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern
+        bool CertEnumSystemStore(CertificateSystemStoreLocations dwFlags, IntPtr notUsed1, IntPtr notUsed2, CertEnumSystemStoreCallBackProto fn);
+
+        /// <summary>
+        /// signature of call back function used by CertEnumSystemStore
+        /// </summary>
+        internal delegate
+        bool CertEnumSystemStoreCallBackProto([MarshalAs(UnmanagedType.LPWStr)] string storeName, uint dwFlagsNotUsed, IntPtr notUsed1, IntPtr notUsed2, IntPtr notUsed3);
+
         [DllImport("Ncrypt.dll", SetLastError = true, ExactSpelling = true)]
         internal static extern int NCryptSetProperty(SafeNCryptHandle hObject, [MarshalAs(UnmanagedType.LPWStr)] string szProperty, IntPtr pbInputByteArray, int cbInput, int flags);
 
@@ -68,6 +78,19 @@ namespace Calamari.Integration.Certificates.WindowsNative
         internal enum AddCertificateDisposition
         {
             CERT_STORE_ADD_REPLACE_EXISTING = 3
+        }
+
+        [Flags]
+        internal enum CertificateSystemStoreLocations
+        {
+            CurrentUser = 1 << 16, // CERT_SYSTEM_STORE_CURRENT_USER
+            LocalMachine = 2 << 16, // CERT_SYSTEM_STORE_LOCAL_MACHINE
+            CurrentService = 4 << 16, // CERT_SYSTEM_STORE_CURRENT_SERVICE
+            Services = 5 << 16, // CERT_SYSTEM_STORE_SERVICES
+            Users = 6 << 16, // CERT_SYSTEM_STORE_USERS
+            UserGroupPolicy = 7 << 16, // CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY
+            MachineGroupPolicy = 8 << 16, // CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY
+            LocalMachineEnterprise = 9 << 16, // CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE
         }
 
         // typedef struct _CRYPTOAPI_BLOB

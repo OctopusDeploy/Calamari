@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Commands.Support;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.Iis;
 using Octostache;
 
 namespace Calamari.Deployment.Features
@@ -41,24 +38,39 @@ namespace Calamari.Deployment.Features
         {
             var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
 
-            if (CertificateExistsInLocalMachineStore(thumbprint))
+            var storeName = FindCertificateInLocalMachineStore(thumbprint);
+            if (storeName != null)
             {
-                Log.Verbose($"Certificate with thumbprint '{thumbprint}' already exists in Cert:\\LocalMachine");
-                return;
+                Log.Verbose($"Found existing certificate with thumbprint '{thumbprint}' in Cert:\\LocalMachine\\{storeName}");
+            }
+            else
+            {
+                storeName = AddCertificateToLocalMachineStore(variables, certificateVariable);
             }
 
-            AddCertificateToLocalMachineStore(variables, certificateVariable);
+            Log.SetOutputVariable(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, storeName, variables);
         }
 
-        static bool CertificateExistsInLocalMachineStore(string thumbprint)
+        static string FindCertificateInLocalMachineStore(string thumbprint)
         {
-            var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
-            store.Open(OpenFlags.ReadOnly);
+            foreach (var storeName in WindowsX509CertificateStore.GetStoreNames(StoreLocation.LocalMachine))
+            {
+                var store = new X509Store(storeName, StoreLocation.LocalMachine);
+                store.Open(OpenFlags.ReadOnly);
 
-            return store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false).Count > 0;
+                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                if (found.Count != 0 && found[0].HasPrivateKey)
+                {
+                    return storeName;
+                }
+
+                store.Close();
+            }
+
+            return null;
         }
 
-        static void AddCertificateToLocalMachineStore(VariableDictionary variables, string certificateVariable)
+        static string AddCertificateToLocalMachineStore(VariableDictionary variables, string certificateVariable)
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
             var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
@@ -69,6 +81,7 @@ namespace Calamari.Deployment.Features
             try
             {
                 WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, StoreLocation.LocalMachine, "My", true);
+                return "My";
             }
             catch (Exception)
             {

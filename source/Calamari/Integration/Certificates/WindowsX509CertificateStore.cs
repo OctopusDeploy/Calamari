@@ -118,6 +118,53 @@ namespace Calamari.Integration.Certificates
             store.Close();
         }
 
+        public static ICollection<string> GetStoreNames(StoreLocation location)
+        {
+            var callback = new CertEnumSystemStoreCallBackProto(CertEnumSystemStoreCallBack); 
+            var names = new List<string>();
+            CertificateSystemStoreLocations locationFlags;
+
+            switch (location)
+            {
+                case StoreLocation.CurrentUser:
+                    locationFlags = CertificateSystemStoreLocations.CurrentUser; 
+                    break;
+                case StoreLocation.LocalMachine:
+                    locationFlags = CertificateSystemStoreLocations.LocalMachine; 
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(location), location, null);
+            }
+
+            lock (StoreNamesSyncLock)
+            {
+                EnumeratedStoreNames.Clear();
+                CertEnumSystemStore(locationFlags, IntPtr.Zero, IntPtr.Zero, callback);
+                names.AddRange(EnumeratedStoreNames);
+            }
+
+            return names;
+        }
+
+        private static readonly IList<string> EnumeratedStoreNames  = new List<string>();
+        private static readonly object StoreNamesSyncLock = new object(); 
+
+        /// <summary>
+        /// call back function used by CertEnumSystemStore
+        ///
+        /// Currently, there is no managed support for enumerating store
+        /// names on a machine. We use the win32 function CertEnumSystemStore()
+        /// to get a list of stores for a given context.
+        ///
+        /// Each time this callback is called, we add the passed store name
+        /// to the list of stores
+        /// </summary>
+        internal static bool CertEnumSystemStoreCallBack(string storeName, uint dwFlagsNotUsed, IntPtr notUsed1, IntPtr notUsed2, IntPtr notUsed3)
+        {
+            EnumeratedStoreNames.Add(storeName);
+            return true;
+        }
+
         static void AddCertificateToStore(SafeCertStoreHandle store, SafeCertContextHandle certificate)
         {
             try
@@ -273,8 +320,5 @@ namespace Calamari.Integration.Certificates
             currentCertificate = CertEnumCertificatesInStore(store, previousCertificate);
             return !currentCertificate.IsInvalid;
         }
-
-
-
     }
 }
