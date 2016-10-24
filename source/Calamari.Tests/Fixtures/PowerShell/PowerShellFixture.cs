@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 // Need to check for "-NoProfile -NoLogo" not just "-NoProfile" because when
                 // run via Cake we end up with the outer Powershell call included in the
                 // output too, which has a -NoProfile flag.
-                Assert.That(allOutput.Contains("-NoProfile -NoLogo") == calledWithNoProfile);
+                Assert.That(allOutput.Contains("-NoProfile -NoLo") == calledWithNoProfile);
             }
         }
 
