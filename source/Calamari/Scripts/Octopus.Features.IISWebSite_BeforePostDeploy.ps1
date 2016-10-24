@@ -409,70 +409,30 @@ if ($deployAsWebSite)
 		}
 	}
 
-	function Ensure-CertificateInStore($certificateVariableName, $storeName) {
-
-		$thumbprint = $OctopusParameters[$certificateVariableName + ".Thumbprint"]
-		$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object {$thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
-
-		if ($certificate) {
-			Write-Host "Certificate with thumbprint '$thumbprint' already exists in Cert:\LocalMachine"
-			Return $certificate
-		}
-
-		# Certificate does not exist in store, so add it
-
-		Write-Host "Adding certificate with thumbprint '$thumbprint' to Cert:\LocalMachine"
-
-		$temporaryPfxFile = [System.IO.Path]::GetTempFileName()
-
-		try {
-			$certStore = New-Object "System.Security.Cryptography.X509Certificates.X509Store"($storeName, [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine) 
-			$certStore.Open('ReadWrite');
-
-			[IO.File]::WriteAllBytes($temporaryPfxFile, [Convert]::FromBase64String($OctopusParameters[$certificateVariableName + ".Pfx"]))
-			$certificate = New-Object "System.Security.Cryptography.X509Certificates.X509Certificate2"($temporaryPfxFile, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]"MachineKeySet,PersistKeySet") 
-			$certStore.Add($certificate)
-			return $certificate
-		}
-		catch [System.Exception]{
-			Write-Host "Error adding certificate to store"
-			throw
-		}
-		finally {
-			Remove-Item $temporaryPfxFile -Force
-		}
-	}
-
 	# For any HTTPS bindings, ensure the certificate is configured for the IP/port combination
 	$wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
 
+		# If an Octopus-managed certificate variable is supplied, it will have been installed in the store earlier
+		# in the deployment process
 		if ($_.certificateVariable) {
-			# If an Octopus-managed certificate variable is supplied, we need to ensure it is added 
-			# to the certificate store.
-
-			# Must be a certificate variable
-			if ($OctopusParameters[$_.certificateVariable + ".Type"] -ne "Certificate") {
-				throw "Variable '$($_.certificateVariable)' is not of type Certificate"
-			}
-
-			$certStoreName = "MY"
-			$certificate = Ensure-CertificateInStore $_.certificateVariable $certStoreName 
+			$sslCertificateThumbprint = $OctopusParameters[$_.certificateVariable + ".Thumbprint"]
 		} else {
-			# Otherwise, if the certificate thumbprint was supplied we assume it is already in the store
+			# Otherwise, the certificate thumbprint was supplied directly in the binding
 			$sslCertificateThumbprint = $_.thumbprint.Trim()
-			Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
-		
-			$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
-			if (! $certificate) 
-			{
-				throw "Could not find certificate under Cert:\LocalMachine with thumbprint $sslCertificateThumbprint. Make sure that the certificate is installed to the Local Machine context and that the private key is available."
-			}
-
-			$certPathParts = $certificate.PSParentPath.Split('\')
-			$certStoreName = $certPathParts[$certPathParts.Length-1]
-
-			Write-Host ("Found certificate: " + $certificate.Subject + " in: " + $certStoreName)
 		}
+
+		Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
+	
+		$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
+		if (! $certificate) 
+		{
+			throw "Could not find certificate under Cert:\LocalMachine with thumbprint $sslCertificateThumbprint. Make sure that the certificate is installed to the Local Machine context and that the private key is available."
+		}
+
+		$certPathParts = $certificate.PSParentPath.Split('\')
+		$certStoreName = $certPathParts[$certPathParts.Length-1]
+
+		Write-Host ("Found certificate: " + $certificate.Subject + " in: " + $certStoreName)
 
 		$ipAddress = $_.ipAddress;
 		if ((! $ipAddress) -or ($ipAddress -eq '*')) {
