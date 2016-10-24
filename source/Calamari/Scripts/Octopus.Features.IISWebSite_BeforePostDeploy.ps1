@@ -177,10 +177,11 @@ function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 
 function Assert-WebsiteExists($SitePath, $SiteName)
 {
+	Write-Verbose "Looking for the parent Site `"$SiteName`" at `"$SitePath`"..."
 	$site = Get-Item $SitePath -ErrorAction SilentlyContinue
 	if (!$site) 
 	{ 
-		throw "Site `"$SiteName`" does not exist." 
+		throw "The Web Site `"$SiteName`" does not exist in IIS and this step cannot create the Web Site because the necessary details are not available. Add a step which makes sure the parent Web Site exists before this step attempts to add a child to it." 
 	}
 }
 
@@ -197,20 +198,22 @@ function Set-Path($virtualPath, $physicalPath)
 	}
 }
 
+function Is-Directory($Path){
+	return Test-Path -Path $Path -PathType Container
+}
+
 if ($deployAsVirtualDirectory) 
 {
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"]
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"]
 
-	Write-Host "Creating Virtual Directory $virtualPath ..."
+	Write-Host "Making sure a Virtual Directory `"$virtualPath`" is configured as a child of `"$webSiteName`" at `"$physicalPath`"..."
     
     pushd IIS:\
 
 	$sitePath = "IIS:\Sites\$webSiteName"
 
-	Write-Verbose "Searching for $webSiteName Web Site."
-	
 	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
 
 	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
@@ -220,16 +223,26 @@ if ($deployAsVirtualDirectory)
 	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
 
 	if (!$lastSegment) {
-		Write-Host "`"$virtualPath`" does not exist. Creating Virtual Folder pointing to $fullPathToLastVirtualPathSegment ..."
+		Write-Host "`"$virtualPath`" does not exist. Creating Virtual Directory pointing to $fullPathToLastVirtualPathSegment ..."
 		Execute-WithRetry { 
 			New-Item $fullPathToLastVirtualPathSegment -type VirtualDirectory -physicalPath $physicalPath
 		}
 	} else {
-		if ($lastSegment.ElementTagName -eq 'application')
-		{
-			throw "`"$virtualPath`" already exists and points to a web application. Please delete it and then re-deploy the project."
+		if ($lastSegment.ElementTagName -eq 'virtualDirectory') {
+			Write-Host "Virtual Directory `"$virtualPath`" already exists, no need to create it."
+		} elseif ($lastSegment.ElementTagName -eq 'application') {
+			# It looks like the only reliable way to do the conversion is to delete the exsting application and then create a new virtual directory. http://stackoverflow.com/questions/16738995/powershell-convertto-webapplication-on-iis
+			# We don't want to delete anything as the customer might have handcrafted the settings and has no way of retrieving them.
+			throw "`"$virtualPath`" already exists in IIS and points to a Web Application. We cannot automatically change this to a Virtual Directory on your behalf. Please delete it and then re-deploy the project."
 		} else {
-			Write-Host "Virtual Directory `"$virtualPath`" already exists."
+			if (!(Is-Directory -Path $physicalPath)) {
+				throw "`"$virtualPath`" already exists in IIS and points to an unknown item which isn't a directory. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Virtual Directory on your behalf."
+			}
+			
+			Write-Host "`"$virtualPath`" already exists in IIS and points to an unknown item which seems to be a directory. We will try to convert it to a Virtual Directory. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Virtual Directory on your behalf."
+			Execute-WithRetry { 
+				New-Item $fullPathToLastVirtualPathSegment -type VirtualDirectory -physicalPath $physicalPath
+			}
 		}
 
 		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
@@ -244,7 +257,7 @@ if ($deployAsWebApplication)
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.VirtualPath"]
 
-	Write-Host "Creating Web Application $virtualPath ..."
+	Write-Host "Making sure a Web Application `"$virtualPath`" is configured as a child of `"$webSiteName`" at `"$physicalPath`"..."
     
     pushd IIS:\
 
@@ -256,8 +269,6 @@ if ($deployAsWebApplication)
 
 	$sitePath = ("IIS:\Sites\" + $webSiteName)
 
-	Write-Verbose "Searching for $webSiteName Web Site."
-	
 	Assert-WebsiteExists -SitePath $sitePath -SiteName $webSiteName
 
 	[array]$virtualPathSegments =  Convert-ToPathSegments -VirtualPath $virtualPath
@@ -274,13 +285,22 @@ if ($deployAsWebApplication)
 			New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
 		}
 	} else {
-		if ($lastSegment.ElementTagName -eq 'virtualDirectory')
-		{
-			# It looks like the only relaibe way to do the conversion is to delete the exsting virtual directory and then create a new web application. http://stackoverflow.com/questions/16738995/powershell-convertto-webapplication-on-iis
+		if ($lastSegment.ElementTagName -eq 'application') {
+			Write-Host "Web Application `"$virtualPath`" already exists, no need to create it."
+		} elseif ($lastSegment.ElementTagName -eq 'virtualDirectory') {
+			# It looks like the only reliable way to do the conversion is to delete the exsting web application and then create a new virtual directory. http://stackoverflow.com/questions/16738995/powershell-convertto-webapplication-on-iis
 			# We don't want to delete anything as the customer might have handcrafted the settings and has no way of retrieving them.
-			throw "`"$virtualPath`" already exists and points to a virtual directory. Please delete it and then re-deploy the project."
+			throw "`"$virtualPath`" already exists in IIS and points to a Virtual Directory. We cannot automatically change this to a Web Application on your behalf. Please delete it and then re-deploy the project."
 		} else {
-			Write-Host "Web Application `"$virtualPath`" already exists."
+			if (!(Is-Directory -Path $physicalPath)) {
+				throw "`"$virtualPath`" already exists in IIS and points to an unknown item which isn't a directory. Please delete it and then re-deploy the project. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Web Application on your behalf."
+			}
+			
+			Write-Host "`"$virtualPath`" already exists in IIS and points to an unknown item which seems to be a directory. We will try to convert it to a Web Application. If you used the Custom Installation Directory feature to target this path we recommend removing the Custom Installation Directory feature, instead allowing Octopus to unpack the files into the default location and update the Physical Path of the Web Application on your behalf."
+			Execute-WithRetry { 
+				New-Item $fullPathToLastVirtualPathSegment -type Application -physicalPath $physicalPath
+			}
+
 		}
 
 		Set-Path -virtualPath $fullPathToLastVirtualPathSegment -physicalPath $physicalPath
@@ -307,7 +327,7 @@ if ($deployAsWebSite)
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
 	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
 
-	Write-Host "Creating Website $webSiteName"
+	Write-Host "Making sure a Website `"$webSiteName`" is configured in IIS..."
 
 	#Assess SNI support (IIS 8 or greater)
 	$iis = get-itemproperty HKLM:\SOFTWARE\Microsoft\InetStp\  | select setupstring 
