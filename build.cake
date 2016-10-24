@@ -252,10 +252,11 @@ Task("SetTeamCityVersion")
             BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
     });
 
-Task("BuildAndZipTestBinaries")
+Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("__Clean")
     .IsDependentOn("__Restore")
-    .IsDependentOn("__BuildAndZipNET45TestProject");  
+    .IsDependentOn("__BuildAndZipNET45TestProject")
+    .IsDependentOn("__Pack");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
