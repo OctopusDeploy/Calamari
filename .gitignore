@@ -190,3 +190,4 @@ source/Octopus.Deploy.Scripts.Tests/Tests/Variables.vars
 .vscode
 tools/
 *.DS_Store
+**/.idea

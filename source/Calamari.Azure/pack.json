@@ -12,7 +12,7 @@
         "licenseUrl": "https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE",
         "files": {
             "include": "**/*.*",
-            "exclude": [ "project.json", "FSharp/*.xml", "ScriptCS/*.ps1", "AzurePowershell/*.xml" ]
+            "exclude": [ "project.json", "FSharp/*.xml", "ScriptCS/*.ps1" ]
         }
     }
 }
