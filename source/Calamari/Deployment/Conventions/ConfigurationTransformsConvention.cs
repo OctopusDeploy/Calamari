@@ -29,14 +29,15 @@ namespace Calamari.Deployment.Conventions
 
             var allTransforms = explicitTransforms.Concat(automaticTransforms).ToList();
             var transformDefinitionsApplied = new List<XmlConfigTransformDefinition>();
+            var duplicateTransformDefinitions = new List<XmlConfigTransformDefinition>();
             var transformFilesApplied = new HashSet<Tuple<string, string>>();
            
             foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions.ToArray()))
             {
-                ApplyTransformations(configFile, allTransforms, transformFilesApplied, transformDefinitionsApplied);
+                ApplyTransformations(configFile, allTransforms, transformFilesApplied, transformDefinitionsApplied, duplicateTransformDefinitions);
             }
 
-            LogFailedTransforms(explicitTransforms.Except(transformDefinitionsApplied));
+            LogFailedTransforms(explicitTransforms, transformDefinitionsApplied, duplicateTransformDefinitions);
             deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformFilesApplied.Select(t => t.Item1), "|");
         }
 
@@ -71,8 +72,11 @@ namespace Calamari.Deployment.Conventions
                 .ToList();
         }
 
-        void ApplyTransformations(string sourceFile, IEnumerable<XmlConfigTransformDefinition> transformations, 
-            ISet<Tuple<string, string>> transformFilesApplied,  IList<XmlConfigTransformDefinition> transformDefinitionsApplied)
+        void ApplyTransformations(string sourceFile, 
+            IEnumerable<XmlConfigTransformDefinition> transformations, 
+            ISet<Tuple<string, string>> transformFilesApplied,  
+            IList<XmlConfigTransformDefinition> transformDefinitionsApplied,
+            IList<XmlConfigTransformDefinition> duplicateTransformDefinitions)
         {
             foreach (var transformation in transformations)
             {
@@ -80,7 +84,7 @@ namespace Calamari.Deployment.Conventions
                     continue;
                 try
                 {
-                    ApplyTransformations(sourceFile, transformation, transformFilesApplied, transformDefinitionsApplied);
+                    ApplyTransformations(sourceFile, transformation, transformFilesApplied, transformDefinitionsApplied, duplicateTransformDefinitions);
                 }
                 catch (Exception)
                 {
@@ -90,8 +94,11 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void ApplyTransformations(string sourceFile, XmlConfigTransformDefinition transformation, 
-            ISet<Tuple<string, string>> transformFilesApplied,  ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied)
+        void ApplyTransformations(string sourceFile, 
+            XmlConfigTransformDefinition transformation, 
+            ISet<Tuple<string, string>> transformFilesApplied, 
+            ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied,
+            ICollection<XmlConfigTransformDefinition> duplicateTransformDefinitions)
         {
             if (transformation == null)
                 return;
@@ -100,7 +107,10 @@ namespace Calamari.Deployment.Conventions
             {
                 var transformFiles = new Tuple<string, string>(transformFile, sourceFile);
                 if (transformFilesApplied.Contains(transformFiles))
+                {
+                    duplicateTransformDefinitions.Add(transformation);
                     continue;
+                }
 
                 Log.Info("Transforming '{0}' using '{1}'.", sourceFile, transformFile);
                 configurationTransformer.PerformTransform(sourceFile, transformFile, sourceFile);
@@ -130,11 +140,16 @@ namespace Calamari.Deployment.Conventions
             return extensions.ToArray();
         }
 
-        void LogFailedTransforms(IEnumerable<XmlConfigTransformDefinition> configTransform)
+        void LogFailedTransforms(IEnumerable<XmlConfigTransformDefinition> configTransform, List<XmlConfigTransformDefinition> transformDefinitionsApplied, List<XmlConfigTransformDefinition> duplicateTransformDefinitions)
         {
-            foreach (var transform in configTransform.Select(trans => trans.ToString()).Distinct())
+            foreach (var transform in configTransform.Except(transformDefinitionsApplied).Except(duplicateTransformDefinitions).Select(trans => trans.ToString()).Distinct())
             {
-                Log.VerboseFormat("The transform pattern \"{0}\" was not performed due to a missing file or overlapping rule.", transform);
+                Log.VerboseFormat("The transform pattern \"{0}\" was not performed due to a missing file.", transform);
+            }
+
+            foreach (var transform in duplicateTransformDefinitions.Select(trans => trans.ToString()).Distinct())
+            {
+                Log.VerboseFormat("The transform pattern \"{0}\" was not performed as it overlapped with another transform.", transform);
             }
         }
 

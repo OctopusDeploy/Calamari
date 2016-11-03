@@ -91,12 +91,26 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
-        public void ShouldLogErrorIfUnableToFindFile()
+        [TestCase("foo.missing.config => foo.config")]
+        [TestCase("config\\fizz.buzz.config => config\\fizz.config")]
+        public void ShouldLogErrorIfUnableToFindFile(string transform)
         {
-            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "foo.missing.config => foo.config");
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transform);
 
             CreateConvention().Install(deployment);
-            logs.AssertContains("The transform pattern \"foo.missing.config => foo.config\" was not performed due to a missing file or overlapping rule.");
+            logs.AssertContains($"The transform pattern \"{transform}\" was not performed due to a missing file.");
+        }
+
+        [Test]
+        [TestCase("foo.bar.config => foo.config", "foo.bar.config => foo.config")]
+        [TestCase("*.bar.config => foo.config", "foo.bar.config => foo.config")]
+        [TestCase("foo.bar.config => foo.config", "*.bar.config => foo.config")]
+        public void ShouldLogErrorIfDuplicateTransform(string transformA, string transformB)
+        {
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformA + Environment.NewLine + transformB);
+
+            CreateConvention().Install(deployment);
+            logs.AssertContains($"The transform pattern \"{transformA}\" was not performed as it overlapped with another transform.");
         }
 
         [Test]
