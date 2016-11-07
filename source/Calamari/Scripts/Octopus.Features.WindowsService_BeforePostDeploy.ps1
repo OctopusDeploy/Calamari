@@ -43,7 +43,7 @@ if (!$serviceName)
 if ($arguments) 
 {
 	$arguments = $arguments.Replace("`"", "\`"")
-	$binPath = ("\`"" + $fullPath + "\`" " + $arguments) # An extra set of escaped quotes added around the exe	
+	$binPath = "$fullPath $arguments" # An extra set of escaped quotes added around the exe	
 }
 else
 {
