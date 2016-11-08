@@ -8,10 +8,11 @@ namespace Calamari.Commands.Support
     {
         public static int PrintError(Exception ex)
         {
-            if (ex is CommandException)
+            var cmdException = ex as CommandException;
+            if (cmdException != null)
             {
-                Log.Error(ex.Message);
-                return 1;
+                Log.Error(cmdException.Message);
+                return cmdException.ExitCode;
             }
             if (ex is ReflectionTypeLoadException)
             {

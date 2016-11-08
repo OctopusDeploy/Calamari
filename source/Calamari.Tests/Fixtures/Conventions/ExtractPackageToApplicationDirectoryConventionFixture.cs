@@ -29,6 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));
+            fileSystem.FileExists(PackageLocation).Returns(true);
 
             variables = new CalamariVariableDictionary();
             convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem, SemaphoreFactory.Get());

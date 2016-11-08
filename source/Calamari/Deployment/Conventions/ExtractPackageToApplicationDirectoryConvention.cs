@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Octostache;
 

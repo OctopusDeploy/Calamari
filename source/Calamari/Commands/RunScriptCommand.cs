@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -9,7 +11,6 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Util;
-using Octostache;
 
 namespace Calamari.Commands
 {
@@ -40,58 +41,35 @@ namespace Calamari.Commands
             Options.Parse(commandLineArguments);
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-            variables.EnrichWithEnvironmentVariables();
-            variables.LogVariables();
-
-            ExtractPackage(variables);
-            SubstituteVariablesInScript(variables);
-            return InvokeScript(variables);
-        }
-
-        void ExtractPackage(VariableDictionary variables)
-        {
-            if (string.IsNullOrWhiteSpace(packageFile))
-                return;
-
-            Log.Info("Extracting package: " + packageFile);
-
-            if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);
-
-            var extractor = new GenericPackageExtractor();
-            extractor.GetExtractor(packageFile).Extract(packageFile, CrossPlatform.GetCurrentDirectory(), true);
-
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, CrossPlatform.GetCurrentDirectory());
-        }
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, substituteVariables.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, scriptFile);
 
-        private void SubstituteVariablesInScript(CalamariVariableDictionary variables)
-        {
-            if (!substituteVariables) return;
 
-            Log.Info("Substituting variables in: " + scriptFile);
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var scriptCapability = new CombinedScriptEngine();
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+            
+            var substituter = new FileSubstituter(fileSystem);
+            var conventions = new List<IConvention>
+            {
+                new ContributeEnvironmentVariablesConvention(),
+                new LogVariablesConvention()
+            };
 
-            var validatedScriptFilePath = AssertScriptFileExists();
-            var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
-            substituter.PerformSubstitution(validatedScriptFilePath, variables);
-        }
+            if (!string.IsNullOrWhiteSpace(packageFile))
+            {
+                conventions.Add(new ExtractPackageToWorkingDirectoryConvention(new GenericPackageExtractor(), fileSystem));
+            }
+            conventions.Add(new SubstituteFileConvention(scriptFile, fileSystem, substituter));
+            conventions.Add(new InvokeScriptConvention(scriptFile, scriptParameters, fileSystem, scriptCapability, commandLineRunner));
 
-        private int InvokeScript(CalamariVariableDictionary variables)
-        {
-            var validatedScriptFilePath = AssertScriptFileExists();
+            var deployment = new RunningDeployment(packageFile, variables);
+            var conventionRunner = new ConventionProcessor(deployment, conventions);
 
-            var scriptEngine = new CombinedScriptEngine();
-            var runner = new CommandLineRunner(
-                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var result = scriptEngine.Execute(new Script(validatedScriptFilePath, scriptParameters), variables, runner);
-            return result.ExitCode;
-        }
+            conventionRunner.RunConventions();
 
-        private string AssertScriptFileExists()
-        {
-            if (!File.Exists(scriptFile))
-                throw new CommandException("Could not find script file: " + scriptFile);
-
-            return scriptFile;
+            return 0;
         }
     }
 }

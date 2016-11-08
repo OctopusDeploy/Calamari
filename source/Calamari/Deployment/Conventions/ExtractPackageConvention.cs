@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.FileSystem;
+﻿using Calamari.Commands.Support;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 
 namespace Calamari.Deployment.Conventions
@@ -16,19 +17,25 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            if (string.IsNullOrWhiteSpace(deployment.PackageFilePath))
+            var packagePath = deployment.PackageFilePath;
+            if (string.IsNullOrWhiteSpace(packagePath))
             {
                Log.Verbose("No package path defined. Skipping package extraction.");
                return;
             }
 
-            var metadata = extractor.GetMetadata(deployment.PackageFilePath);
+            Log.Info("Extracting package: " + packagePath);
+
+            if (!fileSystem.FileExists(packagePath))
+                throw new CommandException("Could not find package file: " + packagePath);
+
+            var metadata = extractor.GetMetadata(packagePath);
 
             var targetPath = GetTargetPath(deployment, metadata);
 
             Log.Verbose("Extracting package to: " + targetPath);
 
-            var filesExtracted = extractor.Extract(deployment.PackageFilePath, targetPath, deployment.Variables.GetFlag(SpecialVariables.Package.SuppressNestedScriptWarning, false));
+            var filesExtracted = extractor.Extract(packagePath, targetPath, deployment.Variables.GetFlag(SpecialVariables.Package.SuppressNestedScriptWarning, false));
 
             Log.Verbose("Extracted " + filesExtracted + " files");
 
