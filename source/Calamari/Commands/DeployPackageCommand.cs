@@ -18,6 +18,7 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
+using Calamari.Integration.Vhd;
 
 namespace Calamari.Commands
 {
@@ -68,7 +69,7 @@ namespace Calamari.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-
+            
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
@@ -76,6 +77,7 @@ namespace Calamari.Commands
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore),
+                new MountVhdConvention(fileSystem),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
