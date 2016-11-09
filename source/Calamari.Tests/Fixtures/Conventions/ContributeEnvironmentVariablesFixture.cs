@@ -35,10 +35,13 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldAddMacEnvironmentVariables()
         {
+            // Mac running in TeamCity agent service does not contain $HOME variable
+            // $PATH is being used since it should be common between service & development
+            // http://askubuntu.com/a/394330
             if (!CalamariEnvironment.IsRunningOnMac)
                 Assert.Ignore("This test is designed to run on Mac");
             var variables = AddEnvironmentVariables();
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /Users/"));
+            Assert.That(variables.Evaluate("My paths are #{env:PATH}"), Does.Contain("/usr/local/bin"));
         }
 
         private VariableDictionary AddEnvironmentVariables()
