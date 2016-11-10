@@ -1,7 +1,7 @@
 using System;
 using System.CodeDom.Compiler;
 using System.IO;
-using System.Text;
+using Calamari.Integration.Processes;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Helpers
@@ -12,55 +12,55 @@ namespace Calamari.Tests.Helpers
     /// </summary>
     public class ProxyLog : IDisposable
     {
-        private static bool isActive = false;
-        readonly IndentedTextWriter originalStdOut;
-        readonly IndentedTextWriter originalStdErr;
-
-        readonly StringBuilder interceptedOutWriter;
-        readonly StringBuilder interceptedErrWriter;
+        private readonly IndentedTextWriter initialStdOut;
+        private readonly IndentedTextWriter initialStdErr;
         public ProxyLog()
         {
-            if (isActive)
+            initialStdOut = Log.StdOut;
+            initialStdErr = Log.StdErr;
+
+            Log.StdOut = new IndentedTextWriter(new SplitTextWriter(Console.Out, stdOut));
+            Log.StdErr = new IndentedTextWriter(new SplitTextWriter(Console.Error, stdErr));
+
+        }
+
+        private readonly StringWriter stdOut = new StringWriter();
+        private readonly StringWriter stdErr = new StringWriter();
+
+
+        public string StdOut => stdOut.ToString();
+        public string StdErr => stdErr.ToString();
+
+        public void WriteOutput(ICommandOutput commandOutput)
+        {
+            string line;
+            using (var reader = new StringReader(StdOut))
             {
-                throw new Exception("You are already intercepting the Logs. Please dispose of existing ProxyLog");
+                while ((line = reader.ReadLine()) != null)
+                {
+                    commandOutput.WriteInfo(line);
+                }
             }
-            isActive = true;
 
-            originalStdOut = Log.StdOut;
-            interceptedOutWriter = new StringBuilder();
-            Log.StdOut = new IndentedTextWriter(new StringWriter(interceptedOutWriter));
-
-            originalStdErr = Log.StdErr;
-            interceptedErrWriter = new StringBuilder();
-            Log.StdErr = new IndentedTextWriter(new StringWriter(interceptedErrWriter));
+            using (var reader = new StringReader(StdErr))
+            {
+                while ((line = reader.ReadLine()) != null)
+                {
+                    commandOutput.WriteError(line);
+                }
+            }
         }
 
-        public string StdOut
+        protected virtual void Dispose(bool disposing)
         {
-            get { return interceptedOutWriter.ToString(); }
-        }
-
-        public string StdErr
-        {
-            get { return interceptedErrWriter.ToString(); }
+            if (!disposing) return;
+            Log.StdOut = initialStdOut;
+            Log.StdErr = initialStdErr;
         }
 
         public void Dispose()
         {
-            Log.StdOut = originalStdOut;
-            Log.StdErr = originalStdErr;
-
-            isActive = false;
-        }
-
-        public void AssertContains(string expectedOutput)
-        {
-            Assert.That(StdOut.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, StdOut));
-        }
-
-        public void AssertDoesNotContain(string expectedOutput)
-        {
-            Assert.That(StdOut.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) == -1, string.Format("Expected not to find: {0}. Output:\r\n{1}", expectedOutput, StdOut));
+            Dispose(true);
         }
     }
 }

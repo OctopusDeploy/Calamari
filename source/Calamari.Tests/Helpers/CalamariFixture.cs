@@ -5,6 +5,8 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
 using System.Reflection;
+using NUnit.Framework.Internal;
+
 #if APPROVAL_TESTS
 using ApprovalTests.Namers;
 using ApprovalTests.Reporters;
@@ -22,7 +24,7 @@ namespace Calamari.Tests.Helpers
         {
             string calamariFullPath;
 #if NET40
-            calamariFullPath = typeof (DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
+            calamariFullPath = typeof(DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
 #else
             var folder = Path.GetDirectoryName(typeof(Program).GetTypeInfo().Assembly.FullLocalPath());
             if(Util.CrossPlatform.IsWindows())
@@ -40,23 +42,43 @@ namespace Calamari.Tests.Helpers
         protected CommandLine OctoDiff()
         {
             var octoDiffExe = OctoDiffCommandLineRunner.FindOctoDiffExecutable();
-
             return CommandLine.Execute(octoDiffExe);
         }
 
-        protected CalamariResult Invoke(CommandLine command, VariableDictionary variables)
+        protected CalamariResult Invoke(CommandLine command, VariableDictionary variables = null)
         {
             var capture = new CaptureCommandOutput();
-            var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables), capture));
+            var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables ?? new VariableDictionary()), capture));
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, capture);
         }
 
-        protected CalamariResult Invoke(CommandLine command)
+        protected CommandLine InProcessCalamari()
         {
-            return Invoke(command, new VariableDictionary());
+            var program = new Calamari.Program("Calamari", typeof(Calamari.Program).GetTypeInfo().Assembly.GetInformationalVersion());
+            return new CommandLine(args => program.Execute(args));
         }
 
+        protected CalamariResult InProcessInvoke(CommandLine command, VariableDictionary variables = null) { 
+
+            var directInvocation = command.BuildLibraryCall();
+            using (var log = new ProxyLog())
+            {
+                var capturedCommand = new CaptureCommandOutput();
+                int exitCode = 1;
+                try
+                {
+                    exitCode = directInvocation.Executable(directInvocation.Arguments);
+                }
+                catch (Exception)
+                {
+                    //return new CalamariResult(1, ls.WriteOutput());
+                }
+                log.WriteOutput(new SplitCommandOutput(new ServiceMessageCommandOutput(variables ?? new VariableDictionary()), capturedCommand));
+                return new CalamariResult(exitCode, capturedCommand);
+            }
+        }
+        
         protected string GetFixtureResouce(params string[] paths)
         {
             var path = GetType().Namespace.Replace("Calamari.Tests.", String.Empty);
@@ -64,4 +86,7 @@ namespace Calamari.Tests.Helpers
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
     }
+
+   
+
 }

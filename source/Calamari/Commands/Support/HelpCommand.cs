@@ -47,7 +47,7 @@ namespace Calamari.Commands.Support
                 if (command == null)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Command '{0}' is not supported", commandName);
+                    Log.StdOut.WriteLine("Command '{0}' is not supported", commandName);
                     Console.ResetColor();
                     PrintGeneralHelp(executable);
                 }
@@ -63,44 +63,44 @@ namespace Calamari.Commands.Support
         void PrintCommandHelp(string executable, ICommand command, string commandName)
         {
             Console.ResetColor();
-            Console.Write("Usage: ");
+            Log.StdOut.Write("Usage: ");
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(executable + " " + commandName + " [<options>]");
+            Log.StdOut.WriteLine(executable + " " + commandName + " [<options>]");
             Console.ResetColor();
-            Console.WriteLine();
-            Console.WriteLine("Where [<options>] is any of: ");
-            Console.WriteLine();
+            Log.StdOut.WriteLine();
+            Log.StdOut.WriteLine("Where [<options>] is any of: ");
+            Log.StdOut.WriteLine();
 
-            command.GetHelp(Console.Out);
+            command.GetHelp(Log.StdOut);
 
-            Console.WriteLine();
+            Log.StdOut.WriteLine();
         }
 
         void PrintGeneralHelp(string executable)
         {
             Console.ResetColor();
-            Console.Write("Usage: ");
+            Log.StdOut.Write("Usage: ");
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(executable + " <command> [<options>]");
+            Log.StdOut.WriteLine(executable + " <command> [<options>]");
             Console.ResetColor();
-            Console.WriteLine();
-            Console.WriteLine("Where <command> is one of: ");
-            Console.WriteLine();
+            Log.StdOut.WriteLine();
+            Log.StdOut.WriteLine("Where <command> is one of: ");
+            Log.StdOut.WriteLine();
 
             foreach (var possible in commands.List().OrderBy(x => x.Name))
             {
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("  " + possible.Name.PadRight(15, ' '));
+                Log.StdOut.WriteLine("  " + possible.Name.PadRight(15, ' '));
                 Console.ResetColor();
-                Console.WriteLine("   " + possible.Description);
+                Log.StdOut.WriteLine("   " + possible.Description);
             }
 
-            Console.WriteLine();
-            Console.Write("Or use ");
+            Log.StdOut.WriteLine();
+            Log.StdOut.Write("Or use ");
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write(executable + " help <command>");
+            Log.StdOut.Write(executable + " help <command>");
             Console.ResetColor();
-            Console.WriteLine(" for more details.");
+            Log.StdOut.WriteLine(" for more details.");
         }
     }
 }

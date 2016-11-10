@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
-using System.Reflection;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
@@ -38,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deployment = new RunningDeployment(deployDirectory, variables);
             logs = new ProxyLog();
         }
-
+         
         [TearDown]
         public void TearDown()
         {
@@ -96,7 +95,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "foo.missing.config => foo.config");
 
             CreateConvention().Install(deployment);
-            logs.AssertContains("The transform pattern \"foo.missing.config => foo.config\" was not performed due to a missing file or overlapping rule.");
+            AssertContains("The transform pattern \"foo.missing.config => foo.config\" was not performed due to a missing file or overlapping rule.");
         }
 
         [Test]
@@ -208,6 +207,12 @@ namespace Calamari.Tests.Fixtures.Conventions
                 return workingDirectory;
 
             return Path.Combine(workingDirectory, filename.Replace('\\', Path.DirectorySeparatorChar));
+        }
+        void AssertContains(string expectedOutput)
+        {
+            var output = new CaptureCommandOutput();
+            logs.WriteOutput(output);
+            Assert.That(logs.StdOut.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, $"Expected to find: {expectedOutput}. Output:\r\n{logs.StdOut}");
         }
     }
 }

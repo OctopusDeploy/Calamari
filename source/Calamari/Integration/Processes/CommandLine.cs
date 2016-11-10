@@ -28,8 +28,9 @@ namespace Calamari.Integration.Processes
             return new CommandLine(func);
         }
 
-        private CommandLine(Func<string[], int> func)
+        public CommandLine(Func<string[], int> func)
         {
+            if (func == null) throw new ArgumentNullException("func");
             this.func = func;
             rawArgList = true;
         }
@@ -71,13 +72,8 @@ namespace Calamari.Integration.Processes
 
         public CommandLine Flag(string flagName)
         {
-            arguments.Add(MakeFlag(flagName));
+            arguments.Add(GetDash() + Normalize(flagName));
             return this;
-        }
-
-        string MakeFlag(string flagName)
-        {
-            return GetDash() + Normalize(flagName);
         }
 
         string GetDash()
@@ -87,40 +83,25 @@ namespace Calamari.Integration.Processes
 
         public CommandLine PositionalArgument(object argValue)
         {
-            arguments.Add(MakePositionalArg(argValue));
+            var sval = "";
+            var f = argValue as IFormattable;
+            if (f != null)
+                sval = f.ToString(null, CultureInfo.InvariantCulture);
+            else if (argValue != null)
+                sval = argValue.ToString();
+
+            arguments.Add(Escape(sval));
             return this;
         }
 
         public CommandLine Argument(string argName, object argValue)
         {
-            arguments.Add(MakeArg(argName, argValue));
+            Flag(argName);
+            PositionalArgument(argValue);
             return this;
         }
-
-        string MakePositionalArg(object argValue)
-        {
-            var sval = "";
-            var f = argValue as IFormattable;
-            if (f != null)
-                sval = f.ToString(null, CultureInfo.InvariantCulture);
-            else if (argValue != null)
-                sval = argValue.ToString();
-
-            return Escape(sval);
-        }
-
-        string MakeArg(string argName, object argValue)
-        {
-            var sval = "";
-            var f = argValue as IFormattable;
-            if (f != null)
-                sval = f.ToString(null, CultureInfo.InvariantCulture);
-            else if (argValue != null)
-                sval = argValue.ToString();
-
-            return string.Format("{2}{0} {1}", Normalize(argName), Escape(sval), GetDash());
-        }
-
+        
+        
         string Escape(string argValue)
         {
             if (argValue == null) throw new ArgumentNullException("argValue");
