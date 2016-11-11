@@ -7,5 +7,4 @@ And the following files exist:
 c:\
 └─transforms
   └─web.mytransform.config
-Then the transform c:\transforms\web.mytransform.config => temp\config\web.config will:
- - Apply the transform c:\transforms\web.mytransform.config to file config\web.config
+Then the transform c:\transforms\web.mytransform.config => config\web.config will do nothing.

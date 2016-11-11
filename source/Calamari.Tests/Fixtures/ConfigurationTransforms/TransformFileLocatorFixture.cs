@@ -152,9 +152,9 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Given.FileExists(@"c:\temp\config\web.config")
                 .And.FileExists(@"c:\transforms\security.mytransform.config")
                 .And.FileExists(@"c:\transforms\connstrings.mytransform.config")
-                .When.UsingTransform(@"c:\transforms\*.mytransform.config => temp\config\web.config")
+                .When.UsingTransform(@"c:\transforms\*.mytransform.config => config\web.config")
                 .Then.SourceFile(@"c:\temp\config\web.config")
-                .Should.BeTransFormedBy(@"c:\transforms\security.mytransform.config", @"c:\transforms\connstrings.mytransform.config")
+                .Should.FailToBeTransformed()
                 .Verify();
         }
 
@@ -454,9 +454,9 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .ForTheScenario("Applying a transform with an absolute path to target in a different directory")
                 .Given.FileExists(@"c:\temp\config\web.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
-                .When.UsingTransform(@"c:\transforms\web.mytransform.config => temp\config\web.config") 
+                .When.UsingTransform(@"c:\transforms\web.mytransform.config => config\web.config") 
                 .Then.SourceFile(@"c:\temp\config\web.config")
-                .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
+                .Should.FailToBeTransformed()
                 .Verify();
         }
 
