@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
-using System.Reflection;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -150,6 +150,56 @@ namespace Calamari.Tests.Fixtures.Conventions
             AssertTransformRun("foo.bar.blah", "bar.blah");
             AssertTransformRun("xyz.bar.blah", "bar.blah");
             configurationTransformer.ReceivedWithAnyArgs(2).PerformTransform("", "", "");
+        }
+
+        [Test]
+        public void ShouldOutputDiagnosticsLoggingIfEnabled()
+        {
+            var calamariFileSystem = Substitute.For<ICalamariFileSystem>();
+            var deploymentVariables = new CalamariVariableDictionary();
+            deploymentVariables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, @"MyPackage.1.0.0.nupkg");
+            deploymentVariables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, @"MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config => MyApplication.ProcessingServer.WorkerRole.dll.config");
+            deploymentVariables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, "True");
+            deploymentVariables.Set(SpecialVariables.Environment.Name, "my-test-env");
+            deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
+            var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
+
+            //mock the world
+            calamariFileSystem.DirectoryExists(@"c:\temp").Returns(true);
+            calamariFileSystem.FileExists(@"c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config").Returns(true);
+            calamariFileSystem.FileExists(@"c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.config").Returns(true);
+            calamariFileSystem.EnumerateFilesRecursively(@"c:\temp", "*.config")
+                .Returns(new[] { @"c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config", @"c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.config" });
+            calamariFileSystem.EnumerateFiles(@"c:\temp", "MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config", @"MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config")
+                .Returns(new[] { @"c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config" });
+            calamariFileSystem.EnumerateFiles(@"c:\temp", "MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config", @"MyApplication.ProcessingServer.WorkerRole.dll.my-test-env")
+             .Returns(new[] { @"c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config" });
+
+            //these variables would normally be set by ExtractPackageToStagingDirectoryConvention
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, "c:\\temp", runningDeployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.OriginalPackageDirectoryPath, "c:\\temp", runningDeployment.Variables);
+
+            var log = new InMemoryLog();
+            var transformer = Substitute.For<IConfigurationTransformer>();
+            var fileLocator = new TransformFileLocator(calamariFileSystem, log);
+            new ConfigurationTransformsConvention(calamariFileSystem, transformer, fileLocator, log).Install(runningDeployment);
+
+            //not completely testing every scenario here, but this is a reasonable half way point to make sure it works without going overboard
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @"Recursively searching for transformation files that match *.config in folder 'c:\temp'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @"Found config file 'c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - checking against transform 'MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config => MyApplication.ProcessingServer.WorkerRole.dll.config'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - Skipping as file name 'MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config' does not match the target pattern 'MyApplication.ProcessingServer.WorkerRole.dll.config'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - checking against transform 'Release'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - skipping as neither transform 'MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.Release.config' nor transform 'MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.Release' could be found in 'c:\temp'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - checking against transform 'my-test-env'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - skipping as neither transform 'MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.my-test-env.config' nor transform 'MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.my-test-env' could be found in 'c:\temp'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @"Found config file 'c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.config'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - checking against transform 'MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config => MyApplication.ProcessingServer.WorkerRole.dll.config'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Info    && m.FormattedMessage == @"Transforming 'c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.config' using 'c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config'.");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - checking against transform 'Release'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - skipping as neither transform 'MyApplication.ProcessingServer.WorkerRole.dll.Release.config' nor transform 'MyApplication.ProcessingServer.WorkerRole.dll.Release' could be found in 'c:\temp'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - checking against transform 'my-test-env'");
+            log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @" - Skipping as target 'c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.config' has already been transformed by transform 'c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config'");
         }
 
         private static IEnumerable AdvancedTransformTestCases

@@ -98,7 +98,8 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Returns(x => GetRelativePath(x, realFileSystem));
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var transform = new XmlConfigTransformDefinition(transformDefinition);
-            var result = transformFileLocator.DetermineTransformFileNames(sourceFile, transform).ToArray();
+            const bool diagnosticLoggingEnabled = false;
+            var result = transformFileLocator.DetermineTransformFileNames(sourceFile, transform, diagnosticLoggingEnabled).ToArray();
             return result;
         }
 
