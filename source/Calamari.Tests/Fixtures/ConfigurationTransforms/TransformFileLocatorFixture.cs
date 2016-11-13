@@ -117,7 +117,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void When_TransformIsWildcardFullPath_And_TargetIsFileNameOnly_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Applying multiple transforms to the same target file")
+                .ForTheScenario("Applying multiple absolute path transforms to the same target file")
                 .Given.FileExists(@"c:\temp\web.config")
                 .And.FileExists(@"c:\transforms\connstrings.mytransform.config")
                 .And.FileExists(@"c:\transforms\security.mytransform.config")
@@ -131,7 +131,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void When_TransformIsWildcardFullPath_And_TargetIsWildcardFileNameOnly_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Using wildcards for both transform and target") 
+                .ForTheScenario("Using an absolute path wildcard transform and multiple targets") 
                 .Given.FileExists(@"c:\temp\web.config")
                 .And.FileExists(@"c:\temp\web.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
@@ -207,7 +207,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void When_TransformIsWildcardRelativePath_And_TargetIsFileNameOnly_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Applying a wildcard transform against a specific target")
+                .ForTheScenario("Applying multiple relative transforms against a specific target")
                 .Given.FileExists(@"c:\temp\web.config")
                 .And.FileExists(@"c:\temp\transforms\connstrings.mytransform.config")
                 .And.FileExists(@"c:\temp\transforms\security.mytransform.config")

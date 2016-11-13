@@ -1,4 +1,4 @@
-﻿Applying a wildcard transform against a specific target
+﻿Applying multiple relative transforms against a specific target
 Given a package which has the structure:
 Acme.Core.1.0.0.nupkg
 ├─transforms

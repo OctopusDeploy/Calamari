@@ -1,4 +1,4 @@
-﻿Using wildcards for both transform and target
+﻿Using an absolute path wildcard transform and multiple targets
 Given a package which has the structure:
 Acme.Core.1.0.0.nupkg
 ├─web.config

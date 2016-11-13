@@ -1,4 +1,4 @@
-﻿Applying multiple transforms to the same target file
+﻿Applying multiple absolute path transforms to the same target file
 Given a package which has the structure:
 Acme.Core.1.0.0.nupkg
 └─web.config
