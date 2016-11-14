@@ -4,6 +4,9 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using NuGet;
+#if !NET40
+using System.Runtime.Loader;
+#endif
 
 namespace Calamari.Util
 {
@@ -171,6 +174,16 @@ namespace Calamari.Util
             return IsWindows()
                 ? Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%")
                 : Environment.GetEnvironmentVariable("HOME");
+        }
+
+
+        public static Assembly LoadAssemblyFromDll(string file)
+        {
+#if NET40
+            return Assembly.LoadFrom(file);
+#else
+            return AssemblyLoadContext.Default.LoadFromAssemblyPath(file);
+#endif
         }
     }
 }

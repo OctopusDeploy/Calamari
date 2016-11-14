@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 
 namespace Calamari.Integration.FileSystem
 {
-    public abstract class CalamariPhysicalFileSystem : ICalamariFileSystem
+    public abstract class CalamariPhysicalFileSystem : ICalamariFileSystem,  Shared.ICalamariFileSystem
     {
         public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
         {
@@ -612,6 +612,31 @@ namespace Calamari.Integration.FileSystem
         public Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess)
         {
             return File.Open(filePath, fileMode, fileAccess, FileShare.None);
+        }
+
+        public void DeleteFile(string path, Shared.FailureOptions options)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DeleteDirectory(string path, Shared.FailureOptions options)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void PurgeDirectory(string targetDirectory, Shared.FailureOptions options)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void PurgeDirectory(string targetDirectory, Shared.FailureOptions options, CancellationToken cancel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void PurgeDirectory(string targetDirectory, Predicate<Shared.IFileInfo> filter, Shared.FailureOptions options)
+        {
+            throw new NotImplementedException();
         }
     }
 }

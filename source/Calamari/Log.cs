@@ -7,7 +7,7 @@ using Octostache;
 
 namespace Calamari
 {
-    public class LogWrapper : ILog
+    public class LogWrapper : ILog, Calamari.Shared.ILog
     {
         public void Verbose(string message)
         {

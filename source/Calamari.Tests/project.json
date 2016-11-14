@@ -2,6 +2,8 @@
   "version": "0.0.0-*",
   "dependencies": {
     "Calamari": "*",
+    "Calamari.RunScript": "*",
+    "Calamari.Shared": "*",
     "NSubstitute": "2.0.0-rc",
     "NUnit": "3.4.1",
     "FluentAssertions": "4.13.1",
@@ -101,7 +103,8 @@
     }
   },
   "scripts": {
-    "precompile": "./chmodexes"
+    "precompile": [ "./chmodexes" ],
+    "postcompile": "./copyfeatures \"%compile:RuntimeOutputDir%\""
   },
   "runtimes": {
     "win7-x64": {},
