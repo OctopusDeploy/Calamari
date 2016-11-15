@@ -18,13 +18,13 @@ namespace Calamari.Tests.Fixtures.FindPackage
         readonly string packageVersion = "1.0.0.0";
         readonly string newpackageVersion = "1.0.0.1";
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
             Environment.SetEnvironmentVariable("TentacleHome", tentacleHome);
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TestFixtureTearDown()
         {
             Environment.SetEnvironmentVariable("TentacleHome", null);

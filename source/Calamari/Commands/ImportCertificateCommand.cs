@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -94,3 +95,4 @@ namespace Calamari.Commands
         }
     }
 }
+#endif

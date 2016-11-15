@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+using System;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Integration.Certificates;
 using Calamari.Tests.Helpers.Certificates;
@@ -38,3 +39,4 @@ namespace Calamari.Tests.Fixtures.Certificates
         }
     }
 }
+#endif

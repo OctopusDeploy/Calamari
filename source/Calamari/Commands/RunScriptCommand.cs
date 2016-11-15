@@ -8,6 +8,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
+using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Commands
@@ -58,9 +59,9 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find package file: " + packageFile);
 
             var extractor = new GenericPackageExtractor();
-            extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);
+            extractor.GetExtractor(packageFile).Extract(packageFile, CrossPlatform.GetCurrentDirectory(), true);
 
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, CrossPlatform.GetCurrentDirectory());
         }
 
         private void SubstituteVariablesInScript(CalamariVariableDictionary variables)

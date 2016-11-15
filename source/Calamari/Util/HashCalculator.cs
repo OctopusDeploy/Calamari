@@ -14,7 +14,7 @@ namespace Calamari.Util
 
         static HashAlgorithm GetAlgorithm()
         {
-            return new SHA1CryptoServiceProvider();
+            return SHA1.Create();
         }
     }
 }

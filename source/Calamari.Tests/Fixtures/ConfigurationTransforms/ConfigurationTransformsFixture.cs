@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -38,7 +40,12 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 
         [Test]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+#if USE_OCTOPUS_XMLT
+        //vs shows ambiguous refence here but it builds and runs fine?
+        [ExpectedException(typeof(Octopus.System.Xml.XmlException))]
+#else
         [ExpectedException(typeof(System.Xml.XmlException))]
+#endif
         public void ShouldThrowExceptionForBadConfig()
         {
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));

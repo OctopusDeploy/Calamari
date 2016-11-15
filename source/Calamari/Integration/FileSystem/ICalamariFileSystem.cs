@@ -43,5 +43,7 @@ namespace Calamari.Integration.FileSystem
         string RemoveInvalidFileNameChars(string path);
         void MoveFile(string sourceFile, string destinationFile);
         string GetRelativePath(string fromFile, string toFile);
+        Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess);
+        DateTime GetCreationTime(string filePath);
     }
 }

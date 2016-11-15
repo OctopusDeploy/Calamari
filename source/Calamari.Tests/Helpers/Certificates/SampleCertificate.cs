@@ -1,13 +1,14 @@
-﻿using System;
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
+using System.Linq;
 
 namespace Calamari.Tests.Helpers.Certificates
 {
@@ -145,3 +146,4 @@ namespace Calamari.Tests.Helpers.Certificates
 
     }
 }
+#endif

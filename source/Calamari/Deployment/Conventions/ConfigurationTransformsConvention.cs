@@ -76,7 +76,7 @@ namespace Calamari.Deployment.Conventions
         {
             foreach (var transformation in transformations)
             {
-                if ((transformation.IsTransformWildcard && !sourceFile.EndsWith(GetFileName(transformation.SourcePattern), StringComparison.InvariantCultureIgnoreCase)))
+                if ((transformation.IsTransformWildcard && !sourceFile.EndsWith(GetFileName(transformation.SourcePattern), StringComparison.OrdinalIgnoreCase)))
                     continue;
                 try
                 {
@@ -119,10 +119,13 @@ namespace Calamari.Deployment.Conventions
                 extensions.Add("*.config");
             }
 
-            extensions.AddRange(transformDefinitions
+            foreach (var definition in transformDefinitions
                 .Where(transform => transform.Advanced)
                 .Select(transform => "*" + Path.GetExtension(transform.SourcePattern))
-                .Distinct());
+                .Distinct())
+            {
+                extensions.Add(definition);
+            }
 
             return extensions.ToArray();
         }

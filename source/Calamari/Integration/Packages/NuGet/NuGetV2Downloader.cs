@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if USE_NUGET_V2_LIBS
+using System;
 using System.IO;
 using System.Net;
 using Calamari.Integration.Packages.Download;
@@ -9,7 +10,8 @@ namespace Calamari.Integration.Packages.NuGet
 {
     public class NuGetV2Downloader
     {
-        public static void DownloadPackage(string packageId, string packageVersion, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        public static void DownloadPackage(string packageId, string packageVersion, Uri feedUri,
+            ICredentials feedCredentials, string targetFilePath)
         {
             SetFeedCredentials(feedUri, feedCredentials);
 
@@ -18,7 +20,8 @@ namespace Calamari.Integration.Packages.NuGet
             DownloadPackage(package, targetFilePath, downloader);
         }
 
-        static IPackage FindPackage(string packageId, string packageVersion, Uri feed, out global::NuGet.PackageDownloader downloader)
+        static IPackage FindPackage(string packageId, string packageVersion, Uri feed,
+            out global::NuGet.PackageDownloader downloader)
         {
             var remoteRepository = PackageRepositoryFactory.Default.CreateRepository(feed.AbsoluteUri);
 
@@ -29,18 +32,23 @@ namespace Calamari.Integration.Packages.NuGet
             var package = remoteRepository.FindPackage(packageId, requiredVersion, true, true);
 
             if (package == null)
-                throw new Exception(string.Format("Could not find package {0} {1} in feed: '{2}'", packageId, packageVersion, feed));
+                throw new Exception(string.Format("Could not find package {0} {1} in feed: '{2}'", packageId,
+                    packageVersion, feed));
 
             if (!requiredVersion.Equals(package.Version))
             {
-                var message = string.Format("The package version '{0}' returned from the package repository doesn't match the requested package version '{1}'.", package.Version, requiredVersion);
+                var message =
+                    string.Format(
+                        "The package version '{0}' returned from the package repository doesn't match the requested package version '{1}'.",
+                        package.Version, requiredVersion);
                 throw new Exception(message);
             }
 
             return package;
         }
 
-        static void DownloadPackage(IPackage package, string fullPathToDownloadTo, global::NuGet.PackageDownloader directDownloader)
+        static void DownloadPackage(IPackage package, string fullPathToDownloadTo,
+            global::NuGet.PackageDownloader directDownloader)
         {
             Log.VerboseFormat("Found package {0} version {1}", package.Id, package.Version);
             Log.Verbose("Downloading to: " + fullPathToDownloadTo);
@@ -66,3 +74,4 @@ namespace Calamari.Integration.Packages.NuGet
         }
     }
 }
+#endif

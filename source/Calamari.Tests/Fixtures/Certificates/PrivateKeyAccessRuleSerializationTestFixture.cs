@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+using System.Linq;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
 
@@ -24,3 +25,4 @@ namespace Calamari.Tests.Fixtures.Certificates
         }
     }
 }
+#endif

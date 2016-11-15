@@ -61,7 +61,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 var allOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
-                Assert.That(allOutput.Contains("-NoProfile") == calledWithNoProfile);
+                // Need to check for "-NoProfile -NoLogo" not just "-NoProfile" because when
+                // run via Cake we end up with the outer Powershell call included in the
+                // output too, which has a -NoProfile flag.
+                Assert.That(allOutput.Contains("-NoProfile -NoLo") == calledWithNoProfile);
             }
         }
 
@@ -469,7 +472,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
-        public void ThrowsExceptionOnNix()
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ThrowsExceptionOnNixOrMac()
         {
             var output = Invoke(Calamari()
                 .Action("run-script")

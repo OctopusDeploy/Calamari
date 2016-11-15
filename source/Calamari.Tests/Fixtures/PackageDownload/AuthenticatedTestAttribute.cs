@@ -1,5 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace Calamari.Tests.Fixtures.PackageDownload
 {
@@ -17,7 +18,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             this.feedPasswordVariable = feedPasswordVariable;
         }
 
-        public void BeforeTest(TestDetails testDetails)
+        public void BeforeTest(ITest testDetails)
         {
             if (String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(feedUri)) ||
                 String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(feedUsernameVariable)) ||
@@ -27,7 +28,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             }
         }
 
-        public void AfterTest(TestDetails testDetails)
+        public void AfterTest(ITest testDetails)
         {
         }
 

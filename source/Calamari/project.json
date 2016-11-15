@@ -1,0 +1,144 @@
+{
+  "version": "0.0.0-*",
+  "dependencies": {
+    "OctoDiff": "1.1.0",
+    "FSharp.Compiler.Tools": "4.0.0.1",
+    "ScriptCS": "0.16.1",
+    "Octostache": "2.0.7"
+  },
+  "frameworks": {
+    "net40": {
+      "frameworkAssemblies": {
+        "System.ComponentModel.DataAnnotations": "*",
+        "System.Configuration.Install": "*",
+        "System.Core": "*",
+        "System.DirectoryServices": "*",
+        "System.Net": "*",
+        "System.Runtime.Serialization": "*",
+        "System.Xml.Linq": "*",
+        "System.Data.DataSetExtensions": "*",
+        "Microsoft.CSharp": "*",
+        "System.Data": "*",
+        "System.Xml": "*",
+        "WindowsBase": "*"
+      },
+      "dependencies": {
+        "GitVersionTask": "3.3.0",
+        "MarkdownSharp": "1.13.0.0",
+        "Microsoft.Bcl": "1.1.9",
+        "Microsoft.Bcl.Async": "1.0.168",
+        "Microsoft.Bcl.Build": "1.0.14",
+        "Microsoft.Data.Edm": "5.6.2",
+        "Microsoft.Data.OData": "5.6.2",
+        "Microsoft.Data.Services.Client": "5.6.2",
+        "Microsoft.Net.Http": "2.2.22",
+        "Microsoft.Web.Administration": "7.0.0.0",
+        "Microsoft.Web.Deployment": "3.6.0",
+        "Microsoft.Web.Xdt": "2.1.1",
+        "Newtonsoft.Json": "9.0.1",
+        "NuGet.CommandLine": "2.8.3",
+        "NuGet.Core": "2.11.1",
+        "SharpCompress": "0.12.4",
+        "System.Spatial": "5.6.2"
+      },
+      "buildOptions": {
+        "platform": "anycpu",
+        "define": [
+          "NET40",
+          "HAS_SERIALIZABLE_EXCEPTIONS",
+          "CAPI_AES",
+          "HAS_DEFAULT_ENCODING",
+          "USE_NUGET_V2_LIBS",
+          "IIS_SUPPORT",
+          "USE_OCTODIFF_EXE",
+          "WINDOWS_CERTIFICATE_STORE_SUPPORT"
+        ]
+      }
+    },
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Markdown": "2.1.0",
+        "Microsoft.NETCore.Runtime.CoreCLR": "1.0.4",
+        "Microsoft.NETCore.DotNetHostPolicy": "1.0.1",
+        "Newtonsoft.Json": "9.0.1",
+        "NuGet.Commands": "3.5.0-rc1-final",
+        "NuGet.Protocol.Core.v3": "3.5.0-rc1-final",
+        "Octopus.Web.XmlTransform": "1.0.0-ci0018",
+        "SharpCompress": "0.12.4",
+        "Sprache": "2.1.0",
+        "System.ComponentModel.TypeConverter": "4.1.0",
+        "System.Diagnostics.FileVersionInfo": "4.0.0",
+        "System.Diagnostics.TraceSource": "4.0.0",
+        "System.IO.FileSystem": "4.0.1",
+        "System.IO.FileSystem.AccessControl": "4.0.0",
+        "System.IO.FileSystem.DriveInfo": "4.0.0",
+        "System.IO.Packaging": "4.0.0",
+        "System.Net.Requests": "4.0.11",
+        "System.Reflection.Extensions": "4.0.1",
+        "System.Reflection.TypeExtensions": "4.1.0",
+        "System.Runtime": "4.1.0",
+        "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
+        "System.Runtime.Serialization.Formatters": "4.0.0-rc3-24212-01",
+        "System.Security.Cryptography.Primitives": "4.0.0",
+        "System.Security.Cryptography.X509Certificates": "4.1.0",
+        "System.Threading.AccessControl": "4.0.0",
+        "System.Xml.XPath.XDocument": "4.0.1",
+        "System.Text.Encoding.CodePages": "4.0.1"
+      },
+      "buildOptions": {
+        "define": [
+          "USE_OCTOPUS_XMLT",
+          "USE_SYSTEM_IO_DIRECTORY",
+          "USE_NUGET_V3_LIBS"
+        ]
+      }
+    }
+  },
+  "buildOptions": {
+    "emitEntryPoint": true,
+    "warningsAsErrors": true,
+    "embed": {
+      "include": [
+        "Integration\\Scripting\\Bash\\Bootstrap.sh",
+        "Integration\\Scripting\\WindowsPowerShell\\Bootstrap.ps1",
+        "Integration\\Scripting\\ScriptCS\\Bootstrap.csx",
+        "Integration\\Scripting\\FSharp\\Bootstrap.fsx",
+        "Scripts\\Octopus.Features.IISWebSite_BeforePostDeploy.ps1",
+        "Scripts\\Octopus.Features.RedGateDatabase_BeforePostDeploy.ps1",
+        "Scripts\\Octopus.Features.WindowsService_AfterPreDeploy.ps1",
+        "Scripts\\Octopus.Features.WindowsService_BeforePostDeploy.ps1",
+        "Scripts\\Octopus.Features.HelloWorld_BeforePreDeploy.sh",
+        "Scripts\\Octopus.Features.HelloWorld_BeforePreDeploy.ps1"
+      ]
+    }
+  },
+  "copyToOutput": {
+    "mappings": {
+      "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
+      "ScriptCS/": "../Tools/ScriptCS**/"
+    }
+  },
+  "publishOptions": {
+    "mappings": {
+      "project.json": "pack.json",
+      "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
+      "ScriptCS/": "../Tools/ScriptCS**/"
+    }
+  },
+  "scripts": {
+    "precompile": "../Tools/copytools"
+  },
+  "runtimes": {
+    "win7-x64": {},
+    "win7-x86": {},
+    "osx.10.10-x64": {},
+    "ubuntu.14.04-x64": {},
+    "ubuntu.16.04-x64": {},
+    "rhel.7.2-x64": {},
+    "debian.8-x64": {},
+    "fedora.23-x64": {},
+    "opensuse.13.2-x64": {},
+    "linuxmint.17-x64": {},
+    "centos.7-x64": {}
+  }
+}

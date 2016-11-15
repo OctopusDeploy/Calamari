@@ -1,33 +1,45 @@
 using System;
 using System.IO;
-using ApprovalTests.Namers;
-using ApprovalTests.Reporters;
 using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
+using System.Reflection;
+#if APPROVAL_TESTS
+using ApprovalTests.Namers;
+using ApprovalTests.Reporters;
+#endif
 
 namespace Calamari.Tests.Helpers
 {
+#if APPROVAL_TESTS
     [UseReporter(typeof(DiffReporter))]
     [UseApprovalSubdirectory("Approved")]
+#endif
     public abstract class CalamariFixture
     {
         protected CommandLine Calamari()
         {
-            var calamariFullPath = typeof (DeployPackageCommand).Assembly.FullLocalPath();
-            var calamariConfigFilePath = calamariFullPath + ".config";
-            if (!File.Exists(calamariConfigFilePath))
-                throw new FileNotFoundException($"Unable to find {calamariConfigFilePath} which means the config file would not have been included in testing {calamariFullPath}");
-
-            return CommandLine.Execute(calamariFullPath);
+            string calamariFullPath;
+#if NET40
+            calamariFullPath = typeof (DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
+#else
+            var folder = Path.GetDirectoryName(typeof(Program).GetTypeInfo().Assembly.FullLocalPath());
+            if(Util.CrossPlatform.IsWindows())
+            {
+                calamariFullPath = Path.Combine(folder, "Calamari.Tests.exe");
+            }
+            else
+            {
+                calamariFullPath = Path.Combine(folder, "Calamari.Tests.dll");
+            }
+#endif
+            return CommandLine.Execute(calamariFullPath).DotNet();
         }
 
         protected CommandLine OctoDiff()
         {
-            var octoDiffExe = Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Octodiff.exe");
-            if (!File.Exists(octoDiffExe))
-                throw new FileNotFoundException($"Unable to find {octoDiffExe}");
+            var octoDiffExe = OctoDiffCommandLineRunner.FindOctoDiffExecutable();
 
             return CommandLine.Execute(octoDiffExe);
         }

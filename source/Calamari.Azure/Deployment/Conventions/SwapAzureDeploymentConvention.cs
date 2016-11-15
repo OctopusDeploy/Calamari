@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -41,7 +42,7 @@ namespace Calamari.Azure.Deployment.Conventions
             // The user may supply the script, to override behaviour
             if (!fileSystem.FileExists(scriptFile))
             {
-                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText("Calamari.Azure.Scripts.SwapAzureCloudServiceDeployment.ps1"));
+                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.SwapAzureCloudServiceDeployment.ps1"));
             }
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);

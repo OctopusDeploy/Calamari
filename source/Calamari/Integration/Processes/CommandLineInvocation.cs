@@ -1,4 +1,5 @@
 using System;
+using Calamari.Util;
 
 namespace Calamari.Integration.Processes
 {
@@ -36,7 +37,7 @@ namespace Calamari.Integration.Processes
         /// </summary>
         public string WorkingDirectory
         {
-            get { return workingDirectory ?? Environment.CurrentDirectory;}
+            get { return workingDirectory ?? CrossPlatform.GetCurrentDirectory(); }
         }
 
         public override string ToString()

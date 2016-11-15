@@ -29,7 +29,8 @@ namespace Calamari.Integration.JsonVariables
             if (new FileInfo(jsonFilePath).Length == 0)
                 return new JObject();
 
-            using (var reader = new StreamReader(jsonFilePath))
+            using (var file = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read))
+            using (var reader = new StreamReader(file))
             using (var json = new JsonTextReader(reader))
             {
                 return JObject.Load(json);
@@ -38,7 +39,8 @@ namespace Calamari.Integration.JsonVariables
 
         static void SaveJson(string jsonFilePath, JObject root)
         {
-            using (var writer = new StreamWriter(jsonFilePath))
+            using (var file = new FileStream(jsonFilePath, FileMode.Create, FileAccess.Write))
+            using (var writer = new StreamWriter(file))
             using (var json = new JsonTextWriter(writer))
             {
                 json.Formatting = Formatting.Indented;

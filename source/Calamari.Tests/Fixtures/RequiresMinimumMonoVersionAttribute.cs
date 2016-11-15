@@ -1,6 +1,7 @@
 using System;
 using Calamari.Integration.Scripting;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace Calamari.Tests.Fixtures
 {
@@ -17,7 +18,7 @@ namespace Calamari.Tests.Fixtures
             this.build = build;
         }
 
-        public void BeforeTest(TestDetails testDetails)
+        public void BeforeTest(ITest testDetails)
         {
             if (ScriptingEnvironment.IsRunningOnMono() && (ScriptingEnvironment.GetMonoVersion() < new Version(major, minor, build)))
             {
@@ -25,7 +26,7 @@ namespace Calamari.Tests.Fixtures
             }
         }
 
-        public void AfterTest(TestDetails testDetails)
+        public void AfterTest(ITest testDetails)
         {
         }
 

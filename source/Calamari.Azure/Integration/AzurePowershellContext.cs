@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
@@ -21,13 +22,13 @@ namespace Calamari.Azure.Integration
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
-        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "AzurePowershell");
+        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
 
         public AzurePowerShellContext()
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
-            this.embeddedResources = new CallingAssemblyEmbeddedResources();
+            this.embeddedResources = new AssemblyEmbeddedResources();
         }
 
         public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
@@ -73,7 +74,7 @@ namespace Calamari.Azure.Integration
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");
-            var contextScript = embeddedResources.GetEmbeddedResourceText("Calamari.Azure.Scripts.AzureContext.ps1");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.AzureContext.ps1");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }

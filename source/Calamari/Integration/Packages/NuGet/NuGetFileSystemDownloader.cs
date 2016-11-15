@@ -4,8 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Util;
 using NuGet;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
 using NuGet.Versioning;
+#endif
 
 namespace Calamari.Integration.Packages.NuGet
 {
@@ -58,7 +63,7 @@ namespace Calamari.Integration.Packages.NuGet
                 string partialName = version.Version.Build < 1 ?
                                         String.Join(".", packageId, version.Version.Major, version.Version.Minor) :
                                         String.Join(".", packageId, version.Version.Major, version.Version.Minor, version.Version.Build);
-                partialName += "*" + Constants.PackageExtension;
+                partialName += "*" + CrossPlatform.GetPackageExtension();
 
                 // Partial names would result is gathering package with matching major and minor but different build and revision.
                 // Attempt to match the version in the path to the version we're interested in.
@@ -84,7 +89,7 @@ namespace Calamari.Integration.Packages.NuGet
         {
             var feedPath = feedUri.LocalPath;
 
-            filter = filter ?? "*" + Constants.PackageExtension;
+            filter = filter ?? "*" + CrossPlatform.GetPackageExtension();
 
             // Check for package files one level deep. We use this at package install time
             // to determine the set of installed packages. Installed packages are copied to
@@ -120,7 +125,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static string GetPackageFileName(string packageId, NuGetVersion version)
         {
-            return packageId + "." + version + Constants.PackageExtension;
+            return packageId + "." + version + CrossPlatform.GetPackageExtension();
         }
     }
 }

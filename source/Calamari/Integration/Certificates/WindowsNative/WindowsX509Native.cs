@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+using System;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
@@ -188,3 +189,4 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
     }
 }
+#endif

@@ -5,7 +5,11 @@ using System.Net;
 using System.Text;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Integration.Retry;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
 using NuGet.Versioning;
+#endif
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
@@ -53,7 +57,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                     (arg1, arg2, arg3, arg4, arg5) =>
                     {
                         calledCount++;
-                        throw new ApplicationException("Expected exception from test");
+                        throw new Exception("Expected exception from test");
                     });
             });
             Assert.That(calledCount, Is.EqualTo(5));

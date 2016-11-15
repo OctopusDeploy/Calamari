@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if IIS_SUPPORT
+using System;
+using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
@@ -23,14 +25,14 @@ namespace Calamari.Tests.Fixtures.Deployment
         private string uniqueValue;
         private WebServerSevenSupport iis;
       
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void Init()
         {
             packageV1 = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0"));
             packageV2 = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "2.0.0"));
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
             packageV1.Dispose();
@@ -42,7 +44,11 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             iis = new WebServerSevenSupport();
             uniqueValue = "Test_" + Guid.NewGuid().ToString("N");
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
             SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
+#endif
+
             base.SetUp();
         }
 
@@ -51,7 +57,10 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             if (iis.WebSiteExists(uniqueValue)) iis.DeleteWebSite(uniqueValue);
             if (iis.ApplicationPoolExists(uniqueValue)) iis.DeleteApplicationPool(uniqueValue);
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
             SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
+#endif
 
             base.CleanUp();
         }
@@ -188,7 +197,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage(packageV1.FilePath);
 
             result.AssertFailure();
-            result.AssertErrorOutput($"Site \"{uniqueValue}\" does not exist.", true);
+            result.AssertErrorOutput($"The Web Site \"{uniqueValue}\" does not exist", true);
         }
 
         [Test]
@@ -253,6 +262,36 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertErrorOutput("Please delete", true);
         }
 
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldDeployWhenVirtualPathAlreadyExistsAndPointsToPhysicalDirectory()
+        {
+            var webSitePhysicalPath = Path.Combine(Path.GetTempPath(), uniqueValue);
+            Directory.CreateDirectory(webSitePhysicalPath);
+            using (new TemporaryDirectory(webSitePhysicalPath))
+            {
+                iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, webSitePhysicalPath, 1087);
+
+                Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
+                Variables["Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate"] = "True";
+
+                Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
+                Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
+
+                Variables["Octopus.Action.Package.CustomInstallationDirectory"] = Path.Combine(webSitePhysicalPath,
+                    uniqueValue);
+                Variables["Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment"] = "True";
+
+                Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+                var result = DeployPackage(packageV1.FilePath);
+
+                result.AssertSuccess();
+            }
+        }
+
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsVariable()
@@ -377,6 +416,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }
+#endif
 
         private string ToFirstLevelPath(string value)
         {
@@ -419,3 +459,4 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
     }
 }
+#endif

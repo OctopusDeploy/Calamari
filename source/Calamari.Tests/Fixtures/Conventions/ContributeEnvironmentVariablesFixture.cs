@@ -14,16 +14,34 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldAddWindowsEnvironmentVariables()
         {
+            if (!CalamariEnvironment.IsRunningOnWindows)
+                Assert.Ignore("This test is designed to run on windows");
             var variables = AddEnvironmentVariables();
-            WindowsEnvironmentVariableTest(variables);
+            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Does.StartWith("My OS is Windows"));
         }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         public void ShouldAddLinuxEnvironmentVariables()
         {
+            if (!CalamariEnvironment.IsRunningOnNix)
+                Assert.Ignore("This test is designed to run on *nix");
+
             var variables = AddEnvironmentVariables();
-            LinuxEnvironmentVariableTest(variables);
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home/"));
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldAddMacEnvironmentVariables()
+        {
+            // Mac running in TeamCity agent service does not contain $HOME variable
+            // $PATH is being used since it should be common between service & development
+            // http://askubuntu.com/a/394330
+            if (!CalamariEnvironment.IsRunningOnMac)
+                Assert.Ignore("This test is designed to run on Mac");
+            var variables = AddEnvironmentVariables();
+            Assert.That(variables.Evaluate("My paths are #{env:PATH}"), Does.Contain("/usr/local/bin"));
         }
 
         private VariableDictionary AddEnvironmentVariables()
@@ -36,16 +54,5 @@ namespace Calamari.Tests.Fixtures.Conventions
             Assert.That(variables.GetRaw(SpecialVariables.Tentacle.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));
             return variables;
         }
-
-        private void WindowsEnvironmentVariableTest(VariableDictionary variables)
-        {
-            Assert.That(variables.Evaluate("My OS is #{env:OS}"), Is.StringStarting("My OS is Windows"));
-        }
-
-        private void LinuxEnvironmentVariableTest(VariableDictionary variables)
-        {
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Is.StringStarting("My home starts at /home"));
-        }
-
     }
 }

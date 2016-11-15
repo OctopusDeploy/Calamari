@@ -5,8 +5,14 @@ using System.Net;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Util;
+#if USE_NUGET_V2_LIBS
 using NuGet;
+using Calamari.NuGet.Versioning;
+#else
+using NuGet.Packaging;
 using NuGet.Versioning;
+#endif
+
 
 namespace Calamari.Integration.Packages.Download
 {
@@ -132,19 +138,23 @@ namespace Calamari.Integration.Packages.Download
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version)
         {
-            var name = packageId + "." + version + "_" + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + Constants.PackageExtension;
+            var name = packageId + "." + version + "_" + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + CrossPlatform.GetPackageExtension();
             return Path.Combine(cacheDirectory, name);
         }
 
-        void CheckWhetherThePackageHasDependencies(IPackageMetadata downloaded)
+        void CheckWhetherThePackageHasDependencies(ManifestMetadata downloaded)
         {
-            var dependencies = downloaded.DependencySets.SelectMany(ds => ds.Dependencies).Count();
-            if (dependencies > 0)
+#if USE_NUGET_V3_LIBS
+            var dependencies = downloaded.DependencyGroups.SelectMany(ds => ds.Packages).ToArray();
+#else
+            var dependencies = downloaded.DependencySets.SelectMany(ds => ds.Dependencies).ToArray();
+#endif
+            if (dependencies.Any())
             {
                 Log.Info("NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
                                downloaded.Id,
                                downloaded.Version,
-                               string.Join(", ", downloaded.DependencySets.SelectMany(ds => ds.Dependencies).Select(dependency => dependency.ToString())),
+                               string.Join(", ", dependencies.Select(dependency => dependency.ToString())),
                                WhyAmINotAllowedToUseDependencies);
             }
         }

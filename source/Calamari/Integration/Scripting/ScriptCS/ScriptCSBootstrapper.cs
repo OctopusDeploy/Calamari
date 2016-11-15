@@ -1,9 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using System.Reflection;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
@@ -23,18 +25,14 @@ namespace Calamari.Integration.Scripting.ScriptCS
             if (!ScriptingEnvironment.IsNet45OrNewer())
                 throw new CommandException("ScriptCS scripts require the Roslyn CTP, which requires .NET framework 4.5");
 
-            var myPath = typeof(ScriptCSScriptEngine).Assembly.Location;
+            var myPath = typeof(ScriptCSScriptEngine).GetTypeInfo().Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
+            var executable = Path.GetFullPath(Path.Combine(parent, "ScriptCS", "scriptcs.exe"));
 
-            var attemptOne = Path.GetFullPath(Path.Combine(parent, "ScriptCS", "scriptcs.exe"));
-            if (File.Exists(attemptOne))
-                return attemptOne;
+            if (File.Exists(executable))
+                return executable;
 
-            var attemptTwo = Path.GetFullPath(Path.Combine("..", "..", "packages", "scriptcs.0.16.1", "tools", "scriptcs.exe"));
-            if (File.Exists(attemptTwo))
-                return attemptTwo;
-
-            throw new CommandException(string.Format("ScriptCS.exe was not found at either '{0}' or '{1}'", attemptOne, attemptTwo));
+            throw new CommandException(string.Format("ScriptCS.exe was not found at '{0}'", executable));
         }
 
         public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
@@ -58,7 +56,8 @@ namespace Calamari.Integration.Scripting.ScriptCS
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
 
-            using (var writer = new StreamWriter(bootstrapFile, false, Encoding.UTF8))
+            using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
+            using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.WriteLine("#load \"" + configurationFile.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("#load \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
@@ -76,7 +75,8 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("{{VariableDeclarations}}", WriteVariableDictionary(variables));
 
-            using (var writer = new StreamWriter(configurationFile, false, Encoding.UTF8))
+            using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
+            using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.Write(builder.ToString());
                 writer.Flush();

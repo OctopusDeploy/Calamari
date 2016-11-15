@@ -19,12 +19,18 @@ namespace Calamari.Deployment.Features
 
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
                 // For any bindings using certificate variables, the application pool account
                 // must have access to the private-key. 
                 EnsureApplicationPoolHasCertificatePrivateKeyAccess(variables);
+#endif
+
             }
         }
 
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
         static void EnsureApplicationPoolHasCertificatePrivateKeyAccess(VariableDictionary variables)
         {
             foreach (var binding in GetBindings(variables))
@@ -84,5 +90,7 @@ namespace Calamari.Deployment.Features
                     throw new ArgumentOutOfRangeException(nameof(applicationPoolIdentityType), applicationPoolIdentityType, null);
             }
         }
+#endif
+
     }
 }

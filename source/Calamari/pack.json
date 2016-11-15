@@ -1,0 +1,18 @@
+{ 
+    "name": "Calamari",
+    "version": "1.0.0.0",
+    "authors": [ "Octopus Deploy" ],
+    "description": "Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.",
+    "language": "en-US",
+    "frameworks": {
+        "net40": {}
+    },
+    "packOptions": {
+        "projectUrl": "https://github.com/OctopusDeploy/Calamari/",
+        "licenseUrl": "https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE",
+        "files": {
+            "include": "**/*.*",
+            "exclude": [ "project.json", "FSharp/*.xml", "ScriptCS/*.ps1" ]
+        }
+    }
+}

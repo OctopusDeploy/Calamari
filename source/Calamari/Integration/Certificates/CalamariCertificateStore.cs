@@ -6,6 +6,7 @@ using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
+using Calamari.Util;
 
 namespace Calamari.Integration.Certificates
 {
@@ -64,7 +65,11 @@ namespace Calamari.Integration.Certificates
             }
             finally
             {
+#if NET40
                 store.Close();
+#else
+                store.Dispose();
+#endif
             }
         }
 
@@ -96,7 +101,7 @@ namespace Calamari.Integration.Certificates
                             message.AppendLine("However, the current user does not appear to be able to access the private key file, or it does not exist.");
                         }
 
-                        message.AppendLine("Attempting to grant the user " + Environment.UserDomainName + "\\" + Environment.UserName + " access to the certificate private key directory.");
+                        message.AppendLine("Attempting to grant the user " + CrossPlatform.GetUserDomainName() + "\\" + CrossPlatform.GetUserName() + " access to the certificate private key directory.");
 
                         try
                         {
@@ -132,7 +137,11 @@ namespace Calamari.Integration.Certificates
         {
             try
             {
+#if NET40
                 return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
+#else
+                return certificate2.HasPrivateKey && (certificate2.GetECDsaPrivateKey() != null || certificate2.GetRSAPrivateKey() != null);
+#endif
             }
             catch (Exception)
             {
@@ -167,12 +176,13 @@ namespace Calamari.Integration.Certificates
             if (current == null || current.User == null)
                 throw new Exception("There is no current windows identity.");
 
-            var security = Directory.GetAccessControl(folderPath);
+            DirectoryInfo directoryInfo = new DirectoryInfo(folderPath);
+            var security = directoryInfo.GetAccessControl();
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
-            Directory.SetAccessControl(folderPath, security);
+            directoryInfo.SetAccessControl(security);
         }
 
-        #region Nested type: CryptUtils
+#region Nested type: CryptUtils
 
         // This code is from a Microsoft sample that resolves the path to a certificate's private key
         static class CryptUtils
@@ -230,14 +240,14 @@ namespace Calamari.Integration.Certificates
 
             static string GetKeyFileDirectory(string keyFileName)
             {
-                string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-                string text = folderPath + "\\Microsoft\\Crypto\\RSA\\MachineKeys";
+                string folderPath = CrossPlatform.GetCommonApplicationDataFolderPath();
+                string text = Path.Combine(folderPath, "Microsoft", "Crypto", "RSA", "MachineKeys");
                 string[] array = Directory.GetFiles(text, keyFileName);
                 string result;
                 if (array.Length <= 0)
                 {
-                    string folderPath2 = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    string path = folderPath2 + "\\Microsoft\\Crypto\\RSA\\";
+                    string folderPath2 = CrossPlatform.GetApplicationDataFolderPath();
+                    string path = Path.Combine(folderPath2, "Microsoft", "Crypto", "RSA");
                     array = Directory.GetDirectories(path);
                     if (array.Length > 0)
                     {
@@ -268,7 +278,7 @@ namespace Calamari.Integration.Certificates
             [DllImport("advapi32", SetLastError = true)]
             internal static extern bool CryptReleaseContext(IntPtr hProv, uint dwFlags);
 
-            #region Nested type: CryptGetProvParamType
+#region Nested type: CryptGetProvParamType
 
             internal enum CryptGetProvParamType
             {
@@ -305,9 +315,9 @@ namespace Calamari.Integration.Certificates
                 PP_CRYPT_COUNT_KEY_USE
             }
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
     }
 }

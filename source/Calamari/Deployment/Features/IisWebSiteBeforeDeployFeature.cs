@@ -15,12 +15,18 @@ namespace Calamari.Deployment.Features
 
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
                 // Any certificate-variables used by IIS bindings must be placed in the 
                 // LocalMachine certificate store
                 EnsureCertificatesUsedInBindingsAreInStore(variables);
+#endif
+
             }
         }
 
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
         static void EnsureCertificatesUsedInBindingsAreInStore(VariableDictionary variables)
         {
             foreach (var binding in GetBindings(variables))
@@ -89,5 +95,7 @@ namespace Calamari.Deployment.Features
                 throw;
             }
         }
+#endif
+
     }
 }

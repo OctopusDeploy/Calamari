@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using ApprovalTests;
 using Calamari.Integration.ServiceMessages;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
+#if APPROVAL_TESTS
+using ApprovalTests;
+#endif
 
 namespace Calamari.Tests.Helpers
 {
@@ -124,21 +126,21 @@ namespace Calamari.Tests.Helpers
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput, Is.Not.StringContaining(expectedOutput));
+            Assert.That(allOutput, Does.Not.Contain(expectedOutput));
         }
 
         public void AssertOutput(string expectedOutput)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput, Is.StringContaining(expectedOutput));
+            Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 
         public void AssertOutputMatches(string regex)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput, Is.StringMatching(regex));
+            Assert.That(allOutput, Does.Match(regex));
         }
 
         public string GetOutputForLineContaining(string expectedOutput)
@@ -157,12 +159,14 @@ namespace Calamari.Tests.Helpers
         {
             var separator = noNewLines ? String.Empty : Environment.NewLine;
             var allOutput = string.Join(separator, captured.Errors);
-            Assert.That(allOutput, Is.StringContaining(expectedOutput));
+            Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 
+#if APPROVAL_TESTS
         public void ApproveOutput()
         {
             Approvals.Verify(captured.ToApprovalString());
         }
+#endif
     }
 }

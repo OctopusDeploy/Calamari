@@ -1,6 +1,4 @@
-﻿
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 
 namespace Calamari.Integration.Certificates.WindowsNative
 {
@@ -27,3 +25,4 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
     }
 }
+#endif
