@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Calamari.Features;
-using Calamari.RunScript;
+using Calamari.Features.Conventions;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

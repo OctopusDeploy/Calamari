@@ -8,4 +8,9 @@ namespace Calamari.Shared.Convention
         public const string ContributeEnvironmentVariables = "Octopus.Calamari.Convention.ContributeEnvironmentVariables";
         public const string LogVariables = "Octopus.Calamari.Convention.LogVariables";
     }
+
+    public static class CommonFeatures
+    {
+        public const string RunScript = "Octopus.Calamari.Feature.RunScript";
+    }
 }

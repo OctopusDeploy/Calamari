@@ -10,7 +10,6 @@ namespace Calamari.Shared.Features
 
         IEnumerable<string> ConventionDependencies { get; }
 
-        IFeature CreateFeature();
         Type Feature { get; }
     }
 }

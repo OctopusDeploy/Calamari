@@ -5,7 +5,6 @@ namespace Calamari.Shared.Features
 {
     public interface IFeatureLocator
     {
-        IFeature ConstructFeature(string name);
         Type GetFeatureType(string name);
     }
 

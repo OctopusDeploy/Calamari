@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared.Convention;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -21,14 +22,15 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var variables = new VariableDictionary();
             variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
+            variables.Set(SpecialVariables.Action.Script.Path, GetFixtureResouce("Scripts", "Hello.ps1"));
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {
                 // Let's just use the Hello.ps1 script for something simples
                 var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1"))
+                    .Action("run-feature")
+                    .Argument("feature", CommonFeatures.RunScript)
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
@@ -50,13 +52,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variables = new VariableDictionary();
             if(executeWithoutProfile != null)
                 variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, executeWithoutProfile);
+            variables.Set(SpecialVariables.Action.Script.Path, GetFixtureResouce("Scripts", "Profile.ps1"));
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {
                 var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Profile.ps1"))
+                    .Action("run-feature")
+                    .Argument("feature", CommonFeatures.RunScript)
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
@@ -76,13 +79,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var variables = new VariableDictionary();
             variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, "true");
+            variables.Set(SpecialVariables.Action.Script.Path, GetFixtureResouce("Scripts", "Profile.ps1"));
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {
                 var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Profile.ps1"))
+                     .Action("run-feature")
+                    .Argument("feature", CommonFeatures.RunScript)
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
@@ -94,42 +98,67 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCallHello()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello!");
+             var variablesFile = Path.GetTempFileName();
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.Path, GetFixtureResouce("Scripts", "Hello.ps1"));
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                     .Action("run-feature")
+                    .Argument("feature", CommonFeatures.RunScript)
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello!");
+            }           
         }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldRetrieveCustomReturnValue()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Exit2.ps1")));
+            var variablesFile = Path.GetTempFileName();
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.Path, GetFixtureResouce("Scripts", "Exit2.ps1"));
+            variables.Save(variablesFile);
 
-            output.AssertFailure(2);
-            output.AssertOutput("Hello!");
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                     .Action("run-feature")
+                    .Argument("feature", CommonFeatures.RunScript)
+                    .Argument("variables", variablesFile));
+
+                output.AssertFailure(2);
+                output.AssertOutput("Hello!");
+            }
         }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldCallHelloWithSensitiveVariable()
         {
+            var sensitiveVariablesFilename = Path.GetTempFileName();
+            var sensitiveVariables = new VariableDictionary();
+            sensitiveVariables.Set("Name", "NameToEncrypt");
+            sensitiveVariables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", sensitiveVariablesFilename);
+
             var variablesFile = Path.GetTempFileName();
-
             var variables = new VariableDictionary();
-            variables.Set("Name", "NameToEncrypt");
-            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
+            variables.Set(SpecialVariables.Action.Script.Path, GetFixtureResouce("Scripts", "HelloWithVariable.ps1"));
+            variables.Save(variablesFile);
 
+            using (new TemporaryFile(sensitiveVariablesFilename))
             using (new TemporaryFile(variablesFile))
             {
                 var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "HelloWithVariable.ps1"))
-                    .Argument("sensitiveVariables", variablesFile)
+                    .Action("run-feature")
+                    .Argument("feature", CommonFeatures.RunScript)
+                    .Argument("variables", variablesFile)
+                    .Argument("sensitiveVariables", sensitiveVariablesFilename)
                     .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
 
                 output.AssertSuccess();

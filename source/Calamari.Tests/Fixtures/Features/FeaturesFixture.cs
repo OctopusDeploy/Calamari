@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared.Convention;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -30,16 +31,15 @@ namespace Calamari.Tests.Fixtures.Features
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Package.NuGetPackageId, "Paul");
-            variables.Set("ScriptName", GetFixtureResouce("../","PowerShell","Scripts", "Hello.ps1"));
-            variables.Set("ScriptParameters", "Cake");
+            variables.Set(SpecialVariables.Action.Script.Path, GetFixtureResouce("../","PowerShell","Scripts", "Hello.ps1"));
+            variables.Set(SpecialVariables.Action.Script.Parameters, "Cake");
             variables.Save(variablesFile);
             
             using (new TemporaryFile(variablesFile))
             {
                 var output = InProcessInvoke(InProcessCalamari()
                     .Action("run-feature")
-                    .Argument("feature", "RunScript")
+                    .Argument("feature", CommonFeatures.RunScript)
                     .Argument("variables", variablesFile));
                     //.Argument("script", GetFixtureResouce("Scripts", "Parameters.fsx"))
                     //.Argument("scriptParameters", "\"Para meter0\" Parameter1"));

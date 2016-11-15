@@ -4,7 +4,7 @@ using Calamari.Shared;
 using Calamari.Shared.Convention;
 using Calamari.Shared.Features;
 
-namespace Calamari.RunScript
+namespace Calamari.Conventions.RunScript
 {
     public class RunScriptFeature : IFeature
     {       
@@ -13,8 +13,8 @@ namespace Calamari.RunScript
             sequence
                 .Run(Hello)
                 .RunConditional(HasPackage, CommonConventions.PackageExtraction)
-                .Run(CommonConventions.VariableReplacement, variables.Get("ScriptName"))
-                .Run(CommonConventions.ExecuteScript, variables.Get("ScriptName"), variables.Get("ScriptParameters"));
+                .Run(CommonConventions.VariableReplacement, variables.Get(SpecialVariables.Action.Script.Path))
+                .Run(CommonConventions.ExecuteScript, variables.Get(SpecialVariables.Action.Script.Path), variables.Get(SpecialVariables.Action.Script.Parameters));
         }
 
         public void Rolback(IVariableDictionary variables)

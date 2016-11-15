@@ -29,7 +29,7 @@ namespace Calamari.Features.Conventions
             this.scriptEngine = scriptEngine;
         }
 
-        public void Install(IVariableDictionary variables)
+        public void Install(IVariableDictionary variables) 
         {
             if (!fileSystem.FileExists(scriptFile))
                 throw new CommandException("Could not find script file: " + scriptFile);

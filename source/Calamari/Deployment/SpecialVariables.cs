@@ -192,6 +192,12 @@
                 public static readonly string CustomPowerShellVersion = "Octopus.Action.PowerShell.CustomPowerShellVersion";
                 public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile";
             }
+
+            public static class Script
+            {
+                public static readonly string Path = "Octopus.Action.Script.Path";
+                public static readonly string Parameters = "Octopus.Action.Script.Parameters";
+            }
         }
 
         public static class Machine

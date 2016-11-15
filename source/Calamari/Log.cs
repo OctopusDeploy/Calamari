@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 using Calamari.Util;
 using Octostache;
 
@@ -97,10 +98,17 @@ namespace Calamari
 
         public static void SetOutputVariable(string name, string value)
         {
-            SetOutputVariable(name, value, null);
+            SetOutputVariable(name, value, (VariableDictionary)null);
         }
 
         public static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        {
+            Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
+
+            variables?.SetOutputVariable(name, value);
+        }
+
+        public static void SetOutputVariable(string name, string value, IVariableDictionary variables)
         {
             Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
 

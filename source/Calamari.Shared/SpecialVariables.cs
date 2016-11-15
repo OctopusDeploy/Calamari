@@ -178,6 +178,12 @@ namespace Calamari.Shared
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
 
+            public static class Script
+            {
+                public static readonly string Path = "Octopus.Action.Script.Path";
+                public static readonly string Parameters = "Octopus.Action.Script.Parameters";
+            }
+
             public static class Azure
             {
                 public static readonly string UseBundledAzurePowerShellModules =

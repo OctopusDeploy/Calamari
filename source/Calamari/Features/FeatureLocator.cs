@@ -14,18 +14,7 @@ using Calamari.Shared.Features;
 namespace Calamari.Features
 {
     public class FeatureLocator : IFeatureLocator
-    {   
-        public IFeature ConstructFeature(string name)
-        {
-            var handler = FeatureHandlers.FirstOrDefault(h => h.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            if (handler == null)
-            {
-                throw new InvalidOperationException($"Unable to find feature with name '{name}'");
-            }
-            return handler.CreateFeature();
-        }
-
-
+    {  
         public Type GetFeatureType(string name)
         {
             var handler = FeatureHandlers.FirstOrDefault(h => h.Name.Equals(name, StringComparison.OrdinalIgnoreCase));

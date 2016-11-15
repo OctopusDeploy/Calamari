@@ -7,6 +7,9 @@ namespace Calamari.Shared
 {
     public interface IVariableDictionary
     {
+
+        void SetOutputVariable(string name, string value);
+
         string this[string name] { get; set; }
         void Set(string name, string value);
         bool GetFlag(string variableName, bool defaultValueIfUnset = false);
