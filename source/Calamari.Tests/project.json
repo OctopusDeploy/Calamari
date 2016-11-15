@@ -91,7 +91,8 @@
         "Fixtures/PowerShell/Packages/**",
         "Fixtures/PowerShell/Scripts/**",
         "Fixtures/ScriptCS/Scripts/**",
-        "Fixtures/Substitutions/Samples/**"
+        "Fixtures/Substitutions/Samples/**",
+        "Helpers/Certificates/SampleCertificateFiles/*.*"
       ],
       "mappings": {
         "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
