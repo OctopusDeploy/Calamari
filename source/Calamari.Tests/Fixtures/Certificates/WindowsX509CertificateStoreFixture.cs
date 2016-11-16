@@ -4,12 +4,14 @@ using System.Security.Cryptography.X509Certificates;
 using Calamari.Integration.Certificates;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
+using Calamari.Tests.Helpers;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
     public class WindowsX509CertificateStoreFixture
     {
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         [Test]
         [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.LocalMachine, "My")]
         [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.CurrentUser, "My")]
