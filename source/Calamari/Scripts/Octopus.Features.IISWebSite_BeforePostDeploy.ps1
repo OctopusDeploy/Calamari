@@ -369,7 +369,7 @@ if ($deployAsWebSite)
 
 			if ($binding.certificateVariable) {
 				$bindingObj.certificateVariable = $binding.certificateVariable.Trim();
-			} elseif ($bindingObj.thumbprint){
+			} elseif ($binding.thumbprint){
 				$bindingObj.thumbprint=$binding.thumbprint.Trim();
 			}
 
