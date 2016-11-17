@@ -8,6 +8,9 @@ namespace Calamari.Integration.Certificates.WindowsNative
     internal static class WindowsX509Native
     {
         [DllImport("Crypt32.dll", SetLastError = true)]
+        public static extern SafeCertStoreHandle CertOpenStore(CertStoreProviders lpszStoreProvider, IntPtr notUsed, IntPtr notUsed2, CertificateSystemStoreLocations location, [MarshalAs(UnmanagedType.LPWStr)]string storeName);
+
+        [DllImport("Crypt32.dll", SetLastError = true)]
         public static extern bool CertCloseStore(IntPtr hCertStore, int dwFlags);
 
         [DllImport("Crypt32.dll", SetLastError = true)]
@@ -71,9 +74,10 @@ namespace Calamari.Integration.Certificates.WindowsNative
         [DllImport("Ncrypt.dll")]
         internal static extern int NCryptDeleteKey(SafeNCryptKeyHandle hKey, int flags);
 
-        internal static class CertStoreProviders
+        [Flags]
+        internal enum CertStoreProviders
         {
-            public const int CERT_STORE_PROV_SYSTEM = 10;
+            CERT_STORE_PROV_SYSTEM = 10
         }
 
         internal enum AddCertificateDisposition

@@ -216,6 +216,7 @@
                 public static readonly string PrivateKeyExportable = "Octopus.Action.Certificate.PrivateKeyExportable";
                 public static readonly string StoreLocation = "Octopus.Action.Certificate.StoreLocation";
                 public static readonly string StoreName = "Octopus.Action.Certificate.StoreName";
+                public static readonly string StoreUser = "Octopus.Action.Certificate.StoreUser";
                 public static readonly string PrivateKeyAccessRules = "Octopus.Action.Certificate.PrivateKeyAccessRules";
             }
         }

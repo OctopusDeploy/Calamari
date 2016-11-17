@@ -39,6 +39,24 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
         }
+
+        [Test]
+        public void CanImportCertificateForUser()
+        {
+            // This test cheats a little bit, using the current user 
+            var user = System.Security.Principal.WindowsIdentity.GetCurrent().Name; 
+            var storeName = "My";
+            var sampleCertificate = SampleCertificate.CapiWithPrivateKey;
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
+
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
+                user, storeName, sampleCertificate.HasPrivateKey);
+
+            sampleCertificate.AssertCertificateIsInStore(storeName, StoreLocation.CurrentUser);
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
+        }
     }
 }
 #endif

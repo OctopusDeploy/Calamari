@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using Calamari.Integration.Certificates.WindowsNative;
 using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
@@ -16,24 +17,42 @@ namespace Calamari.Integration.Certificates
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
             string storeName, bool privateKeyExportable)
         {
-            var store = new X509Store(storeName, storeLocation);
-            store.Open(OpenFlags.ReadWrite);
-            var storeHandle = new SafeCertStoreHandle(store.StoreHandle, false);
+            CertificateSystemStoreLocations systemStoreLocation;
+            bool useUserKeyStore;
 
-            var pfxImportFlags = storeLocation == StoreLocation.LocalMachine
-                ? PfxImportFlags.CRYPT_MACHINE_KEYSET
-                : PfxImportFlags.CRYPT_USER_KEYSET;
-
-            if (privateKeyExportable)
+            switch (storeLocation)
             {
-                pfxImportFlags = pfxImportFlags | PfxImportFlags.CRYPT_EXPORTABLE;
+                case StoreLocation.CurrentUser:
+                    systemStoreLocation = CertificateSystemStoreLocations.CurrentUser;
+                    useUserKeyStore = true;
+                    break;
+                case StoreLocation.LocalMachine:
+                    systemStoreLocation = CertificateSystemStoreLocations.LocalMachine;
+                    useUserKeyStore = false;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(storeLocation), storeLocation, null);
             }
 
-            var certificate = GetCertificateFromPfx(pfxBytes, password, pfxImportFlags);
+            using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
+                systemStoreLocation, storeName))
+            {
+                ImportPfxToStore(store, pfxBytes, password, useUserKeyStore, privateKeyExportable);                
+            }
+        }
 
-            AddCertificateToStore(storeHandle, certificate);
+        public static void ImportCertificateToStore(byte[] pfxBytes, string password, string userName,
+            string storeName, bool privateKeyExportable)
+        {
+           // Get the user SID 
+            var account = new NTAccount(userName);
+            var sid = ((SecurityIdentifier) account.Translate(typeof(SecurityIdentifier))).ToString();
 
-            store.Close();
+            using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
+                CertificateSystemStoreLocations.Users, sid + "\\" + storeName))
+            {
+               ImportPfxToStore(store, pfxBytes, password, true, privateKeyExportable); 
+            }
         }
 
         public static void SetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName, 
@@ -144,6 +163,23 @@ namespace Calamari.Integration.Certificates
             }
 
             return names;
+        }
+
+        static void ImportPfxToStore(SafeCertStoreHandle store, byte[] pfxBytes, string password,
+            bool useUserKeyStore, bool privateKeyExportable)
+        {
+            var pfxImportFlags = useUserKeyStore
+                ? PfxImportFlags.CRYPT_USER_KEYSET
+                : PfxImportFlags.CRYPT_MACHINE_KEYSET;
+
+            if (privateKeyExportable)
+            {
+                pfxImportFlags = pfxImportFlags | PfxImportFlags.CRYPT_EXPORTABLE;
+            }
+
+            var certificate = GetCertificateFromPfx(pfxBytes, password, pfxImportFlags);
+
+            AddCertificateToStore(store, certificate);
         }
 
         private static readonly IList<string> EnumeratedStoreNames  = new List<string>();
