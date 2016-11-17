@@ -77,7 +77,6 @@ namespace Calamari.Commands
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore),
-                new MountVhdConvention(fileSystem),
                 new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
@@ -98,7 +97,6 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new UnmountVhdConvention(fileSystem),
                 new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
             };
 

@@ -1,53 +1,39 @@
-﻿function EnsureVHDState 
+﻿$vhds = @(Get-ChildItem * -Include *.vhd, *.vhdx)
+If($vhds.Length -lt 1)
 {
-    [CmdletBinding(DefaultParametersetName="Mounted")] 
-    param(        
-        
-        [parameter(Mandatory=$false,ParameterSetName = "Mounted")]
-        [switch]$Mounted,
-        [parameter(Mandatory=$false,ParameterSetName = "Dismounted")]  
-        [switch]$Dismounted,
-        [parameter(Mandatory=$true)]
-        $vhdPath 
-        )
-
-        if ( -not ( Get-Module -ListAvailable Hyper-v))
-        {
-            throw "Hyper-v-Powershell Windows Feature is required to run this resource. Please install Hyper-v feature and try again"
-        }
-        if ($PSCmdlet.ParameterSetName -eq 'Mounted')
-        {
-             # Try mounting the VHD.
-            $mountedVHD = Mount-VHD -Path $vhdPath -Passthru -ErrorAction SilentlyContinue -ErrorVariable var
-
-            # If mounting the VHD failed. Dismount the VHD and mount it again.
-            if ($var)
-            {
-                Write-Verbose "Mounting Failed. Attempting to dismount and mount it back"
-                Dismount-VHD $vhdPath 
-                $mountedVHD = Mount-VHD -Path $vhdPath -Passthru -ErrorAction SilentlyContinue
-
-                return $mountedVHD            
-            }
-            else
-            {
-                return $mountedVHD
-            }
-        }
-        else
-        {
-            Dismount-VHD $vhdPath -ea SilentlyContinue
-                
-        }
+	Write-Error "No VHDs found. A single VHD must be in the root of the package deployed to use this step"
+	exit -1
 }
 
-$vhdPath = $OctopusParameters["Octopus.Action.Vhd.MountPath"]
+If($vhds.Length -gt 1)
+{
+	Write-Error "More than one VHD found. A single VHD must be in the root of the package deployed to use this step"
+	exit -2
+}
 
-$mountVHD = EnsureVHDState -Mounted -vhdPath $vhdPath
+$vhdPath = Resolve-Path $vhds[0].FullName
+$mountedDrive = ""
+$attempts = 0
 
-$mountedDrive =  $mountVHD | Get-Disk | Get-Partition | Get-Volume
-$letterDrive  = (-join $mountedDrive.DriveLetter) + ":\"
+# after mounting sometimes we drive letter won't be available immediately, so retry
+while ([string]::IsNullOrEmpty($mountedDrive)){
+	if($attempts -ge 5){
+		Write-Error "Unable to mount VHD"
+		exit -3
+	}
 
-# write this to a variable...
+	$attempts = $attempts + 1
+    Try{
+		Mount-VHD $vhdPath -ErrorAction SilentlyContinue
+        $image = Get-DiskImage $vhdPath -ErrorAction SilentlyContinue
+        $disk = Get-Disk -number $image.Number -ErrorAction SilentlyContinue
+        $partition = Get-Partition -disk $disk -ErrorAction SilentlyContinue
+        $volume = Get-Volume -partition $partition -ErrorAction SilentlyContinue
+        $mountedDrive = $volume.DriveLetter
+    }
+    Catch{}
+    sleep -Seconds 2
+}
 
-write-host $letterDrive
+$letterDrive  = $mountedDrive + ":\"
+$OctopusParameters["Octopus.Action.Vhd.MountPath"] = $letterDrive
