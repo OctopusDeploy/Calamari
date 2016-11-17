@@ -114,6 +114,12 @@
             }
         }
 
+        public static class Vhd
+        {
+            public static readonly string MountPoint = "Octopus.Action.Vhd.MountPoint";
+            public static readonly string VmName = "Octopus.Action.Vhd.VmName";
+        }
+
         public static class Environment
         {
             public static readonly string Id = "Octopus.Environment.Id";
@@ -129,6 +135,7 @@
         public static class Features
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";
+            public const string Vhd = "Octopus.Features.Vhd";
         }
 
         public static class Action

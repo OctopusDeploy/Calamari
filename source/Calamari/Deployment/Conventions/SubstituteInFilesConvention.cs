@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
+using Calamari.Integration.Vhd;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -23,8 +25,7 @@ namespace Calamari.Deployment.Conventions
 
             foreach (var target in deployment.Variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets))
             {
-                var matchingFiles = fileSystem.EnumerateFiles(deployment.CurrentDirectory, target)
-                    .Select(Path.GetFullPath).ToList();
+                var matchingFiles = MatchingFiles(deployment, target);
 
                 if (!matchingFiles.Any())
                 {
@@ -37,8 +38,19 @@ namespace Calamari.Deployment.Conventions
                     Log.Info("Performing variable substitution on '{0}'", file);
                     substituter.PerformSubstitution(file, deployment.Variables);
                 }
-
             }
+        }
+
+        private List<string> MatchingFiles(RunningDeployment deployment, string target)
+        {
+            var files = fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+
+            if(Vhd.FeatureIsOn(deployment))
+            {
+                var mountedFiles = fileSystem.EnumerateFiles(Vhd.GetMountPoint(deployment), target).Select(Path.GetFullPath);
+                files.AddRange(mountedFiles);
+            }
+            return files.ToList();
         }
     }
 }

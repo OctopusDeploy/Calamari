@@ -3,6 +3,9 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Linq;
+using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.Vhd
 {
@@ -54,7 +57,7 @@ namespace Calamari.Integration.Vhd
             try
             {
                 var detachResult = DetachVirtualDisk(handle, DETACH_VIRTUAL_DISK_FLAG.DETACH_VIRTUAL_DISK_FLAG_NONE, 0);
-                if (detachResult != ERROR_SUCCESS)
+                if (detachResult != ERROR_SUCCESS && detachResult != ERROR_NOT_READY) // get ERROR_NOT_READY if device isn't mounted such us doing a rollback before Mount ran
                 {
                     throw new Exception($"The VHD cannot be detached [DetachVirtualDisk failed], errorCode: {detachResult}");
                 }
@@ -145,7 +148,7 @@ namespace Calamari.Integration.Vhd
             }
 
             //GetVDPP gives us something like \\.\PhysicalDrive1 we just need the number
-            int.TryParse(Regex.Match(vhdPhysicalPath.ToString(), @"\d+").Value, out driveNumber);
+            Int32.TryParse(Regex.Match(vhdPhysicalPath.ToString(), @"\d+").Value, out driveNumber);
             return driveNumber;
         }
 
@@ -170,6 +173,7 @@ namespace Calamari.Integration.Vhd
         }
 
         private const Int32 ERROR_SUCCESS = 0;
+        private const Int32 ERROR_NOT_READY = 21;
         private const int OPEN_VIRTUAL_DISK_RW_DEPTH_DEFAULT = 1;
         private const int VIRTUAL_STORAGE_TYPE_DEVICE_VHD = 2;
         private static IntPtr INVALID_HANDLE_VALUE = (IntPtr)(-1);
@@ -268,22 +272,6 @@ namespace Calamari.Integration.Vhd
             TRUNCATE_EXISTING = 5
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        struct DISK_EXTENT
-        {
-            public Int32 diskNumber;
-            public Int64 startingOffset;
-            public Int64 extentLength;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        private struct VOLUME_DISK_EXTENTS
-        {
-            public Int32 numberOfDiskExtents;
-            public DISK_EXTENT[] extents;
-        }
-
-
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct ATTACH_VIRTUAL_DISK_PARAMETERS
         {
@@ -325,17 +313,6 @@ namespace Calamari.Integration.Vhd
             public Int32 partitionNumber;
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct GET_VIRTUAL_DISK_INFO_SIZE
-        {
-            public GET_VIRTUAL_DISK_INFO_VERSION version;
-            public UInt64 virtualSize;
-            public UInt64 physicalSize;
-            public UInt32 blockSize;
-            public UInt32 sectorSize;
-        }
-
-
         [DllImport("virtdisk.dll", CharSet = CharSet.Unicode)]
         private static extern Int32 AttachVirtualDisk(IntPtr virtualDiskHandle, IntPtr securityDescriptor, ATTACH_VIRTUAL_DISK_FLAG flags, Int32 providerSpecificFlags, ref ATTACH_VIRTUAL_DISK_PARAMETERS parameters, IntPtr overlapped);
 
@@ -351,9 +328,6 @@ namespace Calamari.Integration.Vhd
 
         [DllImport("virtdisk.dll", CharSet = CharSet.Unicode)]
         private static extern Int32 GetVirtualDiskPhysicalPath(IntPtr virtualDiskHandle, ref Int32 diskPathSizeInBytes, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder diskPath);
-
-        [DllImport("virtdisk.dll", CharSet = CharSet.Unicode)]
-        private static extern Int32 GetVirtualDiskInformation(IntPtr virtualDiskHandle, ref UInt32 virtualDiskInfoSize, ref GET_VIRTUAL_DISK_INFO_SIZE virtualDiskInfo, IntPtr sizeUsed);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr FindFirstVolume([MarshalAs(UnmanagedType.LPTStr)] StringBuilder volumeName, Int32 bufferLength);
@@ -379,5 +353,29 @@ namespace Calamari.Integration.Vhd
 
         [DllImport("kernel32.dll")]
         static extern uint GetLastError();
+
+        public static string FindSingleVhdInFolder(ICalamariFileSystem fileSystem, string directory)
+        {
+            var vhds = fileSystem.EnumerateFiles(directory, "*.vhd", "*.vhdx").ToArray();
+            if (vhds.Length == 0)
+            {
+                throw new Exception("No VHD or VHDX file found in package.");
+            }
+            if (vhds.Length > 1)
+            {
+                throw new Exception("More than one VHD or VHDX file found in package. Only bundle a single disk image per package.");
+            }
+            return vhds.Single();
+        }
+
+        public static bool FeatureIsOn(RunningDeployment deployment)
+        {
+            return deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).Contains(SpecialVariables.Features.Vhd);
+        }
+
+        public static string GetMountPoint(RunningDeployment deployment)
+        {
+            return Path.Combine(deployment.CurrentDirectory, "mount");
+        }
     }
 }

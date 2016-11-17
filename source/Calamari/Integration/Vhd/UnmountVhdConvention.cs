@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -7,11 +6,11 @@ using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.Vhd
 {
-    public class MountVhdConvention : IInstallConvention
+    public class UnmountVhdConvention : IInstallConvention, IRollbackConvention
     {
         private readonly ICalamariFileSystem fileSystem;
 
-        public MountVhdConvention(ICalamariFileSystem fileSystem)
+        public UnmountVhdConvention(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
         }
@@ -23,8 +22,16 @@ namespace Calamari.Integration.Vhd
 
             var vhdPath = Vhd.FindSingleVhdInFolder(fileSystem, deployment.CurrentDirectory);
 
-            Vhd.Mount(vhdPath, Vhd.GetMountPoint(deployment));
-            deployment.Variables.Set(SpecialVariables.Vhd.MountPoint, vhdPath);
+            Vhd.Unmount(vhdPath);
+        }
+
+        public void Rollback(RunningDeployment deployment)
+        {
+            Install(deployment);
+        }
+
+        public void Cleanup(RunningDeployment deployment)
+        {
         }
     }
 }
