@@ -37,21 +37,31 @@ namespace Calamari.Integration.Certificates
             using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
                 systemStoreLocation, storeName))
             {
-                ImportPfxToStore(store, pfxBytes, password, useUserKeyStore, privateKeyExportable);                
+                ImportPfxToStore(store, pfxBytes, password, useUserKeyStore, privateKeyExportable);
             }
         }
 
+        /// <summary>
+        /// Import a certificate into a specific user's store 
+        /// </summary>
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, string userName,
             string storeName, bool privateKeyExportable)
         {
-           // Get the user SID 
             var account = new NTAccount(userName);
-            var sid = ((SecurityIdentifier) account.Translate(typeof(SecurityIdentifier))).ToString();
+            var sid = (SecurityIdentifier)account.Translate(typeof(SecurityIdentifier));
+            var userStoreName = sid + "\\" + storeName;
 
             using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
-                CertificateSystemStoreLocations.Users, sid + "\\" + storeName))
+                CertificateSystemStoreLocations.Users, userStoreName))
             {
-               ImportPfxToStore(store, pfxBytes, password, true, privateKeyExportable); 
+                // Note we use the machine key-store. There is no way to store the private-key in 
+                // another user's key-store.  
+                var certificate = ImportPfxToStore(store, pfxBytes, password, false, privateKeyExportable);
+
+                // Because we have to store the private-key in the machine key-store, we must grant the user access to it
+                var keySecurity =
+                    PrivateKeyAccessRule.CreateCryptoKeySecurity(new [] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) }); 
+                SetPrivateKeySecurity(keySecurity, certificate);
             }
         }
 
@@ -165,7 +175,7 @@ namespace Calamari.Integration.Certificates
             return names;
         }
 
-        static void ImportPfxToStore(SafeCertStoreHandle store, byte[] pfxBytes, string password,
+        static SafeCertContextHandle ImportPfxToStore(SafeCertStoreHandle store, byte[] pfxBytes, string password,
             bool useUserKeyStore, bool privateKeyExportable)
         {
             var pfxImportFlags = useUserKeyStore
@@ -180,6 +190,8 @@ namespace Calamari.Integration.Certificates
             var certificate = GetCertificateFromPfx(pfxBytes, password, pfxImportFlags);
 
             AddCertificateToStore(store, certificate);
+
+            return certificate;
         }
 
         private static readonly IList<string> EnumeratedStoreNames  = new List<string>();

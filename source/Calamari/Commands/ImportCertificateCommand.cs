@@ -56,8 +56,16 @@ namespace Calamari.Commands
                     Log.Info($"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
                     WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName,
                         privateKeyExportable);
+
+                    if (storeLocation == StoreLocation.LocalMachine)
+                    {
+                        // Set private-key access
+                        var privateKeyAccessRules = GetPrivateKeyAccessRules(variables);
+                        if (privateKeyAccessRules.Any())
+                            WindowsX509CertificateStore.SetPrivateKeySecurity(thumbprint, storeLocation, storeName, privateKeyAccessRules);
+                    }
                 }
-                else
+                else // Import into a specific user's store
                 {
                     var storeUser = variables.Get(SpecialVariables.Action.Certificate.StoreUser);
 
@@ -70,10 +78,6 @@ namespace Calamari.Commands
                     WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName, privateKeyExportable);
                 }
 
-                // Set private-key access
-                var privateKeyAccessRules = GetPrivateKeyAccessRules(variables);
-                if (privateKeyAccessRules.Any())
-                    WindowsX509CertificateStore.SetPrivateKeySecurity(thumbprint, storeLocation, storeName, privateKeyAccessRules);
             }
             catch (Exception)
             {
