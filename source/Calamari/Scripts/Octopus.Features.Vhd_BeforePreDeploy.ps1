@@ -15,7 +15,7 @@ $vhdPath = Resolve-Path $vhds[0].FullName
 $mountedDrive = ""
 $attempts = 0
 
-# after mounting sometimes we drive letter won't be available immediately, so retry
+# retry
 while ([string]::IsNullOrEmpty($mountedDrive)){
 	if($attempts -ge 5){
 		Write-Error "Unable to mount VHD"
@@ -35,5 +35,17 @@ while ([string]::IsNullOrEmpty($mountedDrive)){
     sleep -Seconds 2
 }
 $letterDrive  = $mountedDrive + ":\"
-$OctopusParameters["Octopus.Action.Vhd.MountPath"] = $letterDrive
+
+# append a record to the AdditionalPaths list 
+function Add-ToAdditionalPaths([string]$new) {
+	$current = $OctopusParameters["Octopus.Action.AdditionalPaths"]
+    If([string]::IsNullOrEmpty($current)){
+        $current = $new
+    } Else {
+        $current = $current + "," + $new
+    }
+	Set-OctopusVariable -name "Octopus.Action.AdditionalPaths" -value $current
+}
+
+Add-ToAdditionalPaths $letterDrive
 Write-Host "VHD at $vhdPath mounted to $letterDrive"

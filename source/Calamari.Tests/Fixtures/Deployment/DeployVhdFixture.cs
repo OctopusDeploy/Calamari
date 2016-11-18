@@ -42,7 +42,9 @@ namespace Calamari.Tests.Fixtures.Deployment
         private void RunDeployment()
         {
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd";
-            Variables["Octopus.Action.WindowsService.CreateOrUpdateService"] = "True";
+            Variables["foo"] = "bar";
+            Variables[SpecialVariables.Package.SubstituteInFilesTargets] = "web.config";
+            Variables[SpecialVariables.Package.SubstituteInFilesEnabled] = "true";
 
             using (var vhd = new TemporaryFile(VhdBuilder.BuildSampleVhd(ServiceName)))
             using (var file = new TemporaryFile(PackageBuilder.BuildSimpleZip(ServiceName, "1.0.0", Path.GetDirectoryName(vhd.FilePath))))
@@ -52,7 +54,9 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, ServiceName, "1.0.0"));
                 result.AssertOutput("Extracted 2 files");
+                result.AssertOutput("Bonjour from PreDeploy.ps1");
                 result.AssertOutput($"VHD at {Path.Combine(StagingDirectory, ServiceName, "1.0.0", ServiceName + ".vhdx")} mounted to");
+                result.AssertOutputMatches(@"Performing variable substitution on '.:\\web\.config'");
             }
         }
     }

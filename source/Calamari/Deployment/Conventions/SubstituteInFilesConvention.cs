@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Calamari.Integration.FileSystem;
@@ -42,7 +43,15 @@ namespace Calamari.Deployment.Conventions
 
         private List<string> MatchingFiles(RunningDeployment deployment, string target)
         {
-            return fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+            var files = fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+
+            foreach (var path in deployment.Variables.GetStrings(SpecialVariables.Action.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
+            {
+                var pathFiles = fileSystem.EnumerateFiles(path, target).Select(Path.GetFullPath);
+                files.AddRange(pathFiles);
+            }
+
+            return files;
         }
     }
 }
