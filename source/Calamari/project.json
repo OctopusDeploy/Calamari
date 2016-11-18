@@ -102,12 +102,7 @@
         "Integration\\Scripting\\WindowsPowerShell\\Bootstrap.ps1",
         "Integration\\Scripting\\ScriptCS\\Bootstrap.csx",
         "Integration\\Scripting\\FSharp\\Bootstrap.fsx",
-        "Scripts\\Octopus.Features.IISWebSite_BeforePostDeploy.ps1",
-        "Scripts\\Octopus.Features.RedGateDatabase_BeforePostDeploy.ps1",
-        "Scripts\\Octopus.Features.WindowsService_AfterPreDeploy.ps1",
-        "Scripts\\Octopus.Features.WindowsService_BeforePostDeploy.ps1",
-        "Scripts\\Octopus.Features.HelloWorld_BeforePreDeploy.sh",
-        "Scripts\\Octopus.Features.HelloWorld_BeforePreDeploy.ps1"
+        "Scripts\\**"
       ]
     }
   },

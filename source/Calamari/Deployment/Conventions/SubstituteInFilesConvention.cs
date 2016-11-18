@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
-using Calamari.Integration.Vhd;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -43,14 +42,7 @@ namespace Calamari.Deployment.Conventions
 
         private List<string> MatchingFiles(RunningDeployment deployment, string target)
         {
-            var files = fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
-
-            if(Vhd.FeatureIsOn(deployment))
-            {
-                var mountedFiles = fileSystem.EnumerateFiles(Vhd.GetMountPoint(deployment), target).Select(Path.GetFullPath);
-                files.AddRange(mountedFiles);
-            }
-            return files.ToList();
+            return fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
         }
     }
 }

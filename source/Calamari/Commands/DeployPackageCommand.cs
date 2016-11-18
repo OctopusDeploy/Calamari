@@ -18,7 +18,6 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
-using Calamari.Integration.Vhd;
 
 namespace Calamari.Commands
 {
@@ -97,7 +96,8 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
+                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner),
+                new FeatureScriptRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner, embeddedResources)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

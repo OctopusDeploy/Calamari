@@ -7,7 +7,7 @@ If($vhds.Length -lt 1)
 
 If($vhds.Length -gt 1)
 {
-	Write-Error "More than one VHD found. A single VHD must be in the root of the package deployed to use this step"
+	Write-Error "More than one VHD found ($vhds.Length). A single VHD must be in the root of the package deployed to use this step"
 	exit -2
 }
 
@@ -34,6 +34,6 @@ while ([string]::IsNullOrEmpty($mountedDrive)){
     Catch{}
     sleep -Seconds 2
 }
-
 $letterDrive  = $mountedDrive + ":\"
 $OctopusParameters["Octopus.Action.Vhd.MountPath"] = $letterDrive
+Write-Host "VHD at $vhdPath mounted to $letterDrive"
