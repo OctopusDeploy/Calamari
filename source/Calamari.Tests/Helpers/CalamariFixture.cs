@@ -5,17 +5,9 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
 using System.Reflection;
-#if APPROVAL_TESTS
-using ApprovalTests.Namers;
-using ApprovalTests.Reporters;
-#endif
 
 namespace Calamari.Tests.Helpers
 {
-#if APPROVAL_TESTS
-    [UseReporter(typeof(DiffReporter))]
-    [UseApprovalSubdirectory("Approved")]
-#endif
     public abstract class CalamariFixture
     {
         protected CommandLine Calamari()

@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
+using Assent;
+using Assent.Namers;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using NSubstitute;
@@ -13,6 +16,8 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
     internal class ConfigurationTransformTestCaseBuilder
     {
+        private static readonly Configuration AssentConfiguration = new Configuration().UsingNamer(new SubdirectoryNamer("Approved"));
+
         private readonly ICalamariFileSystem fileSystem;
         private string transformDefinition;
         private readonly List<string> files = new List<string>();
@@ -197,7 +202,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             return relativePath.Split('\\')[1];
         }
 
-        public void Verify()
+        public void Verify(object testFixture, [CallerMemberName] string testName = null, [CallerFilePath] string filePath = null)
         {
             var results = new StringBuilder();
             results.AppendLine(scenarioDescription);
@@ -211,16 +216,15 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             {
                 results.AppendLine("Then the transform " + transformDefinition + " will:");
                 foreach (var result in allResults)
-                {   
+                {
                     foreach (var transform in result.Value)
                     {
                         results.AppendLine(" - Apply the transform " + transform.Replace(@"c:\temp\", "") + " to file " + result.Key.Replace(@"c:\temp\", ""));
                     }
                 }
             }
-#if APPROVAL_TESTS
-            ApprovalTests.Approvals.Verify(results.ToString());
-#endif
+            
+            testFixture.Assent(results.ToString(), AssentConfiguration, testName, filePath);
         }
     }
 }

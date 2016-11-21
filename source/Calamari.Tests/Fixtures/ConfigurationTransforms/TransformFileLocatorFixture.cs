@@ -4,10 +4,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
     [TestFixture]
-#if APPROVAL_TESTS
-    [ApprovalTests.Reporters.UseReporter(typeof(ApprovalTests.Reporters.DiffReporter))]
-    [ApprovalTests.Namers.UseApprovalSubdirectory("Approved")]
-#endif
     public class TransformFileLocatorFixture
     {
         [Test]
@@ -20,7 +16,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform("web.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\web.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -36,7 +32,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\connstrings.mytransform.config")
                 .And.SourceFile(@"c:\temp\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -49,7 +45,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"transforms\web.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\web.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -65,7 +61,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\transforms\connstrings.mytransform.config")
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -78,7 +74,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"c:\transforms\web.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -94,7 +90,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\transforms\connstrings.mytransform.config")
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.BeTransFormedBy(@"c:\transforms\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -110,7 +106,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.FailToBeTransformed()
                 .Then.SourceFile(@"c:\transforms\app.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -124,7 +120,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"c:\transforms\*.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\connstrings.mytransform.config", @"c:\transforms\security.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -141,7 +137,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.BeTransFormedBy(@"c:\transforms\app.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -155,7 +151,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"c:\transforms\*.mytransform.config => config\web.config")
                 .Then.SourceFile(@"c:\temp\config\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -169,7 +165,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"c:\transforms\*.mytransform.config => c:\temp\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -183,7 +179,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"c:\transforms\*.mytransform.config => c:\temp\*.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -200,7 +196,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
                 .Then.SourceFile(@"c:\temp\config\app.config")
                 .Should.BeTransFormedBy(@"c:\transforms\app.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -214,7 +210,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"transforms\*.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\connstrings.mytransform.config", @"c:\temp\transforms\security.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -231,7 +227,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\transforms\web.mytransform.config")
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\app.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -245,7 +241,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"transforms\*.mytransform.config => config\web.config")
                 .Then.SourceFile(@"c:\temp\config\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\connstrings.mytransform.config", @"c:\temp\transforms\security.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -262,7 +258,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\transforms\web.mytransform.config")
                 .Then.SourceFile(@"c:\temp\config\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\app.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -279,7 +275,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.FailToBeTransformed()
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -296,7 +292,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.FailToBeTransformed()
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -310,7 +306,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"transforms\*.mytransform.config => c:\temp\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -324,7 +320,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"*.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\security.mytransform.config", @"c:\temp\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -341,7 +337,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\web.mytransform.config")
                 .And.SourceFile(@"c:\temp\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\app.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -355,7 +351,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"*.mytransform.config => config\web.config")
                 .Then.SourceFile(@"c:\temp\config\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\security.mytransform.config", @"c:\temp\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -372,7 +368,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\web.mytransform.config")
                 .Then.SourceFile(@"c:\temp\config\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\app.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -386,7 +382,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"*.mytransform.config => c:\temp\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -399,7 +395,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"web.mytransform.config => config\web.config")
                 .Then.SourceFile(@"c:\temp\config\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\web.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -415,7 +411,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\connstrings.mytransform.config")
                 .And.SourceFile(@"c:\temp\config\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -428,7 +424,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"transforms\web.mytransform.config => config\web.config")
                 .Then.SourceFile(@"c:\temp\config\web.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\web.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -444,7 +440,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\temp\transforms\connstrings.mytransform.config")
                 .And.SourceFile(@"c:\temp\config\app.config")
                 .Should.BeTransFormedBy(@"c:\temp\transforms\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -457,7 +453,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"c:\transforms\web.mytransform.config => config\web.config") 
                 .Then.SourceFile(@"c:\temp\config\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -473,7 +469,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.BeTransFormedBy(@"c:\transforms\connstrings.mytransform.config")
                 .And.SourceFile(@"c:\temp\config\app.config")
                 .Should.BeTransFormedBy(@"c:\transforms\connstrings.mytransform.config")
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -486,7 +482,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"web.mytransform.config => c:\temp\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -499,7 +495,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"transforms\web.mytransform.config => c:\temp\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -515,7 +511,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.FailToBeTransformed()
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -531,7 +527,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Should.FailToBeTransformed()
                 .Then.SourceFile(@"c:\temp\app.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
 
         [Test]
@@ -544,7 +540,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .When.UsingTransform(@"c:\transforms\web.mytransform.config => c:\temp\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Verify();
+                .Verify(this);
         }
     }
 }
