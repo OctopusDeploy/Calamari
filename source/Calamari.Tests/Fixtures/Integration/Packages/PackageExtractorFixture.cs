@@ -56,8 +56,48 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 Assert.Less(fileInfo.LastWriteTime, timeBeforeExtraction);
             }
-            Assert.AreEqual(1, filesExtracted);
-            Assert.AreEqual("Im in a package!", text.TrimEnd('\n'));
+            Assert.AreEqual(3, filesExtracted, "Mismatch in the number of files extracted");
+            Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
+        }
+
+        [Test]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", true)]
+        [TestCase(typeof(TarPackageExtractor), "tar", true)]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
+        [TestCase(typeof(ZipPackageExtractor), "zip", true)]
+        [TestCase(typeof(NupkgExtractor), "nupkg", false)]
+        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
+        public void ExtractCanHandleNestedPackage(Type extractorType, string extension, bool preservesTimestamp)
+        {
+            var fileName = GetFileName(extension);
+
+            var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
+            var targetDir = GetTargetDir(extractorType, fileName);
+
+            extractor.Extract(fileName, targetDir, true);
+            var textFileName = Path.Combine(targetDir, "file-from-child-archive.txt");
+            Assert.That(File.Exists(textFileName), Is.False, $"The file '{Path.GetFileName(textFileName)}' should not have been extracted.");
+            var childArchiveName = Path.Combine(targetDir, "child-archive." + extension);
+            Assert.That(File.Exists(childArchiveName), Is.True, $"Expected nested archive '{Path.GetFileName(childArchiveName)}' to have been extracted");
+        }
+
+        [Test]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", true)]
+        [TestCase(typeof(TarPackageExtractor), "tar", true)]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
+        [TestCase(typeof(ZipPackageExtractor), "zip", true)]
+        [TestCase(typeof(NupkgExtractor), "nupkg", false)]
+        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
+        public void ExtractCanHandleNestedFolders(Type extractorType, string extension, bool preservesTimestamp)
+        {
+            var fileName = GetFileName(extension);
+
+            var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
+            var targetDir = GetTargetDir(extractorType, fileName);
+
+            extractor.Extract(fileName, targetDir, true);
+            var textFileName = Path.Combine(targetDir, "ChildFolder", "file-in-child-folder.txt");
+            Assert.That(File.Exists(textFileName), Is.True, $"The file '{Path.GetFileName(textFileName)}' should have been extracted.");
         }
 
         private string GetFileName(string extension)
