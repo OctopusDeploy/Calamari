@@ -98,7 +98,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transform);
 
             CreateConvention().Install(deployment);
-            logs.AssertContains($"The transform pattern \"{transform}\" was not performed due to a missing file.");
+            logs.AssertContains($"The transform pattern \"{transform}\" was not performed as no matching files could be found.");
         }
 
         [Test]
@@ -110,7 +110,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformA + Environment.NewLine + transformB);
 
             CreateConvention().Install(deployment);
-            logs.AssertContains($"The transform pattern \"{transformA}\" was not performed as it overlapped with another transform.");
+            logs.AssertContains($"The transform pattern \"{transformB}\" was not performed as it overlapped with another transform.");
         }
 
         [Test]
