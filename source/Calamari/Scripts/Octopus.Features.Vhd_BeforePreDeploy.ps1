@@ -47,5 +47,11 @@ function Add-ToAdditionalPaths([string]$new) {
 	Set-OctopusVariable -name "Octopus.Action.AdditionalPaths" -value $current
 }
 
-Add-ToAdditionalPaths $letterDrive
+If($OctopusParameters["Octopus.Action.Vhd.ApplicationPath"]){
+    $path = split-path $OctopusParameters["Octopus.Action.Vhd.ApplicationPath"] -NoQualifier | % Trim "." | % { join-path -Path $letterDrive -ChildPath $_ }
+} Else {
+    $path = $letterDrive
+}
+
+Add-ToAdditionalPaths $path
 Write-Host "VHD at $vhdPath mounted to $letterDrive"
