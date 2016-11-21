@@ -27,21 +27,44 @@ if(-Not $deployVhdToVm){
 
 $vmname = $OctopusParameters["Octopus.Action.Vhd.VmName"]
 
-#stop existing vm
-$vm = Get-VM -Name $vmname
-if($vm){
-    Stop-VM $vm
-
-    while ($vm.State -ne "Off"){
-        sleep -s 2
-        $vm = Get-VM -Name $vmname
-    }
+if(!$vmname){
+	Write-Error "Deploy VHD to VM enabled, but no VM Name set"
+	exit -3
 }
 
 
-#set vm storage...
+Write-Host "Stopping VM $vmname"
+$vm = Get-VM -Name $vmname
+Stop-VM $vm
 
+$attempts = 0
+while ($vm.State -ne "Off"){
+   sleep -s 5
+   Write-Host "Waiting for VM $vmname to stop"
+   $vm = Get-VM -Name $vmname
+}
 
+$existingDrive = @(GET-VMHardDiskDrive -VM $vm) | Select -First 1
+
+if($existingDrive){
+
+    write-host "Removing existing drive"
+    Remove-VMHardDiskDrive -VMName $vmname -ControllerType $existingDrive.ControllerType `
+                                   -ControllerNumber $existingDrive.ControllerNumber `
+                                   -ControllerLocation $existingDrive.ControllerLocation
+
+    write-host "Adding new drive"
+    Add-VMHardDiskDrive -VMName $vmname -Path $vhdpath `
+                                   -ControllerType $existingDrive.ControllerType `
+                                   -ControllerNumber $existingDrive.ControllerNumber `
+                                   -ControllerLocation $existingDrive.ControllerLocation
+
+} Else {
+    write-host "Adding new drive"
+    Add-VMHardDiskDrive -VMName $vmname -Path $vhdpath
+}
+
+write-host "Starting VM"
 
 #restart the vm
 if($vm){

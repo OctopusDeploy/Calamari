@@ -116,7 +116,6 @@
 
         public static class Vhd
         {
-            public static readonly string MountPoint = "Octopus.Action.Vhd.MountPoint";
             public static readonly string ApplicationPath = "Octopus.Action.Vhd.ApplicationPath";
             public static readonly string VmName = "Octopus.Action.Vhd.VmName";
             public static readonly string DeployVhdToVm = "Octopus.Action.Vhd.DeployVhdToVm";
