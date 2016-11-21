@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -7,6 +8,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
     [TestFixture]
+    [Category(TestEnvironment.ScriptingSupport.ScriptCS)]
     public class ScriptCSFixture : CalamariFixture
     {
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
@@ -15,7 +17,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             var output = Invoke(Calamari()
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.csx")));
-
+            
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }

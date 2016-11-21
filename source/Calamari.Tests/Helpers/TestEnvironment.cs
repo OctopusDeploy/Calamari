@@ -1,11 +1,12 @@
 ﻿using System.IO;
+using System.Reflection;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Tests.Helpers
 {
     public static class TestEnvironment 
     {
-        public static readonly string AssemblyLocalPath = typeof(TestEnvironment).Assembly.FullLocalPath();
+        public static readonly string AssemblyLocalPath = typeof(TestEnvironment).GetTypeInfo().Assembly.FullLocalPath();
         public static readonly string CurrentWorkingDirectory = Path.GetDirectoryName(AssemblyLocalPath);
 
         public static string GetTestPath(params string[] paths)
@@ -23,6 +24,15 @@ namespace Calamari.Tests.Helpers
             public const string Nix = "Nix";
 
             public const string Windows = "Windows";
+
+            public const string Mac = "macOS";
+        }
+
+        public static class ScriptingSupport
+        {
+            public const string FSharp = "fsharp";
+
+            public const string ScriptCS = "scriptcs";
         }
     }
 }

@@ -6,7 +6,7 @@
 ## The script is passed the following parameters. 
 ##
 ##   $OctopusUseBundledAzureModules = "true"
-##   $OctopusAzureModulePath = "....\Calamari\AzurePowershell\Azure.psd1"
+##   $OctopusAzureModulePath = "....\Calamari\PowerShell\Azure.psd1"
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
 ##   $UseServicePrincipal = "false"

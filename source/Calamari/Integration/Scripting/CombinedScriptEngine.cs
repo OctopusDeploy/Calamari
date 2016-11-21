@@ -9,7 +9,7 @@ namespace Calamari.Integration.Scripting
     {
         public string[] GetSupportedExtensions()
         {
-            return CalamariEnvironment.IsRunningOnNix
+            return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 ? new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Bash.FileExtension(), ScriptType.FSharp.FileExtension()}
                 : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension(), ScriptType.FSharp.FileExtension()};
         }
@@ -23,7 +23,7 @@ namespace Calamari.Integration.Scripting
         private ScriptType ValidateScriptType(Script script)
         {
             var scriptExtension = Path.GetExtension(script.File).TrimStart('.');
-            if (!GetSupportedExtensions().Any(ext => ext.Equals(scriptExtension, StringComparison.InvariantCultureIgnoreCase)))
+            if (!GetSupportedExtensions().Any(ext => ext.Equals(scriptExtension, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new InvalidOperationException(string.Format("Script type `{0}` unsupported on this platform.", scriptExtension));
             };

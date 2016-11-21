@@ -9,10 +9,10 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
     public class WindowsPhysicalFileSystemFixture
     {
         [Test]
-        [TestCase("C:\\foo.bar", "C:\\foo.bar", Result = "foo.bar")]
-        [TestCase("C:\\foo.bar", "C:\\dir\\foo.bar", Result = "dir\\foo.bar")]
-        [TestCase("C:\\folder\\foo.bar", "C:\\foo.bar", Result = "..\\foo.bar")]
-        [TestCase("C:\\folder\\foo.bar", "C:\\dir\\foo.bar", Result = "..\\dir\\foo.bar")]        
+        [TestCase("C:\\foo.bar", "C:\\foo.bar", ExpectedResult = "foo.bar")]
+        [TestCase("C:\\foo.bar", "C:\\dir\\foo.bar", ExpectedResult = "dir\\foo.bar")]
+        [TestCase("C:\\folder\\foo.bar", "C:\\foo.bar", ExpectedResult = "..\\foo.bar")]
+        [TestCase("C:\\folder\\foo.bar", "C:\\dir\\foo.bar", ExpectedResult = "..\\dir\\foo.bar")]        
         public string ShouldGetRelativePath(string fromPath, string toPath)
         {
             var target = new WindowsPhysicalFileSystem();

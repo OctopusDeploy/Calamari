@@ -4,8 +4,12 @@ using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
-using NuGet.Versioning;
 using NUnit.Framework;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
+using NuGet.Versioning;
+#endif
 using PackageBuilder = Calamari.Tests.Fixtures.Deployment.Packages.PackageBuilder;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem

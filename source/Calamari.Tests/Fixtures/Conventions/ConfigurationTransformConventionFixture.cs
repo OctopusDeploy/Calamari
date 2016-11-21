@@ -26,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [SetUp]
         public void SetUp()
         {
-            fileSystem = new WindowsPhysicalFileSystem();
+            fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             configurationTransformer = Substitute.For<IConfigurationTransformer>();
             transformFileLocator = new TransformFileLocator(fileSystem);
             
@@ -184,12 +184,18 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private void AssertTransformRun(string configFile, string transformFile)
         {
-            configurationTransformer.Received().PerformTransform(BuildConfigPath(configFile), BuildConfigPath(transformFile), BuildConfigPath(configFile));
+            configurationTransformer.Received().PerformTransform(
+                Arg.Is<string>(s => s.Equals(BuildConfigPath(configFile), StringComparison.OrdinalIgnoreCase)),
+                Arg.Is<string>(s => s.Equals(BuildConfigPath(transformFile), StringComparison.OrdinalIgnoreCase)),
+                Arg.Is<string>(s => s.Equals(BuildConfigPath(configFile), StringComparison.OrdinalIgnoreCase)));
         }
 
         private void AssertTransformNotRun(string configFile, string transformFile)
         {
-            configurationTransformer.DidNotReceive().PerformTransform(BuildConfigPath(configFile), BuildConfigPath(transformFile), BuildConfigPath(configFile));
+            configurationTransformer.DidNotReceive().PerformTransform(
+                Arg.Is<string>(s => s.Equals(BuildConfigPath(configFile), StringComparison.OrdinalIgnoreCase)),
+                Arg.Is<string>(s => s.Equals(BuildConfigPath(transformFile), StringComparison.OrdinalIgnoreCase)),
+                Arg.Is<string>(s => s.Equals(BuildConfigPath(configFile), StringComparison.OrdinalIgnoreCase)));
         }
 
         private static string BuildConfigPath(string filename)

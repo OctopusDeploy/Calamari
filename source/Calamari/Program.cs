@@ -2,6 +2,8 @@
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
+using Calamari.Util;
+using System.Reflection;
 
 namespace Calamari
 {
@@ -18,11 +20,11 @@ namespace Calamari
 
         static int Main(string[] args)
         {
-            var program = new Program("Calamari", typeof(Program).Assembly.GetInformationalVersion());
+            var program = new Program("Calamari", typeof(Program).GetTypeInfo().Assembly.GetInformationalVersion());
             return program.Execute(args);
         }
 
-        protected int Execute(string[] args)
+        public int Execute(string[] args)
         {
             Log.Verbose($"Octopus Deploy: {displayName} version {informationalVersion}");
 
@@ -46,7 +48,7 @@ namespace Calamari
 
         protected virtual void RegisterCommandAssemblies()
         {
-            CommandLocator.Instance.RegisterAssemblies(typeof(Program).Assembly);
+            CommandLocator.Instance.RegisterAssemblies(typeof(Program).GetTypeInfo().Assembly);
         }
 
         private static string GetFirstArgument(string[] args)

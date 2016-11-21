@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if IIS_SUPPORT
+using System;
 using System.IO;
 using System.Linq;
 using Calamari.Deployment;
@@ -21,14 +22,14 @@ namespace Calamari.Tests.Fixtures.Deployment
         private WebServerSevenSupport iis;
       
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void Init()
         {
             packageV1 = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0"));
             packageV2 = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "2.0.0"));
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
             packageV1.Dispose();
@@ -318,3 +319,4 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
     }
 }
+#endif

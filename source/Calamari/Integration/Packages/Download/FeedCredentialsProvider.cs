@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if USE_NUGET_V2_LIBS
+using System;
 using System.Collections.Concurrent;
 using System.Net;
 using NuGet;
@@ -91,3 +92,4 @@ namespace Calamari.Integration.Packages.Download
         }
     }
 }
+#endif

@@ -6,6 +6,7 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment
@@ -36,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var service = GetInstalledService();
             if (service != null)
             {
-                var system32 = System.Environment.GetFolderPath(System.Environment.SpecialFolder.System);
+                var system32 = CrossPlatform.GetSystemFolderPath();
                 var sc = Path.Combine(system32, "sc.exe");
 
                 Process.Start(new ProcessStartInfo(sc, $"stop {ServiceName}") {CreateNoWindow = true, UseShellExecute = false })?.WaitForExit();

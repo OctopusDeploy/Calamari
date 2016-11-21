@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Calamari.Util;
 
 namespace Calamari.Commands.Support
 {
@@ -21,7 +22,7 @@ namespace Calamari.Commands.Support
             return
                 (from t in assemblies.SelectMany(a => a.GetTypes())
                     where typeof (ICommand).IsAssignableFrom(t)
-                    let attribute = (ICommandMetadata) t.GetCustomAttributes(typeof (CommandAttribute), true).FirstOrDefault()
+                    let attribute = (ICommandMetadata) t.GetTypeInfo().GetCustomAttributes(typeof (CommandAttribute), true).FirstOrDefault()
                     where attribute != null
                     select attribute).ToArray();
         }
@@ -31,7 +32,7 @@ namespace Calamari.Commands.Support
             name = name.Trim().ToLowerInvariant();
             var found = (from t in assemblies.SelectMany(a => a.GetTypes())
                 where typeof (ICommand).IsAssignableFrom(t)
-                let attribute = (ICommandMetadata) t.GetCustomAttributes(typeof (CommandAttribute), true).FirstOrDefault()
+                let attribute = (ICommandMetadata) t.GetTypeInfo().GetCustomAttributes(typeof (CommandAttribute), true).FirstOrDefault()
                 where attribute != null
                 where attribute.Name == name || attribute.Aliases.Any(a => a == name)
                 select t).FirstOrDefault();

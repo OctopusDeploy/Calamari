@@ -302,7 +302,7 @@ namespace Calamari.Commands.Support
                         break;
                     default:
                         if (start == -1)
-                            seps.Add(name[i].ToString(CultureInfo.InvariantCulture));
+                            seps.Add(name[i].ToString());
                         break;
                 }
             }

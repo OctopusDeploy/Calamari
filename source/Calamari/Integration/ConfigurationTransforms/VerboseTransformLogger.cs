@@ -1,5 +1,9 @@
 ﻿using System;
+#if USE_OCTOPUS_XMLT
+using Octopus.Web.XmlTransform;
+#else
 using Microsoft.Web.XmlTransform;
+#endif
 
 namespace Calamari.Integration.ConfigurationTransforms
 {

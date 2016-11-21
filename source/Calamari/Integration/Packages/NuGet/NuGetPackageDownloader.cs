@@ -3,7 +3,11 @@ using System.Net;
 using System.Threading;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Retry;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
 using NuGet.Versioning;
+#endif
 
 namespace Calamari.Integration.Packages.NuGet
 {
@@ -68,6 +72,7 @@ namespace Calamari.Integration.Packages.NuGet
                 NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath);
             }
 
+#if USE_NUGET_V2_LIBS
             // NuGet V3 feed 
             else if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
@@ -75,10 +80,16 @@ namespace Calamari.Integration.Packages.NuGet
             }
 
             // V2 feed
-            else
+            else 
             {
                 NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
             }
+#else
+            else
+            {
+                NuGetV3LibDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
+            }
+#endif
         }
 
         bool IsHttp(string uri)

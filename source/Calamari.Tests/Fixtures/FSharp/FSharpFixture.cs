@@ -7,6 +7,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.FSharp
 {
     [TestFixture]
+    [Category(TestEnvironment.ScriptingSupport.FSharp)]
     public class FSharpFixture : CalamariFixture
     {
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]

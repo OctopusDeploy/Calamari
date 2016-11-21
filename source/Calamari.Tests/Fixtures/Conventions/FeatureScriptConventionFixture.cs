@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
@@ -118,19 +119,19 @@ namespace Calamari.Tests.Fixtures.Conventions
             {
                 var scriptName = FeatureScriptConvention.GetScriptName(feature, suffix, "ps1");
                 var embeddedResourceName = FeatureScriptConvention.GetEmbeddedResourceName(scriptName);
-                embeddedResources.GetEmbeddedResourceText(embeddedResourceName).Returns(scriptContents);
+                embeddedResources.GetEmbeddedResourceText(Arg.Any<Assembly>(), embeddedResourceName).Returns(scriptContents);
                 embeddedResourceNames.Add(embeddedResourceName);
                 var scriptPath = Path.Combine(stagingDirectory, scriptName);
                 scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner)
                             .Returns(new CommandResult("", 0));
             }
 
-            embeddedResources.GetEmbeddedResourceNames().Returns(embeddedResourceNames.ToArray());
+            embeddedResources.GetEmbeddedResourceNames(Arg.Any<Assembly>()).Returns(embeddedResourceNames.ToArray());
         }
 
         private FeatureScriptConvention CreateConvention(string deployStage)
         {
-            return new FeatureScriptConvention(deployStage, fileSystem, embeddedResources, scriptEngine, commandLineRunner );
+            return new FeatureScriptConvention(deployStage, fileSystem, scriptEngine, commandLineRunner, embeddedResources);
         }
     }
 }

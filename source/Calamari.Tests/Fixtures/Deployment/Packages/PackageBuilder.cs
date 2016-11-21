@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages
@@ -10,14 +11,27 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
     {
         public static string BuildSamplePackage(string name, string version, bool modifyPackage = false)
         {
-            var nugetCommandLine = TestEnvironment.GetTestPath("NuGet", "NuGet.exe");
-            Assert.That(File.Exists(nugetCommandLine), string.Format("NuGet.exe is not available (expected at {0}).", nugetCommandLine));
-
             var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
             Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
 
-            var nuspec = Path.Combine(packageDirectory, name + ".nuspec");
-            Assert.That(File.Exists(nuspec), string.Format("Nuspec for {0} is not available (expected at {1}.", name, nuspec));
+#if NET40
+            var nugetCommandLine = TestEnvironment.GetTestPath("NuGet", "NuGet.exe");
+            Assert.That(File.Exists(nugetCommandLine), string.Format("NuGet.exe is not available (expected at {0}).", nugetCommandLine));
+
+            var target = Path.Combine(packageDirectory, name + ".nuspec");
+            Assert.That(File.Exists(target), string.Format("Nuspec for {0} is not available (expected at {1}.", name, target));
+#else
+            var nugetCommandLine = "dotnet";
+
+            var target = Path.Combine(packageDirectory, "project.json");
+            Assert.That(File.Exists(target), string.Format("Project.json for {0} is not available (expected at {1}.", name, target));      
+            
+            var json = File.ReadAllText(target);
+            dynamic jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+            jsonObj["version"] = version;
+            json = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObj, Newtonsoft.Json.Formatting.Indented);
+            File.WriteAllText(target, json);      
+#endif                 
 
             var output = Path.GetTempPath();
             var path = Path.Combine(output, name + "." + version + ".nupkg");
@@ -33,10 +47,16 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
             var result = runner.Execute(CommandLine.Execute(nugetCommandLine)
                 .Action("pack")
-                .Argument(nuspec)
-                .Flag("NoPackageAnalysis")
+                .Argument(target)
+#if NET40            
                 .Argument("Version", version)
+                .Flag("NoPackageAnalysis")
                 .Argument("OutputDirectory", output)
+#else
+                .DoubleDash()
+                .Argument("version-suffix", version)
+                .Argument("output", output)
+#endif
                 .Build());
             result.VerifySuccess();
 

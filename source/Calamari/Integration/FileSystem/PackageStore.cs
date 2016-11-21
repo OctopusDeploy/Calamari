@@ -4,7 +4,11 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.Packages;
 using Calamari.Util;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
 using NuGet.Versioning;
+#endif
 
 namespace Calamari.Integration.FileSystem
 {

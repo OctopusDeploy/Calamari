@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿#if IIS_SUPPORT
+using System.Linq;
 
 namespace Calamari.Integration.Iis
 {
@@ -32,3 +33,4 @@ namespace Calamari.Integration.Iis
         }
     }
 }
+#endif

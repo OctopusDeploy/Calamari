@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
@@ -80,7 +81,8 @@ namespace Calamari.Integration.ConfigurationVariables
         static void WriteXmlDocument(XDocument doc, string configurationFilePath)
         {
             var xws = new XmlWriterSettings {OmitXmlDeclaration = doc.Declaration == null, Indent = true};
-            using (var writer = XmlWriter.Create(configurationFilePath, xws))
+            using (var file = new FileStream(configurationFilePath, FileMode.Create, FileAccess.Write))
+            using (var writer = XmlWriter.Create(file, xws))
             {
                 doc.Save(writer);
             }
@@ -93,7 +95,7 @@ namespace Calamari.Integration.ConfigurationVariables
                 from element in document.XPathSelectElements(xpath)
                 let keyAttribute = element.Attribute(keyAttributeName)
                 where keyAttribute != null
-                where string.Equals(keyAttribute.Value, keyAttributeValue, StringComparison.InvariantCultureIgnoreCase)
+                where string.Equals(keyAttribute.Value, keyAttributeValue, StringComparison.OrdinalIgnoreCase)
                 select element).ToList();
 
             if (settings.Count == 0)
@@ -127,7 +129,7 @@ namespace Calamari.Integration.ConfigurationVariables
                 from element in document.XPathSelectElements(xpath)
                 let keyAttribute = element.Attribute(keyAttributeName)
                 where keyAttribute != null
-                where string.Equals(keyAttribute.Value, keyAttributeValue, StringComparison.InvariantCultureIgnoreCase)
+                where string.Equals(keyAttribute.Value, keyAttributeValue, StringComparison.OrdinalIgnoreCase)
                 select element).ToList();
 
             if (settings.Count == 0)

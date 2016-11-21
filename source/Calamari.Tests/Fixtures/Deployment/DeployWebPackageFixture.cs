@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             base.SetUp();
         }
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void Init()
         {
             nupkgFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0"));
@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
             nupkgFile.Dispose();
@@ -58,7 +58,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
-        public void ShouldDeployPackageOnNix()
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldDeployPackageOnMacOrNix()
         {
             var result = DeployPackage();
             result.AssertSuccess();
@@ -131,6 +132,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
+        [Category(TestEnvironment.ScriptingSupport.FSharp)]
+        [Category(TestEnvironment.ScriptingSupport.ScriptCS)]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldInvokeDeployFailedOnError()
         {
@@ -144,7 +147,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("I have failed! DeployFailed.csx");
         }
 
-        [Test]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldNotInvokeDeployFailedWhenNoError()
         {
@@ -183,6 +185,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("Hello World!");
         }
 
+#if IIS_SUPPORT
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldModifyIisWebsiteRoot()
@@ -209,13 +212,14 @@ namespace Calamari.Tests.Fixtures.Deployment
             webServer.DeleteWebSite(siteName);
             FileSystem.DeleteDirectory(originalWebRootPath);
         }
+#endif
 
         [Test]
         public void ShouldRunConfiguredScripts()
         {
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
 
-            if (CalamariEnvironment.IsRunningOnNix)
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
                 Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "sh"), "echo 'The wheels on the bus go round...'");
             }

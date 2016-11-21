@@ -44,7 +44,7 @@ namespace Calamari.Integration.ConfigurationTransforms
                     ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.', Path.DirectorySeparatorChar)
                     : GetFileName(sourceFile);
 
-                if (transformation.Advanced && !transformation.IsSourceWildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.InvariantCultureIgnoreCase))
+                if (transformation.Advanced && !transformation.IsSourceWildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (transformation.Advanced && transformation.IsSourceWildcard && !DoesFileMatchWildcardPattern(sourceFileName, transformation.SourcePattern))
@@ -53,7 +53,7 @@ namespace Calamari.Integration.ConfigurationTransforms
                 if (!fileSystem.FileExists(transformFile))
                     continue;
 
-                if (string.Equals(sourceFile, transformFile, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(sourceFile, transformFile, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 yield return transformFile;

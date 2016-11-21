@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if IIS_SUPPORT
+using System;
 
 namespace Calamari.Integration.Iis
 {
@@ -29,3 +30,4 @@ namespace Calamari.Integration.Iis
         }
     }
 }
+#endif

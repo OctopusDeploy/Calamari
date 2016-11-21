@@ -1,10 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
 using Octostache;
 
@@ -37,7 +39,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             var text = PerformTest(GetFixtureResouce("Samples", "ParserErrors.txt"), variables).Text;
 
-            Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\r\nthe quick brown replaced fox jumps over the lazy #{dog #{", text);
+            // Environment.Newline returning \r\n when running tests on mono, but \n on dotnet core, just replace
+            Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\nthe quick brown replaced fox jumps over the lazy #{dog #{", text.Replace("\r\n", "\n"));
         }
 
         [Test]
@@ -127,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(Encoding.Default, encoding);
+            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), encoding);
         }
 
         [Test]
@@ -141,8 +144,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(Encoding.Default, encoding);
-            Assert.AreEqual(Encoding.Default, result.Encoding);
+            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), encoding);
+            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), result.Encoding);
         }
 
         [Test]
