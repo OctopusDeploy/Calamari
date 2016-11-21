@@ -8,6 +8,7 @@ using Assent;
 using Assent.Namers;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.Core;
 using NUnit.Framework;
@@ -16,7 +17,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
     internal class ConfigurationTransformTestCaseBuilder
     {
-        private static readonly Configuration AssentConfiguration = new Configuration().UsingNamer(new SubdirectoryNamer("Approved"));
 
         private readonly ICalamariFileSystem fileSystem;
         private string transformDefinition;
@@ -224,7 +224,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 }
             }
             
-            testFixture.Assent(results.ToString(), AssentConfiguration, testName, filePath);
+            testFixture.Assent(results.ToString(), TestEnvironment.AssentConfiguration, testName, filePath);
         }
     }
 }

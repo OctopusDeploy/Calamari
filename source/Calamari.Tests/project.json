@@ -78,6 +78,7 @@
       "include": [
         "Fixtures/ConfigurationVariables/Samples/**",
         "Fixtures/ConfigurationTransforms/Samples/**",
+        "Fixtures/ConfigurationTransforms/Approved/**.approved.*",
         "Fixtures/Bash/Scripts/**",
         "Fixtures/Conventions/ConfigTransforms/**",
         "Fixtures/Deployment/Packages/Acme.Service/**",
