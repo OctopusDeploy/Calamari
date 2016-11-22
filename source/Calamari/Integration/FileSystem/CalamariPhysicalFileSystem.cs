@@ -348,21 +348,23 @@ namespace Calamari.Integration.FileSystem
 
         public void PurgeDirectory(string targetDirectory, FailureOptions options)
         {
-            PurgeDirectory(targetDirectory, fi => true, options);
+            PurgeDirectory(targetDirectory, fi => false, options);
         }
 
         public void PurgeDirectory(string targetDirectory, FailureOptions options, CancellationToken cancel)
         {
-            PurgeDirectory(targetDirectory, fi => true, options, cancel);
+            PurgeDirectory(targetDirectory, fi => false, options, cancel);
         }
 
-        public void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, FailureOptions options)
+        public void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options)
         {
-            PurgeDirectory(targetDirectory, include, options, CancellationToken.None);
+            PurgeDirectory(targetDirectory, exclude, options, CancellationToken.None);
         }
 
-        void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, FailureOptions options, CancellationToken cancel, bool includeTarget = false)
+        void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options, CancellationToken cancel, bool includeTarget = false)
         {
+            exclude = exclude?? (fi => false);
+
             if (!DirectoryExists(targetDirectory))
             {
                 return;
@@ -372,13 +374,10 @@ namespace Calamari.Integration.FileSystem
             {
                 cancel.ThrowIfCancellationRequested();
 
-                if (include != null)
+                var includeInfo = new FileSystemInfoAdapter(new FileInfo(file));
+                if (exclude(includeInfo))
                 {
-                    var info = new FileInfoAdapter(new FileInfo(file));
-                    if (!include(info))
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 DeleteFile(file, options);
@@ -389,13 +388,19 @@ namespace Calamari.Integration.FileSystem
                 cancel.ThrowIfCancellationRequested();
 
                 var info = new DirectoryInfo(directory);
+                var includeInfo = new FileSystemInfoAdapter(info);
+                if (exclude(includeInfo))
+                {
+                    continue;
+                }
+
                 if ((info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
                 {
                     Directory.Delete(directory);
                 }
                 else
                 {
-                    PurgeDirectory(directory, include, options, cancel, includeTarget: true);
+                    PurgeDirectory(directory, exclude, options, cancel, includeTarget: true);
                 }
             }
 
