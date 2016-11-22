@@ -67,7 +67,6 @@ namespace Calamari.Integration.Scripting.FSharp
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("(*{{VariableDeclarations}}*)", WritePatternMatching(variables));
-            builder.Replace("(*{{LogEnvironmentInformation}}*)", LogEnvironmentInformation());
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -78,18 +77,6 @@ namespace Calamari.Integration.Scripting.FSharp
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
-        }
-
-        static string LogEnvironmentInformation()
-        {
-            var output = new StringBuilder();
-
-            foreach (var envInfo in EnvironmentHelper.SafelyGetEnvironmentInformation())
-            {
-                output.AppendLine($"printfn \"{envInfo}\"");
-            }
-
-            return output.ToString();
         }
 
         static string WritePatternMatching(CalamariVariableDictionary variables)

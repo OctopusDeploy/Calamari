@@ -3,8 +3,6 @@
 # Version: 1.0.0
 # -----------------------------------------------------------------------------
 
-
-
 # -----------------------------------------------------------------------------
 # Function to base64 decode a service message value
 #		Accepts 1 argument:
@@ -32,4 +30,3 @@ function get_octopusvariable
     ;;
     esac
 }
-

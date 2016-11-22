@@ -17,11 +17,6 @@ function Log-VersionTable
 	Write-Verbose ($PSVersionTable | Out-String)
 }
 
-function Log-EnvironmentInformation
-{
-	{{LogEnvironmentInformation}}
-}
-
 function Convert-ServiceMessageValue([string]$value)
 {
 	$valueBytes = [System.Text.Encoding]::UTF8.GetBytes($value)
@@ -152,7 +147,6 @@ function Initialize-ProxySettings()
 }
 
 Log-VersionTable
-Log-EnvironmentInformation
 
 # -----------------------------------------------------------------
 # Variables
