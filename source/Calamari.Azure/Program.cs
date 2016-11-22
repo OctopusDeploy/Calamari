@@ -1,12 +1,14 @@
 ﻿using Calamari.Azure.Integration;
 using Calamari.Commands.Support;
 using Calamari.Integration.Scripting;
+using Calamari.Util.Environments;
+using System.Reflection;
 
 namespace Calamari.Azure
 {
     class Program : Calamari.Program
     {
-        public Program() : base("Calamari.Azure", typeof(Azure.Program).Assembly.GetInformationalVersion())
+        public Program() : base("Calamari.Azure", typeof(Azure.Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation())
         {
             ScriptEngineRegistry.Instance.ScriptEngines[ScriptType.Powershell] = new AzurePowerShellScriptEngine();            
         }

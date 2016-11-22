@@ -4,6 +4,8 @@ using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Calamari.Util.Environments;
+using System.Reflection; /* Don't remove this, it overrides the Calamari.Util.CrossPlatformExtensions */
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
@@ -71,7 +73,8 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{VariableDeclarations}}", WriteVariableDictionary(variables));
+            builder.Replace("/*{{VariableDeclarations}}*/", WriteVariableDictionary(variables));
+            builder.Replace("/*{{LogEnvironmentInformation}}*/", LogEnvironmentInformation());
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -82,6 +85,18 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+
+        static string LogEnvironmentInformation()
+        {
+            var output = new StringBuilder();
+
+            foreach (var envInfo in EnvironmentHelper.SafelyGetEnvironmentInformation())
+            {
+                output.AppendLine($"Console.WriteLine(\"{envInfo}\");");
+            }
+
+            return output.ToString();
         }
             
         static string WriteVariableDictionary(CalamariVariableDictionary variables)

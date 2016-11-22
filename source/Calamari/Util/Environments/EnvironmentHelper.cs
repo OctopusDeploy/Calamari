@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Calamari.Integration.FileSystem;
+using System.Runtime.InteropServices;
 #if VISUALBASIC_SUPPORT
 using Microsoft.VisualBasic.Devices;
 #endif
 
-namespace Calamari.Util
+namespace Calamari.Util.Environments /* This is in the 'Environments' namespace to avoid collisions with CrossPlatformExtensions - long story */
 {
     public static class EnvironmentHelper
     {
@@ -24,11 +26,16 @@ namespace Calamari.Util
         {
             try
             {
+#if NET40
                 envVars.Add($"OperatingSystem: {Environment.OSVersion.ToString()}");
                 envVars.Add($"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
-                envVars.Add($"MachineName: {Environment.MachineName}");
                 envVars.Add($"CurrentUser: {Environment.UserName}");
                 envVars.Add($"Is64BitProcess: {Environment.Is64BitProcess.ToString()}");
+#else
+                envVars.Add($"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSDescription.ToString()}");
+                envVars.Add($"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()}");
+#endif
+                envVars.Add($"MachineName: {Environment.MachineName}");
                 envVars.Add($"ProcessorCount: {Environment.ProcessorCount.ToString()}");
             }
             catch
@@ -41,6 +48,7 @@ namespace Calamari.Util
         {
             try
             {
+                envVars.Add($"CurrentDirectory: {Directory.GetCurrentDirectory()}");
                 envVars.Add($"TempDirectory: {Path.GetTempPath()}");
             }
             catch

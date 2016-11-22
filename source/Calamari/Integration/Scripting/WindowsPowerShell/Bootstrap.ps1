@@ -12,12 +12,12 @@ $ErrorActionPreference = 'Stop'
 # Functions
 # -----------------------------------------------------------------
 
-function Write-VersionTable
+function Log-VersionTable
 {
 	Write-Verbose ($PSVersionTable | Out-String)
 }
 
-function Write-EnvironmentInformation
+function Log-EnvironmentInformation
 {
 	{{LogEnvironmentInformation}}
 }
@@ -151,8 +151,8 @@ function Initialize-ProxySettings()
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
 }
 
-Write-VersionTable
-Write-EnvironmentInformation
+Log-VersionTable
+Log-EnvironmentInformation
 
 # -----------------------------------------------------------------
 # Variables

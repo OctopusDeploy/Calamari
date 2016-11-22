@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Calamari.Util.Environments;
 
 namespace Calamari.Integration.Scripting.Bash
 {

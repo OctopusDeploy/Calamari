@@ -3,6 +3,8 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
 using Calamari.Util;
+using Calamari.Util.Environments;
+using System.Reflection; /* Don't remove this, it overrides the Calamari.Util.CrossPlatformExtensions */
 
 namespace Calamari
 {

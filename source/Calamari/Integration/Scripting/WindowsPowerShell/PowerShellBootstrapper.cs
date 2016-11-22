@@ -6,6 +6,7 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Calamari.Util.Environments;
 using Octostache;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
@@ -117,7 +118,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             foreach (var envInfo in EnvironmentHelper.SafelyGetEnvironmentInformation())
             {
-                output.AppendLine($"Write-Verbose {envInfo}");
+                output.AppendLine($"Write-Verbose \"{envInfo}\"");
             }
 
             return output.ToString();

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using NuGet;
+using Calamari.Util.Environments;
 
 namespace Calamari.Util
 {

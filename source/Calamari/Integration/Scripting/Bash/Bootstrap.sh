@@ -109,9 +109,9 @@ function new_octopusartifact
 # -----------------------------------------------------------------------------
 # Function to write the environment information
 # -----------------------------------------------------------------------------
-function write_environment_information
+function log_environment_information
 {
 	#### LogEnvironmentInformation ####
 }
 
-write_environment_information
+log_environment_information

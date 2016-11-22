@@ -38,9 +38,12 @@ let private decryptString encrypted iv =
     use streamReader = new StreamReader(cryptoStream, Encoding.UTF8)
     streamReader.ReadToEnd();
 
+let private logEnvironmentInformation () =
+    (*{{LogEnvironmentInformation}}*)
+
 let tryFindVariable name =
     match name |> encode with
-{{VariableDeclarations}}
+(*{{VariableDeclarations}}*)
 
 let findVariable name =
     match name |> tryFindVariable with
@@ -50,7 +53,7 @@ let findVariable name =
 let findVariableOrDefault defaultValue name =
     match name |> tryFindVariable with
     | Some x -> x
-    | None -> defaultValue       
+    | None -> defaultValue
 
 let initializeProxy () =
     let proxyHost = "TentacleProxyHost" |> getEnvironmentVariable 
