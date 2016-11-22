@@ -12,7 +12,8 @@ namespace Calamari.Integration.FileSystem
             this.info = info;
         }
 
-        public string FullPath => info.FullName;
+        public string Name => info.Name;
+        public string FullName => info.FullName;
         public string Extension => info.Extension;
         public DateTime LastAccessTimeUtc => info.LastAccessTimeUtc;
         public DateTime LastWriteTimeUtc => info.LastWriteTimeUtc;
