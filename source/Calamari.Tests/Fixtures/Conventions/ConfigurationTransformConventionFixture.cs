@@ -153,6 +153,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldOutputDiagnosticsLoggingIfEnabled()
         {
             var calamariFileSystem = Substitute.For<ICalamariFileSystem>();
