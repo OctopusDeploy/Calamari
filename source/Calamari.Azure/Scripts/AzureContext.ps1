@@ -17,6 +17,7 @@
 ##   $OctopusAzureADTenantId = "...."
 ##   $OctopusAzureADClientId = "...."
 ##   $OctopusAzureADPassword = "...."
+##   $OctopusAzureEnvrionment = "...."
 
 if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
 	# Add bundled Azure modules to PSModulePath
@@ -31,7 +32,14 @@ If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 	# Authenticate via Service Principal
 	$securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
 	$creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-	$azureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $AzureEnvironment}
+	$azureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $OctopusAzureEnvrionment}
+
+	if (!$azureEnvironment)
+	{
+		Write-Error "No Azure environment could be matched given name $OctopusAzureEnvrionment"
+		exit -2
+	}
+
 	Write-Verbose "Authenticating with Service Principal"
 	Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -ServicePrincipal -Environment $azureEnvironment
 } Else {
@@ -39,7 +47,13 @@ If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 	Write-Verbose "Loading the management certificate"
 	Add-Type -AssemblyName "System"
 	$certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
-	$azureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $AzureEnvironment}
+	$azureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $OctopusAzureEnvrionment}
+
+	if (!$azureEnvironment)
+	{
+		Write-Error "No Azure environment could be matched given name $OctopusAzureEnvrionment"
+		exit -2
+	}
 	$azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Certificate $certificate -Environment $azureEnvironment
 	$azureProfile.Save(".\AzureProfile.json")
 	Select-AzureProfile -Profile $azureProfile | Out-Null
