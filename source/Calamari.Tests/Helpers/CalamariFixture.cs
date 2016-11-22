@@ -5,17 +5,9 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
 using System.Reflection;
-#if APPROVAL_TESTS
-using ApprovalTests.Namers;
-using ApprovalTests.Reporters;
-#endif
 
 namespace Calamari.Tests.Helpers
 {
-#if APPROVAL_TESTS
-    [UseReporter(typeof(DiffReporter))]
-    [UseApprovalSubdirectory("Approved")]
-#endif
     public abstract class CalamariFixture
     {
         protected CommandLine Calamari()
@@ -59,7 +51,13 @@ namespace Calamari.Tests.Helpers
 
         protected string GetFixtureResouce(params string[] paths)
         {
-            var path = GetType().Namespace.Replace("Calamari.Tests.", String.Empty);
+            var type = GetType();
+            return GetFixtureResouce(type, paths);
+        }
+
+        public static string GetFixtureResouce(Type type, params string[] paths)
+        {
+            var path = type.Namespace.Replace("Calamari.Tests.", String.Empty);
             path = path.Replace('.', Path.DirectorySeparatorChar);
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }

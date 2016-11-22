@@ -1,0 +1,9 @@
+﻿Applying a transform to a target in a sibling directory
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─config
+| └─web.config
+└─transforms
+  └─web.mytransform.config
+Then the transform transforms\web.mytransform.config => config\web.config will:
+ - Apply the transform transforms\web.mytransform.config to file config\web.config

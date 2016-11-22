@@ -1,0 +1,7 @@
+﻿Transform and target are in the same directory
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─web.config
+└─web.mytransform.config
+Then the transform web.mytransform.config => web.config will:
+ - Apply the transform web.mytransform.config to file web.config
