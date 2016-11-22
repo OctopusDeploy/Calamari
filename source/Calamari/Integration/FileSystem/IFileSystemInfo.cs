@@ -2,7 +2,7 @@ using System;
 
 namespace Calamari.Integration.FileSystem
 {
-    public interface IFileInfo
+    public interface IFileSystemInfo
     {
         string FullPath { get; }
         string Extension { get; }

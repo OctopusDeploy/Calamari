@@ -356,12 +356,12 @@ namespace Calamari.Integration.FileSystem
             PurgeDirectory(targetDirectory, fi => true, options, cancel);
         }
 
-        public void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, FailureOptions options)
+        public void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> include, FailureOptions options)
         {
             PurgeDirectory(targetDirectory, include, options, CancellationToken.None);
         }
 
-        void PurgeDirectory(string targetDirectory, Predicate<IFileInfo> include, FailureOptions options, CancellationToken cancel, bool includeTarget = false)
+        void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> include, FailureOptions options, CancellationToken cancel, bool includeTarget = false)
         {
             if (!DirectoryExists(targetDirectory))
             {
@@ -374,7 +374,7 @@ namespace Calamari.Integration.FileSystem
 
                 if (include != null)
                 {
-                    var includeInfo = new FileInfoAdapter(new FileInfo(file));
+                    var includeInfo = new FileSystemInfoAdapter(new FileInfo(file));
                     if (!include(includeInfo))
                     {
                         continue;
@@ -392,7 +392,7 @@ namespace Calamari.Integration.FileSystem
 
                 if (include != null)
                 {
-                    var includeInfo = new FileInfoAdapter(info);
+                    var includeInfo = new FileSystemInfoAdapter(info);
                     if (!include(includeInfo))
                     {
                         continue;
