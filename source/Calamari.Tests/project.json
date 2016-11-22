@@ -61,7 +61,7 @@
          "Polly": "4.3.0" 
        },
       "buildOptions": {
-        "define": [ "NET40", "IIS_SUPPORT", "APPROVAL_TESTS", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
+        "define": [ "NET40", "IIS_SUPPORT", "APPROVAL_TESTS", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE", "VISUALBASIC_SUPPORT" ]
       }
     }
   },

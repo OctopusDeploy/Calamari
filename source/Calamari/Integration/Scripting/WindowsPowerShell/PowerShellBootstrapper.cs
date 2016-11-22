@@ -82,7 +82,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             builder.Replace("{{TargetScriptFile}}", script.File.Replace("'", "''"))
                     .Replace("{{ScriptParameters}}", script.Parameters)
                     .Replace("{{VariableDeclarations}}", DeclareVariables(variables))
-                    .Replace("{{ScriptModules}}", DeclareScriptModules(variables));
+                    .Replace("{{ScriptModules}}", DeclareScriptModules(variables))
+                    .Replace("{{LogEnvironmentInformation}}", LogEnvironmentInformation());
 
             CalamariFileSystem.OverwriteFile(bootstrapFile, builder.ToString(), new UTF8Encoding(true));
 
@@ -90,7 +91,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return bootstrapFile;
         }
 
-        private static string DeclareVariables(CalamariVariableDictionary variables)
+        static string DeclareVariables(CalamariVariableDictionary variables)
         {
             var output = new StringBuilder();
 
@@ -101,11 +102,23 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return output.ToString();
         }
 
-        private static string DeclareScriptModules(CalamariVariableDictionary variables)
+        static string DeclareScriptModules(CalamariVariableDictionary variables)
         {
             var output = new StringBuilder();
 
             WriteScriptModules(variables, output);
+
+            return output.ToString();
+        }
+
+        static string LogEnvironmentInformation()
+        {
+            var output = new StringBuilder();
+
+            foreach (var envInfo in EnvironmentHelper.SafelyGetEnvironmentInformation())
+            {
+                output.AppendLine($"Write-Verbose {envInfo}");
+            }
 
             return output.ToString();
         }

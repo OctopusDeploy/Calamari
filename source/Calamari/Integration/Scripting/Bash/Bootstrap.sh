@@ -78,7 +78,6 @@ function set_octopusvariable
 	echo $MESSAGE
 }
 
-
 # -----------------------------------------------------------------------------
 # Function to create a new octopus artifact
 #	Accepts 2 arguments:
@@ -99,7 +98,6 @@ function new_octopusartifact
 	ofn=$2
 	len=$(wc -c < $1 )
 
-
 	if [ -z "$ofn" ]
 	then
 	    ofn=`basename "$pth"`
@@ -107,3 +105,13 @@ function new_octopusartifact
 
 	echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
 }
+
+# -----------------------------------------------------------------------------
+# Function to write the environment information
+# -----------------------------------------------------------------------------
+function write_environment_information
+{
+	#### LogEnvironmentInformation ####
+}
+
+write_environment_information

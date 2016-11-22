@@ -17,6 +17,11 @@ function Write-VersionTable
 	Write-Verbose ($PSVersionTable | Out-String)
 }
 
+function Write-EnvironmentInformation
+{
+	{{LogEnvironmentInformation}}
+}
+
 function Convert-ServiceMessageValue([string]$value)
 {
 	$valueBytes = [System.Text.Encoding]::UTF8.GetBytes($value)
@@ -24,34 +29,33 @@ function Convert-ServiceMessageValue([string]$value)
 }
 
 function Set-OctopusVariable([string]$name, [string]$value) 
-{ 	
-    $name = Convert-ServiceMessageValue($name)
-    $value = Convert-ServiceMessageValue($value)
+{
+	$name = Convert-ServiceMessageValue($name)
+	$value = Convert-ServiceMessageValue($value)
 
 	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
 }
 
 function New-OctopusArtifact([string]$path, [string]$name="""") 
-{ 	
-    if ((Test-Path $path) -eq $false) {
-        Write-Verbose "There is no file at '$path' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
-    }
+{
+	if ((Test-Path $path) -eq $false) {
+		Write-Verbose "There is no file at '$path' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
+	}
 
-    if ($name -eq """") 
-    {
-        $name = [System.IO.Path]::GetFileName($path)
-    }
+	if ($name -eq """")	{
+		$name = [System.IO.Path]::GetFileName($path)
+	}
 	$name = Convert-ServiceMessageValue($name)
 
-    $length = ([System.IO.FileInfo]$path).Length;
+	$length = ([System.IO.FileInfo]$path).Length;
 	if (!$length) {
 		$length = 0;
 	}
-    $length = Convert-ServiceMessageValue($length.ToString());
+	$length = Convert-ServiceMessageValue($length.ToString());
 
-    $path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
-    $path = [System.IO.Path]::GetFullPath($path)
-    $path = Convert-ServiceMessageValue($path)
+	$path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
+	$path = [System.IO.Path]::GetFullPath($path)
+	$path = Convert-ServiceMessageValue($path)
 
 	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)' length='$($length)']"
 }
@@ -136,7 +140,7 @@ function Initialize-ProxySettings()
 		}
 		else
 		{
-            $proxy.Credentials = New-Object System.Net.NetworkCredential("","")
+			$proxy.Credentials = New-Object System.Net.NetworkCredential("","")
 		}
 	}
 	else 
@@ -148,6 +152,7 @@ function Initialize-ProxySettings()
 }
 
 Write-VersionTable
+Write-EnvironmentInformation
 
 # -----------------------------------------------------------------
 # Variables
@@ -177,6 +182,6 @@ Initialize-ProxySettings
 # -----------------------------------------------------------------
 
 if ((test-path variable:global:lastexitcode)) 
-{ 
+{
 	exit $LastExitCode 
 }

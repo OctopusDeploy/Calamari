@@ -1,11 +1,9 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
-using System.Reflection;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
@@ -37,14 +35,14 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
         public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
         {
-            scriptParameters = RetriveParameterValues(scriptParameters);
+            scriptParameters = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("-script \"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
         }
 
-        private static string RetriveParameterValues(string scriptParameters)
+        private static string RetrieveParameterValues(string scriptParameters)
         {
             if (scriptParameters == null) return null;
             return scriptParameters.Trim()

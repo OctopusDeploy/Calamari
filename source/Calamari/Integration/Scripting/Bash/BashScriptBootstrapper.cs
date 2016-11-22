@@ -35,6 +35,7 @@ namespace Calamari.Integration.Scripting.Bash
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariableSwitchConditions(variables)));
+            builder.Replace("#### LogEnvironmentInformation ####", LogEnvironmentInformation());
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -45,6 +46,18 @@ namespace Calamari.Integration.Scripting.Bash
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+
+        static string LogEnvironmentInformation()
+        {
+            var output = new StringBuilder();
+
+            foreach (var envInfo in EnvironmentHelper.SafelyGetEnvironmentInformation())
+            {
+                output.AppendLine($"echo \"{envInfo}\"");
+            }
+
+            return output.ToString();
         }
 
         static IEnumerable<string> GetVariableSwitchConditions(CalamariVariableDictionary variables)
