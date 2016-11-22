@@ -8,5 +8,6 @@ namespace Calamari.Integration.FileSystem
         string Extension { get; }
         DateTime LastAccessTimeUtc { get; }
         DateTime LastWriteTimeUtc { get; }
+        bool IsDirectory { get; }
     }
 }
