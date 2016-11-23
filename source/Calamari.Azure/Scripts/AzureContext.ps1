@@ -39,7 +39,8 @@ If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
 		Write-Error "No Azure environment could be matched given name $OctopusAzureEnvrionment"
 		exit -2
 	}
-
+	Write-Verbose "Looking for $OctopusAzureEnvrionment"
+	Write-Verbose "Found Environment $azureEnvironment"
 	Write-Verbose "Authenticating with Service Principal"
 	Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -ServicePrincipal -Environment $azureEnvironment
 } Else {
