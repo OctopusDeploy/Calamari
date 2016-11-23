@@ -67,14 +67,17 @@ namespace Calamari.Tests.Fixtures.Deployment
                 // runs predeploy etc
                 result.AssertOutput("Bonjour from PreDeploy.ps1");
 
+                // can access mountpoint from predeploy
+                result.AssertOutputMatches(@"VHD is mounted at [A-Z]:\\");
+
                 // variable substitution in files
-                result.AssertOutputMatches(@"Performing variable substitution on '.:\\ApplicationPath\\web\.config'");
+                result.AssertOutputMatches(@"Performing variable substitution on '[A-Z]:\\ApplicationPath\\web\.config'");
 
                 // config transforms
-                result.AssertOutputMatches(@"Transforming '.:\\ApplicationPath\\web\.config' using '.:\\ApplicationPath\\web\.Production\.config'") ;
+                result.AssertOutputMatches(@"Transforming '[A-Z]:\\ApplicationPath\\web\.config' using '[A-Z]:\\ApplicationPath\\web\.Production\.config'") ;
 
                 // json substitutions
-                result.AssertOutputMatches(@"Performing JSON variable replacement on '.:\\ApplicationPath\\appsettings\.json'");
+                result.AssertOutputMatches(@"Performing JSON variable replacement on '[A-Z]:\\ApplicationPath\\appsettings\.json'");
             }
         }
     }

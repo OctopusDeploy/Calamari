@@ -54,4 +54,5 @@ If($OctopusParameters["Octopus.Action.Vhd.ApplicationPath"]){
 }
 
 Add-ToAdditionalPaths $path
+Set-OctopusVariable -name "VhdMountPoint" -value $letterDrive
 Write-Host "VHD at $vhdPath mounted to $letterDrive"
