@@ -4,6 +4,7 @@ using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Calamari.Util.Environments;
 using System.Reflection;
 
 namespace Calamari.Integration.Scripting.ScriptCS
@@ -73,6 +74,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("/*{{VariableDeclarations}}*/", WriteVariableDictionary(variables));
+            builder.Replace("/*{{LogEnvironmentInformation}}*/", LogEnvironmentInformation());
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -83,6 +85,21 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+
+        static string LogEnvironmentInformation()
+        {
+            //Write-Host "##octopus[stdout-verbose]"
+            //Write-Host $message
+            //Write-Host "##octopus[stdout-default]"
+            var environmentInformationStamp = $"ScriptCS Environment Information:{Environment.NewLine}" +
+                $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}";
+
+            var output = new StringBuilder();
+            output.AppendLine("Console.WriteLine(\"##octopus[stdout-verbose]\");");
+            output.AppendLine($"Console.WriteLine(\"{environmentInformationStamp}\");");
+            output.AppendLine("Console.WriteLine(\"##octopus[stdout-default]\");");
+            return output.ToString();
         }
             
         static string WriteVariableDictionary(CalamariVariableDictionary variables)

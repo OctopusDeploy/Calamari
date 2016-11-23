@@ -105,3 +105,13 @@ function new_octopusartifact
 
 	echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
 }
+
+# -----------------------------------------------------------------------------
+# Function to write the environment information
+# -----------------------------------------------------------------------------
+function log_environment_information
+{
+	#### LogEnvironmentInformation ####
+}
+
+log_environment_information

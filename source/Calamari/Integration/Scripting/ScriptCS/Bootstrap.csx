@@ -23,6 +23,12 @@ public static class Octopus
             throw new Exception("Octopus can only be initialized once.");
         }
         Parameters = new OctopusParametersDictionary(password);
+        LogEnvironmentInformation();
+    }
+
+    static void LogEnvironmentInformation()
+    {
+        /*{{LogEnvironmentInformation}}*/
     }
 
     public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string, string>

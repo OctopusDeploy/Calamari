@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Calamari.Util.Environments;
 
 namespace Calamari.Integration.Scripting.Bash
 {
@@ -35,6 +36,7 @@ namespace Calamari.Integration.Scripting.Bash
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariableSwitchConditions(variables)));
+            builder.Replace("#### LogEnvironmentInformation ####", LogEnvironmentInformation());
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -45,6 +47,18 @@ namespace Calamari.Integration.Scripting.Bash
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+
+        static string LogEnvironmentInformation()
+        {
+            var environmentInformationStamp = $"Bash Environment Information:{Environment.NewLine}" +
+                $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}";
+
+            var output = new StringBuilder();
+            output.AppendLine("echo \"##octopus[stdout-verbose]\"");
+            output.AppendLine($"echo \"{environmentInformationStamp}\"");
+            output.AppendLine("echo \"##octopus[stdout-default]\"");
+            return output.ToString();
         }
 
         static IEnumerable<string> GetVariableSwitchConditions(CalamariVariableDictionary variables)

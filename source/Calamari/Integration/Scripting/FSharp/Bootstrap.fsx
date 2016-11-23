@@ -38,6 +38,9 @@ let private decryptString encrypted iv =
     use streamReader = new StreamReader(cryptoStream, Encoding.UTF8)
     streamReader.ReadToEnd();
 
+let private logEnvironmentInformation () =
+    (*{{LogEnvironmentInformation}}*)
+
 let tryFindVariable name =
     match name |> encode with
 (*{{VariableDeclarations}}*)

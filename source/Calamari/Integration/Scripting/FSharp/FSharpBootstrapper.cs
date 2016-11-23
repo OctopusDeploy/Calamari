@@ -4,6 +4,7 @@ using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Calamari.Util.Environments;
 using System.Reflection;
 
 namespace Calamari.Integration.Scripting.FSharp
@@ -66,6 +67,7 @@ namespace Calamari.Integration.Scripting.FSharp
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("(*{{VariableDeclarations}}*)", WritePatternMatching(variables));
+            builder.Replace("(*{{LogEnvironmentInformation}}*)", LogEnvironmentInformation());
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -76,6 +78,18 @@ namespace Calamari.Integration.Scripting.FSharp
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+
+        static string LogEnvironmentInformation()
+        {
+            var environmentInformationStamp = $"FSharp Environment Information:{Environment.NewLine}" +
+                $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}";
+
+            var output = new StringBuilder();
+            output.AppendLine("    printfn \"##octopus[stdout-verbose]\"");
+            output.AppendLine($"    printfn \"{environmentInformationStamp}\"");
+            output.AppendLine("    printfn \"##octopus[stdout-default]\"");
+            return output.ToString();
         }
 
         static string WritePatternMatching(CalamariVariableDictionary variables)

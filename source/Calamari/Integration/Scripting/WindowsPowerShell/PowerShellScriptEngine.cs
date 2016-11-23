@@ -25,5 +25,6 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 return commandLineRunner.Execute(invocation);
             }
         }
+
     }
 }
