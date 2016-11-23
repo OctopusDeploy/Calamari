@@ -13,22 +13,10 @@ $deployAsVirtualDirectory = !(Is-DeploymentTypeDisabled $OctopusParameters["Octo
 
 if (!$deployAsVirtualDirectory -and !$deployAsWebSite -and !$deployAsWebApplication)
 {
-	Write-Host "Skipping IIS deployment. Neither Website nor Virtual Directory nor Web Application deployment type has been enabled." 
-	exit 0
+   Write-Host "Skipping IIS deployment. Neither Website nor Virtual Directory nor Web Application deployment type has been enabled." 
+   exit 0
 }
 
-try {
-	$iisFeature = Get-WindowsFeature Web-WebServer
-	if ($iisFeature -eq $null -or $iisFeature.Installed -eq $false) {
-		Write-Error "It looks like IIS is not installed on this server and the deployment is likely to fail."
-		Write-Error "Tip: You can use PowerShell to ensure IIS is installed: 'Install-WindowsFeature Web-WebServer'"
-		Write-Error "     You are likely to want more IIS features than just the web server. Run 'Get-WindowsFeature *web*' to see all of the features you can install."
-		exit 1
-	}
-} catch {
-	Write-Verbose "Call to `Get-WindowsFeature Web-WebServer` failed."
-	Write-Verbose "Unable to determine if IIS is installed on this server but will optimistically continue."
-}
 
 try {
 	Add-PSSnapin WebAdministration
