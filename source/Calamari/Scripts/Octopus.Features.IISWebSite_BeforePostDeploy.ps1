@@ -22,7 +22,7 @@ try {
 	Add-PSSnapin WebAdministration
 } catch {
     try {
-        Import-Module WebAdministration
+        Import-Module WebAdministration -ErrorAction Stop
     } catch {
 		Write-Warning "We failed to load the WebAdministration module. This usually resolved by doing one of the following:"
 		Write-Warning "1. Install .NET Framework 3.5.1"
