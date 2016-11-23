@@ -1,6 +1,7 @@
 ﻿param([string]$OctopusKey="")
 
 $ErrorActionPreference = 'Stop'
+$OperatingSystem = (Get-WmiObject Win32_OperatingSystem)
 
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
@@ -19,7 +20,81 @@ function Log-VersionTable
 
 function Log-EnvironmentInformation
 {
-	{{LogEnvironmentInformation}}
+	Write-Verbose "PowerShell Environment Information:"
+	SafelyLog-EnvironmentVarsToList
+	SafelyLog-PathVarsToList
+	SafelyLog-ProcessVarsToList
+	SafelyLog-ComputerInfoVarsToList
+}
+
+function SafelyLog-EnvironmentVarsToList
+{
+	Try
+	{
+		$osCaption = $OperatingSystem.Caption
+		Write-Verbose "  OperatingSystem: $($osCaption)"
+
+		$osArchitecture = $OperatingSystem.OSArchitecture
+		Write-Verbose "  OsBitVersion: $($osArchitecture)"
+
+		$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+		Write-Verbose "  CurrentUser: $($currentUser)"
+
+		$machineName = $env:COMPUTERNAME
+		Write-Verbose "  MachineName: $($machineName)"
+
+		$numberOfProcessors = $env:NUMBER_OF_PROCESSORS
+		Write-Verbose "  ProcessorCount: $($numberOfProcessors)"
+	}
+	Catch
+	{
+		# silently fail.
+	}
+}
+
+function SafelyLog-PathVarsToList
+{
+	Try
+	{
+		$currentDirectory = (Resolve-Path .\).Path
+		Write-Verbose "  CurrentDirectory: $($currentDirectory)"
+
+		$tempPath = $env:TEMP
+		Write-Verbose "  TempDirectory: $($tempPath)"
+	}
+	Catch
+	{
+		# silently fail.
+	}
+}
+
+function SafelyLog-ProcessVarsToList
+{
+	Try
+	{
+		$hostProcess = [System.Diagnostics.Process]::GetCurrentProcess().ProcessName
+		Write-Verbose "  HostProcessName: $()"
+	}
+	Catch
+	{
+		# silently fail.
+	}
+}
+
+function SafelyLog-ComputerInfoVarsToList
+{
+	Try
+	{
+		$totalVisibleMemorySize = $OperatingSystem.TotalVisibleMemorySize
+		Write-Verbose "  TotalPhysicalMemory: $($totalVisibleMemorySize) KB"
+
+		$freePhysicalMemory = $OperatingSystem.FreePhysicalMemory
+		Write-Verbose "  AvailablePhysicalMemory: $($freePhysicalMemory) KB"
+	}
+	Catch
+	{
+		# silently fail.
+	}
 }
 
 function Convert-ServiceMessageValue([string]$value)
@@ -152,6 +227,7 @@ function Initialize-ProxySettings()
 }
 
 Log-VersionTable
+Write-Host "hi"
 Log-EnvironmentInformation
 
 # -----------------------------------------------------------------

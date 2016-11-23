@@ -29,12 +29,12 @@ namespace Calamari.Util.Environments /* This is in the 'Environments' namespace 
 #if NET40
                 envVars.Add($"OperatingSystem: {Environment.OSVersion.ToString()}");
                 envVars.Add($"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
-                envVars.Add($"CurrentUser: {Environment.UserName}");
                 envVars.Add($"Is64BitProcess: {Environment.Is64BitProcess.ToString()}");
 #else
                 envVars.Add($"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSDescription.ToString()}");
-                envVars.Add($"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()}");
+                envVars.Add($"OsBitVersion: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()}");
 #endif
+                envVars.Add($"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
                 envVars.Add($"MachineName: {Environment.MachineName}");
                 envVars.Add($"ProcessorCount: {Environment.ProcessorCount.ToString()}");
             }
@@ -61,7 +61,7 @@ namespace Calamari.Util.Environments /* This is in the 'Environments' namespace 
         {
             try
             {
-                envVars.Add($"HostProcessName: {Process.GetCurrentProcess().ToString()}");
+                envVars.Add($"HostProcessName: {Process.GetCurrentProcess().ProcessName}");
             }
             catch
             {

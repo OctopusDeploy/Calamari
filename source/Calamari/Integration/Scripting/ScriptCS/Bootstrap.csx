@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using System.Net;
 using System.Security.Cryptography;
+using System.Diagnostics;
 
 public static class Octopus
 {
@@ -28,8 +29,68 @@ public static class Octopus
 
     static void LogEnvironmentInformation()
     {
-        /*{{LogEnvironmentInformation}}*/
+        var environmentInformationStamp = $"ScriptCS Environment Information:{Environment.NewLine}" +
+            $"  {string.Join($"{Environment.NewLine}  ", SafelyGetEnvironmentInformation())}";
+
+        Console.WriteLine("##octopus[stdout-verbose]");
+        Console.WriteLine(environmentInformationStamp);
+        Console.WriteLine("##octopus[stdout-default]");
     }
+
+    #region Logging Helpers
+
+    static string[] SafelyGetEnvironmentInformation()
+    {
+        var envVars = new List<string>();
+        SafelyAddEnvironmentVarsToList(ref envVars);
+        SafelyAddPathVarsToList(ref envVars);
+        SafelyAddProcessVarsToList(ref envVars);
+        return envVars.ToArray();
+    }
+
+    static void SafelyAddEnvironmentVarsToList(ref List<string> envVars)
+    {
+        try
+        {
+            envVars.Add($"OperatingSystem: {Environment.OSVersion.ToString()}");
+            envVars.Add($"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
+            envVars.Add($"Is64BitProcess: {Environment.Is64BitProcess.ToString()}");
+            envVars.Add($"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
+            envVars.Add($"MachineName: {Environment.MachineName}");
+            envVars.Add($"ProcessorCount: {Environment.ProcessorCount.ToString()}");
+        }
+        catch
+        {
+            // silently fail.
+        }
+    }
+
+    static void SafelyAddPathVarsToList(ref List<string> envVars)
+    {
+        try
+        {
+            envVars.Add($"CurrentDirectory: {Directory.GetCurrentDirectory()}");
+            envVars.Add($"TempDirectory: {Path.GetTempPath()}");
+        }
+        catch
+        {
+            // silently fail.
+        }
+    }
+
+    static void SafelyAddProcessVarsToList(ref List<string> envVars)
+    {
+        try
+        {
+            envVars.Add($"HostProcessName: {Process.GetCurrentProcess().ProcessName}");
+        }
+        catch
+        {
+            // silently fail.
+        }
+    }
+
+    #endregion
 
     public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string, string>
     {

@@ -67,7 +67,6 @@ namespace Calamari.Integration.Scripting.FSharp
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("(*{{VariableDeclarations}}*)", WritePatternMatching(variables));
-            builder.Replace("(*{{LogEnvironmentInformation}}*)", LogEnvironmentInformation());
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -78,20 +77,6 @@ namespace Calamari.Integration.Scripting.FSharp
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
-        }
-
-        static string LogEnvironmentInformation()
-        {
-            var environmentInformationStamp = $"ScriptCS Environment Information:{Environment.NewLine}" +
-                $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}";
-
-            // Note: We're not using 'printfn' because I couldn't figure out how to call print once with newlines
-            // in f# like you can using '@' in Console.WriteLine (and I didn't want to foreach).
-            var output = new StringBuilder();
-            output.AppendLine("    Console.WriteLine(\"##octopus[stdout-verbose]\");");
-            output.AppendLine($"    Console.WriteLine(@\"{environmentInformationStamp}\");");
-            output.AppendLine("    Console.WriteLine(\"##octopus[stdout-default]\");");
-            return output.ToString();
         }
 
         static string WritePatternMatching(CalamariVariableDictionary variables)
