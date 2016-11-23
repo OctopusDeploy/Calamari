@@ -39,7 +39,7 @@ let private decryptString encrypted iv =
     streamReader.ReadToEnd();
 
 let private logEnvironmentInformation () =
-    (*{{LogEnvironmentInformation}}*)
+(*{{LogEnvironmentInformation}}*)
 
 let tryFindVariable name =
     match name |> encode with
@@ -87,3 +87,5 @@ let createArtifact path fileName =
 
     let content = sprintf "path='%s' name='%s' length='%s'"  encodedPath encodedFileName encodedLength
     writeServiceMessage "createArtifact" content
+
+logEnvironmentInformation()

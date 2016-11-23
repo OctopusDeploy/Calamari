@@ -82,13 +82,15 @@ namespace Calamari.Integration.Scripting.FSharp
 
         static string LogEnvironmentInformation()
         {
-            var environmentInformationStamp = $"FSharp Environment Information:{Environment.NewLine}" +
+            var environmentInformationStamp = $"ScriptCS Environment Information:{Environment.NewLine}" +
                 $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}";
 
+            // Note: We're not using 'printfn' because I couldn't figure out how to call print once with newlines
+            // in f# like you can using '@' in Console.WriteLine (and I didn't want to foreach).
             var output = new StringBuilder();
-            output.AppendLine("    printfn \"##octopus[stdout-verbose]\"");
-            output.AppendLine($"    printfn \"{environmentInformationStamp}\"");
-            output.AppendLine("    printfn \"##octopus[stdout-default]\"");
+            output.AppendLine("    Console.WriteLine(\"##octopus[stdout-verbose]\");");
+            output.AppendLine($"    Console.WriteLine(@\"{environmentInformationStamp}\");");
+            output.AppendLine("    Console.WriteLine(\"##octopus[stdout-default]\");");
             return output.ToString();
         }
 
