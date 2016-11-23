@@ -9,10 +9,11 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ServiceManagementPublishProfileProvider  
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, byte[] certificateBytes, string siteName)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, byte[] certificateBytes, string siteName,string serviceManagementEndpoint)
         {
+            Log.Verbose($"servicemanagement endpoint is {serviceManagementEndpoint}");
             using (var cloudClient = CloudContext.Clients.CreateWebSiteManagementClient(
-                new CertificateCloudCredentials(subscriptionId, new X509Certificate2(certificateBytes))))
+                new CertificateCloudCredentials(subscriptionId, new X509Certificate2(certificateBytes)),new Uri(serviceManagementEndpoint)))
             {
                 var webApp = cloudClient.WebSpaces.List()
                     .SelectMany(
