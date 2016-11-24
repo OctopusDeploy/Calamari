@@ -29,6 +29,9 @@ public static class Octopus
 
     static void LogEnvironmentInformation()
     {
+        if (Parameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging") && Parameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True")
+            return;
+
         var environmentInformationStamp = $"ScriptCS Environment Information:{Environment.NewLine}" +
             $"  {string.Join($"{Environment.NewLine}  ", SafelyGetEnvironmentInformation())}";
 

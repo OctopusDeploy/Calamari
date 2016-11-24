@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Calamari.Integration.FileSystem;
-using System.Runtime.InteropServices;
+using System.Runtime.InteropServices; // Needed for dotnetcore
 #if VISUALBASIC_SUPPORT
 using Microsoft.VisualBasic.Devices;
 #endif

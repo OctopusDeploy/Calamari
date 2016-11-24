@@ -136,6 +136,7 @@
             public const string Name = "Octopus.Action.Name";
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
+            public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
 
             public static class Azure
             {

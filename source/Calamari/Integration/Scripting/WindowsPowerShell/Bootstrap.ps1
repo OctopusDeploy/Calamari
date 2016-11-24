@@ -20,31 +20,39 @@ function Log-VersionTable
 
 function Log-EnvironmentInformation
 {
-	Write-Verbose "PowerShell Environment Information:"
-	SafelyLog-EnvironmentVarsToList
-	SafelyLog-PathVarsToList
-	SafelyLog-ProcessVarsToList
-	SafelyLog-ComputerInfoVarsToList
+	if ($OctopusParameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging")) {
+		if ($OctopusParameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True") {
+			return;
+		}
+	}
+
+	Write-Host "##octopus[stdout-verbose]"
+	Write-Host "PowerShell Environment Information:"
+	SafelyLog-EnvironmentVars
+	SafelyLog-PathVars
+	SafelyLog-ProcessVars
+	SafelyLog-ComputerInfoVars
+	Write-Host "##octopus[stdout-default]"
 }
 
-function SafelyLog-EnvironmentVarsToList
+function SafelyLog-EnvironmentVars
 {
 	Try
 	{
 		$osCaption = $OperatingSystem.Caption
-		Write-Verbose "  OperatingSystem: $($osCaption)"
+		Write-Host "  OperatingSystem: $($osCaption)"
 
 		$osArchitecture = $OperatingSystem.OSArchitecture
-		Write-Verbose "  OsBitVersion: $($osArchitecture)"
+		Write-Host "  OsBitVersion: $($osArchitecture)"
 
 		$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-		Write-Verbose "  CurrentUser: $($currentUser)"
+		Write-Host "  CurrentUser: $($currentUser)"
 
 		$machineName = $env:COMPUTERNAME
-		Write-Verbose "  MachineName: $($machineName)"
+		Write-Host "  MachineName: $($machineName)"
 
 		$numberOfProcessors = $env:NUMBER_OF_PROCESSORS
-		Write-Verbose "  ProcessorCount: $($numberOfProcessors)"
+		Write-Host "  ProcessorCount: $($numberOfProcessors)"
 	}
 	Catch
 	{
@@ -52,15 +60,15 @@ function SafelyLog-EnvironmentVarsToList
 	}
 }
 
-function SafelyLog-PathVarsToList
+function SafelyLog-PathVars
 {
 	Try
 	{
 		$currentDirectory = (Resolve-Path .\).Path
-		Write-Verbose "  CurrentDirectory: $($currentDirectory)"
+		Write-Host "  CurrentDirectory: $($currentDirectory)"
 
 		$tempPath = $env:TEMP
-		Write-Verbose "  TempDirectory: $($tempPath)"
+		Write-Host "  TempDirectory: $($tempPath)"
 	}
 	Catch
 	{
@@ -68,12 +76,12 @@ function SafelyLog-PathVarsToList
 	}
 }
 
-function SafelyLog-ProcessVarsToList
+function SafelyLog-ProcessVars
 {
 	Try
 	{
 		$hostProcess = [System.Diagnostics.Process]::GetCurrentProcess().ProcessName
-		Write-Verbose "  HostProcessName: $()"
+		Write-Host "  HostProcessName: $($hostProcess)"
 	}
 	Catch
 	{
@@ -81,15 +89,15 @@ function SafelyLog-ProcessVarsToList
 	}
 }
 
-function SafelyLog-ComputerInfoVarsToList
+function SafelyLog-ComputerInfoVars
 {
 	Try
 	{
 		$totalVisibleMemorySize = $OperatingSystem.TotalVisibleMemorySize
-		Write-Verbose "  TotalPhysicalMemory: $($totalVisibleMemorySize) KB"
+		Write-Host "  TotalPhysicalMemory: $($totalVisibleMemorySize) KB"
 
 		$freePhysicalMemory = $OperatingSystem.FreePhysicalMemory
-		Write-Verbose "  AvailablePhysicalMemory: $($freePhysicalMemory) KB"
+		Write-Host "  AvailablePhysicalMemory: $($freePhysicalMemory) KB"
 	}
 	Catch
 	{
@@ -227,8 +235,6 @@ function Initialize-ProxySettings()
 }
 
 Log-VersionTable
-Write-Host "hi"
-Log-EnvironmentInformation
 
 # -----------------------------------------------------------------
 # Variables
@@ -247,6 +253,8 @@ Log-EnvironmentInformation
 # -----------------------------------------------------------------
 
 Initialize-ProxySettings
+
+Log-EnvironmentInformation
 
 # -----------------------------------------------------------------
 # Invoke target script

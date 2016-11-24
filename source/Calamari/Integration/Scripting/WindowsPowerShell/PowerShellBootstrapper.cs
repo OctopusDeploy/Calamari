@@ -6,7 +6,6 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
-using Calamari.Util.Environments;
 using Octostache;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell

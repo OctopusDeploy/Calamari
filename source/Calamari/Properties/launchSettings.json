@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Calamari": {
+      "commandName": "Project",
+      "commandLineArgs": "run-script -script C:\\Development\\_tmp\\_EnvScripts\\test.ps1"
+    }
+  }
+}
