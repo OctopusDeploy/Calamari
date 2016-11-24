@@ -6,6 +6,9 @@ val private getEnvironmentVariable : name:string -> string option
 val private getCustomProxy : proxyHost:string -> System.Net.IWebProxy
 val private getCustomCredentials : proxyUserName:string -> System.Net.NetworkCredential
 val private decryptString : encrypted:string -> iv:string -> string
+val private safelyLogEnvironmentVars : unit -> unit
+val private safelyLogPathVars : unit -> unit
+val private safelyLogProcessVars : unit -> unit
 val private logEnvironmentInformation : unit -> unit
 val tryFindVariable : name:string -> string option
 val findVariable : name:string -> string

@@ -87,6 +87,30 @@ let createArtifact path fileName =
     let content = sprintf "path='%s' name='%s' length='%s'"  encodedPath encodedFileName encodedLength
     writeServiceMessage "createArtifact" content
 
+let private safelyLogEnvironmentVars () =
+    try
+        Console.WriteLine("  OperatingSystem: " + Environment.OSVersion.ToString())
+        Console.WriteLine("  OsBitVersion: " + if Environment.Is64BitOperatingSystem then "x64" else "x86")
+        Console.WriteLine("  Is64BitProcess: " + Environment.Is64BitProcess.ToString())
+        Console.WriteLine("  CurrentUser: " + WindowsIdentity.GetCurrent().Name)
+        Console.WriteLine("  MachineName: " + Environment.MachineName)
+        Console.WriteLine("  ProcessorCount: " + Environment.ProcessorCount.ToString())
+    with
+    | _ -> ()
+
+let private safelyLogPathVars () =
+    try
+        Console.WriteLine("  CurrentDirectory: " + Directory.GetCurrentDirectory())
+        Console.WriteLine("  TempDirectory: " + Path.GetTempPath())
+    with
+    | _ -> ()
+
+let private safelyLogProcessVars () =
+    try
+        Console.WriteLine("  HostProcessName: " + Process.GetCurrentProcess().ProcessName)
+    with
+    | _ -> ()
+
 let private logEnvironmentInformation () =
     try
         let suppressEnvironmentLogging = findVariableOrDefault "False" "Octopus.Action.Script.SuppressEnvironmentLogging"
@@ -95,15 +119,9 @@ let private logEnvironmentInformation () =
         else
             Console.WriteLine("##octopus[stdout-verbose]")
             Console.WriteLine("FSharp Environment Information:")
-            Console.WriteLine("  OperatingSystem: " + Environment.OSVersion.ToString())
-            Console.WriteLine("  OsBitVersion: " + if Environment.Is64BitOperatingSystem then "x64" else "x86")
-            Console.WriteLine("  Is64BitProcess: " + Environment.Is64BitProcess.ToString())
-            Console.WriteLine("  CurrentUser: " + WindowsIdentity.GetCurrent().Name)
-            Console.WriteLine("  MachineName: " + Environment.MachineName)
-            Console.WriteLine("  ProcessorCount: " + Environment.ProcessorCount.ToString())
-            Console.WriteLine("  CurrentDirectory: " + Directory.GetCurrentDirectory())
-            Console.WriteLine("  TempDirectory: " + Path.GetTempPath())
-            Console.WriteLine("  HostProcessName: " + Process.GetCurrentProcess().ProcessName)
+            safelyLogEnvironmentVars()
+            safelyLogPathVars()
+            safelyLogProcessVars()
             Console.WriteLine("##octopus[stdout-default]")
     with
     | _ -> Console.WriteLine("##octopus[stdout-default]")
