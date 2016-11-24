@@ -1,7 +1,6 @@
 ﻿param([string]$OctopusKey="")
 
 $ErrorActionPreference = 'Stop'
-$OperatingSystem = (Get-WmiObject Win32_OperatingSystem)
 
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
@@ -39,20 +38,23 @@ function SafelyLog-EnvironmentVars
 {
 	Try
 	{
-		$osCaption = $OperatingSystem.Caption
-		Write-Host "  OperatingSystem: $($osCaption)"
+		$operatingSystem = [System.Environment]::OSVersion.ToString()
+		Write-Host "  OperatingSystem: $($operatingSystem)"
+		
+		$osBitVersion = If ([System.Environment]::Is64BitOperatingSystem) {"x64"} Else {"x86"}
+		Write-Host "  OsBitVersion: $($osBitVersion)"
 
-		$osArchitecture = $OperatingSystem.OSArchitecture
-		Write-Host "  OsBitVersion: $($osArchitecture)"
+		$is64BitProcess = [System.Environment]::Is64BitProcess.ToString()
+		Write-Host "  Is64BitProcess: $($is64BitProcess)"
 
 		$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 		Write-Host "  CurrentUser: $($currentUser)"
 
-		$machineName = $env:COMPUTERNAME
+		$machineName = [System.Environment]::MachineName
 		Write-Host "  MachineName: $($machineName)"
 
-		$numberOfProcessors = $env:NUMBER_OF_PROCESSORS
-		Write-Host "  ProcessorCount: $($numberOfProcessors)"
+		$processorCount = [System.Environment]::ProcessorCount.ToString()
+		Write-Host "  ProcessorCount: $($processorCount)"
 	}
 	Catch
 	{
@@ -64,10 +66,10 @@ function SafelyLog-PathVars
 {
 	Try
 	{
-		$currentDirectory = (Resolve-Path .\).Path
+		$currentDirectory = [System.IO.Directory]::GetCurrentDirectory()
 		Write-Host "  CurrentDirectory: $($currentDirectory)"
-
-		$tempPath = $env:TEMP
+		
+		$tempPath = [System.IO.Path]::GetTempPath()
 		Write-Host "  TempDirectory: $($tempPath)"
 	}
 	Catch
@@ -93,6 +95,8 @@ function SafelyLog-ComputerInfoVars
 {
 	Try
 	{
+		$OperatingSystem = (Get-WmiObject Win32_OperatingSystem)
+
 		$totalVisibleMemorySize = $OperatingSystem.TotalVisibleMemorySize
 		Write-Host "  TotalPhysicalMemory: $($totalVisibleMemorySize) KB"
 

@@ -7,6 +7,7 @@ using System.Text;
 using System.Net;
 using System.Security.Cryptography;
 using System.Diagnostics;
+using System.Security.Principal;
 
 public static class Octopus
 {
@@ -58,7 +59,7 @@ public static class Octopus
             envVars.Add($"OperatingSystem: {Environment.OSVersion.ToString()}");
             envVars.Add($"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
             envVars.Add($"Is64BitProcess: {Environment.Is64BitProcess.ToString()}");
-            envVars.Add($"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
+            envVars.Add($"CurrentUser: {WindowsIdentity.GetCurrent().Name}");
             envVars.Add($"MachineName: {Environment.MachineName}");
             envVars.Add($"ProcessorCount: {Environment.ProcessorCount.ToString()}");
         }

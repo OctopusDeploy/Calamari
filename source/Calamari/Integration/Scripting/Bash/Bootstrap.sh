@@ -116,31 +116,18 @@ function log_environment_information
 		return 0
 	else
 		echo "##octopus[stdout-verbose]"
-		safely_log_environmentvars
-		safely_log_pathvars
-		safely_log_processvars
+		echo "Bash Environment Information:"
+		echo "  OperatingSystem: $(uname -a)"
+		echo "  CurrentUser: $(whoami)"
+		echo "  HostName: $(hostname)"
+		echo "  ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
+		currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+		echo "  CurrentDirectory: " $currentDirectory
+		tempDirectory=$(dirname $(mktemp -u))
+		echo "  TempDirectory: " $tempDirectory
+		echo "  HostProcessID: $$"
 		echo "##octopus[stdout-default]"
 	fi
-}
-function safely_log_environmentvars
-{
-	rage = "CurrentUser: $(whoami2)"
-	echo "OperatingSystem: $(uname -a)"
-	echo "CurrentUser: $(whoami)"
-	echo "HostName: $(hostname)"
-	echo "ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
-}
-function safely_log_pathvars
-{
-	currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-	echo "CurrentDirectory: " $currentDirectory
-
-	tempDirectory=$(dirname $(mktemp -u))
-	echo "TempDirectory: " $tempDirectory
-}
-function safely_log_processvars
-{
-    echo "HostProcessID: $$"
 }
 
 log_environment_information

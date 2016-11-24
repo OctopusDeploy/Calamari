@@ -7,6 +7,7 @@ open System.IO
 open System.Text
 open System.Net
 open System.Security.Cryptography
+open System.Security.Principal
 
 let private encode (value:string) = System.Text.Encoding.UTF8.GetBytes(value) |> Convert.ToBase64String
 let private decode (value:string) = Convert.FromBase64String(value) |> System.Text.Encoding.UTF8.GetString
@@ -38,26 +39,6 @@ let private decryptString encrypted iv =
     use cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read)
     use streamReader = new StreamReader(cryptoStream, Encoding.UTF8)
     streamReader.ReadToEnd();
-
-let private logEnvironmentInformation () =
-    try
-        let suppressEnvironmentLogging = findVariableOrDefault "False" "Octopus.Action.Script.SuppressEnvironmentLogging"
-        if suppressEnvironmentLogging = "True" then
-            () // bail out
-        else
-            Console.WriteLine("##octopus[stdout-verbose]")
-            Console.WriteLine("OperatingSystem: " + Environment.OSVersion.ToString())
-            Console.WriteLine("OsBitVersion: " + if Environment.Is64BitOperatingSystem then "x64" else "x86")
-            Console.WriteLine("CurrentUser: " + Environment.UserName)
-            Console.WriteLine("Is64BitProcess: " + Environment.Is64BitProcess.ToString())
-            Console.WriteLine("MachineName: " + Environment.MachineName)
-            Console.WriteLine("ProcessorCount: " + Environment.ProcessorCount.ToString())
-            Console.WriteLine("CurrentDirectory: " + Directory.GetCurrentDirectory())
-            Console.WriteLine("TempDirectory: " + Path.GetTempPath())
-            Console.WriteLine("HostProcessName: " + Process.GetCurrentProcess().ProcessName)
-            Console.WriteLine("##octopus[stdout-default]")
-    with
-    | _ -> Console.WriteLine("##octopus[stdout-default]")
 
 let tryFindVariable name =
     match name |> encode with
@@ -105,5 +86,26 @@ let createArtifact path fileName =
 
     let content = sprintf "path='%s' name='%s' length='%s'"  encodedPath encodedFileName encodedLength
     writeServiceMessage "createArtifact" content
+
+let private logEnvironmentInformation () =
+    try
+        let suppressEnvironmentLogging = findVariableOrDefault "False" "Octopus.Action.Script.SuppressEnvironmentLogging"
+        if suppressEnvironmentLogging = "True" then
+            () // bail out
+        else
+            Console.WriteLine("##octopus[stdout-verbose]")
+            Console.WriteLine("FSharp Environment Information:")
+            Console.WriteLine("  OperatingSystem: " + Environment.OSVersion.ToString())
+            Console.WriteLine("  OsBitVersion: " + if Environment.Is64BitOperatingSystem then "x64" else "x86")
+            Console.WriteLine("  Is64BitProcess: " + Environment.Is64BitProcess.ToString())
+            Console.WriteLine("  CurrentUser: " + WindowsIdentity.GetCurrent().Name)
+            Console.WriteLine("  MachineName: " + Environment.MachineName)
+            Console.WriteLine("  ProcessorCount: " + Environment.ProcessorCount.ToString())
+            Console.WriteLine("  CurrentDirectory: " + Directory.GetCurrentDirectory())
+            Console.WriteLine("  TempDirectory: " + Path.GetTempPath())
+            Console.WriteLine("  HostProcessName: " + Process.GetCurrentProcess().ProcessName)
+            Console.WriteLine("##octopus[stdout-default]")
+    with
+    | _ -> Console.WriteLine("##octopus[stdout-default]")
 
 logEnvironmentInformation()
