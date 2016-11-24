@@ -112,26 +112,23 @@ function new_octopusartifact
 function log_environment_information
 {
 	suppressEnvironmentLogging=$(get_octopusvariable "Octopus.Action.Script.SuppressEnvironmentLogging")
-	if [ -n "$suppressEnvironmentLogging" ]
+	if [ "$suppressEnvironmentLogging" == "True" ]
 	then
-		if [ "$suppressEnvironmentLogging" == "True" ]
-		then
-			return 0
-		fi
-	else
-		echo "##octopus[stdout-verbose]"
-		echo "Bash Environment Information:"
-		echo "  OperatingSystem: $(uname -a)"
-		echo "  CurrentUser: $(whoami)"
-		echo "  HostName: $(hostname)"
-		echo "  ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
-		currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-		echo "  CurrentDirectory: " $currentDirectory
-		tempDirectory=$(dirname $(mktemp -u))
-		echo "  TempDirectory: " $tempDirectory
-		echo "  HostProcessID: $$"
-		echo "##octopus[stdout-default]"
+		return 0
 	fi
+
+	echo "##octopus[stdout-verbose]"
+	echo "Bash Environment Information:"
+	echo "  OperatingSystem: $(uname -a)"
+	echo "  CurrentUser: $(whoami)"
+	echo "  HostName: $(hostname)"
+	echo "  ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
+	currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+	echo "  CurrentDirectory: " $currentDirectory
+	tempDirectory=$(dirname $(mktemp -u))
+	echo "  TempDirectory: " $tempDirectory
+	echo "  HostProcessID: $$"
+	echo "##octopus[stdout-default]"
 }
 
 log_environment_information
