@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Processes;
@@ -14,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         ICalamariFileSystem fileSystem;
         IInternetInformationServer iis;
-        CalamariVariableDictionary variables;
+        IVariableDictionary variables;
         RunningDeployment deployment;
         const string stagingDirectory = "C:\\Applications\\Acme\\1.0.0";
 

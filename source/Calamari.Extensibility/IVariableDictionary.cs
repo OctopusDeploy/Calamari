@@ -19,6 +19,12 @@ namespace Calamari.Extensibility
         string Evaluate(string expressionOrVariableOrText, out string error, bool haltOnError = true);
         string Evaluate(string expressionOrVariableOrText);
         void SetStrings(string variableName, IEnumerable<string> values, string separator = ",");
+
+        void Save(string path);
+
+        void Save();
+
+        string SaveAsString();
     }
     /*
         /// <summary>

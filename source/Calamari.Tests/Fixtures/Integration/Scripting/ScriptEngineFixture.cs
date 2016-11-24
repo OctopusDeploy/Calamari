@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -51,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             }
         }
 
-        private CalamariVariableDictionary GetDictionaryWithSecret()
+        private IVariableDictionary GetDictionaryWithSecret()
         {
             var cd = new CalamariVariableDictionary();
             cd.Set("foo", "bar");
@@ -59,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             return cd;
         }
 
-        private CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, CalamariVariableDictionary variables)
+        private CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariableDictionary variables)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(capture);

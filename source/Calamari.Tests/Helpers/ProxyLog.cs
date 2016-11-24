@@ -58,6 +58,16 @@ namespace Calamari.Tests.Helpers
             Log.StdErr = initialStdErr;
         }
 
+        public void AssertContains(string expectedOutput)
+        {
+            Assert.That(StdOut.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0, string.Format("Expected to find: {0}. Output:\r\n{1}", expectedOutput, StdOut));
+        }
+
+        public void AssertDoesNotContain(string expectedOutput)
+        {
+            Assert.That(StdOut.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) == -1, string.Format("Expected not to find: {0}. Output:\r\n{1}", expectedOutput, StdOut));
+        }
+
         public void Dispose()
         {
             Dispose(true);

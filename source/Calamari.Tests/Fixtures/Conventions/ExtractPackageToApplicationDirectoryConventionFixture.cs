@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -16,7 +18,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class ExtractPackageToApplicationDirectoryConventionFixture
     {
         IPackageExtractor extractor;
-        CalamariVariableDictionary variables;
+        IVariableDictionary variables;
         ExtractPackageToApplicationDirectoryConvention convention;
         ICalamariFileSystem fileSystem;
         static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Package.nupkg");

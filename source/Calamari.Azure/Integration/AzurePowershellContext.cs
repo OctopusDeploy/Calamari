@@ -21,6 +21,7 @@ namespace Calamari.Azure.Integration
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
+        const string DefaultAzureEnvironment = "AzureCloud";
 
         static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
 
@@ -41,6 +42,7 @@ namespace Calamari.Azure.Integration
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
+            SetOutputVariable("OctopusAzureEnvrionment",variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment),variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))

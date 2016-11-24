@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Substitutions;
@@ -19,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         ICalamariFileSystem fileSystem;
         IFileSubstituter substituter;
         RunningDeployment deployment;
-        CalamariVariableDictionary variables;
+        IVariableDictionary variables;
 
         [SetUp]
         public void SetUp()
@@ -62,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             CreateConvention().Install(deployment);
 
-            substituter.DidNotReceive().PerformSubstitution(Arg.Any<string>(), Arg.Any<VariableDictionary>());
+            substituter.DidNotReceive().PerformSubstitution(Arg.Any<string>(), Arg.Any<CalamariVariableDictionary>());
         }
 
         private SubstituteInFilesConvention CreateConvention()

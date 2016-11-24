@@ -3,6 +3,8 @@ using System.IO;
 using System.Reflection;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -20,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         IScriptEngine scriptEngine;
         ICommandLineRunner commandLineRunner;
         RunningDeployment deployment;
-        CalamariVariableDictionary variables;
+        IVariableDictionary variables;
         const string stagingDirectory = "c:\\applications\\acme\\1.0.0";
         const string scriptContents = "blah blah blah";
 

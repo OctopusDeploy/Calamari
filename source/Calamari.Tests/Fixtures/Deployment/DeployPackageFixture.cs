@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using Calamari.Deployment;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
@@ -11,7 +13,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     public abstract class DeployPackageFixture : CalamariFixture
     {
         protected ICalamariFileSystem FileSystem { get; private set; }
-        protected VariableDictionary Variables { get; private set; }
+        protected IVariableDictionary Variables { get; private set; }
         protected string StagingDirectory { get; private set; }
         protected string CustomDirectory { get; private set; }
 
@@ -27,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
 
-            Variables = new VariableDictionary();
+            Variables = new CalamariVariableDictionary();
             Variables.EnrichWithEnvironmentVariables();
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
             Variables.Set("PreDeployGreeting", "Bonjour");

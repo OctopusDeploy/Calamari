@@ -1,6 +1,9 @@
 ﻿using System;
 using System.IO;
+using Assent;
+using Assent.Namers;
 using Calamari.Deployment;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -176,7 +179,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
-            //output.ApproveOutput();
+          //  this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
         }
 
         [Test]
@@ -190,7 +193,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
-            //output.ApproveOutput();
+           // this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
         }
 
         [Test]
@@ -209,7 +212,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetVariables()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariableDictionary();
 
             var output = Invoke(Calamari()
                 .Action("run-script")
@@ -224,7 +227,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetActionIndexedOutputVariables()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Action.Name, "run-script");
 
             var output = Invoke(Calamari()
@@ -239,7 +242,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetMachineIndexedOutputVariables()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Action.Name, "run-script");
             variables.Set(SpecialVariables.Machine.Name, "App01");
 

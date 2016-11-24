@@ -2,6 +2,8 @@ using System;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.Processes;
 using NSubstitute;
 using NUnit.Framework;
@@ -13,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         JournalEntry previous;
         IDeploymentJournal journal;
-        CalamariVariableDictionary variables;
+        IVariableDictionary variables;
 
         [SetUp]
         public void SetUp()

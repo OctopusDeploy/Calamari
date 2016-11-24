@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml.Linq;
 using Calamari.Deployment.Journal;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
@@ -18,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         CalamariResult result;
         ICalamariFileSystem fileSystem;
         IDeploymentJournal deploymentJournal;
-        VariableDictionary variables;
+        CalamariVariableDictionary variables;
         string tentacleDirectory;
         string packagesDirectory;
         string stagingDirectory;
@@ -37,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(tentacleHiddenDirectory, "DeploymentJournal.xml" ));
 
-            variables = new VariableDictionary();
+            variables = new CalamariVariableDictionary();
             variables.EnrichWithEnvironmentVariables();
 
             deploymentJournal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);

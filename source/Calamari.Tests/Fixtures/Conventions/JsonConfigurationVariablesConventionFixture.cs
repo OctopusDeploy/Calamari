@@ -2,6 +2,7 @@
 using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Processes;

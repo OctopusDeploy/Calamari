@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Calamari.Azure.Deployment.Integration;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
+using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Security;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -47,6 +48,8 @@ namespace Calamari.Azure.Deployment.Conventions
             var tenantId = variables[SpecialVariables.Action.Azure.TenantId];
             var clientId = variables[SpecialVariables.Action.Azure.ClientId];
             var password = variables[SpecialVariables.Action.Azure.Password];
+            var serviceManagementEndPoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
+            var activeDirectoryEndPoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
                     ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
@@ -62,7 +65,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
-            Func<IResourceManagementClient> createArmClient = () => new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password)));
+            Func<IResourceManagementClient> createArmClient = () => new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password,serviceManagementEndPoint, activeDirectoryEndPoint)));
 
             CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
             PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
