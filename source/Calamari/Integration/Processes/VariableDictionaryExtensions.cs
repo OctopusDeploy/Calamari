@@ -1,13 +1,14 @@
 using System;
 using System.Text;
 using Calamari.Deployment;
+using Calamari.Extensibility;
 using Octostache;
 
 namespace Calamari.Integration.Processes
 {
     public static class VariableDictionaryExtensions
     {
-        public static void EnrichWithEnvironmentVariables(this VariableDictionary variables)
+        public static void EnrichWithEnvironmentVariables(this IVariableDictionary variables)
         {
             var environmentVariables = Environment.GetEnvironmentVariables();
 
@@ -18,6 +19,18 @@ namespace Calamari.Integration.Processes
 
             variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
         }
+
+//        public static void EnrichWithEnvironmentVariables(this VariableDictionary variables)
+//        {
+//            var environmentVariables = Environment.GetEnvironmentVariables();
+//
+//            foreach (var name in environmentVariables.Keys)
+//            {
+//                variables["env:" + name] = (environmentVariables[name] ?? string.Empty).ToString();
+//            }
+//
+//            variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
+//        }
 
         public static void SetOutputVariable(this VariableDictionary variables, string name, string value)
         {
@@ -48,7 +61,7 @@ namespace Calamari.Integration.Processes
 
 
 
-        public static void LogVariables(this VariableDictionary variables)
+        public static void LogVariables(this IVariableDictionary variables)
         {
             if (variables.GetFlag(SpecialVariables.PrintVariables))
             {
@@ -63,7 +76,7 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        private static string ToString(this VariableDictionary variables, Func<string, bool> nameFilter, bool useRawValue)
+        private static string ToString(this IVariableDictionary variables, Func<string, bool> nameFilter, bool useRawValue)
         {
             var text = new StringBuilder();
 

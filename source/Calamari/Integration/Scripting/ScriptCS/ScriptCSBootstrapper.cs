@@ -6,6 +6,8 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using System.Reflection;
+using Calamari.Extensibility;
+using Calamari.Features;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
@@ -68,7 +70,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return bootstrapFile;
         }
 
-        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, IVariableDictionary variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
 
@@ -86,12 +88,12 @@ namespace Calamari.Integration.Scripting.ScriptCS
             return configurationFile;
         }
             
-        static string WriteVariableDictionary(CalamariVariableDictionary variables)
+        static string WriteVariableDictionary(IVariableDictionary variables)
         {
             var builder = new StringBuilder();
             foreach (var variable in variables.GetNames())
             {
-                var variableValue = variables.IsSensitive(variable)
+                var variableValue = (variables as CalamariVariableDictionary).IsSensitive(variable)
                     ? EncryptVariable(variables.Get(variable))
                     : EncodeValue(variables.Get(variable));
                 builder.Append("\t\t\tthis[").Append(EncodeValue(variable)).Append("] = ").Append(variableValue).AppendLine(";");

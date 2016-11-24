@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Calamari.Extensibility;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting
@@ -14,7 +15,7 @@ namespace Calamari.Integration.Scripting
                 : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension(), ScriptType.FSharp.FileExtension()};
         }
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(Script script, IVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var scriptType = ValidateScriptType(script);
             return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(script, variables, commandLineRunner);

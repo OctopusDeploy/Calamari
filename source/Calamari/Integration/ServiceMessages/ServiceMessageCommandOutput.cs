@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Processes;
+﻿using Calamari.Extensibility;
+using Calamari.Integration.Processes;
 using Octostache;
 
 namespace Calamari.Integration.ServiceMessages
@@ -8,10 +9,10 @@ namespace Calamari.Integration.ServiceMessages
     /// </summary>
     public class ServiceMessageCommandOutput : ICommandOutput
     {
-        private readonly VariableDictionary variables;
+        private readonly IVariableDictionary variables;
         readonly ServiceMessageParser serviceMessageParser;
 
-        public ServiceMessageCommandOutput(VariableDictionary variables)
+        public ServiceMessageCommandOutput(IVariableDictionary variables)
         {
             this.variables = variables;
             this.serviceMessageParser = new ServiceMessageParser(ProcessServiceMessage);

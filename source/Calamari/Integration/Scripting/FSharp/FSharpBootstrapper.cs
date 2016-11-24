@@ -5,6 +5,8 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using System.Reflection;
+using Calamari.Extensibility;
+using Calamari.Features;
 
 namespace Calamari.Integration.Scripting.FSharp
 {
@@ -60,7 +62,7 @@ namespace Calamari.Integration.Scripting.FSharp
             return bootstrapFile;
         }
 
-        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, IVariableDictionary variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".fsx");
 
@@ -78,13 +80,14 @@ namespace Calamari.Integration.Scripting.FSharp
             return configurationFile;
         }
             
-        static string WritePatternMatching(CalamariVariableDictionary variables)
+        static string WritePatternMatching(IVariableDictionary variables)
         {
+            var custom = (variables as CalamariVariableDictionary);
             var builder = new StringBuilder();
             foreach (var variableName in variables.GetNames())
             {
                 var variableValue = variables.Get(variableName);
-                if (variables.IsSensitive(variableName))
+                if (custom.IsSensitive(variableName))
                 {
                     builder.AppendFormat("        | \"{0}\" -> {1} |> Some", EncodeValue(variableName),
                                                                                         EncryptVariable(variableValue));                    

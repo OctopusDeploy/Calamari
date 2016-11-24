@@ -181,6 +181,7 @@ namespace Calamari.Util
         {
 #if NET40
             return Assembly.LoadFrom(file);
+            
 #else
             return AssemblyLoadContext.Default.LoadFromAssemblyPath(file);
 #endif

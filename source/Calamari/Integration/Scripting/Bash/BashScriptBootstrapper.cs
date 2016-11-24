@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 
@@ -29,7 +31,7 @@ namespace Calamari.Integration.Scripting.Bash
             return commandArguments.ToString();
         }
         
-        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, IVariableDictionary variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
 
@@ -47,11 +49,11 @@ namespace Calamari.Integration.Scripting.Bash
             return configurationFile;
         }
 
-        static IEnumerable<string> GetVariableSwitchConditions(CalamariVariableDictionary variables)
+        static IEnumerable<string> GetVariableSwitchConditions(IVariableDictionary variables)
         {
             return variables.GetNames().Select(variable =>
             {
-                var variableValue = variables.IsSensitive(variable)
+                var variableValue = (variables as CalamariVariableDictionary).IsSensitive(variable)
                     ? DecryptValueCommand(variables.Get(variable))
                     : string.Format("decode_servicemessagevalue \"{0}\"", EncodeValue(variables.Get(variable)));
 

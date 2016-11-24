@@ -32,11 +32,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{EEBCEA71
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Azure", "Calamari.Azure\Calamari.Azure.xproj", "{E58A81EC-2C83-49E4-8DD4-877E68E0759B}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility", "Calamari.Shared\Calamari.Extensibility.xproj", "{32682237-96C0-4703-A229-C5C40882ED6B}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility", "Calamari.Extensibility\Calamari.Extensibility.xproj", "{32682237-96C0-4703-A229-C5C40882ED6B}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Conventions.RunScript", "Calamari.RunScript\Calamari.Conventions.RunScript.xproj", "{EAE33667-AB45-4369-9428-46F692E76E7D}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.RunScript", "Calamari.Extensibility.RunScript\Calamari.Extensibility.RunScript.xproj", "{EAE33667-AB45-4369-9428-46F692E76E7D}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Conventions.ExtractPackage", "Calamari.Conventions.ExtractPackage\Calamari.Conventions.ExtractPackage.xproj", "{167025EA-5904-4E64-A87D-1716BE96C7F0}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.DeployPackage", "Calamari.Extensibility.DeployPackage\Calamari.Extensibility.DeployPackage.xproj", "{167025EA-5904-4E64-A87D-1716BE96C7F0}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Tests.Integration", "Calamari.Tests.Integration\Calamari.Tests.Integration.xproj", "{7B00DF1A-42FB-4C7E-9CE9-9D423F8079BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +70,10 @@ Global
 		{167025EA-5904-4E64-A87D-1716BE96C7F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{167025EA-5904-4E64-A87D-1716BE96C7F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{167025EA-5904-4E64-A87D-1716BE96C7F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B00DF1A-42FB-4C7E-9CE9-9D423F8079BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B00DF1A-42FB-4C7E-9CE9-9D423F8079BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B00DF1A-42FB-4C7E-9CE9-9D423F8079BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B00DF1A-42FB-4C7E-9CE9-9D423F8079BA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

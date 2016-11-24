@@ -4,70 +4,62 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Calamari.Extensibility.Features;
+using Calamari.Util;
 #if !NET40
 using System.Runtime.Loader;
 using Microsoft.Extensions.DependencyModel;
 #endif
 
-using Calamari.Shared.Features;
-
 namespace Calamari.Features
 {
     public class FeatureLocator : IFeatureLocator
-    {  
-        public Type GetFeatureType(string name)
-        {
-            var handler = FeatureHandlers.FirstOrDefault(h => h.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            if (handler == null)
-            {
-                throw new InvalidOperationException($"Unable to find feature with name '{name}'. Either it was not listed as a dependency or it failed to load due to an invalid FeatureHandler.");
-            }
-            return handler.Feature;
-        }
-        
+    {
         public FeatureLocator(IAssemblyLoader assemblyLoader)
         {
             LoadTypes(assemblyLoader.Types);
         }
+       
 
-        private List<IFeatureHandler> FeatureHandlers;
+        IDictionary<string, Type> features;
 
-        void LoadTypes(IEnumerable<Type>  types)
+
+        void LoadTypes(IEnumerable<Type> loadedTypes)
         {
-            FeatureHandlers = types.Where(typeof(IFeatureHandler).IsAssignableFrom)
-               .Select(feature =>
+            features = loadedTypes
+                .Where(typeof(IFeature).IsAssignableFrom)
+                .Select(f =>
                 {
 #if NET40
-                    if (feature.IsInterface)
+                    if (f.IsInterface)
                         return null;
 #else
 
-                   if (feature.GetTypeInfo().IsInterface)
+                    if (f.GetTypeInfo().IsInterface)
                         return null;
 #endif
-                   try
-                   {
-                       if (!feature.GetConstructors().Any(ctr => ctr.GetParameters().Any()))
-                       {
-                           var handler = (IFeatureHandler) Activator.CreateInstance(feature);
-                           if (!typeof(IFeature).IsAssignableFrom(handler.Feature))
-                           {
-                                Log.WarnFormat("The the type described by feature handler `{0}` does not impliment IFeature so will be ignored. This may be a fatal problem if it is required for this operation.", feature.FullName);
-                               return null;
-                           }
+                    var attribute = f.GetTypeInfo()
+                        .GetCustomAttributes(true)
+                        .FirstOrDefault(t => t is FeatureAttribute);
+                    if (attribute != null)
+                        return new {Convention = f, ((FeatureAttribute) attribute).Name};
 
-                           return handler;
-                       }
-
-                       Log.WarnFormat("The feature handler `{0}` does not have a parameterless constructor so will be unable to be instantiated. This may be a fatal problem if it is required for this operation.", feature.FullName);
-                       return null;
-                   }
-                   catch (Exception ex)
-                   {
-                       Log.WarnFormat("Error loading feature `{0}` so it will be ignored. This may be a fatal problem if it is required for this operation.{1}{2}", feature.FullName, Environment.NewLine, ex.ToString());
-                   }
-                   return null;
-               }).Where(f => f != null).ToList();
+                    Log.WarnFormat(
+                        "Feature `{0}` does not have a FeatureAttribute attribute so it will be ignored." +
+                        " This may be a fatal problem if it is required for this operation.", f.FullName);
+                    return null;
+                })
+                .Where(f => f != null)
+                .ToDictionary(t => t.Name, t => t.Convention, StringComparer.OrdinalIgnoreCase);
         }
+
+        public Type Locate(string name)
+        {
+            if (!features.ContainsKey(name))
+            {
+                throw new InvalidOperationException($"Unable to find feature with name '{name}'.");
+            }
+            return features[name];
+        }       
     }
 }

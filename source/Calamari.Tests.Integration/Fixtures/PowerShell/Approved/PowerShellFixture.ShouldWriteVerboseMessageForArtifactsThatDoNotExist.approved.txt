@@ -1,0 +1,22 @@
+﻿##octopus[stdout-verbose]
+Octopus Deploy: Calamari version
+##octopus[stdout-default]
+##octopus[stdout-verbose]
+
+Name                           Value                                                                                   
+----                           -----                                                                                   
+PSVersion                      
+WSManStackVersion              
+SerializationVersion           
+CLRVersion                     
+BuildVersion                   
+PSCompatibleVersions           
+PSRemotingProtocolVersion      
+
+
+
+##octopus[stdout-default]
+##octopus[stdout-verbose]
+There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.
+##octopus[stdout-default]
+##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']

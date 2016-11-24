@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes.Semaphores;
@@ -22,7 +23,7 @@ namespace Calamari.Deployment.Conventions
             return EnsureTargetPathIsEmpty(Path.Combine(root, metadata.Id, metadata.Version));
         }
 
-        private string GetInitialExtractionDirectory(VariableDictionary variables)
+        private string GetInitialExtractionDirectory(IVariableDictionary variables)
         {
             var root = GetApplicationDirectoryPath(variables);
             root = AppendTenantNameIfProvided(variables, root);
@@ -33,7 +34,7 @@ namespace Calamari.Deployment.Conventions
             return root;
         }
 
-        string GetApplicationDirectoryPath (VariableDictionary variables)
+        string GetApplicationDirectoryPath (IVariableDictionary variables)
         {
             const string windowsRoot = "env:SystemDrive";
             const string linuxRoot = "env:HOME";
@@ -54,7 +55,7 @@ namespace Calamari.Deployment.Conventions
             return string.Format("{0}{1}Applications", root, Path.DirectorySeparatorChar);
         }
 
-        string AppendEnvironmentNameIfProvided(VariableDictionary variables, string root)
+        string AppendEnvironmentNameIfProvided(IVariableDictionary variables, string root)
         {
             var environment = variables.Get(SpecialVariables.Environment.Name);
             if (!string.IsNullOrWhiteSpace(environment))
@@ -66,7 +67,7 @@ namespace Calamari.Deployment.Conventions
             return root;
         }
 
-        string AppendTenantNameIfProvided(VariableDictionary variables, string root)
+        string AppendTenantNameIfProvided(IVariableDictionary variables, string root)
         {
             var tenant = variables.Get(SpecialVariables.Deployment.Tenant.Name);
             if (!string.IsNullOrWhiteSpace(tenant))

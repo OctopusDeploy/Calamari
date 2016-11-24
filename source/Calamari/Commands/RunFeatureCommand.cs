@@ -1,21 +1,25 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
 using Calamari.Commands.Support;
+using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
+using Calamari.Extensibility.Features;
 using Calamari.Features;
 using Calamari.Features.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
-using Calamari.Shared;
-using Calamari.Shared.Convention;
-using Calamari.Shared.Features;
+using Calamari.Integration.Substitutions;
 using Calamari.Util;
-using Newtonsoft.Json;
-using Octostache;
+using System.Runtime.InteropServices;
+using Calamari.Conventions.RunScript;
+using Calamari.Deployment;
+using Calamari.Integration.Packages;
+using Calamari.Integration.Processes.Semaphores;
+using IPackageExtractor = Calamari.Extensibility.Features.IPackageExtractor;
+using SpecialVariables = Calamari.Shared.SpecialVariables;
 
 namespace Calamari.Commands
 {
@@ -39,193 +43,130 @@ namespace Calamari.Commands
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.",
                 v => sensitiveVariablesPassword = v);
         }
+
+
+        internal int Execute(string featureName, IVariableDictionary variables)
+        {
+            variables.EnrichWithEnvironmentVariables();
+            variables.LogVariables();
+
+
+            var al = new AssemblyLoader();
+            
+            al.RegisterAssembly(typeof(RunScriptFeature).GetTypeInfo().Assembly);
+            al.RegisterAssembly(typeof(DeployPackageFeature).GetTypeInfo().Assembly);
+
+            var featureLocator = new FeatureLocator(al);
+            Console.Write(al.Types.Count());
+
+            var type = featureLocator.Locate(featureName);
+
+            var container = CreateContainer(variables);
+
+
+            var dpb = new DepencencyInjectionBuilder(container);
+
+            var feature = (IFeature)dpb.BuildConvention(type);
+            feature.Install(variables);
+            return 0;
+        }
         
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            Guard.NotNullOrWhiteSpace(featureName,
-                "No feature was specified. Please pass a value for the `--feature` option.");
+            Guard.NotNullOrWhiteSpace(featureName, "No feature was specified. Please pass a value for the `--feature` option.");
 
-            var variables = new CustomCalamariVariableDictionary(variablesFile, sensitiveVariablesFile,
-                sensitiveVariablesPassword);
+            return Execute(featureName, new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword));
+        }
 
+        private static CalamariContainer CreateContainer(IVariableDictionary variables)
+        {
+            var container = new CalamariContainer();
+            var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            var container = new CalamariCalamariContainer();
-            new MyModule().Register(container);
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+            var log = new LogWrapper();
 
-            container.RegisterInstance(new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables))));
+            container.RegisterInstance<IPackageExtractor>(new PackageExtractor(filesystem, variables, SemaphoreFactory.Get()));
             container.RegisterInstance<IVariableDictionary>(variables);
-
-            var al = new AssemblyLoader();
-            al.RegisterCompiled();
-            al.RegisterAssembly(this.GetType().GetTypeInfo().Assembly);
-
-
-            var featureLocator = new FeatureLocator(al);
-            var diBuilder = new DepencencyInjectionBuilder(container);
-            var sequence = new ConventionSequence(new ConventionLocator(al));
-
-            sequence
-                .Run<ContributeEnvironmentVariablesConvention>()
-                .Run<LogVariablesConvention>();
-
-
-            var type = featureLocator.GetFeatureType(featureName);
-            var feature = (IFeature)diBuilder.BuildConvention(type, new object[0]);
-
-
-            feature.ConfigureInstallSequence(variables, sequence);
-            //////
-
-            foreach (var s in sequence.Sequence)
-            {
-                if (!s.Condition(variables))
-                    continue;
-
-                foreach (var arg in s.Arguments(variables))
-                {
-                    if (s.LocalConvention != null)
-                    {
-                        s.LocalConvention(variables);
-                    }
-                    else
-                    {
-                        var conventionInstance = (s.ConventionType == null)
-                            ? s.ConventionInstance
-                            : (IInstallConvention) diBuilder.BuildConvention(s.ConventionType, arg);
-                        conventionInstance.Install(variables);
-                    }
-                }
-            }
-
-            
-            
-
-            /*
-            try
-            {
-                foreach (var convention in sequence.Sequence)
-                {
-                    if (!convention.Item1(ctx.Variables))
-                        continue;
-
-                    var installer = convention.Item2;
-
-                    //if exits non zero;
-                    installer.Install(ctx.Variables);
-                }
-            }
-            catch (Exception)
-            {
-                var rollbackConvention = (feature as IRollbackConvention);
-                if (rollbackConvention != null)
-                {
-                    // rollbackConvention.SetUpRollback();
-                }
-            }
-            */
-            return 0;
+            container.RegisterInstance<IScriptExecution>(new ScriptExecution(filesystem, new Integration.Scripting.CombinedScriptEngine(), commandLineRunner, variables));
+            container.RegisterInstance<IFileSubstitution>(new FileSubstitution(filesystem, new FileSubstituter(filesystem), variables, log));
+            container.RegisterInstance<ILog>(log);
+            return container;
         }
     }
 
-
-
-
-
-    public class CustomCalamariVariableDictionary : VariableDictionary, IVariableDictionary
+    public class PackageExtractor : IPackageExtractor
     {
-        protected HashSet<string> SensitiveVariableNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly IVariableDictionary variables;
+        private readonly ISemaphoreFactory semaphore;
 
-        public void SetOutputVariable(string name, string value)
+        public PackageExtractor(ICalamariFileSystem fileSystem, IVariableDictionary variables, ISemaphoreFactory semaphore)
         {
-            Set(name, value);
-
-            // And set the output-variables.
-            // Assuming we are running in a step named 'DeployWeb' and are setting a variable named 'Foo'
-            // then we will set Octopus.Action[DeployWeb].Output.Foo
-            var actionName = Get(SpecialVariables.Action.Name);
-
-            if (string.IsNullOrWhiteSpace(actionName))
-                return;
-
-            var actionScopedVariable = SpecialVariables.GetOutputVariableName(actionName, name);
-
-            Set(actionScopedVariable, value);
-
-            // And if we are on a machine named 'Web01'
-            // Then we will set Octopus.Action[DeployWeb].Output[Web01].Foo
-            var machineName = Get(SpecialVariables.Machine.Name);
-
-            if (string.IsNullOrWhiteSpace(machineName))
-                return;
-
-            var machineIndexedVariableName = SpecialVariables.GetMachineIndexedOutputVariableName(actionName, machineName, name);
-            Set(machineIndexedVariableName, value);
+            this.fileSystem = fileSystem;
+            this.variables = variables;
+            this.semaphore = semaphore;
         }
 
-        public CustomCalamariVariableDictionary() { }
 
-        public CustomCalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
-
-        public CustomCalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword)
+        public string Extract(string package, PackageExtractionLocation extractionLocation)
         {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            if (!string.IsNullOrEmpty(storageFilePath))
+            ExtractPackageConvention extractPackage = null;
+            switch (extractionLocation)
             {
-                if (!fileSystem.FileExists(storageFilePath))
-                    throw new CommandException("Could not find variables file: " + storageFilePath);
-
-                var nonSensitiveVariables = new VariableDictionary(storageFilePath);
-                nonSensitiveVariables.GetNames().ForEach(name => Set(name, nonSensitiveVariables.GetRaw(name)));
+                case PackageExtractionLocation.ApplicationDirectory:
+                    extractPackage = new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore);
+                    break;
+                case PackageExtractionLocation.WorkingDirectory:
+                    extractPackage = new ExtractPackageToWorkingDirectoryConvention(new GenericPackageExtractor(), fileSystem);
+                    break;
+                case PackageExtractionLocation.StagingDirectory:
+                    extractPackage = new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem);
+                    break;
+                default:
+                    throw new InvalidOperationException("Unknown extraction location: "+ extractionLocation);
             }
 
-            if (!string.IsNullOrEmpty(sensitiveFilePath))
-            {
-                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-                    ? fileSystem.ReadFile(sensitiveFilePath)
-                    : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
+         
 
+            var rd = new RunningDeployment(package, variables);
+            extractPackage.Install(rd);
 
-                try
-                {
-                    var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                    foreach (var variable in sensitiveVariables)
-                    {
-                        SetSensitive(variable.Key, variable.Value);
-                    }
-                }
-                catch (JsonReaderException)
-                {
-                    throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
-                }
-            }
-        }
-
-        public void SetSensitive(string name, string value)
-        {
-            if (name == null) return;
-            Set(name, value);
-            SensitiveVariableNames.Add(name);
-        }
-
-        public bool IsSensitive(string name)
-        {
-            return name != null && SensitiveVariableNames.Contains(name);
-        }
-
-        static string Decrypt(byte[] encryptedVariables, string encryptionPassword)
-        {
-            try
-            {
-                return new AesEncryption(encryptionPassword).Decrypt(encryptedVariables);
-            }
-            catch (CryptographicException)
-            {
-                throw new CommandException("Cannot decrypt sensitive-variables. Check your password is correct.");
-            }
+            return "";
         }
     }
+
     
-  
+
+    public class FileSubstitution : IFileSubstitution
+    {
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly IFileSubstituter substituter;
+        private readonly IVariableDictionary variableDictionary;
+        private readonly ILog log;
+
+        public FileSubstitution(ICalamariFileSystem fileSystem, IFileSubstituter substituter, IVariableDictionary variableDictionary, ILog log)
+        {
+            this.fileSystem = fileSystem;
+            this.substituter = substituter;
+            this.variableDictionary = variableDictionary;
+            this.log = log;
+        }
+
+        public void PerformSubstitution(string sourceFile)
+        {
+            if (!variableDictionary.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled))
+                return;
+
+            if (!fileSystem.FileExists(sourceFile))
+            {
+                log.WarnFormat($"The file '{sourceFile}' could not be found for variable substitution.");
+                return;
+            }
+            log.Info($"Performing variable substitution on '{sourceFile}'");
+            substituter.PerformSubstitution(sourceFile, variableDictionary);
+        }
+    }
 }

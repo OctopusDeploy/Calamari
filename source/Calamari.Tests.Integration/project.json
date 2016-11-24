@@ -1,0 +1,120 @@
+{
+  "version": "0.0.0-*",
+  "dependencies": {
+    "Calamari": "*",
+    "NSubstitute": "2.0.0-rc",
+    "NUnit": "3.4.1",
+    "FluentAssertions": "4.13.1",
+    "dotnet-test-nunit": "3.4.0-beta-2",
+    "NuGet.CommandLine": "2.8.3",
+    "OctoDiff": "1.1.0-dnc0014",
+    "Octostache": "2.0.7"
+  },
+  "testRunner": "nunit",
+  "frameworks": {
+    "netcoreapp1.0": {
+      "imports": "portable-net45+win8",
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "version": "1.0.0-*"
+        },
+        "Markdown": "2.1.0",
+        "Newtonsoft.Json": "9.0.1",
+        "Octopus.Web.XmlTransform": "1.0.0-ci0018",
+        "SharpCompress": "0.12.4",
+        "Sprache": "2.1.0",
+        "System.IO.Packaging": "4.0.0",
+        "System.ServiceProcess.ServiceController": "4.1.0",
+        "System.Runtime": "4.1.0"       
+      },
+      "buildOptions": {
+        "define": [ "NETCORE", "USE_OCTOPUS_XMLT" ],
+        "emitEntryPoint": true,
+        "debugType": "portable"
+      }
+    },
+     "net451": {
+       "frameworkAssemblies": {
+         "System.Core": "*",
+         "System.Net": "*",
+         "System.ServiceProcess": "*",
+         "System.Xml.Linq": "*",
+         "System.Data.DataSetExtensions": "*",
+         "Microsoft.CSharp": "*",
+         "System.Data": "*",
+         "System.Xml": "*",
+         "WindowsBase": "*"        
+       },
+       "dependencies": {
+         "ApprovalTests": "3.0.11",
+         "ApprovalUtilities": "3.0.11",
+         "GitVersionTask": "3.3.0",
+         "MarkdownSharp": "1.13.0.0",
+         "Microsoft.Bcl": "1.1.9",
+         "Microsoft.Bcl.Async": "1.0.168",
+         "Microsoft.Bcl.Build": "1.0.14",
+         "Microsoft.Net.Http": "2.2.22",
+         "Microsoft.Web.Administration": "7.0.0.0",
+         "Microsoft.Web.Deployment": "3.6.0",
+         "Microsoft.Web.Xdt": "2.1.1",
+         "SharpCompress": "0.12.4",
+         "Polly": "4.3.0" 
+       },
+      "buildOptions": {
+        "define": [ "NET40", "IIS_SUPPORT", "APPROVAL_TESTS", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
+      }
+    }
+  },
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "embed": {
+      "include": [
+        "Fixtures/PowerShell/Scripts/HelloWithVariable.ps1",
+        "Fixtures/FSharp/Scripts/HelloDefaultValue.fsx",
+        "Fixtures/FSharp/Scripts/HelloDirectValue.fsx",
+        "Fixtures/FSharp/Scripts/HelloVariableSubstitution.fsx"
+      ]
+    },
+    "copyToOutput": {
+      "include": [
+        "Fixtures/ConfigurationVariables/Samples/**",
+        "Fixtures/ConfigurationTransforms/Samples/**",
+        "Fixtures/Bash/Scripts/**",
+        "Fixtures/Conventions/ConfigTransforms/**",
+        "Fixtures/Deployment/Packages/Acme.Service/**",
+        "Fixtures/Deployment/Packages/Acme.Web/**",
+        "Fixtures/Deployment/Packages/Acme.Web.Tests/**",
+        "Fixtures/Deployment/Packages/Octopus.Sample.AzureCloudService/**",
+        "Fixtures/FSharp/Scripts/**",
+        "Fixtures/Integration/Packages/Samples/**",
+        "Fixtures/JsonVariables/Samples/**",
+        "Fixtures/PowerShell/Packages/**",
+        "Fixtures/PowerShell/Scripts/**",
+        "Fixtures/ScriptCS/Scripts/**",
+        "Fixtures/Substitutions/Samples/**"
+      ],
+      "mappings": {
+        "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
+        "ScriptCS/": "../Tools/ScriptCS**/",
+        "NuGet/": "../Tools/NuGet**/"
+      }
+    }
+  },
+  "scripts": {
+    "precompile": [ "./chmodexes" ]
+
+  },
+  "runtimes": {
+    "win7-x64": {},
+    "win7-x86": {},
+    "osx.10.10-x64": {},
+    "ubuntu.14.04-x64": {},
+    "ubuntu.16.04-x64": {},
+    "rhel.7.2-x64": {},
+    "debian.8-x64": {},
+    "fedora.23-x64": {},
+    "opensuse.13.2-x64": {},
+    "linuxmint.17-x64": {},
+    "centos.7-x64": {}
+  }
+}

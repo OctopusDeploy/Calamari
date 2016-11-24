@@ -4,6 +4,7 @@ using Calamari.Commands.Support;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Util;
 using System.Reflection;
+using Calamari.Features;
 
 namespace Calamari.Integration.Processes
 {

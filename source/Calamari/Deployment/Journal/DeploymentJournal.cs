@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
@@ -14,10 +15,10 @@ namespace Calamari.Deployment.Journal
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphore;
-        readonly VariableDictionary variables;
+        readonly IVariableDictionary variables;
         const string SemaphoreName = "Octopus.Calamari.DeploymentJournal";
 
-        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore, VariableDictionary variables)
+        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore, IVariableDictionary variables)
         {
             this.fileSystem = fileSystem;
             this.semaphore = semaphore;

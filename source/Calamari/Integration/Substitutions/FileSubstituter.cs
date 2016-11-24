@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using Calamari.Deployment;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Octostache;
 
@@ -15,17 +16,17 @@ namespace Calamari.Integration.Substitutions
             this.fileSystem = fileSystem;
         }
 
-        public void PerformSubstitution(string sourceFile, VariableDictionary variables)
+        public void PerformSubstitution(string sourceFile, IVariableDictionary variables)
         {
             PerformSubstitution(sourceFile, variables, sourceFile);
         }
 
-        public void PerformSubstitution(string sourceFile, VariableDictionary variables, string targetFile)
+        public void PerformSubstitution(string sourceFile, IVariableDictionary variables, string targetFile)
         {
             Encoding sourceFileEncoding;
             var source = fileSystem.ReadFile(sourceFile, out sourceFileEncoding);
             var encoding = GetEncoding(variables, sourceFileEncoding);
-
+          
             string error;
             var result = variables.Evaluate(source, out error, haltOnError: false);
 
@@ -35,7 +36,7 @@ namespace Calamari.Integration.Substitutions
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }
 
-        private Encoding GetEncoding(VariableDictionary variables, Encoding fileEncoding)
+        private Encoding GetEncoding(IVariableDictionary variables, Encoding fileEncoding)
         {
             var requestedEncoding = variables.Get(SpecialVariables.Package.SubstituteInFilesOutputEncoding);
             if (requestedEncoding == null)

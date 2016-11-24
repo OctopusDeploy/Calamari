@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Extensibility;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment
@@ -6,9 +7,9 @@ namespace Calamari.Deployment
     public class RunningDeployment
     {
         private readonly string packageFilePath;
-        private readonly CalamariVariableDictionary variables;
+        private readonly IVariableDictionary variables;
 
-        public RunningDeployment(string packageFilePath, CalamariVariableDictionary variables)
+        public RunningDeployment(string packageFilePath, IVariableDictionary variables)
         {
             this.packageFilePath = packageFilePath;
             this.variables = variables;
@@ -48,7 +49,7 @@ namespace Calamari.Deployment
             get { return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ? StagingDirectory : CustomDirectory; }
         }
 
-        public CalamariVariableDictionary Variables
+        public IVariableDictionary Variables
         {
             get {  return variables; }
         }

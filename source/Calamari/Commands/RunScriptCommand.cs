@@ -4,6 +4,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -43,9 +44,18 @@ namespace Calamari.Commands
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, CrossPlatform.GetCurrentDirectory());
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, substituteVariables.ToString());
+
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, scriptFile);
+            variables.Set(SpecialVariables.Action.Script.Path, scriptFile);
+
+            variables.Set(SpecialVariables.Action.Script.PackagePath, packageFile);
+            variables.Set(SpecialVariables.Action.Script.Parameters, scriptParameters);
 
 
+
+            return new RunFeatureCommand().Execute("RunScript", variables);
+
+            /*
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var scriptCapability = new CombinedScriptEngine();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
@@ -70,6 +80,7 @@ namespace Calamari.Commands
             conventionRunner.RunConventions();
 
             return 0;
+            */
         }
     }
 }

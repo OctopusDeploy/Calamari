@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using Calamari.Features;
-using Calamari.Features.Conventions;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -30,14 +29,6 @@ namespace Calamari.Tests.Fixtures.Features
 
             
             CollectionAssert.IsNotEmpty(locator.Types);
-            //var handler = locator.Find("RunScript");
-            //Assert.IsInstanceOf<RunScriptMetaData>(handler);
         }
-
-        [Test]
-        public void LogsWarningIfNoParameterlessHandlerConstructor() { }
-
-        [Test]
-        public void LogsWarningIfHandlerConstructorFails() { }
     }
 }

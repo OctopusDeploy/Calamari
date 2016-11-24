@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Globalization;
-using System.Text;
+using Calamari.Extensibility;
 using Calamari.Integration.Processes;
-using Calamari.Shared;
 using Calamari.Util;
 using Octostache;
 
 namespace Calamari
 {
-    public class LogWrapper : ILog, Calamari.Shared.ILog
+    public class LogWrapper : ILog, Calamari.Extensibility.ILog
     {
         public void Verbose(string message)
         {

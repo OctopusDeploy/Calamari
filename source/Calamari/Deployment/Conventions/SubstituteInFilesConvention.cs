@@ -29,7 +29,6 @@ namespace Calamari.Deployment.Conventions
                 Log.WarnFormat("The file '{0}' could not be found for variable substitution.", file);
                 return;
             }
-
             Log.Info("Performing variable substitution on '{0}'", file);
             substituter.PerformSubstitution(file, deployment.Variables);
         }

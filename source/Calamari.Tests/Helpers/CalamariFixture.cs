@@ -22,6 +22,7 @@ namespace Calamari.Tests.Helpers
     {
         protected CommandLine Calamari()
         {
+            Environment.SetEnvironmentVariable("CalamariLocation", @"C:\Temp\Debug\Calamari.Extensibility.RunScript\1.0.0");
             string calamariFullPath;
 #if NET40
             calamariFullPath = typeof(DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();

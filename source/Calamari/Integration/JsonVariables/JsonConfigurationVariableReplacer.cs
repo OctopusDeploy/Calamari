@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Extensibility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
@@ -10,7 +11,7 @@ namespace Calamari.Integration.JsonVariables
 {
     public class JsonConfigurationVariableReplacer : IJsonConfigurationVariableReplacer
     {
-        public void ModifyJsonFile(string jsonFilePath, VariableDictionary variables)
+        public void ModifyJsonFile(string jsonFilePath, IVariableDictionary variables)
         {
             var root = LoadJson(jsonFilePath);
 
@@ -170,7 +171,7 @@ namespace Calamari.Integration.JsonVariables
             key = string.Join(":", path.Reverse());
         }
 
-        public void Update(VariableDictionary variables)
+        public void Update(IVariableDictionary variables)
         {
             foreach (var name in variables.GetNames().Where(x => !x.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase)))
             {

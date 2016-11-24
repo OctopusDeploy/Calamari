@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
@@ -11,7 +12,7 @@ namespace Calamari.Integration.Scripting.FSharp
             return new[] {ScriptType.FSharp.FileExtension()};
         }
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(Script script, IVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 

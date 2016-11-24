@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Deployment;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
@@ -49,7 +51,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return powerShellPath;
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, CalamariVariableDictionary variables)
+        public static string FormatCommandArguments(string bootstrapFile, IVariableDictionary variables)
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
@@ -72,7 +74,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return commandArguments.ToString();
         }
 
-        public static string PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
+        public static string PrepareBootstrapFile(Script script, IVariableDictionary variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
@@ -90,7 +92,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return bootstrapFile;
         }
 
-        private static string DeclareVariables(CalamariVariableDictionary variables)
+        private static string DeclareVariables(IVariableDictionary variables)
         {
             var output = new StringBuilder();
 
@@ -101,7 +103,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return output.ToString();
         }
 
-        private static string DeclareScriptModules(CalamariVariableDictionary variables)
+        private static string DeclareScriptModules(IVariableDictionary variables)
         {
             var output = new StringBuilder();
 
@@ -110,7 +112,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return output.ToString();
         }
 
-        static void WriteScriptModules(VariableDictionary variables, StringBuilder output)
+        static void WriteScriptModules(IVariableDictionary variables, StringBuilder output)
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
@@ -122,12 +124,12 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             }
         }
 
-        static void WriteVariableDictionary(CalamariVariableDictionary variables, StringBuilder output)
+        static void WriteVariableDictionary(IVariableDictionary variables, StringBuilder output)
         {
             output.AppendLine("$OctopusParameters = New-Object 'System.Collections.Generic.Dictionary[String,String]' (,[System.StringComparer]::OrdinalIgnoreCase)");
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
             {
-                var variableValue = variables.IsSensitive(variableName)
+                var variableValue = (variables as CalamariVariableDictionary).IsSensitive(variableName)
                     ? EncryptVariable(variables.Get(variableName))
                     : EncodeValue(variables.Get(variableName));
 
@@ -135,7 +137,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             }
         }
 
-        static void WriteLocalVariables(CalamariVariableDictionary variables, StringBuilder output)
+        static void WriteLocalVariables(IVariableDictionary variables, StringBuilder output)
         {
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
             {

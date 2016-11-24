@@ -197,6 +197,7 @@
             {
                 public static readonly string Path = "Octopus.Action.Script.Path";
                 public static readonly string Parameters = "Octopus.Action.Script.Parameters";
+                public static readonly string PackagePath = "Octopus.Action.Script.PackagePath";
             }
         }
 
