@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open System.Diagnostics
 open System.IO
 open System.Text
 open System.Net
@@ -38,7 +39,25 @@ let private decryptString encrypted iv =
     use streamReader = new StreamReader(cryptoStream, Encoding.UTF8)
     streamReader.ReadToEnd();
 
-let private logEnvironmentInformation () = ""
+let private logEnvironmentInformation () =
+    try
+        let suppressEnvironmentLogging = findVariableOrDefault "False" "Octopus.Action.Script.SuppressEnvironmentLogging"
+        if suppressEnvironmentLogging = "True" then
+            () // bail out
+        else
+            Console.WriteLine("##octopus[stdout-verbose]")
+            Console.WriteLine("OperatingSystem: " + Environment.OSVersion.ToString())
+            Console.WriteLine("OsBitVersion: " + if Environment.Is64BitOperatingSystem then "x64" else "x86")
+            Console.WriteLine("CurrentUser: " + Environment.UserName)
+            Console.WriteLine("Is64BitProcess: " + Environment.Is64BitProcess.ToString())
+            Console.WriteLine("MachineName: " + Environment.MachineName)
+            Console.WriteLine("ProcessorCount: " + Environment.ProcessorCount.ToString())
+            Console.WriteLine("CurrentDirectory: " + Directory.GetCurrentDirectory())
+            Console.WriteLine("TempDirectory: " + Path.GetTempPath())
+            Console.WriteLine("HostProcessName: " + Process.GetCurrentProcess().ProcessName)
+            Console.WriteLine("##octopus[stdout-default]")
+    with
+    | _ -> Console.WriteLine("##octopus[stdout-default]")
 
 let tryFindVariable name =
     match name |> encode with
@@ -68,7 +87,7 @@ let initializeProxy () =
                                     | None -> CredentialCache.DefaultNetworkCredentials
     proxy.Credentials <- (credentials :> ICredentials)
     WebRequest.DefaultWebProxy <- proxy
-        
+
 let setVariable name value = 
     let encodedName = encode name
     let encodedValue = encode value
