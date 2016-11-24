@@ -111,9 +111,13 @@ function new_octopusartifact
 # -----------------------------------------------------------------------------
 function log_environment_information
 {
-	if [ get_octopusvariable("Octopus.Action.Script.SuppressEnvironmentLogging") == "True" ]
+	suppressEnvironmentLogging=$(get_octopusvariable "Octopus.Action.Script.SuppressEnvironmentLogging")
+	if [ -n "$suppressEnvironmentLogging" ]
 	then
-		return 0
+		if [ "$suppressEnvironmentLogging" == "True" ]
+		then
+			return 0
+		fi
 	else
 		echo "##octopus[stdout-verbose]"
 		echo "Bash Environment Information:"

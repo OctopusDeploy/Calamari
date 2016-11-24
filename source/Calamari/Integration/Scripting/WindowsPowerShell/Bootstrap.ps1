@@ -20,7 +20,7 @@ function Log-VersionTable
 function Log-EnvironmentInformation
 {
 	if ($OctopusParameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging")) {
-		if ($OctopusParameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True") {
+		if ($OctopusParameters["Octopus.Action.Script.SuppressEnvironmentLogging"] -eq "True") {
 			return;
 		}
 	}
