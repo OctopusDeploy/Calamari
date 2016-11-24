@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -67,14 +68,12 @@ namespace Calamari.Azure.Deployment.Conventions
 
         private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
         {
-            const string defaultServiceManagementEndpoint = "https://management.core.windows.net/";
-            const string defaultActiveDirectoryEndpoint = "https://login.windows.net/";
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
-            var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, defaultServiceManagementEndpoint);
-            var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, defaultActiveDirectoryEndpoint);
+            var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
+            var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
 
             switch (accountType)
             {
@@ -84,12 +83,15 @@ namespace Calamari.Azure.Deployment.Conventions
                         siteName,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
-                        variables.Get(SpecialVariables.Action.Azure.Password),serviceManagementEndpoint,activeDirectoryEndpoint);
+                        variables.Get(SpecialVariables.Action.Azure.Password),
+                        serviceManagementEndpoint,
+                        activeDirectoryEndpoint);
 
                 case AzureAccountTypes.ManagementCertificateAccountType:
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
-                        siteName,serviceManagementEndpoint);
+                        siteName,
+                        serviceManagementEndpoint);
                 default:
                     throw new CommandException(
                         "Account type must be either Azure Management Certificate or Azure Service Principal");

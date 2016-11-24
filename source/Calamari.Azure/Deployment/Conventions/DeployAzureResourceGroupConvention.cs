@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
+using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Security;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -45,8 +46,8 @@ namespace Calamari.Azure.Deployment.Conventions
             var tenantId = variables[SpecialVariables.Action.Azure.TenantId];
             var clientId = variables[SpecialVariables.Action.Azure.ClientId];
             var password = variables[SpecialVariables.Action.Azure.Password];
-            var serviceManagementEndPoint = variables[SpecialVariables.Action.Azure.ServiceManagementEndPoint];
-            var activeDirectoryEndPoint = variables[SpecialVariables.Action.Azure.ActiveDirectoryEndPoint];
+            var serviceManagementEndPoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
+            var activeDirectoryEndPoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
                     ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
