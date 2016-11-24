@@ -136,7 +136,6 @@
             public const string Name = "Octopus.Action.Name";
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
-            public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
 
             public static class Azure
             {
@@ -198,6 +197,11 @@
             {
                 public static readonly string CustomPowerShellVersion = "Octopus.Action.PowerShell.CustomPowerShellVersion";
                 public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile";
+            }
+
+            public static class Script
+            {
+                public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
             }
         }
 

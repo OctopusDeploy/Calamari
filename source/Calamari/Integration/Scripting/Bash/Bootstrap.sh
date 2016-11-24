@@ -124,9 +124,9 @@ function log_environment_information
 	echo "  HostName: $(hostname)"
 	echo "  ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
 	currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-	echo "  CurrentDirectory: " $currentDirectory
+	echo "  CurrentDirectory: $currentDirectory"
 	tempDirectory=$(dirname $(mktemp -u))
-	echo "  TempDirectory: " $tempDirectory
+	echo "  TempDirectory: $tempDirectory"
 	echo "  HostProcessID: $$"
 	echo "##octopus[stdout-default]"
 }
