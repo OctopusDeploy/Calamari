@@ -1,12 +1,18 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using System.DirectoryServices;
 using System.Linq;
 
-namespace Calamari.Integration.Iis
+namespace Calamari.Extensibility.IIS
 {
     public class WebServerSixSupport : WebServerSupport
     {
+        private readonly ILog log;
+
+        public WebServerSixSupport(ILog log)
+        {
+            this.log = log;
+        }
+
         public override void CreateWebSiteOrVirtualDirectory(string webSiteName, string virtualDirectoryPath, string webRootPath, int port)
         {
             var siteId = GetSiteId(webSiteName);
@@ -164,15 +170,13 @@ namespace Calamari.Integration.Iis
                             }
                             catch (Exception ex)
                             {
-                                Log.ErrorFormat("Unable to find the virtual directory '{0}': {1}", virtualDirectory, ex.Message);
+                                log.ErrorFormat("Unable to find the virtual directory '{0}': {1}", virtualDirectory, ex.Message);
                                 result = false;
                             }
                         }
-
                         webRoot.Close();
                     }
                 }
-
                 webSite.Close();
             }
 
@@ -201,4 +205,3 @@ namespace Calamari.Integration.Iis
         }
     }
 }
-#endif

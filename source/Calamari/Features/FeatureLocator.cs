@@ -27,7 +27,7 @@ namespace Calamari.Features
         void LoadTypes(IEnumerable<Type> loadedTypes)
         {
             features = loadedTypes
-                .Where(typeof(IFeature).IsAssignableFrom)
+                .Where(t => typeof(IFeature).IsAssignableFrom(t) || typeof(IPackageDeploymentFeature).IsAssignableFrom(t))
                 .Select(f =>
                 {
 #if NET40

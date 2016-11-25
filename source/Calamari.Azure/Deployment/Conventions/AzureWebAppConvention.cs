@@ -6,6 +6,7 @@ using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
 using Calamari.Integration.Retry;
 using Microsoft.Web.Deployment;
 using Octostache;
@@ -66,7 +67,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
+        private static SitePublishProfile GetPublishProfile(IVariableDictionary variables)
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
@@ -99,7 +100,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static string BuildPath(string site, VariableDictionary variables)
+        private static string BuildPath(string site, IVariableDictionary variables)
         {
             var relativePath = (variables.Get(SpecialVariables.Action.Azure.PhysicalPath) ?? "").TrimStart('\\');
 
@@ -126,7 +127,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return options;
         }
 
-        private static DeploymentSyncOptions DeploymentSyncOptions(VariableDictionary variables)
+        private static DeploymentSyncOptions DeploymentSyncOptions(IVariableDictionary variables)
         {
             var syncOptions = new DeploymentSyncOptions
             {
@@ -142,7 +143,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         private static void ApplyPreserveAppDataDeploymentRule(DeploymentSyncOptions syncOptions,
-            VariableDictionary variables)
+            IVariableDictionary variables)
         {
             // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
             if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
@@ -155,7 +156,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         private static void ApplyPreservePathsDeploymentRule(DeploymentSyncOptions syncOptions,
-            VariableDictionary variables)
+            IVariableDictionary variables)
         {
             // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
@@ -172,7 +173,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         private static void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
-            VariableDictionary variables)
+            IVariableDictionary variables)
         {
             if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
             {

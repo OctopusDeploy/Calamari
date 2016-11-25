@@ -1,4 +1,4 @@
-﻿namespace Calamari.Integration.Iis
+﻿namespace Calamari.Extensibility.IIS
 {
     public interface IInternetInformationServer
     {

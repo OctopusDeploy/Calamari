@@ -12,6 +12,7 @@ using Calamari.Azure.Integration.Security;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Microsoft.Azure;
@@ -111,7 +112,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         static void PollForCompletion(Func<IResourceManagementClient> createArmClient, string resourceGroupName,
-            string deploymentName, VariableDictionary variables)
+            string deploymentName, IVariableDictionary variables)
         {
             // While the deployment is running, we poll to check it's state.
             // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds. 
@@ -180,7 +181,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return log.ToString();
         }
 
-        static void CaptureOutputs(string outputsJson, VariableDictionary variables)
+        static void CaptureOutputs(string outputsJson, IVariableDictionary variables)
         {
             if (string.IsNullOrWhiteSpace(outputsJson))
                 return;
@@ -197,7 +198,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         // The template and parameter files are relative paths, and may be located either inside or outside of the package.
-        string ResolveAndSubstituteFile(string relativeFilePath, bool inPackage, VariableDictionary variables)
+        string ResolveAndSubstituteFile(string relativeFilePath, bool inPackage, IVariableDictionary variables)
         {
             var absolutePath = inPackage
                 ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(relativeFilePath))

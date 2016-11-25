@@ -1,10 +1,7 @@
-﻿using System.Linq;
-using System.Text;
-using Calamari.Extensibility;
-using Calamari.Extensibility.Features;
+﻿using Calamari.Extensibility.Features;
 using Calamari.Shared;
 
-namespace Calamari.Conventions.RunScript
+namespace Calamari.Extensibility.RunScript
 {
     [Feature("RunScript", "I Am A Run Script")]
     public class RunScriptFeature : IFeature

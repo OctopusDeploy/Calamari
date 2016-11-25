@@ -2,7 +2,7 @@
 
 namespace Calamari.Tests.Helpers
 {
-    public class InMemoryLog : ILog
+    public class InMemoryLog : ILog, Extensibility.ILog
     {
         public List<Message> Messages { get; } = new List<Message>();
 

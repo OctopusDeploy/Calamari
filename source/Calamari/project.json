@@ -6,8 +6,7 @@
     "ScriptCS": "0.16.1",
     "Octostache": "2.0.7",
     "Calamari.Extensibility": "*",
-    "Calamari.Extensibility.RunScript": "*",
-    "Calamari.Extensibility.DeployPackage": "*"
+    "Calamari.Extensibility.RunScript": "*"
   },
   "frameworks": {
     "net40": {

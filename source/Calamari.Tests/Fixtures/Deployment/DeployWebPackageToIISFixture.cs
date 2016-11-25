@@ -3,8 +3,8 @@ using System;
 using System.IO;
 using System.Linq;
 using Calamari.Deployment;
+using Calamari.Extensibility.IIS;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Iis;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using Microsoft.Web.Administration;
@@ -106,11 +106,13 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
-
+            
+            Console.WriteLine($"XXXXXXXXXXXXX - {packageV1.FilePath}");
             var result = DeployPackage(packageV1.FilePath);
 
             result.AssertSuccess();
 
+            Console.WriteLine($"XXXXXXXXXXXXX - {uniqueValue}");
             var applicationPoolExists = ApplicationPoolExists(uniqueValue);
 
             Assert.IsFalse(applicationPoolExists);

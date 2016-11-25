@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Reflection;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 
 namespace Calamari.Integration.Scripting
 {

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.WebSites.Models;
 

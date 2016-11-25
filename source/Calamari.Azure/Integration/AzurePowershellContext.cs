@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
@@ -32,7 +34,7 @@ namespace Calamari.Azure.Integration
             this.embeddedResources = new AssemblyEmbeddedResources();
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, IVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
@@ -65,7 +67,7 @@ namespace Calamari.Azure.Integration
             }
         }
 
-        static void SetAzureModuleLoadingMethod(VariableDictionary variables)
+        static void SetAzureModuleLoadingMethod(IVariableDictionary variables)
         {
             // By default use the Azure PowerShell modules bundled with Calamari
             // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
@@ -81,7 +83,7 @@ namespace Calamari.Azure.Integration
             return azureContextScriptFile;
         }
 
-        private string CreateAzureCertificate(string workingDirectory, VariableDictionary variables)
+        private string CreateAzureCertificate(string workingDirectory, IVariableDictionary variables)
         {
             var certificateFilePath = Path.Combine(workingDirectory, CertificateFileName);
             var certificatePassword = GenerateCertificatePassword();
@@ -98,7 +100,7 @@ namespace Calamari.Azure.Integration
 
         }
 
-        static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        static void SetOutputVariable(string name, string value, IVariableDictionary variables)
         {
             if (variables.Get(name) != value)
             {

@@ -1,25 +1,14 @@
-using System;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using Calamari.Commands.Support;
-using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
 using Calamari.Extensibility.Features;
 using Calamari.Features;
 using Calamari.Features.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 using Calamari.Util;
-using System.Runtime.InteropServices;
-using Calamari.Conventions.RunScript;
 using Calamari.Deployment;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes.Semaphores;
-using IPackageExtractor = Calamari.Extensibility.Features.IPackageExtractor;
-using SpecialVariables = Calamari.Shared.SpecialVariables;
+using Calamari.Extensibility.RunScript;
+using System.Reflection;
 
 namespace Calamari.Commands
 {
@@ -45,32 +34,47 @@ namespace Calamari.Commands
         }
 
 
-        internal int Execute(string featureName, IVariableDictionary variables)
+        internal int Execute(string featureName, CalamariVariableDictionary variables)
         {
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
 
             var al = new AssemblyLoader();
-            
+
             al.RegisterAssembly(typeof(RunScriptFeature).GetTypeInfo().Assembly);
-            al.RegisterAssembly(typeof(DeployPackageFeature).GetTypeInfo().Assembly);
-
-            var featureLocator = new FeatureLocator(al);
-            Console.Write(al.Types.Count());
-
-            var type = featureLocator.Locate(featureName);
+            al.RegisterAssembly(typeof(PackageDeploymentFeatureRunner.DeployPackageFeature).GetTypeInfo().Assembly);
 
             var container = CreateContainer(variables);
-
-
             var dpb = new DepencencyInjectionBuilder(container);
 
-            var feature = (IFeature)dpb.BuildConvention(type);
-            feature.Install(variables);
+
+            var type = new FeatureLocator(al).Locate(featureName);
+
+            var feature = dpb.BuildConvention(type);
+
+            try
+            {
+                var deploymentFeature = feature as IPackageDeploymentFeature;
+
+                if (deploymentFeature != null)
+                {
+                    var runner = new PackageDeploymentFeatureRunner(deploymentFeature);
+                    runner.Install(variables);
+                }
+                else
+                {
+                    (feature as IFeature)?.Install(variables);
+                }
+            }
+            catch
+            {
+                (feature as IRollBackFeature)?.Rollback(variables);
+                throw;
+            }
             return 0;
         }
-        
+
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
@@ -79,94 +83,15 @@ namespace Calamari.Commands
             return Execute(featureName, new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword));
         }
 
-        private static CalamariContainer CreateContainer(IVariableDictionary variables)
+        private static CalamariContainer CreateContainer(CalamariVariableDictionary variables)
         {
+            
             var container = new CalamariContainer();
-            var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var log = new LogWrapper();
-
-            container.RegisterInstance<IPackageExtractor>(new PackageExtractor(filesystem, variables, SemaphoreFactory.Get()));
             container.RegisterInstance<IVariableDictionary>(variables);
-            container.RegisterInstance<IScriptExecution>(new ScriptExecution(filesystem, new Integration.Scripting.CombinedScriptEngine(), commandLineRunner, variables));
-            container.RegisterInstance<IFileSubstitution>(new FileSubstitution(filesystem, new FileSubstituter(filesystem), variables, log));
-            container.RegisterInstance<ILog>(log);
+            container.RegisterInstance<CalamariVariableDictionary>(variables);
+
+            (new MyModule()).Register(container);
             return container;
-        }
-    }
-
-    public class PackageExtractor : IPackageExtractor
-    {
-        
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly IVariableDictionary variables;
-        private readonly ISemaphoreFactory semaphore;
-
-        public PackageExtractor(ICalamariFileSystem fileSystem, IVariableDictionary variables, ISemaphoreFactory semaphore)
-        {
-            this.fileSystem = fileSystem;
-            this.variables = variables;
-            this.semaphore = semaphore;
-        }
-
-
-        public string Extract(string package, PackageExtractionLocation extractionLocation)
-        {
-            ExtractPackageConvention extractPackage = null;
-            switch (extractionLocation)
-            {
-                case PackageExtractionLocation.ApplicationDirectory:
-                    extractPackage = new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore);
-                    break;
-                case PackageExtractionLocation.WorkingDirectory:
-                    extractPackage = new ExtractPackageToWorkingDirectoryConvention(new GenericPackageExtractor(), fileSystem);
-                    break;
-                case PackageExtractionLocation.StagingDirectory:
-                    extractPackage = new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem);
-                    break;
-                default:
-                    throw new InvalidOperationException("Unknown extraction location: "+ extractionLocation);
-            }
-
-         
-
-            var rd = new RunningDeployment(package, variables);
-            extractPackage.Install(rd);
-
-            return "";
-        }
-    }
-
-    
-
-    public class FileSubstitution : IFileSubstitution
-    {
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly IFileSubstituter substituter;
-        private readonly IVariableDictionary variableDictionary;
-        private readonly ILog log;
-
-        public FileSubstitution(ICalamariFileSystem fileSystem, IFileSubstituter substituter, IVariableDictionary variableDictionary, ILog log)
-        {
-            this.fileSystem = fileSystem;
-            this.substituter = substituter;
-            this.variableDictionary = variableDictionary;
-            this.log = log;
-        }
-
-        public void PerformSubstitution(string sourceFile)
-        {
-            if (!variableDictionary.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled))
-                return;
-
-            if (!fileSystem.FileExists(sourceFile))
-            {
-                log.WarnFormat($"The file '{sourceFile}' could not be found for variable substitution.");
-                return;
-            }
-            log.Info($"Performing variable substitution on '{sourceFile}'");
-            substituter.PerformSubstitution(sourceFile, variableDictionary);
         }
     }
 }

@@ -1,15 +1,14 @@
-{
+﻿{
   "version": "1.0.0-*",
   "dependencies": {
     "Calamari.Extensibility": "1.0.0-*"
   },
   "frameworks": {
-    "netstandard1.6": {
-      "imports": "dnxcore50",
+    "net40": {
       "dependencies": {
-        "NETStandard.Library": "1.6.0"
+        "System.DirectoryServices": "*",
+        "Microsoft.Web.Administration": "7.0.0.0"
       }
-    },
-    "net40": {}
+    }
   }
 }

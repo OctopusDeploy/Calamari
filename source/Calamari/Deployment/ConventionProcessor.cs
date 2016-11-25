@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
 
 namespace Calamari.Deployment
 {

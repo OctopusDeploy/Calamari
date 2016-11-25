@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;

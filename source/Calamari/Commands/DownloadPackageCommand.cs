@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else

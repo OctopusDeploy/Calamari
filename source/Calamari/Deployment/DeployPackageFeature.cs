@@ -11,7 +11,6 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Iis;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -23,32 +22,13 @@ using IPackageExtractor = Calamari.Extensibility.Features.IPackageExtractor;
 
 namespace Calamari.Deployment
 {
-
-    public class BlahConvention : IInstallConvention
-    {
-        private readonly Action<IVariableDictionary> invoker;
-
-        public BlahConvention(Action<IVariableDictionary>  invoker)
-        {
-            this.invoker = invoker;
-        }
-        public void Install(RunningDeployment deployment)
-        {
-            invoker.Invoke(deployment.Variables);
-        }
-    }
-
     public class PackageDeploymentFeatureRunner
     {
         private readonly IPackageDeploymentFeature feature;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly ISemaphoreFactory semaphore;
 
-        public PackageDeploymentFeatureRunner(IPackageDeploymentFeature feature, ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore)
+        public PackageDeploymentFeatureRunner(IPackageDeploymentFeature feature)
         {
             this.feature = feature;
-            this.fileSystem = fileSystem;
-            this.semaphore = semaphore;
         }
 
         public void Install(IVariableDictionary variables)
@@ -104,13 +84,14 @@ namespace Calamari.Deployment
                     new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
                     new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new BlahConvention(feature.AfterDeploy),
+                new FeatureInstallConvention(feature.AfterDeploy),
 
                 new FeatureScriptConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),                
                     new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                     new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),                
                 new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                //new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
+                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
+
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
@@ -130,99 +111,39 @@ namespace Calamari.Deployment
             }
 
         }
-    }
 
-  
-    public class IISDeployment : IPackageDeploymentFeature
-    {
-        private readonly ICalamariFileSystem fileSystem;
 
-        public IISDeployment(ICalamariFileSystem fileSystem)
+        [Feature("DeployPackage", "I Am A Run Script")]
+        public class DeployPackageFeature : IPackageDeploymentFeature
         {
-            this.fileSystem = fileSystem;
-        }
-
-        public void AfterDeploy(IVariableDictionary variables)
-        {
-            
-#if IIS_SUPPORT
-            new LegacyIisWebSiteConvention(fileSystem, new InternetInformationServer()).Install(null);
-#endif
-        }
-    }
-
-
-
-
-
-    [Feature("DeployPackage", "I Deploy Packages")]
-    public class DeployPackageFeature : IFeature
-    {
-/*
- new ContributeEnvironmentVariablesConvention(),
-                new ContributePreviousInstallationConvention(journal),
-                new LogVariablesConvention(),
-                new AlreadyInstalledConvention(journal),
-                new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore),
-                
-BeforePreDeploy
-
-
-            new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
-                
-                new FeatureScriptConvention(DeploymentStages.AfterPreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new SubstituteInFilesConvention(fileSystem, substituter),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(generator, fileSystem),
-                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
-                
-                new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                
-                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
-                
-                new FeatureScriptConvention(DeploymentStages.AfterDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-//#if IIS_SUPPORT
-                new LegacyIisWebSiteConvention(fileSystem, iis),
-//#endif
-                new FeatureScriptConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                
-
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
-     
-*/
-        private readonly IPackageExtractor extractor;
-        private readonly IScriptExecution executor;
-        private readonly IFileSubstitution substitutor;
-
-        public DeployPackageFeature(IPackageExtractor extractor, IScriptExecution executor, IFileSubstitution substitutor)
-        {
-            this.extractor = extractor;
-            this.executor = executor;
-            this.substitutor = substitutor;
-        }
-
-        public void Install(IVariableDictionary variables)
-        {
-            var script = variables.Get(Shared.SpecialVariables.Action.Script.Path);
-            var parameters = variables.Get(Shared.SpecialVariables.Action.Script.Parameters);
-            var package = variables.Get(Shared.SpecialVariables.Action.Script.PackagePath);
-
-            if (!string.IsNullOrWhiteSpace(package))
+            public void AfterDeploy(IVariableDictionary variables)
             {
-                extractor.Extract(package, PackageExtractionLocation.WorkingDirectory);
+
             }
 
-            substitutor.PerformSubstitution(script);
-            executor.Invoke(script, parameters);
+            public void Rollback(IVariableDictionary variables)
+            {
+
+            }
+
+            public void Cleanup(IVariableDictionary variables)
+            {
+
+            }
         }
-    }
+
+        class FeatureInstallConvention : IInstallConvention
+        {
+            private readonly Action<IVariableDictionary> invoker;
+
+            public FeatureInstallConvention(Action<IVariableDictionary> invoker)
+            {
+                this.invoker = invoker;
+            }
+            public void Install(RunningDeployment deployment)
+            {
+                invoker.Invoke(deployment.Variables);
+            }
+        }
+    }    
 }

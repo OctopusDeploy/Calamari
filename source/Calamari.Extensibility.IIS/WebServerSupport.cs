@@ -1,7 +1,6 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 
-namespace Calamari.Integration.Iis
+namespace Calamari.Extensibility.IIS
 {
     public abstract class WebServerSupport
     {
@@ -10,12 +9,12 @@ namespace Calamari.Integration.Iis
         public abstract void DeleteWebSite(string webSiteName);
         public abstract bool ChangeHomeDirectory(string webSiteName, string virtualDirectoryPath, string newWebRootPath);
 
-        public static WebServerSupport Legacy()
+        public static WebServerSupport Legacy(ILog log)
         {
-            return new WebServerSixSupport();            
+            return new WebServerSixSupport(log);            
         }
 
-        public static WebServerSupport AutoDetect()
+        public static WebServerSupport AutoDetect(ILog log)
         {
             // Sources:
             // http://support.microsoft.com/kb/224609
@@ -23,11 +22,10 @@ namespace Calamari.Integration.Iis
 
             if (Environment.OSVersion.Version.Major < 6)
             {
-                return new WebServerSixSupport();
+                return new WebServerSixSupport(log);
             }
 
             return new WebServerSevenSupport();
         }
     }
 }
-#endif

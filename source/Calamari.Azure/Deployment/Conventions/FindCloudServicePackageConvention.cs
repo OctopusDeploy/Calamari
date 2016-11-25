@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Azure.Deployment.Conventions

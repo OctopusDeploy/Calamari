@@ -5,6 +5,8 @@ using Calamari.Azure.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
+using Calamari.Features;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Deployment.Conventions
@@ -59,6 +60,7 @@ namespace Calamari.Deployment.Conventions
 
             // From this point on, the current directory will be the custom-directory
             deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
+
 
             Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
             Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);

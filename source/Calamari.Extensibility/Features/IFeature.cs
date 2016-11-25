@@ -13,14 +13,17 @@ namespace Calamari.Extensibility.Features
     public interface IFeature
     {
         void Install(IVariableDictionary variables);
-//        string Name { get; }
-//        string Description { get; }
     }
 
-    public interface IRollBack : IFeature
+    public interface IRollBackFeature
     {
         void Rollback(IVariableDictionary variables);
+        void Cleanup(IVariableDictionary variables);
     }
+
+
+
+
 
     public interface IFeatureExecutionContext
     {

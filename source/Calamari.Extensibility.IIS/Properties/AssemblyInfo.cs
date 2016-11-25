@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Calamari.Conventions.ExtractPackage")]
+[assembly: AssemblyProduct("Calamari.Extensibility.IIS")]
 [assembly: AssemblyTrademark("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
@@ -16,4 +16,4 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("167025ea-5904-4e64-a87d-1716be96c7f0")]
+[assembly: Guid("c7adc13f-33ac-4e95-8b0a-7943c516a269")]

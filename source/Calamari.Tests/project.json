@@ -3,7 +3,6 @@
   "dependencies": {
     "Calamari": "*",
     "Calamari.Extensibility.RunScript": "*",
-    "Calamari.Extensibility.DeployPackage": "*",
     "Calamari.Extensibility": "*",
     "NSubstitute": "2.0.0-rc",
     "NUnit": "3.4.1",
@@ -16,6 +15,36 @@
   },
   "testRunner": "nunit",
   "frameworks": {
+    "net451": {
+      "frameworkAssemblies": {
+        "System.Core": "*",
+        "System.Net": "*",
+        "System.ServiceProcess": "*",
+        "System.Xml.Linq": "*",
+        "System.Data.DataSetExtensions": "*",
+        "Microsoft.CSharp": "*",
+        "System.Data": "*",
+        "System.Xml": "*",
+        "WindowsBase": "*"
+      },
+      "dependencies": {
+        "GitVersionTask": "3.3.0",
+        "MarkdownSharp": "1.13.0.0",
+        "Microsoft.Bcl": "1.1.9",
+        "Microsoft.Bcl.Async": "1.0.168",
+        "Microsoft.Bcl.Build": "1.0.14",
+        "Microsoft.Net.Http": "2.2.22",
+        "Microsoft.Web.Administration": "7.0.0.0",
+        "Microsoft.Web.Deployment": "3.6.0",
+        "Microsoft.Web.Xdt": "2.1.1",
+        "SharpCompress": "0.12.4",
+        "Polly": "4.3.0",
+        "Calamari.Extensibility.IIS": "*"
+      },
+      "buildOptions": {
+        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
+      }
+    },
     "netcoreapp1.0": {
       "imports": "portable-net45+win8",
       "dependencies": {
@@ -29,41 +58,12 @@
         "Sprache": "2.1.0",
         "System.IO.Packaging": "4.0.0",
         "System.ServiceProcess.ServiceController": "4.1.0",
-        "System.Runtime": "4.1.0"       
+        "System.Runtime": "4.1.0"
       },
       "buildOptions": {
         "define": [ "NETCORE", "USE_OCTOPUS_XMLT" ],
         "emitEntryPoint": true,
         "debugType": "portable"
-      }
-    },
-     "net451": {
-       "frameworkAssemblies": {
-         "System.Core": "*",
-         "System.Net": "*",
-         "System.ServiceProcess": "*",
-         "System.Xml.Linq": "*",
-         "System.Data.DataSetExtensions": "*",
-         "Microsoft.CSharp": "*",
-         "System.Data": "*",
-         "System.Xml": "*",
-         "WindowsBase": "*"        
-       },
-       "dependencies": {
-         "GitVersionTask": "3.3.0",
-         "MarkdownSharp": "1.13.0.0",
-         "Microsoft.Bcl": "1.1.9",
-         "Microsoft.Bcl.Async": "1.0.168",
-         "Microsoft.Bcl.Build": "1.0.14",
-         "Microsoft.Net.Http": "2.2.22",
-         "Microsoft.Web.Administration": "7.0.0.0",
-         "Microsoft.Web.Deployment": "3.6.0",
-         "Microsoft.Web.Xdt": "2.1.1",
-         "SharpCompress": "0.12.4",
-         "Polly": "4.3.0" 
-       },
-      "buildOptions": {
-        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
       }
     }
   },

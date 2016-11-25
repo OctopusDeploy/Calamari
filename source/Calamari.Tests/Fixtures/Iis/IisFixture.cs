@@ -1,6 +1,6 @@
 ﻿#if IIS_SUPPORT
 using System;
-using Calamari.Integration.Iis;
+using Calamari.Extensibility.IIS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -10,7 +10,7 @@ namespace Calamari.Tests.Fixtures.Iis
     [Category(TestEnvironment.CompatibleOS.Windows)]
     public class IisFixture
     {
-        readonly WebServerSupport webServer = WebServerSupport.AutoDetect();
+        readonly WebServerSupport webServer = WebServerSupport.AutoDetect(new InMemoryLog());
         string siteName;
 
         [SetUp]
@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Iis
         [Test]
         public void CanUpdateIisSite()
         {
-            var server = new InternetInformationServer();
+            var server = new InternetInformationServer(new InMemoryLog());
             var success = server.OverwriteHomeDirectory(siteName, "C:\\Windows\\system32", false);
             Assert.IsTrue(success, "Home directory was not overwritten");
 
@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Iis
         [Test]
         public void CanUpdateIisSiteWithVirtualDirectory()
         {
-            var server = new InternetInformationServer();
+            var server = new InternetInformationServer(new InMemoryLog());
             var success = server.OverwriteHomeDirectory(siteName + "/Foo", "C:\\Windows\\Microsoft.NET", false);
             Assert.IsTrue(success, "Home directory was not overwritten");
 
@@ -47,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Iis
         [Test]
         public void CanUpdateIisSiteWithNestedVirtualDirectory()
         {
-            var server = new InternetInformationServer();
+            var server = new InternetInformationServer(new InMemoryLog());
             var success = server.OverwriteHomeDirectory(siteName + "/Foo/Bar/Baz", "C:\\Windows\\Microsoft.NET\\Framework", false);
             Assert.IsTrue(success, "Home directory was not overwritten");
 

@@ -6,8 +6,10 @@ using System.Threading;
 using System.Xml;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+#if IIS_SUPPORT
+using Calamari.Extensibility.IIS;
+#endif
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Iis;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -195,7 +197,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             // Create the website
             var originalWebRootPath = Path.Combine(Path.GetTempPath(), "CalamariTestIisSite");
             FileSystem.EnsureDirectoryExists(originalWebRootPath);
-            var webServer = WebServerSupport.AutoDetect();
+            var webServer = WebServerSupport.AutoDetect(new InMemoryLog());
             var siteName = "CalamariTest-" + Guid.NewGuid();
             webServer.CreateWebSiteOrVirtualDirectory(siteName, "/", originalWebRootPath, 1081);
 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 

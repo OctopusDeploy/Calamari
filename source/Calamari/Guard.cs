@@ -1,5 +1,6 @@
 ﻿using System;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 
 namespace Calamari
 {

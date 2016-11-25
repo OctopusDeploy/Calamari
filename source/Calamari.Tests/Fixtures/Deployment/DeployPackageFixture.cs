@@ -45,12 +45,20 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
+                Variables.Set(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath, packageName);
                 Variables.Save(variablesFile.FilePath);
 
-                return Invoke(Calamari()
-                    .Action("deploy-package")
-                    .Argument("package", packageName)
-                    .Argument("variables", variablesFile.FilePath));
+                /*
+                    return InProcessInvoke(InProcessCalamari()
+                        .Action("run-feature")
+                        .Argument("feature", "DeployPackage")
+                        .Argument("variables", variablesFile.FilePath));
+*/
+                      return Invoke(Calamari()
+                        .Action("deploy-package")
+                        .Argument("package", packageName)
+                        .Argument("variables", variablesFile.FilePath));
+
             }
         }
     }

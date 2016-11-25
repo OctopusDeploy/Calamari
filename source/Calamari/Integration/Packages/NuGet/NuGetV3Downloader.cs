@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 using Calamari.NuGet.Versioning;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

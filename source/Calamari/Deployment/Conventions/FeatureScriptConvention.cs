@@ -8,6 +8,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 using System.Reflection;
+using Calamari.Extensibility;
 
 namespace Calamari.Deployment.Conventions
 {

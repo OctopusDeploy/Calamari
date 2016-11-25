@@ -7,6 +7,7 @@ using Calamari.Azure.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 using Octostache;
@@ -44,7 +45,7 @@ namespace Calamari.Azure.Deployment.Conventions
             fileSystem.OverwriteFile(configurationFilePath, document.ToString());
         }
 
-        static void UpdateConfigurationSettings(XContainer configurationFile, VariableDictionary variables)
+        static void UpdateConfigurationSettings(XContainer configurationFile, IVariableDictionary variables)
         {
             Log.Verbose("Updating configuration settings...");
             var foundSettings = false;
@@ -70,7 +71,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        void UpdateConfigurationWithCurrentInstanceCount(XContainer localConfigurationFile, string configurationFileName, VariableDictionary variables)
+        void UpdateConfigurationWithCurrentInstanceCount(XContainer localConfigurationFile, string configurationFileName, IVariableDictionary variables)
         {
             if (!variables.GetFlag(SpecialVariables.Action.Azure.UseCurrentInstanceCount))
                 return;

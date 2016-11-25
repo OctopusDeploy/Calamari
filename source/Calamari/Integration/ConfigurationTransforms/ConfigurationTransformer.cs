@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Xml;
 using Calamari.Commands.Support;
+using Calamari.Extensibility;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;
 #else
