@@ -2,7 +2,6 @@
   "version": "0.0.0-*",
   "dependencies": {
     "Calamari": "*",
-    "Calamari.Extensibility.RunScript": "*",
     "Calamari.Extensibility": "*",
     "NSubstitute": "2.0.0-rc",
     "NUnit": "3.4.1",
@@ -106,7 +105,8 @@
     }
   },
   "scripts": {
-    "precompile": [ "./chmodexes" ]
+    "precompile": [ "./chmodexes" ],
+    "postcompile": [ "./featurecopy \"%project:Directory%\" \"%compile:OutputDir%\" \"%compile:Configuration%\" \"%compile:TargetFramework%\" \"%compile:FullTargetFramework%\" \"%compile:RuntimeOutputDir%\" \"%compile:RuntimeIdentifier%\"" ]
   },
   "runtimes": {
     "win7-x64": {},

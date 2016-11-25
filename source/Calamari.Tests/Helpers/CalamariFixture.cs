@@ -7,6 +7,7 @@ using Octostache;
 using System.Reflection;
 using Calamari.Extensibility;
 using Calamari.Features;
+using NUnit.Framework;
 using NUnit.Framework.Internal;
 
 #if APPROVAL_TESTS
@@ -18,9 +19,15 @@ namespace Calamari.Tests.Helpers
 {
     public abstract class CalamariFixture
     {
+        [SetUp]
+        public void SetUpExtensionsPath()
+        {
+            Environment.SetEnvironmentVariable("CalamariExtensionsPath", Path.Combine(TestEnvironment.CurrentWorkingDirectory, "../Calamari.Extensions"));
+        }
+
         protected CommandLine Calamari()
         {
-            Environment.SetEnvironmentVariable("CalamariLocation", @"C:\Temp\Debug\Calamari.Extensibility.RunScript\1.0.0");
+           
             string calamariFullPath;
 #if NET40
             calamariFullPath = typeof(DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
@@ -91,7 +98,4 @@ namespace Calamari.Tests.Helpers
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
     }
-
-   
-
 }

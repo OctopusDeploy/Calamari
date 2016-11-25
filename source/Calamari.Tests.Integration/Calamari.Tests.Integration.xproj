@@ -6,7 +6,7 @@
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\DotNet\Microsoft.DotNet.Props" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>7b00df1a-42fb-4c7e-9ce9-9d423f8079ba</ProjectGuid>
+    <ProjectGuid>ef7d8065-d481-418c-b26f-2df62f0f4a2a</ProjectGuid>
     <RootNamespace>Calamari.Tests.Integration</RootNamespace>
     <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'=='' ">.\obj</BaseIntermediateOutputPath>
     <OutputPath Condition="'$(OutputPath)'=='' ">.\bin\</OutputPath>

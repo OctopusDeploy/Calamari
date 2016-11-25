@@ -4,13 +4,13 @@ using Calamari.Shared;
 namespace Calamari.Extensibility.RunScript
 {
     [Feature("RunScript", "I Am A Run Script")]
-    public class RunScriptFeature : IFeature
+    public class RunScriptInstallFeature : IFeature
     {
         private readonly IPackageExtractor extractor;
         private readonly IScriptExecution executor;
         private readonly IFileSubstitution substitutor;
 
-        public RunScriptFeature(IPackageExtractor extractor, IScriptExecution executor, IFileSubstitution substitutor)
+        public RunScriptInstallFeature(IPackageExtractor extractor, IScriptExecution executor, IFileSubstitution substitutor)
         {
             this.extractor = extractor;
             this.executor = executor;

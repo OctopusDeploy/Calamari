@@ -31,7 +31,7 @@ namespace Calamari.Commands
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             variables.Set(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath, this.packageFile);
 
-            var feature = variables.GetFlag(SpecialVariables.Package.UpdateIisWebsite) ? "IISDeployment" : "DeployPackage";
+            var feature = variables.GetFlag(SpecialVariables.Package.UpdateIisWebsite) ? "Calamari.Extensibility.IIS.IISDeploymentFeature, Calamari.Extensibility.IIS" : "Calamari.Deployment.DeployPackageFeature";
             return new RunFeatureCommand().Execute(feature, variables);
         }
     }

@@ -20,6 +20,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public virtual void SetUp()
         {
             FileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            
 
             // Ensure staging directory exists and is empty 
             StagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
@@ -43,6 +44,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         protected CalamariResult DeployPackage(string packageName)
         {
+
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
                 Variables.Set(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath, packageName);

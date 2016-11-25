@@ -5,8 +5,7 @@
     "FSharp.Compiler.Tools": "4.0.0.1",
     "ScriptCS": "0.16.1",
     "Octostache": "2.0.7",
-    "Calamari.Extensibility": "*",
-    "Calamari.Extensibility.RunScript": "*"
+    "Calamari.Extensibility": "*"
   },
   "frameworks": {
     "net40": {

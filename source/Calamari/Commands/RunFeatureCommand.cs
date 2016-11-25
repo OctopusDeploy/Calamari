@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Extensibility;
@@ -7,7 +8,6 @@ using Calamari.Features.Conventions;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Calamari.Deployment;
-using Calamari.Extensibility.RunScript;
 using System.Reflection;
 
 namespace Calamari.Commands
@@ -19,6 +19,7 @@ namespace Calamari.Commands
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
         private string featureName;
+        private string extensionsDirectory;
 
         public RunFeatureCommand()
         {
@@ -31,25 +32,37 @@ namespace Calamari.Commands
                 v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.",
                 v => sensitiveVariablesPassword = v);
+            Options.Add("extensionsDirectory=", "Path the folder containing all extensions.",
+               v => extensionsDirectory = v);
         }
 
+
+        string GetExtensionsDirectory(IVariableDictionary variables)
+        {
+            if (!string.IsNullOrEmpty(extensionsDirectory))
+                return extensionsDirectory;
+
+            var extensionPath = variables.Get("env:CalamariExtensionsPath");
+            if (!string.IsNullOrEmpty(extensionPath))
+                return extensionPath;
+
+            extensionPath = variables.Get("CalamariExtensionsPath");
+            if (!string.IsNullOrEmpty(extensionPath))
+                return extensionPath;
+
+            var currentDirectory = Path.GetDirectoryName(this.GetType().GetTypeInfo().Assembly.FullLocalPath());
+            return Path.Combine(currentDirectory, "Extensions");
+        }
 
         internal int Execute(string featureName, CalamariVariableDictionary variables)
         {
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
-
-            var al = new AssemblyLoader();
-
-            al.RegisterAssembly(typeof(RunScriptFeature).GetTypeInfo().Assembly);
-            al.RegisterAssembly(typeof(PackageDeploymentFeatureRunner.DeployPackageFeature).GetTypeInfo().Assembly);
-
             var container = CreateContainer(variables);
             var dpb = new DepencencyInjectionBuilder(container);
 
-
-            var type = new FeatureLocator(al).Locate(featureName);
+            var type = new FeatureLocator(GetExtensionsDirectory(variables)).Locate(featureName);
 
             var feature = dpb.BuildConvention(type);
 

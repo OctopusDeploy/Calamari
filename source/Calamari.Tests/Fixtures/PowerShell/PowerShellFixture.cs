@@ -11,7 +11,7 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
-    [TestFixture]
+[TestFixture]
     public class PowerShellFixture : CalamariFixture
     {
         [Test]
@@ -20,6 +20,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [TestCase("2.0", "PSVersion                      2.0")]
         public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
         {
+           
+
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
             variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
@@ -31,7 +33,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 // Let's just use the Hello.ps1 script for something simples
                 var output = InProcessInvoke(InProcessCalamari()
                    .Action("run-feature")
-                    .Argument("feature", "RunScript")
+                    .Argument("feature", "Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript")
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
@@ -404,7 +406,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Flag("substituteVariables"));
 
                 output.AssertSuccess();
-                output.AssertOutput("Substituting variables");
+                output.AssertOutput("Performing variable substitution on");
                 output.AssertOutput("Hello Production!");
             }
         }
@@ -430,7 +432,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Extracting package");
-                output.AssertOutput("Substituting variables");
+                output.AssertOutput("Performing variable substitution on");
                 output.AssertOutput("OctopusParameter: Production");
                 output.AssertOutput("InlineVariable: Production");
                 output.AssertOutput("VariableSubstitution: Production");

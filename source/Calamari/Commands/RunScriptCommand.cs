@@ -53,7 +53,7 @@ namespace Calamari.Commands
 
 
 
-            return new RunFeatureCommand().Execute("RunScript", variables);
+            return new RunFeatureCommand().Execute("Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript", variables);
 
             /*
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
