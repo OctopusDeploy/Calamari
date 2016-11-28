@@ -2,6 +2,7 @@
 using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
 

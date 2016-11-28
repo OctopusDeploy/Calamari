@@ -159,20 +159,18 @@ Task("__TestTeamCity")
 Task("__Pack")
     .Does(() =>
 {
-    DoPackage("Calamari", "net40", nugetVersion);
-    DoPackage("Calamari.Azure", "net45", nugetVersion);   
+    PackageAppWithVersion("Calamari", "net40", nugetVersion);
+    PackageAppWithVersion("Calamari.Azure", "net45", nugetVersion);   
+	PackageLibraryWithVersion("Calamari.Extensibility", nugetVersion);
+	PackageLibraryWithVersion("Calamari.Extensibility.IIS", nugetVersion);
+	PackageLibraryWithVersion("Calamari.Extensibility.RunScript", nugetVersion);
+	PackageLibraryWithVersion("Calamari.Extensibility.TestingUtilities", nugetVersion);
 });
 
-private void DoPackage(string project, string framework, string version)
-{
-    DotNetCorePublish(Path.Combine("./source", project), new DotNetCorePublishSettings
-    {
-        Configuration = configuration,
-        OutputDirectory = Path.Combine(artifactsDir, project),
-        Framework = framework
-    });
 
-    TransformConfig(Path.Combine(artifactsDir, project, "project.json"), new TransformationCollection {
+private void UpdateVersionAndRepack(string project, string version) {
+	
+	TransformConfig(Path.Combine(artifactsDir, project, "project.json"), new TransformationCollection {
         { "version", version }
     });
 
@@ -184,6 +182,22 @@ private void DoPackage(string project, string framework, string version)
 
     DeleteDirectory(Path.Combine(artifactsDir, project), true);
     DeleteFiles(artifactsDir + "*symbols*");
+}
+private void PackageLibraryWithVersion(string project, string version)
+{
+	CopyDirectory(Path.Combine("./source", project), Path.Combine(artifactsDir, project));   
+	UpdateVersionAndRepack(project, version);
+}
+
+private void PackageAppWithVersion(string project, string framework, string version)
+{
+    DotNetCorePublish(Path.Combine("./source", project), new DotNetCorePublishSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = Path.Combine(artifactsDir, project),
+        Framework = framework
+    });
+	UpdateVersionAndRepack(project, version);
 }
 
 Task("__Publish")
