@@ -99,6 +99,17 @@ Task("__Build")
 
 Task("__BuildAndZipNET45TestProject")
     .Does(() => {
+		DotNetCoreBuild("source/Calamari.Extensibility.RunScript/project.json", new DotNetCoreBuildSettings
+        {
+            Configuration = "Release",
+            Framework = "net40"
+        });
+		DotNetCoreBuild("source/Calamari.Extensibility.IIS/project.json", new DotNetCoreBuildSettings
+        {
+            Configuration = "Release",
+            Framework = "net40"
+        });
+
         var settings =  new DotNetCoreBuildSettings
         {
             Configuration = "Release",

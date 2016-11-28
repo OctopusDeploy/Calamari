@@ -22,7 +22,7 @@ namespace Calamari.Tests.Helpers
         [SetUp]
         public void SetUpExtensionsPath()
         {
-            Environment.SetEnvironmentVariable("CalamariExtensionsPath", Path.Combine(TestEnvironment.CurrentWorkingDirectory, "../Calamari.Extensions"));
+            Environment.SetEnvironmentVariable("CalamariExtensionsPath", Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Calamari.Extensions"));
         }
 
         protected CommandLine Calamari()
