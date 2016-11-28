@@ -13,6 +13,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Microsoft.Azure;

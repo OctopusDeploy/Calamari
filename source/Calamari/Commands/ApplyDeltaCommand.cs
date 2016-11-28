@@ -2,9 +2,11 @@
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Commands
 {

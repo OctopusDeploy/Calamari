@@ -1,4 +1,4 @@
-namespace Calamari.Extensibility.IIS.FileSystem
+namespace Calamari.Extensibility.FileSystem
 {
     public static class FileSizeExtensions
     {

@@ -6,6 +6,8 @@ namespace Calamari.Extensibility.Features
     {
         public string Name { get; }
         public string Description { get; }
+
+        public Type Module { get; set; }
         public FeatureAttribute(string name, string description)
         {
             Name = name;

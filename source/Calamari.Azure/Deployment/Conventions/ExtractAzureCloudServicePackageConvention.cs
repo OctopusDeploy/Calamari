@@ -8,6 +8,7 @@ using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Azure.Deployment.Conventions

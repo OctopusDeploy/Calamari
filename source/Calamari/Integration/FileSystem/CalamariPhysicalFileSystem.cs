@@ -10,6 +10,7 @@ using Calamari.Integration.Retry;
 using Calamari.Util;
 using System.Runtime.InteropServices;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 
 namespace Calamari.Integration.FileSystem
 {

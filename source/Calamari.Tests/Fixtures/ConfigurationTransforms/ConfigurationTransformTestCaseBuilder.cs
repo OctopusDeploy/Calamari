@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Assent;
 using Assent.Namers;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;

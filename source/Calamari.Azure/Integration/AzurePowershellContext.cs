@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Features;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;

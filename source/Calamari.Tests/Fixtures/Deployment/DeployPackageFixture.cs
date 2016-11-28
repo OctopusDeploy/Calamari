@@ -2,11 +2,13 @@ using System;
 using System.IO;
 using Calamari.Deployment;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Octostache;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -56,7 +58,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                         .Argument("feature", "DeployPackage")
                         .Argument("variables", variablesFile.FilePath));
 */
-                      return Invoke(Calamari()
+                      return InProcessInvoke(InProcessCalamari()
                         .Action("deploy-package")
                         .Argument("package", packageName)
                         .Argument("variables", variablesFile.FilePath));

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Retry;
 #if USE_NUGET_V2_LIBS

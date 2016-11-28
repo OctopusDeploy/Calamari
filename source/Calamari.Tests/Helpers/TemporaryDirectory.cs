@@ -1,5 +1,7 @@
 ﻿using System;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Tests.Helpers
 {

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.IO;
 using Calamari.Extensibility.Features;
-using Calamari.Extensibility.IIS.FileSystem;
 using System.Linq;
+using Calamari.Extensibility.FileSystem;
 
 namespace Calamari.Extensibility.IIS
 {
-    [Feature("IISDeployment", "I Am A Run Script")]
+    [Feature("IISDeployment", "I Am A Run Script", Module = typeof(IISModule))]
     public class IISDeploymentFeature : IPackageDeploymentFeature
     {
         readonly ICalamariFileSystem fileSystem;

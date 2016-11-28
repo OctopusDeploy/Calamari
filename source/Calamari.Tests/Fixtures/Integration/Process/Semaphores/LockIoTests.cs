@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
 using Newtonsoft.Json;

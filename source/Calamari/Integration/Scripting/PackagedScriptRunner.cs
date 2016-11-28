@@ -5,8 +5,9 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Extensibility;
-using Calamari.Integration.FileSystem;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.Processes;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Integration.Scripting
 {

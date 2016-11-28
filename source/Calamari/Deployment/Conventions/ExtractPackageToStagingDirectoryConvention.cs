@@ -3,7 +3,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Util;
-using ICalamariFileSystem = Calamari.Integration.FileSystem.ICalamariFileSystem;
+using ICalamariFileSystem = Calamari.Extensibility.FileSystem.ICalamariFileSystem;
 
 namespace Calamari.Deployment.Conventions
 {

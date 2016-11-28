@@ -1,7 +1,8 @@
 ﻿using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Extensibility;
-using Calamari.Integration.FileSystem;
+using Calamari.Extensibility.FileSystem;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Deployment.Conventions
 {

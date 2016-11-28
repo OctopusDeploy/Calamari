@@ -5,10 +5,11 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Azure.Deployment.Conventions
 {

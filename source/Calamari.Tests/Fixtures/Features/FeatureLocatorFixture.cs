@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Features
         [SetUp]
         public void SetUp()
         {
-            locator = new FeatureLocator(Path.Combine(TestEnvironment.CurrentWorkingDirectory, "../Calamari.Extensions"));
+            locator = new FeatureLocator(Path.Combine(TestEnvironment.CurrentWorkingDirectory, "../Calamari.Extensions", "Features"));
         }
 
         [Test]
@@ -25,27 +25,34 @@ namespace Calamari.Tests.Fixtures.Features
         {
             var typename = typeof(MissingAttribute).AssemblyQualifiedName;
             Assert.Throws<InvalidOperationException>(() => locator.Locate(typename),
-                "Feature `{typename}` does not have a FeatureAttribute attribute so is to be used in this operation.");
+                $"Feature `{typename}` does not have a FeatureAttribute attribute so is to be used in this operation.");
         }
 
         [Test]
         public void ConventionReturnsWhenNameSearched()
         {
             var t = locator.Locate(typeof(IncludesAttribute).AssemblyQualifiedName);
-            Assert.AreEqual(typeof(IncludesAttribute), t);
+            Assert.AreEqual(typeof(IncludesAttribute), t.Feature);
         }
 
         [Test]
         public void FindsNameFromClassNotInProcess()
         {
             var t = locator.Locate("Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript");
-            Assert.IsNotNull(t);
+            Assert.IsNotNull(t.Feature);
         }
 
         [Test]
-        public void ConventionThrowsWhenNotFound()
+        public void LocateThrowsWhenFeatureNotFound()
         {
             Assert.Throws<InvalidOperationException>(() => locator.Locate("FakeName"), "Unable to determine feature from name `FakeName`");
+        }
+
+        [Test]
+        public void LocateThrowsWhenFeatureHasDodgyModule()
+        {
+            Assert.Throws<InvalidOperationException>(() => locator.Locate(typeof(FeatureWithDodgyModule).AssemblyQualifiedName), 
+                $"Module `{typeof(ModuleWithNoDefaultConstructor).FullName}` does not have a default parameterless constructor.");
         }
 
         public class MissingAttribute : IFeature
@@ -60,6 +67,28 @@ namespace Calamari.Tests.Fixtures.Features
         public class IncludesAttribute : IFeature
         {
             public void Install(IVariableDictionary variables)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+
+        [Feature("MyName", "Here Is Info", Module = typeof(ModuleWithNoDefaultConstructor))]
+        public class FeatureWithDodgyModule : IFeature
+        {
+            public void Install(IVariableDictionary variables)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public class ModuleWithNoDefaultConstructor :IModule
+        {
+            public ModuleWithNoDefaultConstructor(int value){
+                
+            }
+
+            public void Register(ICalamariContainer container)
             {
                 throw new NotImplementedException();
             }

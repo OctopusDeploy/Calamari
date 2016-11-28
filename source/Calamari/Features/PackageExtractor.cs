@@ -3,6 +3,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
 using Calamari.Extensibility.Features;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes.Semaphores;

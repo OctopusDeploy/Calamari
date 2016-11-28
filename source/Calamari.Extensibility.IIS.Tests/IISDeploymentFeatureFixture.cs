@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using Calamari.Extensibility.IIS.FileSystem;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Extensibility.TestingUtilities;
 using NSubstitute;
 using NUnit.Framework;

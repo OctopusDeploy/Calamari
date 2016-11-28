@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml.Linq;
 using Calamari.Deployment.Journal;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -10,6 +11,7 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {

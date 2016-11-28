@@ -7,6 +7,7 @@ using System.Xml;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 #if IIS_SUPPORT
 using Calamari.Extensibility.IIS;
 #endif

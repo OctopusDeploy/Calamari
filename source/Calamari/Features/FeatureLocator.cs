@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Calamari.Extensibility;
 using Calamari.Extensibility.Features;
 using Calamari.Integration.Processes;
 using Calamari.Util;
@@ -76,11 +74,17 @@ namespace Calamari.Features
 
         
 
-        public Type Locate(string name)
+        public FeatureExtension Locate(string name)
         {
             var type = Type.GetType(name, false);
             if (type != null && ValidateType(type))
-                return type;
+            {
+                return new FeatureExtension()
+                {
+                    Feature = type,
+                    Details = GetFeatureAttribute(type)
+                };
+            }
 
             var requestedType = RequestedClass.ParseFromAssemblyQualifiedName(name);
             if(requestedType == null || string.IsNullOrEmpty(requestedType.AssemblyName))
@@ -89,7 +93,13 @@ namespace Calamari.Features
             type = LoadFromDirectory(requestedType.AssemblyName, requestedType.ClassName);
 
             if (type != null && ValidateType(type))
-                return type;
+            {
+                return new FeatureExtension()
+                {
+                    Feature = type,
+                    Details = GetFeatureAttribute(type)
+                };
+            }
 
             throw new InvalidOperationException($"Unable to determine feature from name `{name}`");
         }
@@ -98,22 +108,30 @@ namespace Calamari.Features
         bool ValidateType(Type type)
         {
             if (!typeof(IFeature).IsAssignableFrom(type) && !typeof(IPackageDeploymentFeature).IsAssignableFrom(type))
-                throw new InvalidOperationException($"Class `{type.FullName}` does not impliment IFeature or IPackageDeploymentFeature so is unable to be used in this operation.");
-
-            if (FeatureDetails(type) == null)
-            {
-                throw new InvalidOperationException($"Feature `{type.FullName}` does not have a FeatureAttribute attribute so is to be used in this operation.");
-            }
+                throw new InvalidOperationException(
+                    $"Class `{type.FullName}` does not impliment IFeature or IPackageDeploymentFeature so is unable to be used in this operation.");
 
             return true;
         }
 
-        FeatureAttribute FeatureDetails(Type type)
+        FeatureAttribute GetFeatureAttribute(Type type)
         {
-            var attribute = type.GetTypeInfo()
-                   .GetCustomAttributes(true)
-                   .FirstOrDefault(t => t is FeatureAttribute);
-            return  attribute as FeatureAttribute;
+            var attribute = (FeatureAttribute) type.GetTypeInfo()
+                .GetCustomAttributes(true)
+                .FirstOrDefault(t => t is FeatureAttribute);
+
+            if (attribute == null)
+            {
+                throw new InvalidOperationException(
+                    $"Feature `{type.FullName}` does not have a FeatureAttribute attribute so is to be used in this operation.");
+            }
+
+            if (attribute.Module != null && attribute.Module.GetConstructors().All(c => c.GetParameters().Any()))
+            {
+                throw new InvalidOperationException(
+                    $"Module `{attribute.Module.FullName}` does not have a default parameterless constructor.");
+            }
+            return attribute;
         }
     }
 }

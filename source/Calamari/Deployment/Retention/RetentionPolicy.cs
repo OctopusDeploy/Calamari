@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Deployment.Journal;
-using Calamari.Integration.FileSystem;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.Time;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Deployment.Retention
 {

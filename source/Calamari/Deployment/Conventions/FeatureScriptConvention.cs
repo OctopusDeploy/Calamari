@@ -3,12 +3,13 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 using System.Reflection;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Deployment.Conventions
 {

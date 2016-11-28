@@ -59,12 +59,8 @@ namespace Calamari.Commands
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
-            var container = CreateContainer(variables);
-            var dpb = new DepencencyInjectionBuilder(container);
-
             var type = new FeatureLocator(Path.Combine(GetExtensionsDirectory(variables), "Features")).Locate(featureName);
-
-            var feature = dpb.BuildConvention(type);
+            var feature = new DepencencyInjectionBuilder(CreateContainer(variables, type.Details.Module)).BuildConvention(type.Feature);
 
             try
             {
@@ -96,14 +92,16 @@ namespace Calamari.Commands
             return Execute(featureName, new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword));
         }
 
-        private static CalamariContainer CreateContainer(CalamariVariableDictionary variables)
+        private static CalamariContainer CreateContainer(CalamariVariableDictionary variables, Type featureModule)
         {
-            
             var container = new CalamariContainer();
             container.RegisterInstance<IVariableDictionary>(variables);
             container.RegisterInstance<CalamariVariableDictionary>(variables);
-
-            (new MyModule()).Register(container);
+            container.RegisterModule(new MyModule());
+            if (featureModule != null)
+            {
+                container.RegisterModule(featureModule);
+            }
             return container;
         }
     }

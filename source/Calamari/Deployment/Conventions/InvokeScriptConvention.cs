@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Calamari.Commands.Support;
 using Calamari.Extensibility;
 using Calamari.Extensibility.Features;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

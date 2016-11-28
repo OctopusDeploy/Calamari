@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Extensibility.FileSystem
 {
     public interface IFileSystemInfo
     {

@@ -3,13 +3,14 @@ using System.Text;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Features;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using NSubstitute;
 using NSubstitute.Core.Arguments;
 using NUnit.Framework;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {

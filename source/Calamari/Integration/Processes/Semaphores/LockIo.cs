@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Calamari.Extensibility.FileSystem;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Calamari.Integration.FileSystem;

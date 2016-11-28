@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Calamari.Commands;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Extensibility.FileSystem
 {
-    public interface ICalamariFileSystem 
+    public interface ICalamariFileSystem
     {
         bool FileExists(string path);
         bool DirectoryExists(string path);

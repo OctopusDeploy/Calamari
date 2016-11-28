@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 

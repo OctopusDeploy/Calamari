@@ -2,6 +2,7 @@
 using System.Text;
 using Calamari.Deployment;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Octostache;
 

@@ -1,9 +1,7 @@
-using System;
-
-namespace Calamari.Extensibility
+namespace Calamari.Features
 {
     public interface IFeatureLocator
     {
-        Type Locate(string name);
+        FeatureExtension Locate(string name);
     }
 }

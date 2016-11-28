@@ -1,4 +1,5 @@
 ﻿using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 

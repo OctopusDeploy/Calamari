@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Calamari.Extensibility;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes.Semaphores;

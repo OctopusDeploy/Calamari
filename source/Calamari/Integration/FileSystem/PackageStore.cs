@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Util;
 #if USE_NUGET_V2_LIBS

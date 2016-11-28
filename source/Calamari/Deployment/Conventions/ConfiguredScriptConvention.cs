@@ -3,9 +3,10 @@ using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Extensibility;
-using Calamari.Integration.FileSystem;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
 
 namespace Calamari.Deployment.Conventions
 {
