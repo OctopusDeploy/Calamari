@@ -1,5 +1,4 @@
 ﻿using Calamari.Extensibility.Features;
-using Calamari.Shared;
 
 namespace Calamari.Extensibility.RunScript
 {
@@ -25,7 +24,7 @@ namespace Calamari.Extensibility.RunScript
 
             if (!string.IsNullOrWhiteSpace(package))
             {
-                extractor.Extract(package, PackageExtractionLocation.WorkingDirectory);
+                extractor.Extract(package, PackageExtractionDestination.WorkingDirectory);
             }
 
             substitutor.PerformSubstitution(script);

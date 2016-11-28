@@ -17,7 +17,7 @@ REM echo %compile_fulltargetframework%
 REM echo %compile_runtimeoutputdir%
 REM echo %compile_runtimeidentifier%
 
-SET extensions_directory=%compile_outputdir%\Calamari.Extensions
+SET extensions_directory=%compile_outputdir%\Calamari.Extensions\Features
 rmdir /Q /S %extensions_directory%
 
 for %%x in (
@@ -26,6 +26,5 @@ for %%x in (
        ) do (
          xcopy %project_directory%\..\%%x\bin\%compile_Configuration% %extensions_directory%\%%x\ /E
        )
-REM xcopy %project_directory%\..\Calamari.Extensibility.IIS\bin\%compile_Configuration% %extensions_directory%\Calamari.Extensibility.IIS\ /E
 
 echo "------ Copying Extenstions: End ------"

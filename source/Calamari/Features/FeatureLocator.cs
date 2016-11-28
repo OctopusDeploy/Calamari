@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Calamari.Extensibility;
 using Calamari.Extensibility.Features;
 using Calamari.Integration.Processes;
 using Calamari.Util;

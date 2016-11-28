@@ -1,10 +1,9 @@
 ﻿#if IIS_SUPPORT
 using System;
-using Calamari.Extensibility.IIS;
-using Calamari.Tests.Helpers;
+using Calamari.Extensibility.IIS.Tests.Helpers;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Iis
+namespace Calamari.Extensibility.IIS.Tests
 {
     [TestFixture]
     [Category(TestEnvironment.CompatibleOS.Windows)]

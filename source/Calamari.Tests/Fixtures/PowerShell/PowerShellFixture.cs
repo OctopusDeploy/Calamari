@@ -3,6 +3,7 @@ using System.IO;
 using Assent;
 using Assent.Namers;
 using Calamari.Deployment;
+using Calamari.Extensibility;
 using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;

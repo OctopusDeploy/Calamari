@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Xml.Linq;
+using Calamari.Extensibility;
 
 namespace Calamari.Deployment.Journal
 {

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 

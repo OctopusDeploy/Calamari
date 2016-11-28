@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.ConfigurationVariables;
+﻿using Calamari.Extensibility;
+using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Deployment.Conventions

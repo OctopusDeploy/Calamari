@@ -30,8 +30,7 @@ namespace Calamari.Deployment
 
         public void Install(IVariableDictionary variables)
         {
-            var packageFile = variables.Get(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
-
+            var packageFile = variables.Get(SpecialVariables.Package.FilePath);
 
             Guard.NotNullOrWhiteSpace(packageFile,
                 "No package file was specified. Please pass --package YourPackage.nupkg");
@@ -75,13 +74,10 @@ namespace Calamari.Deployment
                 new AlreadyInstalledConvention(journal),
                 new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore),
 
-                new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptCapability,
-                    commandLineRunner, embeddedResources),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability,
-                    commandLineRunner),
+                new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureScriptConvention(DeploymentStages.AfterPreDeploy, fileSystem, scriptCapability,
-                    commandLineRunner, embeddedResources),
+                new FeatureScriptConvention(DeploymentStages.AfterPreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
 
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
@@ -89,24 +85,18 @@ namespace Calamari.Deployment
                 new JsonConfigurationVariablesConvention(generator, fileSystem),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
 
-                new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, scriptCapability,
-                    commandLineRunner, embeddedResources),
+                new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureScriptConvention(DeploymentStages.AfterDeploy, fileSystem, scriptCapability,
-                    commandLineRunner, embeddedResources),
-                new FeatureInstallConvention(feature.AfterDeploy),
+                new FeatureScriptConvention(DeploymentStages.AfterDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new FeatureInstallConvention(feature.AfterDeploy2),
 
-                new FeatureScriptConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptCapability,
-                    commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability,
-                    commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability,
-                    commandLineRunner),
-                new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability,
-                    commandLineRunner, embeddedResources),
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability,
-                    commandLineRunner)
+                new FeatureScriptConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
+                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
+                new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+
+                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
 
             };
 
@@ -116,12 +106,13 @@ namespace Calamari.Deployment
             try
             {
                 conventionRunner.RunConventions();
-                if (!deployment.SkipJournal)
+                
+                if (!variables.GetFlag(SpecialVariables.Action.SkipJournal))
                     journal.AddJournalEntry(new JournalEntry(deployment, true));
             }
             catch (Exception)
             {
-                if (!deployment.SkipJournal)
+                if (!variables.GetFlag(SpecialVariables.Action.SkipJournal))
                     journal.AddJournalEntry(new JournalEntry(deployment, false));
                 throw;
             }
@@ -133,16 +124,16 @@ namespace Calamari.Deployment
 
         class FeatureInstallConvention : IInstallConvention
         {
-            private readonly Action<IVariableDictionary> invoker;
+            private readonly Action<IVariableDictionary, string> invoker;
 
-            public FeatureInstallConvention(Action<IVariableDictionary> invoker)
+            public FeatureInstallConvention(Action<IVariableDictionary, string> invoker)
             {
                 this.invoker = invoker;
             }
 
             public void Install(RunningDeployment deployment)
             {
-                invoker.Invoke(deployment.Variables);
+                invoker.Invoke(deployment.Variables, deployment.CurrentDirectory);
             }
         }
     }

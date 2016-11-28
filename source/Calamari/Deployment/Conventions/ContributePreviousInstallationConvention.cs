@@ -1,4 +1,5 @@
 ﻿using Calamari.Deployment.Journal;
+using Calamari.Extensibility;
 
 namespace Calamari.Deployment.Conventions
 {

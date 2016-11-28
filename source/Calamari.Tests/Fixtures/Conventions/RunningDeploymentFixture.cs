@@ -1,4 +1,5 @@
 ﻿using Calamari.Deployment;
+using Calamari.Extensibility;
 using Calamari.Features;
 using Calamari.Integration.Processes;
 using NUnit.Framework;

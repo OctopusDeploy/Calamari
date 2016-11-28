@@ -17,8 +17,7 @@ namespace Calamari.Tests.Fixtures.Features
         [SetUp]
         public void SetUp()
         {
-            var path = Path.Combine(TestEnvironment.CurrentWorkingDirectory, "../");
-            locator = new FeatureLocator(path);
+            locator = new FeatureLocator(Path.Combine(TestEnvironment.CurrentWorkingDirectory, "../Calamari.Extensions"));
         }
 
         [Test]

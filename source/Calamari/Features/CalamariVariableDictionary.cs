@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using Calamari.Commands.Support;
 using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
-using Calamari.Shared;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Octostache;

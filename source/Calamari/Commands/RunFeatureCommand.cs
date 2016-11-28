@@ -62,7 +62,7 @@ namespace Calamari.Commands
             var container = CreateContainer(variables);
             var dpb = new DepencencyInjectionBuilder(container);
 
-            var type = new FeatureLocator(GetExtensionsDirectory(variables)).Locate(featureName);
+            var type = new FeatureLocator(Path.Combine(GetExtensionsDirectory(variables), "Features")).Locate(featureName);
 
             var feature = dpb.BuildConvention(type);
 

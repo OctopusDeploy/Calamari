@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.ServiceProcess;
 using Calamari.Deployment;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;

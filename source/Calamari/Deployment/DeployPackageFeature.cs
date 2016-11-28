@@ -23,5 +23,10 @@ namespace Calamari.Deployment
         {
 
         }
+
+        public void AfterDeploy2(IVariableDictionary variables, string currentDirectory)
+        {
+            
+        }
     }
 }

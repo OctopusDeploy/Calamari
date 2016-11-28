@@ -1,7 +1,6 @@
 using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
-using Calamari.Shared;
 
 namespace Calamari.Features
 {

@@ -4,7 +4,6 @@ namespace Calamari.Extensibility
 {
     public interface IVariableDictionary
     {
-
         void SetOutputVariable(string name, string value);
         List<string> GetStrings(string variableName, params char[] separators);
         string this[string name] { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Deployment;
+using Calamari.Extensibility;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

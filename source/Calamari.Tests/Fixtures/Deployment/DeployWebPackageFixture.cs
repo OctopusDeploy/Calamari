@@ -6,6 +6,7 @@ using System.Threading;
 using System.Xml;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensibility;
 #if IIS_SUPPORT
 using Calamari.Extensibility.IIS;
 #endif

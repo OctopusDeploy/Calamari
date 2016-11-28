@@ -1,15 +1,9 @@
-namespace Calamari.Extensibility.Features
+namespace Calamari.Extensibility
 {
     public interface ICalamariContainer
     {
         void RegisterInstance<TType>(TType instance);
 
         TType Resolve<TType>();
-    }
-
-
-    public interface IModule
-    {
-        void Register(ICalamariContainer container);
     }
 }

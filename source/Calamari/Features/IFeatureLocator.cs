@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.Extensibility.Features
+namespace Calamari.Extensibility
 {
     public interface IFeatureLocator
     {

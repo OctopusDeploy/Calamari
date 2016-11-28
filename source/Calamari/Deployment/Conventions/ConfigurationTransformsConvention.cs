@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Extensibility;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 

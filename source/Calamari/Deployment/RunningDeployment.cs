@@ -1,24 +1,20 @@
 ﻿using System;
 using Calamari.Extensibility;
-using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment
 {
     public class RunningDeployment
     {
-        private readonly string packageFilePath;
         private readonly IVariableDictionary variables;
 
         public RunningDeployment(string packageFilePath, IVariableDictionary variables)
         {
-            this.packageFilePath = packageFilePath;
+            this.PackageFilePath = packageFilePath;
             this.variables = variables;
+            CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
         }
 
-        public string PackageFilePath
-        {
-            get { return packageFilePath; }
-        }
+        public string PackageFilePath { get; }
 
         /// <summary>
         /// Gets the directory that Tentacle extracted the package to.
@@ -44,17 +40,9 @@ namespace Calamari.Deployment
 
         public DeploymentWorkingDirectory CurrentDirectoryProvider { get; set; }
 
-        public string CurrentDirectory
-        {
-            get { return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ? StagingDirectory : CustomDirectory; }
-        }
+        public string CurrentDirectory => CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ? StagingDirectory : CustomDirectory;
 
-        public IVariableDictionary Variables
-        {
-            get {  return variables; }
-        }
-
-        public bool SkipJournal { get { return variables.GetFlag(SpecialVariables.Action.SkipJournal); } }
+        public IVariableDictionary Variables => variables;
 
         public void Error(Exception ex)
         {

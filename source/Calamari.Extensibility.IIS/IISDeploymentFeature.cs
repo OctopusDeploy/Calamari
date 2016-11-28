@@ -2,7 +2,6 @@
 using System.IO;
 using Calamari.Extensibility.Features;
 using Calamari.Extensibility.IIS.FileSystem;
-using Calamari.Shared;
 using System.Linq;
 
 namespace Calamari.Extensibility.IIS
@@ -24,10 +23,12 @@ namespace Calamari.Extensibility.IIS
 
         public void AfterDeploy(IVariableDictionary variables)
         {
-            //////////////////////FIX ME///////////////////////
-            /// 
-            var currentDirectory = "FAKEDIR"; //deployment.CurrentDirectory
+            throw new NotImplementedException();
+        }
 
+        public void AfterDeploy2(IVariableDictionary variables, string currentDirectory)
+        {
+            //////////////////////FIX ME///////////////////////
             if (!variables.GetFlag(SpecialVariables.Package.UpdateIisWebsite))
                 return;
 
@@ -64,6 +65,6 @@ namespace Calamari.Extensibility.IIS
             // Find all folders under package root and sort them by depth
             var dirs = fileSystem.EnumerateDirectoriesRecursively(currentDirectory).ToList();
             return dirs.OrderBy(x => x.Count(c => c == '\\')).FirstOrDefault(dir => fileSystem.FileExists(Path.Combine(dir, "Web.config")));
-        }
+        }        
     }
 }

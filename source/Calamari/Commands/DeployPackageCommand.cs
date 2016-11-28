@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Extensibility;
 using Calamari.Features;
 
 namespace Calamari.Commands
@@ -29,7 +30,7 @@ namespace Calamari.Commands
             Options.Parse(commandLineArguments);
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-            variables.Set(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath, this.packageFile);
+            variables.Set(SpecialVariables.Package.FilePath, this.packageFile);
 
             var feature = variables.GetFlag(SpecialVariables.Package.UpdateIisWebsite) ? "Calamari.Extensibility.IIS.IISDeploymentFeature, Calamari.Extensibility.IIS" : "Calamari.Deployment.DeployPackageFeature";
             return new RunFeatureCommand().Execute(feature, variables);

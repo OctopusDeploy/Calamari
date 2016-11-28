@@ -25,22 +25,22 @@ namespace Calamari.Features
         }
 
 
-        public string Extract(string package, PackageExtractionLocation extractionLocation)
+        public string Extract(string package, PackageExtractionDestination extractionDestination)
         {
             ExtractPackageConvention extractPackage = null;
-            switch (extractionLocation)
+            switch (extractionDestination)
             {
-                case PackageExtractionLocation.ApplicationDirectory:
+                case PackageExtractionDestination.ApplicationDirectory:
                     extractPackage = new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore);
                     break;
-                case PackageExtractionLocation.WorkingDirectory:
+                case PackageExtractionDestination.WorkingDirectory:
                     extractPackage = new ExtractPackageToWorkingDirectoryConvention(new GenericPackageExtractor(), fileSystem);
                     break;
-                case PackageExtractionLocation.StagingDirectory:
+                case PackageExtractionDestination.StagingDirectory:
                     extractPackage = new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractor(), fileSystem);
                     break;
                 default:
-                    throw new InvalidOperationException("Unknown extraction location: "+ extractionLocation);
+                    throw new InvalidOperationException("Unknown extraction location: "+ extractionDestination);
             }
 
          
