@@ -16,8 +16,8 @@ for %%x in (
         Calamari.Extensibility.RunScript
 		Calamari.Extensibility.IIS
        ) do (
-	   echo %project_directory%\..\%%x\bin\%compile_Configuration%
-         xcopy %project_directory%\..\%%x\bin\%compile_Configuration% %extensions_directory%\%%x\ /E
+			mkdir -p %project_directory%\..\%%x\bin\%compile_Configuration%
+			xcopy %project_directory%\..\%%x\bin\%compile_Configuration% %extensions_directory%\%%x\ /E
        )
 
 echo "------ Copying Extenstions: End ------"
