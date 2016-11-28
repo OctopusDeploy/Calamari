@@ -37,11 +37,10 @@
         "Microsoft.Web.Deployment": "3.6.0",
         "Microsoft.Web.Xdt": "2.1.1",
         "SharpCompress": "0.12.4",
-        "Polly": "4.3.0",
-        "Calamari.Extensibility.IIS": "*"
+        "Polly": "4.3.0"
       },
       "buildOptions": {
-        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
+        "define": [ "NET40", "IIS_SUPPORT2", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
       }
     },
     "netcoreapp1.0": {
@@ -106,7 +105,7 @@
   },
   "scripts": {
     "precompile": [ "./chmodexes" ],
-    "postcompile": [ "./featurecopy \"%project:Directory%\" \"%compile:OutputDir%\" \"%compile:Configuration%\" \"%compile:TargetFramework%\" \"%compile:FullTargetFramework%\" \"%compile:RuntimeOutputDir%\" \"%compile:RuntimeIdentifier%\"" ]
+    "postcompile": [ "./featurecopy \"%project:Directory%\" \"%compile:RuntimeOutputDir%\" \"%compile:Configuration%\"" ]
   },
   "runtimes": {
     "win7-x64": {},
@@ -119,6 +118,6 @@
     "fedora.23-x64": {},
     "opensuse.13.2-x64": {},
     "linuxmint.17-x64": {},
-    "centos.7-x64":  {} 
+    "centos.7-x64": {}
   }
 }
