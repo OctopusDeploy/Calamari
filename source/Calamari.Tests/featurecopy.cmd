@@ -9,14 +9,14 @@ echo "------ Copying Extenstions: Start ------"
 
 
 SET extensions_directory=%compile_runtimeoutputdir%\Calamari.Extensions\Features
-rmdir /Q /S %extensions_directory%
+echo Copying Extensions To %extensions_directory%
 
+rmdir /Q /S %extensions_directory%
 for %%x in (
         Calamari.Extensibility.RunScript
 		Calamari.Extensibility.IIS
        ) do (
-	   echo %%x
-			echo %project_directory%\..\%%x\bin\%compile_Configuration%
+	   echo %project_directory%\..\%%x\bin\%compile_Configuration%
          xcopy %project_directory%\..\%%x\bin\%compile_Configuration% %extensions_directory%\%%x\ /E
        )
 
