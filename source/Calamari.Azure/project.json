@@ -26,7 +26,7 @@
     "Microsoft.WindowsAzure.Management.Storage": "3.2.2",
     "Microsoft.WindowsAzure.Management.WebSites": "4.0.0",
     "Newtonsoft.Json": "7.0.1",
-    "Octopus.Dependencies.AzureBinaries": "2.6.0",
+    "Octopus.Dependencies.AzureBinaries": "2.6.1",
     "Octopus.Dependencies.AzureCmdlets": "1.6.0",
     "Octostache": "2.0.7",
     "Sprache": "2.1.0",
