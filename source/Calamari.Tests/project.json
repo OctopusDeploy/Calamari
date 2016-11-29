@@ -84,6 +84,7 @@
         "Fixtures/Deployment/Packages/Acme.Service/**",
         "Fixtures/Deployment/Packages/Acme.Web/**",
         "Fixtures/Deployment/Packages/Acme.Web.Tests/**",
+        "Fixtures/Deployment/Packages/Acme.Package/**",
         "Fixtures/Deployment/Packages/Octopus.Sample.AzureCloudService/**",
         "Fixtures/FSharp/Scripts/**",
         "Fixtures/Integration/Packages/Samples/**",
