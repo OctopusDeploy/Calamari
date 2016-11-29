@@ -48,8 +48,7 @@ public static class Octopus
     {
         var envVars = SafelyGetEnvironmentVars()
             .Concat(SafelyGetPathVars())
-            .Concat(SafelyGetProcessVars())
-            .Concat(SafelyGetComputerInfoVars());
+            .Concat(SafelyGetProcessVars());
         return envVars.ToArray();
     }
 
