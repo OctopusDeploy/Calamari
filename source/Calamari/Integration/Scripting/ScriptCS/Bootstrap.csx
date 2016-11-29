@@ -8,6 +8,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Diagnostics;
 using System.Security.Principal;
+using System.Linq;
 
 public static class Octopus
 {
@@ -45,10 +46,10 @@ public static class Octopus
 
     static string[] SafelyGetEnvironmentInformation()
     {
-        var envVars = new List<string>();
-        SafelyAddEnvironmentVarsToList(ref envVars);
-        SafelyAddPathVarsToList(ref envVars);
-        SafelyAddProcessVarsToList(ref envVars);
+        var envVars = SafelyGetEnvironmentVars()
+            .Concat(SafelyGetPathVars())
+            .Concat(SafelyGetProcessVars())
+            .Concat(SafelyGetComputerInfoVars());
         return envVars.ToArray();
     }
 
