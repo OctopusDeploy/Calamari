@@ -33,19 +33,30 @@ if(!$vmname){
 }
 
 
+# Stop VM and Wait for it
 Write-Host "Stopping VM $vmname"
-$vm = Get-VM -Name $vmname
-Stop-VM $vm
+Stop-VM -Name $vmname
 
 $attempts = 0
-while ($vm.State -ne "Off"){
-   sleep -s 5
-   Write-Host "Waiting for VM $vmname to stop"
+$timeout = New-TimeSpan -minutes 5
+$sw = [system.diagnostics.stopwatch]::startNew()
+
+$vm = Get-VM -Name $vmname
+while ($vm.State -ne "Off" -and $sw.Elapsed -lt $timeout){
+   if($attempts++ -gt 0){
+      Write-Host "Waiting for VM $vmname to stop, current state" $vm.State
+      sleep -s 5
+   }
    $vm = Get-VM -Name $vmname
 }
 
-$existingDrive = @(GET-VMHardDiskDrive -VM $vm) | Select -First 1
+if($vm.State -ne "Off"){
+    throw "Unable to stop VM $vmname after 5 minutes"
+}
 
+
+# Swap the drive
+$existingDrive = @(GET-VMHardDiskDrive -VM $vm) | Select -First 1
 if($existingDrive){
 
     write-host "Removing existing drive"
@@ -64,10 +75,48 @@ if($existingDrive){
     Add-VMHardDiskDrive -VMName $vmname -Path $vhdpath
 }
 
-write-host "Starting VM"
 
-#restart the vm
-if($vm){
-    Start-VM $vm
+# Start VM and Wait for it
+Write-Host "Starting VM $vmname"
+Start-VM -Name $vmname
+
+$attempts = 0
+$timeout = New-TimeSpan -minutes 5
+$sw = [system.diagnostics.stopwatch]::startNew()
+
+$vm = Get-VM -Name $vmname
+while ($vm.State -ne "Running" -and $sw.Elapsed -lt $timeout){
+   if($attempts++ -gt 0){
+      Write-Host "Waiting for VM $vmname to start, current state" $vm.State
+      sleep -s 5
+   }
+   $vm = Get-VM -Name $vmname
 }
 
+if($vm.State -ne "Running"){
+    throw "Unable to start VM $vmname after 5 minutes"
+}
+
+Write-Host "VM $vmname is Running"
+
+# Wait for heartbeat
+Write-Host "Waiting for heartbeat on $vmname"
+
+$attempts = 0
+$timeout = New-TimeSpan -minutes 5
+$sw = [system.diagnostics.stopwatch]::startNew()
+
+$hb = (Get-VMIntegrationService -vmName $vmname | ?{$_.name -eq "Heartbeat"}).PrimaryStatusDescription
+while ($hb -ne "OK" -and $sw.Elapsed -lt $timeout){
+   if($attempts++ -gt 0){
+      Write-Host "Waiting for heartbeat on $vmname"
+      sleep -s 5
+   }
+   $hb = (Get-VMIntegrationService -vmName $vmname | ?{$_.name -eq "Heartbeat"}).PrimaryStatusDescription
+}
+
+if($hb -ne "OK"){
+    throw "VM $vmname is running but heartbeat has not returned OK, it may have failed to boot or still be booting"
+}
+
+Write-Host "VM $vmname heartbeat is OK"
