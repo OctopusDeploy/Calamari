@@ -89,8 +89,6 @@ namespace Calamari.Util.Environments /* This is in the 'Environments' namespace 
         {
             try
             {
-                // TODO: markse - review
-                //return GetComputerInfoVars();
                 return Enumerable.Empty<string>();
             }
             catch
@@ -99,14 +97,15 @@ namespace Calamari.Util.Environments /* This is in the 'Environments' namespace 
                 return Enumerable.Empty<string>();
             }
         }
-//        static IEnumerable<string> GetComputerInfoVars()
-//        {
-//#if CAN_GET_PHYSICAL_MEMORY
-//            var computerInfo = new ComputerInfo();
-//            yield return $"TotalPhysicalMemory: {computerInfo.TotalPhysicalMemory.ToFileSizeString()}";
-//            yield return $"AvailablePhysicalMemory: {computerInfo.AvailablePhysicalMemory.ToFileSizeString()}";
-
-//#endif
-//        }
+        static IEnumerable<string> GetComputerInfoVars()
+        {
+#if CAN_GET_PHYSICAL_MEMORY
+            var computerInfo = new ComputerInfo();
+            yield return $"TotalPhysicalMemory: {computerInfo.TotalPhysicalMemory.ToFileSizeString()}";
+            yield return $"AvailablePhysicalMemory: {computerInfo.AvailablePhysicalMemory.ToFileSizeString()}";
+#else
+            yield break;
+#endif
+        }
     }
 }
