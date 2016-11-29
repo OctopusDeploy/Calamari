@@ -2,6 +2,6 @@
 
 Foreach($vhd in $vhds)
 {
-	Dismount-VHD $vhd -ErrorAction Continue
+	Dismount-DiskImage -ImagePath $vhd -ErrorAction Continue
 	Write-Host  "VHD at $vhdPath dismounted"
 }

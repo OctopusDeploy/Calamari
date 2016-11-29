@@ -17,7 +17,7 @@ If($vhds.Length -gt 1)
 
 # Dismount
 $vhdPath = $vhds[0].FullName
-Dismount-VHD $vhdPath
+Dismount-DiskImage -ImagePath $vhdPath
 Write-Host "VHD at $vhdPath dismounted"
 
 $deployVhdToVm = !(Is-DeploymentTypeDisabled $OctopusParameters["Octopus.Action.Vhd.DeployVhdToVm"])

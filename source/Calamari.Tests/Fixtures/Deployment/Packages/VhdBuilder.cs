@@ -1,9 +1,12 @@
+using System;
+using System.Diagnostics;
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages
@@ -16,18 +19,28 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
 
             var output = GetTemporaryDirectory(); //create a new temp dir because later we'll zip it up and we want it to be empty
-            var path = Path.Combine(output, name + ".vhdx");
-            if (File.Exists(path))
-                File.Delete(path);
+            var vhdPath = Path.Combine(output, name + ".vhdx");
+            if (File.Exists(vhdPath))
+                File.Delete(vhdPath);
+
+            using (var scriptFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                // create an uninistialized VHD with diskpart
+                // can't use New-VHD cmdlet as it requires the Hyper-V service which
+                // won't run in EC2
+                File.WriteAllText(scriptFile.FilePath, CreateVhdDiskPartScrtipt(vhdPath));
+                var exitCode = SilentProcessRunner.ExecuteCommand("diskpart", $"/s {scriptFile.FilePath}", output, Console.WriteLine, Console.Error.WriteLine);
+                exitCode.Should().Be(0);
+            }
 
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
-                File.WriteAllText(scriptFile.FilePath, CreateScript(path, packageDirectory));
+                File.WriteAllText(scriptFile.FilePath, InitializeAndCopyFilesScript(vhdPath, packageDirectory));
                 var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, new CalamariVariableDictionary());
                 result.AssertSuccess();
             }
 
-            return path;
+            return vhdPath;
         }
 
         private static string GetTemporaryDirectory()
@@ -45,23 +58,28 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             return new CalamariResult(result.ExitCode, capture);
         }
 
-        private static string CreateScript(string vhdpath, string includefolder)
+        private static string CreateVhdDiskPartScrtipt(string path)
+        {
+            return $"create vdisk file={path} type=fixed maximum=10";
+        }
+
+        private static string InitializeAndCopyFilesScript(string vhdpath, string includefolder)
         {
             return $@"
-                $drive = (New-VHD -path {vhdpath} -SizeBytes 10MB -Fixed | `
-                    Mount-VHD -Passthru |  `
-                    get-disk -number {{$_.DiskNumber}} | `
-                    Initialize-Disk -PartitionStyle MBR -PassThru | `
-                    New-Partition -UseMaximumSize -AssignDriveLetter:$False -MbrType IFS | `
-                    Format-Volume -Confirm:$false -FileSystem NTFS -force | `
-                    get-partition | `
-                    Add-PartitionAccessPath -AssignDriveLetter -PassThru | `
-                    get-volume).DriveLetter 
+                Mount-DiskImage -ImagePath {vhdpath} -NoDriveLetter
+
+                $diskImage = Get-DiskImage -ImagePath {vhdpath}
+                Initialize-Disk -Number $diskImage.Number -PartitionStyle MBR
+                $partition = New-Partition -DiskNumber $diskImage.Number -UseMaximumSize -AssignDriveLetter:$false -MbrType IFS
+                Format-Volume -Partition $partition -Confirm:$false -FileSystem NTFS -force
+                Add-PartitionAccessPath -InputObject $partition -AssignDriveLetter
+                $volume = Get-Volume -Partition $partition
+                $drive = $volume.DriveLetter
 
                 $drive = $drive + "":\""
                 Write-Host ""Copying from {includefolder} to $drive""
                 Copy-Item -Path {includefolder}\InVhd\* -Destination $drive -Recurse
-                Dismount-VHD {vhdpath};
+                Dismount-DiskImage -ImagePath {vhdpath};
 
                 $zipDestination = Split-Path {vhdpath}
                 Copy-Item -Path {includefolder}\InZip\* -Destination $zipDestination -Recurse";
