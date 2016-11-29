@@ -21,7 +21,7 @@
         "System.Data": "*",
         "System.Xml": "*",
         "WindowsBase": "*",
-        "Microsoft.VisualBasic": "10.0.0.0"
+        "Microsoft.VisualBasic": "*"
       },
       "dependencies": {
         "GitVersionTask": "3.3.0",
@@ -52,7 +52,7 @@
           "USE_NUGET_V2_LIBS",
           "IIS_SUPPORT",
           "USE_OCTODIFF_EXE",
-          "VISUALBASIC_SUPPORT"
+          "CAN_GET_PHYSICAL_MEMORY"
         ]
       }
     },

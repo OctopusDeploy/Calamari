@@ -52,46 +52,62 @@ public static class Octopus
         return envVars.ToArray();
     }
 
-    static void SafelyAddEnvironmentVarsToList(ref List<string> envVars)
+    static IEnumerable<string> SafelyGetEnvironmentVars()
     {
         try
         {
-            envVars.Add($"OperatingSystem: {Environment.OSVersion.ToString()}");
-            envVars.Add($"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
-            envVars.Add($"Is64BitProcess: {Environment.Is64BitProcess.ToString()}");
-            envVars.Add($"CurrentUser: {WindowsIdentity.GetCurrent().Name}");
-            envVars.Add($"MachineName: {Environment.MachineName}");
-            envVars.Add($"ProcessorCount: {Environment.ProcessorCount.ToString()}");
+            return GetEnvironmentVars();
         }
         catch
         {
-            // silently fail.
+            // Fail silently
+            return Enumerable.Empty<string>();
         }
     }
-
-    static void SafelyAddPathVarsToList(ref List<string> envVars)
+    static IEnumerable<string> GetEnvironmentVars()
     {
-        try
-        {
-            envVars.Add($"CurrentDirectory: {Directory.GetCurrentDirectory()}");
-            envVars.Add($"TempDirectory: {Path.GetTempPath()}");
-        }
-        catch
-        {
-            // silently fail.
-        }
+        yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
+        yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
+        yield return $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}";
+        yield return $"Is64BitProcess: {Environment.Is64BitProcess.ToString()}";
+        yield return $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}";
+        yield return $"MachineName: {Environment.MachineName}";
+        yield return $"ProcessorCount: {Environment.ProcessorCount.ToString()}";
     }
 
-    static void SafelyAddProcessVarsToList(ref List<string> envVars)
+    static IEnumerable<string> SafelyGetPathVars()
     {
         try
         {
-            envVars.Add($"HostProcessName: {Process.GetCurrentProcess().ProcessName}");
+            return GetPathVars();
         }
         catch
         {
-            // silently fail.
+            // Fail silently
+            return Enumerable.Empty<string>();
         }
+    }
+    static IEnumerable<string> GetPathVars()
+    {
+        yield return $"CurrentDirectory: {Directory.GetCurrentDirectory()}";
+        yield return $"TempDirectory: {Path.GetTempPath()}";
+    }
+
+    static IEnumerable<string> SafelyGetProcessVars()
+    {
+        try
+        {
+            return GetProcessVars();
+        }
+        catch
+        {
+            // Fail silently
+            return Enumerable.Empty<string>();
+        }
+    }
+    static IEnumerable<string> GetProcessVars()
+    {
+        yield return $"HostProcessName: {Process.GetCurrentProcess().ProcessName}";
     }
 
     #endregion

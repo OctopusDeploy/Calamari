@@ -4,85 +4,109 @@ using System.Diagnostics;
 using System.IO;
 using Calamari.Integration.FileSystem;
 using System.Runtime.InteropServices; // Needed for dotnetcore
-#if VISUALBASIC_SUPPORT
+using System.Linq;
+#if CAN_GET_PHYSICAL_MEMORY
 using Microsoft.VisualBasic.Devices;
 #endif
 
-namespace Calamari.Util.Environments /* This is in the 'Environments' namespace to avoid collisions with CrossPlatformExtensions - long story */
+namespace Calamari.Util.Environments /* This is in the 'Environments' namespace to avoid collisions with CrossPlatformExtensions */
 {
     public static class EnvironmentHelper
     {
         public static string[] SafelyGetEnvironmentInformation()
         {
-            var envVars = new List<string>();
-            SafelyAddEnvironmentVarsToList(ref envVars);
-            SafelyAddPathVarsToList(ref envVars);
-            SafelyAddProcessVarsToList(ref envVars);
-            SafelyAddComputerInfoVarsToList(ref envVars);
+            var envVars = SafelyGetEnvironmentVars()
+                .Concat(SafelyGetPathVars())
+                .Concat(SafelyGetProcessVars())
+                .Concat(SafelyGetComputerInfoVars());
             return envVars.ToArray();
         }
 
-        static void SafelyAddEnvironmentVarsToList(ref List<string> envVars)
+        static IEnumerable<string> SafelyGetEnvironmentVars()
         {
             try
             {
+                return GetEnvironmentVars();
+            }
+            catch
+            {
+                // Fail silently
+                return Enumerable.Empty<string>();
+            }
+        }
+        static IEnumerable<string> GetEnvironmentVars()
+        {
 #if NET40
-                envVars.Add($"OperatingSystem: {Environment.OSVersion.ToString()}");
-                envVars.Add($"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
-                envVars.Add($"Is64BitProcess: {Environment.Is64BitProcess.ToString()}");
+            yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
+            yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
+            yield return $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}";
+            yield return $"Is64BitProcess: {Environment.Is64BitProcess.ToString()}";
 #else
-                envVars.Add($"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSDescription.ToString()}");
-                envVars.Add($"OsBitVersion: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()}");
+            yield return $"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSDescription.ToString()}";
+            yield return $"OsBitVersion: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()}";
 #endif
-                envVars.Add($"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
-                envVars.Add($"MachineName: {Environment.MachineName}");
-                envVars.Add($"ProcessorCount: {Environment.ProcessorCount.ToString()}");
-            }
-            catch
-            {
-                // silently fail.
-            }
+            yield return $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}";
+            yield return $"MachineName: {Environment.MachineName}";
+            yield return $"ProcessorCount: {Environment.ProcessorCount.ToString()}";
         }
 
-        static void SafelyAddPathVarsToList(ref List<string> envVars)
+        static IEnumerable<string> SafelyGetPathVars()
         {
             try
             {
-                envVars.Add($"CurrentDirectory: {Directory.GetCurrentDirectory()}");
-                envVars.Add($"TempDirectory: {Path.GetTempPath()}");
+                return GetPathVars();
             }
             catch
             {
-                // silently fail.
+                // Fail silently
+                return Enumerable.Empty<string>();
             }
         }
+        static IEnumerable<string> GetPathVars()
+        {
+            yield return $"CurrentDirectory: {Directory.GetCurrentDirectory()}";
+            yield return $"TempDirectory: {Path.GetTempPath()}";
+        }
 
-        static void SafelyAddProcessVarsToList(ref List<string> envVars)
+        static IEnumerable<string> SafelyGetProcessVars()
         {
             try
             {
-                envVars.Add($"HostProcessName: {Process.GetCurrentProcess().ProcessName}");
+                return GetProcessVars();
             }
             catch
             {
-                // silently fail.
+                // Fail silently
+                return Enumerable.Empty<string>();
             }
+        }
+        static IEnumerable<string> GetProcessVars()
+        {
+            yield return $"HostProcessName: {Process.GetCurrentProcess().ProcessName}";
         }
 
-        static void SafelyAddComputerInfoVarsToList(ref List<string> envVars)
+        static IEnumerable<string> SafelyGetComputerInfoVars()
         {
-#if VISUALBASIC_SUPPORT
             try
             {
-                var computerInfo = new ComputerInfo();
-                envVars.Add($"TotalPhysicalMemory: {computerInfo.TotalPhysicalMemory.ToFileSizeString()}");
-                envVars.Add($"AvailablePhysicalMemory: {computerInfo.AvailablePhysicalMemory.ToFileSizeString()}");
+                // TODO: markse - review
+                //return GetComputerInfoVars();
+                return Enumerable.Empty<string>();
             }
             catch
             {
-                // silently fail.
+                // Fail silently
+                return Enumerable.Empty<string>();
             }
-#endif
         }
+//        static IEnumerable<string> GetComputerInfoVars()
+//        {
+//#if CAN_GET_PHYSICAL_MEMORY
+//            var computerInfo = new ComputerInfo();
+//            yield return $"TotalPhysicalMemory: {computerInfo.TotalPhysicalMemory.ToFileSizeString()}";
+//            yield return $"AvailablePhysicalMemory: {computerInfo.AvailablePhysicalMemory.ToFileSizeString()}";
+
+//#endif
+//        }
     }
 }
