@@ -89,25 +89,25 @@ let createArtifact path fileName =
 
 let private safelyLogEnvironmentVars () =
     try
-        Console.WriteLine("  OperatingSystem: " + Environment.OSVersion.ToString())
-        Console.WriteLine("  OsBitVersion: " + if Environment.Is64BitOperatingSystem then "x64" else "x86")
-        Console.WriteLine("  Is64BitProcess: " + Environment.Is64BitProcess.ToString())
-        Console.WriteLine("  CurrentUser: " + WindowsIdentity.GetCurrent().Name)
-        Console.WriteLine("  MachineName: " + Environment.MachineName)
-        Console.WriteLine("  ProcessorCount: " + Environment.ProcessorCount.ToString())
+        printfn "  OperatingSystem: %s" (Environment.OSVersion.ToString())
+        printfn "  OsBitVersion: %s" (if Environment.Is64BitOperatingSystem then "x64" else "x86")
+        printfn "  Is64BitProcess: %s" (Environment.Is64BitProcess.ToString())
+        printfn "  CurrentUser: %s" (WindowsIdentity.GetCurrent().Name)
+        printfn "  MachineName: %s" (Environment.MachineName)
+        printfn "  ProcessorCount: %s" (Environment.ProcessorCount.ToString())
     with
     | _ -> ()
 
 let private safelyLogPathVars () =
     try
-        Console.WriteLine("  CurrentDirectory: " + Directory.GetCurrentDirectory())
-        Console.WriteLine("  TempDirectory: " + Path.GetTempPath())
+        printfn "  CurrentDirectory: %s" (Directory.GetCurrentDirectory())
+        printfn "  TempDirectory: %s" (Path.GetTempPath())
     with
     | _ -> ()
 
 let private safelyLogProcessVars () =
     try
-        Console.WriteLine("  HostProcessName: " + Process.GetCurrentProcess().ProcessName)
+        printfn "  HostProcessName: %s" (Process.GetCurrentProcess().ProcessName)
     with
     | _ -> ()
 
@@ -117,13 +117,13 @@ let private logEnvironmentInformation () =
         if suppressEnvironmentLogging = "True" then
             () // bail out
         else
-            Console.WriteLine("##octopus[stdout-verbose]")
-            Console.WriteLine("FSharp Environment Information:")
+            printfn "##octopus[stdout-verbose]"
+            printfn "FSharp Environment Information:"
             safelyLogEnvironmentVars()
             safelyLogPathVars()
             safelyLogProcessVars()
-            Console.WriteLine("##octopus[stdout-default]")
+            printfn "##octopus[stdout-default]"
     with
-    | _ -> Console.WriteLine("##octopus[stdout-default]")
+    | _ -> printfn "##octopus[stdout-default]"
 
 logEnvironmentInformation()
