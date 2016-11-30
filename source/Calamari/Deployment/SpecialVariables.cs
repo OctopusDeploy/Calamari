@@ -114,6 +114,13 @@
             }
         }
 
+        public static class Vhd
+        {
+            public static readonly string ApplicationPath = "Octopus.Action.Vhd.ApplicationPath";
+            public static readonly string VmName = "Octopus.Action.Vhd.VmName";
+            public static readonly string DeployVhdToVm = "Octopus.Action.Vhd.DeployVhdToVm";
+        }
+
         public static class Environment
         {
             public static readonly string Id = "Octopus.Environment.Id";
@@ -129,6 +136,7 @@
         public static class Features
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";
+            public const string Vhd = "Octopus.Features.Vhd";
         }
 
         public static class Action
@@ -136,6 +144,7 @@
             public const string Name = "Octopus.Action.Name";
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
+            public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
 
             public static class Azure
             {

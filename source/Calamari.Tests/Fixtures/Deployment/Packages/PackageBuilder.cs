@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
@@ -92,6 +93,20 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
             Assert.That(File.Exists(indexFilePath));
             return indexFilePath;
+        }
+
+        public static string BuildSimpleZip(string name, string version, string directory)
+        {
+            Assert.That(Directory.Exists(directory), string.Format("Package {0} is not available (expected at {1}).", name, directory));
+
+            var output = Path.GetTempPath();
+            var path = Path.Combine(output, name + "." + version + ".zip");
+            if (File.Exists(path))
+                File.Delete(path);
+
+            ZipFile.CreateFromDirectory(directory, path);
+
+            return path;
         }
     }
 }

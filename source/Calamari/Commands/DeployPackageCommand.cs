@@ -68,7 +68,7 @@ namespace Calamari.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-
+            
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
@@ -96,7 +96,8 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner)
+                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner),
+                new FeatureScriptRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner, embeddedResources)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
