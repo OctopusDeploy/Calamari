@@ -38,7 +38,6 @@ namespace Calamari.Util.Environments /* This is in the 'Environments' namespace 
         {
 #if NET40
             yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
-            yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
             yield return $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}";
             yield return $"Is64BitProcess: {Environment.Is64BitProcess.ToString()}";
 #else

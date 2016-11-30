@@ -67,7 +67,6 @@ public static class Octopus
     static IEnumerable<string> GetEnvironmentVars()
     {
         yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
-        yield return $"OperatingSystem: {Environment.OSVersion.ToString()}";
         yield return $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}";
         yield return $"Is64BitProcess: {Environment.Is64BitProcess.ToString()}";
         yield return $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}";
