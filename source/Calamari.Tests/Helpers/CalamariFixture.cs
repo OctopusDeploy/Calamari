@@ -7,6 +7,7 @@ using Octostache;
 using System.Reflection;
 using Calamari.Extensibility;
 using Calamari.Features;
+using Calamari.Integration.FileSystem;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
@@ -22,7 +23,10 @@ namespace Calamari.Tests.Helpers
         [SetUp]
         public void SetUpExtensionsPath()
         {
-            Environment.SetEnvironmentVariable("CalamariExtensionsPath", Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Calamari.Extensions"));
+            var testExtensionsDirectoryPath = Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Fixtures", "Extensions");
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            CalamariPhysicalFileSystem.GetPhysicalFileSystem().CopyDirectory(testExtensionsDirectoryPath, Path.Combine(randomDirectory, "Extensions"));
+            Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
         }
 
         protected CommandLine Calamari()

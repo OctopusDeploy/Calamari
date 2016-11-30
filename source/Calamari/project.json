@@ -63,6 +63,7 @@
         "Newtonsoft.Json": "9.0.1",
         "NuGet.Commands": "3.5.0-rc1-final",
         "NuGet.Protocol.Core.v3": "3.5.0-rc1-final",
+        "NuGet.Frameworks": "3.5.0-rc1-final",
         "Octopus.Web.XmlTransform": "1.0.0-ci0018",
         "SharpCompress": "0.12.4",
         "Sprache": "2.1.0",

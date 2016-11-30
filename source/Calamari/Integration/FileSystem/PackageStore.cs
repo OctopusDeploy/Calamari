@@ -13,7 +13,15 @@ using NuGet.Versioning;
 
 namespace Calamari.Integration.FileSystem
 {
-    public class PackageStore
+    public interface IPackageStore
+    {
+        StoredPackage GetPackage(string packageFullPath);
+        StoredPackage GetPackage(ExtendedPackageMetadata metadata);
+        string GetPackagesDirectory();
+        IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version = null, int take = 5);
+    }
+
+    public class PackageStore : IPackageStore
     {
         private readonly IPackageExtractor packageExtractorFactory;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -85,13 +93,13 @@ namespace Calamari.Integration.FileSystem
             return fileSystem.EnumerateFilesRecursively(rootDirectory, patterns);
         }
 
-        public IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version, int take = 5)
+        public IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version = null, int take = 5)
         {
             fileSystem.EnsureDirectoryExists(rootDirectory);
             var zipPackages =
                 from filePath in PackageFiles(packageId +"*")
                 let zip = PackageMetadata(filePath)
-                where zip != null && zip.Id == packageId && new NuGetVersion(zip.Version) <= version
+                where zip != null && zip.Id == packageId && (version == null || new NuGetVersion(zip.Version) <= version)
                 orderby zip.Version descending
                 select new {zip, filePath};
 

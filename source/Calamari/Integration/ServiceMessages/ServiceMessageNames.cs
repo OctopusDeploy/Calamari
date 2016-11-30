@@ -9,6 +9,13 @@
             public const string ValueAttribute = "value";            
         }
 
+        public static class CalamariFeatureRequired
+        {
+            public const string Name = "calamari-feature-required";
+            public const string Feature = "feature";
+            public const string Target = "target";
+        }
+
         public static class CalamariFoundPackage
         {
             public const string Name = "calamari-found-package";

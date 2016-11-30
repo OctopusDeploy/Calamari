@@ -8,7 +8,7 @@ SET compile_Configuration=%3
 echo "------ Copying Extenstions: Start ------"
 
 
-SET extensions_directory=%compile_runtimeoutputdir%\Calamari.Extensions\Features
+SET extensions_directory=%compile_runtimeoutputdir%\Fixtures\Extensions
 echo Copying Extensions To %extensions_directory%
 
 rmdir /Q /S %extensions_directory%

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using Calamari.Deployment.Journal;
 using Calamari.Deployment.Retention;
 using Calamari.Extensibility.FileSystem;
@@ -8,6 +9,7 @@ using Calamari.Integration.Time;
 using NSubstitute;
 using NUnit.Framework;
 using FailureOptions = Calamari.Extensibility.FileSystem.FailureOptions;
+using System.Reflection;
 
 namespace Calamari.Tests.Fixtures.Retention
 {
@@ -93,6 +95,12 @@ namespace Calamari.Tests.Fixtures.Retention
         [Test]
         public void ShouldNotDeleteDirectoryWhereRetainedDeployedToSame()
         {
+
+#if NET40
+            var tf = (TargetFrameworkAttribute)typeof(Program).Assembly.GetCustomAttributes(typeof(TargetFrameworkAttribute), true).First();
+#else
+            var tf = typeof(Program).GetTypeInfo().Assembly.GetCustomAttribute<TargetFrameworkAttribute>();
+#endif
             var journalEntries = new List<JournalEntry>
             {
                 fourDayOldDeployment,

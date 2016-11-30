@@ -198,6 +198,11 @@ namespace Calamari.Integration.FileSystem
                 : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.AllDirectories).Select(fi => fi.FullName));
         }
 
+        public IEnumerable<string> EnumerateFileSystemEntries(string parentDirectoryPath)
+        {
+            return Directory.EnumerateFileSystemEntries(parentDirectoryPath);
+        }
+
         public IEnumerable<string> EnumerateDirectories(string parentDirectoryPath)
         {
             return Directory.EnumerateDirectories(parentDirectoryPath);

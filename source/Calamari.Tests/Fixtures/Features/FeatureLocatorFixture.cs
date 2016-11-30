@@ -2,27 +2,39 @@
 using System.IO;
 using Calamari.Extensibility;
 using Calamari.Extensibility.Features;
+using Calamari.Extensibility.FileSystem;
 using Calamari.Features;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-
 
 namespace Calamari.Tests.Fixtures.Features
 {
     [TestFixture]
     public class FeatureLocatorFixture
     {
-        private FeatureLocator locator;
+        private static readonly string TestExtensionsDirectoryPath = Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Fixtures", "Extensions");
+        private static readonly string RunScriptAssembly = "Calamari.Extensibility.RunScript";
+        private static readonly string RunScriptFeatureName = $"Calamari.Extensibility.RunScript.RunScriptInstallFeature, {RunScriptAssembly}";
+
+        private readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         [SetUp]
         public void SetUp()
         {
-            locator = new FeatureLocator(Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Calamari.Extensions", "Features"));
+            Environment.SetEnvironmentVariable("TentacleHome", Path.GetTempPath());
+        }
+
+        FeatureLocator BuildLocator(string customDirectory = null)
+        {
+            return new FeatureLocator(new GenericPackageExtractor(), new PackageStore(new GenericPackageExtractor()), fileSystem, customDirectory);
         }
 
         [Test]
         public void WarningLoggedIfAttributeMissing()
         {
+            var locator = BuildLocator();
             var typename = typeof(MissingAttribute).AssemblyQualifiedName;
             Assert.Throws<InvalidOperationException>(() => locator.Locate(typename),
                 $"Feature `{typename}` does not have a FeatureAttribute attribute so is to be used in this operation.");
@@ -31,26 +43,81 @@ namespace Calamari.Tests.Fixtures.Features
         [Test]
         public void ConventionReturnsWhenNameSearched()
         {
+            var locator = BuildLocator();
             var t = locator.Locate(typeof(IncludesAttribute).AssemblyQualifiedName);
             Assert.AreEqual(typeof(IncludesAttribute), t.Feature);
         }
 
         [Test]
-        public void FindsNameFromClassNotInProcess()
+        public void FindsNameFromBuiltInDirectory()
         {
-            var t = locator.Locate("Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript");
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, randomDirectory);
+
+            var locator = BuildLocator();
+            locator.BuiltInExtensionsPath = randomDirectory;
+
+            var t = locator.Locate(RunScriptFeatureName);
+            Assert.IsNotNull(t.Feature); 
+        }
+
+        [Test]
+        public void LocateReturnsNullWhenFeatureNotFoundInValidAssembly()
+        {
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, randomDirectory);
+
+            var locator = BuildLocator(randomDirectory);
+
+            var t = locator.Locate($"Calamari.Extensibility.RunScript.FakeFeature, {RunScriptAssembly}");
+            Assert.IsNull(t);
+        }
+
+        [Test]
+        public void LocateReturnsNullWhenAssemblyNotFound()
+        {
+            var locator = BuildLocator();
+            var type = locator.Locate("MyClass, MyAssembly");
+            Assert.IsNull(type);
+        }
+
+        [Test]
+        public void FindsNameFromCustomDirectory()
+        {
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, randomDirectory);
+
+            var locator = BuildLocator(randomDirectory);
+
+            var t = locator.Locate(RunScriptFeatureName);
             Assert.IsNotNull(t.Feature);
         }
 
         [Test]
-        public void LocateThrowsWhenFeatureNotFound()
+        public void FindsNameFromTentacleHome()
         {
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, Path.Combine(randomDirectory, "Extensions"));
+            Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
+
+            var locator = BuildLocator();
+
+            var t = locator.Locate(RunScriptFeatureName);
+            Assert.IsNotNull(t.Feature);
+        }
+
+        [Test]
+        public void LocateThrowsWhenFeatureTypeNotParseable()
+        {
+            var locator = BuildLocator();
             Assert.Throws<InvalidOperationException>(() => locator.Locate("FakeName"), "Unable to determine feature from name `FakeName`");
         }
+        
 
         [Test]
         public void LocateThrowsWhenFeatureHasDodgyModule()
         {
+            var locator = BuildLocator();
             Assert.Throws<InvalidOperationException>(() => locator.Locate(typeof(FeatureWithDodgyModule).AssemblyQualifiedName), 
                 $"Module `{typeof(ModuleWithNoDefaultConstructor).FullName}` does not have a default parameterless constructor.");
         }

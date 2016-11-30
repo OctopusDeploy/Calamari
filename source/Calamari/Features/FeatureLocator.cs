@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Calamari.Extensibility.Features;
+using Calamari.Extensibility.FileSystem;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 #if !NET40
@@ -15,28 +19,50 @@ namespace Calamari.Features
 {
     public class FeatureLocator : IFeatureLocator
     {
-        
-        private readonly string basePath;
+        private readonly IGenericPackageExtractor extractor;
+        private readonly IPackageStore packageStore;
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly string customExtensionsPath;
 
-        public FeatureLocator(string path = null)
+        public FeatureLocator(IGenericPackageExtractor extractor, IPackageStore packageStore, ICalamariFileSystem fileSystem, string path = null)
         {
-            if (string.IsNullOrEmpty(path))
+            this.extractor = extractor;
+            this.packageStore = packageStore;
+            this.fileSystem = fileSystem;
+
+            customExtensionsPath = ExtensionsDirectory(path);
+        }
+
+        internal string BuiltInExtensionsPath = Path.Combine(Path.GetDirectoryName(typeof(FeatureLocator).GetTypeInfo().Assembly.FullLocalPath()), "Extensions");
+
+        string ExtensionsDirectory(string path = null)
+        {
+            if (!string.IsNullOrEmpty(path))
+                return path;
+
+            var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
+            if (tentacleHome != null)
             {
-                basePath = Path.Combine(Path.GetDirectoryName(this.GetType().GetTypeInfo().Assembly.FullLocalPath()), "Extensions");
+                return Path.Combine(tentacleHome, "Extensions");
             }
-            basePath = path;
+            else
+            {
+                Log.Warn("Environment variable 'TentacleHome' has not been set.");
+                return null;
+            }
         }
 
 
-        public Type LoadFromDirectory(string assemblyName, string className)
+        public bool TryLoadFromDirectory(string path, RequestedClass requestedClass, out Type type)
         {
-            if (assemblyName.Contains(Path.DirectorySeparatorChar))
+            type = null;
+            if (requestedClass.AssemblyName.Contains(Path.DirectorySeparatorChar))
                 throw new InvalidOperationException("This provided assembly name contains the path seperator.");
 
-            var dir = Path.Combine(basePath, assemblyName);
+            var dir = Path.Combine(path, requestedClass.AssemblyName);
             if (!Directory.Exists(dir))
             {
-                throw new Exception($"The assembly `{assemblyName}` appears to be missing in the extensions directory `{dir}`");
+                return false;
             }
 
             foreach (var compatableFramework in CompatableFrameworks())
@@ -46,25 +72,25 @@ namespace Calamari.Features
                 {
                     try
                     {
-                        var dllName = Path.Combine(frameworkFolder, $"{assemblyName}.dll");
+                        var dllName = Path.Combine(frameworkFolder, $"{requestedClass.AssemblyName}.dll");
                         var assembly = CrossPlatform.LoadAssemblyFromDll(dllName);
-                        return assembly.GetType(className);
+                        type = assembly.GetType(requestedClass.ClassName, true);
+                        return true;
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        Log.Error(ex.ToString());
                     }
                 }
             }
 
-            throw new Exception($"Unable to find the a framework folder for assembly `{assemblyName}` that is compatable with currently running framework. Valid frameworks are: {string.Join(", ", CompatableFrameworks())}");
+            Log.Warn($"Unable to find the a framework folder for assembly `{requestedClass.AssemblyName}` that is compatable with currently running framework. Valid frameworks are: {string.Join(", ", CompatableFrameworks())}");
+            return false;
         }
-
-
 
         IEnumerable<string> CompatableFrameworks()
         {
-#if !NET40
+#if !NET40            
             yield return "netstandard1.6";
 #else
             yield return "net451";
@@ -72,36 +98,71 @@ namespace Calamari.Features
 #endif
         }
 
-        
+
+        FeatureExtension ToFeatureExtension(Type type)
+        {
+            return new FeatureExtension()
+            {
+                Feature = type,
+                Details = GetFeatureAttribute(type)
+            };
+        }
 
         public FeatureExtension Locate(string name)
         {
             var type = Type.GetType(name, false);
             if (type != null && ValidateType(type))
             {
-                return new FeatureExtension()
-                {
-                    Feature = type,
-                    Details = GetFeatureAttribute(type)
-                };
+                return ToFeatureExtension(type);
             }
 
             var requestedType = RequestedClass.ParseFromAssemblyQualifiedName(name);
-            if(requestedType == null || string.IsNullOrEmpty(requestedType.AssemblyName))
+            if(string.IsNullOrEmpty(requestedType?.AssemblyName))
                 throw new InvalidOperationException($"Unable to determine feature from name `{name}`");
 
-            type = LoadFromDirectory(requestedType.AssemblyName, requestedType.ClassName);
-
-            if (type != null && ValidateType(type))
+            if(TryLoadFromDirectory(BuiltInExtensionsPath, requestedType, out type) && ValidateType(type))
             {
-                return new FeatureExtension()
-                {
-                    Feature = type,
-                    Details = GetFeatureAttribute(type)
-                };
+                return ToFeatureExtension(type);
             }
 
-            throw new InvalidOperationException($"Unable to determine feature from name `{name}`");
+            if(TryLoadFromDirectory(customExtensionsPath, requestedType, out type) && ValidateType(type))
+            {
+                return ToFeatureExtension(type);
+            }
+
+            if (!TryExtractFromPackageStagingDirectory(requestedType.AssemblyName))
+                return null;
+
+            if(TryLoadFromDirectory(customExtensionsPath, requestedType, out type) && ValidateType(type))
+            {
+                return ToFeatureExtension(type);
+            }
+
+            throw new Exception($"Extracted extension {requestedType.AssemblyName} but unable to get type {requestedType.ClassName}");
+        }
+
+        public bool TryExtractFromPackageStagingDirectory(string assemblyName)
+        {
+            var packages = packageStore.GetNearestPackages(assemblyName, null, 1).ToList();
+            if (!packages.Any())
+                return false;
+
+            var pkg = packages.First();
+            var assemblyDir = Path.Combine(customExtensionsPath, assemblyName, pkg.Metadata.Version);
+
+            fileSystem.EnsureDirectoryExists(assemblyDir);
+            fileSystem.PurgeDirectory(assemblyDir, FailureOptions.ThrowOnFailure);
+            extractor.Extract(pkg.FullPath, assemblyDir, true);
+            var nugetLibDir = Path.Combine(assemblyDir, "lib");
+            if (fileSystem.DirectoryExists(nugetLibDir))
+            {
+                foreach (var v in fileSystem.EnumerateFileSystemEntries(nugetLibDir))
+                {
+                    fileSystem.MoveFile(v, Path.Combine(assemblyDir, Path.GetFileName(v)));
+                }
+                fileSystem.DeleteDirectory(nugetLibDir);
+            }
+            return true;
         }
 
 

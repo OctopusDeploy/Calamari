@@ -15,10 +15,11 @@ namespace Calamari.Extensibility.FileSystem
         void DeleteFile(string path, FailureOptions options);
         void DeleteDirectory(string path);
         void DeleteDirectory(string path, FailureOptions options);
+        IEnumerable<string> EnumerateFileSystemEntries(string parentDirectoryPath);
         IEnumerable<string> EnumerateDirectories(string parentDirectoryPath);
         IEnumerable<string> EnumerateDirectoriesRecursively(string parentDirectoryPath);
         IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns);
-        IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns);
+        IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns);        
         long GetFileSize(string path);
         string ReadFile(string path);
         string ReadFile(string path, out Encoding encoding);

@@ -2,6 +2,7 @@
 using System.Globalization;
 using Calamari.Extensibility;
 using Calamari.Integration.Processes;
+using Calamari.Integration.ServiceMessages;
 using Calamari.Util;
 using Octostache;
 
@@ -172,6 +173,16 @@ namespace Calamari
             public static string ConvertServiceMessageValue(string value)
             {
                 return Convert.ToBase64String(CrossPlatform.GetDefaultEncoding().GetBytes(value));
+            }
+
+            public static void FeatureMissing(string feature, string target)
+            {
+                VerboseFormat("##octopus[{0} {1}=\"{3}\" {2}=\"{4}\"]",
+                    ServiceMessageNames.CalamariFeatureRequired.Name,
+                    ServiceMessageNames.CalamariFeatureRequired.Feature,
+                    ServiceMessageNames.CalamariFeatureRequired.Target,
+                    ConvertServiceMessageValue(feature),
+                    ConvertServiceMessageValue(target));
             }
 
             public static void PackageFound(string packageId, string packageVersion, string packageHash,

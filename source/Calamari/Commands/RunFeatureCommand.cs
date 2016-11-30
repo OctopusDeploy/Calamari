@@ -9,6 +9,8 @@ using Calamari.Integration.Processes;
 using Calamari.Util;
 using Calamari.Deployment;
 using System.Reflection;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 
 namespace Calamari.Commands
 {
@@ -36,30 +38,21 @@ namespace Calamari.Commands
                v => extensionsDirectory = v);
         }
 
-
-        string GetExtensionsDirectory(IVariableDictionary variables)
-        {
-            if (!string.IsNullOrEmpty(extensionsDirectory))
-                return extensionsDirectory;
-
-            var extensionPath = variables.Get("env:CalamariExtensionsPath");
-            if (!string.IsNullOrEmpty(extensionPath))
-                return extensionPath;
-
-            extensionPath = variables.Get("CalamariExtensionsPath");
-            if (!string.IsNullOrEmpty(extensionPath))
-                return extensionPath;
-
-            var currentDirectory = Path.GetDirectoryName(this.GetType().GetTypeInfo().Assembly.FullLocalPath());
-            return Path.Combine(currentDirectory, "Extensions");
-        }
-
         internal int Execute(string featureName, CalamariVariableDictionary variables)
         {
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
-            var type = new FeatureLocator(Path.Combine(GetExtensionsDirectory(variables), "Features")).Locate(featureName);
+            var type = new FeatureLocator(new GenericPackageExtractor(), new PackageStore(new GenericPackageExtractor()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), extensionsDirectory).Locate(featureName);
+            if (type == null)
+            {
+#if !NET40
+                Log.ServiceMessages.FeatureMissing(featureName, "net40");
+#else
+                Log.ServiceMessages.FeatureMissing(featureName, "netcoreapp1.0");
+#endif
+                return 1;
+            }
             var feature = new DepencencyInjectionBuilder(CreateContainer(variables, type.Details.Module)).BuildConvention(type.Feature);
 
             try
