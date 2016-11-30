@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using Calamari.Azure.Deployment.Integration;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Security;

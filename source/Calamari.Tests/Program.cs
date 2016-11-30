@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using Calamari.Util.Environments;
+using System.Reflection;
+
 namespace Calamari.Tests
 {
     public class Program
@@ -7,7 +9,7 @@ namespace Calamari.Tests
         //Calamari project we only get the dll, not the exe
         public static int Main(string[] args)
         {
-            var program = new Calamari.Program("Calamari", typeof(Calamari.Program).GetTypeInfo().Assembly.GetInformationalVersion());
+            var program = new Calamari.Program("Calamari", typeof(Calamari.Program).GetTypeInfo().Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation());
             return program.Execute(args);
         }
     }

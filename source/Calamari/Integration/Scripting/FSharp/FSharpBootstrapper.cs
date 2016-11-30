@@ -65,7 +65,7 @@ namespace Calamari.Integration.Scripting.FSharp
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".fsx");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{VariableDeclarations}}", WritePatternMatching(variables));
+            builder.Replace("(*{{VariableDeclarations}}*)", WritePatternMatching(variables));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -77,7 +77,7 @@ namespace Calamari.Integration.Scripting.FSharp
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
-            
+
         static string WritePatternMatching(CalamariVariableDictionary variables)
         {
             var builder = new StringBuilder();

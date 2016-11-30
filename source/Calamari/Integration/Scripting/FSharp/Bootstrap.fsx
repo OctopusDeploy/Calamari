@@ -2,10 +2,12 @@
 
 open System
 open System.Collections.Generic
+open System.Diagnostics
 open System.IO
 open System.Text
 open System.Net
 open System.Security.Cryptography
+open System.Security.Principal
 
 let private encode (value:string) = System.Text.Encoding.UTF8.GetBytes(value) |> Convert.ToBase64String
 let private decode (value:string) = Convert.FromBase64String(value) |> System.Text.Encoding.UTF8.GetString
@@ -40,7 +42,7 @@ let private decryptString encrypted iv =
 
 let tryFindVariable name =
     match name |> encode with
-{{VariableDeclarations}}
+(*{{VariableDeclarations}}*)
 
 let findVariable name =
     match name |> tryFindVariable with
@@ -50,7 +52,7 @@ let findVariable name =
 let findVariableOrDefault defaultValue name =
     match name |> tryFindVariable with
     | Some x -> x
-    | None -> defaultValue       
+    | None -> defaultValue
 
 let initializeProxy () =
     let proxyHost = "TentacleProxyHost" |> getEnvironmentVariable 
@@ -66,7 +68,7 @@ let initializeProxy () =
                                     | None -> CredentialCache.DefaultNetworkCredentials
     proxy.Credentials <- (credentials :> ICredentials)
     WebRequest.DefaultWebProxy <- proxy
-        
+
 let setVariable name value = 
     let encodedName = encode name
     let encodedValue = encode value
@@ -84,3 +86,44 @@ let createArtifact path fileName =
 
     let content = sprintf "path='%s' name='%s' length='%s'"  encodedPath encodedFileName encodedLength
     writeServiceMessage "createArtifact" content
+
+let private safelyLogEnvironmentVars () =
+    try
+        printfn "  OperatingSystem: %s" (Environment.OSVersion.ToString())
+        printfn "  OsBitVersion: %s" (if Environment.Is64BitOperatingSystem then "x64" else "x86")
+        printfn "  Is64BitProcess: %s" (Environment.Is64BitProcess.ToString())
+        printfn "  CurrentUser: %s" (WindowsIdentity.GetCurrent().Name)
+        printfn "  MachineName: %s" (Environment.MachineName)
+        printfn "  ProcessorCount: %s" (Environment.ProcessorCount.ToString())
+    with
+    | _ -> ()
+
+let private safelyLogPathVars () =
+    try
+        printfn "  CurrentDirectory: %s" (Directory.GetCurrentDirectory())
+        printfn "  TempDirectory: %s" (Path.GetTempPath())
+    with
+    | _ -> ()
+
+let private safelyLogProcessVars () =
+    try
+        printfn "  HostProcessName: %s" (Process.GetCurrentProcess().ProcessName)
+    with
+    | _ -> ()
+
+let private logEnvironmentInformation () =
+    try
+        let suppressEnvironmentLogging = findVariableOrDefault "False" "Octopus.Action.Script.SuppressEnvironmentLogging"
+        if suppressEnvironmentLogging = "True" then
+            () // bail out
+        else
+            printfn "##octopus[stdout-verbose]"
+            printfn "FSharp Environment Information:"
+            safelyLogEnvironmentVars()
+            safelyLogPathVars()
+            safelyLogProcessVars()
+            printfn "##octopus[stdout-default]"
+    with
+    | _ -> printfn "##octopus[stdout-default]"
+
+logEnvironmentInformation()

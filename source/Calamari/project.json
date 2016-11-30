@@ -20,7 +20,8 @@
         "Microsoft.CSharp": "*",
         "System.Data": "*",
         "System.Xml": "*",
-        "WindowsBase": "*"
+        "WindowsBase": "*",
+        "Microsoft.VisualBasic": "*"
       },
       "dependencies": {
         "GitVersionTask": "3.3.0",
@@ -50,7 +51,8 @@
           "HAS_DEFAULT_ENCODING",
           "USE_NUGET_V2_LIBS",
           "IIS_SUPPORT",
-          "USE_OCTODIFF_EXE"
+          "USE_OCTODIFF_EXE",
+          "CAN_GET_PHYSICAL_MEMORY"
         ]
       }
     },
@@ -76,6 +78,7 @@
         "System.Reflection.Extensions": "4.0.1",
         "System.Reflection.TypeExtensions": "4.1.0",
         "System.Runtime": "4.1.0",
+        "System.Runtime.Extensions": "4.1.0",
         "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
         "System.Runtime.Serialization.Formatters": "4.0.0-rc3-24212-01",
         "System.Security.Cryptography.Primitives": "4.0.0",
