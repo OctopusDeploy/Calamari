@@ -1,0 +1,8 @@
+﻿Wildcard transform with wildcard in the middle of the filename to a single target where both are in the same directory
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─MyApp.connstrings.octopus.config
+├─MyApp.nlog_octopus.config
+└─MyApp.WinSvc.exe.config
+Then the transform MyApp.*.octopus.config => MyApp.WinSvc.exe.config will:
+ - Apply the transform MyApp.connstrings.octopus.config to file MyApp.WinSvc.exe.config
