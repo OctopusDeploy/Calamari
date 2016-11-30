@@ -34,6 +34,6 @@ namespace Calamari.Commands
 
             var feature = variables.GetFlag(SpecialVariables.Package.UpdateIisWebsite) ? "Calamari.Extensibility.IIS.IISDeploymentFeature, Calamari.Extensibility.IIS" : "Calamari.Deployment.DeployPackageFeature";
             return new RunFeatureCommand().Execute(feature, variables);
-        }
+            }
     }
 }

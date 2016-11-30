@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Calamari.Extensibility;
@@ -35,7 +37,6 @@ namespace Calamari.Deployment.Conventions
             substituter.PerformSubstitution(file, deployment.Variables);
         }
     }
-
     public class SubstituteInFilesConvention : IInstallConvention
     {
         private readonly ICalamariFileSystem fileSystem;
@@ -54,7 +55,7 @@ namespace Calamari.Deployment.Conventions
 
             foreach (var target in deployment.Variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets))
             {
-                var matchingFiles = fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+                var matchingFiles = MatchingFiles(deployment, target);
 
                 if (!matchingFiles.Any())
                 {
@@ -68,6 +69,19 @@ namespace Calamari.Deployment.Conventions
                     substituter.PerformSubstitution(file, deployment.Variables);
                 }
             }
+        }
+
+        private List<string> MatchingFiles(RunningDeployment deployment, string target)
+        {
+            var files = fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+
+            foreach (var path in deployment.Variables.GetStrings(SpecialVariables.Action.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
+            {
+                var pathFiles = fileSystem.EnumerateFiles(path, target).Select(Path.GetFullPath);
+                files.AddRange(pathFiles);
+            }
+
+            return files;
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Calamari.Deployment.Conventions
             
             if (diagnosticLoggingEnabled)
                 log.Verbose($"Recursively searching for transformation files that match {string.Join(" or ", sourceExtensions)} in folder '{deployment.CurrentDirectory}'");
-            foreach (var configFile in fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions))
+            foreach (var configFile in MatchingFiles(deployment, sourceExtensions))
             {
                 if (diagnosticLoggingEnabled)
                     log.Verbose($"Found config file '{configFile}'");
@@ -187,6 +187,19 @@ namespace Calamari.Deployment.Conventions
         static string GetFileName(string path)
         {
             return Path.GetFileName(path) ?? string.Empty;
+        }
+
+        private List<string> MatchingFiles(RunningDeployment deployment, string[] sourceExtensions)
+        {
+            var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions).ToList();
+
+            foreach (var path in deployment.Variables.GetStrings(SpecialVariables.Action.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
+            {
+                var pathFiles = fileSystem.EnumerateFilesRecursively(path, sourceExtensions);
+                files.AddRange(pathFiles);
+            }
+
+            return files;
         }
     }
 }
