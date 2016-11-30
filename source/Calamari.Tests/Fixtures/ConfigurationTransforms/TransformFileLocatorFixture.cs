@@ -340,6 +340,19 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
+        public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildcardFileNameOnlyWithWildCardInMiddleOfFilename_ItFails()
+        {
+            ConfigurationTransformTestCaseBuilder
+                .ForTheScenario("Not supported: Using wildcard in the middle of target filename")
+                .Given.FileExists(@"c:\temp\web.config")
+                .And.FileExists(@"c:\temp\web.mytransform.config")
+                .When.UsingTransform(@"*.mytransform.config => w*.config")
+                .Then.SourceFile(@"c:\temp\web.config")
+                .Should.FailToBeTransformed()
+                .Verify(this);
+        }
+
+        [Test]
         public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildcardFileNameOnly_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
