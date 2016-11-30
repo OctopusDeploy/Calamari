@@ -34,6 +34,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [RequiresAdmin]
+        [RequiresWindowsServer2012OrAbove]
         public void ShouldDeployAVhd()
         {
             RunDeployment();
