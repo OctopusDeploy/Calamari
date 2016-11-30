@@ -15,13 +15,10 @@ If($vhds.Length -gt 1)
 
 $vhdPath = Resolve-Path $vhds[0].FullName
 
-Mount-DiskImage -ImagePath $vhdPath
- 
-$image = Get-DiskImage $vhdPath
-$partition = Get-Partition -DiskNumber $image.Number
-$volume = Get-Volume -partition $partition
-$mountedDrive = $volume.DriveLetter
-$letterDrive  = $mountedDrive + ":\"
+$driveLetter = (Mount-DiskImage -ImagePath $vhdPath -PassThru `
+    | Get-DiskImage `
+    | Get-Disk `
+    | Get-Partition).DriveLetter + ":\"
 
 # append a record to the AdditionalPaths list 
 function Add-ToAdditionalPaths([string]$new) {
@@ -35,11 +32,11 @@ function Add-ToAdditionalPaths([string]$new) {
 }
 
 If($OctopusParameters["Octopus.Action.Vhd.ApplicationPath"]){
-    $path = split-path $OctopusParameters["Octopus.Action.Vhd.ApplicationPath"] -NoQualifier | % Trim "." | % { join-path -Path $letterDrive -ChildPath $_ }
+    $path = split-path $OctopusParameters["Octopus.Action.Vhd.ApplicationPath"] -NoQualifier | % Trim "." | % { join-path -Path $driveLetter -ChildPath $_ }
 } Else {
-    $path = $letterDrive
+    $path = $driveLetter
 }
 
 Add-ToAdditionalPaths $path
-Set-OctopusVariable -name "VhdMountPoint" -value $letterDrive
-Write-Host "VHD at $vhdPath mounted to $letterDrive"
+Set-OctopusVariable -name "VhdMountPoint" -value $driveLetter
+Write-Host "VHD at $vhdPath mounted to $driveLetter"
