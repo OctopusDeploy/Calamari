@@ -7,7 +7,7 @@
     "FluentAssertions": "4.13.1",
     "dotnet-test-nunit": "3.4.0-beta-2",
     "NuGet.CommandLine": "2.8.3",
-    "OctoDiff": "1.1.0-dnc0014",
+    "OctoDiff": "1.1.0",
     "Octostache": "2.0.7",
     "Assent": "0.4.0"
   },

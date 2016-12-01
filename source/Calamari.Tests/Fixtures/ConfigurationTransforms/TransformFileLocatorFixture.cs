@@ -326,6 +326,33 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
+        public void When_TransformIsWildcardFileNameOnly_And_TargetIsFileNameOnly_2_ItSucceeds()
+        {
+            ConfigurationTransformTestCaseBuilder
+                .ForTheScenario("Wildcard transform with wildcard in the middle of the filename to a single target where both are in the same directory")
+                .Given.FileExists(@"c:\temp\MyApp.connstrings.octopus.config")
+                .And.FileExists(@"c:\temp\MyApp.nlog_octopus.config")
+                .And.FileExists(@"c:\temp\MyApp.WinSvc.exe.config")
+                .When.UsingTransform(@"MyApp.*.octopus.config => MyApp.WinSvc.exe.config")
+                .Then.SourceFile(@"c:\temp\MyApp.WinSvc.exe.config")
+                .Should.BeTransFormedBy(@"c:\temp\MyApp.connstrings.octopus.config")
+                .Verify(this);
+        }
+
+        [Test]
+        public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildCardInMiddleOfFileNameOnly_ItFails()
+        {
+            ConfigurationTransformTestCaseBuilder
+                .ForTheScenario("Not supported: Using wildcard in the middle of target filename")
+                .Given.FileExists(@"c:\temp\web.config")
+                .And.FileExists(@"c:\temp\web.mytransform.config")
+                .When.UsingTransform(@"*.mytransform.config => w*.config")
+                .Then.SourceFile(@"c:\temp\web.config")
+                .Should.FailToBeTransformed()
+                .Verify(this);
+        }
+
+        [Test]
         public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildcardFileNameOnly_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
