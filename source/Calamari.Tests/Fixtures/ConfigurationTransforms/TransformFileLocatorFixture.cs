@@ -326,7 +326,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        public void When_TransformIsWildcardFileNameOnlyWithWildCardInMiddleOfFileName_And_TargetIsFileNameOnly_ItSucceeds()
+        public void When_TransformIsWildcardFileNameOnly_And_TargetIsFileNameOnly_2_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
                 .ForTheScenario("Wildcard transform with wildcard in the middle of the filename to a single target where both are in the same directory")
@@ -340,7 +340,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildcardFileNameOnlyWithWildCardInMiddleOfFilename_ItFails()
+        public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildCardInMiddleOfFileNameOnly_ItFails()
         {
             ConfigurationTransformTestCaseBuilder
                 .ForTheScenario("Not supported: Using wildcard in the middle of target filename")
