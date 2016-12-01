@@ -44,7 +44,7 @@ namespace Calamari.Util.Environments /* This is in the 'Environments' namespace 
             yield return $"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSDescription.ToString()}";
             yield return $"OsBitVersion: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()}";
 #endif
-            yield return $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}";
+            yield return $"CurrentUser: {Environment.UserName}";
             yield return $"MachineName: {Environment.MachineName}";
             yield return $"ProcessorCount: {Environment.ProcessorCount.ToString()}";
         }
