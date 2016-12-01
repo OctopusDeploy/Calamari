@@ -20,8 +20,7 @@
         "Microsoft.CSharp": "*",
         "System.Data": "*",
         "System.Xml": "*",
-        "WindowsBase": "*",
-        "Microsoft.VisualBasic": "*"
+        "WindowsBase": "*"
       },
       "dependencies": {
         "GitVersionTask": "3.3.0",
@@ -51,8 +50,7 @@
           "HAS_DEFAULT_ENCODING",
           "USE_NUGET_V2_LIBS",
           "IIS_SUPPORT",
-          "USE_OCTODIFF_EXE",
-          "CAN_GET_PHYSICAL_MEMORY"
+          "USE_OCTODIFF_EXE"
         ]
       }
     },

@@ -2,13 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Calamari.Integration.FileSystem;
 using System.Runtime.InteropServices; // Needed for dotnetcore
 using System.Linq;
-#if CAN_GET_PHYSICAL_MEMORY
-using Microsoft.VisualBasic.Devices;
-
-#endif
 
 namespace Calamari.Util.Environments
     /* This is in the 'Environments' namespace to avoid collisions with CrossPlatformExtensions */
@@ -19,8 +14,7 @@ namespace Calamari.Util.Environments
         {
             var envVars = GetEnvironmentVars()
                 .Concat(GetPathVars())
-                .Concat(GetProcessVars())
-                .Concat(GetComputerInfoVars());
+                .Concat(GetProcessVars());
             return envVars.ToArray();
         }
 
@@ -60,17 +54,6 @@ namespace Calamari.Util.Environments
         static IEnumerable<string> GetProcessVars()
         {
             yield return SafelyGet(() => $"HostProcessName: {Process.GetCurrentProcess().ProcessName}");
-        }
-
-        static IEnumerable<string> GetComputerInfoVars()
-        {
-#if CAN_GET_PHYSICAL_MEMORY
-            var computerInfo = new ComputerInfo();
-            yield return SafelyGet(() => $"TotalPhysicalMemory: {computerInfo.TotalPhysicalMemory.ToFileSizeString()}");
-            yield return SafelyGet(() => $"AvailablePhysicalMemory: {computerInfo.AvailablePhysicalMemory.ToFileSizeString()}");
-#else
-            yield break;
-#endif
         }
     }
 }
