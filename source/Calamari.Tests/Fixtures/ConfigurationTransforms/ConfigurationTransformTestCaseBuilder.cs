@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using Assent;
 using Assent.Namers;
 using Calamari.Integration.ConfigurationTransforms;
@@ -83,7 +84,13 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         private bool FilesMatch(CallInfo callInfo, string file)
         {
             var filePatterns = callInfo.ArgAt<string[]>(1);
-            return filePatterns.Any(z => file.EndsWith(z.TrimStart('*')));
+            return filePatterns.Any(pattern =>
+            {
+                //bit of a naive regex, but it works enough for our tests
+                //"foo.*.config" becomes "foo\..*\.config"
+                var regex = new Regex(pattern.Replace(".", @"\.").Replace("*", ".*"));
+                return regex.IsMatch(file);
+            });
         }
 
         private string GetRelativePath(CallInfo callInfo, CalamariPhysicalFileSystem realFileSystem)

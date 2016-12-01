@@ -25,22 +25,13 @@ namespace Calamari.Integration.ConfigurationTransforms
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
 
             string fullTransformDirectoryPath;
-            string fullTransformFilePath;
             if (Path.IsPathRooted(transformFileName))
             {
-                if (transformation.IsTransformWildcard)
-                    fullTransformFilePath = transformFileName;
-                else
-                    fullTransformFilePath = Path.GetFullPath(transformFileName);
-                fullTransformDirectoryPath = Path.GetFullPath(GetDirectoryName(fullTransformFilePath));
+                fullTransformDirectoryPath = Path.GetFullPath(GetDirectoryName(transformFileName));
             }
             else
             {
                 var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
-                if (transformation.IsTransformWildcard)
-                    fullTransformFilePath = relativeTransformPath;
-                else
-                    fullTransformFilePath = Path.GetFullPath(relativeTransformPath);
                 fullTransformDirectoryPath = Path.GetFullPath(Path.Combine(GetDirectoryName(sourceFile), GetDirectoryName(relativeTransformPath)));
             }
             
