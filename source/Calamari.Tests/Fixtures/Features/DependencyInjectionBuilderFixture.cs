@@ -22,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Features
         [Test]
         public void ClassWithNoConstructorCanBeInstantiated()
         {
-            var item = builder.BuildConvention(typeof(ClassWithNoConstructor));
+            var item = builder.Build(typeof(ClassWithNoConstructor));
             Assert.IsInstanceOf<ClassWithNoConstructor>(item);
         }
 
@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Features
         {
             var dateTime = new DateTime(2012, 11, 11);
             container.RegisterInstance(dateTime);
-            var item = builder.BuildConvention(typeof(ClassConstructorWithDependencies));
+            var item = builder.Build(typeof(ClassConstructorWithDependencies));
 
             Assert.IsInstanceOf<ClassConstructorWithDependencies>(item);
             Assert.AreEqual(dateTime, ((ClassConstructorWithDependencies) item).Date);
@@ -43,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Features
         public void ConstructorWithDependenciesFailsWhenDependencyNotRegistered()
         {
             Assert.Throws<InvalidOperationException>(
-                () => builder.BuildConvention(typeof(ClassConstructorWithDependencies)),
+                () => builder.Build(typeof(ClassConstructorWithDependencies)),
                 "Parameter `myDate` on constructor for ClassConstructorWithDependencies did not match any known or provided argument types.");
         }
 
@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.Features
         public void ConstructorWithMultipleDependenciesFailsWhenSpecialAttributeNotProvided()
         {
             Assert.Throws<InvalidOperationException>(
-                () => builder.BuildConvention(typeof(ClassWithMultipleConstructors)),
+                () => builder.Build(typeof(ClassWithMultipleConstructors)),
                 "Convention ClassWithMultipleConstructors has more than one constructor. If there are more than one constructors, please specify using attribute.");
         }
 

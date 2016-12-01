@@ -17,7 +17,7 @@ namespace Calamari.Integration.FileSystem
     {
         StoredPackage GetPackage(string packageFullPath);
         StoredPackage GetPackage(ExtendedPackageMetadata metadata);
-        string GetPackagesDirectory();
+        string PackagesDirectory { get; }
         IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version = null, int take = 5);
     }
 
@@ -25,9 +25,9 @@ namespace Calamari.Integration.FileSystem
     {
         private readonly IPackageExtractor packageExtractorFactory;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
+        string rootDirectory;
 
-        private static string TentacleHome
+        private string TentacleHome
         {
             get
             {
@@ -45,9 +45,10 @@ namespace Calamari.Integration.FileSystem
             this.packageExtractorFactory = packageExtractorFactory;
         }
 
-        public string GetPackagesDirectory()
+        public string PackagesDirectory
         {
-            return rootDirectory;
+            get { return rootDirectory ?? (rootDirectory = Path.Combine(TentacleHome, "Files"));  }
+            internal set { rootDirectory = value; }
         }
 
         public StoredPackage GetPackage(string packageFullPath)
@@ -66,7 +67,7 @@ namespace Calamari.Integration.FileSystem
         public StoredPackage GetPackage(ExtendedPackageMetadata metadata)
         {
             var name = GetNameOfPackage(metadata);
-            fileSystem.EnsureDirectoryExists(rootDirectory);
+            fileSystem.EnsureDirectoryExists(PackagesDirectory);
 
             foreach (var file in PackageFiles(name))
             {
@@ -90,12 +91,12 @@ namespace Calamari.Integration.FileSystem
         private IEnumerable<string> PackageFiles(string name)
         {
             var patterns = packageExtractorFactory.Extensions.Select(e => name + e +"-*").ToArray();
-            return fileSystem.EnumerateFilesRecursively(rootDirectory, patterns);
+            return fileSystem.EnumerateFilesRecursively(PackagesDirectory, patterns);
         }
 
         public IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version = null, int take = 5)
         {
-            fileSystem.EnsureDirectoryExists(rootDirectory);
+            fileSystem.EnsureDirectoryExists(PackagesDirectory);
             var zipPackages =
                 from filePath in PackageFiles(packageId +"*")
                 let zip = PackageMetadata(filePath)

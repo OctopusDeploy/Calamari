@@ -5,12 +5,12 @@ using System.Reflection;
 namespace Calamari.Tests.Fixtures.Features
 {
     [TestFixture]
-    public class RequestedClassFixture
+    public class AssemblyQualifiedClassNameFixture
     {
         [Test]
         public void ParsesWhenJustClassNamePresent()
         {
-            var c = RequestedClass.ParseFromAssemblyQualifiedName("JustAClass");
+            var c = new AssemblyQualifiedClassName("JustAClass");
 
             Assert.AreEqual("JustAClass", c.ClassName);
             Assert.IsNull(c.AssemblyName);
@@ -19,9 +19,9 @@ namespace Calamari.Tests.Fixtures.Features
         [Test]
         public void ParsesWhenFullyQualified()
         {
-            var c = RequestedClass.ParseFromAssemblyQualifiedName(this.GetType().GetTypeInfo().AssemblyQualifiedName);
+            var c = new AssemblyQualifiedClassName(this.GetType().GetTypeInfo().AssemblyQualifiedName);
 
-            Assert.AreEqual("Calamari.Tests.Fixtures.Features.RequestedClassFixture", c.ClassName);
+            Assert.AreEqual("Calamari.Tests.Fixtures.Features.AssemblyQualifiedClassNameFixture", c.ClassName);
             Assert.AreEqual("Calamari.Tests", c.AssemblyName);
         }
     }

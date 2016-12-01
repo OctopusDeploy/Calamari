@@ -15,7 +15,7 @@ namespace Calamari.Features
             this.knownTypes = knownTypes;
         }
 
-        public object BuildConvention(Type type)
+        public object Build(Type type)
         {
 
             var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);

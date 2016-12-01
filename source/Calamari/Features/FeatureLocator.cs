@@ -9,7 +9,13 @@ using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
+using NuGet.Versioning;
+#endif
 using Calamari.Util;
+
 #if !NET40
 using System.Runtime.Loader;
 using Microsoft.Extensions.DependencyModel;
@@ -53,7 +59,7 @@ namespace Calamari.Features
         }
 
 
-        public bool TryLoadFromDirectory(string path, RequestedClass requestedClass, out Type type)
+        public bool TryLoadFromDirectory(string path, AssemblyQualifiedClassName requestedClass, out Type type)
         {
             type = null;
             if (requestedClass.AssemblyName.Contains(Path.DirectorySeparatorChar))
@@ -65,9 +71,30 @@ namespace Calamari.Features
                 return false;
             }
 
+            var versioversionDirectories = Directory.EnumerateDirectories(dir).Select(filename =>
+            {
+                NuGetVersion version;
+                NuGetVersion.TryParse(filename, out version);
+                return new
+                {
+                    filename,
+                    version
+                };
+            }).Where(p => p.version != null);
+
+            var fileName = (requestedClass.Version == null)
+                ? versioversionDirectories.OrderByDescending(v => v.version).FirstOrDefault()?.filename
+                : versioversionDirectories.FirstOrDefault(p => p.version.Equals(requestedClass.Version))?.filename;
+
+            if (string.IsNullOrEmpty(fileName))
+            {
+                Log.Warn($"Unable to find a version of `{requestedClass.AssemblyName}` that is compatable with the requested feature.");
+                return false;
+            }
+
             foreach (var compatableFramework in CompatableFrameworks())
             {
-                var frameworkFolder = Path.Combine(dir, compatableFramework);
+                var frameworkFolder = Path.Combine(fileName, compatableFramework);
                 if (Directory.Exists(frameworkFolder))
                 {
                     try
@@ -75,6 +102,7 @@ namespace Calamari.Features
                         var dllName = Path.Combine(frameworkFolder, $"{requestedClass.AssemblyName}.dll");
                         var assembly = CrossPlatform.LoadAssemblyFromDll(dllName);
                         type = assembly.GetType(requestedClass.ClassName, true);
+                        Log.Verbose($"Loading feature {requestedClass} from {frameworkFolder}");
                         return true;
                     }
                     catch (Exception ex)
@@ -116,7 +144,7 @@ namespace Calamari.Features
                 return ToFeatureExtension(type);
             }
 
-            var requestedType = RequestedClass.ParseFromAssemblyQualifiedName(name);
+            var requestedType = new AssemblyQualifiedClassName(name);
             if(string.IsNullOrEmpty(requestedType?.AssemblyName))
                 throw new InvalidOperationException($"Unable to determine feature from name `{name}`");
 
@@ -130,7 +158,7 @@ namespace Calamari.Features
                 return ToFeatureExtension(type);
             }
 
-            if (!TryExtractFromPackageStagingDirectory(requestedType.AssemblyName))
+            if (!TryExtractFromPackageStagingDirectory(requestedType))
                 return null;
 
             if(TryLoadFromDirectory(customExtensionsPath, requestedType, out type) && ValidateType(type))
@@ -141,24 +169,25 @@ namespace Calamari.Features
             throw new Exception($"Extracted extension {requestedType.AssemblyName} but unable to get type {requestedType.ClassName}");
         }
 
-        public bool TryExtractFromPackageStagingDirectory(string assemblyName)
+        public bool TryExtractFromPackageStagingDirectory(AssemblyQualifiedClassName assemblyName)
         {
-            var packages = packageStore.GetNearestPackages(assemblyName, null, 1).ToList();
+            var packages = packageStore.GetNearestPackages(assemblyName.AssemblyName, null, 1).ToList();
             if (!packages.Any())
                 return false;
 
             var pkg = packages.First();
-            var assemblyDir = Path.Combine(customExtensionsPath, assemblyName, pkg.Metadata.Version);
+            var assemblyDir = Path.Combine(customExtensionsPath, assemblyName.AssemblyName, pkg.Metadata.Version);
 
             fileSystem.EnsureDirectoryExists(assemblyDir);
             fileSystem.PurgeDirectory(assemblyDir, FailureOptions.ThrowOnFailure);
+            Log.Verbose($"Extracting feature `{assemblyName}` to {assemblyDir}");
             extractor.Extract(pkg.FullPath, assemblyDir, true);
             var nugetLibDir = Path.Combine(assemblyDir, "lib");
             if (fileSystem.DirectoryExists(nugetLibDir))
             {
                 foreach (var v in fileSystem.EnumerateFileSystemEntries(nugetLibDir))
                 {
-                    fileSystem.MoveFile(v, Path.Combine(assemblyDir, Path.GetFileName(v)));
+                    Directory.Move(v, Path.Combine(assemblyDir, Path.GetFileName(v)));
                 }
                 fileSystem.DeleteDirectory(nugetLibDir);
             }

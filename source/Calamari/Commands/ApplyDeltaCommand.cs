@@ -19,7 +19,7 @@ namespace Calamari.Commands
         string newFileName;
         bool showProgress;
         bool skipVerification;
-        readonly PackageStore packageStore = new PackageStore(new GenericPackageExtractor());
+        readonly IPackageStore packageStore = new PackageStore(new GenericPackageExtractor());
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public ApplyDeltaCommand()
@@ -40,7 +40,7 @@ namespace Calamari.Commands
             string newFilePath;
             string basisFilePath;
             ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
-            fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
+            fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.PackagesDirectory);
 
             var tempNewFilePath = newFilePath + ".partial";
 #if USE_OCTODIFF_EXE
@@ -110,7 +110,7 @@ namespace Calamari.Commands
             }
 
 
-            newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), newFileName + "-" + Guid.NewGuid());
+            newFilePath = Path.Combine(packageStore.PackagesDirectory, newFileName + "-" + Guid.NewGuid());
 
             var previousPackage = packageStore.GetPackage(basisFilePath);
             if (previousPackage.Metadata.Hash != fileHash)

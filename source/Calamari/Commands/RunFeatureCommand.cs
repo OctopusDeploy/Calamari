@@ -6,9 +6,7 @@ using Calamari.Extensibility.Features;
 using Calamari.Features;
 using Calamari.Features.Conventions;
 using Calamari.Integration.Processes;
-using Calamari.Util;
 using Calamari.Deployment;
-using System.Reflection;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 
@@ -42,19 +40,17 @@ namespace Calamari.Commands
         {
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
-
-            var type = new FeatureLocator(new GenericPackageExtractor(), new PackageStore(new GenericPackageExtractor()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), extensionsDirectory).Locate(featureName);
-            if (type == null)
-            {
-#if !NET40
-                Log.ServiceMessages.FeatureMissing(featureName, "net40");
-#else
-                Log.ServiceMessages.FeatureMissing(featureName, "netcoreapp1.0");
-#endif
+            
+            var feature = GetFeature(variables);
+            if (feature == null)
                 return 1;
-            }
-            var feature = new DepencencyInjectionBuilder(CreateContainer(variables, type.Details.Module)).BuildConvention(type.Feature);
 
+            RunFeature(variables, feature);
+            return 0;
+        }
+
+        private static void RunFeature(CalamariVariableDictionary variables, object feature)
+        {
             try
             {
                 var deploymentFeature = feature as IPackageDeploymentFeature;
@@ -74,7 +70,23 @@ namespace Calamari.Commands
                 (feature as IRollBackFeature)?.Rollback(variables);
                 throw;
             }
-            return 0;
+        }
+
+        object GetFeature(IVariableDictionary variables)
+        {
+            var type = new FeatureLocator(new GenericPackageExtractor(), new PackageStore(new GenericPackageExtractor()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), extensionsDirectory).Locate(featureName);
+            if (type == null)
+            {
+                Log.Info($"Unable to find feature {featureName}.");
+#if !NET40
+                Log.ServiceMessages.FeatureMissing(featureName, "net40");
+#else
+                Log.ServiceMessages.FeatureMissing(featureName, "netcoreapp1.0");
+#endif
+                return null;
+            }
+
+            return new DepencencyInjectionBuilder(CreateContainer(variables, type.Details.Module)).Build(type.Feature);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -85,11 +97,10 @@ namespace Calamari.Commands
             return Execute(featureName, new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword));
         }
 
-        private static CalamariContainer CreateContainer(CalamariVariableDictionary variables, Type featureModule)
+        private static CalamariContainer CreateContainer(IVariableDictionary variables, Type featureModule)
         {
             var container = new CalamariContainer();
             container.RegisterInstance<IVariableDictionary>(variables);
-            container.RegisterInstance<CalamariVariableDictionary>(variables);
             container.RegisterModule(new MyModule());
             if (featureModule != null)
             {

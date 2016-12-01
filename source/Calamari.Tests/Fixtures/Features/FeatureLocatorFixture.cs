@@ -19,16 +19,18 @@ namespace Calamari.Tests.Fixtures.Features
         private static readonly string RunScriptFeatureName = $"Calamari.Extensibility.RunScript.RunScriptInstallFeature, {RunScriptAssembly}";
 
         private readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        private  PackageStore packageStore;
 
         [SetUp]
         public void SetUp()
         {
             Environment.SetEnvironmentVariable("TentacleHome", Path.GetTempPath());
+            packageStore = new PackageStore(new GenericPackageExtractor());
         }
 
         FeatureLocator BuildLocator(string customDirectory = null)
         {
-            return new FeatureLocator(new GenericPackageExtractor(), new PackageStore(new GenericPackageExtractor()), fileSystem, customDirectory);
+            return new FeatureLocator(new GenericPackageExtractor(), packageStore, fileSystem, customDirectory);
         }
 
         [Test]
@@ -91,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Features
 
             var t = locator.Locate(RunScriptFeatureName);
             Assert.IsNotNull(t.Feature);
-        }
+        }     
 
         [Test]
         public void FindsNameFromTentacleHome()
@@ -112,7 +114,6 @@ namespace Calamari.Tests.Fixtures.Features
             var locator = BuildLocator();
             Assert.Throws<InvalidOperationException>(() => locator.Locate("FakeName"), "Unable to determine feature from name `FakeName`");
         }
-        
 
         [Test]
         public void LocateThrowsWhenFeatureHasDodgyModule()
@@ -121,6 +122,23 @@ namespace Calamari.Tests.Fixtures.Features
             Assert.Throws<InvalidOperationException>(() => locator.Locate(typeof(FeatureWithDodgyModule).AssemblyQualifiedName), 
                 $"Module `{typeof(ModuleWithNoDefaultConstructor).FullName}` does not have a default parameterless constructor.");
         }
+
+
+        [Test]
+        public void ExtractsPackage()
+        {
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
+
+            packageStore.PackagesDirectory = TestEnvironment.GetTestPath("Fixtures", "Features", "Packages");
+
+            var locator = BuildLocator();
+
+            var t = locator.Locate(RunScriptFeatureName);
+            Assert.IsNotNull(t.Feature);
+        }
+
+
 
         public class MissingAttribute : IFeature
         {
