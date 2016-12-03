@@ -1,4 +1,6 @@
-﻿using Calamari.Deployment;
+﻿using System;
+using System.Linq;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -51,7 +53,36 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             // Assert directory was purged
-            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>());
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Is((Predicate<IFileSystemInfo>)null), Arg.Any<FailureOptions>());
+        }
+
+        [Test]
+        public void ShouldPurgeFileInCustomInstallationDirectoryWhenFlagAndPurgePathsAreSet()
+        {
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryPurgePaths, "A" + Environment.NewLine + "B");
+
+            Predicate<IFileSystemInfo> exclude = null;
+            string[] expectedSearchPatterns = new string[] { "A", "B" };
+            string fileName = customInstallationDirectory + ((CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac) ? "/" : "\\") + "A.txt";
+            string otherFileName = customInstallationDirectory + ((CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac) ? "/" : "\\") + "B.txt";
+
+            var fileSystem = Substitute.For<ICalamariFileSystem>();
+            fileSystem.PurgeDirectory(Arg.Is(customInstallationDirectory), Arg.Do<Predicate<IFileSystemInfo>>(x => exclude = x), Arg.Any<FailureOptions>());
+            fileSystem.EnumerateFiles(Arg.Any<string>(), Arg.Is<string[]>(x => expectedSearchPatterns.SequenceEqual(x))).Returns(new string[] { fileName });
+
+            CreateConvention(fileSystem).Install(deployment);
+
+            // Assert directory was purged
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<Predicate<IFileSystemInfo>>(), Arg.Any<FailureOptions>());
+
+            var file = Substitute.For<IFileSystemInfo>();
+            file.FullName.Returns(fileName);
+            Assert.IsFalse(exclude(file));
+
+            file.FullName.Returns(otherFileName);
+            Assert.IsTrue(exclude(file));
         }
 
         [Test]
@@ -62,8 +93,8 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             CreateConvention().Install(deployment);
 
-            // Assert directory was purged
-            fileSystem.DidNotReceive().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>());
+            // Assert directory was not purged
+            fileSystem.DidNotReceive().PurgeDirectory(customInstallationDirectory, Arg.Any<Predicate<IFileSystemInfo>>(), Arg.Any<FailureOptions>());
         }
 
         [Test]
@@ -96,7 +127,12 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private CopyPackageToCustomInstallationDirectoryConvention CreateConvention()
         {
-           return new CopyPackageToCustomInstallationDirectoryConvention(fileSystem); 
+            return new CopyPackageToCustomInstallationDirectoryConvention(fileSystem);
+        }
+
+        private CopyPackageToCustomInstallationDirectoryConvention CreateConvention(ICalamariFileSystem fileSystem)
+        {
+            return new CopyPackageToCustomInstallationDirectoryConvention(fileSystem);
         }
     }
 }
