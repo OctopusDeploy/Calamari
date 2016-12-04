@@ -1,8 +1,8 @@
-﻿using Octostache;
+﻿using Calamari.Extensibility;
 
-namespace Calamari.Extensibility.TestingUtilities
+namespace Calamari.Utilities
 {
-    public class TestVariableDictionary : VariableDictionary, IVariableDictionary
+    public class VariableDictionary : Octostache.VariableDictionary, IVariableDictionary
     {
         public void SetOutputVariable(string name, string value)
         {

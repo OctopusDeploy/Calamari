@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Calamari": {
+      "commandName": "Project",
+      "commandLineArgs": " run-script -script \"C:\\temp\\Cal\\script.sh\" -variables \"C:\\temp\\Cal\\variables.json\""
+    }
+  }
+}

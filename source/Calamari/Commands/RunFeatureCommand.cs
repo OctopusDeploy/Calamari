@@ -38,6 +38,13 @@ namespace Calamari.Commands
 
         internal int Execute(string featureName, CalamariVariableDictionary variables)
         {
+            this.featureName = featureName;
+            if (string.IsNullOrEmpty(featureName))
+            {
+                throw new Exception("Feature name was not provided.");
+            }
+
+            Log.Verbose($"Attempting to execute feature: {featureName}");
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
             
@@ -72,7 +79,7 @@ namespace Calamari.Commands
             }
         }
 
-        object GetFeature(IVariableDictionary variables)
+        object GetFeature(CalamariVariableDictionary variables)
         {
             var type = new FeatureLocator(new GenericPackageExtractor(), new PackageStore(new GenericPackageExtractor()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), extensionsDirectory).Locate(featureName);
             if (type == null)
@@ -97,10 +104,11 @@ namespace Calamari.Commands
             return Execute(featureName, new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword));
         }
 
-        private static CalamariContainer CreateContainer(IVariableDictionary variables, Type featureModule)
+        private static CalamariContainer CreateContainer(CalamariVariableDictionary variables, Type featureModule)
         {
             var container = new CalamariContainer();
             container.RegisterInstance<IVariableDictionary>(variables);
+            container.RegisterInstance<CalamariVariableDictionary>(variables);
             container.RegisterModule(new MyModule());
             if (featureModule != null)
             {

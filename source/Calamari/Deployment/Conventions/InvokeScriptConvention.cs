@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Calamari.Commands.Support;
-using Calamari.Extensibility;
-using Calamari.Extensibility.Features;
+﻿using Calamari.Extensibility;
 using Calamari.Extensibility.FileSystem;
-using Calamari.Integration.FileSystem;
+using Calamari.Extensibility.Scripting;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 
@@ -28,7 +22,9 @@ namespace Calamari.Deployment.Conventions
             this.variables = variables;
         }
 
-        public void Invoke(string scriptFile, string scriptParameters)
+        public string[] SupportedExtensions => scriptEngine.GetSupportedExtensions();
+
+        public ICommandResult InvokeFromFile(string scriptFile, string scriptParameters)
         {
             if (!fileSystem.FileExists(scriptFile))
                 throw new CommandException("Could not find script file: " + scriptFile);
@@ -42,6 +38,7 @@ namespace Calamari.Deployment.Conventions
             {
                 throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile, result.ExitCode), result.ExitCode);
             }
+            return result;
         }
     }
 

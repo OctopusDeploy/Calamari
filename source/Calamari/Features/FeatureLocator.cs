@@ -9,6 +9,7 @@ using Calamari.Extensibility.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+using Calamari.Extensibility;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -74,7 +75,7 @@ namespace Calamari.Features
             var versioversionDirectories = Directory.EnumerateDirectories(dir).Select(filename =>
             {
                 NuGetVersion version;
-                NuGetVersion.TryParse(filename, out version);
+                NuGetVersion.TryParse(Path.GetFileName(filename), out version);
                 return new
                 {
                     filename,

@@ -101,18 +101,18 @@ Task("__BuildAndZipNET45TestProject")
     .Does(() => {
 		DotNetCoreBuild("source/Calamari.Extensibility.RunScript/project.json", new DotNetCoreBuildSettings
         {
-            Configuration = "Release",
+            Configuration = configuration,
             Framework = "net40"
         });
 		DotNetCoreBuild("source/Calamari.Extensibility.IIS/project.json", new DotNetCoreBuildSettings
         {
-            Configuration = "Release",
+            Configuration = configuration,
             Framework = "net40"
         });
 
         var settings =  new DotNetCoreBuildSettings
         {
-            Configuration = "Release",
+            Configuration = configuration,
             Framework = "net451",
             Runtime = "win7-x64"
         };
@@ -175,7 +175,8 @@ Task("__Pack")
 	PackageLibraryWithVersion("Calamari.Extensibility", nugetVersion);
 	PackageLibraryWithVersion("Calamari.Extensibility.IIS", nugetVersion);
 	PackageLibraryWithVersion("Calamari.Extensibility.RunScript", nugetVersion);
-	PackageLibraryWithVersion("Calamari.Extensibility.TestingUtilities", nugetVersion);
+	PackageLibraryWithVersion("Calamari.Extensibility.Docker", nugetVersion);
+	PackageLibraryWithVersion("Calamari.Utilities", nugetVersion);
 });
 
 
@@ -187,6 +188,7 @@ private void UpdateVersionAndRepack(string project, string version) {
 
     DotNetCorePack(Path.Combine(artifactsDir, project), new DotNetCorePackSettings
     {
+		Configuration = configuration,
         OutputDirectory = artifactsDir,
         NoBuild = true
     });

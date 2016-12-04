@@ -1,0 +1,100 @@
+﻿{
+  "version": "0.0.0-*",
+  "dependencies": {
+    "OctoDiff": "1.1.0",
+    "FSharp.Compiler.Tools": "4.0.0.1",
+    "ScriptCS": "0.16.1",
+    "Octostache": "2.0.7",
+    "Calamari.Extensibility": "*"
+  },
+  "frameworks": {
+    "net40": {
+      "frameworkAssemblies": {
+        "System.ComponentModel.DataAnnotations": "*",
+        "System.Configuration.Install": "*",
+        "System.Core": "*",
+        "System.DirectoryServices": "*",
+        "System.Net": "*",
+        "System.Runtime.Serialization": "*",
+        "System.Xml.Linq": "*",
+        "System.Data.DataSetExtensions": "*",
+        "Microsoft.CSharp": "*",
+        "System.Data": "*",
+        "System.Xml": "*",
+        "WindowsBase": "*"
+      },
+      "dependencies": {
+        "GitVersionTask": "3.3.0",
+        "MarkdownSharp": "1.13.0.0",
+        "Microsoft.Bcl": "1.1.9",
+        "Microsoft.Bcl.Async": "1.0.168",
+        "Microsoft.Bcl.Build": "1.0.14",
+        "Microsoft.Data.Edm": "5.6.2",
+        "Microsoft.Data.OData": "5.6.2",
+        "Microsoft.Data.Services.Client": "5.6.2",
+        "Microsoft.Net.Http": "2.2.22",
+        "Microsoft.Web.Administration": "7.0.0.0",
+        "Microsoft.Web.Deployment": "3.6.0",
+        "Microsoft.Web.Xdt": "2.1.1",
+        "Newtonsoft.Json": "9.0.1",
+        "NuGet.CommandLine": "2.8.3",
+        "NuGet.Core": "2.11.1",
+        "SharpCompress": "0.12.4",
+        "System.Spatial": "5.6.2"
+      },
+      "buildOptions": {
+        "platform": "anycpu",
+        "define": [
+          "NET40",
+          "HAS_SERIALIZABLE_EXCEPTIONS",
+          "CAPI_AES",
+          "HAS_DEFAULT_ENCODING",
+          "USE_NUGET_V2_LIBS",
+          "IIS_SUPPORT",
+          "USE_OCTODIFF_EXE"
+        ]
+      }
+    },
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Markdown": "2.1.0",
+        "Microsoft.NETCore.Runtime.CoreCLR": "1.0.4",
+        "Microsoft.NETCore.DotNetHostPolicy": "1.0.1",
+        "Newtonsoft.Json": "9.0.1",
+        "NuGet.Commands": "3.5.0-rc1-final",
+        "NuGet.Protocol.Core.v3": "3.5.0-rc1-final",
+        "NuGet.Frameworks": "3.5.0-rc1-final",
+        "Octopus.Web.XmlTransform": "1.0.0-ci0018",
+        "SharpCompress": "0.12.4",
+        "Sprache": "2.1.0",
+        "System.ComponentModel.TypeConverter": "4.1.0",
+        "System.Diagnostics.FileVersionInfo": "4.0.0",
+        "System.Diagnostics.TraceSource": "4.0.0",
+        "System.IO.FileSystem": "4.0.1",
+        "System.IO.FileSystem.AccessControl": "4.0.0",
+        "System.IO.FileSystem.DriveInfo": "4.0.0",
+        "System.IO.Packaging": "4.0.0",
+        "System.Net.Requests": "4.0.11",
+        "System.Reflection.Extensions": "4.0.1",
+        "System.Reflection.TypeExtensions": "4.1.0",
+        "Microsoft.Extensions.DependencyModel": "1.0.0",
+        "System.Runtime": "4.1.0",
+        "System.Runtime.Loader": "4.0.0",
+        "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
+        "System.Runtime.Serialization.Formatters": "4.0.0-rc3-24212-01",
+        "System.Security.Cryptography.Primitives": "4.0.0",
+        "System.Security.Cryptography.X509Certificates": "4.1.0",
+        "System.Threading.AccessControl": "4.0.0",
+        "System.Xml.XPath.XDocument": "4.0.1",
+        "System.Text.Encoding.CodePages": "4.0.1"
+      },
+      "buildOptions": {
+        "define": [
+          "USE_OCTOPUS_XMLT",
+          "USE_SYSTEM_IO_DIRECTORY",
+          "USE_NUGET_V3_LIBS"
+        ]
+      }
+    }
+  }
+}

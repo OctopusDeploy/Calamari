@@ -28,7 +28,7 @@ namespace Calamari.Extensibility.RunScript
             }
 
             substitutor.PerformSubstitution(script);
-            executor.Invoke(script, parameters);
+            executor.InvokeFromFile(script, parameters);
         }
     }
 }

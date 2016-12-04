@@ -40,7 +40,11 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.RunS
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.IIS.Tests", "Calamari.Extensibility.IIS.Tests\Calamari.Extensibility.IIS.Tests.xproj", "{691D6FCB-0812-4023-BD88-E3F436BD804F}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.TestingUtilities", "Calamari.Extensibility.TestingUtilities\Calamari.Extensibility.TestingUtilities.xproj", "{6AE95C98-7582-49E2-83E7-A0C3C71ED4CB}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Utilities", "Calamari.Utilities\Calamari.Utilities.xproj", "{6AE95C98-7582-49E2-83E7-A0C3C71ED4CB}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.Docker", "Calamari.Extensibility.Docker\Calamari.Extensibility.Docker.xproj", "{A25DCD66-23A6-4C96-8D2D-9D894EC35865}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.Docker.Tests", "Calamari.Extensibility.Docker.Tests\Calamari.Extensibility.Docker.Tests.xproj", "{3A7E6ED6-A221-44C1-B290-453AD8A92DB8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -80,6 +84,14 @@ Global
 		{6AE95C98-7582-49E2-83E7-A0C3C71ED4CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AE95C98-7582-49E2-83E7-A0C3C71ED4CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AE95C98-7582-49E2-83E7-A0C3C71ED4CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A25DCD66-23A6-4C96-8D2D-9D894EC35865}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A25DCD66-23A6-4C96-8D2D-9D894EC35865}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A25DCD66-23A6-4C96-8D2D-9D894EC35865}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A25DCD66-23A6-4C96-8D2D-9D894EC35865}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A7E6ED6-A221-44C1-B290-453AD8A92DB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A7E6ED6-A221-44C1-B290-453AD8A92DB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A7E6ED6-A221-44C1-B290-453AD8A92DB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A7E6ED6-A221-44C1-B290-453AD8A92DB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

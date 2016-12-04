@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using Calamari.Extensibility.FileSystem;
-using Calamari.Extensibility.TestingUtilities;
+using Calamari.Utilities;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -17,7 +17,7 @@ namespace Calamari.Extensibility.IIS.Tests
         [SetUp]
         public void SetUp()
         {
-            variables = new TestVariableDictionary();
+            variables = new VariableDictionary();
             fileSystem = Substitute.For<ICalamariFileSystem>();
             iis = Substitute.For<IInternetInformationServer>();
         }

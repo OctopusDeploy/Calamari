@@ -72,8 +72,12 @@
             }
         }
 
+        
+
         public static class Deployment
         {
+            public static readonly string Id = "Octopus.Deployment.Id";
+
             public static class Tenant
             {
                 public static string Id = "Octopus.Deployment.Tenant.Id";
@@ -142,6 +146,7 @@
 
         public static class Action
         {
+            public const string Id = "Octopus.Action.Id";
             public const string Name = "Octopus.Action.Name";
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
@@ -215,6 +220,49 @@
                 public static readonly string CustomPowerShellVersion = "Octopus.Action.PowerShell.CustomPowerShellVersion";
                 public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile";
             }
+
+
+
+
+
+            public static class Docker
+            {
+                public static readonly string ActionTypeNameForRun = "Octopus.DockerRun";
+                public static readonly string ActionTypeNameForNetwork = "Octopus.DockerNetwork";
+                public static readonly string ActionTypeNameForStop = "Octopus.DockerStop";
+                public static readonly string Args = "Octopus.Action.Docker.Args";
+
+                public static readonly string DontRun = "Octopus.Action.Docker.DontRun";
+                public static readonly string NetworkType = "Octopus.Action.Docker.NetworkType";
+                public static readonly string EnvVariable = "Octopus.Action.Docker.EnvVariable";
+                public static readonly string NetworkName = "Octopus.Action.Docker.NetworkName";
+                public static readonly string NetworkContainer = "Octopus.Action.Docker.NetworkContainer";
+                public static readonly string NetworkCustomDriver = "Octopus.Action.Docker.NetworkCustomDriver";
+                public static readonly string AddedHost = "Octopus.Action.Docker.AddedHost";
+                public static readonly string NetworkAlias = "Octopus.Action.Docker.NetworkAlias";
+                public static readonly string NetworkSubnet = "Octopus.Action.Docker.NetworkSubnet";
+                public static readonly string NetworkGateway = "Octopus.Action.Docker.NetworkGateway";
+                public static readonly string NetworkIPRange = "Octopus.Action.Docker.NetworkIPRange";
+                public static readonly string VolumeBindings = "Octopus.Action.Docker.VolumeBindings";
+                public static readonly string VolumesFrom = "Octopus.Action.Docker.VolumesFrom";
+                public static readonly string VolumeDriver = "Octopus.Action.Docker.VolumeDriver";
+                public static readonly string PortMapping = "Octopus.Action.Docker.PortMapping";
+                public static readonly string Command = "Octopus.Action.Docker.Command";
+                public static readonly string RestartPolicyMax = "Octopus.Action.Docker.RestartPolicyMax";
+                public static readonly string RestartPolicy = "Octopus.Action.Docker.RestartPolicy";
+                public static readonly string PortAutoMap = "Octopus.Action.Docker.PortAutoMap";
+                public static readonly string ActionTypeNameForCompose = "Octopus.DockerCompose";
+                public static readonly string RemoveByEnvironment = "Octopus.Action.Docker.RemoveByEnvironment";
+                public static readonly string RemoveByTenant = "Octopus.Action.Docker.RemoveByTenant";
+                public static readonly string RemoveByRelease = "Octopus.Action.Docker.RemoveByRelease";
+                public static readonly string RemoveSteps = "Octopus.Action.Docker.RemoveSteps";
+                public static readonly string RemoveCustomTags = "Octopus.Action.Docker.RemoveCustomTags";
+                public static readonly string RemoveAll = "Octopus.Action.Docker.RemoveAll";
+                public static readonly string StopTimeout = "Octopus.Action.Docker.StopTimeout";
+            }
+
+
+
         }
 
         public static class Machine

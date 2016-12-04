@@ -1,6 +1,8 @@
-﻿namespace Calamari.Integration.Processes
+﻿using Calamari.Extensibility.Scripting;
+
+namespace Calamari.Integration.Processes
 {
-    public class CommandResult
+    public class CommandResult : ICommandResult
     {
         private readonly string command;
         private readonly int exitCode;
@@ -17,15 +19,9 @@
             this.additionalErrors = additionalErrors;
         }
 
-        public int ExitCode
-        {
-            get { return exitCode; }
-        }
+        public int ExitCode => exitCode;
 
-        public string Errors
-        {
-            get { return additionalErrors; }
-        }
+        public string Errors => additionalErrors;
 
         public CommandResult VerifySuccess()
         {
