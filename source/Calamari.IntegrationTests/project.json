@@ -39,10 +39,11 @@
          "Microsoft.Web.Deployment": "3.6.0",
          "Microsoft.Web.Xdt": "2.1.1",
          "SharpCompress": "0.12.4",
-         "Polly": "4.3.0" 
+        "Polly": "4.3.0",
+        "Calamari.Extensibility.IIS": "*" 
        },
       "buildOptions": {
-        "define": [ "NET40", "IIS_SUPPORT2", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
+        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE" ]
       }
     },
     "netcoreapp1.0": {

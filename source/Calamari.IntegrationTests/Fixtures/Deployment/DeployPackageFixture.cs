@@ -50,17 +50,10 @@ namespace Calamari.IntegrationTests.Fixtures.Deployment
                 Variables.Set(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath, packageName);
                 Variables.Save(variablesFile.FilePath);
 
-                /*
-                    return InProcessInvoke(InProcessCalamari()
-                        .Action("run-feature")
-                        .Argument("feature", "DeployPackage")
-                        .Argument("variables", variablesFile.FilePath));
-*/
-                      return InProcessInvoke(InProcessCalamari()
-                        .Action("deploy-package")
-                        .Argument("package", packageName)
-                        .Argument("variables", variablesFile.FilePath));
-
+                return InProcessInvoke(InProcessCalamari()
+                    .Action("deploy-package")
+                    .Argument("package", packageName)
+                    .Argument("variables", variablesFile.FilePath));
             }
         }
     }

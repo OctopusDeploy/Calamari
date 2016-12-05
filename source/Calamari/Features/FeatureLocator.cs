@@ -30,6 +30,7 @@ namespace Calamari.Features
         private readonly IPackageStore packageStore;
         private readonly ICalamariFileSystem fileSystem;
         private readonly string customExtensionsPath;
+        internal string BuiltInExtensionsPath = Path.Combine(Path.GetDirectoryName(typeof(FeatureLocator).GetTypeInfo().Assembly.FullLocalPath()), "Extensions");
 
         public FeatureLocator(IGenericPackageExtractor extractor, IPackageStore packageStore, ICalamariFileSystem fileSystem, string path = null)
         {
@@ -40,7 +41,40 @@ namespace Calamari.Features
             customExtensionsPath = ExtensionsDirectory(path);
         }
 
-        internal string BuiltInExtensionsPath = Path.Combine(Path.GetDirectoryName(typeof(FeatureLocator).GetTypeInfo().Assembly.FullLocalPath()), "Extensions");
+
+        public FeatureExtension Locate(string name)
+        {
+            var type = Type.GetType(name, false);
+            if (type != null && ValidateType(type))
+            {
+                return ToFeatureExtension(type);
+            }
+
+            var requestedType = new AssemblyQualifiedClassName(name);
+            if (string.IsNullOrEmpty(requestedType?.AssemblyName))
+                throw new InvalidOperationException($"Unable to determine feature from name `{name}`");
+
+            if (TryLoadFromDirectory(BuiltInExtensionsPath, requestedType, out type) && ValidateType(type))
+            {
+                return ToFeatureExtension(type);
+            }
+
+            if (TryLoadFromDirectory(customExtensionsPath, requestedType, out type) && ValidateType(type))
+            {
+                return ToFeatureExtension(type);
+            }
+
+            if (!TryExtractFromPackageStagingDirectory(requestedType))
+                return null;
+
+            if (TryLoadFromDirectory(customExtensionsPath, requestedType, out type) && ValidateType(type))
+            {
+                return ToFeatureExtension(type);
+            }
+
+            throw new Exception(
+                $"Extracted extension {requestedType.AssemblyName} but unable to get type {requestedType.ClassName}");
+        }
 
         string ExtensionsDirectory(string path = null)
         {
@@ -59,8 +93,7 @@ namespace Calamari.Features
             }
         }
 
-
-        public bool TryLoadFromDirectory(string path, AssemblyQualifiedClassName requestedClass, out Type type)
+        bool TryLoadFromDirectory(string path, AssemblyQualifiedClassName requestedClass, out Type type)
         {
             type = null;
             if (requestedClass.AssemblyName.Contains(Path.DirectorySeparatorChar))
@@ -127,7 +160,6 @@ namespace Calamari.Features
 #endif
         }
 
-
         FeatureExtension ToFeatureExtension(Type type)
         {
             return new FeatureExtension()
@@ -136,43 +168,10 @@ namespace Calamari.Features
                 Details = GetFeatureAttribute(type)
             };
         }
-
-        public FeatureExtension Locate(string name)
+        
+        bool TryExtractFromPackageStagingDirectory(AssemblyQualifiedClassName assemblyName)
         {
-            var type = Type.GetType(name, false);
-            if (type != null && ValidateType(type))
-            {
-                return ToFeatureExtension(type);
-            }
-
-            var requestedType = new AssemblyQualifiedClassName(name);
-            if(string.IsNullOrEmpty(requestedType?.AssemblyName))
-                throw new InvalidOperationException($"Unable to determine feature from name `{name}`");
-
-            if(TryLoadFromDirectory(BuiltInExtensionsPath, requestedType, out type) && ValidateType(type))
-            {
-                return ToFeatureExtension(type);
-            }
-
-            if(TryLoadFromDirectory(customExtensionsPath, requestedType, out type) && ValidateType(type))
-            {
-                return ToFeatureExtension(type);
-            }
-
-            if (!TryExtractFromPackageStagingDirectory(requestedType))
-                return null;
-
-            if(TryLoadFromDirectory(customExtensionsPath, requestedType, out type) && ValidateType(type))
-            {
-                return ToFeatureExtension(type);
-            }
-
-            throw new Exception($"Extracted extension {requestedType.AssemblyName} but unable to get type {requestedType.ClassName}");
-        }
-
-        public bool TryExtractFromPackageStagingDirectory(AssemblyQualifiedClassName assemblyName)
-        {
-            var packages = packageStore.GetNearestPackages(assemblyName.AssemblyName, null, 1).ToList();
+            var packages = packageStore.GetNearestPackages(assemblyName.AssemblyName, assemblyName.Version, 1).ToList();
             if (!packages.Any())
                 return false;
 
@@ -194,7 +193,6 @@ namespace Calamari.Features
             }
             return true;
         }
-
 
         bool ValidateType(Type type)
         {

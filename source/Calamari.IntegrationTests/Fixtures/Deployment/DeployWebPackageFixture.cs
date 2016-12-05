@@ -13,6 +13,7 @@ using Calamari.Integration.Scripting;
 using Calamari.IntegrationTests.Fixtures.Deployment.Packages;
 using Calamari.IntegrationTests.Helpers;
 using Calamari.IntegrationTests.Helpers.FilterAttributes;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 #if IIS_SUPPORT
 using Calamari.Extensibility.IIS;

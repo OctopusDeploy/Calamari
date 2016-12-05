@@ -7,7 +7,11 @@ using Calamari.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
+#if !NET40
+using System.Reflection;
+#endif
 
 namespace Calamari.Tests.Fixtures.Features
 {
@@ -15,8 +19,8 @@ namespace Calamari.Tests.Fixtures.Features
     public class FeatureLocatorFixture
     {
         private static readonly string TestExtensionsDirectoryPath = Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Fixtures", "Extensions");
-        private static readonly string RunScriptAssembly = "Calamari.Extensibility.RunScript";
-        private static readonly string RunScriptFeatureName = $"Calamari.Extensibility.RunScript.RunScriptInstallFeature, {RunScriptAssembly}";
+        private static readonly string RunScriptAssembly = "Calamari.Extensibility.FakeFeatures";
+        private static readonly string RunScriptFeatureName = $"Calamari.Extensibility.FakeFeatures.HelloWorldFeature, {RunScriptAssembly}";
 
         private readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         private  PackageStore packageStore;
@@ -50,18 +54,7 @@ namespace Calamari.Tests.Fixtures.Features
             Assert.AreEqual(typeof(IncludesAttribute), t.Feature);
         }
 
-        [Test]
-        public void FindsNameFromBuiltInDirectory()
-        {
-            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, randomDirectory);
-
-            var locator = BuildLocator();
-            locator.BuiltInExtensionsPath = randomDirectory;
-
-            var t = locator.Locate(RunScriptFeatureName);
-            Assert.IsNotNull(t.Feature); 
-        }
+     
 
         [Test]
         public void LocateReturnsNullWhenFeatureNotFoundInValidAssembly()
@@ -84,31 +77,6 @@ namespace Calamari.Tests.Fixtures.Features
         }
 
         [Test]
-        public void FindsNameFromCustomDirectory()
-        {
-            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, randomDirectory);
-
-            var locator = BuildLocator(randomDirectory);
-
-            var t = locator.Locate(RunScriptFeatureName);
-            Assert.IsNotNull(t.Feature);
-        }     
-
-        [Test]
-        public void FindsNameFromTentacleHome()
-        {
-            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, Path.Combine(randomDirectory, "Extensions"));
-            Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
-
-            var locator = BuildLocator();
-
-            var t = locator.Locate(RunScriptFeatureName);
-            Assert.IsNotNull(t.Feature);
-        }
-
-        [Test]
         public void LocateThrowsWhenFeatureTypeNotParseable()
         {
             var locator = BuildLocator();
@@ -123,9 +91,61 @@ namespace Calamari.Tests.Fixtures.Features
                 $"Module `{typeof(ModuleWithNoDefaultConstructor).FullName}` does not have a default parameterless constructor.");
         }
 
+        [Test]
+        public void FindsFeatureFromBuiltInDirectory()
+        {
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, randomDirectory);
+
+            var locator = BuildLocator();
+            locator.BuiltInExtensionsPath = randomDirectory;
+
+            var t = locator.Locate(RunScriptFeatureName);
+            Assert.IsNotNull(t.Feature);
+        }
 
         [Test]
-        public void ExtractsPackage()
+        public void FindsFeatureFromCustomDirectory()
+        {
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, randomDirectory);
+
+            var locator = BuildLocator(randomDirectory);
+
+            var t = locator.Locate(RunScriptFeatureName);
+            Assert.IsNotNull(t.Feature);
+        }
+
+        [Test]
+        public void FindsFeatureFromTentacleHome()
+        {
+            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            fileSystem.CopyDirectory(TestExtensionsDirectoryPath, Path.Combine(randomDirectory, "Extensions"));
+            Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
+
+            var locator = BuildLocator();
+
+            var t = locator.Locate(RunScriptFeatureName);
+            Assert.IsNotNull(t.Feature);
+        }
+
+        [Test]
+//        public void FindsFeatureInPacakge()
+//        {
+//            var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+//            Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
+//
+//            packageStore.PackagesDirectory = TestEnvironment.GetTestPath("Fixtures", "Features", "Packages");
+//
+//            var locator = BuildLocator();
+//            
+//            var t = locator.Locate(RunScriptFeatureName +", Version=1.0.0.0");
+//            Assert.IsNotNull(t.Feature);
+//            Assert.AreEqual(new Version(1, 0, 0, 0), t.Feature.GetTypeInfo().Assembly.GetName().Version);
+//        }
+
+        
+        public void FindsFeatureWithCorrectVersionInPacakge()
         {
             var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
@@ -134,11 +154,11 @@ namespace Calamari.Tests.Fixtures.Features
 
             var locator = BuildLocator();
 
-            var t = locator.Locate(RunScriptFeatureName);
+            var t = locator.Locate(RunScriptFeatureName);            
             Assert.IsNotNull(t.Feature);
+            // Defaults to latest one
+            Assert.AreEqual(new Version(6, 6, 6, 0), t.Feature.GetTypeInfo().Assembly.GetName().Version);
         }
-
-
 
         public class MissingAttribute : IFeature
         {

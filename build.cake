@@ -27,7 +27,7 @@ var gitVersionInfo = GitVersion(new GitVersionSettings {
     OutputType = GitVersionOutput.Json
 });
 
-var nugetVersion = isContinuousIntegrationBuild ? gitVersionInfo.NuGetVersion : "0.0.0";
+var nugetVersion = gitVersionInfo.NuGetVersion; //isContinuousIntegrationBuild ? gitVersionInfo.NuGetVersion : "0.0.0";
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
@@ -98,18 +98,7 @@ Task("__Build")
 });
 
 Task("__BuildAndZipNET45TestProject")
-    .Does(() => {
-		DotNetCoreBuild("source/Calamari.Extensibility.RunScript/project.json", new DotNetCoreBuildSettings
-        {
-            Configuration = configuration,
-            Framework = "net40"
-        });
-		DotNetCoreBuild("source/Calamari.Extensibility.IIS/project.json", new DotNetCoreBuildSettings
-        {
-            Configuration = configuration,
-            Framework = "net40"
-        });
-
+    .Does(() => {		
         var settings =  new DotNetCoreBuildSettings
         {
             Configuration = configuration,
@@ -151,6 +140,12 @@ Task("__TestTeamCity")
     {
         Configuration = configuration
     };
+	
+	//FakeFeatures assembly used to test loading features dlls
+	DotNetCoreBuild("source/Calamari.Extensibility.FakeFeatures/project.json", new DotNetCoreBuildSettings
+	{
+		Configuration = configuration
+	});
 
     settings.ArgumentCustomization = f => {
         f.Append("-where");
@@ -174,7 +169,6 @@ Task("__Pack")
     PackageAppWithVersion("Calamari.Azure", "net45", nugetVersion);   
 	PackageLibraryWithVersion("Calamari.Extensibility", nugetVersion);
 	PackageLibraryWithVersion("Calamari.Extensibility.IIS", nugetVersion);
-	PackageLibraryWithVersion("Calamari.Extensibility.RunScript", nugetVersion);
 	PackageLibraryWithVersion("Calamari.Extensibility.Docker", nugetVersion);
 	PackageLibraryWithVersion("Calamari.Utilities", nugetVersion);
 });

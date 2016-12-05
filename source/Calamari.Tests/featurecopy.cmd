@@ -13,10 +13,9 @@ echo Copying Extensions To %extensions_directory%
 
 rmdir /Q /S %extensions_directory%
 for %%x in (
-        Calamari.Extensibility.RunScript
-		Calamari.Extensibility.IIS
+        Calamari.Extensibility.FakeFeatures
        ) do (
-			echo %extensions_directory%\%%x\0.0.0
+			echo %project_directory%\..\%%x\bin\%compile_Configuration% to %extensions_directory%\%%x\0.0.0
 			xcopy %project_directory%\..\%%x\bin\%compile_Configuration% %extensions_directory%\%%x\0.0.0\ /E
        )
 

@@ -1,17 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using Calamari.Commands.Support;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
 using Calamari.Extensibility;
 using Calamari.Features;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 using Calamari.Util;
 
 namespace Calamari.Commands
@@ -52,7 +42,7 @@ namespace Calamari.Commands
             variables.Set(SpecialVariables.Action.Script.PackagePath, packageFile);
             variables.Set(SpecialVariables.Action.Script.Parameters, scriptParameters);
 
-            return new RunFeatureCommand().Execute("Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript", variables);            
+            return new FeatureRunCommand().Execute("Calamari.Features.RunScriptFeature, Calamari", variables);            
         }
     }
 }

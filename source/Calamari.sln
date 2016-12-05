@@ -36,8 +36,6 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility", "C
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.IIS", "Calamari.Extensibility.IIS\Calamari.Extensibility.IIS.xproj", "{C7ADC13F-33AC-4E95-8B0A-7943C516A269}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.RunScript", "Calamari.Extensibility.RunScript\Calamari.Extensibility.RunScript.xproj", "{EAE33667-AB45-4369-9428-46F692E76E7D}"
-EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.IIS.Tests", "Calamari.Extensibility.IIS.Tests\Calamari.Extensibility.IIS.Tests.xproj", "{691D6FCB-0812-4023-BD88-E3F436BD804F}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Utilities", "Calamari.Utilities\Calamari.Utilities.xproj", "{6AE95C98-7582-49E2-83E7-A0C3C71ED4CB}"
@@ -47,6 +45,8 @@ EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.Docker.Tests", "Calamari.Extensibility.Docker.Tests\Calamari.Extensibility.Docker.Tests.xproj", "{3A7E6ED6-A221-44C1-B290-453AD8A92DB8}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.IntegrationTests", "Calamari.IntegrationTests\Calamari.IntegrationTests.xproj", "{09BA1807-D194-4B43-AFF4-60909D713E96}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Calamari.Extensibility.FakeFeatures", "Calamari.Extensibility.FakeFeatures\Calamari.Extensibility.FakeFeatures.xproj", "{D864D58A-8420-4A65-B640-10D55FAC7CCB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,10 +74,6 @@ Global
 		{C7ADC13F-33AC-4E95-8B0A-7943C516A269}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7ADC13F-33AC-4E95-8B0A-7943C516A269}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7ADC13F-33AC-4E95-8B0A-7943C516A269}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EAE33667-AB45-4369-9428-46F692E76E7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EAE33667-AB45-4369-9428-46F692E76E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EAE33667-AB45-4369-9428-46F692E76E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EAE33667-AB45-4369-9428-46F692E76E7D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{691D6FCB-0812-4023-BD88-E3F436BD804F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{691D6FCB-0812-4023-BD88-E3F436BD804F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{691D6FCB-0812-4023-BD88-E3F436BD804F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -98,6 +94,10 @@ Global
 		{09BA1807-D194-4B43-AFF4-60909D713E96}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09BA1807-D194-4B43-AFF4-60909D713E96}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09BA1807-D194-4B43-AFF4-60909D713E96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D864D58A-8420-4A65-B640-10D55FAC7CCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D864D58A-8420-4A65-B640-10D55FAC7CCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D864D58A-8420-4A65-B640-10D55FAC7CCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D864D58A-8420-4A65-B640-10D55FAC7CCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

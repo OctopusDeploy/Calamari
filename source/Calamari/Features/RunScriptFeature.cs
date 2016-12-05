@@ -1,15 +1,16 @@
-﻿using Calamari.Extensibility.Features;
+﻿using Calamari.Extensibility;
+using Calamari.Extensibility.Features;
 
-namespace Calamari.Extensibility.RunScript
+namespace Calamari.Features
 {
     [Feature("RunScript", "I Am A Run Script")]
-    public class RunScriptInstallFeature : IFeature
+    public class RunScriptFeature : IFeature
     {
         private readonly IPackageExtractor extractor;
         private readonly IScriptExecution executor;
         private readonly IFileSubstitution substitutor;
 
-        public RunScriptInstallFeature(IPackageExtractor extractor, IScriptExecution executor, IFileSubstitution substitutor)
+        public RunScriptFeature(IPackageExtractor extractor, IScriptExecution executor, IFileSubstitution substitutor)
         {
             this.extractor = extractor;
             this.executor = executor;

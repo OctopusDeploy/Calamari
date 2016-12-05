@@ -28,8 +28,8 @@ namespace Calamari.IntegrationTests.Fixtures.PowerShell
             {
                 // Let's just use the Hello.ps1 script for something simples
                 var output = InProcessInvoke(InProcessCalamari()
-                   .Action("run-feature")
-                    .Argument("feature", "Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript")
+                   .Action("feature-run")
+                    .Argument("feature", "Calamari.Features.RunScriptFeature, Calamari")
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();

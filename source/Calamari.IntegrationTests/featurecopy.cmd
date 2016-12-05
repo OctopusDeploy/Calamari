@@ -15,6 +15,7 @@ rmdir /Q /S %extensions_directory%
 for %%x in (
         Calamari.Extensibility.RunScript
 		Calamari.Extensibility.IIS
+		Calamari.Extensibility.Docker
        ) do (
 			echo %extensions_directory%\%%x\0.0.0
 			xcopy %project_directory%\..\%%x\bin\%compile_Configuration% %extensions_directory%\%%x\0.0.0\ /E

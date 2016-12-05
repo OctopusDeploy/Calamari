@@ -33,7 +33,7 @@ namespace Calamari.Commands
             variables.Set(SpecialVariables.Package.FilePath, this.packageFile);
 
             var feature = variables.GetFlag(SpecialVariables.Package.UpdateIisWebsite) ? "Calamari.Extensibility.IIS.IISDeploymentFeature, Calamari.Extensibility.IIS" : "Calamari.Deployment.DeployPackageFeature";
-            return new RunFeatureCommand().Execute(feature, variables);
+            return new FeatureRunCommand().Execute(feature, variables);
             }
     }
 }

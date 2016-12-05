@@ -12,8 +12,8 @@ using Calamari.Integration.Packages;
 
 namespace Calamari.Commands
 {
-    [Command("run-feature", Description = "Extracts and installs a deployment package")]
-    public class RunFeatureCommand : Command
+    [Command("feature-run", Description = "Extracts and installs a deployment package")]
+    public class FeatureRunCommand : Command
     {
         private string variablesFile;
         private string sensitiveVariablesFile;
@@ -21,7 +21,7 @@ namespace Calamari.Commands
         private string featureName;
         private string extensionsDirectory;
 
-        public RunFeatureCommand()
+        public FeatureRunCommand()
         {
             Options.Add("feature=",
                 "The name of the feature that will be loaded from available assembelies and invoked.",
