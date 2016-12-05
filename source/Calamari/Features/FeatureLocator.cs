@@ -95,6 +95,7 @@ namespace Calamari.Features
 
         bool TryLoadFromDirectory(string path, AssemblyQualifiedClassName requestedClass, out Type type)
         {
+            Log.Verbose($"Searching for feature in {path}");
             type = null;
             if (requestedClass.AssemblyName.Contains(Path.DirectorySeparatorChar))
                 throw new InvalidOperationException("This provided assembly name contains the path seperator.");
@@ -171,6 +172,8 @@ namespace Calamari.Features
         
         bool TryExtractFromPackageStagingDirectory(AssemblyQualifiedClassName assemblyName)
         {
+            Log.Verbose($"Searching for feature in package staging directory.");
+
             var packages = packageStore.GetNearestPackages(assemblyName.AssemblyName, assemblyName.Version, 1).ToList();
             if (!packages.Any())
                 return false;
