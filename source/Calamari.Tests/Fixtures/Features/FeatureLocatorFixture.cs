@@ -15,6 +15,7 @@ using System.Reflection;
 
 namespace Calamari.Tests.Fixtures.Features
 {
+    
     [TestFixture]
     public class FeatureLocatorFixture
     {
@@ -37,6 +38,7 @@ namespace Calamari.Tests.Fixtures.Features
             return new FeatureLocator(new GenericPackageExtractor(), packageStore, fileSystem, customDirectory);
         }
 
+        /*
         [Test]
         public void WarningLoggedIfAttributeMissing()
         {
@@ -186,7 +188,7 @@ namespace Calamari.Tests.Fixtures.Features
                 throw new NotImplementedException();
             }
         }
-
+        */
         public class ModuleWithNoDefaultConstructor :IModule
         {
             public ModuleWithNoDefaultConstructor(int value){
