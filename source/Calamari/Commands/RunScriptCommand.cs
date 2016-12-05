@@ -52,36 +52,7 @@ namespace Calamari.Commands
             variables.Set(SpecialVariables.Action.Script.PackagePath, packageFile);
             variables.Set(SpecialVariables.Action.Script.Parameters, scriptParameters);
 
-
-
-            return new RunFeatureCommand().Execute("Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript", variables);
-
-            /*
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var scriptCapability = new CombinedScriptEngine();
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            
-            var substituter = new FileSubstituter(fileSystem);
-            var conventions = new List<IConvention>
-            {
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention()
-            };
-
-            if (!string.IsNullOrWhiteSpace(packageFile))
-            {
-                conventions.Add(new ExtractPackageToWorkingDirectoryConvention(new GenericPackageExtractor(), fileSystem));
-            }
-            conventions.Add(new SubstituteFileConvention(scriptFile, fileSystem, substituter));
-            conventions.Add(new InvokeScriptConvention(scriptFile, scriptParameters, fileSystem, scriptCapability, commandLineRunner));
-
-            var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
-
-            conventionRunner.RunConventions();
-
-            return 0;
-            */
+            return new RunFeatureCommand().Execute("Calamari.Extensibility.RunScript.RunScriptInstallFeature, Calamari.Extensibility.RunScript", variables);            
         }
     }
 }

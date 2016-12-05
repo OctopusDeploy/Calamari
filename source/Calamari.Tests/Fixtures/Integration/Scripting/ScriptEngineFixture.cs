@@ -7,8 +7,8 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
-using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
+using Calamari.Tests.Helpers.FilterAttributes;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting

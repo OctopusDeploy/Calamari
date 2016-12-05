@@ -83,7 +83,6 @@
         "Fixtures/ConfigurationVariables/Samples/**",
         "Fixtures/ConfigurationTransforms/Samples/**",
         "Fixtures/ConfigurationTransforms/Approved/**.approved.*",
-        "Fixtures/Bash/Scripts/**",
         "Fixtures/Conventions/ConfigTransforms/**",
         "Fixtures/Deployment/Packages/Acme.Service/**",
         "Fixtures/Deployment/Packages/Acme.Vhd/**",
@@ -91,12 +90,10 @@
         "Fixtures/Deployment/Packages/Acme.Web.Tests/**",
         "Fixtures/Deployment/Packages/Acme.Package/**",
         "Fixtures/Deployment/Packages/Octopus.Sample.AzureCloudService/**",
-        "Fixtures/FSharp/Scripts/**",
         "Fixtures/Integration/Packages/Samples/**",
         "Fixtures/JsonVariables/Samples/**",
         "Fixtures/PowerShell/Packages/**",
         "Fixtures/PowerShell/Scripts/**",
-        "Fixtures/ScriptCS/Scripts/**",
         "Fixtures/Substitutions/Samples/**",
         "Fixtures/Features/Scripts/**",
         "Fixtures/Features/Packages/**"
@@ -109,7 +106,6 @@
     }
   },
   "scripts": {
-    "precompile": [ "./chmodexes" ],
     "postcompile": [ "./featurecopy \"%project:Directory%\" \"%compile:RuntimeOutputDir%\" \"%compile:Configuration%\"" ]
   },
   "runtimes": {

@@ -1,5 +1,6 @@
 ﻿using Calamari.Integration.Processes.Semaphores;
 using Calamari.Tests.Helpers;
+using Calamari.Tests.Helpers.FilterAttributes;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores

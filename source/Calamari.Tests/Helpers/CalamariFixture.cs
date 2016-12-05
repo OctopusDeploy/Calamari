@@ -23,10 +23,12 @@ namespace Calamari.Tests.Helpers
         [SetUp]
         public void SetUpExtensionsPath()
         {
+            /*
             var testExtensionsDirectoryPath = Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Fixtures", "Extensions");
             var randomDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             CalamariPhysicalFileSystem.GetPhysicalFileSystem().CopyDirectory(testExtensionsDirectoryPath, Path.Combine(randomDirectory, "Extensions"));
             Environment.SetEnvironmentVariable("TentacleHome", randomDirectory);
+            */
         }
 
         protected CommandLine Calamari()

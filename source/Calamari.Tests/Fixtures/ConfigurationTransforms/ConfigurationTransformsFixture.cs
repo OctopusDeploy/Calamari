@@ -6,6 +6,7 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
+using Calamari.Tests.Helpers.FilterAttributes;
 using FluentAssertions;
 using NUnit.Framework;
 

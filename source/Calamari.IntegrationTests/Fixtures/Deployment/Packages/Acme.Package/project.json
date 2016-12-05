@@ -1,0 +1,18 @@
+{ 
+    "name": "Acme.Package",
+    "version": "1.0.0.0",
+    "authors": [ "ACME Corporation" ],
+    "description": "A sample project containing a Windows service.",
+    "language": "en-US",
+    "frameworks": {
+        "netstandard1.0": {}
+    },
+    "packOptions": {
+        "projectUrl": "https://github.com/OctopusDeploy/Calamari/",
+        "licenseUrl": "https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE",
+        "files": {
+          "include": "**/*.*",
+          "exclude": [ "project.json", "project.lock.json", "*.nuspec" ]
+        }
+    }
+}

@@ -1,1 +1,0 @@
-﻿Write-Host "Hello from a path containing a '"
