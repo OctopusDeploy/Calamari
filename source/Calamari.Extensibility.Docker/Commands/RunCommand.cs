@@ -5,9 +5,9 @@ using Newtonsoft.Json;
 
 namespace Calamari.Extensibility.Docker.Commands
 {
-    public class DockerRunCommand
+    public class RunCommand
     {
-        public DockerRunCommand(string image)
+        public RunCommand(string image)
         {
             Image = image;
         }

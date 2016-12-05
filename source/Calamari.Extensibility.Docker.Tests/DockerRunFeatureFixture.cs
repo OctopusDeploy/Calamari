@@ -31,7 +31,6 @@ namespace Calamari.Extensibility.Docker.Tests
                 .InvokeFromFile(Arg.Is<string>(t => t.EndsWith("sh")), Arg.Is<string>(t => string.IsNullOrEmpty(t)));
         }
 
-
         [Test]
         public void NoScriptWithSupportedExceptionThrows()
         {
@@ -43,7 +42,6 @@ namespace Calamari.Extensibility.Docker.Tests
             Assert.Throws<Exception>(() => feature.Install(new VariableDictionary()), 
                 "Unable to find runnable script named `docker-run`");
         }
-
 
         [Test]
         public void ScripxxxtWithSupportedExceptionSucceeds()

@@ -4,12 +4,12 @@ using NUnit.Framework;
 namespace Calamari.Extensibility.Docker.Tests.Commands
 {
     [TestFixture]
-    public class DockerRunCommandFixture
+    public class RunCommandFixture
     {
         [Test]
         public void DockerRun_ReturnNothingIfNoVariables()
         {
-            var command = new DockerRunCommand("busybox");
+            var command = new RunCommand("busybox");
 
             Assert.AreEqual("docker run --detach busybox", command.ToString());
         }
@@ -19,7 +19,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         public void DockerRun_AppendsNetworkAliasWhenNetworkTypeNotNetwork()
         {
 
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.NetworkAliases.Add("Smith");
 
             AssertCommandWithDefaults("--network-alias=\"Smith\"", command.ToString());
@@ -28,7 +28,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_UsesNetworkNameWhenNetworkTypeNetwork()
         {
-            var command = new DockerRunCommand(DefaultImage)
+            var command = new RunCommand(DefaultImage)
             {
                 NetworkType = "network",
                 NetworkName = "Smith",
@@ -41,7 +41,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_UsesContainerNameWhenNetworkTypeContainer()
         {
-            var command = new DockerRunCommand(DefaultImage)
+            var command = new RunCommand(DefaultImage)
             {
                 NetworkType = "container",
                 NetworkName = "Smith",
@@ -54,7 +54,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_SetsNetworkType()
         {
-            var command = new DockerRunCommand(DefaultImage)
+            var command = new RunCommand(DefaultImage)
             {
                 NetworkType = "none",
                 NetworkName = "Smith",
@@ -67,7 +67,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_GetsRestartPolicyWithCountWhenOnFailure()
         {
-            var command = new DockerRunCommand(DefaultImage)
+            var command = new RunCommand(DefaultImage)
             {
                 RestartPolicy = "on-failure",
                 RestartPolicyMax = 2
@@ -79,7 +79,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_IgnoreRetryPolicyCountIfNoneProvided()
         {
-            var command = new DockerRunCommand(DefaultImage)
+            var command = new RunCommand(DefaultImage)
             {
                 RestartPolicy = "on-failure",
             };
@@ -90,7 +90,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_IgnoreRetryPolicyCountIfWrongType()
         {
-            var command = new DockerRunCommand(DefaultImage)
+            var command = new RunCommand(DefaultImage)
             {
                 RestartPolicy = "never",
                 RestartPolicyMax = 2
@@ -102,7 +102,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_PublishedAllPortsWhenAutoMapped()
         {
-            var command = new DockerRunCommand(DefaultImage)
+            var command = new RunCommand(DefaultImage)
             {
                 PortAutoMap = true
             };
@@ -113,7 +113,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_PortMapping_AssumeHostIncludesPortWhenNonEndingSemicolon()
         {
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.PortMappings.Add("80", "192.168.0.1:45");
 
             AssertCommandWithDefaults("--publish 192.168.0.1:45:80", command.ToString());
@@ -123,7 +123,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_PortMapping_AssumeHostIPWhenNotNumber()
         {
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.PortMappings.Add("80", "192.168.0.1");
 
             AssertCommandWithDefaults("--publish 192.168.0.1::80", command.ToString());
@@ -132,7 +132,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_PortMapping_AssumeHostIsPortWhenIsANumber()
         {
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.PortMappings.Add("80", "81");
 
             AssertCommandWithDefaults("--publish 81:80", command.ToString());
@@ -142,7 +142,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_PortMapping_ParseWhenNoHostProvided()
         {
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.PortMappings.Add("80", "");
 
             AssertCommandWithDefaults("--publish 80", command.ToString());
@@ -151,7 +151,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_VolumesFrom()
         {
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.VolumesFrom.Add("A");
 
             AssertCommandWithDefaults("--volumes-from=\"A\"", command.ToString());
@@ -161,8 +161,8 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_VolumeBinding_MissingHostSupported()
         {
-            var command = new DockerRunCommand(DefaultImage);
-            command.VolumeBindings.Add("/home", new DockerRunCommand.VolumeBinding());
+            var command = new RunCommand(DefaultImage);
+            command.VolumeBindings.Add("/home", new RunCommand.VolumeBinding());
 
             AssertCommandWithDefaults("--volume \"/home\"", command.ToString());
         }
@@ -170,8 +170,8 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_VolumeBinding_HostPrepended()
         {
-            var command = new DockerRunCommand(DefaultImage);
-            command.VolumeBindings.Add("/home", new DockerRunCommand.VolumeBinding()
+            var command = new RunCommand(DefaultImage);
+            command.VolumeBindings.Add("/home", new RunCommand.VolumeBinding()
             {
                 Host = "/temp"
             });
@@ -183,8 +183,8 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_VolumeBinding_ReadOnlyAppended()
         {
-            var command = new DockerRunCommand(DefaultImage);
-            command.VolumeBindings.Add("/home", new DockerRunCommand.VolumeBinding()
+            var command = new RunCommand(DefaultImage);
+            command.VolumeBindings.Add("/home", new RunCommand.VolumeBinding()
             {
                 Host = "/temp",
                 ReadOnly = "True"
@@ -196,8 +196,8 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_VolumeBinding_NoCopyAppended()
         {
-            var command = new DockerRunCommand(DefaultImage);
-            command.VolumeBindings.Add("/home", new DockerRunCommand.VolumeBinding()
+            var command = new RunCommand(DefaultImage);
+            command.VolumeBindings.Add("/home", new RunCommand.VolumeBinding()
             {
                 Host = "/temp",
                 NoCopy = "True"
@@ -209,7 +209,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_EnvironmentVariableObjectParsed()
         {
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.EnvironmentVariables.Add("Variable1", "Value");
             command.EnvironmentVariables.Add("Variable2", "2");
 
@@ -220,7 +220,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DockerRun_xUsesNetworkNameWhenNetworkTypeNetwork()
         {
-            var command = new DockerRunCommand(DefaultImage);
+            var command = new RunCommand(DefaultImage);
             command.AddedHosts.Add("docker","10.1.1.2");
 
             AssertCommandWithDefaults("--add-host=docker:10.1.1.2", command.ToString());
@@ -229,7 +229,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void DontRun_UsesCreateCommand()
         {
-            var command = new DockerRunCommand("busybox");
+            var command = new RunCommand("busybox");
             command.DontRun = true;
 
             Assert.AreEqual("docker create busybox", command.ToString());
@@ -239,7 +239,7 @@ namespace Calamari.Extensibility.Docker.Tests.Commands
         [Test]
         public void EntryCommand_PlacedAfterImageName()
         {
-            var command = new DockerRunCommand("busybox");
+            var command = new RunCommand("busybox");
             command.EntryCommand = "blah";
 
             Assert.AreEqual("docker run --detach busybox blah", command.ToString());

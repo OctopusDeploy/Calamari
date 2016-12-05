@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Utilities;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Extensibility.Docker.Tests
@@ -15,11 +16,40 @@ namespace Calamari.Extensibility.Docker.Tests
         {
             var result = ScriptBuilder.Run(new VariableDictionary());
 
-            Assert.AreEqual("docker run -d", result);
+            Assert.AreEqual("docker run --detach", result);
         }
 
         [Test]
-        public void MultipleVariables()
+        public void NetworkCommand()
+        {
+            var variables = new VariableDictionary
+            {
+                [SpecialVariables.Action.Docker.NetworkIPRange] = "192.171.0.0/16,192.169.1.0/24",
+                [SpecialVariables.Action.Docker.NetworkSubnet] = "192.170.0.0/16,192.168.1.0/24",
+                [SpecialVariables.Action.Docker.NetworkGateway] = "192.169.0.0/16,192.167.1.0/24",
+                [SpecialVariables.Action.Docker.NetworkType] = "other",
+                [SpecialVariables.Action.Docker.NetworkCustomDriver] = "bananas",
+                [SpecialVariables.Action.Docker.Args] = "--somethingelse"
+            };
+
+            var generator = Substitute.For<RandomStringGenerator>();
+            generator.Generate(Arg.Any<int>()).Returns("ABC");
+
+            var result = ScriptBuilder.Network(generator, variables);
+
+            var expected = "docker network create " +
+                           "--driver=\"bananas\" " +
+                           "--subnet=192.170.0.0/16 --subnet=192.168.1.0/24 " +
+                           "--ip-range=192.171.0.0/16 --ip-range=192.169.1.0/24 " +
+                           "--gateway=192.169.0.0/16 --gateway=192.167.1.0/24 " +
+                           "--somethingelse " +
+                           "network_abc";
+
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void RunCommand()
         {
             var variables = new VariableDictionary
             {
