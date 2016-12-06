@@ -4,13 +4,31 @@
     "netstandard1.6": {
       "imports": "dnxcore50",
       "dependencies": {
-        "System.Runtime.InteropServices": "4.3.0",
         "System.Collections": "4.3.0",
         "System.IO": "4.3.0",
-        "System.IO.FileSystem.Primitives": "4.3.0"
+        "System.IO.FileSystem": "4.3.0",
+        "System.IO.FileSystem.Primitives": "4.3.0",
+        "System.Runtime": "4.3.0",
+        "System.Runtime.Extensions": "4.3.0",
+        "System.Runtime.InteropServices": "4.3.0",
+        "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
+        "System.Runtime.Loader": "4.0.0",
+        "System.Text.Encoding.CodePages": "4.3.0"
       }
     },
     "net40": {
+      "dependencies": {
+        "NuGet.Core": "2.11.1"
+      },
+      "buildOptions": {
+        "platform": "anycpu",
+        "define": [
+          "NET40",
+          "HAS_DEFAULT_ENCODING",
+          "USE_NUGET_V2_LIBS"
+        ]
+      }
     }
+    
   }
 }

@@ -3,13 +3,14 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+#if USE_NUGET_V2_LIBS
 using NuGet;
-
+#endif
 #if !NET40
 using System.Runtime.Loader;
 #endif
 
-namespace Calamari.Utilities
+namespace Calamari.Extensibility.Utilities
 {
     public static class CrossPlatform
     {

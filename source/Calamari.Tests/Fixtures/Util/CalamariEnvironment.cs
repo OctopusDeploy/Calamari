@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Calamari.Utilities
+namespace Calamari.Tests.Fixtures.Util
 {
     public static class CalamariEnvironment
     {

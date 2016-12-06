@@ -6,10 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Extensibility.FileSystem;
-using Calamari.Integration.FileSystem;
 using NUnit.Framework;
 using Calamari.Utilities;
-using Calamari.Utilities.FileSystem;
 using NSubstitute;
 
 namespace Calamari.Extensibility.Docker.Tests
@@ -17,13 +15,25 @@ namespace Calamari.Extensibility.Docker.Tests
     [TestFixture]
     public class DockerRunFeatureFixture
     {
+        readonly ICalamariFileSystem fileSystem = Substitute.For<ICalamariFileSystem>();
+
+        [SetUp]
+        public void SetUp()
+        {
+            string blah = Arg.Any<string>();
+            fileSystem.CreateTemporaryFile(Arg.Any<string>(), out blah).Returns(x => {
+                x[1] = "Banana." + x[0];
+                return new MemoryStream();
+            });
+        }
+
         [Test]
         public void ScriptWithSupportedExceptionSucceeds()
         {
             var execution = Substitute.For<IScriptExecution>();
             execution.SupportedExtensions.Returns(new[] {"fake", "sh"});
 
-            var feature = new DockerRunFeature(execution, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            var feature = new DockerRunFeature(execution, fileSystem);
 
             feature.Install(new VariableDictionary());
 
@@ -35,27 +45,14 @@ namespace Calamari.Extensibility.Docker.Tests
         public void NoScriptWithSupportedExceptionThrows()
         {
             var execution = Substitute.For<IScriptExecution>();
-            execution.SupportedExtensions.Returns(new[] { "fake" });
+            execution.SupportedExtensions.Returns(new[] {"fake"});
 
-            var feature = new DockerRunFeature(execution, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            var fileSystem = Substitute.For<ICalamariFileSystem>();
 
-            Assert.Throws<Exception>(() => feature.Install(new VariableDictionary()), 
+            var feature = new DockerRunFeature(execution, fileSystem);
+
+            Assert.Throws<Exception>(() => feature.Install(new VariableDictionary()),
                 "Unable to find runnable script named `docker-run`");
-        }
-
-        [Test]
-        public void ScripxxxtWithSupportedExceptionSucceeds()
-        {
-            var execution = Substitute.For<IScriptExecution>();
-            execution.SupportedExtensions.Returns(new[] { "fake", "sh" });
-
-            var feature = new DockerRunFeature(execution, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
-
-            feature.Install(new VariableDictionary());
-//
-//            var fileName = execution.ReceivedCalls().Last().GetArguments().First().ToString();
-//            var test = File.ReadAllText(fileName);
-//            
         }
     }   
 }

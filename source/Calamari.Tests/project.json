@@ -74,14 +74,6 @@
   },
   "buildOptions": {
     "warningsAsErrors": true,
-    "embed": {
-      "include": [
-        "Fixtures/PowerShell/Scripts/HelloWithVariable.ps1",
-        "Fixtures/FSharp/Scripts/HelloDefaultValue.fsx",
-        "Fixtures/FSharp/Scripts/HelloDirectValue.fsx",
-        "Fixtures/FSharp/Scripts/HelloVariableSubstitution.fsx"
-      ]
-    },
     "copyToOutput": {
       "include": [
         "Fixtures/ConfigurationVariables/Samples/**",
@@ -96,10 +88,7 @@
         "Fixtures/Deployment/Packages/Octopus.Sample.AzureCloudService/**",
         "Fixtures/Integration/Packages/Samples/**",
         "Fixtures/JsonVariables/Samples/**",
-        "Fixtures/PowerShell/Packages/**",
-        "Fixtures/PowerShell/Scripts/**",
         "Fixtures/Substitutions/Samples/**",
-        "Fixtures/Features/Scripts/**",
         "Fixtures/Features/Packages/**"
       ],
       "mappings": {
@@ -108,9 +97,6 @@
         "NuGet/": "../Tools/NuGet**/"
       }
     }
-  },
-  "scripts": {
-    "postcompile": [ "./featurecopy \"%project:Directory%\" \"%compile:RuntimeOutputDir%\" \"%compile:Configuration%\"" ]
   },
   "runtimes": {
     "win7-x64": {},
