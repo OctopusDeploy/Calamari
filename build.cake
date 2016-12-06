@@ -173,7 +173,6 @@ Task("__Pack")
 	PackageLibraryWithVersion("Calamari.Utilities", nugetVersion);
 });
 
-
 private void UpdateVersionAndRepack(string project, string version) {
 	
 	TransformConfig(Path.Combine(artifactsDir, project, "project.json"), new TransformationCollection {
@@ -192,6 +191,7 @@ private void UpdateVersionAndRepack(string project, string version) {
 }
 private void PackageLibraryWithVersion(string project, string version)
 {
+    DotNetCoreBuild(Path.Combine("./source", project), new DotNetCoreBuildSettings { Configuration = configuration });	
 	CopyDirectory(Path.Combine("./source", project), Path.Combine(artifactsDir, project));   
 	UpdateVersionAndRepack(project, version);
 }
