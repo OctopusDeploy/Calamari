@@ -214,8 +214,9 @@ namespace Calamari.Features
 
             if (attribute == null)
             {
-                throw new InvalidOperationException(
-                    $"Feature `{type.FullName}` does not have a FeatureAttribute attribute so is to be used in this operation.");
+                return new FeatureAttribute(type.Name, "");
+                //throw new InvalidOperationException(
+                //    $"Feature `{type.FullName}` does not have a FeatureAttribute attribute so is to be used in this operation.");
             }
 
             if (attribute.Module != null && attribute.Module.GetConstructors().All(c => c.GetParameters().Any()))
