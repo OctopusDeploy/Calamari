@@ -7,7 +7,6 @@ namespace Calamari.Extensibility
         void SetOutputVariable(string name, string value);
         List<string> GetStrings(string variableName, params char[] separators);
         string this[string name] { get; set; }
-        void Set(string name, string value);
         string Get(string variableName, out string error, string defaultValue = null);
         bool GetFlag(string variableName, bool defaultValueIfUnset = false);
         List<string> GetPaths(string variableName);
@@ -18,7 +17,7 @@ namespace Calamari.Extensibility
         string Evaluate(string expressionOrVariableOrText, out string error, bool haltOnError = true);
         string Evaluate(string expressionOrVariableOrText);
         void SetStrings(string variableName, IEnumerable<string> values, string separator = ",");
-
+        void Set(string name, string value);
         void Save(string path);
 
         void Save();
