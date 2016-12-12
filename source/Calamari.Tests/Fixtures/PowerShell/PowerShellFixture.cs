@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using Assent;
+using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
@@ -176,7 +178,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
-            //output.ApproveOutput();
+          //  this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
         }
 
         [Test]
@@ -190,7 +192,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
-            //output.ApproveOutput();
+           // this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
         }
 
         [Test]

@@ -2,29 +2,60 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Calamari.Commands.Support;
-using Calamari.Deployment.Features;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
+using System.Reflection;
+using Calamari.Deployment.Features;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class FeatureConvention : IInstallConvention
+    public class FeatureConvention : FeatureConventionBase, IInstallConvention
+    {
+        public FeatureConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) 
+            : base(deploymentStage, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+        {
+
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            Run(deployment);
+        }
+    }
+
+    public class FeatureRollbackConvention : FeatureConventionBase, IRollbackConvention
+    {
+        public FeatureRollbackConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) : base(deploymentStage, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+        {
+        }
+
+        public void Rollback(RunningDeployment deployment)
+        {
+            Run(deployment);
+        }
+
+        public void Cleanup(RunningDeployment deployment)
+        {
+            
+        }
+    }
+
+    public abstract class FeatureConventionBase
     {
         readonly string deploymentStage;
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
-        const string ScriptResourcePrefix = "Calamari.Scripts.";
+        const string scriptResourcePrefix = "Calamari.Scripts.";
         readonly ICollection<IFeature> featureClasses;
-        private static readonly Assembly Assembly = typeof(FeatureConvention).GetTypeInfo().Assembly; 
+        static readonly Assembly Assembly = typeof(FeatureConventionBase).GetTypeInfo().Assembly; 
 
-        public FeatureConvention(string deploymentStage, ICalamariFileSystem fileSystem, 
+        protected FeatureConventionBase(string deploymentStage, ICalamariFileSystem fileSystem, 
             IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
         {
             this.deploymentStage = deploymentStage;
@@ -35,7 +66,7 @@ namespace Calamari.Deployment.Conventions
             this.featureClasses = LoadFeatureClasses();
         }
 
-        public void Install(RunningDeployment deployment)
+        protected void Run(RunningDeployment deployment)
         {
             var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
@@ -50,14 +81,7 @@ namespace Calamari.Deployment.Conventions
                 ExecuteFeatureClasses(deployment, feature);
                 ExecuteFeatureScripts(deployment, feature, embeddedResourceNames);
             }
-        }
-        static ICollection<IFeature> LoadFeatureClasses()
-        {
-            return new List<IFeature>
-            {
-               new IisWebSiteBeforeDeployFeature(),
-               new IisWebSiteAfterPostDeployFeature()
-            };
+
         }
 
         void ExecuteFeatureClasses(RunningDeployment deployment, string feature)
@@ -115,14 +139,23 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
+        static ICollection<IFeature> LoadFeatureClasses()
+        {
+            return new List<IFeature>
+            {
+               new IisWebSiteBeforeDeployFeature(),
+               new IisWebSiteAfterPostDeployFeature()
+            };
+        }
+
         public static string GetEmbeddedResourceName(string featureScriptName)
         {
-            return ScriptResourcePrefix + featureScriptName;
+            return scriptResourcePrefix + featureScriptName;
         }
 
         public static string GetScriptName(string feature, string suffix, string extension)
         {
-            return feature + "_" + suffix + "." + extension;
+            return  feature + "_" + suffix + "." + extension;
         }
 
         /// <summary>
@@ -130,8 +163,8 @@ namespace Calamari.Deployment.Conventions
         /// </summary>
         private IEnumerable<string> GetScriptNames(string feature)
         {
-            return scriptEngine.GetSupportedExtensions()
-                .Select(extension => GetScriptName(feature, deploymentStage, extension));
+            return scriptEngine.GetSupportedExtensions() 
+                .Select(extension => GetScriptName(feature, deploymentStage, extension ));
         }
 
     }

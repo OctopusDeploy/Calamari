@@ -17,10 +17,10 @@ namespace Calamari.Azure.Integration
     {
         const string OctopusPackagesContainerName = "octopuspackages";
 
-        public Uri Upload(SubscriptionCloudCredentials credentials, string storageAccountName, string packageFile, string uploadedFileName)
+        public Uri Upload(SubscriptionCloudCredentials credentials, string storageAccountName, string packageFile, string uploadedFileName, string storageEndpointSuffix, string serviceManagementEndpoint)
         {
             var cloudStorage =
-                new CloudStorageAccount(new StorageCredentials(storageAccountName, GetStorageAccountPrimaryKey(credentials, storageAccountName)), true);
+                new CloudStorageAccount(new StorageCredentials(storageAccountName, GetStorageAccountPrimaryKey(credentials, storageAccountName,serviceManagementEndpoint)),storageEndpointSuffix, true);
 
             var blobClient = cloudStorage.CreateCloudBlobClient();
             var container = blobClient.GetContainerReference(OctopusPackagesContainerName);
@@ -119,9 +119,9 @@ namespace Calamari.Azure.Integration
             Log.Verbose("Upload complete");
         }
 
-        static string GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName)
+        static string GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
         {
-            using (var cloudClient = CloudContext.Clients.CreateStorageManagementClient(credentials))
+            using (var cloudClient = CloudContext.Clients.CreateStorageManagementClient(credentials,new Uri(serviceManagementEndpoint)))
             {
                 var getKeysResponse = cloudClient.StorageAccounts.GetKeys(storageAccountName);
 

@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
 using Calamari.Util;
+using Calamari.Util.Environments;
 using System.Reflection;
 
 namespace Calamari
@@ -11,22 +12,26 @@ namespace Calamari
     {
         readonly string displayName;
         readonly string informationalVersion;
+        readonly string[] environmentInformation;
 
-        public Program(string displayName, string informationalVersion)
+        public Program(string displayName, string informationalVersion, string[] environmentInformation)
         {
             this.displayName = displayName;
             this.informationalVersion = informationalVersion;
+            this.environmentInformation = environmentInformation;
         }
 
         static int Main(string[] args)
         {
-            var program = new Program("Calamari", typeof(Program).GetTypeInfo().Assembly.GetInformationalVersion());
+            var program = new Program("Calamari", typeof(Program).GetTypeInfo().Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation());
             return program.Execute(args);
         }
 
         public int Execute(string[] args)
         {
             Log.Verbose($"Octopus Deploy: {displayName} version {informationalVersion}");
+            Log.Verbose($"Environment Information:{Environment.NewLine}" +
+                $"  {string.Join($"{Environment.NewLine}  ", environmentInformation)}");
 
             ProxyInitializer.InitializeDefaultProxy();
             RegisterCommandAssemblies();
@@ -43,7 +48,6 @@ namespace Calamari
             {
                 return ConsoleFormatter.PrintError(ex);
             }
-            
         }
 
         protected virtual void RegisterCommandAssemblies()

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
@@ -37,14 +36,14 @@ namespace Calamari.Integration.Scripting.ScriptCS
 
         public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
         {
-            scriptParameters = RetriveParameterValues(scriptParameters);
+            scriptParameters = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("-script \"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
         }
 
-        private static string RetriveParameterValues(string scriptParameters)
+        private static string RetrieveParameterValues(string scriptParameters)
         {
             if (scriptParameters == null) return null;
             return scriptParameters.Trim()
@@ -73,7 +72,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{VariableDeclarations}}", WriteVariableDictionary(variables));
+            builder.Replace("/*{{VariableDeclarations}}*/", WriteVariableDictionary(variables));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))

@@ -98,6 +98,7 @@
             public static readonly string AutomaticallyRunConfigurationTransformationFiles = "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles";
             public static readonly string IgnoreConfigTransformationErrors = "Octopus.Action.Package.IgnoreConfigTransformationErrors";
             public static readonly string SuppressConfigTransformationLogging = "Octopus.Action.Package.SuppressConfigTransformationLogging";
+            public static readonly string EnableDiagnosticsConfigTransformationLogging = "Octopus.Action.Package.EnableDiagnosticsConfigTransformationLogging";
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string SubstituteInFilesEnabled = "Octopus.Action.SubstituteInFiles.Enabled";
             public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
@@ -111,6 +112,13 @@
                 public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
                 public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
             }
+        }
+
+        public static class Vhd
+        {
+            public static readonly string ApplicationPath = "Octopus.Action.Vhd.ApplicationPath";
+            public static readonly string VmName = "Octopus.Action.Vhd.VmName";
+            public static readonly string DeployVhdToVm = "Octopus.Action.Vhd.DeployVhdToVm";
         }
 
         public static class Environment
@@ -128,6 +136,7 @@
         public static class Features
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";
+            public const string Vhd = "Octopus.Features.Vhd";
         }
 
         public static class Action
@@ -135,6 +144,7 @@
             public const string Name = "Octopus.Action.Name";
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
+            public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
 
             public static class IisWebSite
             {
@@ -189,6 +199,11 @@
                 public static readonly string ResourceGroupDeploymentName = "Octopus.Action.Azure.ResourceGroupDeploymentName";
                 public static readonly string ResourceGroupDeploymentMode = "Octopus.Action.Azure.ResourceGroupDeploymentMode";
 
+                public static readonly string Environment = "Octopus.Action.Azure.Environment";
+                public static readonly string ServiceManagementEndPoint = "Octopus.Action.Azure.ServiceManagementEndPoint";
+                public static readonly string ActiveDirectoryEndPoint = "Octopus.Action.Azure.ActiveDirectoryEndPoint";
+                public static readonly string StorageEndPointSuffix = "Octopus.Action.Azure.StorageEndpointSuffix";
+
                 public static class Output
                 {
                     public static readonly string AzurePowershellModulePath = "OctopusAzureModulePath";
@@ -218,6 +233,11 @@
                 public static readonly string StoreName = "Octopus.Action.Certificate.StoreName";
                 public static readonly string StoreUser = "Octopus.Action.Certificate.StoreUser";
                 public static readonly string PrivateKeyAccessRules = "Octopus.Action.Certificate.PrivateKeyAccessRules";
+            }
+
+            public static class Script
+            {
+                public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
             }
         }
 

@@ -11,52 +11,88 @@ namespace Calamari.Integration.ConfigurationTransforms
     public class TransformFileLocator : ITransformFileLocator
     {
         private readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public TransformFileLocator(ICalamariFileSystem fileSystem)
+        public TransformFileLocator(ICalamariFileSystem fileSystem, ILog log = null)
         {
             this.fileSystem = fileSystem;
+            this.log = log ?? new LogWrapper();
         }
 
-        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation)
+        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled)
         {
             var defaultTransformFileName = DetermineTransformFileName(sourceFile, transformation, true);
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
 
-            string fullTransformPath;
+            string fullTransformDirectoryPath;
             if (Path.IsPathRooted(transformFileName))
             {
-                fullTransformPath = Path.GetFullPath(GetDirectoryName(transformFileName));
+                fullTransformDirectoryPath = Path.GetFullPath(GetDirectoryName(transformFileName));
             }
             else
             {
                 var relativeTransformPath = fileSystem.GetRelativePath(sourceFile, transformFileName);
-                fullTransformPath = Path.GetFullPath(Path.Combine(GetDirectoryName(sourceFile), GetDirectoryName(relativeTransformPath)));
+                fullTransformDirectoryPath = Path.GetFullPath(Path.Combine(GetDirectoryName(sourceFile), GetDirectoryName(relativeTransformPath)));
             }
             
-            if (!fileSystem.DirectoryExists(fullTransformPath))
+            if (!fileSystem.DirectoryExists(fullTransformDirectoryPath))
+            {
+                if (diagnosticLoggingEnabled)
+                    log.Verbose($" - Skipping as transform folder \'{fullTransformDirectoryPath}\' does not exist");
                 yield break;
+            }
 
             // The reason we use fileSystem.EnumerateFiles here is to get the actual file-names from the physical file-system.
             // This prevents any issues with mis-matched casing in transform specifications.
-            foreach (var transformFile in fileSystem.EnumerateFiles(fullTransformPath, GetFileName(defaultTransformFileName), GetFileName(transformFileName)))
+            var enumerateFiles = fileSystem.EnumerateFiles(fullTransformDirectoryPath, GetFileName(defaultTransformFileName), GetFileName(transformFileName)).Distinct().ToArray();
+            if (enumerateFiles.Any())
             {
-                var sourceFileName = (transformation?.SourcePattern?.Contains(Path.DirectorySeparatorChar) ?? false)
-                    ? fileSystem.GetRelativePath(transformFile, sourceFile).TrimStart('.', Path.DirectorySeparatorChar)
-                    : GetFileName(sourceFile);
+                foreach (var transformFile in enumerateFiles)
+                {
+                    var sourceFileName = (transformation.SourcePattern?.Contains(Path.DirectorySeparatorChar) ?? false)
+                        ? fileSystem.GetRelativePath(transformFile, sourceFile)
+                            .TrimStart('.', Path.DirectorySeparatorChar)
+                        : GetFileName(sourceFile);
 
-                if (transformation.Advanced && !transformation.IsSourceWildcard && !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                    if (transformation.Advanced && !transformation.IsSourceWildcard &&
+                        !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (diagnosticLoggingEnabled)
+                            log.Verbose($" - Skipping as file name \'{sourceFileName}\' does not match the target pattern \'{transformation.SourcePattern}\'");
+                        continue;
+                    }
 
-                if (transformation.Advanced && transformation.IsSourceWildcard && !DoesFileMatchWildcardPattern(sourceFileName, transformation.SourcePattern))
-                    continue;
+                    if (transformation.Advanced && transformation.IsSourceWildcard &&
+                        !DoesFileMatchWildcardPattern(sourceFileName, transformation.SourcePattern))
+                    {
+                        if (diagnosticLoggingEnabled)
+                            log.Verbose($" - Skipping as file name \'{sourceFileName}\' does not match the wildcard target pattern \'{transformation.SourcePattern}\'");
+                        continue;
+                    }
 
-                if (!fileSystem.FileExists(transformFile))
-                    continue;
+                    if (!fileSystem.FileExists(transformFile))
+                    {
+                        if (diagnosticLoggingEnabled)
+                            log.Verbose($" - Skipping as transform \'{transformFile}\' does not exist");
+                        continue;
+                    }
 
-                if (string.Equals(sourceFile, transformFile, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                    if (string.Equals(sourceFile, transformFile, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (diagnosticLoggingEnabled)
+                            log.Verbose($" - Skipping as target \'{sourceFile}\' is the same as transform \'{transformFile}\'");
+                        continue;
+                    }
 
-                yield return transformFile;
+                    yield return transformFile;
+                }
+            }
+            else if (diagnosticLoggingEnabled)
+            {
+                if (GetFileName(defaultTransformFileName) == GetFileName(transformFileName))
+                    log.Verbose($" - skipping as transform \'{GetFileName(defaultTransformFileName)}\' could not be found in \'{fullTransformDirectoryPath}\'");
+                else
+                    log.Verbose($" - skipping as neither transform \'{GetFileName(defaultTransformFileName)}\' nor transform \'{GetFileName(transformFileName)}\' could be found in \'{fullTransformDirectoryPath}\'");
             }
         }
 
@@ -135,7 +171,5 @@ namespace Calamari.Integration.ConfigurationTransforms
             var sourcePatternPath = sourcePattern.Substring(0, sourcePattern.LastIndexOf(Path.DirectorySeparatorChar));
             return sourceDirectory.Replace(sourcePatternPath, string.Empty);
         }
-
-
     }
 }

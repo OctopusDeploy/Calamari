@@ -90,7 +90,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return bootstrapFile;
         }
 
-        private static string DeclareVariables(CalamariVariableDictionary variables)
+        static string DeclareVariables(CalamariVariableDictionary variables)
         {
             var output = new StringBuilder();
 
@@ -101,7 +101,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return output.ToString();
         }
 
-        private static string DeclareScriptModules(CalamariVariableDictionary variables)
+        static string DeclareScriptModules(CalamariVariableDictionary variables)
         {
             var output = new StringBuilder();
 

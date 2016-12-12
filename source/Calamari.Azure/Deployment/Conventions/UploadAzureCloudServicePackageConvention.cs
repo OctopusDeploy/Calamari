@@ -13,6 +13,7 @@ namespace Calamari.Azure.Deployment.Conventions
         readonly IAzurePackageUploader azurePackageUploader;
         readonly ISubscriptionCloudCredentialsFactory credentialsFactory;
 
+
         public UploadAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, IAzurePackageUploader azurePackageUploader,
             ISubscriptionCloudCredentialsFactory credentialsFactory)
         {
@@ -36,8 +37,11 @@ namespace Calamari.Azure.Deployment.Conventions
                 );
 
             var storageAccountName = deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName);
-
-            var uploadedUri = azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName);
+            var storageEndpointSuffix =
+                deployment.Variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix, DefaultVariables.StorageEndpointSuffix);
+            var defaultServiceManagementEndpoint =
+                deployment.Variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
+            var uploadedUri = azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName,storageEndpointSuffix, defaultServiceManagementEndpoint);
 
             Log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), deployment.Variables);
             Log.Info("Package uploaded to " + uploadedUri.ToString());

@@ -4,11 +4,22 @@ namespace Calamari.Azure.Integration.Security
 {
     public class ServicePrincipal
     {
-        public static string GetAuthorizationToken(string tenantId, string applicationId, string password)
+        public static string GetAuthorizationToken(string tenantId, string applicationId, string password, string serviceManagementEndPoint, string activeDirectoryEndPoint)
         {
-            var context = new AuthenticationContext($"https://login.windows.net/{tenantId}");
-            var result = context.AcquireToken("https://management.core.windows.net/", new ClientCredential(applicationId, password));
+            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
+            Log.Verbose($"Authentication Context: {authContext}");
+            var context = new AuthenticationContext(authContext);
+            var result = context.AcquireToken(serviceManagementEndPoint, new ClientCredential(applicationId, password));
             return result.AccessToken;
+        }
+
+        static string GetContextUri(string activeDirectoryEndPoint, string tenantId)
+        {
+            if (!activeDirectoryEndPoint.EndsWith("/"))
+            {
+                return $"{activeDirectoryEndPoint}/{tenantId}";
+            }
+            return $"{activeDirectoryEndPoint}{tenantId}";
         }
     }
 }

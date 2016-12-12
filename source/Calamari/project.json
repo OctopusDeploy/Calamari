@@ -77,6 +77,7 @@
         "System.Reflection.Extensions": "4.0.1",
         "System.Reflection.TypeExtensions": "4.1.0",
         "System.Runtime": "4.1.0",
+        "System.Runtime.Extensions": "4.1.0",
         "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
         "System.Runtime.Serialization.Formatters": "4.0.0-rc3-24212-01",
         "System.Security.Cryptography.Primitives": "4.0.0",
@@ -103,12 +104,7 @@
         "Integration\\Scripting\\WindowsPowerShell\\Bootstrap.ps1",
         "Integration\\Scripting\\ScriptCS\\Bootstrap.csx",
         "Integration\\Scripting\\FSharp\\Bootstrap.fsx",
-        "Scripts\\Octopus.Features.IISWebSite_BeforePostDeploy.ps1",
-        "Scripts\\Octopus.Features.RedGateDatabase_BeforePostDeploy.ps1",
-        "Scripts\\Octopus.Features.WindowsService_AfterPreDeploy.ps1",
-        "Scripts\\Octopus.Features.WindowsService_BeforePostDeploy.ps1",
-        "Scripts\\Octopus.Features.HelloWorld_BeforePreDeploy.sh",
-        "Scripts\\Octopus.Features.HelloWorld_BeforePreDeploy.ps1"
+        "Scripts\\**"
       ]
     }
   },

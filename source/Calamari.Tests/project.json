@@ -7,8 +7,9 @@
     "FluentAssertions": "4.13.1",
     "dotnet-test-nunit": "3.4.0-beta-2",
     "NuGet.CommandLine": "2.8.3",
-    "OctoDiff": "1.1.0-dnc0014",
-    "Octostache": "2.0.7"
+    "OctoDiff": "1.1.0",
+    "Octostache": "2.0.7",
+    "Assent": "0.4.0"
   },
   "testRunner": "nunit",
   "frameworks": {
@@ -25,7 +26,8 @@
         "Sprache": "2.1.0",
         "System.IO.Packaging": "4.0.0",
         "System.ServiceProcess.ServiceController": "4.1.0",
-        "System.Runtime": "4.1.0"       
+        "System.Runtime": "4.1.0",
+        "System.IO.Compression.ZipFile": "4.0.1"       
       },
       "buildOptions": {
         "define": [ "NETCORE", "USE_OCTOPUS_XMLT" ],
@@ -43,11 +45,11 @@
          "Microsoft.CSharp": "*",
          "System.Data": "*",
          "System.Xml": "*",
-         "WindowsBase": "*"        
+        "WindowsBase": "*",
+        "System.IO.Compression": "*",
+        "System.IO.Compression.FileSystem": "*"
        },
        "dependencies": {
-         "ApprovalTests": "3.0.11",
-         "ApprovalUtilities": "3.0.11",
          "GitVersionTask": "3.3.0",
          "MarkdownSharp": "1.13.0.0",
          "Microsoft.Bcl": "1.1.9",
@@ -61,7 +63,7 @@
          "Polly": "4.3.0" 
        },
       "buildOptions": {
-        "define": [ "NET40", "IIS_SUPPORT", "APPROVAL_TESTS", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE", "WINDOWS_CERTIFICATE_STORE_SUPPORT" ]
+        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE", "CAN_GET_PHYSICAL_MEMORY", "WINDOWS_CERTIFICATE_STORE_SUPPORT" ]
       }
     }
   },
@@ -79,11 +81,14 @@
       "include": [
         "Fixtures/ConfigurationVariables/Samples/**",
         "Fixtures/ConfigurationTransforms/Samples/**",
+        "Fixtures/ConfigurationTransforms/Approved/**.approved.*",
         "Fixtures/Bash/Scripts/**",
         "Fixtures/Conventions/ConfigTransforms/**",
         "Fixtures/Deployment/Packages/Acme.Service/**",
+        "Fixtures/Deployment/Packages/Acme.Vhd/**",
         "Fixtures/Deployment/Packages/Acme.Web/**",
         "Fixtures/Deployment/Packages/Acme.Web.Tests/**",
+        "Fixtures/Deployment/Packages/Acme.Package/**",
         "Fixtures/Deployment/Packages/Octopus.Sample.AzureCloudService/**",
         "Fixtures/FSharp/Scripts/**",
         "Fixtures/Integration/Packages/Samples/**",

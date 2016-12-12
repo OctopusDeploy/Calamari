@@ -12,9 +12,101 @@ $ErrorActionPreference = 'Stop'
 # Functions
 # -----------------------------------------------------------------
 
-function Write-VersionTable
+function Log-VersionTable
 {
 	Write-Verbose ($PSVersionTable | Out-String)
+}
+
+function Log-EnvironmentInformation
+{
+	if ($OctopusParameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging")) {
+		if ($OctopusParameters["Octopus.Action.Script.SuppressEnvironmentLogging"] -eq "True") {
+			return;
+		}
+	}
+
+	Write-Host "##octopus[stdout-verbose]"
+	Write-Host "PowerShell Environment Information:"
+	SafelyLog-EnvironmentVars
+	SafelyLog-PathVars
+	SafelyLog-ProcessVars
+	SafelyLog-ComputerInfoVars
+	Write-Host "##octopus[stdout-default]"
+}
+
+function SafelyLog-EnvironmentVars
+{
+	Try
+	{
+		$operatingSystem = [System.Environment]::OSVersion.ToString()
+		Write-Host "  OperatingSystem: $($operatingSystem)"
+		
+		$osBitVersion = If ([System.Environment]::Is64BitOperatingSystem) {"x64"} Else {"x86"}
+		Write-Host "  OsBitVersion: $($osBitVersion)"
+
+		$is64BitProcess = [System.Environment]::Is64BitProcess.ToString()
+		Write-Host "  Is64BitProcess: $($is64BitProcess)"
+
+		$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+		Write-Host "  CurrentUser: $($currentUser)"
+
+		$machineName = [System.Environment]::MachineName
+		Write-Host "  MachineName: $($machineName)"
+
+		$processorCount = [System.Environment]::ProcessorCount.ToString()
+		Write-Host "  ProcessorCount: $($processorCount)"
+	}
+	Catch
+	{
+		# silently fail.
+	}
+}
+
+function SafelyLog-PathVars
+{
+	Try
+	{
+		$currentDirectory = [System.IO.Directory]::GetCurrentDirectory()
+		Write-Host "  CurrentDirectory: $($currentDirectory)"
+		
+		$tempPath = [System.IO.Path]::GetTempPath()
+		Write-Host "  TempDirectory: $($tempPath)"
+	}
+	Catch
+	{
+		# silently fail.
+	}
+}
+
+function SafelyLog-ProcessVars
+{
+	Try
+	{
+		$hostProcess = [System.Diagnostics.Process]::GetCurrentProcess().ProcessName
+		Write-Host "  HostProcessName: $($hostProcess)"
+	}
+	Catch
+	{
+		# silently fail.
+	}
+}
+
+function SafelyLog-ComputerInfoVars
+{
+	Try
+	{
+		$OperatingSystem = (Get-WmiObject Win32_OperatingSystem)
+
+		$totalVisibleMemorySize = $OperatingSystem.TotalVisibleMemorySize
+		Write-Host "  TotalPhysicalMemory: $($totalVisibleMemorySize) KB"
+
+		$freePhysicalMemory = $OperatingSystem.FreePhysicalMemory
+		Write-Host "  AvailablePhysicalMemory: $($freePhysicalMemory) KB"
+	}
+	Catch
+	{
+		# silently fail.
+	}
 }
 
 function Convert-ServiceMessageValue([string]$value)
@@ -24,34 +116,33 @@ function Convert-ServiceMessageValue([string]$value)
 }
 
 function Set-OctopusVariable([string]$name, [string]$value) 
-{ 	
-    $name = Convert-ServiceMessageValue($name)
-    $value = Convert-ServiceMessageValue($value)
+{
+	$name = Convert-ServiceMessageValue($name)
+	$value = Convert-ServiceMessageValue($value)
 
 	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
 }
 
 function New-OctopusArtifact([string]$path, [string]$name="""") 
-{ 	
-    if ((Test-Path $path) -eq $false) {
-        Write-Verbose "There is no file at '$path' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
-    }
+{
+	if ((Test-Path $path) -eq $false) {
+		Write-Verbose "There is no file at '$path' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
+	}
 
-    if ($name -eq """") 
-    {
-        $name = [System.IO.Path]::GetFileName($path)
-    }
+	if ($name -eq """")	{
+		$name = [System.IO.Path]::GetFileName($path)
+	}
 	$name = Convert-ServiceMessageValue($name)
 
-    $length = ([System.IO.FileInfo]$path).Length;
+	$length = ([System.IO.FileInfo]$path).Length;
 	if (!$length) {
 		$length = 0;
 	}
-    $length = Convert-ServiceMessageValue($length.ToString());
+	$length = Convert-ServiceMessageValue($length.ToString());
 
-    $path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
-    $path = [System.IO.Path]::GetFullPath($path)
-    $path = Convert-ServiceMessageValue($path)
+	$path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
+	$path = [System.IO.Path]::GetFullPath($path)
+	$path = Convert-ServiceMessageValue($path)
 
 	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)' length='$($length)']"
 }
@@ -136,7 +227,7 @@ function Initialize-ProxySettings()
 		}
 		else
 		{
-            $proxy.Credentials = New-Object System.Net.NetworkCredential("","")
+			$proxy.Credentials = New-Object System.Net.NetworkCredential("","")
 		}
 	}
 	else 
@@ -147,7 +238,7 @@ function Initialize-ProxySettings()
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
 }
 
-Write-VersionTable
+Log-VersionTable
 
 # -----------------------------------------------------------------
 # Variables
@@ -167,6 +258,8 @@ Write-VersionTable
 
 Initialize-ProxySettings
 
+Log-EnvironmentInformation
+
 # -----------------------------------------------------------------
 # Invoke target script
 # -----------------------------------------------------------------
@@ -177,6 +270,6 @@ Initialize-ProxySettings
 # -----------------------------------------------------------------
 
 if ((test-path variable:global:lastexitcode)) 
-{ 
+{
 	exit $LastExitCode 
 }

@@ -78,7 +78,6 @@ function set_octopusvariable
 	echo $MESSAGE
 }
 
-
 # -----------------------------------------------------------------------------
 # Function to create a new octopus artifact
 #	Accepts 2 arguments:
@@ -99,7 +98,6 @@ function new_octopusartifact
 	ofn=$2
 	len=$(wc -c < $1 )
 
-
 	if [ -z "$ofn" ]
 	then
 	    ofn=`basename "$pth"`
@@ -107,3 +105,30 @@ function new_octopusartifact
 
 	echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
 }
+
+# -----------------------------------------------------------------------------
+# Functions to write the environment information
+# -----------------------------------------------------------------------------
+function log_environment_information
+{
+	suppressEnvironmentLogging=$(get_octopusvariable "Octopus.Action.Script.SuppressEnvironmentLogging")
+	if [ "$suppressEnvironmentLogging" == "True" ]
+	then
+		return 0
+	fi
+
+	echo "##octopus[stdout-verbose]"
+	echo "Bash Environment Information:"
+	echo "  OperatingSystem: $(uname -a)"
+	echo "  CurrentUser: $(whoami)"
+	echo "  HostName: $(hostname)"
+	echo "  ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
+	currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+	echo "  CurrentDirectory: $currentDirectory"
+	tempDirectory=$(dirname $(mktemp -u))
+	echo "  TempDirectory: $tempDirectory"
+	echo "  HostProcessID: $$"
+	echo "##octopus[stdout-default]"
+}
+
+log_environment_information

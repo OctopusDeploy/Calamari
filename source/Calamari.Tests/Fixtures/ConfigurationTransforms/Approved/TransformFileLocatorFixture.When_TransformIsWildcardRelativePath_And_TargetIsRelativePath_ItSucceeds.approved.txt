@@ -1,0 +1,11 @@
+﻿Applying multiple transforms in a different directory to a single target in a different directory
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─config
+| └─web.config
+└─transforms
+  ├─connstrings.mytransform.config
+  └─security.mytransform.config
+Then the transform transforms\*.mytransform.config => config\web.config will:
+ - Apply the transform transforms\connstrings.mytransform.config to file config\web.config
+ - Apply the transform transforms\security.mytransform.config to file config\web.config
