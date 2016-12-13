@@ -11,7 +11,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         public void ShouldThrowOnceRetriesExceeded()
         {
             const int retries = 100;
-            var subject = new RetryTracker(100, null, new RetryInterval(100, 200, 2));
+            var subject = new RetryTracker(100, null, new LimitedExponentialRetryInterval(100, 200, 2));
             Exception caught = null;
             var retried = 0;
 
