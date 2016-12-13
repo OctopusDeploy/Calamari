@@ -13,30 +13,24 @@ namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetPackageDownloader
     {
-        private readonly RetryTracker retry;
         private readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        internal const int NumberOfTimesToRetryOnFailure = 4;
-        internal const int NumberOfTimesToAttemptToDownloadPackage = NumberOfTimesToRetryOnFailure + 1;
 
-        public NuGetPackageDownloader() : this(GetRetryTracker())
+        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
         {
+            DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts, downloadAttemptBackoff, DownloadPackageAction);
         }
 
-        public NuGetPackageDownloader(RetryTracker retry)
+        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, Action<string, NuGetVersion, Uri, ICredentials, string> action)
         {
-            this.retry = retry;
-        }
-
-        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
-        {
-            DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, DownloadPackageAction);
-        }
-
-        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, Action<string, NuGetVersion, Uri, ICredentials, string> action)
-        {
+            if (maxDownloadAttempts <= 0)
+                throw new ArgumentException($"The number of download attempts should be greater than zero, but was {maxDownloadAttempts}", nameof(maxDownloadAttempts));
+            
+            // The RetryTracker is a bit finicky to set up...
+            var numberOfRetriesOnFailure = maxDownloadAttempts-1;
+            var retry = new RetryTracker(numberOfRetriesOnFailure, timeLimit: null, retryInterval: new LinearRetryInterval(downloadAttemptBackoff));
             while (retry.Try())
             {
-                Log.Verbose($"Downloading package (attempt {retry.CurrentTry} of {NumberOfTimesToAttemptToDownloadPackage})");
+                Log.Verbose($"Downloading package (attempt {retry.CurrentTry} of {maxDownloadAttempts})");
 
                 try
                 {
@@ -45,7 +39,7 @@ namespace Calamari.Integration.Packages.NuGet
                 }
                 catch (Exception ex)
                 {
-                    Log.Verbose($"Attempt {retry.CurrentTry} of {NumberOfTimesToAttemptToDownloadPackage}: {ex.Message}");
+                    Log.Verbose($"Attempt {retry.CurrentTry} of {maxDownloadAttempts}: {ex.Message}");
 
                     fileSystem.DeleteFile(targetFilePath, FailureOptions.IgnoreFailure);
 
@@ -57,7 +51,7 @@ namespace Calamari.Integration.Packages.NuGet
                     }
                     else
                     {
-                        var helpfulFailure = $"The package {packageId} version {version} could not be downloaded from the external feed '{feedUri}' after making {NumberOfTimesToAttemptToDownloadPackage} attempts over a total of {Math.Floor(retry.TotalElapsed.TotalSeconds)}s. Make sure the package is pushed to the external feed and try the deployment again. If this is part of an automated deployment, make sure all packages are pushed to the external feed before starting the deployment. If the packages are pushed, perhaps the external feed hasn't finished updating its index and you need to give the external feed more time to update its index before starting the deployment. If you are getting a package verification error, try switching to a Windows File Share package repository to see if that helps.";
+                        var helpfulFailure = $"The package {packageId} version {version} could not be downloaded from the external feed '{feedUri}' after making {maxDownloadAttempts} attempts over a total of {Math.Floor(retry.TotalElapsed.TotalSeconds)}s. Make sure the package is pushed to the external feed and try the deployment again. If this is part of an automated deployment, make sure all packages are pushed to the external feed before starting the deployment. If the packages are pushed, perhaps the external feed hasn't finished updating its index and you need to give the external feed more time to update its index before starting the deployment. If you are getting a package verification error, try switching to a Windows File Share package repository to see if that helps.";
                         helpfulFailure += $"{Environment.NewLine}{ex}";
 
                         throw new Exception(helpfulFailure, ex);
@@ -98,11 +92,6 @@ namespace Calamari.Integration.Packages.NuGet
         {
             return uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                    uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
-        }
-
-        static RetryTracker GetRetryTracker()
-        {
-            return new RetryTracker(maxRetries: NumberOfTimesToRetryOnFailure, timeLimit: null, retryInterval: new RetryInterval(5000, 100000, 2));
         }
     }
 }

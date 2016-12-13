@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using Calamari.Integration.Packages.NuGet;
-using Calamari.Integration.Retry;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -28,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             var calledCount = 0;
             var downloader = new NuGetPackageDownloader();
-            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, (arg1, arg2, arg3, arg4, arg5) =>
+            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: 5, downloadAttemptBackoff: TimeSpan.Zero, action: (arg1, arg2, arg3, arg4, arg5) =>
             {
                 calledCount++;
             });
@@ -37,7 +33,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        public void AttemptsFiveTimesOnError()
+        [TestCase(1, ExpectedResult = 1)]
+        [TestCase(5, ExpectedResult = 5)]
+        [TestCase(7, ExpectedResult = 7)]
+        public int AttemptsTheRightNumberOfTimesOnError(int maxDownloadAttempts)
         {
             var packageId = "FakePackageId";
             var version = new NuGetVersion(1, 2, 3);
@@ -48,19 +47,16 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var calledCount = 0;
             Assert.Throws<Exception>(() =>
             {
-                //total attempts is initial attempt + 4 retries
-                var retryTracker = new RetryTracker(maxRetries: 4, 
-                                                    timeLimit: null, 
-                                                    retryInterval: new RetryInterval(100, 150, 1));
-                var downloader = new NuGetPackageDownloader(retryTracker);
-                downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath,
-                    (arg1, arg2, arg3, arg4, arg5) =>
+                var downloader = new NuGetPackageDownloader();
+                downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: maxDownloadAttempts, downloadAttemptBackoff: TimeSpan.Zero,
+                    action: (arg1, arg2, arg3, arg4, arg5) =>
                     {
                         calledCount++;
-                        throw new Exception("Expected exception from test");
+                        throw new Exception("Expected exception from test: simulate download failing");
                     });
             });
-            Assert.That(calledCount, Is.EqualTo(5));
+
+            return calledCount;
         }
     }
 }

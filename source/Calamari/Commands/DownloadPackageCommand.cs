@@ -14,7 +14,7 @@ namespace Calamari.Commands
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
     public class DownloadPackageCommand : Command
     {
-        readonly static PackageDownloader PackageDownloader = new PackageDownloader();
+        static readonly PackageDownloader PackageDownloader = new PackageDownloader();
         string packageId;
         string packageVersion;
         bool forcePackageDownload;
@@ -22,6 +22,8 @@ namespace Calamari.Commands
         string feedUri;
         string feedUsername;
         string feedPassword;
+        string maxDownloadAttempts = "5";
+        string attemptBackoffSeconds = "10";
         
         public DownloadPackageCommand()
         {
@@ -31,6 +33,8 @@ namespace Calamari.Commands
             Options.Add("feedUri=", "URL to NuGet feed", v => feedUri = v);
             Options.Add("feedUsername=", "[Optional] Username to use for an authenticated NuGet feed", v => feedUsername = v);
             Options.Add("feedPassword=", "[Optional] Password to use for an authenticated NuGet feed", v => feedPassword = v);
+            Options.Add("attempts=", $"[Optional] The number of times to attempt downloading the package. Default: {maxDownloadAttempts}", v => maxDownloadAttempts = v);
+            Options.Add("attemptBackoffSeconds=", $"[Optional] The number of seconds to apply as a linear backoff between each download attempt. Default: {attemptBackoffSeconds}", v => attemptBackoffSeconds = v);
             Options.Add("forcePackageDownload", "[Optional, Flag] if specified, the package will be downloaded even if it is already in the package cache", v => forcePackageDownload = true);
         }
 
@@ -42,7 +46,9 @@ namespace Calamari.Commands
             {
                 NuGetVersion version;
                 Uri uri;
-                CheckArguments(packageId, packageVersion, feedId, feedUri, feedUsername, feedPassword, out version, out uri);
+                int parsedMaxDownloadAttempts;
+                TimeSpan parsedAttemptBackoff;
+                CheckArguments(packageId, packageVersion, feedId, feedUri, feedUsername, feedPassword, maxDownloadAttempts, attemptBackoffSeconds, out version, out uri, out parsedMaxDownloadAttempts, out parsedAttemptBackoff);
 
                 string downloadedTo;
                 string hash;
@@ -54,6 +60,8 @@ namespace Calamari.Commands
                     uri,
                     GetFeedCredentials(feedUsername, feedPassword),
                     forcePackageDownload,
+                    parsedMaxDownloadAttempts,
+                    parsedAttemptBackoff,
                     out downloadedTo,
                     out hash,
                     out size);
@@ -85,7 +93,7 @@ namespace Calamari.Commands
         }
 
         // ReSharper disable UnusedParameter.Local
-        static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, out NuGetVersion version, out Uri uri)
+        static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, string maxDownloadAttempts, string attemptBackoffSeconds, out NuGetVersion version, out Uri uri, out int parsedMaxDownloadAttempts, out TimeSpan parsedAttemptBackoff)
         {
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
@@ -93,13 +101,28 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
             if (!NuGetVersion.TryParse(packageVersion, out version))
-                throw new CommandException(String.Format("Package version '{0}' specified is not a valid semantic version", packageVersion));
+                throw new CommandException($"Package version '{packageVersion}' specified is not a valid semantic version");
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
-                throw new CommandException(String.Format("URI specified '{0}' is not a valid URI", feedUri));
+                throw new CommandException($"URI specified '{feedUri}' is not a valid URI");
 
             if (!String.IsNullOrWhiteSpace(feedUsername) && String.IsNullOrWhiteSpace(feedPassword))
                 throw new CommandException("A username was specified but no password was provided. Please pass --feedPassword \"FeedPassword\"");
+
+            if (!int.TryParse(maxDownloadAttempts, out parsedMaxDownloadAttempts))
+                throw new CommandException($"The requested number of download attempts '{maxDownloadAttempts}' is not a valid integer number");
+
+            if (parsedMaxDownloadAttempts <= 0)
+                throw new CommandException("The requested number of download attempts should be more than zero");
+
+            int parsedAttemptBackoffSeconds;
+            if (!int.TryParse(attemptBackoffSeconds, out parsedAttemptBackoffSeconds))
+                throw new CommandException($"Retry requested download attempt retry backoff '{attemptBackoffSeconds}' is not a valid integer number of seconds");
+
+            if (parsedAttemptBackoffSeconds < 0)
+                throw new CommandException("The requested download attempt retry backoff should be a positive integer number of seconds");
+
+            parsedAttemptBackoff = TimeSpan.FromSeconds(parsedAttemptBackoffSeconds);
         }
         // ReSharper restore UnusedParameter.Local
     }
