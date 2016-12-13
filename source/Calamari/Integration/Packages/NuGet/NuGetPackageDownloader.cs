@@ -45,20 +45,22 @@ namespace Calamari.Integration.Packages.NuGet
                 }
                 catch (Exception ex)
                 {
-                    Log.VerboseFormat("Attempt {0} of {1}: Unable to download package: {2}", retry.CurrentTry,
-                        NumberOfTimesToAttemptToDownloadPackage, ex.ToString());
+                    Log.Verbose($"Attempt {retry.CurrentTry} of {NumberOfTimesToAttemptToDownloadPackage}: {ex.Message}");
 
                     fileSystem.DeleteFile(targetFilePath, FailureOptions.IgnoreFailure);
 
                     if (retry.CanRetry())
                     {
-                        Thread.Sleep(retry.Sleep());
+                        var wait = TimeSpan.FromMilliseconds(retry.Sleep());
+                        Log.Verbose($"Going to wait {wait.TotalSeconds}s before attempting the download from the external feed again.");
+                        Thread.Sleep(wait);
                     }
                     else
                     {
-                        Log.ErrorFormat("Unable to download package: {0}", ex.Message);
-                        throw new Exception(
-                            "The package could not be downloaded from NuGet. If you are getting a package verification error, try switching to a Windows File Share package repository to see if that helps.");
+                        var helpfulFailure = $"The package {packageId} version {version} could not be downloaded from the external feed '{feedUri}' after making {NumberOfTimesToAttemptToDownloadPackage} attempts over a total of {Math.Floor(retry.TotalElapsed.TotalSeconds)}s. Make sure the package is pushed to the external feed and try the deployment again. If this is part of an automated deployment, make sure all packages are pushed to the external feed before starting the deployment. If the packages are pushed, perhaps the external feed hasn't finished updating its index and you need to give the external feed more time to update its index before starting the deployment. If you are getting a package verification error, try switching to a Windows File Share package repository to see if that helps.";
+                        helpfulFailure += $"{Environment.NewLine}{ex}";
+
+                        throw new Exception(helpfulFailure, ex);
                     }
                 }
             }
@@ -100,7 +102,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static RetryTracker GetRetryTracker()
         {
-            return new RetryTracker(maxRetries: NumberOfTimesToRetryOnFailure, timeLimit: null, retryInterval: new RetryInterval(1000, 15000, 2));
+            return new RetryTracker(maxRetries: NumberOfTimesToRetryOnFailure, timeLimit: null, retryInterval: new RetryInterval(5000, 100000, 2));
         }
     }
 }
