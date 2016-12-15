@@ -35,10 +35,12 @@ namespace Calamari.Integration.Retry
 
         public int CurrentTry { get { return currentTry; } }
 
+        public TimeSpan TotalElapsed => stopWatch.Value.Elapsed;
+
         public RetryTracker(int? maxRetries, TimeSpan? timeLimit, RetryInterval retryInterval, bool throwOnFailure = true)
         {
             this.maxRetries = maxRetries;
-            if (maxRetries.HasValue && maxRetries.Value < 1) throw new ArgumentException("maxretries must be 1 or more if set");
+            if (maxRetries.HasValue && maxRetries.Value < 0) throw new ArgumentException("maxretries must be 0 or more if set");
             this.timeLimit = timeLimit;
             this.retryInterval = retryInterval;
             ThrowOnFailure = throwOnFailure;

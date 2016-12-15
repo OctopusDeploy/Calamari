@@ -22,7 +22,6 @@ namespace Calamari.Integration.Packages.Download
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
 
-
         private static string TentacleHome
         {
             get
@@ -36,7 +35,7 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        public void DownloadPackage(string packageId, NuGetVersion version, string feedId, Uri feedUri, ICredentials feedCredentials, bool forcePackageDownload, out string downloadedTo, out string hash, out long size)
+        public void DownloadPackage(string packageId, NuGetVersion version, string feedId, Uri feedUri, ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, out string downloadedTo, out string hash, out long size)
         {
             var cacheDirectory = GetPackageRoot(feedId);
             
@@ -44,12 +43,12 @@ namespace Calamari.Integration.Packages.Download
             downloadedTo = null;
             if (!forcePackageDownload)
             {
-                AttemptToGetPackageFromCache(packageId, version, feedId, cacheDirectory, out downloaded, out downloadedTo);
+                AttemptToGetPackageFromCache(packageId, version, cacheDirectory, out downloaded, out downloadedTo);
             }
 
             if (downloaded == null)
             {
-                DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, out downloaded, out downloadedTo);
+                DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts, downloadAttemptBackoff, out downloaded, out downloadedTo);
             }
             else
             {
@@ -62,7 +61,7 @@ namespace Calamari.Integration.Packages.Download
             hash = packageHash;
         }
 
-        private void AttemptToGetPackageFromCache(string packageId, NuGetVersion version, string feedId, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
+        private void AttemptToGetPackageFromCache(string packageId, NuGetVersion version, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
         {
             downloaded = null;
             downloadedTo = null;
@@ -115,10 +114,10 @@ namespace Calamari.Integration.Packages.Download
 
         private string GetNameOfPackage(string packageId, string version)
         {
-            return String.Format("{0}.{1}_", packageId, version);
+            return $"{packageId}.{version}_";
         }
 
-        private void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
+        private void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string cacheDirectory, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, out LocalNuGetPackage downloaded, out string downloadedTo)
         {
             Log.Info("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
@@ -128,7 +127,7 @@ namespace Calamari.Integration.Packages.Download
             var fullPathToDownloadTo = GetFilePathToDownloadPackageTo(cacheDirectory, packageId, version.ToString());
 
             var downloader = new NuGetPackageDownloader();
-            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo); 
+            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo, maxDownloadAttempts, downloadAttemptBackoff); 
 
             downloaded = new LocalNuGetPackage(fullPathToDownloadTo);
             downloadedTo = fullPathToDownloadTo; 

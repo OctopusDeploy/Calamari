@@ -235,13 +235,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             using (var acmeWeb = CreateSamplePackage())
             {
-                var invalidFileShareUri = Path.Combine(acmeWeb.DirectoryPath, "InvalidPath");
+                var invalidFileShareUri = new Uri(Path.Combine(acmeWeb.DirectoryPath, "InvalidPath"));
 
-                var result = DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, invalidFileShareUri);
+                var result = DownloadPackage(FileShare.PackageId, FileShare.Version, FileShare.Id, invalidFileShareUri.ToString());
                 result.AssertFailure();
 
-                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(invalidFileShareUri));
-                result.AssertErrorOutput("Unable to download package: Path does not exist: '{0}'", new Uri(invalidFileShareUri));
+                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
+                result.AssertErrorOutput("Failed to download package Acme.Web 1.0.0.0 from feed: '{0}'", invalidFileShareUri);
                 result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
             }
         }
@@ -339,14 +339,18 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             string feedUri,
             string feedUsername = "",
             string feedPassword = "",
-            bool forcePackageDownload = false)
+            bool forcePackageDownload = false,
+            int attempts = 5,
+            int attemptBackoffSeconds = 0)
         {
             var calamari = Calamari()
                 .Action("download-package")
                 .Argument("packageId", packageId)
                 .Argument("packageVersion", packageVersion)
                 .Argument("feedId", feedId)
-                .Argument("feedUri", feedUri);
+                .Argument("feedUri", feedUri)
+                .Argument("attempts", attempts.ToString())
+                .Argument("attemptBackoffSeconds", attemptBackoffSeconds.ToString());
 
             if (!String.IsNullOrWhiteSpace(feedUsername))
                 calamari.Argument("feedUsername", feedUsername);
