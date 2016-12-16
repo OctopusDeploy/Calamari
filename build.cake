@@ -131,31 +131,6 @@ Task("__Test")
      DotNetCoreTest("source/Calamari.Tests/project.json", settings);
 });
 
-Task("__TestTeamCity")
-    .Does(() =>
-{
-    // Run all Windows Tests
-    // Runs two frameworks seperately to capture both outputs
-    var settings =  new DotNetCoreTestSettings
-    {
-        Configuration = configuration
-    };
-
-    settings.ArgumentCustomization = f => {
-        f.Append("-where");
-        f.AppendQuoted("cat != Nix && cat != macOS");
-        return f;
-    };
-
-    settings.Framework = "net451";
-    DotNetCoreTest("./source/Calamari.Tests", settings);
-    MoveFile("./TestResult.xml", "./TestResult.net451.xml");
-
-    settings.Framework = "netcoreapp1.0";
-    DotNetCoreTest("./source/Calamari.Tests", settings);
-    MoveFile("./TestResult.xml", "./TestResult.netcoreapp1.0.xml");
-});
-
 Task("__Pack")
     .Does(() =>
 {
@@ -237,14 +212,6 @@ Task("Publish")
     .IsDependentOn("__Build")
     .IsDependentOn("__Pack")
     .IsDependentOn("__Publish");
-
-Task("TeamCity")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__UpdateAssemblyVersionInformation")
-    .IsDependentOn("__Build")
-    .IsDependentOn("__TestTeamCity")
-    .IsDependentOn("__Pack");   
 
 Task("SetTeamCityVersion")
     .Does(() => {
