@@ -255,6 +255,7 @@ Task("SetTeamCityVersion")
 Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("__Clean")
     .IsDependentOn("__Restore")
+    .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__BuildAndZipNET45TestProject")
     .IsDependentOn("__Pack");
 
