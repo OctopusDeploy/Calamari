@@ -69,11 +69,11 @@ For ($i=0; $i -lt $partitions.Length; $i++){
 
         $additionalPath = GetAdditionalPath $mountPoint $i
         If(Test-Path -Path $additionalPath){
-            Write-Host "$additionalPath added to paths to perform substitutions on"
+            Write-Host "$additionalPath added to Calamari processing paths"
             $additionalPaths += $additionalPath
         }
         Else{
-            Write-Host "$additionalPath not found so will not be used for substitutions"
+            Write-Host "$additionalPath not found so not added to Calamari processing paths"
         }
 
         if($firstMount){
