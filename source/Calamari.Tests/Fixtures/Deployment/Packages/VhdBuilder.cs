@@ -13,7 +13,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 {
     public class VhdBuilder
     {
-        public static string BuildSampleVhd(string name)
+        public static string BuildSampleVhd(string name, bool twoPartitions = false)
         {
             var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
             Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
-                File.WriteAllText(scriptFile.FilePath, InitializeAndCopyFilesScript(vhdPath, packageDirectory));
+                File.WriteAllText(scriptFile.FilePath, InitializeAndCopyFilesScript(vhdPath, packageDirectory, twoPartitions));
                 var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, new CalamariVariableDictionary());
                 result.AssertSuccess();
             }
@@ -60,29 +60,47 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
         private static string CreateVhdDiskPartScrtipt(string path)
         {
-            return $"create vdisk file={path} type=fixed maximum=10";
+            return $"create vdisk file={path} type=fixed maximum=20";
         }
 
-        private static string InitializeAndCopyFilesScript(string vhdpath, string includefolder)
+        private static string InitializeAndCopyFilesScript(string vhdpath, string includefolder, bool twoPartitions)
         {
-            return $@"
+            var script = $@"
+                Function CopyFilesToPartition($partition){{
+                    Format-Volume -Partition $partition -Confirm:$false -FileSystem NTFS -force
+                    Add-PartitionAccessPath -InputObject $partition -AssignDriveLetter
+                    $volume = Get-Volume -Partition $partition
+                    $drive = $volume.DriveLetter
+
+                    $drive = $drive + "":\""
+                    Write-Host ""Copying from {includefolder} to $drive""
+                    Copy-Item -Path {includefolder}\InVhd\* -Destination $drive -Recurse                    
+                }}
+
                 Mount-DiskImage -ImagePath {vhdpath} -NoDriveLetter
 
                 $diskImage = Get-DiskImage -ImagePath {vhdpath}
                 Initialize-Disk -Number $diskImage.Number -PartitionStyle MBR
-                $partition = New-Partition -DiskNumber $diskImage.Number -UseMaximumSize -AssignDriveLetter:$false -MbrType IFS
-                Format-Volume -Partition $partition -Confirm:$false -FileSystem NTFS -force
-                Add-PartitionAccessPath -InputObject $partition -AssignDriveLetter
-                $volume = Get-Volume -Partition $partition
-                $drive = $volume.DriveLetter
 
-                $drive = $drive + "":\""
-                Write-Host ""Copying from {includefolder} to $drive""
-                Copy-Item -Path {includefolder}\InVhd\* -Destination $drive -Recurse
-                Dismount-DiskImage -ImagePath {vhdpath};
+                $partition = New-Partition -DiskNumber $diskImage.Number -Size 10MB -AssignDriveLetter:$false -MbrType IFS
+                CopyFilesToPartition $partition 
+            ";
 
+            if (twoPartitions)
+            {
+                script += @"
+                    $partition = New-Partition -DiskNumber $diskImage.Number -UseMaximumSize -AssignDriveLetter:$false -MbrType IFS
+                    CopyFilesToPartition $partition
+                ";
+            }
+
+            script += $@"
+                Dismount-DiskImage -ImagePath {vhdpath}
                 $zipDestination = Split-Path {vhdpath}
-                Copy-Item -Path {includefolder}\InZip\* -Destination $zipDestination -Recurse";
+                Copy-Item -Path {includefolder}\InZip\* -Destination $zipDestination -Recurse
+            ";
+
+            return script;
         }
     }
 }

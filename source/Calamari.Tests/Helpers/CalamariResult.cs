@@ -141,6 +141,13 @@ namespace Calamari.Tests.Helpers
             Assert.That(allOutput, Does.Match(regex));
         }
 
+        public void AssertNoOutputMatches(string regex)
+        {
+            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+
+            Assert.That(allOutput, Does.Not.Match(regex));
+        }
+
         public string GetOutputForLineContaining(string expectedOutput)
         {
             var found = captured.Infos.SingleOrDefault(i => i.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0);

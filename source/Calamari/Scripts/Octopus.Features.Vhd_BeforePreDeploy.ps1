@@ -13,15 +13,34 @@ If($vhds.Length -gt 1)
 	exit -2
 }
 
-$vhdPath = Resolve-Path $vhds[0].FullName
+function EvaluateFlagDefaultTrue([string]$flag){
+    if(!$flag)
+    {
+        return $true;
+    }
 
-Mount-DiskImage -ImagePath $vhdPath
- 
-$image = Get-DiskImage $vhdPath
-$partition = Get-Partition -DiskNumber $image.Number
-$volume = Get-Volume -partition $partition
-$mountedDrive = $volume.DriveLetter
-$letterDrive  = $mountedDrive + ":\"
+    return [System.Convert]::ToBoolean($flag)
+}
+
+# attach a partition to a drive letter
+function AddMountPoint($partition){
+    $partition | Add-PartitionAccessPath -AssignDriveLetter | Out-Null
+    $volume = Get-Volume -partition $partition
+    $driveLetter = $volume.DriveLetter
+    $mountPoint = $driveLetter + ":\"
+    return $mountPoint
+}
+
+# get the path in the vhd that we will do substitutions on. can be overridden per partition
+function GetAdditionalPath([string]$mountPoint, [int]$index){
+    If($OctopusParameters["OctopusVhdPartitions[" + $index +"].ApplicationPath"]){
+        return split-path $OctopusParameters["OctopusVhdPartitions[" + $index +"].ApplicationPath"] -NoQualifier | % Trim "." | % { join-path -Path $mountPoint -ChildPath $_ }
+    }
+    If($OctopusParameters["Octopus.Action.Vhd.ApplicationPath"]){
+        return split-path $OctopusParameters["Octopus.Action.Vhd.ApplicationPath"] -NoQualifier | % Trim "." | % { join-path -Path $mountPoint -ChildPath $_ }
+    }
+    return $mountPoint
+}
 
 # append a record to the AdditionalPaths list 
 function Add-ToAdditionalPaths([string]$new) {
@@ -34,12 +53,37 @@ function Add-ToAdditionalPaths([string]$new) {
 	Set-OctopusVariable -name "Octopus.Action.AdditionalPaths" -value $current
 }
 
-If($OctopusParameters["Octopus.Action.Vhd.ApplicationPath"]){
-    $path = split-path $OctopusParameters["Octopus.Action.Vhd.ApplicationPath"] -NoQualifier | % Trim "." | % { join-path -Path $letterDrive -ChildPath $_ }
-} Else {
-    $path = $letterDrive
+$vhdPath = Resolve-Path $vhds[0].FullName
+Mount-DiskImage -ImagePath $vhdPath -NoDriveLetter 
+$image = Get-DiskImage $vhdPath
+$partitions = @(Get-Partition -DiskNumber $image.Number)
+$mountPoints =  @()
+$additionalPaths = @()
+$firstMount = $true
+
+For ($i=0; $i -lt $partitions.Length; $i++){
+    If(EvaluateFlagDefaultTrue $OctopusParameters["OctopusVhdPartitions[" + $i +"].Mount"]){
+
+        $mountPoint = AddMountPoint $partitions[$i]
+        $mountPoints += $mountPoint
+
+        $additionalPath = GetAdditionalPath $mountPoint $i
+        If(Test-Path -Path $additionalPath){
+            Write-Host "$additionalPath added to paths to perform substitutions on"
+            $additionalPaths += $additionalPath
+        }
+        Else{
+            Write-Host "$additionalPath not found so will not be used for substitutions"
+        }
+
+        if($firstMount){
+            $firstMount = $false
+            Set-OctopusVariable -name "OctopusVhdMountPoint" -value $mountPoint
+        }
+
+        Set-OctopusVariable -name "OctopusVhdMountPoint_$i" -value $mountPoint
+        Write-Host "VHD partition $i from $vhdPath mounted to $mountPoint"
+    }
 }
 
-Add-ToAdditionalPaths $path
-Set-OctopusVariable -name "VhdMountPoint" -value $letterDrive
-Write-Host "VHD at $vhdPath mounted to $letterDrive"
+Add-ToAdditionalPaths ($additionalPaths -join ',')
