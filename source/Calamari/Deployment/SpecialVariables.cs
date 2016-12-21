@@ -83,6 +83,7 @@
 
         public static class Package
         {
+            public static readonly string TransferPath = "Octopus.Action.Package.TransferPath";
             public static readonly string NuGetPackageId = "Octopus.Action.Package.NuGetPackageId";
             public static readonly string NuGetPackageVersion = "Octopus.Action.Package.NuGetPackageVersion";
             public static readonly string ShouldDownloadOnTentacle = "Octopus.Action.Package.DownloadOnTentacle";
@@ -111,6 +112,9 @@
             {
                 public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
                 public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
+                public static readonly string DirectoryPath = "Octopus.Action.Package.DirectoryPath";
+                public static readonly string FileName = "Octopus.Action.Package.FileName";
+                public static readonly string FilePath = "Octopus.Action.Package.FilePath";
             }
         }
 
