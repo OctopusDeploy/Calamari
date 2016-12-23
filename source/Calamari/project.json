@@ -4,7 +4,7 @@
     "OctoDiff": "1.1.0",
     "FSharp.Compiler.Tools": "4.0.0.1",
     "ScriptCS": "0.16.1",
-    "Octostache": "2.0.7"
+    "Octostache": "2.0.13"
   },
   "frameworks": {
     "net40": {

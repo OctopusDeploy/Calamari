@@ -107,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutput($"VHD partition 1 from {Path.Combine(StagingDirectory, Environment, ServiceName, "1.0.0", ServiceName + ".vhdx")} mounted to");
 
                 // handles additionalpaths setting not being valid for all partitions
-                result.AssertOutputMatches(@"[A-Z]:\\PathThatDoesNotExist not found so will not be used for substitutions");
+                result.AssertOutputMatches(@"[A-Z]:\\PathThatDoesNotExist not found so not added to Calamari processing paths");
 
                 // runs predeploy etc
                 result.AssertOutput("Bonjour from PreDeploy.ps1");
