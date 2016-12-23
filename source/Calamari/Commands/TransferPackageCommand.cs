@@ -10,6 +10,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Util;
 
 namespace Calamari.Commands
 {
@@ -34,12 +35,13 @@ namespace Calamari.Commands
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-            var packageFile = variables.Get(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
+            var packageFile = variables.GetEvironmentExpandedPath(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
             if(string.IsNullOrEmpty(packageFile))
             {
                 throw new CommandException($"No package file was specified. Please provide `{SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath}` variable");
             }
-            if (!File.Exists(packageFile))
+
+            if (!fileSystem.FileExists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);    
 
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);

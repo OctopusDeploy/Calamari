@@ -75,5 +75,10 @@ namespace Calamari.Integration.Processes
                 throw new CommandException("Cannot decrypt sensitive-variables. Check your password is correct.");
             }
         }
+
+        public string GetEvironmentExpandedPath(string variableName, string defaultValue = null)
+        {
+            return CrossPlatform.ExpandPathEnvironmentVariables(Get(variableName, defaultValue));
+        }
     }
 }

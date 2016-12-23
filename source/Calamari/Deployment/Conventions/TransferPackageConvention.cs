@@ -1,5 +1,6 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -14,7 +15,7 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var transferPath = deployment.Variables.Get(SpecialVariables.Package.TransferPath);
+            var transferPath = deployment.Variables.GetEvironmentExpandedPath(SpecialVariables.Package.TransferPath);
             fileSystem.EnsureDirectoryExists(transferPath);
 
             var fileName = Path.GetFileName(deployment.PackageFilePath);
