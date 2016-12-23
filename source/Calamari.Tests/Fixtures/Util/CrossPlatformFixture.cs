@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Util
 
         [Test]
         [TestCase("$MARIO_BROTHER/blah", "LUIGI/blah")]
-        [TestCase("%MARIO_BROTHER%/blah", "%MARIO_BROTHER%/blah", Description = "Windows style variables ignored in Nix")]
+        [TestCase("%MARIO_BROTHER%/blah", "LUIGI/blah", Description = "Windows style variables included in Nix")]
         [TestCase("$MARIO_BROTHERZZ/blah", "/blah", Description = "Variables terminate at last non alpha numeric character")]
         [TestCase("IMA$MARIO_BROTHER", "IMALUIGI", Description = "Variables begin from dollar character")]
         [TestCase("\\$MARIO_BROTHER/blah", "\\$MARIO_BROTHER/blah", Description = "Escaped dollar preserved")]
