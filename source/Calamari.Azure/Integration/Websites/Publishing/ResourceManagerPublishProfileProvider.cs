@@ -20,8 +20,8 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, serviceManagementEndPoint, activeDirectoryEndPoint);
 
-            using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token)))
-            using (var webSiteClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = subscriptionId})
+            using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token), new Uri(serviceManagementEndPoint)))
+            using (var webSiteClient = new WebSiteManagementClient(new Uri(serviceManagementEndPoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
                 // We may need to search all ResourceGroups, if one isn't specified.  New Step template will always provide the Resource Group, it is currently treated as optional here
                 // for backward compatibility.
