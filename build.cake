@@ -187,7 +187,7 @@ Task("__Publish")
 // TASKS
 //////////////////////////////////////////////////////////////////////
 Task("Default")
-    .IsDependentOn("__Default");
+    .IsDependentOn("BuildPackAndZipTestBinaries");
 
 Task("Clean")
     .IsDependentOn("__Clean");
