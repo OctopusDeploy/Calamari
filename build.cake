@@ -13,7 +13,6 @@ var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
 var framework = Argument("framework", "");
-var forceCiBuild = Argument("forceCiBuild", false);
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
@@ -21,13 +20,13 @@ var forceCiBuild = Argument("forceCiBuild", false);
 var artifactsDir = "./built-packages/";
 var sourceFolder = "./source/";
 var projectsToPackage = new []{"Calamari", "Calamari.Azure"};
-var isContinuousIntegrationBuild = !BuildSystem.IsLocalBuild || forceCiBuild;
+var isContinuousIntegrationBuild = !BuildSystem.IsLocalBuild;
 
 var gitVersionInfo = GitVersion(new GitVersionSettings {
     OutputType = GitVersionOutput.Json
 });
 
-var nugetVersion = isContinuousIntegrationBuild ? gitVersionInfo.NuGetVersion : "0.0.0";
+var nugetVersion = gitVersionInfo.NuGetVersion;
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
@@ -67,7 +66,6 @@ Task("__Restore")
     .Does(() => DotNetCoreRestore());
 
 Task("__UpdateAssemblyVersionInformation")
-    .WithCriteria(isContinuousIntegrationBuild)
     .Does(() =>
 {
     foreach (var project in projectsToPackage)
@@ -162,7 +160,7 @@ private void DoPackage(string project, string framework, string version)
 }
 
 Task("__Publish")
-    .WithCriteria(isContinuousIntegrationBuild && !forceCiBuild) //don't let publish criteria be overridden with flag
+    .WithCriteria(isContinuousIntegrationBuild)
     .Does(() =>
 {
     var isPullRequest = !String.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQUEST_NUMBER"));
