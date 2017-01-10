@@ -93,6 +93,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var variables = new VariableDictionary
             {
                 [SpecialVariables.Package.TransferPath] = CustomDirectory,
+                [SpecialVariables.Package.OriginalFileName] = Path.GetFileName(nupkgFile.FilePath),
                 [SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath] = nupkgFile.FilePath,
                 [SpecialVariables.Action.Name] = "MyAction",
                 [SpecialVariables.Machine.Name] = "MyMachine"
