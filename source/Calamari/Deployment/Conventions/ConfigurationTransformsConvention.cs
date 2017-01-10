@@ -24,6 +24,11 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+
+            if (!features.Contains(SpecialVariables.Features.ConfigurationTransforms))
+                return;
+
             var explicitTransforms = GetExplicitTransforms(deployment);
             var automaticTransforms = GetAutomaticTransforms(deployment);
             var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);           
@@ -123,6 +128,7 @@ namespace Calamari.Deployment.Conventions
             var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled)
                 .Distinct()
                 .ToArray();
+
             foreach (var transformFile in transformFileNames)
             {
                 var transformFiles = new Tuple<string, string>(transformFile, sourceFile);

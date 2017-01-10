@@ -142,6 +142,7 @@
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";
             public const string Vhd = "Octopus.Features.Vhd";
+            public const string ConfigurationTransforms = "Octopus.Features.ConfigurationTransforms";
         }
 
         public static class Action
