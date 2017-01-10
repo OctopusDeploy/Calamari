@@ -72,22 +72,23 @@ namespace Calamari.Azure.Deployment.Conventions
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
-            var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
             var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
 
             switch (accountType)
             {
                 case AzureAccountTypes.ServicePrincipalAccountType:
+                    var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
                     return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
                         variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
                         siteName,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
                         variables.Get(SpecialVariables.Action.Azure.Password),
-                        serviceManagementEndpoint,
+                        resourceManagementEndpoint,
                         activeDirectoryEndpoint);
 
                 case AzureAccountTypes.ManagementCertificateAccountType:
+                    var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                         siteName,

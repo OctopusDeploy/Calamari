@@ -53,7 +53,7 @@ Param(
     [Alias("DryRun","Noop")]
     [switch]$WhatIf,
     [switch]$Mono,
-    [switch]$SkipToolPackageRestore,
+    [switch]$SkipToolPackageRestore
     # ,
     # [Parameter(Position=0,Mandatory=$false,ValueFromRemainingArguments=$true)]
     # [string[]]$ScriptArgs

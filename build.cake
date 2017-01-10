@@ -21,6 +21,7 @@ var artifactsDir = "./built-packages/";
 var sourceFolder = "./source/";
 var projectsToPackage = new []{"Calamari", "Calamari.Azure"};
 var isContinuousIntegrationBuild = !BuildSystem.IsLocalBuild;
+var cleanups = new List<Action>();
 
 var gitVersionInfo = GitVersion(new GitVersionSettings {
     OutputType = GitVersionOutput.Json
@@ -38,7 +39,11 @@ Setup(context =>
 
 Teardown(context =>
 {
-    Information("Finished running tasks.");
+    Information("Cleaning up");
+    foreach(var cleanup in cleanups)
+        cleanup();
+
+    Information("Finished running tasks for build v{0}", nugetVersion);
 });
 
 //////////////////////////////////////////////////////////////////////
@@ -70,9 +75,11 @@ Task("__UpdateAssemblyVersionInformation")
 {
     foreach (var project in projectsToPackage)
     {
+        var assemblyInfoFile = Path.Combine(sourceFolder, project, "Properties", "AssemblyInfo.cs");
+        RestoreFileOnCleanup(assemblyInfoFile);
         GitVersion(new GitVersionSettings {
             UpdateAssemblyInfo = true,
-            UpdateAssemblyInfoFilePath = Path.Combine(sourceFolder, project, "Properties", "AssemblyInfo.cs")
+            UpdateAssemblyInfoFilePath = assemblyInfoFile
         });
     }
     
@@ -180,6 +187,15 @@ Task("__Publish")
         });
     }
 });
+
+private void RestoreFileOnCleanup(string file)
+{
+    var contents = System.IO.File.ReadAllBytes(file);
+    cleanups.Add(() => {
+        Information("Restoring {0}", file);
+        System.IO.File.WriteAllBytes(file, contents);
+    });
+}
 
 //////////////////////////////////////////////////////////////////////
 // TASKS

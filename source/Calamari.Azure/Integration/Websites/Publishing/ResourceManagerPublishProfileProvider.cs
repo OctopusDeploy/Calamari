@@ -16,12 +16,12 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string tenantId, string applicationId, string password,string serviceManagementEndPoint, string activeDirectoryEndPoint)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
         {
-            var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, serviceManagementEndPoint, activeDirectoryEndPoint);
+            var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
 
-            using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token), new Uri(serviceManagementEndPoint)))
-            using (var webSiteClient = new WebSiteManagementClient(new Uri(serviceManagementEndPoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
+            using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token), new Uri(resourceManagementEndpoint)))
+            using (var webSiteClient = new WebSiteManagementClient(new Uri(resourceManagementEndpoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
                 // We may need to search all ResourceGroups, if one isn't specified.  New Step template will always provide the Resource Group, it is currently treated as optional here
                 // for backward compatibility.
