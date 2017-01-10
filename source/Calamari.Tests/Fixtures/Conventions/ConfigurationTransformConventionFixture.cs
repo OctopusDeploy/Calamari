@@ -33,6 +33,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var deployDirectory = BuildConfigPath(null);
 
             variables = new CalamariVariableDictionary();
+            variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
@@ -163,6 +164,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deploymentVariables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, "True");
             deploymentVariables.Set(SpecialVariables.Environment.Name, "my-test-env");
             deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
+            deploymentVariables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
 
             //mock the world
