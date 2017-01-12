@@ -30,6 +30,7 @@ namespace Calamari.Integration.Scripting
 
             foreach (var script in scripts)
             {
+                Log.VerboseFormat("Executing '{0}'", script);
                 var result = scriptEngine.Execute(new Script(script), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
