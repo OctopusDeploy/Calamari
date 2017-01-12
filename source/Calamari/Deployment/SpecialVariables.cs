@@ -163,6 +163,9 @@
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 
+                public static readonly string ServiceFabricConnectionEndpoint = "Octopus.Action.Azure.ServiceFabricConnectionEndpoint";
+                public static readonly string ServiceFabricTargetProfile = "Octopus.Action.Azure.ServiceFabricTargetProfile";
+
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";
                 public static readonly string AppOffline = "Octopus.Action.Azure.AppOffline";
