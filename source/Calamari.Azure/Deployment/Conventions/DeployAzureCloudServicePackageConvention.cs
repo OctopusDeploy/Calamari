@@ -51,7 +51,6 @@ namespace Calamari.Azure.Deployment.Conventions
                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureCloudService.ps1")); 
             }
             
-
             // TODO: markse - figure out how we've going to call this script with the arguments it expects.
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
