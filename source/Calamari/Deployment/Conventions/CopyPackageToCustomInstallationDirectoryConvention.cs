@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 
@@ -48,8 +50,18 @@ namespace Calamari.Deployment.Conventions
             if (deployment.Variables.GetFlag(
                 SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
             {
+                Predicate<IFileSystemInfo> exclude = null;
+
+                var purgePaths = deployment.Variables.GetPaths(SpecialVariables.Package.CustomInstallationDirectoryPurgePaths);
+                if (purgePaths.Count > 0)
+                {
+                    var includedFiles = fileSystem.EnumerateFiles(customInstallationDirectory, purgePaths.ToArray()).Select(Path.GetFullPath).ToList();
+
+                    exclude = f => !includedFiles.Contains(f.FullName);
+                }
+
                 Log.Info("Purging the directory '{0}'", customInstallationDirectory);
-                fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure);
+                fileSystem.PurgeDirectory(deployment.CustomDirectory, exclude, FailureOptions.ThrowOnFailure);
             }
 
             // Copy files from staging area to custom directory
