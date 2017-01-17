@@ -163,9 +163,20 @@
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 
-                public static readonly string ServiceFabricConnectionEndpoint = "Octopus.Action.Azure.ServiceFabricConnectionEndpoint";
-                public static readonly string ServiceFabricTargetProfile = "Octopus.Action.Azure.ServiceFabricTargetProfile";
-
+                // Service Fabric
+                public static readonly string FabricConnectionEndpoint = "Octopus.Action.Azure.FabricConnectionEndpoint";
+                public static readonly string FabricPublishProfileFile = "Octopus.Action.Azure.FabricPublishProfileFile";
+                public static readonly string FabricApplicationPackagePath = "Octopus.Action.Azure.FabricApplicationPackagePath";
+                public static readonly string FabricDeployOnly = "Octopus.Action.Azure.FabricDeployOnly";
+                public static readonly string FabricApplicationParameters = "Octopus.Action.Azure.FabricApplicationParameters";
+                public static readonly string FabricUnregisterUnusedApplicationVersionsAfterUpgrade = "Octopus.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade";
+                public static readonly string FabricOverrideUpgradeBehavior = "Octopus.Action.Azure.FabricOverrideUpgradeBehavior";
+                public static readonly string FabricUseExistingClusterConnection = "Octopus.Action.Azure.FabricUseExistingClusterConnection";
+                public static readonly string FabricOverwriteBehavior = "Octopus.Action.Azure.FabricOverwriteBehavior";
+                public static readonly string FabricSkipPackageValidation = "Octopus.Action.Azure.FabricSkipPackageValidation";
+                public static readonly string FabricSecurityToken = "Octopus.Action.Azure.FabricSecurityToken";
+                public static readonly string FabricCopyPackageTimeoutSec = "Octopus.Action.Azure.FabricCopyPackageTimeoutSec";
+                
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";
                 public static readonly string AppOffline = "Octopus.Action.Azure.AppOffline";

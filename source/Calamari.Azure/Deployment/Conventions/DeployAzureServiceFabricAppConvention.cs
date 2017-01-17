@@ -29,8 +29,19 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
-            Log.SetOutputVariable("OctopusServiceFabricConnectionEndpoint", deployment.Variables.Get(SpecialVariables.Action.Azure.ServiceFabricConnectionEndpoint), deployment.Variables);
-            Log.SetOutputVariable("OctopusServiceFabricTargetProfile", deployment.Variables.Get(SpecialVariables.Action.Azure.ServiceFabricTargetProfile), deployment.Variables);
+            var variables = deployment.Variables;
+            Log.SetOutputVariable("OctopusAzureFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
+            Log.SetOutputVariable("OctopusAzureFabricPublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile), variables);
+            //Log.SetOutputVariable("OctopusAzureFabricApplicationPackagePath", variables.Get(SpecialVariables.Action.Azure.FabricApplicationPackagePath), variables);
+            Log.SetOutputVariable("OctopusAzureFabricDeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly), variables);
+            Log.SetOutputVariable("OctopusAzureFabricApplicationParameters", variables.Get(SpecialVariables.Action.Azure.FabricApplicationParameters), variables);
+            Log.SetOutputVariable("OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade), variables);
+            Log.SetOutputVariable("OctopusAzureFabricOverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverrideUpgradeBehavior), variables);
+            Log.SetOutputVariable("OctopusAzureFabricUseExistingClusterConnection", variables.Get(SpecialVariables.Action.Azure.FabricUseExistingClusterConnection), variables);
+            Log.SetOutputVariable("OctopusAzureFabricOverwriteBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverwriteBehavior), variables);
+            Log.SetOutputVariable("OctopusAzureFabricSkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation), variables);
+            //Log.SetOutputVariable("OctopusAzureFabricSecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken), variables);
+            Log.SetOutputVariable("OctopusAzureFabricCopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.Azure.FabricCopyPackageTimeoutSec), variables);
             
             var scriptFile = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureServiceFabricApp.ps1");
             

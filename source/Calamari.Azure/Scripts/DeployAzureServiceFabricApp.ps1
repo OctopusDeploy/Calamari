@@ -7,75 +7,71 @@
 ## Thx to Colin Dembovsky @ http://colinsalmcorner.com/post/continuous-deployment-of-service-fabric-apps-using-vsts-or-tfs for posting about this.
 ##
 ## The script will be passed the following parameters in addition to the normal Octopus 
-## variables passed to any PowerShell script. 
+## variables passed to any PowerShell script.
 ##
-##   TODO: markse - consider how all these variables get passed / used.
-## 
-##   OctopusServiceFabricConnectionEndpoint           // The connection endpoint
-##   OctopusServiceFabricTargetProfile                // The target profile
-##
-##   PublishProfileFile                               // Path to the file containing the publish profile.
-##   ApplicationPackagePath                           // Path to the folder of the packaged Service Fabric application.
-##   DeployOnly                                       // Indicates that the Service Fabric application should not be created or upgraded after registering the application type.
-##   ApplicationParameter                             // Hashtable of the Service Fabric application parameters to be used for the application.
-##   UnregisterUnusedApplicationVersionsAfterUpgrade  // Indicates whether to unregister any unused application versions that exist after an upgrade is finished.
-##   OverrideUpgradeBehavior                          // Indicates the behavior used to override the upgrade settings specified by the publish profile. Options: None | ForceUpgrade | VetoUpgrade
-##   UseExistingClusterConnection                     // Indicates that the script should make use of an existing cluster connection that has already been established in the PowerShell session.  The cluster connection parameters configured in the publish profile are ignored.
-##   OverwriteBehavior                                // Overwrite Behavior if an application exists in the cluster with the same name. Available Options are Never, Always, SameAppTypeAndVersion. This setting is not applicable when upgrading an application.
-##   SkipPackageValidation                            // Switch signaling whether the package should be validated or not before deployment.
-##   SecurityToken                                    // A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
-##   CopyPackageTimeoutSec                            // Timeout in seconds for copying application package to image store.
+##   OctopusAzureFabricConnectionEndpoint                               // The connection endpoint
+##   OctopusAzureFabricPublishProfileFile                               // Path to the file containing the publish profile.
+##   OctopusAzureFabricApplicationPackagePath                           // Path to the folder of the packaged Service Fabric application.
+##   OctopusAzureFabricDeployOnly                                       // Indicates that the Service Fabric application should not be created or upgraded after registering the application type.
+##   OctopusAzureFabricApplicationParameters                            // Hashtable of the Service Fabric application parameters to be used for the application.
+##   OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade  // Indicates whether to unregister any unused application versions that exist after an upgrade is finished.
+##   OctopusAzureFabricOverrideUpgradeBehavior                          // Indicates the behavior used to override the upgrade settings specified by the publish profile. Options: None | ForceUpgrade | VetoUpgrade
+##   OctopusAzureFabricUseExistingClusterConnection                     // Indicates that the script should make use of an existing cluster connection that has already been established in the PowerShell session.  The cluster connection parameters configured in the publish profile are ignored.
+##   OctopusAzureFabricOverwriteBehavior                                // Overwrite Behavior if an application exists in the cluster with the same name. Available Options are Never, Always, SameAppTypeAndVersion. This setting is not applicable when upgrading an application.
+##   OctopusAzureFabricSkipPackageValidation                            // Switch signaling whether the package should be validated or not before deployment.
+##   OctopusAzureFabricSecurityToken                                    // A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
+##   OctopusAzureFabricCopyPackageTimeoutSec                            // Timeout in seconds for copying application package to image store.
 ##   
 ## --------------------------------------------------------------------------------------
 ##   Examples:
 ##
 ##   Deploy the application using the default package location for a Debug build.
-##   . Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug'
+##   . Scripts\Deploy-FabricApplication.ps1 -OctopusAzureFabricApplicationPackagePath 'pkg\Debug'
 ##   
 ##   Deploy the application but do not create the application instance.
-##   . Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -DoNotCreateApplication
+##   . Scripts\Deploy-FabricApplication.ps1 -OctopusAzureFabricApplicationPackagePath 'pkg\Debug' -DoNotCreateApplication
 ##   
 ##   Deploy the application by providing values for parameters that are defined in the application manifest.
-##   . Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -ApplicationParameter @{CustomParameter1='MyValue'; CustomParameter2='MyValue'}
+##   . Scripts\Deploy-FabricApplication.ps1 -OctopusAzureFabricApplicationPackagePath 'pkg\Debug' -OctopusAzureFabricApplicationParameters @{CustomParameter1='MyValue'; CustomParameter2='MyValue'}
 ## --------------------------------------------------------------------------------------
 ##
 
 Param
 (
     [String]
-    $PublishProfileFile,
+    $OctopusAzureFabricPublishProfileFile,
 
     [String]
-    $ApplicationPackagePath,
+    $OctopusAzureFabricApplicationPackagePath,
 
     [Switch]
-    $DeployOnly,
+    $OctopusAzureFabricDeployOnly,
 
     [Hashtable]
-    $ApplicationParameter,
+    $OctopusAzureFabricApplicationParameters,
 
     [Boolean]
-    $UnregisterUnusedApplicationVersionsAfterUpgrade,
+    $OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade,
 
     [String]
     [ValidateSet('None', 'ForceUpgrade', 'VetoUpgrade')]
-    $OverrideUpgradeBehavior = 'None',
+    $OctopusAzureFabricOverrideUpgradeBehavior = 'None',
 
     [Switch]
-    $UseExistingClusterConnection,
+    $OctopusAzureFabricUseExistingClusterConnection,
 
     [String]
     [ValidateSet('Never','Always','SameAppTypeAndVersion')]
-    $OverwriteBehavior = 'Never',
+    $OctopusAzureFabricOverwriteBehavior = 'Never',
 
     [Switch]
-    $SkipPackageValidation,
+    $OctopusAzureFabricSkipPackageValidation,
 
     [String]
-    $SecurityToken,
+    $OctopusAzureFabricSecurityToken,
 
     [int]
-    $CopyPackageTimeoutSec
+    $OctopusAzureFabricCopyPackageTimeoutSec
 )
 
 function Read-XmlElementAsHashtable
@@ -108,10 +104,10 @@ function Read-PublishProfile
     Param (
         [ValidateScript({Test-Path $_ -PathType Leaf})]
         [String]
-        $PublishProfileFile
+        $OctopusAzureFabricPublishProfileFile
     )
 
-    $publishProfileXml = [Xml] (Get-Content $PublishProfileFile)
+    $publishProfileXml = [Xml] (Get-Content $OctopusAzureFabricPublishProfileFile)
     $publishProfile = @{}
 
     $publishProfile.ClusterConnectionParameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("ClusterConnectionParameters")
@@ -126,8 +122,8 @@ function Read-PublishProfile
         }
     }
 
-    $publishProfileFolder = (Split-Path $PublishProfileFile)
-    $publishProfile.ApplicationParameterFile = [System.IO.Path]::Combine($PublishProfileFolder, $publishProfileXml.PublishProfile.ApplicationParameterFile.Path)
+    $publishProfileFolder = (Split-Path $OctopusAzureFabricPublishProfileFile)
+    $publishProfile.OctopusAzureFabricApplicationParametersFile = [System.IO.Path]::Combine($PublishProfileFolder, $publishProfileXml.PublishProfile.OctopusAzureFabricApplicationParametersFile.Path)
 
     return $publishProfile
 }
@@ -135,26 +131,26 @@ function Read-PublishProfile
 # TODO: markse - removed default fallbacks.
 #$LocalFolder = (Split-Path $MyInvocation.MyCommand.Path)
 
-#if (!$PublishProfileFile)
+#if (!$OctopusAzureFabricPublishProfileFile)
 #{
-#    $PublishProfileFile = "$LocalFolder\..\PublishProfiles\Local.xml"
+#    $OctopusAzureFabricPublishProfileFile = "$LocalFolder\..\PublishProfiles\Local.xml"
 #}
 
-#if (!$ApplicationPackagePath)
+#if (!$OctopusAzureFabricApplicationPackagePath)
 #{
-#    $ApplicationPackagePath = "$LocalFolder\..\pkg\Release"
+#    $OctopusAzureFabricApplicationPackagePath = "$LocalFolder\..\pkg\Release"
 #}
 
-$ApplicationPackagePath = Resolve-Path $ApplicationPackagePath
+$OctopusAzureFabricApplicationPackagePath = Resolve-Path $OctopusAzureFabricApplicationPackagePath
 
-$publishProfile = Read-PublishProfile $PublishProfileFile
+$publishProfile = Read-PublishProfile $OctopusAzureFabricPublishProfileFile
 
-if (-not $UseExistingClusterConnection)
+if (-not $OctopusAzureFabricUseExistingClusterConnection)
 {
     $ClusterConnectionParameters = $publishProfile.ClusterConnectionParameters
-    if ($SecurityToken)
+    if ($OctopusAzureFabricSecurityToken)
     {
-        $ClusterConnectionParameters["SecurityToken"] = $SecurityToken
+        $ClusterConnectionParameters["OctopusAzureFabricSecurityToken"] = $OctopusAzureFabricSecurityToken
     }
 
     try
@@ -174,10 +170,10 @@ if (-not $UseExistingClusterConnection)
 $ModuleFolderPath = ".\ServiceFabricSDK"
 Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
 
-$IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
+$IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OctopusAzureFabricOverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OctopusAzureFabricOverrideUpgradeBehavior -eq 'ForceUpgrade'
  
 # check if this application exists or not
-$ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
+$ManifestFilePath = "$OctopusAzureFabricApplicationPackagePath\ApplicationManifest.xml"
 $manifestXml = [Xml] (Get-Content $ManifestFilePath)
 $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
 $AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName }) -ne $null
@@ -185,42 +181,42 @@ $AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $App
 if ($IsUpgrade -and $AppExists)
 {
     $Action = "RegisterAndUpgrade"
-    if ($DeployOnly)
+    if ($OctopusAzureFabricDeployOnly)
     {
         $Action = "Register"
     }
     
     $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
 
-    if ($OverrideUpgradeBehavior -eq 'ForceUpgrade')
+    if ($OctopusAzureFabricOverrideUpgradeBehavior -eq 'ForceUpgrade')
     {
         # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
 
-    if ($CopyPackageTimeoutSec)
+    if ($OctopusAzureFabricCopyPackageTimeoutSec)
     {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
+        Publish-UpgradedServiceFabricApplication -OctopusAzureFabricApplicationPackagePath $OctopusAzureFabricApplicationPackagePath -OctopusAzureFabricApplicationParametersFilePath $publishProfile.OctopusAzureFabricApplicationParametersFile -Action $Action -UpgradeParameters $UpgradeParameters -OctopusAzureFabricApplicationParameters $OctopusAzureFabricApplicationParameters -UnregisterUnusedVersions:$OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade -OctopusAzureFabricCopyPackageTimeoutSec $OctopusAzureFabricCopyPackageTimeoutSec -ErrorAction Stop
     }
     else
     {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
+        Publish-UpgradedServiceFabricApplication -OctopusAzureFabricApplicationPackagePath $OctopusAzureFabricApplicationPackagePath -OctopusAzureFabricApplicationParametersFilePath $publishProfile.OctopusAzureFabricApplicationParametersFile -Action $Action -UpgradeParameters $UpgradeParameters -OctopusAzureFabricApplicationParameters $OctopusAzureFabricApplicationParameters -UnregisterUnusedVersions:$OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
     }
 }
 else
 {
     $Action = "RegisterAndCreate"
-    if ($DeployOnly)
+    if ($OctopusAzureFabricDeployOnly)
     {
         $Action = "Register"
     }
     
-    if ($CopyPackageTimeoutSec)
+    if ($OctopusAzureFabricCopyPackageTimeoutSec)
     {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
+        Publish-NewServiceFabricApplication -OctopusAzureFabricApplicationPackagePath $OctopusAzureFabricApplicationPackagePath -OctopusAzureFabricApplicationParametersFilePath $publishProfile.OctopusAzureFabricApplicationParametersFile -Action $Action -OctopusAzureFabricApplicationParameters $OctopusAzureFabricApplicationParameters -OctopusAzureFabricOverwriteBehavior $OctopusAzureFabricOverwriteBehavior -OctopusAzureFabricSkipPackageValidation:$OctopusAzureFabricSkipPackageValidation -OctopusAzureFabricCopyPackageTimeoutSec $OctopusAzureFabricCopyPackageTimeoutSec -ErrorAction Stop
     }
     else
     {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -ErrorAction Stop
+        Publish-NewServiceFabricApplication -OctopusAzureFabricApplicationPackagePath $OctopusAzureFabricApplicationPackagePath -OctopusAzureFabricApplicationParametersFilePath $publishProfile.OctopusAzureFabricApplicationParametersFile -Action $Action -OctopusAzureFabricApplicationParameters $OctopusAzureFabricApplicationParameters -OctopusAzureFabricOverwriteBehavior $OctopusAzureFabricOverwriteBehavior -OctopusAzureFabricSkipPackageValidation:$OctopusAzureFabricSkipPackageValidation -ErrorAction Stop
     }
 }
