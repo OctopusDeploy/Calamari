@@ -30,9 +30,10 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
             var variables = deployment.Variables;
+
+            // Deployment variables.
             Log.SetOutputVariable("OctopusAzureFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
             Log.SetOutputVariable("OctopusAzureFabricPublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile), variables);
-            //Log.SetOutputVariable("OctopusAzureFabricApplicationPackagePath", variables.Get(SpecialVariables.Action.Azure.FabricApplicationPackagePath), variables);
             Log.SetOutputVariable("OctopusAzureFabricDeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly), variables);
             Log.SetOutputVariable("OctopusAzureFabricApplicationParameters", variables.Get(SpecialVariables.Action.Azure.FabricApplicationParameters), variables);
             Log.SetOutputVariable("OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade), variables);
@@ -40,9 +41,12 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.SetOutputVariable("OctopusAzureFabricUseExistingClusterConnection", variables.Get(SpecialVariables.Action.Azure.FabricUseExistingClusterConnection), variables);
             Log.SetOutputVariable("OctopusAzureFabricOverwriteBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverwriteBehavior), variables);
             Log.SetOutputVariable("OctopusAzureFabricSkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation), variables);
-            //Log.SetOutputVariable("OctopusAzureFabricSecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken), variables);
+            Log.SetOutputVariable("OctopusAzureFabricSecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken), variables);
             Log.SetOutputVariable("OctopusAzureFabricCopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.Azure.FabricCopyPackageTimeoutSec), variables);
-            
+
+            // Variables set by us during command execution.
+            //Log.SetOutputVariable("OctopusAzureFabricApplicationPackagePath", variables.Get(SpecialVariables.Action.Azure.FabricApplicationPackagePath), variables);
+
             var scriptFile = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureServiceFabricApp.ps1");
             
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);

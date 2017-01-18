@@ -176,7 +176,8 @@
                 public static readonly string FabricSkipPackageValidation = "Octopus.Action.Azure.FabricSkipPackageValidation";
                 public static readonly string FabricSecurityToken = "Octopus.Action.Azure.FabricSecurityToken";
                 public static readonly string FabricCopyPackageTimeoutSec = "Octopus.Action.Azure.FabricCopyPackageTimeoutSec";
-                
+                public static readonly string FabricLogExtractedApplicationPackage = "Octopus.Action.Azure.FabricLogExtractedApplicationPackage";
+
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";
                 public static readonly string AppOffline = "Octopus.Action.Azure.AppOffline";
