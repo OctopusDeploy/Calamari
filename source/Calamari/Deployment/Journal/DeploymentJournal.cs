@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Octostache;
 
@@ -87,9 +86,9 @@ namespace Calamari.Deployment.Journal
             return GetAllJournalEntries().Where(e =>
                 string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
                 && (packageId == null || string.Equals(packageId, e.PackageId, StringComparison.OrdinalIgnoreCase))
-                && (packageVersion == null || string.Equals(packageVersion, e.PackageVersion, StringComparison.OrdinalIgnoreCase)
+                && (packageVersion == null || string.Equals(packageVersion, e.PackageVersion, StringComparison.OrdinalIgnoreCase))
                 && e.WasSuccessful)
-                ).OrderByDescending(o => o.InstalledOn)
+                .OrderByDescending(o => o.InstalledOn)
                 .FirstOrDefault();
         }
 
