@@ -76,6 +76,23 @@ namespace Calamari.Deployment.Journal
                 .FirstOrDefault();
         }
 
+        public JournalEntry GetLatestSuccessfulInstallation(string retentionPolicySubset)
+        {
+            return GetLatestSuccessfulInstallation(retentionPolicySubset, null, null);
+        }
+
+        public JournalEntry GetLatestSuccessfulInstallation(string retentionPolicySubset, string packageId,
+            string packageVersion)
+        {
+            return GetAllJournalEntries().Where(e =>
+                string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
+                && (packageId == null || string.Equals(packageId, e.PackageId, StringComparison.OrdinalIgnoreCase))
+                && (packageVersion == null || string.Equals(packageVersion, e.PackageVersion, StringComparison.OrdinalIgnoreCase)
+                && e.WasSuccessful)
+                ).OrderByDescending(o => o.InstalledOn)
+                .FirstOrDefault();
+        }
+
         private IEnumerable<XElement> Read()
         {
             if (!fileSystem.FileExists(JournalPath))
