@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
@@ -30,9 +31,10 @@ namespace Calamari.Deployment.Conventions
             if (!features.Contains(SpecialVariables.Features.CustomScripts))
                 return;
 
-            foreach (var scriptName in scriptEngine.GetSupportedExtensions() 
-                .Select(extension => GetScriptName(deploymentStage, extension)))
+            foreach (ScriptType scriptType in Enum.GetValues(typeof(ScriptType)))
             {
+                var scriptName = GetScriptName(deploymentStage, scriptType);
+                
                 string error;
                 var scriptBody = deployment.Variables.Get(scriptName, out error);
                 if (!string.IsNullOrEmpty(error))
@@ -40,6 +42,9 @@ namespace Calamari.Deployment.Conventions
 
                 if (string.IsNullOrWhiteSpace(scriptBody))
                     continue;
+
+                if (!scriptEngine.GetSupportedTypes().Contains(scriptType))
+                    throw new CommandException($"{scriptType} scripts are not supported on this platform ({deploymentStage})");
 
                 var scriptFile = Path.Combine(deployment.CurrentDirectory, scriptName);
 
@@ -51,8 +56,7 @@ namespace Calamari.Deployment.Conventions
 
                 if (result.ExitCode != 0)
                 {
-                    throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
-                        result.ExitCode));
+                    throw new CommandException($"{deploymentStage} script returned non-zero exit code: {result.ExitCode}");
                 }
 
                 if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
@@ -63,9 +67,9 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        public static string GetScriptName(string deploymentStage, string extension)
+        public static string GetScriptName(string deploymentStage, ScriptType scriptType)
         {
-            return "Octopus.Action.CustomScripts." + deploymentStage + "." + extension;
+            return "Octopus.Action.CustomScripts." + deploymentStage + "." + scriptType.FileExtension();
         }
 
 

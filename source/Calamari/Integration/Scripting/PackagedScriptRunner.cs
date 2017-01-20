@@ -50,7 +50,7 @@ namespace Calamari.Integration.Scripting
 
         IEnumerable<string> FindScripts(RunningDeployment deployment)
         {
-            var supportedScriptExtensions = scriptEngine.GetSupportedExtensions();
+            var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
             var searchPatterns = supportedScriptExtensions.Select(e => "*." + e).ToArray();
             return
                 from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)

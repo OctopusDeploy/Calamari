@@ -109,7 +109,7 @@ namespace Calamari.Tests.Fixtures.Bash
                 .Argument("script", GetFixtureResouce("Scripts", "print-encoded-variable.sh")));
 
 
-            output.AssertErrorOutput("Script type `sh` unsupported on this platform");
+            output.AssertErrorOutput("Bash scripts are not supported on this platform");
         }
     }
 }
