@@ -121,6 +121,8 @@
             {
                 public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
                 public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
+                public static readonly string ExtractedFileCount = "Package.ExtractedFileCount";
+                public static readonly string CopiedFileCount = "Package.CopiedFileCount";
                 public static readonly string DirectoryPath = "Package.DirectoryPath";
                 public static readonly string FileName = "Package.FileName";
                 public static readonly string FilePath = "Package.FilePath";

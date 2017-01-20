@@ -18,6 +18,7 @@ var framework = Argument("framework", "");
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////
 var artifactsDir = "./built-packages/";
+var localPackagesDir = "../LocalPackages";
 var sourceFolder = "./source/";
 var projectsToPackage = new []{"Calamari", "Calamari.Azure"};
 var isContinuousIntegrationBuild = !BuildSystem.IsLocalBuild;
@@ -49,15 +50,6 @@ Teardown(context =>
 //////////////////////////////////////////////////////////////////////
 //  PRIVATE TASKS
 //////////////////////////////////////////////////////////////////////
-
-Task("__Default")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__UpdateAssemblyVersionInformation")
-    .IsDependentOn("__Build")
-    .IsDependentOn("__Test")
-    .IsDependentOn("__Pack")
-    .IsDependentOn("__Publish");
 
 Task("__Clean")
     .Does(() =>
@@ -197,6 +189,16 @@ private void RestoreFileOnCleanup(string file)
     });
 }
 
+Task("__CopyToLocalPackages")
+    .WithCriteria(BuildSystem.IsLocalBuild)
+    .IsDependentOn("__Pack")
+    .Does(() =>
+{
+    CreateDirectory(localPackagesDir);
+    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.{nugetVersion}.nupkg"), localPackagesDir);
+    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.Azure.{nugetVersion}.nupkg"), localPackagesDir);
+});
+
 //////////////////////////////////////////////////////////////////////
 // TASKS
 //////////////////////////////////////////////////////////////////////
@@ -238,7 +240,8 @@ Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("__Restore")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__BuildAndZipNET45TestProject")
-    .IsDependentOn("__Pack");
+    .IsDependentOn("__Pack")
+    .IsDependentOn("__CopyToLocalPackages");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
