@@ -164,6 +164,7 @@
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 
                 // Service Fabric
+                public static readonly string FabricPackagePath = "Octopus.Action.Azure.FabricPackagePath";
                 public static readonly string FabricConnectionEndpoint = "Octopus.Action.Azure.FabricConnectionEndpoint";
                 public static readonly string FabricPublishProfileFile = "Octopus.Action.Azure.FabricPublishProfileFile";
                 public static readonly string FabricApplicationPackagePath = "Octopus.Action.Azure.FabricApplicationPackagePath";

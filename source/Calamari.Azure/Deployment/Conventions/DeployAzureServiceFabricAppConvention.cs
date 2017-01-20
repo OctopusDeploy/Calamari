@@ -6,6 +6,8 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using System.IO;
+using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
@@ -16,8 +18,10 @@ namespace Calamari.Azure.Deployment.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureServiceFabricAppConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources,
-            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public DeployAzureServiceFabricAppConvention(ICalamariFileSystem fileSystem,
+            ICalamariEmbeddedResources embeddedResources,
+            IScriptEngine scriptEngine,
+            ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
@@ -30,24 +34,27 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
             var variables = deployment.Variables;
+            
+            // Vars we know will exist from our step/action.
+            ///Log.SetOutputVariable("ConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
+            Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile), variables);
 
-            // Deployment variables.
-            Log.SetOutputVariable("OctopusAzureFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
-            Log.SetOutputVariable("OctopusAzureFabricPublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile), variables);
-            Log.SetOutputVariable("OctopusAzureFabricDeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly), variables);
-            Log.SetOutputVariable("OctopusAzureFabricApplicationParameters", variables.Get(SpecialVariables.Action.Azure.FabricApplicationParameters), variables);
-            Log.SetOutputVariable("OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade), variables);
-            Log.SetOutputVariable("OctopusAzureFabricOverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverrideUpgradeBehavior), variables);
-            Log.SetOutputVariable("OctopusAzureFabricUseExistingClusterConnection", variables.Get(SpecialVariables.Action.Azure.FabricUseExistingClusterConnection), variables);
-            Log.SetOutputVariable("OctopusAzureFabricOverwriteBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverwriteBehavior), variables);
-            Log.SetOutputVariable("OctopusAzureFabricSkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation), variables);
-            Log.SetOutputVariable("OctopusAzureFabricSecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken), variables);
-            Log.SetOutputVariable("OctopusAzureFabricCopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.Azure.FabricCopyPackageTimeoutSec), variables);
+            // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
+            var targetPath = Path.Combine(CrossPlatform.GetCurrentDirectory(), "staging");
+            Log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
 
-            // Variables set by us during command execution.
-            //Log.SetOutputVariable("OctopusAzureFabricApplicationPackagePath", variables.Get(SpecialVariables.Action.Azure.FabricApplicationPackagePath), variables);
-
-            var scriptFile = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureServiceFabricApp.ps1");
+            //TODO: markse - how to do optional vars?
+            Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly, defaultValue: false.ToString()), variables);
+            ///Log.SetOutputVariable("ApplicationParameters", variables.Get(SpecialVariables.Action.Azure.FabricApplicationParameters, defaultValue: string.Empty), variables);
+            Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
+            Log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverrideUpgradeBehavior, defaultValue: "None"), variables);
+            Log.SetOutputVariable("UseExistingClusterConnection", variables.Get(SpecialVariables.Action.Azure.FabricUseExistingClusterConnection, defaultValue: false.ToString()), variables);
+            Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
+            Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation, defaultValue: false.ToString()), variables);
+            Log.SetOutputVariable("SecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken, defaultValue: string.Empty), variables);
+            Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.Azure.FabricCopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
+            
+            var scriptFile = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureFabricApplication.ps1");
             
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
 
@@ -58,6 +65,20 @@ namespace Calamari.Azure.Deployment.Conventions
                 throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
                     result.ExitCode));
             }
+
+            /*
+            EXAMPLE
+            >. 'C:\Development\_archives\MarktopusSFA\MarktopusSFA\Scripts\Deploy-FabricApplication.ps1' 
+            -ApplicationPackagePath 'C:\Development\_archives\MarktopusSFA\MarktopusSFA\pkg\Debug' 
+            -PublishProfileFile 'C:\Development\_archives\MarktopusSFA\MarktopusSFA\PublishProfiles\Cloud.xml' 
+            -DeployOnly:$false 
+            -ApplicationParameter:@{} 
+            -UnregisterUnusedApplicationVersionsAfterUpgrade $false 
+            -OverrideUpgradeBehavior 'None' 
+            -OverwriteBehavior 'SameAppTypeAndVersion' 
+            -SkipPackageValidation:$false 
+            -ErrorAction Stop
+            */
         }
     }
 }

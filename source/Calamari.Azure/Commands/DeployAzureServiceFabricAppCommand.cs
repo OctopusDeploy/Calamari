@@ -77,7 +77,7 @@ namespace Calamari.Azure.Commands
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ExtractAzureServiceFabricPackageConvention(fileSystem),
+                //new ExtractAzureServiceFabricPackageConvention(fileSystem, packageFile),
                 new DeployAzureServiceFabricAppConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),

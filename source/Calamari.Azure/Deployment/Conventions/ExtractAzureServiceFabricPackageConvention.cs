@@ -6,105 +6,73 @@ using System.Text;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
     public class ExtractAzureServiceFabricPackageConvention : IInstallConvention
     {
+        readonly IPackageExtractor extractor;
         readonly ICalamariFileSystem fileSystem;
+        readonly string packagePath;
 
-        public ExtractAzureServiceFabricPackageConvention(ICalamariFileSystem fileSystem)
+        public ExtractAzureServiceFabricPackageConvention(IPackageExtractor extractor,
+            ICalamariFileSystem fileSystem,
+            string packagePath)
         {
+            this.extractor = extractor;
             this.fileSystem = fileSystem;
+            this.packagePath = packagePath;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
-            Log.VerboseFormat("Extracting Azure Service Fabric package: '{0}'", packagePath);
+            //if (string.IsNullOrWhiteSpace(packagePath))
+            //{
+            //    throw new Exception("No Azure Fabric Application package path defined.");
+            //    Log.Verbose("No Azure Fabric Application package path defined.");
+            //    return;
+            //}
 
-            //TODO: markse - Consider the implications of package extraction to a hardcoded directory (ie. multiple SF apps in the one deployment working directory won't be able to run in parallel).
-            //TODO: markse - Use the package name for this extraction path instead.
+            //var metadata = extractor.GetMetadata(packagePath);
 
-            var workingDirectory = deployment.CurrentDirectory;
-            var destinationPath = Path.Combine(workingDirectory, "OctopusAzureServiceFabricPackage");
-            using (var package = Package.Open(packagePath, FileMode.Open))
-            {
-                ExtractContents(package, destinationPath);
-            }
+            //var targetPath = GetTargetPath(deployment, metadata);
 
-            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.FabricLogExtractedApplicationPackage))
-                LogExtractedPackage(destinationPath);
+            //Log.Verbose("Extracting package to: " + targetPath);
 
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.FabricApplicationPackagePath,
-                destinationPath,
-                deployment.Variables);
+            //var filesExtracted = extractor.Extract(packagePath, targetPath, deployment.Variables.GetFlag(SpecialVariables.Package.SuppressNestedScriptWarning, false));
+
+            //Log.Verbose("Extracted " + filesExtracted + " files");
+
+            //deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
+            //Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath, deployment.Variables);
+            //Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, targetPath, deployment.Variables);
+
+
+
+
+
+
+            //Log.VerboseFormat("Extracting Azure Fabric Application package: '{0}'", packagePath);
+
+            ////TODO: markse - Consider the implications of package extraction to a hardcoded directory (ie. multiple SF apps in the one deployment working directory won't be able to run in parallel).
+            ////TODO: markse - Use the package name for this extraction path instead.
+
+            //var workingDirectory = deployment.CurrentDirectory;
+            //var destinationPath = Path.Combine(workingDirectory, "OctopusAzureServiceFabricPackage");
+            //using (var package = Package.Open(packagePath, FileMode.Open))
+            //{
+            //    // TODO: markse - confirm how best to extract a package that could be in any package format.
+            //    ExtractContents(package, destinationPath);
+            //}
+
+            //if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.FabricLogExtractedApplicationPackage))
+            //    LogExtractedPackage(destinationPath);
+
+            //Log.SetOutputVariable(SpecialVariables.Action.Azure.FabricApplicationPackagePath,
+            //    destinationPath,
+            //    deployment.Variables);
         }
-
-        #region Helpers
-
-        void ExtractContents(Package package, string destinationPath)
-        {
-            ExtractPart(package.GetPart(
-                PackUriHelper.ResolvePartUri(
-                    new Uri("/", UriKind.Relative),
-                    new Uri("/", UriKind.Relative))),
-                destinationPath);
-        }
-
-        void ExtractPart(PackagePart part, string destinationPath)
-        {
-            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destinationPath));
-
-            using (var packageFileStream = part.GetStream())
-            using (var destinationFileStream = fileSystem.OpenFile(destinationPath, FileMode.Create))
-            {
-                packageFileStream.CopyTo(destinationFileStream);
-                destinationFileStream.Flush();
-            }
-        }
-
-        void LogExtractedPackage(string workingDirectory)
-        {
-            Log.Verbose("Azure Service Fabric package extracted. Working directory contents:");
-            LogDirectoryContents(workingDirectory, "", 0);
-        }
-
-        void LogDirectoryContents(string workingDirectory, string currentDirectoryRelativePath, int depth = 0)
-        {
-            var directory = new DirectoryInfo(Path.Combine(workingDirectory, currentDirectoryRelativePath));
-
-            var files = fileSystem.EnumerateFiles(directory.FullName).ToList();
-            for (int i = 0; i < files.Count; i++)
-            {
-                // Only log the first 50 files in each directory
-                if (i == 50)
-                {
-                    Log.VerboseFormat("{0}And {1} more files...", Indent(depth), files.Count - i);
-                    break;
-                }
-
-                var file = files[i];
-                Log.Verbose(Indent(depth) + Path.GetFileName(file));
-            }
-
-            foreach (var subDirectory in fileSystem.EnumerateDirectories(directory.FullName).Select(x => new DirectoryInfo(x)))
-            {
-                Log.Verbose(Indent(depth + 1) + "\\" + subDirectory.Name);
-                LogDirectoryContents(workingDirectory, Path.Combine(currentDirectoryRelativePath, subDirectory.Name), depth + 1);
-            }
-        }
-
-        static string Indent(int n)
-        {
-            var indent = new StringBuilder("|");
-            for (int i = 0; i < n; i++)
-                indent.Append("-");
-
-            return indent.ToString();
-        }
-
-        #endregion
-
+        
     }
 }
