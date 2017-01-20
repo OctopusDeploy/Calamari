@@ -74,6 +74,19 @@ Param
     $OctopusAzureFabricCopyPackageTimeoutSec
 )
 
+Write-Host "TODO: markse - remove this logging"
+Write-Host "OctopusAzureFabricPublishProfileFile = $($OctopusAzureFabricPublishProfileFile)"
+Write-Host "OctopusAzureFabricApplicationPackagePath = $($OctopusAzureFabricApplicationPackagePath)"
+Write-Host "OctopusAzureFabricDeployOnly = $($OctopusAzureFabricDeployOnly)"
+Write-Host "OctopusAzureFabricApplicationParameters = $($OctopusAzureFabricApplicationParameters)"
+Write-Host "OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade = $($OctopusAzureFabricUnregisterUnusedApplicationVersionsAfterUpgrade)"
+Write-Host "OctopusAzureFabricOverrideUpgradeBehavior = $($OctopusAzureFabricOverrideUpgradeBehavior)"
+Write-Host "OctopusAzureFabricUseExistingClusterConnection = $($OctopusAzureFabricUseExistingClusterConnection)"
+Write-Host "OctopusAzureFabricOverwriteBehavior = $($OctopusAzureFabricOverwriteBehavior)"
+Write-Host "OctopusAzureFabricSkipPackageValidation = $($OctopusAzureFabricSkipPackageValidation)"
+Write-Host "OctopusAzureFabricSecurityToken = $($OctopusAzureFabricSecurityToken)"
+Write-Host "OctopusAzureFabricCopyPackageTimeoutSec = $($OctopusAzureFabricCopyPackageTimeoutSec)"
+
 function Read-XmlElementAsHashtable
 {
     Param (
