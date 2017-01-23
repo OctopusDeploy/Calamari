@@ -34,7 +34,9 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
             var variables = deployment.Variables;
-            
+
+            var test = variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile);
+
             // Vars we know will exist from our step/action.
             ///Log.SetOutputVariable("ConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
             Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile), variables);
@@ -42,8 +44,7 @@ namespace Calamari.Azure.Deployment.Conventions
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
             var targetPath = Path.Combine(CrossPlatform.GetCurrentDirectory(), "staging");
             Log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
-
-            //TODO: markse - how to do optional vars?
+            
             Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly, defaultValue: false.ToString()), variables);
             ///Log.SetOutputVariable("ApplicationParameters", variables.Get(SpecialVariables.Action.Azure.FabricApplicationParameters, defaultValue: string.Empty), variables);
             Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
@@ -53,9 +54,16 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("SecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken, defaultValue: string.Empty), variables);
             Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.Azure.FabricCopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
-            
-            var scriptFile = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureFabricApplication.ps1");
-            
+
+            // The script name 'DeployToAzure.ps1' is used for consistency with other Octopus Azure steps.
+            // The user may supply the script, to override behaviour.
+            var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToAzure.ps1");
+            if (!fileSystem.FileExists(scriptFile))
+            {
+                // Use our bundled version.
+                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureFabricApplication.ps1"));
+            }
+
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
 
             fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);

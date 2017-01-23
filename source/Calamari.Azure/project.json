@@ -61,6 +61,7 @@
         "Scripts\\AzureContext.ps1",
         "Scripts\\DeployAzureCloudService.ps1",
         "Scripts\\DeployAzureFabricApplication.ps1",
+        "Scripts\\ServiceFabricSDK\\*.*",
         "Scripts\\SwapAzureCloudServiceDeployment.ps1"
       ]
     },

@@ -3,8 +3,14 @@
 ##
 ## This script is used to control how we deploy packages to Azure Service Fabric applications to a cluster. 
 ##
-## This is a modified version of the Visual Studio's Service Fabric 'Deploy-FabricApplication.ps1' file. This version includes automatic support for 'fresh install vs upgrade' scenarios.
-## Thx to Colin Dembovsky @ http://colinsalmcorner.com/post/continuous-deployment-of-service-fabric-apps-using-vsts-or-tfs for posting about this.
+## This is a modified version of the Visual Studio's Service Fabric 'Deploy-FabricApplication.ps1' file. This
+## version includes automatic support for 'fresh install vs upgrade' scenarios. Thx to Colin Dembovsky at
+## http://colinsalmcorner.com/post/continuous-deployment-of-service-fabric-apps-using-vsts-or-tfs for posting 
+## about this.
+##
+## If you want to customize the Azure deployment process, simply copy this script into
+## your deployment package as DeployToAzure.ps1. Octopus will invoke it instead of the default 
+## script. 
 ##
 ## The script will be passed the following parameters in addition to the normal Octopus 
 ## variables passed to any PowerShell script.
@@ -17,7 +23,7 @@
 ##   UnregisterUnusedApplicationVersionsAfterUpgrade  // Indicates whether to unregister any unused application versions that exist after an upgrade is finished.
 ##   OverrideUpgradeBehavior                          // Indicates the behavior used to override the upgrade settings specified by the publish profile. Options: None | ForceUpgrade | VetoUpgrade
 ##   UseExistingClusterConnection                     // Indicates that the script should make use of an existing cluster connection that has already been established in the PowerShell session.  The cluster connection parameters configured in the publish profile are ignored.
-##   OverwriteBehavior                                // Overwrite Behavior if an application exists in the cluster with the same name. Available Options are Never, Always, SameAppTypeAndVersion. This setting is not applicable when upgrading an application.
+##   OverwriteBehavior                                // Overwrite Behavior if an application exists in the cluster with the same name. This setting is not applicable when upgrading an application. Options: Never | Always | SameAppTypeAndVersion
 ##   SkipPackageValidation                            // Switch signaling whether the package should be validated or not before deployment.
 ##   SecurityToken                                    // A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
 ##   CopyPackageTimeoutSec                            // Timeout in seconds for copying application package to image store.
@@ -36,44 +42,6 @@
 ## --------------------------------------------------------------------------------------
 ##
 
-Param
-(
-    [String]
-    $PublishProfileFile,
-
-    [String]
-    $ApplicationPackagePath,
-
-    [Switch]
-    $DeployOnly,
-
-    [Hashtable]
-    $ApplicationParameter,
-
-    [Boolean]
-    $UnregisterUnusedApplicationVersionsAfterUpgrade,
-
-    [String]
-    [ValidateSet('None', 'ForceUpgrade', 'VetoUpgrade')]
-    $OverrideUpgradeBehavior = 'None',
-
-    [Switch]
-    $UseExistingClusterConnection,
-
-    [String]
-    [ValidateSet('Never','Always','SameAppTypeAndVersion')]
-    $OverwriteBehavior = 'Never',
-
-    [Switch]
-    $SkipPackageValidation,
-
-    [String]
-    $SecurityToken,
-
-    [int]
-    $CopyPackageTimeoutSec
-)
-
 Write-Host "TODO: markse - remove this logging"
 Write-Host "PublishProfileFile = $($PublishProfileFile)"
 Write-Host "ApplicationPackagePath = $($ApplicationPackagePath)"
@@ -86,6 +54,8 @@ Write-Host "OverwriteBehavior = $($OverwriteBehavior)"
 Write-Host "SkipPackageValidation = $($SkipPackageValidation)"
 Write-Host "SecurityToken = $($SecurityToken)"
 Write-Host "CopyPackageTimeoutSec = $($CopyPackageTimeoutSec)"
+Write-Host "FIN"
+#exit
 
 function Read-XmlElementAsHashtable
 {
@@ -178,9 +148,9 @@ if (-not $UseExistingClusterConnection)
 }
 
 # TODO: markse - removed registry lookups in favour of local SDK folder.
-#$RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
-#$ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
-$ModuleFolderPath = ".\ServiceFabricSDK"
+$RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
+$ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
+#$ModuleFolderPath = ".\ServiceFabricSDK"
 Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
 
 $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
