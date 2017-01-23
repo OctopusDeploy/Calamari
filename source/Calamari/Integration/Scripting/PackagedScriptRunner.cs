@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
@@ -51,7 +52,7 @@ namespace Calamari.Integration.Scripting
         IEnumerable<string> FindScripts(RunningDeployment deployment)
         {
             var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
-            var searchPatterns = supportedScriptExtensions.Select(e => "*." + e).ToArray();
+            var searchPatterns = supportedScriptExtensions.Select(e => "*." + e.FileExtension()).ToArray();
             return
                 from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)
                 let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)
