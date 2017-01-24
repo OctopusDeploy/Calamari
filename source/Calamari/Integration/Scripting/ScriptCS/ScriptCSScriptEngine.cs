@@ -6,9 +6,9 @@ namespace Calamari.Integration.Scripting.ScriptCS
 {
     public class ScriptCSScriptEngine : IScriptEngine
     {
-        public string[] GetSupportedExtensions()
+        public ScriptType[] GetSupportedTypes()
         {
-            return new[] {ScriptType.ScriptCS.FileExtension()};
+            return new[] {ScriptType.ScriptCS};
         }
 
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)

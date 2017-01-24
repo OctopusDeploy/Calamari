@@ -222,11 +222,11 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
-                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "sh"), "echo 'The wheels on the bus go round...'");
+                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, ScriptType.Bash), "echo 'The wheels on the bus go round...'");
             }
             else
             {
-                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, "ps1"), "Write-Host 'The wheels on the bus go round...'");
+                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, ScriptType.Powershell), "Write-Host 'The wheels on the bus go round...'");
             }
 
             var result = DeployPackage();

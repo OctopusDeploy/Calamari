@@ -6,9 +6,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
     public class PowerShellScriptEngine : IScriptEngine
     {
-        public string[] GetSupportedExtensions()
+        public ScriptType[] GetSupportedTypes()
         {
-            return new[] {ScriptType.Powershell.FileExtension()};
+            return new[] {ScriptType.Powershell};
         }
 
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)

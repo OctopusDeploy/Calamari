@@ -481,7 +481,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
-            output.AssertErrorOutput("Script type `ps1` unsupported on this platform");
+            output.AssertErrorOutput("Powershell scripts are not supported on this platform");
         }
     }
 }
