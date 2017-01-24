@@ -58,11 +58,12 @@ namespace Calamari.Azure.Deployment.Conventions
             // The script name 'DeployToAzure.ps1' is used for consistency with other Octopus Azure steps.
             // The user may supply the script, to override behaviour.
             var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToAzure.ps1");
-            if (!fileSystem.FileExists(scriptFile))
-            {
+            // TODO: markse - uncomment these to always run our script during debug.
+            //if (!fileSystem.FileExists(scriptFile))
+            //{
                 // Use our bundled version.
                 fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureFabricApplication.ps1"));
-            }
+            //}
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
 

@@ -42,6 +42,13 @@
 ## --------------------------------------------------------------------------------------
 ##
 
+# Parse our Octopus string output variables into valid types (for the calls to Azure PowerShell cmdlets).
+$DeployOnly = [System.Convert]::ToBoolean($DeployOnly)
+$UnregisterUnusedApplicationVersionsAfterUpgrade = [System.Convert]::ToBoolean($UnregisterUnusedApplicationVersionsAfterUpgrade)
+$UseExistingClusterConnection = [System.Convert]::ToBoolean($UseExistingClusterConnection)
+$SkipPackageValidation = [System.Convert]::ToBoolean($SkipPackageValidation)
+$CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
+
 Write-Host "TODO: markse - remove this logging"
 Write-Host "PublishProfileFile = $($PublishProfileFile)"
 Write-Host "ApplicationPackagePath = $($ApplicationPackagePath)"
@@ -54,8 +61,6 @@ Write-Host "OverwriteBehavior = $($OverwriteBehavior)"
 Write-Host "SkipPackageValidation = $($SkipPackageValidation)"
 Write-Host "SecurityToken = $($SecurityToken)"
 Write-Host "CopyPackageTimeoutSec = $($CopyPackageTimeoutSec)"
-Write-Host "FIN"
-#exit
 
 function Read-XmlElementAsHashtable
 {
@@ -111,19 +116,6 @@ function Read-PublishProfile
     return $publishProfile
 }
 
-# TODO: markse - removed default fallbacks.
-#$LocalFolder = (Split-Path $MyInvocation.MyCommand.Path)
-
-#if (!$PublishProfileFile)
-#{
-#    $PublishProfileFile = "$LocalFolder\..\PublishProfiles\Local.xml"
-#}
-
-#if (!$ApplicationPackagePath)
-#{
-#    $ApplicationPackagePath = "$LocalFolder\..\pkg\Release"
-#}
-
 $ApplicationPackagePath = Resolve-Path $ApplicationPackagePath
 
 $publishProfile = Read-PublishProfile $PublishProfileFile
@@ -139,6 +131,14 @@ if (-not $UseExistingClusterConnection)
     try
     {
         [void](Connect-ServiceFabricCluster @ClusterConnectionParameters)
+
+		# Oh my God >< #plsKillMe
+		# http://stackoverflow.com/questions/35711540/how-do-i-deploy-service-fabric-application-from-vsts-release-pipeline
+		# When the Connect-ServiceFabricCluster function is called, a local $clusterConnection variable is set after the call to Connect-ServiceFabricCluster. You can see that using Get-Variable.
+		# Unfortunately there is logic in some of the SDK scripts that expect that variable to be set but because they run in a different scope, that local variable isn't available.
+		# It works in Visual Studio because the Deploy-FabricApplication.ps1 script is called using dot source notation, which puts the $clusterConnection variable in the current scope.
+		# I'm not sure if there is a way to use dot sourcing when running a script though the release pipeline but you could, as a workaround, make the $clusterConnection variable global right after it's been set via the Connect-ServiceFabricCluster call.
+		$global:clusterConnection = $clusterConnection
     }
     catch [System.Fabric.FabricObjectClosedException]
     {
@@ -147,21 +147,23 @@ if (-not $UseExistingClusterConnection)
     }
 }
 
-# TODO: markse - removed registry lookups in favour of local SDK folder.
+# TODO: markse - remove registry lookups in favour of local SDK folder? Or is reg lookup ok because they'll need the SF SDF installed on the server to run this stuff anyway?
 $RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
 $ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
 #$ModuleFolderPath = ".\ServiceFabricSDK"
 Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
 
 $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
+
+# TODO: markse - try and get this upgrade logic working.
+## check if this application exists or not
+#$ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
+#$manifestXml = [Xml] (Get-Content $ManifestFilePath)
+#$AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
+#$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName }) -ne $null
  
-# check if this application exists or not
-$ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
-$manifestXml = [Xml] (Get-Content $ManifestFilePath)
-$AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
-$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName }) -ne $null
- 
-if ($IsUpgrade -and $AppExists)
+#if ($IsUpgrade -and $AppExists)
+if ($IsUpgrade)
 {
     $Action = "RegisterAndUpgrade"
     if ($DeployOnly)
