@@ -1,7 +1,7 @@
 {
   "version": "0.0.0-*",
   "dependencies": {
-    "OctoDiff": "1.1.0",
+    "OctoDiff": "1.1.1",
     "FSharp.Compiler.Tools": "4.0.0.1",
     "ScriptCS": "0.16.1",
     "Octostache": "2.0.14"
