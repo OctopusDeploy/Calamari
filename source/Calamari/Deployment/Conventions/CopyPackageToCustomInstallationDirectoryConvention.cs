@@ -62,6 +62,7 @@ namespace Calamari.Deployment.Conventions
 
             Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
             Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.CopiedFileCount, count.ToString(), deployment.Variables);
         }
     }
 }

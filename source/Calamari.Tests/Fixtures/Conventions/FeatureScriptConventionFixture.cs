@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine = Substitute.For<IScriptEngine>();
             commandLineRunner = Substitute.For<ICommandLineRunner>();
 
-            scriptEngine.GetSupportedExtensions().Returns(new string[] {"ps1"});
+            scriptEngine.GetSupportedTypes().Returns(new[] { ScriptType.Powershell });
 
             variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.blah");

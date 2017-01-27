@@ -4,7 +4,7 @@ namespace Calamari.Integration.Scripting
 {
     public interface IScriptEngine  
     {
-        string[] GetSupportedExtensions();
+        ScriptType[] GetSupportedTypes();
         CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner);
     }
 }

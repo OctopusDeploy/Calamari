@@ -22,7 +22,10 @@ namespace Calamari.Deployment.Retention
 
         public void ApplyRetentionPolicy(string retentionPolicySet, int? days, int? releases)
         {
-            var deployments = deploymentJournal.GetAllJournalEntries().Where(x => x.RetentionPolicySet == retentionPolicySet);
+            var deployments = deploymentJournal
+                .GetAllJournalEntries()
+                .Where(x => x.RetentionPolicySet == retentionPolicySet)
+                .ToList();
             var preservedEntries = new List<JournalEntry>();
 
             if (days.HasValue && days.Value > 0)
@@ -41,6 +44,11 @@ namespace Calamari.Deployment.Retention
                     .ToList();
             }
 
+            if (!deployments.Any())
+            {
+                Log.Info("Did not find any deployments to clean up");
+            }
+
             foreach (var deployment in deployments)
             {
                 DeleteExtractionDestination(deployment, preservedEntries);
@@ -56,7 +64,7 @@ namespace Calamari.Deployment.Retention
                 || preservedEntries.Any(entry => deployment.ExtractedFrom.Equals(entry.ExtractedFrom, StringComparison.Ordinal)))
                 return;
 
-            Log.VerboseFormat("Removing package file '{0}'", deployment.ExtractedFrom);
+            Log.Info($"Removing package file '{deployment.ExtractedFrom}'");
             fileSystem.DeleteFile(deployment.ExtractedFrom, FailureOptions.IgnoreFailure);
         }
 
@@ -66,7 +74,7 @@ namespace Calamari.Deployment.Retention
                 || preservedEntries.Any(entry => deployment.ExtractedTo.Equals(entry.ExtractedTo, StringComparison.Ordinal)))
                 return;
 
-            Log.VerboseFormat("Removing directory '{0}'", deployment.ExtractedTo);
+            Log.Info($"Removing directory '{deployment.ExtractedTo}'");
             fileSystem.PurgeDirectory(deployment.ExtractedTo, FailureOptions.IgnoreFailure);
 
             try
