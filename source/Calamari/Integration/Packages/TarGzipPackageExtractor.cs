@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using SharpCompress.Reader.GZip;
+using SharpCompress.Readers.GZip;
 
 namespace Calamari.Integration.Packages
 {

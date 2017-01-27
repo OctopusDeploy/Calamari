@@ -1,6 +1,8 @@
 ﻿using System.IO;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Tar;
 using SharpCompress.Common;
-using SharpCompress.Writer;
+using SharpCompress.Writers;
 
 namespace Calamari.Tests.Helpers
 {
@@ -14,9 +16,8 @@ namespace Calamari.Tests.Helpers
             if (File.Exists(outputTarFilename))
                 File.Delete(outputTarFilename);
 
-
             using (Stream stream = File.OpenWrite(outputTarFilename))
-            using (var writer = WriterFactory.Open(stream, ArchiveType.Tar, CompressionType.GZip))
+            using (var writer = WriterFactory.Open(stream, ArchiveType.Tar, new WriterOptions(CompressionType.GZip) {LeaveStreamOpen = false}))
             {
                 writer.WriteAll(sourceDirectory, "*", SearchOption.AllDirectories);
             }
