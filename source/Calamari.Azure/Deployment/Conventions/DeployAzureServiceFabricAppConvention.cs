@@ -35,11 +35,8 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var variables = deployment.Variables;
 
-            var test = variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile);
-
             // Vars we know will exist from our step/action.
-            ///Log.SetOutputVariable("ConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
-            Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile), variables);
+            Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile, "PublishProfiles\\Cloud.xml"), variables);
 
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
             var targetPath = Path.Combine(CrossPlatform.GetCurrentDirectory(), "staging");
