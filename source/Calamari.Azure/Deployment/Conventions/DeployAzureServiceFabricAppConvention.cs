@@ -71,20 +71,6 @@ namespace Calamari.Azure.Deployment.Conventions
                 throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
                     result.ExitCode));
             }
-
-            /*
-            EXAMPLE
-            >. 'C:\Development\_archives\MarktopusSFA\MarktopusSFA\Scripts\Deploy-FabricApplication.ps1' 
-            -ApplicationPackagePath 'C:\Development\_archives\MarktopusSFA\MarktopusSFA\pkg\Debug' 
-            -PublishProfileFile 'C:\Development\_archives\MarktopusSFA\MarktopusSFA\PublishProfiles\Cloud.xml' 
-            -DeployOnly:$false 
-            -ApplicationParameter:@{} 
-            -UnregisterUnusedApplicationVersionsAfterUpgrade $false 
-            -OverrideUpgradeBehavior 'None' 
-            -OverwriteBehavior 'SameAppTypeAndVersion' 
-            -SkipPackageValidation:$false 
-            -ErrorAction Stop
-            */
         }
     }
 }

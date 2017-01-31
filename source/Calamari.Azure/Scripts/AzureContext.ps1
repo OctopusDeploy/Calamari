@@ -6,7 +6,8 @@
 ## The script is passed the following parameters. 
 ##
 ##   $OctopusUseBundledAzureModules = "true"
-##   $OctopusAzureModulePath = "....\Calamari\PowerShell\Azure.psd1"
+##   $OctopusAzureModulePath = "....\Calamari\PowerShell\"
+##   $OctopusAzureFabricModulePath = "....\Calamari\Fabric\"
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
 ##   $UseServicePrincipal = "false"
@@ -50,14 +51,25 @@ function Execute-WithRetry([ScriptBlock] $command) {
     }
 }
 
-
 if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-    # Add bundled Azure modules to PSModulePath
+
+    # Add bundled Azure PowerShell modules to PSModulePath
     $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Storage"
     $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ServiceManagement"
     $ResourceManagerModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ResourceManager" | Join-Path -ChildPath "AzureResourceManager"
     Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
     $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
+	
+    # Add bundled Azure Fabric binaries to Path
+    $FabricCodeModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "Fabric.Code"
+    $FabricClusterModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "ServiceFabricLocalClusterManager"
+    Write-Verbose "Adding bundled Azure Fabric modules to Path"
+    $env:Path = $FabricCodeModulePath + ";" + $FabricClusterModulePath + ";" + $env:Path
+
+	# Add bundled Azure Fabric PowerShell modules to PSModulePath
+    $FabricPowerShellModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "ServiceFabricSDK"
+	Write-Verbose "Adding bundled Azure Fabric PowerShell modules to PSModulePath"
+    $env:PSModulePath =  $FabricPowerShellModulePath + ";" + $env:PSModulePath
 }
 
 Execute-WithRetry{

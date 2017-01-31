@@ -222,9 +222,9 @@
 
                 public static class Output
                 {
-                    public static readonly string AzurePowershellModulePath = "OctopusAzureModulePath";
                     public static readonly string SubscriptionId = "OctopusAzureSubscriptionId";
                     public static readonly string ModulePath = "OctopusAzureModulePath";
+                    public static readonly string FabricModulePath = "OctopusAzureFabricModulePath";
                     public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
                     public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
                 }

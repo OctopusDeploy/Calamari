@@ -132,7 +132,6 @@ if (-not $UseExistingClusterConnection)
     {
         [void](Connect-ServiceFabricCluster @ClusterConnectionParameters)
 
-		# Oh my God >< #plsKillMe
 		# http://stackoverflow.com/questions/35711540/how-do-i-deploy-service-fabric-application-from-vsts-release-pipeline
 		# When the Connect-ServiceFabricCluster function is called, a local $clusterConnection variable is set after the call to Connect-ServiceFabricCluster. You can see that using Get-Variable.
 		# Unfortunately there is logic in some of the SDK scripts that expect that variable to be set but because they run in a different scope, that local variable isn't available.
@@ -147,11 +146,14 @@ if (-not $UseExistingClusterConnection)
     }
 }
 
-# TODO: markse - remove registry lookups in favour of local SDK folder? Or is reg lookup ok because they'll need the SF SDF installed on the server to run this stuff anyway?
-$RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
-$ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
-#$ModuleFolderPath = ".\ServiceFabricSDK"
-Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
+# `AzureContext.ps1` will add our bundled Fabric SDK PowerShell modules to our $env:PSModulePath.
+# However, if the user does NOT want to use the bundled SDKs, the Octopus Server will need to have the Fabric SDK installed.
+# It's only at the point of this script being called that we want to try importing these Fabric-specific modules.
+if (-not [System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
+	$RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
+	$ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
+	Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
+}
 
 $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
 

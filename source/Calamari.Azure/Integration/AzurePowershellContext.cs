@@ -24,6 +24,7 @@ namespace Calamari.Azure.Integration
         const string DefaultAzureEnvironment = "AzureCloud";
 
         static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
+        static readonly string BuiltInAzureFabricPowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "Fabric"); // Fabric is a completely separate beast.
 
         public AzurePowerShellContext()
         {
@@ -67,10 +68,11 @@ namespace Calamari.Azure.Integration
 
         static void SetAzureModuleLoadingMethod(VariableDictionary variables)
         {
-            // By default use the Azure PowerShell modules bundled with Calamari
+            // By default use the Azure modules bundled with Calamari
             // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
             SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
             SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, BuiltInAzurePowershellModulePath, variables);
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.FabricModulePath, BuiltInAzureFabricPowershellModulePath, variables);
         }
 
         string CreateContextScriptFile(string workingDirectory)

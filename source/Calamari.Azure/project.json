@@ -27,13 +27,14 @@
     "Microsoft.WindowsAzure.Management.WebSites": "4.0.0",
     "Newtonsoft.Json": "7.0.1",
     "Octopus.Dependencies.AzureBinaries": "2.9.0",
-    "Octopus.Dependencies.AzureCmdlets": "1.6.0",
+    "Octopus.Dependencies.AzureCmdlets": "3.4.0",
     "Octostache": "2.0.14",
     "Sprache": "2.1.0",
     "System.Spatial": "5.6.4",
     "WindowsAzure.Storage": "4.3.0",
     "OctoDiff": "1.1.0-dnc0013",
-    "Calamari": "*"
+    "Calamari": "*",
+    "Octopus.Dependencies.AzureFabricCmdlets": "2.4.145"
   },
   "frameworks": {
     "net45": {
@@ -68,7 +69,8 @@
       "mappings": {
         "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
         "ScriptCS/": "../Tools/ScriptCS**/",
-        "PowerShell/": "../Tools/Octopus.Dependencies.AzureCmdlets**/"
+        "PowerShell/": "../Tools/Octopus.Dependencies.AzureCmdlets**/",
+        "Fabric/": "../Tools/Octopus.Dependencies.AzureFabricCmdlets**/"
       }
     }
   },

@@ -4,7 +4,8 @@ REM to update tools versions update the versions in project.json so that they
 REM are downloaded to the nuget folder, then update here and in copytools.sh
 SET FSharpVersion=4.0.0.1
 SET ScriptCSVersion=0.16.1
-SET AzurePowershellVersion=1.6.0
+SET AzurePowershellVersion=3.4.0
+SET AzureFabricVersion=2.4.145
 SET NugetCommandlineVersion=2.8.3
 
 SET ToolsFolder=%~dp0
@@ -40,5 +41,13 @@ IF EXIST %AzurePowershellFolder% GOTO AZUREPOWERSHELLEXISTS
    xcopy /E %userprofile%\.nuget\packages\Octopus.Dependencies.AzureCmdlets\%AzurePowershellVersion%\PowerShell %AzurePowershellFolder%
 :AZUREPOWERSHELLEXISTS
 
+SET AzureFabricFolder=%ToolsFolder%Octopus.Dependencies.AzureFabricCmdlets.%AzureFabricVersion%\
+IF EXIST %AzureFabricFolder% GOTO AZUREFABRICEXISTS
+   echo Copying Azure Fabric Cmdlets and Binaries to Tools folder
+   for /d %%G in (%ToolsFolder%Octopus.Dependencies.AzureFabricCmdlets.*) do rmdir /s /q "%%~G"
+   xcopy /E %userprofile%\.nuget\packages\Octopus.Dependencies.AzureFabricCmdlets\%AzureFabricVersion%\PowerShell %AzureFabricFolder%
+   xcopy /E %userprofile%\.nuget\packages\Octopus.Dependencies.AzureFabricCmdlets\%AzureFabricVersion%\ServiceFabricBinaries %AzureFabricFolder%
+:AZUREFABRICEXISTS
+
 :DONE
-exit 0
+REM exit 0
