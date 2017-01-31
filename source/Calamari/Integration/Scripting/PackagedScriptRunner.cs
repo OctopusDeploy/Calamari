@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
@@ -30,6 +31,7 @@ namespace Calamari.Integration.Scripting
 
             foreach (var script in scripts)
             {
+                Log.VerboseFormat("Executing '{0}'", script);
                 var result = scriptEngine.Execute(new Script(script), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
@@ -50,8 +52,8 @@ namespace Calamari.Integration.Scripting
 
         IEnumerable<string> FindScripts(RunningDeployment deployment)
         {
-            var supportedScriptExtensions = scriptEngine.GetSupportedExtensions();
-            var searchPatterns = supportedScriptExtensions.Select(e => "*." + e).ToArray();
+            var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
+            var searchPatterns = supportedScriptExtensions.Select(e => "*." + e.FileExtension()).ToArray();
             return
                 from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)
                 let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)

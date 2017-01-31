@@ -8,8 +8,8 @@ using System.Linq;
 using Calamari.Util;
 using NuGet;
 using SharpCompress.Common;
-using SharpCompress.Reader;
-using SharpCompress.Reader.Zip;
+using SharpCompress.Readers;
+using SharpCompress.Readers.Zip;
 
 namespace Calamari.Integration.Packages.NuGet
 {
@@ -54,7 +54,7 @@ namespace Calamari.Integration.Packages.NuGet
                         continue;
 
                     var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
-                    reader.WriteEntryToFile(targetFile, ExtractOptions.Overwrite);
+                    reader.WriteEntryToFile(targetFile, new ExtractionOptions {Overwrite = true});
 
                     SetFileLastModifiedTime(reader.Entry, targetFile);
 
@@ -115,10 +115,16 @@ namespace Calamari.Integration.Packages.NuGet
 
         private static string UnescapePath(string path)
         {
-            if (path != null
-                && path.IndexOf('%') > -1)
+            if (path != null && path.IndexOf('%') > -1)
             {
-                return Uri.UnescapeDataString(path);
+                try
+                {
+                    return Uri.UnescapeDataString(path);
+                }
+                catch (UriFormatException)
+                {
+                    // on windows server 2003 we can get UriFormatExceptions when the original unescaped string contained %, just swallow and return path
+                }
             }
 
             return path;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Util;
-using SharpCompress.Reader.Zip;
+using SharpCompress.Readers.Zip;
 #if USE_NUGET_V3_LIBS
 using NuGet.Packaging;
 #else

@@ -27,7 +27,7 @@ namespace Calamari.Integration.FileSystem
         /// <summary>
         /// For file operations, try again after 100ms and again every 200ms after that
         /// </summary>
-        static readonly RetryInterval RetryIntervalForFileOperations = new RetryInterval(100, 200, 2);
+        static readonly LimitedExponentialRetryInterval RetryIntervalForFileOperations = new LimitedExponentialRetryInterval(100, 200, 2);
 
         /// <summary>
         /// For file operations, retry constantly up to one minute

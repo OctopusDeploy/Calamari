@@ -6,9 +6,9 @@ namespace Calamari.Integration.Scripting.FSharp
 {
     public class FSharpEngine : IScriptEngine
     {
-        public string[] GetSupportedExtensions()
+        public ScriptType[] GetSupportedTypes()
         {
-            return new[] {ScriptType.FSharp.FileExtension()};
+            return new[] {ScriptType.FSharp};
         }
 
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)

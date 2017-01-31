@@ -6,9 +6,9 @@ namespace Calamari.Integration.Scripting.Bash
 {
     public class BashScriptEngine : IScriptEngine
     {
-        public string[] GetSupportedExtensions()
+        public ScriptType[] GetSupportedTypes()
         {
-            return new[] {ScriptType.Bash.FileExtension()};
+            return new[] {ScriptType.Bash};
         }
 
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)

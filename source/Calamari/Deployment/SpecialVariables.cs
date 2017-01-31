@@ -63,6 +63,14 @@
                 public static readonly string CustomInstallationDirectory = "Octopus.Tentacle.PreviousInstallation.CustomInstallationDirectory";
             }
 
+            public static class PreviousSuccessfulInstallation
+            {
+                public static readonly string PackageVersion = "Octopus.Tentacle.PreviousSuccessfulInstallation.PackageVersion";
+                public static readonly string PackageFilePath = "Octopus.Tentacle.PreviousSuccessfulInstallation.PackageFilePath";
+                public static readonly string OriginalInstalledPath = "Octopus.Tentacle.PreviousSuccessfulInstallation.OriginalInstalledPath";
+                public static readonly string CustomInstallationDirectory = "Octopus.Tentacle.PreviousSuccessfulInstallation.CustomInstallationDirectory";
+            }
+
             public static class Agent
             {
                 public static readonly string ApplicationDirectoryPath = "Octopus.Tentacle.Agent.ApplicationDirectoryPath";
@@ -83,10 +91,12 @@
 
         public static class Package
         {
+            public static readonly string TransferPath = "Octopus.Action.Package.TransferPath";
             public static readonly string NuGetPackageId = "Octopus.Action.Package.NuGetPackageId";
             public static readonly string NuGetPackageVersion = "Octopus.Action.Package.NuGetPackageVersion";
             public static readonly string ShouldDownloadOnTentacle = "Octopus.Action.Package.DownloadOnTentacle";
             public static readonly string NuGetFeedId = "Octopus.Action.Package.NuGetFeedId";
+            public static readonly string OriginalFileName = "Octopus.Action.Package.OriginalFileName";
             public static readonly string EnabledFeatures = "Octopus.Action.EnabledFeatures";
             public static readonly string UpdateIisWebsite = "Octopus.Action.Package.UpdateIisWebsite";
             public static readonly string UpdateIisWebsiteName = "Octopus.Action.Package.UpdateIisWebsiteName";
@@ -111,6 +121,11 @@
             {
                 public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
                 public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
+                public static readonly string ExtractedFileCount = "Package.ExtractedFileCount";
+                public static readonly string CopiedFileCount = "Package.CopiedFileCount";
+                public static readonly string DirectoryPath = "Package.DirectoryPath";
+                public static readonly string FileName = "Package.FileName";
+                public static readonly string FilePath = "Package.FilePath";
             }
         }
 
@@ -137,6 +152,7 @@
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";
             public const string Vhd = "Octopus.Features.Vhd";
+            public const string ConfigurationTransforms = "Octopus.Features.ConfigurationTransforms";
         }
 
         public static class Action
@@ -200,6 +216,7 @@
                 public static readonly string ResourceGroupDeploymentMode = "Octopus.Action.Azure.ResourceGroupDeploymentMode";
 
                 public static readonly string Environment = "Octopus.Action.Azure.Environment";
+                public static readonly string ResourceManagementEndPoint = "Octopus.Action.Azure.ResourceManagementEndPoint";
                 public static readonly string ServiceManagementEndPoint = "Octopus.Action.Azure.ServiceManagementEndPoint";
                 public static readonly string ActiveDirectoryEndPoint = "Octopus.Action.Azure.ActiveDirectoryEndPoint";
                 public static readonly string StorageEndPointSuffix = "Octopus.Action.Azure.StorageEndpointSuffix";

@@ -53,8 +53,7 @@ Param(
     [Alias("DryRun","Noop")]
     [switch]$WhatIf,
     [switch]$Mono,
-    [switch]$SkipToolPackageRestore,
-    [switch]$ForceCIBuild
+    [switch]$SkipToolPackageRestore
     # ,
     # [Parameter(Position=0,Mandatory=$false,ValueFromRemainingArguments=$true)]
     # [string[]]$ScriptArgs
@@ -118,11 +117,6 @@ if($WhatIf.IsPresent) {
     $UseDryRun = "-dryrun"
 }
 
-# Force this to be a CI build
-$ForceIsCIBuild = "false";
-if($ForceCIBuild.IsPresent) {
-    $ForceIsCIBuild = "true"
-}
 
 # Make sure tools folder exists
 if ((Test-Path $PSScriptRoot) -and !(Test-Path $TOOLS_DIR)) {
@@ -196,5 +190,5 @@ if (!(Test-Path $CAKE_EXE)) {
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -framework=`"$Framework`" -where=`"$Where`" -forcecibuild=`"$ForceIsCiBuild`" $UseMono $UseDryRun $UseExperimental"# $ScriptArgs"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -framework=`"$Framework`" -where=`"$Where`" $UseMono $UseDryRun $UseExperimental"# $ScriptArgs"
 exit $LASTEXITCODE

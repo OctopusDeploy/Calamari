@@ -1,17 +1,18 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting
 {
     public class CombinedScriptEngine : IScriptEngine
     {
-        public string[] GetSupportedExtensions()
+        public ScriptType[] GetSupportedTypes()
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                ? new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Bash.FileExtension(), ScriptType.FSharp.FileExtension()}
-                : new[] {ScriptType.ScriptCS.FileExtension(), ScriptType.Powershell.FileExtension(), ScriptType.FSharp.FileExtension()};
+                ? new[] { ScriptType.ScriptCS, ScriptType.Bash, ScriptType.FSharp }
+                : new[] { ScriptType.ScriptCS, ScriptType.Powershell, ScriptType.FSharp };
         }
 
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
@@ -22,12 +23,13 @@ namespace Calamari.Integration.Scripting
 
         private ScriptType ValidateScriptType(Script script)
         {
-            var scriptExtension = Path.GetExtension(script.File).TrimStart('.');
-            if (!GetSupportedExtensions().Any(ext => ext.Equals(scriptExtension, StringComparison.OrdinalIgnoreCase)))
-            {
-                throw new InvalidOperationException(string.Format("Script type `{0}` unsupported on this platform.", scriptExtension));
-            };
-            return scriptExtension.ToScriptType();
+            var scriptExtension = Path.GetExtension(script.File)?.TrimStart('.');
+            var type = scriptExtension.ToScriptType();
+
+            if (!GetSupportedTypes().Contains(type))
+                throw new CommandException($"{type} scripts are not supported on this platform");
+
+            return type;
         }
     }
 }

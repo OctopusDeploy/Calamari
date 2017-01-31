@@ -13,21 +13,22 @@ var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
 var framework = Argument("framework", "");
-var forceCiBuild = Argument("forceCiBuild", false);
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////
 var artifactsDir = "./built-packages/";
+var localPackagesDir = "../LocalPackages";
 var sourceFolder = "./source/";
 var projectsToPackage = new []{"Calamari", "Calamari.Azure"};
-var isContinuousIntegrationBuild = !BuildSystem.IsLocalBuild || forceCiBuild;
+var isContinuousIntegrationBuild = !BuildSystem.IsLocalBuild;
+var cleanups = new List<Action>();
 
 var gitVersionInfo = GitVersion(new GitVersionSettings {
     OutputType = GitVersionOutput.Json
 });
 
-var nugetVersion = isContinuousIntegrationBuild ? gitVersionInfo.NuGetVersion : "0.0.0";
+var nugetVersion = gitVersionInfo.NuGetVersion;
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
@@ -39,21 +40,16 @@ Setup(context =>
 
 Teardown(context =>
 {
-    Information("Finished running tasks.");
+    Information("Cleaning up");
+    foreach(var cleanup in cleanups)
+        cleanup();
+
+    Information("Finished running tasks for build v{0}", nugetVersion);
 });
 
 //////////////////////////////////////////////////////////////////////
 //  PRIVATE TASKS
 //////////////////////////////////////////////////////////////////////
-
-Task("__Default")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__UpdateAssemblyVersionInformation")
-    .IsDependentOn("__Build")
-    .IsDependentOn("__Test")
-    .IsDependentOn("__Pack")
-    .IsDependentOn("__Publish");
 
 Task("__Clean")
     .Does(() =>
@@ -67,14 +63,15 @@ Task("__Restore")
     .Does(() => DotNetCoreRestore());
 
 Task("__UpdateAssemblyVersionInformation")
-    .WithCriteria(isContinuousIntegrationBuild)
     .Does(() =>
 {
     foreach (var project in projectsToPackage)
     {
+        var assemblyInfoFile = Path.Combine(sourceFolder, project, "Properties", "AssemblyInfo.cs");
+        RestoreFileOnCleanup(assemblyInfoFile);
         GitVersion(new GitVersionSettings {
             UpdateAssemblyInfo = true,
-            UpdateAssemblyInfoFilePath = Path.Combine(sourceFolder, project, "Properties", "AssemblyInfo.cs")
+            UpdateAssemblyInfoFilePath = assemblyInfoFile
         });
     }
     
@@ -131,31 +128,6 @@ Task("__Test")
      DotNetCoreTest("source/Calamari.Tests/project.json", settings);
 });
 
-Task("__TestTeamCity")
-    .Does(() =>
-{
-    // Run all Windows Tests
-    // Runs two frameworks seperately to capture both outputs
-    var settings =  new DotNetCoreTestSettings
-    {
-        Configuration = configuration
-    };
-
-    settings.ArgumentCustomization = f => {
-        f.Append("-where");
-        f.AppendQuoted("cat != Nix && cat != macOS");
-        return f;
-    };
-
-    settings.Framework = "net451";
-    DotNetCoreTest("./source/Calamari.Tests", settings);
-    MoveFile("./TestResult.xml", "./TestResult.net451.xml");
-
-    settings.Framework = "netcoreapp1.0";
-    DotNetCoreTest("./source/Calamari.Tests", settings);
-    MoveFile("./TestResult.xml", "./TestResult.netcoreapp1.0.xml");
-});
-
 Task("__Pack")
     .Does(() =>
 {
@@ -187,7 +159,7 @@ private void DoPackage(string project, string framework, string version)
 }
 
 Task("__Publish")
-    .WithCriteria(isContinuousIntegrationBuild && !forceCiBuild) //don't let publish criteria be overridden with flag
+    .WithCriteria(isContinuousIntegrationBuild)
     .Does(() =>
 {
     var isPullRequest = !String.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQUEST_NUMBER"));
@@ -208,11 +180,30 @@ Task("__Publish")
     }
 });
 
+private void RestoreFileOnCleanup(string file)
+{
+    var contents = System.IO.File.ReadAllBytes(file);
+    cleanups.Add(() => {
+        Information("Restoring {0}", file);
+        System.IO.File.WriteAllBytes(file, contents);
+    });
+}
+
+Task("__CopyToLocalPackages")
+    .WithCriteria(BuildSystem.IsLocalBuild)
+    .IsDependentOn("__Pack")
+    .Does(() =>
+{
+    CreateDirectory(localPackagesDir);
+    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.{nugetVersion}.nupkg"), localPackagesDir);
+    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.Azure.{nugetVersion}.nupkg"), localPackagesDir);
+});
+
 //////////////////////////////////////////////////////////////////////
 // TASKS
 //////////////////////////////////////////////////////////////////////
 Task("Default")
-    .IsDependentOn("__Default");
+    .IsDependentOn("BuildPackAndZipTestBinaries");
 
 Task("Clean")
     .IsDependentOn("__Clean");
@@ -238,14 +229,6 @@ Task("Publish")
     .IsDependentOn("__Pack")
     .IsDependentOn("__Publish");
 
-Task("TeamCity")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__UpdateAssemblyVersionInformation")
-    .IsDependentOn("__Build")
-    .IsDependentOn("__TestTeamCity")
-    .IsDependentOn("__Pack");   
-
 Task("SetTeamCityVersion")
     .Does(() => {
         if(BuildSystem.IsRunningOnTeamCity)
@@ -255,8 +238,10 @@ Task("SetTeamCityVersion")
 Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("__Clean")
     .IsDependentOn("__Restore")
+    .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__BuildAndZipNET45TestProject")
-    .IsDependentOn("__Pack");
+    .IsDependentOn("__Pack")
+    .IsDependentOn("__CopyToLocalPackages");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION

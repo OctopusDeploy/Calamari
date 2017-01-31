@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using SharpCompress.Common;
-using SharpCompress.Reader;
-using SharpCompress.Reader.Tar;
+using SharpCompress.Readers;
+using SharpCompress.Readers.Tar;
 
 namespace Calamari.Integration.Packages
 {
@@ -18,12 +18,12 @@ namespace Calamari.Integration.Packages
                 var compressionStream = GetCompressionStream(inStream);
                 try
                 {
-                    using (var reader = TarReader.Open(compressionStream, Options.None))
+                    using (var reader = TarReader.Open(compressionStream))
                     {
                         while (reader.MoveToNextEntry())
                         {
                             ProcessEvent(ref files, reader.Entry, suppressNestedScriptWarning);
-                            reader.WriteEntryToDirectory(directory, ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime);
+                            reader.WriteEntryToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
                         }
                     }
                 }

@@ -163,8 +163,8 @@ namespace Calamari.Deployment.Conventions
         /// </summary>
         private IEnumerable<string> GetScriptNames(string feature)
         {
-            return scriptEngine.GetSupportedExtensions() 
-                .Select(extension => GetScriptName(feature, deploymentStage, extension ));
+            return scriptEngine.GetSupportedTypes() 
+                .Select(type => GetScriptName(feature, deploymentStage, type.FileExtension()));
         }
 
     }

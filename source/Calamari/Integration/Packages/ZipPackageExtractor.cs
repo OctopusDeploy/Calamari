@@ -1,11 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using SharpCompress.Archive;
-using SharpCompress.Archive.Zip;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-using SharpCompress.Reader;
-using SharpCompress.Reader.Zip;
+using SharpCompress.Readers;
 
 namespace Calamari.Integration.Packages
 {
@@ -22,7 +21,7 @@ namespace Calamari.Integration.Packages
                 foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
                 {
                     ProcessEvent(ref filesExtracted, entry, suppressNestedScriptWarning);
-                    entry.WriteToDirectory(directory, ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime);
+                    entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
                 }
             }
             return filesExtracted;
