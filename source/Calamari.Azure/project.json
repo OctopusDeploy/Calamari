@@ -28,13 +28,13 @@
     "Newtonsoft.Json": "7.0.1",
     "Octopus.Dependencies.AzureBinaries": "2.9.0",
     "Octopus.Dependencies.AzureCmdlets": "3.4.0",
+    "Octopus.Dependencies.AzureFabricCmdlets": "2.4.145",
     "Octostache": "2.0.14",
     "Sprache": "2.1.0",
     "System.Spatial": "5.6.4",
     "WindowsAzure.Storage": "4.3.0",
-    "OctoDiff": "1.1.0-dnc0013",
-    "Calamari": "*",
-    "Octopus.Dependencies.AzureFabricCmdlets": "2.4.145"
+    "OctoDiff": "1.1.1",
+    "Calamari": "*"
   },
   "frameworks": {
     "net45": {

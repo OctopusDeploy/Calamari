@@ -7,9 +7,10 @@
     "FluentAssertions": "4.13.1",
     "dotnet-test-nunit": "3.4.0-beta-2",
     "NuGet.CommandLine": "2.8.3",
-    "OctoDiff": "1.1.0",
+    "OctoDiff": "1.1.1",
     "Octostache": "2.0.14",
-    "Assent": "0.4.0"
+    "Assent": "0.4.0",
+    "SharpCompress": "0.15.1"
   },
   "testRunner": "nunit",
   "frameworks": {
@@ -22,7 +23,6 @@
         "Markdown": "2.1.0",
         "Newtonsoft.Json": "9.0.1",
         "Octopus.Web.XmlTransform": "1.0.0-ci0018",
-        "SharpCompress": "0.12.4",
         "Sprache": "2.1.0",
         "System.IO.Packaging": "4.0.0",
         "System.ServiceProcess.ServiceController": "4.1.0",
@@ -59,7 +59,6 @@
          "Microsoft.Web.Administration": "7.0.0.0",
          "Microsoft.Web.Deployment": "3.6.0",
          "Microsoft.Web.Xdt": "2.1.1",
-         "SharpCompress": "0.12.4",
          "Polly": "4.3.0" 
        },
       "buildOptions": {

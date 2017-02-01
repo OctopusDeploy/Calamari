@@ -8,8 +8,8 @@ using System.Linq;
 using Calamari.Util;
 using NuGet;
 using SharpCompress.Common;
-using SharpCompress.Reader;
-using SharpCompress.Reader.Zip;
+using SharpCompress.Readers;
+using SharpCompress.Readers.Zip;
 
 namespace Calamari.Integration.Packages.NuGet
 {
@@ -54,7 +54,7 @@ namespace Calamari.Integration.Packages.NuGet
                         continue;
 
                     var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
-                    reader.WriteEntryToFile(targetFile, ExtractOptions.Overwrite);
+                    reader.WriteEntryToFile(targetFile, new ExtractionOptions {Overwrite = true});
 
                     SetFileLastModifiedTime(reader.Entry, targetFile);
 
