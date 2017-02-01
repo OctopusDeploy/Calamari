@@ -63,7 +63,7 @@ if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
     # Add bundled Azure Fabric binaries to Path
     $FabricCodeModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "Fabric.Code"
     $FabricClusterModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "ServiceFabricLocalClusterManager"
-    Write-Verbose "Adding bundled Azure Fabric modules to Path"
+    Write-Verbose "Adding bundled Azure Fabric binaries to Path"
     $env:Path = $FabricCodeModulePath + ";" + $FabricClusterModulePath + ";" + $env:Path
 
 	# Add bundled Azure Fabric PowerShell modules to PSModulePath
