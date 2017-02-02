@@ -146,12 +146,14 @@ if (-not $UseExistingClusterConnection)
     }
 }
 
-# `AzureContext.ps1` will add our bundled Fabric SDK PowerShell modules to our $env:PSModulePath.
-# However, if the user does NOT want to use the bundled SDKs, the Octopus Server will need to have the Fabric SDK installed.
-# It's only at the point of this script being called that we want to try importing these Fabric-specific modules.
-if (-not [System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
+if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
+    $FabricPowerShellModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "ServiceFabricSDK"
+	Write-Verbose "Importing bundled ServiceFabricSDK modules from $($FabricPowerShellModulePath)"
+	Import-Module "$FabricPowerShellModulePath\ServiceFabricSDK.psm1"
+} else {
 	$RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
 	$ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
+	Write-Verbose "Importing ServiceFabricSDK modules from $($ModuleFolderPath)"
 	Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
 }
 

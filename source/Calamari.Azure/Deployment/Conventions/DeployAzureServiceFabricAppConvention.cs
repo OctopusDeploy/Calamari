@@ -43,7 +43,6 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
             
             Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly, defaultValue: false.ToString()), variables);
-            ///Log.SetOutputVariable("ApplicationParameters", variables.Get(SpecialVariables.Action.Azure.FabricApplicationParameters, defaultValue: string.Empty), variables);
             Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverrideUpgradeBehavior, defaultValue: "None"), variables);
             Log.SetOutputVariable("UseExistingClusterConnection", variables.Get(SpecialVariables.Action.Azure.FabricUseExistingClusterConnection, defaultValue: false.ToString()), variables);
@@ -55,12 +54,11 @@ namespace Calamari.Azure.Deployment.Conventions
             // The script name 'DeployToAzure.ps1' is used for consistency with other Octopus Azure steps.
             // The user may supply the script, to override behaviour.
             var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToAzure.ps1");
-            // TODO: markse - uncomment these to always run our script during debug.
-            //if (!fileSystem.FileExists(scriptFile))
-            //{
+            if (!fileSystem.FileExists(scriptFile))
+            {
                 // Use our bundled version.
                 fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureFabricApplication.ps1"));
-            //}
+            }
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
 

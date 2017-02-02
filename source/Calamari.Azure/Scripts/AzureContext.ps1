@@ -65,11 +65,13 @@ if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
     $FabricClusterModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "ServiceFabricLocalClusterManager"
     Write-Verbose "Adding bundled Azure Fabric binaries to Path"
     $env:Path = $FabricCodeModulePath + ";" + $FabricClusterModulePath + ";" + $env:Path
+	Write-Verbose $env:Path
 
 	# Add bundled Azure Fabric PowerShell modules to PSModulePath
     $FabricPowerShellModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "ServiceFabricSDK"
 	Write-Verbose "Adding bundled Azure Fabric PowerShell modules to PSModulePath"
     $env:PSModulePath =  $FabricPowerShellModulePath + ";" + $env:PSModulePath
+	Write-Verbose $env:PSModulePath
 }
 
 Execute-WithRetry{
