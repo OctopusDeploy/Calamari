@@ -2,7 +2,7 @@
   "profiles": {
     "Calamari.Azure": {
       "commandName": "Project",
-      "commandLineArgs": "deploy-azure-service-fabric-app -package \"C:\\Octopus\\develop\\Packages\\MarktopusSFA\\MarktopusSFA.1.0.2.zip\"  -variables \"C:\\Octopus\\develop\\Work\\20170202035252-2\\Variables.json\" -sensitiveVariables \"C:\\Octopus\\develop\\Work\\20170202035252-2\\Variables.secret\" -sensitiveVariablesPassword=+XzniCIk7TdkoLmQkwArtw=="
+      "commandLineArgs": "deploy-azure-service-fabric-app -package \"C:\\Octopus\\develop\\Packages\\MarktopusSFA\\MarktopusSFA.1.0.2.zip\"  -variables \"C:\\Octopus\\develop\\Work\\20170202045024-1\\Variables.json\" -sensitiveVariables \"C:\\Octopus\\develop\\Work\\20170202045024-1\\Variables.secret\" -sensitiveVariablesPassword=OejJ+5fYGv2lIPOZhCuBFA=="
     }
   }
 }
