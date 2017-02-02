@@ -189,11 +189,13 @@ function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 
 function Assert-WebsiteExists($SitePath, $SiteName)
 {
-	Write-Verbose "Looking for the parent Site `"$SiteName`" at `"$SitePath`"..."
-	$site = Get-Item $SitePath -ErrorAction SilentlyContinue
-	if (!$site) 
-	{ 
-		throw "The Web Site `"$SiteName`" does not exist in IIS and this step cannot create the Web Site because the necessary details are not available. Add a step which makes sure the parent Web Site exists before this step attempts to add a child to it." 
+	Execute-WithRetry { 
+		Write-Verbose "Looking for the parent Site `"$SiteName`" at `"$SitePath`"..."
+		$site = Get-Item $SitePath -ErrorAction SilentlyContinue
+		if (!$site) 
+		{ 
+			throw "The Web Site `"$SiteName`" does not exist in IIS and this step cannot create the Web Site because the necessary details are not available. Add a step which makes sure the parent Web Site exists before this step attempts to add a child to it." 
+		}
 	}
 }
 
