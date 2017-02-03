@@ -326,7 +326,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(1083, binding.EndPoint.Port);
             Assert.AreEqual("https", binding.Protocol);
             Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.AreEqual("MY", binding.CertificateStoreName);
+            Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
 
             // Assert the application-pool account was granted access to the certificate private-key
             var certificate = SampleCertificate.CapiWithPrivateKeyNoPassword.GetCertificateFromStore("MY", StoreLocation.LocalMachine); 
@@ -412,7 +412,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(1083, binding.EndPoint.Port);
             Assert.AreEqual("https", binding.Protocol);
             Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.True(binding.CertificateStoreName.Equals("MY", StringComparison.OrdinalIgnoreCase));
+            Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }
