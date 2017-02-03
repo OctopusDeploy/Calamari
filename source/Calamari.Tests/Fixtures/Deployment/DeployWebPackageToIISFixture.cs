@@ -339,8 +339,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldFindAndUseExistingCertificateInStoreIfPresent()
         {
-            const string certificateStoreName = "OctopusTest";
-
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
             Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
 
@@ -361,7 +359,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateIsInStore(certificateStoreName, StoreLocation.LocalMachine);
+            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -373,11 +371,11 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(1084, binding.EndPoint.Port);
             Assert.AreEqual("https", binding.Protocol);
             Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.AreEqual(certificateStoreName, binding.CertificateStoreName);
+            Assert.AreEqual(StoreName.My.ToString(), binding.CertificateStoreName);
 
             Assert.AreEqual(ObjectState.Started, website.State);
 
-            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateNotInStore(certificateStoreName, StoreLocation.LocalMachine);
+            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
         }
 
         [Test]
