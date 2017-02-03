@@ -9,9 +9,9 @@ using Calamari.Tests.Helpers;
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatibleOS.Windows)]
     public class WindowsX509CertificateStoreFixture
     {
-        [Category(TestEnvironment.CompatibleOS.Windows)]
         [Test]
         [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.LocalMachine, "My")]
         [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.CurrentUser, "My")]
