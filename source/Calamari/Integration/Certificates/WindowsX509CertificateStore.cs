@@ -138,7 +138,11 @@ namespace Calamari.Integration.Certificates
                     }
                     catch (Exception ex)
                     {
-                        throw new Exception("Exception while deleting CAPI private key", ex);
+                        // Swallow keyset does not exist
+                        if (!(ex is CryptographicException && ex.Message.Contains("Keyset does not exist")))
+                        {
+                            throw new Exception("Exception while deleting CAPI private key", ex);
+                        }
                     }
                 }
             }
