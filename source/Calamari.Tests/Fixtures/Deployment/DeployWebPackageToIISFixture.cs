@@ -386,7 +386,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
 
             Variables["Octopus.Action.IISWebSite.Bindings"] =
-                $"[{{\"protocol\":\"https\",\"port\":1083,\"host\":\"\",\"thumbprint\":\"{SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint}\",\"requireSni\":false,\"enabled\":true}}]";
+                $"[{{\"protocol\":\"https\",\"port\":1083,\"host\":\"\",\"thumbprint\":\"{SampleCertificate.CapiWithPrivateKey.Thumbprint}\",\"requireSni\":false,\"enabled\":true}}]";
             Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
             Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
             Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
@@ -398,7 +398,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
-            SampleCertificate.CapiWithPrivateKeyNoPassword.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
+            SampleCertificate.CapiWithPrivateKey.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -409,7 +409,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.AreEqual(1083, binding.EndPoint.Port);
             Assert.AreEqual("https", binding.Protocol);
-            Assert.AreEqual(SampleCertificate.CapiWithPrivateKeyNoPassword.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
             Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
 
             Assert.AreEqual(ObjectState.Started, website.State);
