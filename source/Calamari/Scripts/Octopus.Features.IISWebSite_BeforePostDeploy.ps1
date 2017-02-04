@@ -530,7 +530,7 @@ if ($deployAsWebSite)
 					$appid = [System.Guid]::NewGuid().ToString("b")
 					& netsh http add sslcert ipport="$($ipAddress):$port" certhash="$($certificate.Thumbprint)" appid="$appid" certstorename="$certStoreName"
 					if ($LastExitCode -ne 0 ){
-						Write-Host "Failed adding new SSL binding for certificate with thumbprint '$($certificate.Thumbprint)'"
+						Write-Host "Failed adding new SSL binding for certificate with thumbprint '$($certificate.Thumbprint)'. Exit code: $LastExitCode"
 						throw
 					}
 				}	
