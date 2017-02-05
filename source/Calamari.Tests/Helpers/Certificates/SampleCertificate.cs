@@ -20,7 +20,7 @@ namespace Calamari.Tests.Helpers.Certificates
         public static readonly SampleCertificate CngWithPrivateKey = new SampleCertificate("cng_privatekey_password.pfx", "password", "CFED1F749A4D441F74F8D7345BA77C640E2449F0", true);
 
         public const string CapiWithPrivateKeyId = "CapiWithPrivateKey";
-        public static readonly SampleCertificate CapiWithPrivateKey = new SampleCertificate("capi_self_signed_privatekey_password.pfx", "Password01!", "D8BA5D8760D74AE871C018B1B276602E8B4CFD76", true);
+        public static readonly SampleCertificate CapiWithPrivateKey = new SampleCertificate("capi_self_signed_privatekey_password.pfx", "Password01!", "3FF420AB600A6C14E6EAF6AC25EF42EDCB96EE60", true);
 
         public const string CapiWithPrivateKeyNoPasswordId = "CngWithPrivateKeyNoPassword";
         public static readonly SampleCertificate CapiWithPrivateKeyNoPassword = new SampleCertificate("capi_self_signed_privatekey_no_password.pfx", null, "E7D0BF9F1A62AED35BA22BED80F9795012A53636", true);
