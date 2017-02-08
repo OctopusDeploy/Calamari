@@ -143,10 +143,10 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        public void When_TransformIsWildcardFullPath_And_TargetIsRelativePath_ItSucceeds()
+        public void When_TransformIsWildcardFullPath_And_TargetIsRelativePath_ItFails()
         {
             ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Using an absolute path to a transform against a target in a different directory")
+                .ForTheScenario("Not supported: Using an absolute path to a transform against a target in a different directory")
                 .Given.FileExists(@"c:\temp\config\web.config")
                 .And.FileExists(@"c:\transforms\security.mytransform.config")
                 .And.FileExists(@"c:\transforms\connstrings.mytransform.config")
@@ -473,10 +473,10 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        public void When_TransformIsFullPath_And_TargetIsRelative_ItSucceeds()
+        public void When_TransformIsFullPath_And_TargetIsRelative_ItFails()
         {
             ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Applying a transform with an absolute path to target in a different directory")
+                .ForTheScenario("Not supported: Applying a transform with an absolute path to target in a different directory")
                 .Given.FileExists(@"c:\temp\config\web.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
                 .When.UsingTransform(@"c:\transforms\web.mytransform.config => config\web.config") 
