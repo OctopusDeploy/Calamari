@@ -46,7 +46,7 @@ namespace Calamari.Deployment.Conventions
                 if (diagnosticLoggingEnabled)
                     log.Verbose($"Found config file '{configFile}'");
                 ApplyTransformations(configFile, allTransforms, transformFilesApplied, 
-                    transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled);
+                    transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
             }
 
             LogFailedTransforms(explicitTransforms, automaticTransforms, transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled);
@@ -89,7 +89,8 @@ namespace Calamari.Deployment.Conventions
             ISet<Tuple<string, string>> transformFilesApplied,  
             IList<XmlConfigTransformDefinition> transformDefinitionsApplied,
             IList<XmlConfigTransformDefinition> duplicateTransformDefinitions,
-            bool diagnosticLoggingEnabled)
+            bool diagnosticLoggingEnabled,
+            RunningDeployment deployment)
         {
             foreach (var transformation in transformations)
             {
@@ -105,7 +106,7 @@ namespace Calamari.Deployment.Conventions
                 try
                 {
                     ApplyTransformations(sourceFile, transformation, transformFilesApplied, 
-                                         transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled);
+                                         transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
                 }
                 catch (Exception)
                 {
@@ -120,12 +121,13 @@ namespace Calamari.Deployment.Conventions
             ISet<Tuple<string, string>> transformFilesApplied, 
             ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied,
             ICollection<XmlConfigTransformDefinition> duplicateTransformDefinitions,
-            bool diagnosticLoggingEnabled)
+            bool diagnosticLoggingEnabled,
+            RunningDeployment deployment)
         {
             if (transformation == null)
                 return;
-
-            var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled)
+            
+            var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled, deployment)
                 .Distinct()
                 .ToArray();
 
