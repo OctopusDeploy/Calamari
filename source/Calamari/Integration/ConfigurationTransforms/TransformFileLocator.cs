@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.ConfigurationTransforms
@@ -19,7 +20,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             this.log = log ?? new LogWrapper();
         }
 
-        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled)
+        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, RunningDeployment deployment)
         {
             var defaultTransformFileName = DetermineTransformFileName(sourceFile, transformation, true);
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
@@ -49,10 +50,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             {
                 foreach (var transformFile in enumerateFiles)
                 {
-                    var sourceFileName = (transformation.SourcePattern?.Contains(Path.DirectorySeparatorChar) ?? false)
-                        ? fileSystem.GetRelativePath(transformFile, sourceFile)
-                            .TrimStart('.', Path.DirectorySeparatorChar)
-                        : GetFileName(sourceFile);
+                    var sourceFileName = GetSourceFileName(sourceFile, transformation, transformFileName, transformFile, deployment);
 
                     if (transformation.Advanced && !transformation.IsSourceWildcard &&
                         !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.OrdinalIgnoreCase))
@@ -94,6 +92,23 @@ namespace Calamari.Integration.ConfigurationTransforms
                 else
                     log.Verbose($" - skipping as neither transform \'{GetFileName(defaultTransformFileName)}\' nor transform \'{GetFileName(transformFileName)}\' could be found in \'{fullTransformDirectoryPath}\'");
             }
+        }
+
+        private string GetSourceFileName(string sourceFile, XmlConfigTransformDefinition transformation,
+            string transformFileName, string transformFile, RunningDeployment deployment)
+        {
+            var sourcePattern = transformation.SourcePattern ?? "";
+            if (Path.IsPathRooted(transformFileName) && sourcePattern.StartsWith("." + Path.DirectorySeparatorChar))
+            {
+                var path = fileSystem.GetRelativePath(deployment.CurrentDirectory, sourceFile);
+                return "." + path.Substring(path.IndexOf(Path.DirectorySeparatorChar));
+            }
+
+            if (sourcePattern.Contains(Path.DirectorySeparatorChar))
+                return fileSystem.GetRelativePath(transformFile, sourceFile)
+                    .TrimStart('.', Path.DirectorySeparatorChar);
+
+            return GetFileName(sourceFile);
         }
 
         private static string DetermineTransformFileName(string sourceFile, XmlConfigTransformDefinition transformation, bool defaultExtension)
