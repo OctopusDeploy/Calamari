@@ -169,7 +169,11 @@ namespace Calamari.Integration.ConfigurationTransforms
 
             var sourcePattern = transformation.SourcePattern;
             var sourcePatternPath = sourcePattern.Substring(0, sourcePattern.LastIndexOf(Path.DirectorySeparatorChar));
-            return sourceDirectory.Replace(sourcePatternPath, string.Empty);
+           
+            if (sourceDirectory.EndsWith(sourcePatternPath, StringComparison.OrdinalIgnoreCase))
+                return sourceDirectory.Substring(0, sourceDirectory.Length - sourcePatternPath.Length);
+
+            return sourceDirectory;
         }
     }
 }

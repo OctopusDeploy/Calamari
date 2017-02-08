@@ -457,6 +457,20 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
+        public void When_TransformIsRelativePath_And_TargetIsRelative_AndDirectoryRepeats_ItSucceeds()
+        {
+            // https://github.com/OctopusDeploy/Issues/issues/3152
+            ConfigurationTransformTestCaseBuilder
+                .ForTheScenario("Applying a transform to a target in a sibling directory that repeats")
+                .Given.FileExists(@"c:\temp\temp\web.config")
+                .And.FileExists(@"c:\temp\transforms\web.mytransform.config")
+                .When.UsingTransform(@"transforms\web.mytransform.config => temp\web.config")
+                .Then.SourceFile(@"c:\temp\temp\web.config")
+                .Should.BeTransFormedBy(@"c:\temp\transforms\web.mytransform.config")
+                .Verify(this);
+        }
+
+        [Test]
         public void When_TransformIsRelativePath_And_TargetIsWildcardRelative_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
