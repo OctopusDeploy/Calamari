@@ -1,7 +1,7 @@
 Applying a transform with an absolute path to a target in the extraction path root
 Given a package which has the structure:
 Acme.Core.1.0.0.nupkg
-├─sub
+├─subdir
 | └─web.config
 └─web.config
 And the following files exist:

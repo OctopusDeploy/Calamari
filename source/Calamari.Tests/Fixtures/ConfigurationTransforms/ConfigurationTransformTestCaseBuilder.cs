@@ -73,6 +73,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 
         public ConfigurationTransformTestCaseBuilder SourceFile(string sourceFile)
         {
+            Assert.IsTrue(fileSystem.FileExists(sourceFile), $"The sourceFile {sourceFile} should exist for this test");
             mostRecentResult = PerformTransform(sourceFile);
             allResults.Add(sourceFile, mostRecentResult);
             return this;

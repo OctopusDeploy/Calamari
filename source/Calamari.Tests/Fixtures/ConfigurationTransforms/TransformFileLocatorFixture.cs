@@ -72,21 +72,11 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             ConfigurationTransformTestCaseBuilder
                 .ForTheScenario("Using an absolute path to the transform")
                 .Given.FileExists(@"c:\temp\web.config")
+                .And.FileExists(@"c:\temp\subdir\web.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
                 .When.UsingTransform(@"c:\transforms\web.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
-                .Verify(this);
-        }
-
-        [Test]
-        public void When_TransformIsFullPath_And_TargetIsFileNameOnly_ItRecursesAndSucceeds()
-        {
-            ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Using an absolute path to the transform")
-                .Given.FileExists(@"c:\temp\subdir\web.config")
-                .And.FileExists(@"c:\transforms\web.mytransform.config")
-                .When.UsingTransform(@"c:\transforms\web.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\subdir\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
                 .Verify(this);
@@ -117,9 +107,9 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .And.FileExists(@"c:\temp\app.config")
                 .And.FileExists(@"c:\transforms\connstrings.mytransform.config")
                 .When.UsingTransform(@"c:\transforms\connstrings.mytransform.config => c:\temp\*.config")
-                .Then.SourceFile(@"c:\transforms\web.config")
+                .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .Then.SourceFile(@"c:\transforms\app.config")
+                .Then.SourceFile(@"c:\temp\app.config")
                 .Should.FailToBeTransformed()
                 .Verify(this);
         }
@@ -130,10 +120,13 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             ConfigurationTransformTestCaseBuilder
                 .ForTheScenario("Applying multiple absolute path transforms to the same target file")
                 .Given.FileExists(@"c:\temp\web.config")
+                .Given.FileExists(@"c:\temp\subdir\web.config")
                 .And.FileExists(@"c:\transforms\connstrings.mytransform.config")
                 .And.FileExists(@"c:\transforms\security.mytransform.config")
                 .When.UsingTransform(@"c:\transforms\*.mytransform.config => web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
+                .Should.BeTransFormedBy(@"c:\transforms\connstrings.mytransform.config", @"c:\transforms\security.mytransform.config")
+                .Then.SourceFile(@"c:\temp\subdir\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\connstrings.mytransform.config", @"c:\transforms\security.mytransform.config")
                 .Verify(this);
         }
@@ -144,13 +137,19 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             ConfigurationTransformTestCaseBuilder
                 .ForTheScenario("Using an absolute path wildcard transform and multiple targets") 
                 .Given.FileExists(@"c:\temp\web.config")
-                .And.FileExists(@"c:\temp\web.config")
+                .And.FileExists(@"c:\temp\app.config")
+                .And.FileExists(@"c:\temp\subdir\web.config")
+                .And.FileExists(@"c:\temp\subdir\app.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
                 .And.FileExists(@"c:\transforms\app.mytransform.config")
                 .When.UsingTransform(@"c:\transforms\*.mytransform.config => *.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
                 .Then.SourceFile(@"c:\temp\app.config")
+                .Should.BeTransFormedBy(@"c:\transforms\app.mytransform.config")
+                .Then.SourceFile(@"c:\temp\subdir\web.config")
+                .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
+                .Then.SourceFile(@"c:\temp\subdir\app.config")
                 .Should.BeTransFormedBy(@"c:\transforms\app.mytransform.config")
                 .Verify(this);
         }
@@ -402,7 +401,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             ConfigurationTransformTestCaseBuilder
                 .ForTheScenario("Applying multiple transforms against multiple targets in a different directory")
                 .Given.FileExists(@"c:\temp\config\web.config")
-                .And.FileExists(@"c:\temp\config\App.config")
+                .And.FileExists(@"c:\temp\config\app.config")
                 .And.FileExists(@"c:\temp\app.mytransform.config")
                 .And.FileExists(@"c:\temp\web.mytransform.config")
                 .When.UsingTransform(@"*.mytransform.config => config\*.config")
@@ -606,12 +605,12 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .ForTheScenario("Applying a transform with an absolute path to a target in the extraction path root")
                 .Given.ExtractionDirectoryIs(@"c:\temp")
                 .And.FileExists(@"c:\temp\web.config")
-                .And.FileExists(@"c:\temp\sub\web.config")
+                .And.FileExists(@"c:\temp\subdir\web.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
                 .When.UsingTransform(@"c:\transforms\web.mytransform.config => .\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
-                .And.SourceFile(@"c:\temp\sub\web.config")
+                .And.SourceFile(@"c:\temp\subdir\web.config")
                 .Should.FailToBeTransformed()
                 .Verify(this);
         }
@@ -620,15 +619,15 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void When_TransformIsFullPath_And_TargetIsRelativeToExtractionDirectory_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Applying a transform with an absolute path to a target with an relative to extraction path")
+                .ForTheScenario("Applying a transform with an absolute path to a target relative to the extraction path")
                 .Given.ExtractionDirectoryIs(@"c:\temp")
                 .And.FileExists(@"c:\temp\web.config")
-                .And.FileExists(@"c:\temp\sub\web.config")
+                .And.FileExists(@"c:\temp\subdir\web.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
-                .When.UsingTransform(@"c:\transforms\web.mytransform.config => .\sub\web.config")
+                .When.UsingTransform(@"c:\transforms\web.mytransform.config => .\subdir\web.config")
                 .Then.SourceFile(@"c:\temp\web.config")
                 .Should.FailToBeTransformed()
-                .And.SourceFile(@"c:\temp\sub\web.config")
+                .And.SourceFile(@"c:\temp\subdir\web.config")
                 .Should.BeTransFormedBy(@"c:\transforms\web.mytransform.config")
                 .Verify(this);
         }
