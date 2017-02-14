@@ -1,6 +1,7 @@
 ﻿$ErrorActionPreference = "Stop"
 
-$vhds = @(Get-ChildItem * -Include *.vhd, *.vhdx)
+$extractionDir = $OctopusParameters["OctopusOriginalPackageDirectoryPath"]
+$vhds = @(Get-ChildItem "$extractionDir\*" -Include *.vhd, *.vhdx)
 If($vhds.Length -lt 1)
 {
 	Write-Error "No VHDs found. A single VHD must be in the root of the package deployed to use this step"
@@ -24,7 +25,13 @@ function EvaluateFlagDefaultTrue([string]$flag){
 
 # attach a partition to a drive letter
 function AddMountPoint($partition){
-    $partition | Add-PartitionAccessPath -AssignDriveLetter | Out-Null
+    try {
+        $partition | Add-PartitionAccessPath -AssignDriveLetter | Out-Null
+    }
+    catch {
+        Write-Error "Could not assign a drive letter, ensure that no other VHD with the same partition signature ($($partition.DiskId)) is mounted"
+        throw "Could not assign a drive letter: $($_.Exception.Message)"
+    }
     $volume = Get-Volume -partition $partition
     $driveLetter = $volume.DriveLetter
     $mountPoint = $driveLetter + ":\"
