@@ -1,4 +1,6 @@
-﻿using Calamari.Integration.ConfigurationVariables;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Deployment.Conventions
@@ -28,8 +30,7 @@ namespace Calamari.Deployment.Conventions
             if (deployment.Variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors))
                 Log.Info("Variable replacement errors are supressed because the variable Octopus.Action.Package.IgnoreVariableReplacementErrors has been set.");
 
-            var configurationFiles = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
-            foreach (var configurationFile in configurationFiles)
+            foreach (var configurationFile in MatchingFiles(deployment))
             {
                 if (appliedAsTransforms.Contains(configurationFile))
                 {
@@ -39,6 +40,18 @@ namespace Calamari.Deployment.Conventions
 
                 replacer.ModifyConfigurationFile(configurationFile, deployment.Variables);
             }
+        }
+
+        private string[] MatchingFiles(RunningDeployment deployment)
+        {
+            var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
+
+            var additional = deployment.Variables.GetStrings(SpecialVariables.Action.AdditionalPaths)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .SelectMany(p => fileSystem.EnumerateFilesRecursively(p, "*.config"));
+
+
+            return files.Concat(additional).Distinct().ToArray();
         }
     }
 }
