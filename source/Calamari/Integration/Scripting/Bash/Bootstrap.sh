@@ -33,7 +33,7 @@ function decode_servicemessagevalue
 # -----------------------------------------------------------------------------
 function decrypt_variable
 {
-	echo $1 | openssl enc -a -d -aes-128-cbc -nosalt -K $sensitiveVariableKey -iv $2
+	echo $1 | openssl enc -a -A -d -aes-128-cbc -nosalt -K $sensitiveVariableKey -iv $2
 }
 
 #	---------------------------------------------------------------------------
