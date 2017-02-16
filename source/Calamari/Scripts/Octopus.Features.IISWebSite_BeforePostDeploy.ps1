@@ -90,6 +90,7 @@ function Execute-WithRetry([ScriptBlock] $command) {
 
 			$operationIncomplete = $false
 		} catch [System.Exception] {
+            Stop-WebCommitDelay -Commit $false -ErrorAction SilentlyContinue
 			if ($attemptCount -lt ($maxFailures)) {
 				Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
 			} else {
@@ -615,10 +616,12 @@ if ($deployAsWebSite)
 			Write-Host "Clearing IIS bindings"
 			Clear-ItemProperty $sitePath -name bindings
 
+            Start-WebCommitDelay
        		for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
 				Write-Host ("Assigning binding: " + ($wsbindings[$i].protocol + " " + $wsbindings[$i].bindingInformation))
 				New-ItemProperty $sitePath -name bindings -value ($wsbindings[$i])
 			}
+            Stop-WebCommitDelay -Commit $true
 		} else {
 			Write-Host "Bindings are as configured. No changes required."
 		}
