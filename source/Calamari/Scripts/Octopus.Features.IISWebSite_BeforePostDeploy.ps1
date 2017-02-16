@@ -72,6 +72,13 @@ if ($sleepBetweenFailures -gt 60) {
 	$sleepBetweenFailures = 60
 }
 
+# Not available on Server 2008
+$hasWebCommitDelay = $false
+If(Get-Command "Start-WebCommitDelay" -ErrorAction SilentlyContinue){
+    $hasWebCommitDelay = $true
+}
+
+
 function Execute-WithRetry([ScriptBlock] $command) {
 	$attemptCount = 0
 	$operationIncomplete = $true
@@ -90,7 +97,9 @@ function Execute-WithRetry([ScriptBlock] $command) {
 
 			$operationIncomplete = $false
 		} catch [System.Exception] {
-            Stop-WebCommitDelay -Commit $false -ErrorAction SilentlyContinue
+            if($hasWebCommitDelay){
+                Stop-WebCommitDelay -Commit $false -ErrorAction SilentlyContinue
+            }
 			if ($attemptCount -lt ($maxFailures)) {
 				Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
 			} else {
@@ -616,12 +625,16 @@ if ($deployAsWebSite)
 			Write-Host "Clearing IIS bindings"
 			Clear-ItemProperty $sitePath -name bindings
 
-            Start-WebCommitDelay
+            If($hasWebCommitDelay){
+                Start-WebCommitDelay
+            }
        		for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
 				Write-Host ("Assigning binding: " + ($wsbindings[$i].protocol + " " + $wsbindings[$i].bindingInformation))
 				New-ItemProperty $sitePath -name bindings -value ($wsbindings[$i])
 			}
-            Stop-WebCommitDelay -Commit $true
+            If($hasWebCommitDelay){
+                Stop-WebCommitDelay -Commit $true
+            }
 		} else {
 			Write-Host "Bindings are as configured. No changes required."
 		}
