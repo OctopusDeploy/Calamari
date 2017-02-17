@@ -146,16 +146,10 @@ if (-not $UseExistingClusterConnection)
     }
 }
 
-if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-    $FabricPowerShellModulePath = Join-Path "$OctopusAzureFabricModulePath" -ChildPath "ServiceFabricSDK"
-	Write-Verbose "Importing bundled ServiceFabricSDK modules from $($FabricPowerShellModulePath)"
-	Import-Module "$FabricPowerShellModulePath\ServiceFabricSDK.psm1"
-} else {
-	$RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
-	$ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
-	Write-Verbose "Importing ServiceFabricSDK modules from $($ModuleFolderPath)"
-	Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
-}
+$RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"
+$ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath).FabricSDKPSModulePath
+Write-Verbose "Importing ServiceFabricSDK modules from $($ModuleFolderPath)"
+Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
 
 $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
 

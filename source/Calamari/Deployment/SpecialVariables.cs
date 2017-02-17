@@ -179,7 +179,6 @@
                 public static readonly string FabricPublishProfileFile = "Octopus.Action.Azure.FabricPublishProfileFile";
                 public static readonly string FabricApplicationPackagePath = "Octopus.Action.Azure.FabricApplicationPackagePath";
                 public static readonly string FabricDeployOnly = "Octopus.Action.Azure.FabricDeployOnly";
-                //public static readonly string FabricApplicationParameters = "Octopus.Action.Azure.FabricApplicationParameters";
                 public static readonly string FabricUnregisterUnusedApplicationVersionsAfterUpgrade = "Octopus.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade";
                 public static readonly string FabricOverrideUpgradeBehavior = "Octopus.Action.Azure.FabricOverrideUpgradeBehavior";
                 public static readonly string FabricUseExistingClusterConnection = "Octopus.Action.Azure.FabricUseExistingClusterConnection";
@@ -224,7 +223,6 @@
                 {
                     public static readonly string SubscriptionId = "OctopusAzureSubscriptionId";
                     public static readonly string ModulePath = "OctopusAzureModulePath";
-                    public static readonly string FabricModulePath = "OctopusAzureFabricModulePath";
                     public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
                     public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
                 }
