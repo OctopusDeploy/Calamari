@@ -557,10 +557,6 @@ if ($deployAsWebSite)
 	Assign-ToApplicationPool -iisPath $sitePath -applicationPoolName $applicationPoolName
 	Set-Path -virtualPath $sitePath -physicalPath $webRoot
 
-	function Bindings-AreEqual($bindingA, $bindingB) {
-		return ($bindingA.protocol -eq $bindingB.protocol) -and ($bindingA.bindingInformation -eq $bindingB.bindinginformation) -and ($bindingA.sslFlags -eq $bindingB.sslFlags)
-	}
-	
 	function Convert-ToHashTable($bindingArray) {
 		$hash = @{}
 		$bindingArray | %{
