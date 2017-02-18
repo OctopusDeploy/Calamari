@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -34,19 +37,64 @@ namespace Calamari.Tests.Fixtures.Conventions
             };
         }
 
+
         [Test]
-        public void ShouldPerformSubstitutions()
+        [TestCase(@"**/*.txt", "f1.txt", 2)]
+        [TestCase(@"**/*.txt", "r.txt", 2)]
+        [TestCase(@"*.txt", "r.txt")]
+        [TestCase(@"**/*.config", "root.config", 5)]
+        [TestCase(@"*.config", "root.config")]
+        [TestCase(@"Config\*.config", "c.config")]
+        [TestCase(@"Config\Feature1\*.config", "f1-a.config", 2)]
+        [TestCase(@"Config\Feature1\*.config", "f1-b.config", 2)]
+        [TestCase(@"Config\Feature2\*.config", "f2.config")]
+        public void GlobTestMutiple(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
-            string substitutionTarget = Path.Combine("subFolder","config.json");
+            const string rootPath = @"C:\temp\glob-tests";
+            var configPath = Path.Combine(rootPath, "Config");
+            var content = "file-content" + Environment.NewLine;
 
-            fileSystem.EnumerateFiles(StagingDirectory, substitutionTarget).Returns(new[] {Path.Combine(StagingDirectory, substitutionTarget)});
+            try
+            {
+                // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
+                Directory.CreateDirectory(rootPath);
+                Directory.CreateDirectory(configPath);
+                Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
+                Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
 
-            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, substitutionTarget);
+                File.WriteAllText(Path.Combine(rootPath, "root.config"), content);
+                File.WriteAllText(Path.Combine(rootPath, "r.txt"), content);
+                File.WriteAllText(Path.Combine(configPath, "c.config"), content);
+                File.WriteAllText(Path.Combine(configPath, "Feature1", "f1.txt"), content);
+                File.WriteAllText(Path.Combine(configPath, "Feature1", "f1-a.config"), content);
+                File.WriteAllText(Path.Combine(configPath, "Feature1", "f1-b.config"), content);
+                File.WriteAllText(Path.Combine(configPath, "Feature2", "f2.config"), content);
+
+                var result = Glob.Expand(Path.Combine(rootPath, pattern)).ToList();
+
+                Assert.AreEqual(expectedQty, result.Count, $"{pattern} should have found {expectedQty}, but found {result.Count}");
+                Assert.True(result.Any(r => r.Name.Equals(expectedFileMatchName)), $"{pattern} should have found {expectedFileMatchName}, but didn't");
+            }
+            finally
+            {
+                Directory.Delete(rootPath, true);
+            }
+        }
+
+        [Test]
+        public void ShouldPerformSubstitutionsWithGlobs()
+        {
+            string glob = "**\\*config.json";
+            string actualMatch = "config.json";
+
+            fileSystem.EnumerateFilesWithGlob(StagingDirectory, glob).Returns(new[] { Path.Combine(StagingDirectory, actualMatch) });
+
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, glob);
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
 
             CreateConvention().Install(deployment);
 
-            substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, substitutionTarget), variables);
+            substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch), variables);
         }
 
         [Test]

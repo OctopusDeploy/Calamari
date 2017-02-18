@@ -178,6 +178,15 @@ namespace Calamari.Integration.FileSystem
             Log.Verbose(message);
         }
 
+        public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPattern)
+        {
+            return globPattern.Length == 0
+                ? Glob.Expand(Path.Combine(parentDirectoryPath, "*")).Select(fi => fi.FullName)
+                : globPattern
+                    .SelectMany(pattern => Glob.Expand(Path.Combine(parentDirectoryPath, pattern))
+                    .Select(fi => fi.FullName));
+        }
+
         public virtual IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
         {
             var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);

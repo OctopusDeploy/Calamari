@@ -17,6 +17,7 @@ namespace Calamari.Integration.FileSystem
         void DeleteDirectory(string path, FailureOptions options);
         IEnumerable<string> EnumerateDirectories(string parentDirectoryPath);
         IEnumerable<string> EnumerateDirectoriesRecursively(string parentDirectoryPath);
+        IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPatterns);
         IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns);
         IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns);
         long GetFileSize(string path);
