@@ -557,17 +557,30 @@ if ($deployAsWebSite)
 	Assign-ToApplicationPool -iisPath $sitePath -applicationPoolName $applicationPoolName
 	Set-Path -virtualPath $sitePath -physicalPath $webRoot
 
-	function Bindings-AreEqual($bindingA, $bindingB) {
-		return ($bindingA.protocol -eq $bindingB.protocol) -and ($bindingA.bindingInformation -eq $bindingB.bindinginformation) -and ($bindingA.sslFlags -eq $bindingB.sslFlags)
+	function Convert-ToHashTable($bindingArray) {
+		$hash = @{}
+		$bindingArray | %{
+		    $key = Get-BindingKey $_
+		    $hash[$key] = $_
+		}
+		return $hash
+	}
+
+	function Get-BindingKey($binding) {
+		return $binding.protocol + "|" + $binding.bindingInformation + "|" + $binding.sslFlags
 	}
 
 	# Returns $true if existing IIS bindings are as specified in configuration, otherwise $false
 	function Bindings-AreCorrect($existingBindings, $configuredBindings) {
+		$existingBindingsLookup = Convert-ToHashTable $existingBindings.Collection
+		$configuredBindingsLookup = Convert-ToHashTable $configuredBindings
+	
 		# Are there existing assigned bindings that are not configured
 		for ($i = 0; $i -lt $existingBindings.Collection.Count; $i = $i+1) {
 			$binding = $existingBindings.Collection[$i]
+			$bindingKey = Get-BindingKey $binding
 
-			$matching = $configuredBindings | Where-Object {Bindings-AreEqual $binding $_ }
+			$matching = $configuredBindingsLookup[$bindingKey]
 		
 			if ($matching -eq $null) {
 				Write-Host "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
@@ -578,8 +591,9 @@ if ($deployAsWebSite)
 		# Are there configured bindings which are not assigned
 		for ($i = 0; $i -lt $configuredBindings.Count; $i = $i+1) {
 			$wsbinding = $configuredBindings[$i]
+            		$wsBindingKey = Get-BindingKey $wsbinding
 
-			$matching = $existingBindings.Collection | Where-Object {Bindings-AreEqual $wsbinding $_ }
+			$matching = $existingBindingsLookup[$wsBindingKey]
 
 			if ($matching -eq $null) {
 				Write-Host "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
