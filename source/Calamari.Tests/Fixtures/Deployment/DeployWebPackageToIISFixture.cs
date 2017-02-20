@@ -2,11 +2,15 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Security.AccessControl;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+using Calamari.Tests.Helpers.Certificates;
 using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
@@ -21,7 +25,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         private string uniqueValue;
         private WebServerSevenSupport iis;
       
-
         [OneTimeSetUp]
         public void Init()
         {
@@ -41,6 +44,11 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             iis = new WebServerSevenSupport();
             uniqueValue = "Test_" + Guid.NewGuid().ToString("N");
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+            SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
+#endif
+
             base.SetUp();
         }
 
@@ -49,6 +57,10 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             if (iis.WebSiteExists(uniqueValue)) iis.DeleteWebSite(uniqueValue);
             if (iis.ApplicationPoolExists(uniqueValue)) iis.DeleteApplicationPool(uniqueValue);
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+            SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
+#endif
 
             base.CleanUp();
         }
@@ -277,6 +289,133 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertSuccess();
             }
         }
+
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldCreateHttpsBindingUsingCertificatePassedAsVariable()
+        {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = "[{\"protocol\":\"https\",\"port\":1083,\"host\":\"\",\"certificateVariable\":\"AcmeSelfSigned\",\"requireSni\":false,\"enabled\":true}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables["AcmeSelfSigned"] = "Certificates-1";
+            Variables["AcmeSelfSigned.Type"] = "Certificate";
+            Variables["AcmeSelfSigned.Thumbprint"] = SampleCertificate.CapiWithPrivateKey.Thumbprint;
+            Variables["AcmeSelfSigned.Pfx"] = SampleCertificate.CapiWithPrivateKey.Base64Bytes();
+            Variables["AcmeSelfSigned.Password"] = SampleCertificate.CapiWithPrivateKey.Password;
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            var binding = website.Bindings.Single();
+
+            Assert.AreEqual(1083, binding.EndPoint.Port);
+            Assert.AreEqual("https", binding.Protocol);
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
+
+            // Assert the application-pool account was granted access to the certificate private-key
+            var certificate = SampleCertificate.CapiWithPrivateKey.GetCertificateFromStore("MY", StoreLocation.LocalMachine); 
+            SampleCertificate.AssertIdentityHasPrivateKeyAccess(certificate, new NTAccount("IIS AppPool\\" + uniqueValue), CryptoKeyRights.GenericAll);
+
+            Assert.AreEqual(ObjectState.Started, website.State);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldFindAndUseExistingCertificateInStoreIfPresent()
+        {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = "[{\"protocol\":\"https\",\"port\":1084,\"host\":\"\",\"certificateVariable\":\"AcmeSelfSigned\",\"requireSni\":false,\"enabled\":true}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables["AcmeSelfSigned"] = "Certificates-1";
+            Variables["AcmeSelfSigned.Type"] = "Certificate";
+            Variables["AcmeSelfSigned.Thumbprint"] = SampleCertificate.CapiWithPrivateKey.Thumbprint;
+            Variables["AcmeSelfSigned.Pfx"] = SampleCertificate.CapiWithPrivateKey.Base64Bytes();
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            SampleCertificate.CapiWithPrivateKey.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            var binding = website.Bindings.Single();
+
+            Assert.AreEqual(1084, binding.EndPoint.Port);
+            Assert.AreEqual("https", binding.Protocol);
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            Assert.AreEqual(StoreName.My.ToString(), binding.CertificateStoreName);
+
+            Assert.AreEqual(ObjectState.Started, website.State);
+
+            SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldCreateHttpsBindingUsingCertificatePassedAsThumbprint()
+        {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] =
+                $"[{{\"protocol\":\"https\",\"port\":1083,\"host\":\"\",\"thumbprint\":\"{SampleCertificate.CapiWithPrivateKey.Thumbprint}\",\"requireSni\":false,\"enabled\":true}}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            SampleCertificate.CapiWithPrivateKey.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            var binding = website.Bindings.Single();
+
+            Assert.AreEqual(1083, binding.EndPoint.Port);
+            Assert.AreEqual("https", binding.Protocol);
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
+
+            Assert.AreEqual(ObjectState.Started, website.State);
+        }
+#endif
 
         private string ToFirstLevelPath(string value)
         {

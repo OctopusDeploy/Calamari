@@ -36,19 +36,19 @@
       }
     },
      "net451": {
-      "frameworkAssemblies": {
-        "System.Core": "*",
-        "System.Net": "*",
-        "System.ServiceProcess": "*",
-        "System.Xml.Linq": "*",
-        "System.Data.DataSetExtensions": "*",
-        "Microsoft.CSharp": "*",
-        "System.Data": "*",
-        "System.Xml": "*",
+       "frameworkAssemblies": {
+         "System.Core": "*",
+         "System.Net": "*",
+         "System.ServiceProcess": "*",
+         "System.Xml.Linq": "*",
+         "System.Data.DataSetExtensions": "*",
+         "Microsoft.CSharp": "*",
+         "System.Data": "*",
+         "System.Xml": "*",
         "WindowsBase": "*",
         "System.IO.Compression": "*",
         "System.IO.Compression.FileSystem": "*"
-      },
+       },
        "dependencies": {
          "GitVersionTask": "3.3.0",
          "MarkdownSharp": "1.13.0.0",
@@ -62,7 +62,7 @@
          "Polly": "4.3.0" 
        },
       "buildOptions": {
-        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE", "CAN_GET_PHYSICAL_MEMORY" ]
+        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE", "CAN_GET_PHYSICAL_MEMORY", "WINDOWS_CERTIFICATE_STORE_SUPPORT" ]
       }
     }
   },
@@ -95,7 +95,8 @@
         "Fixtures/PowerShell/Packages/**",
         "Fixtures/PowerShell/Scripts/**",
         "Fixtures/ScriptCS/Scripts/**",
-        "Fixtures/Substitutions/Samples/**"
+        "Fixtures/Substitutions/Samples/**",
+        "Helpers/Certificates/SampleCertificateFiles/**"
       ],
       "mappings": {
         "FSharp/": "../Tools/FSharp.Compiler.Tools**/",

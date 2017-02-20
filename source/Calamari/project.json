@@ -50,7 +50,8 @@
           "HAS_DEFAULT_ENCODING",
           "USE_NUGET_V2_LIBS",
           "IIS_SUPPORT",
-          "USE_OCTODIFF_EXE"
+          "USE_OCTODIFF_EXE",
+          "WINDOWS_CERTIFICATE_STORE_SUPPORT"
         ]
       }
     },

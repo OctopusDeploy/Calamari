@@ -382,27 +382,27 @@ if ($deployAsWebSite)
 			$sslFlagPart = @{$true=1;$false=0}[[Bool]::Parse($binding.requireSni)]  
 			$bindingIpAddress =  @{$true="*";$false=$binding.ipAddress}[[string]::IsNullOrEmpty($binding.ipAddress)]
 			$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
-		
+
+			$bindingObj = @{
+				protocol=$binding.protocol;
+				ipAddress=$bindingIpAddress;
+				port=$binding.port;
+				host=$binding.host;
+				bindingInformation=$bindingInformation;
+			};
+
+			if ($binding.certificateVariable) {
+				$bindingObj.certificateVariable = $binding.certificateVariable.Trim();
+			} elseif ($binding.thumbprint){
+				$bindingObj.thumbprint=$binding.thumbprint.Trim();
+			}
+
+			if ([Bool]::Parse($supportsSNI)) {
+				$bindingObj.sslFlags=$sslFlagPart;
+			}
+			
 			if([Bool]::Parse($binding.enabled)) {
-				Write-IISBinding "Found binding: " $binding
-				if ([Bool]::Parse($supportsSNI)) {
-					$wsbindings.Add(@{ 
-						protocol=$binding.protocol;
-						ipAddress=$bindingIpAddress;
-						port=$binding.port;
-						host=$binding.host;
-						bindingInformation=$bindingInformation;
-						thumbprint=$binding.thumbprint.Trim();
-						sslFlags=$sslFlagPart }) | Out-Null
-				} else {
-					$wsbindings.Add(@{ 
-						protocol=$binding.protocol;
-						ipAddress=$bindingIpAddress;
-						port=$binding.port;
-						host=$binding.host;
-						bindingInformation=$bindingInformation;
-						thumbprint=$binding.thumbprint.Trim() }) | Out-Null
-				}
+				$wsbindings.Add($bindingObj) | Out-Null
 			} else {
 				Write-IISBinding "Ignore binding: " $binding
 			}
@@ -453,12 +453,20 @@ if ($deployAsWebSite)
 		}
 	}
 
-
 	# For any HTTPS bindings, ensure the certificate is configured for the IP/port combination
 	$wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
-		$sslCertificateThumbprint = $_.thumbprint.Trim()
+
+		# If an Octopus-managed certificate variable is supplied, it will have been installed in the store earlier
+		# in the deployment process
+		if ($_.certificateVariable) {
+			$sslCertificateThumbprint = $OctopusParameters[$_.certificateVariable + ".Thumbprint"]
+		} else {
+			# Otherwise, the certificate thumbprint was supplied directly in the binding
+			$sslCertificateThumbprint = $_.thumbprint.Trim()
+		}
+
 		Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
-    
+	
 		$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
 		if (! $certificate) 
 		{
@@ -534,6 +542,7 @@ if ($deployAsWebSite)
 					$appid = [System.Guid]::NewGuid().ToString("b")
 					& netsh http add sslcert ipport="$($ipAddress):$port" certhash="$($certificate.Thumbprint)" appid="$appid" certstorename="$certStoreName"
 					if ($LastExitCode -ne 0 ){
+						Write-Host "Failed adding new SSL binding for certificate with thumbprint '$($certificate.Thumbprint)'. Exit code: $LastExitCode"
 						throw
 					}
 				}	
