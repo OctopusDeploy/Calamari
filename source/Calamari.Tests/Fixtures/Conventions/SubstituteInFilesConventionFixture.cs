@@ -37,38 +37,47 @@ namespace Calamari.Tests.Fixtures.Conventions
             };
         }
 
-
         [Test]
         [TestCase(@"**/*.txt", "f1.txt", 2)]
         [TestCase(@"**/*.txt", "r.txt", 2)]
         [TestCase(@"*.txt", "r.txt")]
         [TestCase(@"**/*.config", "root.config", 5)]
         [TestCase(@"*.config", "root.config")]
-        [TestCase(@"Config\*.config", "c.config")]
-        [TestCase(@"Config\Feature1\*.config", "f1-a.config", 2)]
-        [TestCase(@"Config\Feature1\*.config", "f1-b.config", 2)]
-        [TestCase(@"Config\Feature2\*.config", "f2.config")]
+        [TestCase(@"Config/*.config", "c.config")]
+        [TestCase(@"Config/Feature1/*.config", "f1-a.config", 2)]
+        [TestCase(@"Config/Feature1/*.config", "f1-b.config", 2)]
+        [TestCase(@"Config/Feature2/*.config", "f2.config")]
         public void GlobTestMutiple(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
-            const string rootPath = @"C:\temp\glob-tests";
-            var configPath = Path.Combine(rootPath, "Config");
+            var realFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var rootPath = realFileSystem.CreateTemporaryDirectory();
             var content = "file-content" + Environment.NewLine;
+
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                pattern = pattern.Replace(@"/", @"\");
+            }
 
             try
             {
-                // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
-                Directory.CreateDirectory(rootPath);
-                Directory.CreateDirectory(configPath);
-                Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
-                Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
+                var configPath = Path.Combine(rootPath, "Config");
 
-                File.WriteAllText(Path.Combine(rootPath, "root.config"), content);
-                File.WriteAllText(Path.Combine(rootPath, "r.txt"), content);
-                File.WriteAllText(Path.Combine(configPath, "c.config"), content);
-                File.WriteAllText(Path.Combine(configPath, "Feature1", "f1.txt"), content);
-                File.WriteAllText(Path.Combine(configPath, "Feature1", "f1-a.config"), content);
-                File.WriteAllText(Path.Combine(configPath, "Feature1", "f1-b.config"), content);
-                File.WriteAllText(Path.Combine(configPath, "Feature2", "f2.config"), content);
+                realFileSystem.CreateDirectory(configPath);
+                realFileSystem.CreateDirectory(Path.Combine(configPath, "Feature1"));
+                realFileSystem.CreateDirectory(Path.Combine(configPath, "Feature2"));
+
+                Action<string, string, string> writeFile = (p1, p2, p3) => 
+                    realFileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
+
+                // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
+                writeFile(rootPath, "root.config", null);
+                writeFile(rootPath, "r.txt", null);
+                writeFile(configPath, "c.config", null);
+
+                writeFile(configPath, "Feature1", "f1.txt");
+                writeFile(configPath, "Feature1", "f1-a.config");
+                writeFile(configPath, "Feature1", "f1-b.config");
+                writeFile(configPath, "Feature2", "f2.config");
 
                 var result = Glob.Expand(Path.Combine(rootPath, pattern)).ToList();
 
@@ -77,7 +86,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             }
             finally
             {
-                Directory.Delete(rootPath, true);
+                realFileSystem.DeleteDirectory(rootPath);
             }
         }
 
