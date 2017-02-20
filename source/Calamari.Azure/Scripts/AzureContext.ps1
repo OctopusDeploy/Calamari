@@ -17,7 +17,7 @@
 ##   $OctopusAzureADTenantId = "...."
 ##   $OctopusAzureADClientId = "...."
 ##   $OctopusAzureADPassword = "...."
-##   $OctopusAzureEnvrionment = "...."
+##   $OctopusAzureEnvironment = "...."
 
 $ErrorActionPreference = "Stop"
 
@@ -65,10 +65,10 @@ Execute-WithRetry{
         # Authenticate via Service Principal
         $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
         $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-        $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvrionment
+        $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
         if (!$AzureEnvironment)
         {
-            Write-Error "No Azure environment could be matched given name $OctopusAzureEnvrionment"
+            Write-Error "No Azure environment could be matched given name $OctopusAzureEnvironment"
             exit -2
         }
 
@@ -79,11 +79,11 @@ Execute-WithRetry{
         Write-Verbose "Loading the management certificate"
         Add-Type -AssemblyName "System"
         $certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
-        $AzureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $OctopusAzureEnvrionment}
+        $AzureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $OctopusAzureEnvironment}
 
         if (!$AzureEnvironment)
         {
-            Write-Error "No Azure environment could be matched given name $OctopusAzureEnvrionment"
+            Write-Error "No Azure environment could be matched given name $OctopusAzureEnvironment"
             exit -2
         }
 

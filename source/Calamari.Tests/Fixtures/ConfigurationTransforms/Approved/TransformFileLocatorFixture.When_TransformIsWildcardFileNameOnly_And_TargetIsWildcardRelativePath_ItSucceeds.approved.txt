@@ -3,7 +3,7 @@ Given a package which has the structure:
 Acme.Core.1.0.0.nupkg
 ├─app.mytransform.config
 ├─config
-| ├─App.config
+| ├─app.config
 | └─web.config
 └─web.mytransform.config
 Then the transform *.mytransform.config => config\*.config will:

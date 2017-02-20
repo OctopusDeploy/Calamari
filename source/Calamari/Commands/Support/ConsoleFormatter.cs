@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using Calamari.Util;
 
 namespace Calamari.Commands.Support
 {
@@ -35,7 +36,7 @@ namespace Calamari.Commands.Support
                 return 43;
             }
 
-            Log.Error(ex.ToString());
+            Log.Error(ex.PrettyPrint());
             return 100;
         }
     }

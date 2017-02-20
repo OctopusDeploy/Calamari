@@ -42,7 +42,12 @@ namespace Calamari.Azure.Integration
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
-            SetOutputVariable("OctopusAzureEnvrionment",variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment),variables);
+            var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
+            if (azureEnvironment != DefaultAzureEnvironment)
+            {
+                Log.Info("Using Azure Environment override - {0}", azureEnvironment);
+            }
+            SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))

@@ -72,12 +72,22 @@ namespace Calamari.Azure.Deployment.Conventions
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
-            var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
 
             switch (accountType)
             {
                 case AzureAccountTypes.ServicePrincipalAccountType:
                     var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+                    if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
+                    {
+                        Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
+                    }
+
+                    var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+                    if (activeDirectoryEndpoint != DefaultVariables.ActiveDirectoryEndpoint)
+                    {
+                        Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndpoint);
+                    }
+
                     return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
                         variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
                         siteName,
@@ -89,6 +99,10 @@ namespace Calamari.Azure.Deployment.Conventions
 
                 case AzureAccountTypes.ManagementCertificateAccountType:
                     var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
+                    if (serviceManagementEndpoint != DefaultVariables.ServiceManagementEndpoint)
+                    {
+                        Log.Info("Using override for service management endpoint - {0}", serviceManagementEndpoint);
+                    }
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                         siteName,
