@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading;
 
@@ -33,7 +34,7 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, Action<string> output, Action<string> error)
+        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, SecureString password, Action<string> output, Action<string> error)
         {
             try
             {
@@ -48,6 +49,14 @@ namespace Calamari.Integration.Processes
                     process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.StandardOutputEncoding = oemEncoding;
                     process.StartInfo.StandardErrorEncoding = oemEncoding;
+
+#if CAN_RUN_PROCESS_AS
+                    if (!string.IsNullOrEmpty(userName) && password != null)
+                    {
+                        process.StartInfo.UserName = userName;
+                        process.StartInfo.Password = password;
+                    }
+#endif
 
                     using (var outputWaitHandle = new AutoResetEvent(false))
                     using (var errorWaitHandle = new AutoResetEvent(false))
