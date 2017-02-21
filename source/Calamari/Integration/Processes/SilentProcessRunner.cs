@@ -34,6 +34,11 @@ namespace Calamari.Integration.Processes
             }
         }
 
+        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, Action<string> output, Action<string> error)
+        {
+            return ExecuteCommand(executable, arguments, workingDirectory, null, null, output, error);
+        }
+
         public static int ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, SecureString password, Action<string> output, Action<string> error)
         {
             try
