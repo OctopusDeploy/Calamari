@@ -1,17 +1,23 @@
 ﻿$ErrorActionPreference = "Stop"
 
+if (-not (Get-Command Mount-DiskImage -errorAction SilentlyContinue))
+{
+    Write-Error "VHD deployment requires Windows Server 2012 or newer"
+	exit -1
+}
+
 $extractionDir = $OctopusParameters["OctopusOriginalPackageDirectoryPath"]
 $vhds = @(Get-ChildItem "$extractionDir\*" -Include *.vhd, *.vhdx)
 If($vhds.Length -lt 1)
 {
 	Write-Error "No VHDs found. A single VHD must be in the root of the package deployed to use this step"
-	exit -1
+	exit -2
 }
 
 If($vhds.Length -gt 1)
 {
 	Write-Error "More than one VHD found ($vhds.Length). A single VHD must be in the root of the package deployed to use this step"
-	exit -2
+	exit -3
 }
 
 function EvaluateFlagDefaultTrue([string]$flag){
