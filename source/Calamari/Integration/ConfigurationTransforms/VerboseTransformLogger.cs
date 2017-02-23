@@ -10,23 +10,23 @@ namespace Calamari.Integration.ConfigurationTransforms
     public class VerboseTransformLogger : IXmlTransformationLogger
     {
         public event LogDelegate Warning;
-        readonly bool treatWarningsAsInfo;
-        readonly bool suppressVerboseLogging;
+        readonly TransformLoggingOptions transformLoggingOptions;
+        readonly ILog log;
 
-        public VerboseTransformLogger(bool treatWarningsAsInfo = false, bool suppressVerboseLogging = false)
+        public VerboseTransformLogger(TransformLoggingOptions transformLoggingOptions, ILog log)
         {
-            this.treatWarningsAsInfo = treatWarningsAsInfo;
-            this.suppressVerboseLogging = suppressVerboseLogging;
+            this.transformLoggingOptions = transformLoggingOptions;
+            this.log = log;
         }
 
         public void LogMessage(string message, params object[] messageArgs)
         {
-            if (suppressVerboseLogging)
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.DoNotLogVerbose))
             {
                 return;
             }
 
-            Log.VerboseFormat(message, messageArgs);
+            log.VerboseFormat(message, messageArgs);
         }
 
         public void LogMessage(MessageType type, string message, params object[] messageArgs)
@@ -37,88 +37,88 @@ namespace Calamari.Integration.ConfigurationTransforms
         public void LogWarning(string message, params object[] messageArgs)
         {
             Warning?.Invoke(this, new WarningDelegateArgs(string.Format(message, messageArgs)));
-            if (treatWarningsAsInfo)
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsInfo))
             {
-                Log.Info(message, messageArgs);
+                log.InfoFormat(message, messageArgs);
             }
             else
             {
-                Log.WarnFormat(message, messageArgs);
+                log.WarnFormat(message, messageArgs);
             }
         }
 
         public void LogWarning(string file, string message, params object[] messageArgs)
         {
             Warning?.Invoke(this, new WarningDelegateArgs($"{file}: {string.Format(message, messageArgs)}"));
-            if (treatWarningsAsInfo)
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsInfo))
             {
-                Log.Info("File {0}: ", file);
-                Log.Info(message, messageArgs);
+                log.InfoFormat("File {0}: ", file);
+                log.InfoFormat(message, messageArgs);
             }
             else
             {
-                Log.WarnFormat("File {0}: ", file);
-                Log.WarnFormat(message, messageArgs);
+                log.WarnFormat("File {0}: ", file);
+                log.WarnFormat(message, messageArgs);
             }
         }
 
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
             Warning?.Invoke(this, new WarningDelegateArgs($"{file}({lineNumber},{linePosition}): {string.Format(message, messageArgs)}"));
-            if (treatWarningsAsInfo)
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsInfo))
             {
-                Log.Info("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
-                Log.Info(message, messageArgs);
+                log.InfoFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+                log.InfoFormat(message, messageArgs);
             }
             else
             {
-                Log.WarnFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
-                Log.WarnFormat(message, messageArgs);
+                log.WarnFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+                log.WarnFormat(message, messageArgs);
             }
         }
 
         public void LogError(string message, params object[] messageArgs)
         {
-            Log.ErrorFormat(message, messageArgs);
+            log.ErrorFormat(message, messageArgs);
         }
 
         public void LogError(string file, string message, params object[] messageArgs)
         {
-            Log.ErrorFormat("File {0}: ", file);
-            Log.ErrorFormat(message, messageArgs);
+            log.ErrorFormat("File {0}: ", file);
+            log.ErrorFormat(message, messageArgs);
         }
 
         public void LogError(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
-            Log.ErrorFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
-            Log.ErrorFormat(message, messageArgs);
+            log.ErrorFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+            log.ErrorFormat(message, messageArgs);
         }
 
         public void LogErrorFromException(Exception ex)
         {
-            Log.ErrorFormat(ex.ToString());
+            log.ErrorFormat(ex.ToString());
         }
 
         public void LogErrorFromException(Exception ex, string file)
         {
-            Log.ErrorFormat("File {0}: ", file);
-            Log.ErrorFormat(ex.ToString());
+            log.ErrorFormat("File {0}: ", file);
+            log.ErrorFormat(ex.ToString());
         }
 
         public void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition)
         {
-            Log.ErrorFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
-            Log.ErrorFormat(ex.ToString());
+            log.ErrorFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+            log.ErrorFormat(ex.ToString());
         }
 
         public void StartSection(string message, params object[] messageArgs)
         {
-            if (suppressVerboseLogging)
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.DoNotLogVerbose))
             {
                 return;
             }
 
-            Log.VerboseFormat(message, messageArgs);
+            log.VerboseFormat(message, messageArgs);
         }
 
         public void StartSection(MessageType type, string message, params object[] messageArgs)
@@ -128,12 +128,12 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void EndSection(string message, params object[] messageArgs)
         {
-            if (suppressVerboseLogging)
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.DoNotLogVerbose))
             {
                 return;
             }
 
-            Log.VerboseFormat(message, messageArgs);
+            log.VerboseFormat(message, messageArgs);
         }
 
         public void EndSection(MessageType type, string message, params object[] messageArgs)

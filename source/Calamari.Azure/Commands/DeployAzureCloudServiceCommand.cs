@@ -59,7 +59,7 @@ namespace Calamari.Azure.Commands
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
             var substituter = new FileSubstituter(fileSystem);
-            var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.FailOnConfigTransformationWarnings, true), variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonVariablesReplacer = new JsonConfigurationVariableReplacer();
