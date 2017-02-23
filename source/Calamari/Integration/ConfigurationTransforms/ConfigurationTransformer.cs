@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Xml;
 using Calamari.Commands.Support;
+using Calamari.Deployment;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;
 #else
@@ -11,17 +12,17 @@ namespace Calamari.Integration.ConfigurationTransforms
 {
     public class ConfigurationTransformer : IConfigurationTransformer
     {
+        readonly bool failOnTransformationWarnings;
         readonly bool suppressTransformationErrors;
-        readonly bool suppressTransformationLogging;
+        readonly bool suppressVerboseTransformationLogging;
 
-        bool transformFailed;
-        string transformWarning;
         readonly ILog log;
 
-        public ConfigurationTransformer(bool suppressTransformationErrors = false, bool suppressTransformationLogging = false, ILog log = null)
+        public ConfigurationTransformer(bool failOnTransformationWarnings = true, bool suppressTransformationErrors = false, bool suppressVerboseTransformationLogging = false, ILog log = null)
         {
+            this.failOnTransformationWarnings = failOnTransformationWarnings;
             this.suppressTransformationErrors = suppressTransformationErrors;
-            this.suppressTransformationLogging = suppressTransformationLogging;
+            this.suppressVerboseTransformationLogging = suppressVerboseTransformationLogging;
             this.log = log ?? new LogWrapper();
         }
 
@@ -36,27 +37,38 @@ namespace Calamari.Integration.ConfigurationTransforms
             {
                 if (suppressTransformationErrors)
                 {
+                    log.WarnFormat("The XML configuration file {0} failed with transformation file {1}.", configFile, transformFile);
                     log.Warn(ex.Message);
                     log.Warn(ex.StackTrace);
-                }                    
-                else throw;
+                }
+                else
+                {
+                    log.ErrorFormat("The XML configuration file {0} failed with transformation file {1}.", configFile, transformFile);
+                    throw;
+                }
             }
         }
 
         IXmlTransformationLogger SetupLogger()
         {
-            transformFailed = false;
-            transformWarning = default(string);
-            
-            var logger = new VerboseTransformLogger(suppressTransformationErrors, suppressTransformationLogging);
+            var logger = new VerboseTransformLogger(suppressTransformationErrors, suppressVerboseTransformationLogging);
             logger.Warning += (sender, args) =>
             {
-                transformWarning = args.Message;
-                transformFailed = true;
+                if (!failOnTransformationWarnings)
+                {
+                    return;
+                }
+
+                Log.Verbose($"A warning was encountered and has been elevated to an error. Prevent this by adding the variable {SpecialVariables.Package.FailOnConfigTransformationWarnings} and setting it to false.");
+                throw new CommandException(args.Message);
             };
+            if (suppressVerboseTransformationLogging)
+            {
+                log.Verbose($"Verbose XML transformation logging has been turned off because the variable {SpecialVariables.Package.SuppressConfigTransformationLogging} has been set to true.");
+            }
             if (suppressTransformationErrors)
             {
-                log.Info("XML Transformation warnings will be suppressed.");
+                log.Info($"XML transformation warnings will be suppressed because the variable {SpecialVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
             }
 
             return logger;
@@ -73,10 +85,9 @@ namespace Calamari.Integration.ConfigurationTransforms
             configurationFileDocument.Load(configFile);
 
             var success = transformation.Apply(configurationFileDocument);
-            if (!suppressTransformationErrors && (!success || transformFailed))
+            if (!success)
             {
-                log.ErrorFormat("The XML configuration file {0} failed with transformation file {1}.", configFile, transformFile);
-                throw new CommandException(transformWarning);
+                throw new CommandException($"The XML configuration file {configFile} failed with transformation file {transformFile}.");
             }
 
             if (!configurationFileDocument.ChildNodes.OfType<XmlElement>().Any())

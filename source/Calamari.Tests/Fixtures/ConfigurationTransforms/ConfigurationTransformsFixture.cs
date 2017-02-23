@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Commands.Support;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;
@@ -55,8 +56,24 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
-            configurationTransformer = new ConfigurationTransformer(true);
+            configurationTransformer = new ConfigurationTransformer(suppressTransformationErrors: true);
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
+        }
+
+        [Test]
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        [ExpectedException(typeof(CommandException))]
+        public void ShouldThrowExceptionForTransformWarnings()
+        {
+            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
+        }
+
+        [Test]
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        public void ShouldSuppressExceptionForTransformWarnings_WhenFlagIsSet()
+        {
+            configurationTransformer = new ConfigurationTransformer(failOnTransformationWarnings: false);
+            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
         }
 
         [Test]

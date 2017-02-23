@@ -10,35 +10,34 @@ namespace Calamari.Integration.ConfigurationTransforms
     public class VerboseTransformLogger : IXmlTransformationLogger
     {
         public event LogDelegate Warning;
-        readonly bool _suppressWarnings;
-        readonly bool _suppressLogging;
+        readonly bool treatWarningsAsInfo;
+        readonly bool suppressVerboseLogging;
 
-        public VerboseTransformLogger(bool suppressWarnings = false, bool suppressLogging = false)
+        public VerboseTransformLogger(bool treatWarningsAsInfo = false, bool suppressVerboseLogging = false)
         {
-            _suppressWarnings = suppressWarnings;
-            _suppressLogging = suppressLogging;
+            this.treatWarningsAsInfo = treatWarningsAsInfo;
+            this.suppressVerboseLogging = suppressVerboseLogging;
         }
 
         public void LogMessage(string message, params object[] messageArgs)
         {
-            if (!_suppressLogging)
+            if (suppressVerboseLogging)
             {
-                Log.VerboseFormat(message, messageArgs);
+                return;
             }
+
+            Log.VerboseFormat(message, messageArgs);
         }
 
         public void LogMessage(MessageType type, string message, params object[] messageArgs)
         {
-            if (!_suppressLogging)
-            {
-                LogMessage(message, messageArgs);
-            }
+            LogMessage(message, messageArgs);
         }
 
         public void LogWarning(string message, params object[] messageArgs)
         {
-            if (Warning != null) { Warning(this, new WarningDelegateArgs(string.Format(message, messageArgs))); }
-            if (_suppressWarnings)
+            Warning?.Invoke(this, new WarningDelegateArgs(string.Format(message, messageArgs)));
+            if (treatWarningsAsInfo)
             {
                 Log.Info(message, messageArgs);
             }
@@ -50,8 +49,8 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void LogWarning(string file, string message, params object[] messageArgs)
         {
-            if (Warning != null) { Warning(this, new WarningDelegateArgs(string.Format("{0}: {1}", file, string.Format(message, messageArgs)))); }
-            if (_suppressWarnings)
+            Warning?.Invoke(this, new WarningDelegateArgs($"{file}: {string.Format(message, messageArgs)}"));
+            if (treatWarningsAsInfo)
             {
                 Log.Info("File {0}: ", file);
                 Log.Info(message, messageArgs);
@@ -65,8 +64,8 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
-            if (Warning != null) { Warning(this, new WarningDelegateArgs(string.Format("{0}({1},{2}): {3}", file, lineNumber, linePosition, string.Format(message, messageArgs)))); }
-            if (_suppressWarnings)
+            Warning?.Invoke(this, new WarningDelegateArgs($"{file}({lineNumber},{linePosition}): {string.Format(message, messageArgs)}"));
+            if (treatWarningsAsInfo)
             {
                 Log.Info("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
                 Log.Info(message, messageArgs);
@@ -114,34 +113,32 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void StartSection(string message, params object[] messageArgs)
         {
-            if (!_suppressLogging)
+            if (suppressVerboseLogging)
             {
-                Log.VerboseFormat(message, messageArgs);
+                return;
             }
+
+            Log.VerboseFormat(message, messageArgs);
         }
 
         public void StartSection(MessageType type, string message, params object[] messageArgs)
         {
-            if (!_suppressLogging)
-            {
-                StartSection(message, messageArgs);
-            }
+            StartSection(message, messageArgs);
         }
 
         public void EndSection(string message, params object[] messageArgs)
         {
-            if (!_suppressLogging)
+            if (suppressVerboseLogging)
             {
-                Log.VerboseFormat(message, messageArgs);
+                return;
             }
+
+            Log.VerboseFormat(message, messageArgs);
         }
 
         public void EndSection(MessageType type, string message, params object[] messageArgs)
         {
-            if (!_suppressLogging)
-            {
-                EndSection(message, messageArgs);
-            }
+            EndSection(message, messageArgs);
         }
     }
 }
