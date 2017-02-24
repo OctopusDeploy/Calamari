@@ -1,4 +1,6 @@
 ﻿using System;
+using Calamari.Commands.Support;
+using Calamari.Deployment;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;
 #else
@@ -9,7 +11,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 {
     public class VerboseTransformLogger : IXmlTransformationLogger
     {
-        public event LogDelegate Warning;
+        public event LogDelegate Error;
         readonly TransformLoggingOptions transformLoggingOptions;
         readonly ILog log;
 
@@ -36,79 +38,83 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public void LogWarning(string message, params object[] messageArgs)
         {
-            Warning?.Invoke(this, new WarningDelegateArgs(string.Format(message, messageArgs)));
-            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsInfo))
-            {
-                log.InfoFormat(message, messageArgs);
-            }
-            else
-            {
-                log.WarnFormat(message, messageArgs);
-            }
+            LogWarn(message, messageArgs);
         }
 
         public void LogWarning(string file, string message, params object[] messageArgs)
         {
-            Warning?.Invoke(this, new WarningDelegateArgs($"{file}: {string.Format(message, messageArgs)}"));
-            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsInfo))
-            {
-                log.InfoFormat("File {0}: ", file);
-                log.InfoFormat(message, messageArgs);
-            }
-            else
-            {
-                log.WarnFormat("File {0}: ", file);
-                log.WarnFormat(message, messageArgs);
-            }
+            LogWarn("File {0}:", file);
+            LogWarn(message, messageArgs);
         }
 
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
-            Warning?.Invoke(this, new WarningDelegateArgs($"{file}({lineNumber},{linePosition}): {string.Format(message, messageArgs)}"));
-            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsInfo))
+            LogWarn("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+            LogWarning(message, messageArgs);
+        }
+
+        void LogWarn(string message, params object[] messageArgs)
+        {
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsErrors))
             {
-                log.InfoFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
+                log.ErrorFormat(message, messageArgs);
+                Error?.Invoke(this);
+            }
+            else if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsInfo))
+            {
                 log.InfoFormat(message, messageArgs);
             }
             else
             {
-                log.WarnFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
                 log.WarnFormat(message, messageArgs);
             }
         }
 
         public void LogError(string message, params object[] messageArgs)
         {
-            log.ErrorFormat(message, messageArgs);
+            LogErr(message, messageArgs);
         }
 
         public void LogError(string file, string message, params object[] messageArgs)
         {
-            log.ErrorFormat("File {0}: ", file);
-            log.ErrorFormat(message, messageArgs);
+            LogErr("File {0}: ", file);
+            LogErr(message, messageArgs);
         }
 
         public void LogError(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
-            log.ErrorFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
-            log.ErrorFormat(message, messageArgs);
+            LogErr("File {0}, line {1}, position {2}:", file, lineNumber, linePosition);
+            LogErr(message, messageArgs);
         }
 
         public void LogErrorFromException(Exception ex)
         {
-            log.ErrorFormat(ex.ToString());
+            LogErr(ex.ToString());
         }
 
         public void LogErrorFromException(Exception ex, string file)
         {
-            log.ErrorFormat("File {0}: ", file);
-            log.ErrorFormat(ex.ToString());
+            LogErr("File {0}:", file);
+            LogErr(ex.ToString());
         }
 
         public void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition)
         {
-            log.ErrorFormat("File {0}, line {1}, position {2}: ", file, lineNumber, linePosition);
-            log.ErrorFormat(ex.ToString());
+            LogErr("File {0}, line {1}, position {2}:", file, lineNumber, linePosition);
+            LogErr(ex.ToString());
+        }
+
+        void LogErr(string message, params object[] messageArgs)
+        {
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogExceptionsAsWarnings))
+            {
+                log.WarnFormat(message, messageArgs);
+            }
+            else
+            {
+                log.ErrorFormat(message, messageArgs);
+                Error?.Invoke(this);
+            }
         }
 
         public void StartSection(string message, params object[] messageArgs)

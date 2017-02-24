@@ -78,7 +78,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void ShouldSuppressExceptionForTransformWarnings_WhenFlagIsSet()
         {
             var variables = new CalamariVariableDictionary();
-            variables.Set(SpecialVariables.Package.FailOnConfigTransformationWarnings, "false");
+            variables.Set(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, "false");
             configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
 
             PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
@@ -89,7 +89,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void ShouldShowMessageWhenResultIsInvalidXml()
         {
             PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Empty.config"));
-            log.Messages.Where(m => m.Level == InMemoryLog.Level.Warn)
+            log.Messages.Where(m => m.Level == InMemoryLog.Level.Error)
                 .Select(m => m.MessageFormat)
                 .Should()
                 .Contain("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}");

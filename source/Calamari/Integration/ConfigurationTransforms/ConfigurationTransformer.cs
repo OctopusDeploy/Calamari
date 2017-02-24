@@ -13,18 +13,16 @@ namespace Calamari.Integration.ConfigurationTransforms
 {
     public class ConfigurationTransformer : IConfigurationTransformer
     {
-        readonly TransformWarningAction transformWarningAction;
-        readonly TransformErrorAction transformErrorAction;
         readonly TransformLoggingOptions transformLoggingOptions;
 
-        readonly ILog log;
+        readonly ILog calamariLog;
 
-        public ConfigurationTransformer(TransformWarningAction transformWarningAction, TransformErrorAction transformErrorAction, TransformLoggingOptions transformLoggingOptions, ILog log = null)
+        bool errorEncountered;
+
+        public ConfigurationTransformer(TransformLoggingOptions transformLoggingOptions, ILog log = null)
         {
-            this.transformWarningAction = transformWarningAction;
-            this.transformErrorAction = transformErrorAction;
             this.transformLoggingOptions = transformLoggingOptions;
-            this.log = log ?? new LogWrapper();
+            calamariLog = log ?? new LogWrapper();
         }
 
         public void PerformTransform(string configFile, string transformFile, string destinationFile)
@@ -34,17 +32,15 @@ namespace Calamari.Integration.ConfigurationTransforms
             {
                 ApplyTransformation(configFile, transformFile, destinationFile, logger);
             }
+            catch (CommandException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                if (transformErrorAction == TransformErrorAction.Succeed)
+                logger.LogErrorFromException(ex);
+                if (errorEncountered)
                 {
-                    log.WarnFormat("The XML configuration file {0} failed with transformation file {1}.", configFile, transformFile);
-                    log.Warn(ex.Message);
-                    log.Warn(ex.StackTrace);
-                }
-                else
-                {
-                    log.ErrorFormat("The XML configuration file {0} failed with transformation file {1}.", configFile, transformFile);
                     throw;
                 }
             }
@@ -52,28 +48,23 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         IXmlTransformationLogger SetupLogger()
         {
-            var logger = new VerboseTransformLogger(transformLoggingOptions, log);
-            logger.Warning += (sender, args) =>
-            {
-                if (transformWarningAction == TransformWarningAction.Succeed)
-                {
-                    return;
-                }
-
-                log.Verbose($"A warning was encountered and has been elevated to an error. Prevent this by adding the variable {SpecialVariables.Package.FailOnConfigTransformationWarnings} and setting it to false.");
-                throw new CommandException(args.Message);
-            };
+            var logger = new VerboseTransformLogger(transformLoggingOptions, calamariLog);
+            logger.Error += delegate { errorEncountered = true; };
             if (transformLoggingOptions.HasFlag(TransformLoggingOptions.DoNotLogVerbose))
             {
-                log.Verbose($"Verbose XML transformation logging has been turned off because the variable {SpecialVariables.Package.SuppressConfigTransformationLogging} has been set to true.");
+                calamariLog.Verbose($"Verbose XML transformation logging has been turned off because the variable {SpecialVariables.Package.SuppressConfigTransformationLogging} has been set to true.");
             }
             if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogExceptionsAsWarnings))
             {
-                log.Verbose($"XML transformation warnings will be downgraded to information because the variable {SpecialVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
+                calamariLog.Verbose($"XML transformation warnings will be downgraded to information because the variable {SpecialVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
             }
             if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogExceptionsAsWarnings))
             {
-                log.Verbose($"XML transformation exceptions will be downgraded to warnings because the variable {SpecialVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
+                calamariLog.Verbose($"XML transformation exceptions will be downgraded to warnings because the variable {SpecialVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
+            }
+            if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsErrors))
+            {
+                calamariLog.Verbose($"Warning will be elevated to errors. Prevent this by adding the variable {SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors} and setting it to false.");
             }
 
             return logger;
@@ -81,6 +72,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         void ApplyTransformation(string configFile, string transformFile, string destinationFile, IXmlTransformationLogger logger)
         {
+            errorEncountered = false;
             var transformation = new XmlTransformation(transformFile, logger);
 
             var configurationFileDocument = new XmlTransformableDocument()
@@ -90,14 +82,14 @@ namespace Calamari.Integration.ConfigurationTransforms
             configurationFileDocument.Load(configFile);
 
             var success = transformation.Apply(configurationFileDocument);
-            if (!success)
+            if (!success || errorEncountered)
             {
                 throw new CommandException($"The XML configuration file {configFile} failed with transformation file {transformFile}.");
             }
 
             if (!configurationFileDocument.ChildNodes.OfType<XmlElement>().Any())
             {
-                log.WarnFormat("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}", configFile, transformFile);
+                logger.LogWarning("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}", new object[] { configFile, transformFile });
             }
 
             configurationFileDocument.Save(destinationFile);
@@ -105,53 +97,31 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         public static ConfigurationTransformer FromVariables(CalamariVariableDictionary variables, ILog log = null)
         {
-            var failOnConfigTransformWarnings =
-                variables.GetFlag(SpecialVariables.Package.FailOnConfigTransformationWarnings, true);
-            var ignoreConfigTransformErrors =
-                variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors, false);
-            var suppressConfigTransformLogging =
-                    variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging, false);
-
-            var transformWarningAction = failOnConfigTransformWarnings
-                ? TransformWarningAction.Fail
-                : TransformWarningAction.Succeed;
-
-            var transformErrorAction = ignoreConfigTransformErrors
-                ? TransformErrorAction.Succeed
-                : TransformErrorAction.Fail;
+            var treatConfigTransformationWarningsAsErrors = variables.GetFlag(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, true);
+            var ignoreConfigTransformErrors = variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors);
+            var suppressConfigTransformLogging = variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging);
 
             var transformLoggingOptions = TransformLoggingOptions.None;
 
+            if (treatConfigTransformationWarningsAsErrors)
+            {
+                transformLoggingOptions |= TransformLoggingOptions.LogWarningsAsErrors;
+            }
+
             if (ignoreConfigTransformErrors)
             {
-                transformLoggingOptions = transformLoggingOptions & TransformLoggingOptions.LogExceptionsAsWarnings;
-                transformLoggingOptions = transformLoggingOptions & TransformLoggingOptions.LogWarningsAsInfo;
-
-                if (!variables.IsSet(SpecialVariables.Package.FailOnConfigTransformationWarnings))
-                {
-                    transformWarningAction= TransformWarningAction.Succeed;
-                }
+                transformLoggingOptions |= TransformLoggingOptions.LogExceptionsAsWarnings;
+                transformLoggingOptions |= TransformLoggingOptions.LogWarningsAsInfo;
+                transformLoggingOptions &= ~TransformLoggingOptions.LogWarningsAsErrors;
             }
 
             if (suppressConfigTransformLogging)
             {
-                transformLoggingOptions = transformLoggingOptions & TransformLoggingOptions.DoNotLogVerbose;
+                transformLoggingOptions |= TransformLoggingOptions.DoNotLogVerbose;
             }
 
-            return new ConfigurationTransformer(transformWarningAction, transformErrorAction, transformLoggingOptions, log);
+            return new ConfigurationTransformer(transformLoggingOptions, log);
         }
-    }
-
-    public enum TransformWarningAction
-    {
-        Succeed,
-        Fail
-    }
-
-    public enum TransformErrorAction
-    {
-        Succeed,
-        Fail
     }
 
     [Flags]
@@ -160,6 +130,7 @@ namespace Calamari.Integration.ConfigurationTransforms
         None = 0,
         DoNotLogVerbose = 1,
         LogWarningsAsInfo = 2,
-        LogExceptionsAsWarnings = 4
+        LogWarningsAsErrors = 4,
+        LogExceptionsAsWarnings = 8
     }
 }
