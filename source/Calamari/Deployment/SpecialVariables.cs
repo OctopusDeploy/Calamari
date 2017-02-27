@@ -4,6 +4,7 @@
     {
         public const string LastErrorMessage = "OctopusLastErrorMessage";
         public const string LastError = "OctopusLastError";
+        public const string TreatWarningsAsErrors = "OctopusTreatWarningsAsErrors";
 
         public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
 

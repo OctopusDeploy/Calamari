@@ -133,8 +133,7 @@ namespace Calamari.Deployment.Conventions
 
                 if (result.ExitCode != 0)
                 {
-                    throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
-                        result.ExitCode));
+                    throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile, result.ExitCode));
                 }
             }
         }

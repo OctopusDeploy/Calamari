@@ -59,6 +59,11 @@ namespace Calamari.Deployment.Conventions
                     throw new CommandException($"{deploymentStage} script returned non-zero exit code: {result.ExitCode}");
                 }
 
+                if (result.HasErrors && deployment.Variables.GetFlag(SpecialVariables.TreatWarningsAsErrors, false))
+                {
+                    throw new CommandException($"{deploymentStage} script returned zero exit code but had error output.");
+                }
+
                 if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
                 {
                     // And then delete it (this means if the script failed, it will persist, which may assist debugging)
