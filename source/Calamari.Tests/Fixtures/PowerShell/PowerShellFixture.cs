@@ -473,6 +473,39 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldNotFailOnStdErr()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "stderr.ps1")));
+
+            output.AssertSuccess();
+            output.AssertErrorOutput("error");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShoulFailOnStdErrWithTreatScriptWarningsAsErrors()
+        {
+            var variablesFile = Path.GetTempFileName();
+            var variables = new VariableDictionary();
+            variables.Set("Octopus.Action.TreatScriptWarningsAsErrors", "True");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("variables", variablesFile)
+                    .Argument("script", GetFixtureResouce("Scripts", "stderr.ps1")));
+
+                output.AssertFailure();
+                output.AssertErrorOutput("error");
+            }
+        }
+
+        [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ThrowsExceptionOnNixOrMac()

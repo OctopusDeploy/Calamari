@@ -1,7 +1,10 @@
-﻿$vhds = @(Get-ChildItem * -Include *.vhd, *.vhdx)
-
-Foreach($vhd in $vhds)
+﻿if (Get-Command Dismount-DiskImage -errorAction SilentlyContinue)
 {
-	Dismount-DiskImage -ImagePath $vhd -ErrorAction Continue
-	Write-Host  "VHD at $vhdPath dismounted"
+    $vhds = @(Get-ChildItem * -Include *.vhd, *.vhdx)
+
+    Foreach($vhd in $vhds)
+    {
+	    Dismount-DiskImage -ImagePath $vhd -ErrorAction Continue
+	    Write-Host  "VHD at $vhdPath dismounted"
+    }
 }

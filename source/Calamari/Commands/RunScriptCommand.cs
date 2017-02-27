@@ -84,6 +84,12 @@ namespace Calamari.Commands
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", validatedScriptFilePath);
             var result = scriptEngine.Execute(new Script(validatedScriptFilePath, scriptParameters), variables, runner);
+
+            if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.TreatScriptWarningsAsErrors, false))
+            {
+                return -1;
+            }
+
             return result.ExitCode;
         }
 
