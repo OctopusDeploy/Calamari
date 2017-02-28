@@ -1,3 +1,4 @@
+using System.Security;
 using Calamari.Util;
 
 namespace Calamari.Integration.Processes
@@ -12,7 +13,7 @@ namespace Calamari.Integration.Processes
             Arguments = arguments;
         }
 
-        public CommandLineInvocation(string executable, string arguments, string workingDirectory, string userName = null, string password = null)
+        public CommandLineInvocation(string executable, string arguments, string workingDirectory, string userName = null, SecureString password = null)
             : this(executable, arguments)
         {
             this.workingDirectory = workingDirectory;
@@ -26,7 +27,7 @@ namespace Calamari.Integration.Processes
 
         public string UserName { get; }
 
-        public string Password { get; }
+        public SecureString Password { get; }
 
         /// <summary>
         /// The initial working-directory for the invocation.
