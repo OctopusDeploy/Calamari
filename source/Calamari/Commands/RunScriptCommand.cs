@@ -85,7 +85,7 @@ namespace Calamari.Commands
             Log.VerboseFormat("Executing '{0}'", validatedScriptFilePath);
             var result = scriptEngine.Execute(new Script(validatedScriptFilePath, scriptParameters), variables, runner);
 
-            if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.TreatScriptWarningsAsErrors, false))
+            if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
             {
                 return -1;
             }

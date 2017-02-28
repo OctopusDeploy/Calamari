@@ -38,7 +38,7 @@ namespace Calamari.Integration.Scripting
                     throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}. Deployment terminated.", script, result.ExitCode));
                 }
 
-                if (result.HasErrors && deployment.Variables.GetFlag(SpecialVariables.Action.TreatScriptWarningsAsErrors, false))
+                if (result.HasErrors && deployment.Variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
                 {
                     throw new CommandException($"Script '{script}' returned zero exit code but had error output. Deployment terminated.");
                 }

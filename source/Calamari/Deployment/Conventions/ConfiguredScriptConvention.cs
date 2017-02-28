@@ -59,7 +59,7 @@ namespace Calamari.Deployment.Conventions
                     throw new CommandException($"{deploymentStage} script returned non-zero exit code: {result.ExitCode}");
                 }
 
-                if (result.HasErrors && deployment.Variables.GetFlag(SpecialVariables.Action.TreatScriptWarningsAsErrors, false))
+                if (result.HasErrors && deployment.Variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
                 {
                     throw new CommandException($"{deploymentStage} script returned zero exit code but had error output.");
                 }

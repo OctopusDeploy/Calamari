@@ -161,7 +161,7 @@
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
             public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
-            public const string TreatScriptWarningsAsErrors = "Octopus.Action.TreatScriptWarningsAsErrors";
+            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";
 
 
             public static class IisWebSite

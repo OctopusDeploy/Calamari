@@ -120,7 +120,7 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
-            variables.Set("Octopus.Action.TreatScriptWarningsAsErrors", "True");
+            variables.Set("Octopus.Action.FailScriptOnErrorOutput", "True");
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
