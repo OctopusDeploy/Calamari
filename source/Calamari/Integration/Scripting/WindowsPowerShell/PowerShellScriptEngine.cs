@@ -23,24 +23,13 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var arguments = PowerShellBootstrapper.FormatCommandArguments(boostrapFile, variables);
 
             var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
-            var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));
+            var password = variables.Get(SpecialVariables.Action.PowerShell.Password);
 
             using (new TemporaryFile(boostrapFile))
             {
                 var invocation = new CommandLineInvocation(executable, arguments, workingDirectory, userName, password);
                 return commandLineRunner.Execute(invocation);
             }
-        }
-
-        static SecureString ToSecureString(string unsecureString)
-        {
-            if (string.IsNullOrEmpty(unsecureString))
-                return null;
-
-            return unsecureString.Aggregate(new SecureString(), (s, c) => {
-                s.AppendChar(c);
-                return s;
-            });
         }
     }
 }

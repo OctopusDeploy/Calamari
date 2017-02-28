@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -39,7 +40,7 @@ namespace Calamari.Integration.Processes
             return ExecuteCommand(executable, arguments, workingDirectory, null, null, output, error);
         }
 
-        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, SecureString password, Action<string> output, Action<string> error)
+        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, string password, Action<string> output, Action<string> error)
         {
             try
             {
@@ -59,7 +60,7 @@ namespace Calamari.Integration.Processes
                     if (!string.IsNullOrEmpty(userName) && password != null)
                     {
                         process.StartInfo.UserName = userName;
-                        process.StartInfo.Password = password;
+                        process.StartInfo.Password = ToSecureString(password);
                     }
 #endif
 
@@ -109,6 +110,20 @@ namespace Calamari.Integration.Processes
                 throw new Exception(string.Format("Error when attempting to execute {0}: {1}", executable, ex.Message), ex);
             }
         }
+
+#if CAN_RUN_PROCESS_AS
+        static SecureString ToSecureString(string unsecureString)
+        {
+            if (string.IsNullOrEmpty(unsecureString))
+                return null;
+
+            return unsecureString.Aggregate(new SecureString(), (s, c) => {
+                s.AppendChar(c);
+                return s;
+            });
+        }
+#endif
+
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GetCPInfoEx([MarshalAs(UnmanagedType.U4)] int CodePage, [MarshalAs(UnmanagedType.U4)] int dwFlags, out CPINFOEX lpCPInfoEx);
