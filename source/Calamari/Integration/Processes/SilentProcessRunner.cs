@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -60,6 +61,16 @@ namespace Calamari.Integration.Processes
                     {
                         process.StartInfo.UserName = userName;
                         process.StartInfo.Password = password;
+
+                        foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process))
+                        {
+                            var key = environmentVariable.Key.ToString();
+                            if (!key.StartsWith("Tentacle"))
+                            {
+                                continue;
+                            }
+                            process.StartInfo.EnvironmentVariables[key] = environmentVariable.Value.ToString();
+                        }
                     }
 #endif
 
