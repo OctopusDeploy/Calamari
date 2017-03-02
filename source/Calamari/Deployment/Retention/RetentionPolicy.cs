@@ -93,7 +93,10 @@ namespace Calamari.Deployment.Retention
             return journalEntry =>
             {
                 if (preservedEntries.Count() > releases)
+                {
+                    Log.Verbose($"Keeping {journalEntry.ExtractedTo} and {journalEntry.ExtractedFrom} as it was one of the last {releases+1} successful releases");
                     return false;
+                }
 
                 if (journalEntry.WasSuccessful)
                     preservedEntries.Add(journalEntry);
@@ -108,6 +111,8 @@ namespace Calamari.Deployment.Retention
             {
                 if (journalEntry.InstalledOn < clock.GetUtcTime().AddDays(-days))
                     return true;
+
+                Log.Verbose($"Keeping {journalEntry.ExtractedTo} and {journalEntry.ExtractedFrom} as it was installed less than {days} days ago");
 
                 preservedEntries.Add(journalEntry);
                 return false;
