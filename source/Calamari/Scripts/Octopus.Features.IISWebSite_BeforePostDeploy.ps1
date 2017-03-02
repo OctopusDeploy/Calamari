@@ -119,14 +119,15 @@ function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityTyp
 	# Set App Pool
 	Execute-WithRetry { 
 		Write-Verbose "Loading Application pool"
-		$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
-		if (!$pool) { 
+		$exists = Test-Path $appPoolPath -ErrorAction SilentlyContinue
+		if (!$exists) { 
 			Write-Host "Application pool `"$applicationPoolName`" does not exist, creating..." 
-			new-item $appPoolPath -confirm:$false
-			$pool = Get-Item $appPoolPath
+			New-Item $appPoolPath -confirm:$false
 		} else {
 			Write-Host "Application pool `"$applicationPoolName`" already exists"
 		}
+        # Confirm it's there. Get-Item can pause if the app-pool is suspended, so use Get-WebAppPoolState
+        $pool = Get-WebAppPoolState $applicationPoolName
 	}
 
 	# Set App Pool Identity
