@@ -1,9 +1,11 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Commands.Support;
+using Calamari.Deployment;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -21,7 +23,8 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void SetUp()
         {
             log = new InMemoryLog();
-            configurationTransformer = new ConfigurationTransformer(log: log);
+            var variables = new CalamariVariableDictionary();
+            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
         }
 
         [Test]
@@ -55,8 +58,30 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
-            configurationTransformer = new ConfigurationTransformer(true);
+            var variables = new CalamariVariableDictionary();
+            variables.Set(SpecialVariables.Package.IgnoreConfigTransformationErrors, "true");
+            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
+        }
+
+        [Test]
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        [ExpectedException(typeof(CommandException))]
+        public void ShouldThrowExceptionForTransformWarnings()
+        {
+            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
+        }
+
+        [Test]
+        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        public void ShouldSuppressExceptionForTransformWarnings_WhenFlagIsSet()
+        {
+            var variables = new CalamariVariableDictionary();
+            variables.Set(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, "false");
+            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+
+            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
         }
 
         [Test]
@@ -64,7 +89,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void ShouldShowMessageWhenResultIsInvalidXml()
         {
             PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Empty.config"));
-            log.Messages.Where(m => m.Level == InMemoryLog.Level.Warn)
+            log.Messages.Where(m => m.Level == InMemoryLog.Level.Error)
                 .Select(m => m.MessageFormat)
                 .Should()
                 .Contain("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}");
