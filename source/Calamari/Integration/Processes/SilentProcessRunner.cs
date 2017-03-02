@@ -62,6 +62,8 @@ namespace Calamari.Integration.Processes
                         process.StartInfo.UserName = userName;
                         process.StartInfo.Password = password;
 
+                        WindowStationAndDesktopAccess.GrantAccessToWindowStationAndDesktop(userName);
+
                         foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process))
                         {
                             var key = environmentVariable.Key.ToString();
@@ -117,7 +119,7 @@ namespace Calamari.Integration.Processes
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format("Error when attempting to execute {0}: {1}", executable, ex.Message), ex);
+                throw new Exception($"Error when attempting to execute {executable}: {ex.Message}", ex);
             }
         }
 
