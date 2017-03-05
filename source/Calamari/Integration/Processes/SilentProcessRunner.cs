@@ -64,15 +64,7 @@ namespace Calamari.Integration.Processes
 
                         WindowStationAndDesktopAccess.GrantAccessToWindowStationAndDesktop(userName);
 
-                        foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process))
-                        {
-                            var key = environmentVariable.Key.ToString();
-                            if (!key.StartsWith("Tentacle"))
-                            {
-                                continue;
-                            }
-                            process.StartInfo.EnvironmentVariables[key] = environmentVariable.Value.ToString();
-                        }
+                        AddTentacleEnvironmentVariablesToProcess(process.StartInfo);
                     }
 #endif
 
@@ -120,6 +112,19 @@ namespace Calamari.Integration.Processes
             catch (Exception ex)
             {
                 throw new Exception($"Error when attempting to execute {executable}: {ex.Message}", ex);
+            }
+        }
+
+        static void AddTentacleEnvironmentVariablesToProcess(ProcessStartInfo processStartInfo)
+        {
+            foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process))
+            {
+                var key = environmentVariable.Key.ToString();
+                if (!key.StartsWith("Tentacle"))
+                {
+                    continue;
+                }
+                processStartInfo.EnvironmentVariables[key] = environmentVariable.Value.ToString();
             }
         }
 
