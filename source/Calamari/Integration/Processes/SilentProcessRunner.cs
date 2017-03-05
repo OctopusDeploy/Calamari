@@ -115,6 +115,7 @@ namespace Calamari.Integration.Processes
             }
         }
 
+#if CAN_RUN_PROCESS_AS
         static void AddTentacleEnvironmentVariablesToProcess(ProcessStartInfo processStartInfo)
         {
             foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process))
@@ -127,6 +128,7 @@ namespace Calamari.Integration.Processes
                 processStartInfo.EnvironmentVariables[key] = environmentVariable.Value.ToString();
             }
         }
+#endif
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GetCPInfoEx([MarshalAs(UnmanagedType.U4)] int CodePage, [MarshalAs(UnmanagedType.U4)] int dwFlags, out CPINFOEX lpCPInfoEx);
