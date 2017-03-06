@@ -82,14 +82,4 @@ Execute-WithRetry{
 }
 
 Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters"
-
-try {
-    Invoke-Expression ". $OctopusAzureTargetScript $OctopusAzureTargetScriptParameters"
-} catch {
-    # Warn if FIPS 140 compliance required when using Service Management SDK
-    if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
-        Write-Warning "The Azure Service Management SDK is not FIPS 140 compliant. http://g.octopushq.com/FIPS"
-    }
-    
-    throw
-}
+Invoke-Expression ". $OctopusAzureTargetScript $OctopusAzureTargetScriptParameters"
