@@ -64,6 +64,8 @@ namespace Calamari.Integration.Processes
 
                         WindowStationAndDesktopAccess.GrantAccessToWindowStationAndDesktop(userName);
 
+                        // Environment variables (such as {env:TentacleHome}) are usually inherited from the parent process.
+                        // When running as a different user they are not inherited, so manually add them to the process.
                         AddTentacleEnvironmentVariablesToProcess(process.StartInfo);
                     }
 #endif
