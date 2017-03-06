@@ -9,7 +9,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 
-namespace Calamari
+namespace Calamari.Integration.FileSystem
 {
     /// <summary>
     /// Finds files and directories by matching their path names against a pattern.
