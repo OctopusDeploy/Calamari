@@ -165,7 +165,6 @@
             public static class Azure
             {
                 public static readonly string UseBundledAzurePowerShellModules = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
-                public static readonly string UseAzureServiceFabricContext = "Octopus.Action.Azure.UseAzureServiceFabricContext";
 
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
                 public static readonly string ClientId = "Octopus.Action.Azure.ClientId";
@@ -177,12 +176,14 @@
                 // Service Fabric
                 public static readonly string FabricPackagePath = "Octopus.Action.Azure.FabricPackagePath";
                 public static readonly string FabricConnectionEndpoint = "Octopus.Action.Azure.FabricConnectionEndpoint";
+                public static readonly string FabricIsSecure = "Octopus.Action.Azure.FabricIsSecure";
+                public static readonly string FabricServerCertificateThumbprint = "Octopus.Action.Azure.FabricServerCertificateThumbprint";
+                public static readonly string FabricClientCertificateThumbprint = "Octopus.Action.Azure.FabricClientCertificateThumbprint";
                 public static readonly string FabricPublishProfileFile = "Octopus.Action.Azure.FabricPublishProfileFile";
                 public static readonly string FabricApplicationPackagePath = "Octopus.Action.Azure.FabricApplicationPackagePath";
                 public static readonly string FabricDeployOnly = "Octopus.Action.Azure.FabricDeployOnly";
                 public static readonly string FabricUnregisterUnusedApplicationVersionsAfterUpgrade = "Octopus.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade";
                 public static readonly string FabricOverrideUpgradeBehavior = "Octopus.Action.Azure.FabricOverrideUpgradeBehavior";
-                public static readonly string FabricUseExistingClusterConnection = "Octopus.Action.Azure.FabricUseExistingClusterConnection";
                 public static readonly string FabricOverwriteBehavior = "Octopus.Action.Azure.FabricOverwriteBehavior";
                 public static readonly string FabricSkipPackageValidation = "Octopus.Action.Azure.FabricSkipPackageValidation";
                 public static readonly string FabricSecurityToken = "Octopus.Action.Azure.FabricSecurityToken";

@@ -15,7 +15,6 @@
 ## The script will be passed the following parameters in addition to the normal Octopus 
 ## variables passed to any PowerShell script.
 ##
-##   ConnectionEndpoint                               // The connection endpoint
 ##   PublishProfileFile                               // Path to the file containing the publish profile.
 ##   ApplicationPackagePath                           // Path to the folder of the packaged Service Fabric application.
 ##   DeployOnly                                       // Indicates that the Service Fabric application should not be created or upgraded after registering the application type.
@@ -120,30 +119,11 @@ $ApplicationPackagePath = Resolve-Path $ApplicationPackagePath
 
 $publishProfile = Read-PublishProfile $PublishProfileFile
 
-if (-not $UseExistingClusterConnection)
+# This global clusterConnection should be set by now, from our AzureFabricContext.
+if (-not $global:clusterConnection)
 {
-    $ClusterConnectionParameters = $publishProfile.ClusterConnectionParameters
-    if ($SecurityToken)
-    {
-        $ClusterConnectionParameters["SecurityToken"] = $SecurityToken
-    }
-
-    try
-    {
-        [void](Connect-ServiceFabricCluster @ClusterConnectionParameters)
-
-		# http://stackoverflow.com/questions/35711540/how-do-i-deploy-service-fabric-application-from-vsts-release-pipeline
-		# When the Connect-ServiceFabricCluster function is called, a local $clusterConnection variable is set after the call to Connect-ServiceFabricCluster. You can see that using Get-Variable.
-		# Unfortunately there is logic in some of the SDK scripts that expect that variable to be set but because they run in a different scope, that local variable isn't available.
-		# It works in Visual Studio because the Deploy-FabricApplication.ps1 script is called using dot source notation, which puts the $clusterConnection variable in the current scope.
-		# I'm not sure if there is a way to use dot sourcing when running a script though the release pipeline but you could, as a workaround, make the $clusterConnection variable global right after it's been set via the Connect-ServiceFabricCluster call.
-		$global:clusterConnection = $clusterConnection
-    }
-    catch [System.Fabric.FabricObjectClosedException]
-    {
-        Write-Warning "Service Fabric cluster may not be connected."
-        throw
-    }
+    Write-Warning "Service Fabric cluster may not be connected."
+    throw
 }
 
 $RegKey = "HKLM:\SOFTWARE\Microsoft\Service Fabric SDK"

@@ -6,11 +6,10 @@
 ## The script is passed the following parameters. 
 ##
 ##   $OctopusUseBundledAzureModules = "true"
-##   $OctopusUseAzureServiceFabricContext = "false"
 ##   $OctopusAzureModulePath = "....\Calamari\PowerShell\"
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
-##   $UseServicePrincipal = "false"
+##   $OctopusUseServicePrincipal = "false"
 ##   $OctopusAzureSubscriptionId = "..."
 ##   $OctopusAzureStorageAccountName = "..."
 ##   $OctopusAzureCertificateFileName = "...."
@@ -60,11 +59,6 @@ if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
     $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
 }
 
-if ([System.Convert]::ToBoolean($OctopusUseAzureServiceFabricContext)) {
-	Write-Verbose "Setting the Azure Service Fabric context"
-	# TODO: markse - set this up as per doco.
-}
-
 Execute-WithRetry{
     If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
         # Authenticate via Service Principal
@@ -99,14 +93,4 @@ Execute-WithRetry{
 }
 
 Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters"
-
-try {
-    Invoke-Expression ". $OctopusAzureTargetScript $OctopusAzureTargetScriptParameters"
-} catch {
-    # Warn if FIPS 140 compliance required when using Service Management SDK
-    if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
-        Write-Warning "The Azure Service Management SDK is not FIPS 140 compliant. http://g.octopushq.com/FIPS"
-    }
-    
-    throw
-}
+Invoke-Expression ". $OctopusAzureTargetScript $OctopusAzureTargetScriptParameters"

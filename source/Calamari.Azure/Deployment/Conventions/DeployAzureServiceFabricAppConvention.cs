@@ -34,17 +34,12 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
             var variables = deployment.Variables;
-
-            // TODO: markse - review this, just doing a quick POC.
-            // Setup the Azure Service Fabric context.
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.UseAzureServiceFabricContext, true.ToString());
             
             // Vars that should exist from our step/action.
             Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile, "PublishProfiles\\Cloud.xml"), variables);
             Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverrideUpgradeBehavior, defaultValue: "None"), variables);
-            Log.SetOutputVariable("UseExistingClusterConnection", variables.Get(SpecialVariables.Action.Azure.FabricUseExistingClusterConnection, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
             Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("SecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken, defaultValue: string.Empty), variables);

@@ -15,7 +15,11 @@ namespace Calamari.Azure.Integration
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var powerShellEngine = new PowerShellScriptEngine();
-            if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
+            if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile, string.Empty)))
+            {
+                return new AzureFabricPowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
+            }
+            else if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
             {
                 return new AzurePowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
             }
