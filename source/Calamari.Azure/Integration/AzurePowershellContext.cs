@@ -42,7 +42,7 @@ namespace Calamari.Azure.Integration
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
-            SetOutputVariable("OctopusAzureEnvrionment",variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment),variables);
+            SetOutputVariable("OctopusAzureEnvironment",variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment),variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
@@ -71,6 +71,9 @@ namespace Calamari.Azure.Integration
             // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
             SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
             SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, BuiltInAzurePowershellModulePath, variables);
+
+            // If the flag below is set to 'true', then we will setup the Azure Service Fabric context.
+            SetOutputVariable("OctopusUseAzureServiceFabricContext", variables.GetFlag(SpecialVariables.Action.Azure.UseAzureServiceFabricContext, false).ToString(), variables);
         }
 
         string CreateContextScriptFile(string workingDirectory)

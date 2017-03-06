@@ -165,6 +165,7 @@
             public static class Azure
             {
                 public static readonly string UseBundledAzurePowerShellModules = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
+                public static readonly string UseAzureServiceFabricContext = "Octopus.Action.Azure.UseAzureServiceFabricContext";
 
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
                 public static readonly string ClientId = "Octopus.Action.Azure.ClientId";
