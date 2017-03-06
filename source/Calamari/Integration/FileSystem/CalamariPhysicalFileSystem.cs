@@ -351,11 +351,6 @@ namespace Calamari.Integration.FileSystem
         public string CreateTemporaryDirectory()
         {
             var path = Path.Combine(GetTempBasePath(), Guid.NewGuid().ToString());
-            return CreateDirectory(path);
-        }
-
-        public string CreateDirectory(string path)
-        {
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);

@@ -21,10 +21,7 @@ namespace Calamari.Util
                    ?? Environment.GetEnvironmentVariable("TEMP")
                    ?? "/tmp";
 #endif
-            if (Assembly.GetEntryAssembly() != null)
-                path = Path.Combine(path, Assembly.GetEntryAssembly().GetName().Name);
-            else
-                path = Path.Combine(path, Guid.NewGuid().ToString());
+            path = Assembly.GetEntryAssembly()?.GetName().Name ?? Guid.NewGuid().ToString();
 
             return Path.Combine(path, "Temp");
         }

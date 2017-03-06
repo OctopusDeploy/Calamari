@@ -103,8 +103,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
         public void GlobTestMutiple(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
-            var realFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var rootPath = realFileSystem.CreateTemporaryDirectory();
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var rootPath = fileSystem.CreateTemporaryDirectory();
             var content = "file-content" + Environment.NewLine;
 
             if (CalamariEnvironment.IsRunningOnWindows)
@@ -116,12 +116,12 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             {
                 var configPath = Path.Combine(rootPath, "Config");
 
-                realFileSystem.CreateDirectory(configPath);
-                realFileSystem.CreateDirectory(Path.Combine(configPath, "Feature1"));
-                realFileSystem.CreateDirectory(Path.Combine(configPath, "Feature2"));
+                Directory.CreateDirectory(configPath);
+                Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
+                Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
 
                 Action<string, string, string> writeFile = (p1, p2, p3) =>
-                    realFileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
+                    fileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
 
                 // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
                 writeFile(rootPath, "root.config", null);
@@ -140,7 +140,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             }
             finally
             {
-                realFileSystem.DeleteDirectory(rootPath);
+                fileSystem.DeleteDirectory(rootPath);
             }
         }
     }
