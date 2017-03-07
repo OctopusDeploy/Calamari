@@ -95,7 +95,6 @@ namespace Calamari.Azure.Integration
 
             fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificatePassword));
             return certificateFilePath;
-
         }
 
         static void SetOutputVariable(string name, string value, VariableDictionary variables)

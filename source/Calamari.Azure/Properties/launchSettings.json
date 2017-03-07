@@ -2,7 +2,7 @@
   "profiles": {
     "Calamari.Azure": {
       "commandName": "Project",
-      "commandLineArgs": "deploy-azure-cloud-service -package \"C:\\Octopus\\develop\\Packages\\MarktopusCS\\MarktopusCS.1.0.0.2.zip\"  -variables \"C:\\Octopus\\develop\\Work\\20170213224817-5\\Variables.json\" -sensitiveVariablesPassword=JrWKMmPyHlSJWODBWYtY3g=="
+      "commandLineArgs": "run-script -script \"C:\\Octopus\\develop\\Work\\20170307035358-3\\Script.ps1\" -variables \"C:\\Octopus\\develop\\Work\\20170307035358-3\\Variables.json\""
     }
   }
 }

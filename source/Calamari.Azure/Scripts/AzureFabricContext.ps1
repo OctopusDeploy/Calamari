@@ -44,14 +44,18 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 Execute-WithRetry{
+	
+Write-Host "TODO: markse - remove this logging"
+Write-Host "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
 
-	$ClusterConnectionParameters = @()
+	$ClusterConnectionParameters = @{}
 	$ClusterConnectionParameters["ConnectionEndpoint"] = $OctopusFabricConnectionEndpoint
+Write-Host "ClusterConnectionParameters = $($ClusterConnectionParameters)"
 
     If ([System.Convert]::ToBoolean($OctopusFabricIsSecure)) {
         # Secure (client certificate)
         Write-Verbose "Connect to Service Fabric securely (client certificate)"
-		$ClusterConnectionParameters["ServerCertificateThumbprint"] = $OctopusFabricServerCertificateThumbprint
+		$ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertificateThumbprint
 		$ClusterConnectionParameters["X509Credential"] = $true
 		$ClusterConnectionParameters["StoreLocation"] = "LocalMachine"
 		$ClusterConnectionParameters["StoreName"] = "MY"

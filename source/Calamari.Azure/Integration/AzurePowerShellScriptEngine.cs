@@ -15,7 +15,7 @@ namespace Calamari.Azure.Integration
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
             var powerShellEngine = new PowerShellScriptEngine();
-            if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint, string.Empty)))
+            if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint)))
             {
                 return new AzureFabricPowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
             }

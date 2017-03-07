@@ -6,6 +6,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octostache;
+using Calamari.Deployment;
 
 namespace Calamari.Azure.Integration
 {
@@ -25,6 +26,12 @@ namespace Calamari.Azure.Integration
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
+
+            // Vars that should exist from our step/action.
+            SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
+            SetOutputVariable("OctopusFabricIsSecure", variables.Get(SpecialVariables.Action.Azure.FabricIsSecure), variables);
+            SetOutputVariable("OctopusFabricServerCertificateThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricServerCertificateThumbprint), variables);
+            SetOutputVariable("OctopusFabricClientCertificateThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricClientCertificateThumbprint), variables);
             
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))

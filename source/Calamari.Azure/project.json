@@ -59,6 +59,7 @@
     "embed": {
       "include": [
         "Scripts\\AzureContext.ps1",
+        "Scripts\\AzureFabricContext.ps1",
         "Scripts\\DeployAzureCloudService.ps1",
         "Scripts\\DeployAzureFabricApplication.ps1",
         "Scripts\\SwapAzureCloudServiceDeployment.ps1"
