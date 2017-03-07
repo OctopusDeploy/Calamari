@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0007"
+#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0009"
 #addin "MagicChunks"
 
 using Path = System.IO.Path;

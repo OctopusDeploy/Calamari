@@ -48,11 +48,11 @@ namespace Calamari.Deployment.Conventions
 
         private List<string> MatchingFiles(RunningDeployment deployment, string target)
         {
-            var files = fileSystem.EnumerateFiles(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+            var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
 
             foreach (var path in deployment.Variables.GetStrings(SpecialVariables.Action.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                var pathFiles = fileSystem.EnumerateFiles(path, target).Select(Path.GetFullPath);
+                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target).Select(Path.GetFullPath);
                 files.AddRange(pathFiles);
             }
 

@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -37,16 +40,17 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldPerformSubstitutions()
         {
-            string substitutionTarget = Path.Combine("subFolder","config.json");
+            string glob = "**\\*config.json";
+            string actualMatch = "config.json";
 
-            fileSystem.EnumerateFiles(StagingDirectory, substitutionTarget).Returns(new[] {Path.Combine(StagingDirectory, substitutionTarget)});
+            fileSystem.EnumerateFilesWithGlob(StagingDirectory, glob).Returns(new[] { Path.Combine(StagingDirectory, actualMatch) });
 
-            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, substitutionTarget);
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, glob);
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
 
             CreateConvention().Install(deployment);
 
-            substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, substitutionTarget), variables);
+            substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch), variables);
         }
 
         [Test]

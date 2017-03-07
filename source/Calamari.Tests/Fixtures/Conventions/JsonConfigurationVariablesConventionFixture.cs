@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldFindAndCallModifyOnTargetFile()
         {
-            fileSystem.EnumerateFiles(Arg.Any<string>(), "appsettings.environment.json")
+            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "appsettings.environment.json")
                 .Returns(new[] {TestEnvironment.ConstructRootedPath("applications" ,"Acme", "1.0.0", "appsettings.environment.json")});
 
             deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesEnabled, "true");
@@ -61,9 +61,9 @@ namespace Calamari.Tests.Fixtures.Conventions
                 "config.prod.json"
             };
 
-            fileSystem.EnumerateFiles(Arg.Any<string>(), "config.json")
+            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "config.json")
                 .Returns(new[] {targetFiles[0]}.Select(t => TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", t)));
-            fileSystem.EnumerateFiles(Arg.Any<string>(), "config.*.json")
+            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "config.*.json")
                 .Returns(targetFiles.Skip(1).Select(t => TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", t)));
 
             deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesEnabled, "true");
