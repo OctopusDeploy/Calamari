@@ -56,7 +56,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 Assert.Less(fileInfo.LastWriteTime, timeBeforeExtraction);
             }
-            Assert.AreEqual(3, filesExtracted, "Mismatch in the number of files extracted");
+            Assert.AreEqual(3, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 4 here.
             Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
         }
 
@@ -98,6 +98,25 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             extractor.Extract(fileName, targetDir, true);
             var textFileName = Path.Combine(targetDir, "ChildFolder", "file-in-child-folder.txt");
             Assert.That(File.Exists(textFileName), Is.True, $"The file '{Path.GetFileName(textFileName)}' should have been extracted.");
+        }
+
+        [Test]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", true)]
+        [TestCase(typeof(TarPackageExtractor), "tar", true)]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
+        [TestCase(typeof(ZipPackageExtractor), "zip", true)]
+        [TestCase(typeof(NupkgExtractor), "nupkg", false)]
+        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
+        public void ExtractCanHandleEmptyFolders(Type extractorType, string extension, bool preservesTimestamp)
+        {
+            var fileName = GetFileName(extension);
+
+            var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
+            var targetDir = GetTargetDir(extractorType, fileName);
+
+            extractor.Extract(fileName, targetDir, true);
+            var folderName = Path.Combine(targetDir, "EmptyFolder");
+            Assert.That(Directory.Exists(folderName), Is.True, $"The empty folder '{Path.GetFileName(folderName)}' should have been extracted.");
         }
 
         private string GetFileName(string extension)

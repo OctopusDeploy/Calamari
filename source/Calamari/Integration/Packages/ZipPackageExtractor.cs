@@ -18,7 +18,7 @@ namespace Calamari.Integration.Packages
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
             using (var archive = ZipArchive.Open(inStream))
             {
-                foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+                foreach (var entry in archive.Entries)
                 {
                     ProcessEvent(ref filesExtracted, entry, suppressNestedScriptWarning);
                     entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
