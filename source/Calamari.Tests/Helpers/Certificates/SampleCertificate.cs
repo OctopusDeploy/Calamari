@@ -28,12 +28,16 @@ namespace Calamari.Tests.Helpers.Certificates
         public const string FabrikamNoPrivateKeyId = "FabrikamNoPrivateKey";
         public static readonly SampleCertificate FabrikamNoPrivateKey = new SampleCertificate("fabrikam_no_private_key_password.pfx", "password", "00567BA9BA571F9F53278067DB8C0871A72A3C51", false);
 
+        public const string CertificateChainId = "CertificateChain";
+        public static readonly SampleCertificate CertificateChain = new SampleCertificate("3-cert-chain.pfx", "hello world", "A11C309EFDF2864B1641F43A7A5B5019EB4CB816", true);
+
         public static readonly IDictionary<string, SampleCertificate> SampleCertificates = new Dictionary<string, SampleCertificate>
         {
             {CngPrivateKeyId, CngWithPrivateKey},
             {CapiWithPrivateKeyId, CapiWithPrivateKey},
             {CapiWithPrivateKeyNoPasswordId, CapiWithPrivateKeyNoPassword},
-            {FabrikamNoPrivateKeyId, FabrikamNoPrivateKey}
+            {FabrikamNoPrivateKeyId, FabrikamNoPrivateKey},
+            {CertificateChainId, CertificateChain},
         };
 
         public SampleCertificate(string fileName, string password, string thumbprint, bool hasPrivateKey)

@@ -58,6 +58,46 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
         }
+
+        [Test]
+        public void CanImportCertificateChain()
+        {
+            var storeLocation = StoreLocation.LocalMachine;
+            var storeName = "My";
+            var sampleCertificate = SampleCertificate.CertificateChain;
+            const string intermediateAuthorityThumbprint = "2E5DEC036985A4028351FD8DF3532E49D7B34049";
+            const string rootAuthorityThumbprint = "CC7ED077F0F292595A8166B01709E20C0884A5F8";
+            var intermediateAuthorityStore = new X509Store(StoreName.CertificateAuthority, storeLocation);
+            var rootAuthorityStore = new X509Store(StoreName.Root, storeLocation);
+            intermediateAuthorityStore.Open(OpenFlags.ReadWrite);
+            rootAuthorityStore.Open(OpenFlags.ReadWrite);
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, storeLocation, intermediateAuthorityStore.Name);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, storeLocation, rootAuthorityStore.Name);
+
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
+                storeLocation, storeName, sampleCertificate.HasPrivateKey);
+
+            sampleCertificate.AssertCertificateIsInStore(storeName, storeLocation);
+
+            // Assert chain certificates were imported
+            AssertCertificateInStore(intermediateAuthorityStore, intermediateAuthorityThumbprint);
+            AssertCertificateInStore(rootAuthorityStore, rootAuthorityThumbprint);
+
+            var certificate = sampleCertificate.GetCertificateFromStore(storeName, storeLocation);
+            Assert.True(certificate.HasPrivateKey);
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, storeLocation, intermediateAuthorityStore.Name);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, storeLocation, rootAuthorityStore.Name);
+        }
+
+        private static void AssertCertificateInStore(X509Store store, string thumbprint)
+        {
+            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+            Assert.AreEqual(1, found.Count);
+        }
     }
 }
 #endif
