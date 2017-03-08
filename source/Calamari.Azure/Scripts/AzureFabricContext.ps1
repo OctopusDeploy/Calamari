@@ -44,13 +44,10 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 Execute-WithRetry{
-	
-Write-Host "TODO: markse - remove this logging"
-Write-Host "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
 
+	# Prepare a dictionary of connection parameters that we'll use to connect below.
 	$ClusterConnectionParameters = @{}
 	$ClusterConnectionParameters["ConnectionEndpoint"] = $OctopusFabricConnectionEndpoint
-Write-Host "ClusterConnectionParameters = $($ClusterConnectionParameters)"
 
     If ([System.Convert]::ToBoolean($OctopusFabricIsSecure)) {
         # Secure (client certificate)
