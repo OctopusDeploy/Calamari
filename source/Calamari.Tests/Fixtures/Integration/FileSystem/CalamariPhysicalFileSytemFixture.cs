@@ -107,11 +107,6 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             var rootPath = fileSystem.CreateTemporaryDirectory();
             var content = "file-content" + Environment.NewLine;
 
-            if (CalamariEnvironment.IsRunningOnWindows)
-            {
-                pattern = pattern.Replace(@"/", @"\");
-            }
-
             try
             {
                 var configPath = Path.Combine(rootPath, "Config");
@@ -133,10 +128,14 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 writeFile(configPath, "Feature1", "f1-b.config");
                 writeFile(configPath, "Feature2", "f2.config");
 
-                var result = Glob.Expand(Path.Combine(rootPath, pattern)).ToList();
+                // try each glob pattern with `\` too
+                new List<string> { pattern, pattern.Replace(@"/", @"\")}
+                    .ForEach(p => {
+                        var result = Glob.Expand(Path.Combine(rootPath, p)).ToList();
 
-                Assert.AreEqual(expectedQty, result.Count, $"{pattern} should have found {expectedQty}, but found {result.Count}");
-                Assert.True(result.Any(r => r.Name.Equals(expectedFileMatchName)), $"{pattern} should have found {expectedFileMatchName}, but didn't");
+                        Assert.AreEqual(expectedQty, result.Count, $"{p} should have found {expectedQty}, but found {result.Count}");
+                        Assert.True(result.Any(r => r.Name.Equals(expectedFileMatchName)), $"{p} should have found {expectedFileMatchName}, but didn't");
+                    });
             }
             finally
             {
