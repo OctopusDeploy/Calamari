@@ -27,7 +27,7 @@ namespace Calamari.Azure.Integration
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            // Vars that should exist from our step/action.
+            // Set output variables for our script to access (these vars should exist from our step/action).
             SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
             SetOutputVariable("OctopusFabricIsSecure", variables.Get(SpecialVariables.Action.Azure.FabricIsSecure), variables);
             SetOutputVariable("OctopusFabricServerCertificateThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricServerCertificateThumbprint), variables);

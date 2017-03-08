@@ -34,8 +34,8 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
             var variables = deployment.Variables;
-            
-            // Vars that should exist from our step/action.
+
+            // Set output variables for our script to access (these vars should exist from our step/action).
             Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile, "PublishProfiles\\Cloud.xml"), variables);
             Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
@@ -48,7 +48,10 @@ namespace Calamari.Azure.Deployment.Conventions
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
             var targetPath = Path.Combine(CrossPlatform.GetCurrentDirectory(), "staging");
             Log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
-            
+
+            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.FabricLogExtractedApplicationPackage))
+                LogExtractedPackage(deployment.CurrentDirectory);
+
             // The script name 'DeployToAzure.ps1' is used for consistency with other Octopus Azure steps.
             // The user may supply the script, to override behaviour.
             var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToAzure.ps1");
@@ -67,6 +70,12 @@ namespace Calamari.Azure.Deployment.Conventions
                 throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
                     result.ExitCode));
             }
+        }
+
+        void LogExtractedPackage(string workingDirectory)
+        {
+            Log.Verbose("Service Fabric extracted. Working directory contents:");
+            DirectoryLoggingHelper.LogDirectoryContents(fileSystem, workingDirectory, "", 0);
         }
     }
 }

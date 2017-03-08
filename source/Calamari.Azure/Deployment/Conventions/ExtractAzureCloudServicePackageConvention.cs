@@ -2,12 +2,12 @@
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
-using System.Text;
 using Calamari.Azure.Integration.CloudServicePackage;
 using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
@@ -101,41 +101,7 @@ namespace Calamari.Azure.Deployment.Conventions
         void LogExtractedPackage(string workingDirectory)
         {
             Log.Verbose("CSPKG extracted. Working directory contents:");
-            LogDirectoryContents(workingDirectory, "", 0);
-        }
-
-        void LogDirectoryContents(string workingDirectory, string currentDirectoryRelativePath, int depth = 0)
-        {
-            var directory = new DirectoryInfo(Path.Combine(workingDirectory, currentDirectoryRelativePath));
-
-            var files = fileSystem.EnumerateFiles(directory.FullName).ToList();
-            for (int i = 0; i < files.Count; i++)
-            {
-                // Only log the first 50 files in each directory
-                if (i == 50)
-                {
-                    Log.VerboseFormat("{0}And {1} more files...", Indent(depth), files.Count - i);
-                    break;
-                }
-
-                var file = files[i];
-                Log.Verbose(Indent(depth) + Path.GetFileName(file));
-            }
-
-            foreach (var subDirectory in fileSystem.EnumerateDirectories(directory.FullName).Select(x => new DirectoryInfo(x)))
-            {
-                Log.Verbose(Indent(depth + 1) + "\\" + subDirectory.Name);
-                LogDirectoryContents(workingDirectory, Path.Combine(currentDirectoryRelativePath, subDirectory.Name), depth + 1);
-            }
-        }
-
-        static string Indent(int n)
-        {
-            var indent = new StringBuilder("|");
-            for (int i = 0; i < n; i++)
-                indent.Append("-");
-
-            return indent.ToString();
+            DirectoryLoggingHelper.LogDirectoryContents(fileSystem, workingDirectory, "", 0);
         }
     }
 }

@@ -48,18 +48,22 @@ $UseExistingClusterConnection = [System.Convert]::ToBoolean($UseExistingClusterC
 $SkipPackageValidation = [System.Convert]::ToBoolean($SkipPackageValidation)
 $CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
 
-Write-Host "TODO: markse - remove this logging"
-Write-Host "PublishProfileFile = $($PublishProfileFile)"
-Write-Host "ApplicationPackagePath = $($ApplicationPackagePath)"
-Write-Host "DeployOnly = $($DeployOnly)"
-Write-Host "ApplicationParameter = $($ApplicationParameter)"
-Write-Host "UnregisterUnusedApplicationVersionsAfterUpgrade = $($UnregisterUnusedApplicationVersionsAfterUpgrade)"
-Write-Host "OverrideUpgradeBehavior = $($OverrideUpgradeBehavior)"
-Write-Host "UseExistingClusterConnection = $($UseExistingClusterConnection)"
-Write-Host "OverwriteBehavior = $($OverwriteBehavior)"
-Write-Host "SkipPackageValidation = $($SkipPackageValidation)"
-Write-Host "SecurityToken = $($SecurityToken)"
-Write-Host "CopyPackageTimeoutSec = $($CopyPackageTimeoutSec)"
+Write-Verbose "TODO: markse - remove this logging"
+Write-Verbose "FabricPackagePath = $($FabricPackagePath)"
+Write-Verbose "FabricConnectionEndpoint = $($FabricConnectionEndpoint)"
+Write-Verbose "FabricIsSecure = $($FabricIsSecure)"
+Write-Verbose "FabricServerCertificateThumbprint = $($FabricServerCertificateThumbprint)"
+Write-Verbose "FabricClientCertificateThumbprint = $($FabricClientCertificateThumbprint)"
+Write-Verbose "PublishProfileFile = $($PublishProfileFile)"
+Write-Verbose "ApplicationPackagePath = $($ApplicationPackagePath)"
+Write-Verbose "DeployOnly = $($DeployOnly)"
+Write-Verbose "UnregisterUnusedApplicationVersionsAfterUpgrade = $($UnregisterUnusedApplicationVersionsAfterUpgrade)"
+Write-Verbose "OverrideUpgradeBehavior = $($OverrideUpgradeBehavior)"
+Write-Verbose "OverwriteBehavior = $($OverwriteBehavior)"
+Write-Verbose "SkipPackageValidation = $($SkipPackageValidation)"
+Write-Verbose "SecurityToken = $($SecurityToken)"
+Write-Verbose "CopyPackageTimeoutSec = $($CopyPackageTimeoutSec)"
+Write-Verbose "FabricLogExtractedApplicationPackage = $($FabricLogExtractedApplicationPackage)"
 
 function Read-XmlElementAsHashtable
 {

@@ -49,8 +49,6 @@ namespace Calamari.Azure.Commands
             Log.Info("Deploying package:    " + packageFile);
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             
-            //TODO: markse - work through which conventions we should be calling for Azure SF.
-
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
