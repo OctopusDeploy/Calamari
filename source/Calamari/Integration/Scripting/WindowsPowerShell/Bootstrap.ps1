@@ -68,6 +68,9 @@ function SafelyLog-PathVars
 	{
 		$currentDirectory = [System.IO.Directory]::GetCurrentDirectory()
 		Write-Host "  CurrentDirectory: $($currentDirectory)"
+
+		$currentLocation = Get-Location
+		Write-Host "  CurrentLocation: $($currentLocation)"
 		
 		$tempPath = [System.IO.Path]::GetTempPath()
 		Write-Host "  TempDirectory: $($tempPath)"

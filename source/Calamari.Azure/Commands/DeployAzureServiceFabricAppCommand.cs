@@ -58,10 +58,7 @@ namespace Calamari.Azure.Commands
             var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var configurationTransformer =
-                new ConfigurationTransformer(
-                    variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors),
-                    variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 
             var conventions = new List<IConvention>

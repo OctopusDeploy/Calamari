@@ -80,5 +80,10 @@ namespace Calamari.Integration.Processes
         {
             return CrossPlatform.ExpandPathEnvironmentVariables(Get(variableName, defaultValue));
         }
+
+        public bool IsSet(string name)
+        {
+            return this[name] != null;
+        }
     }
 }

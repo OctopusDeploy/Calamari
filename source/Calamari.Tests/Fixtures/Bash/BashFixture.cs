@@ -101,6 +101,41 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldNotFailOnStdErr()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "stderr.sh")));
+
+            output.AssertSuccess();
+            output.AssertErrorOutput("hello");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShoulFailOnStdErrWithTreatScriptWarningsAsErrors()
+        {
+            var variablesFile = Path.GetTempFileName();
+            var variables = new VariableDictionary();
+            variables.Set("Octopus.Action.FailScriptOnErrorOutput", "True");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("sensitiveVariables", variablesFile)
+                    .Argument("script", GetFixtureResouce("Scripts", "stderr.sh")));
+
+                output.AssertFailure();
+                output.AssertErrorOutput("hello");
+            }
+        }
+
+        [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ThrowsExceptionOnWindows()
         {

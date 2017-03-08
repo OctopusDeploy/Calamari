@@ -44,6 +44,12 @@ namespace Calamari.Deployment.Conventions
                     $"The custom install directory '{customInstallationDirectory}' is a relative path, please specify the path as an absolute path or a UNC path.");
             }
 
+            if (customInstallationDirectory.IsChildDirectoryOf(sourceDirectory))
+            {
+                throw new CommandException(
+                    $"The custom install directory '{customInstallationDirectory}' is a child directory of the base installation directory '{sourceDirectory}', please specify a different destination.");
+            }
+
             // Purge if requested
             if (deployment.Variables.GetFlag(
                 SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))

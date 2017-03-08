@@ -7,8 +7,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Assent;
 using Assent.Namers;
+using Calamari.Deployment;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.Core;
@@ -25,6 +27,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         private string[] mostRecentResult;
         private readonly Dictionary<string, string[]> allResults = new Dictionary<string, string[]>() ;
         private readonly string scenarioDescription;
+        private string extractionDirectory;
 
         private ConfigurationTransformTestCaseBuilder(string description)
         {
@@ -56,6 +59,12 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             return this;
         }
 
+        public ConfigurationTransformTestCaseBuilder ExtractionDirectoryIs(string path)
+        {
+            extractionDirectory = path;
+            return this;
+        }
+
         public ConfigurationTransformTestCaseBuilder UsingTransform(string transform)
         {
             transformDefinition = transform;
@@ -64,6 +73,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 
         public ConfigurationTransformTestCaseBuilder SourceFile(string sourceFile)
         {
+            Assert.IsTrue(fileSystem.FileExists(sourceFile), $"The sourceFile {sourceFile} should exist for this test");
             mostRecentResult = PerformTransform(sourceFile);
             allResults.Add(sourceFile, mostRecentResult);
             return this;
@@ -110,8 +120,13 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .Returns(x => GetRelativePath(x, realFileSystem));
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var transform = new XmlConfigTransformDefinition(transformDefinition);
+
+            var deploymentVariables = new CalamariVariableDictionary();
+            deploymentVariables[SpecialVariables.OriginalPackageDirectoryPath] = extractionDirectory;
+            var deployment = new RunningDeployment(null, deploymentVariables);
+
             const bool diagnosticLoggingEnabled = false;
-            var result = transformFileLocator.DetermineTransformFileNames(sourceFile, transform, diagnosticLoggingEnabled).ToArray();
+            var result = transformFileLocator.DetermineTransformFileNames(sourceFile, transform, diagnosticLoggingEnabled, deployment).ToArray();
             return result;
         }
 
@@ -233,5 +248,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             
             testFixture.Assent(results.ToString(), TestEnvironment.AssentConfiguration, testName, filePath);
         }
+
     }
 }

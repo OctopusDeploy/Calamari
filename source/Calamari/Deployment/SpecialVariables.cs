@@ -106,6 +106,7 @@
             public static readonly string JsonConfigurationVariablesEnabled = "Octopus.Action.Package.JsonConfigurationVariablesEnabled";
             public static readonly string JsonConfigurationVariablesTargets = "Octopus.Action.Package.JsonConfigurationVariablesTargets";
             public static readonly string AutomaticallyRunConfigurationTransformationFiles = "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles";
+            public static readonly string TreatConfigTransformationWarningsAsErrors = "Octopus.Action.Package.TreatConfigTransformationWarningsAsErrors";
             public static readonly string IgnoreConfigTransformationErrors = "Octopus.Action.Package.IgnoreConfigTransformationErrors";
             public static readonly string SuppressConfigTransformationLogging = "Octopus.Action.Package.SuppressConfigTransformationLogging";
             public static readonly string EnableDiagnosticsConfigTransformationLogging = "Octopus.Action.Package.EnableDiagnosticsConfigTransformationLogging";
@@ -161,6 +162,25 @@
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
             public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
+            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";
+
+
+            public static class IisWebSite
+            {
+                public static readonly string DeployAsWebSite = "Octopus.Action.IISWebSite.CreateOrUpdateWebSite"; 
+                public static readonly string DeployAsWebApplication = "Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"; 
+                public static readonly string DeployAsVirtualDirectory = "Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate";
+
+                public static readonly string ApplicationPoolName = "Octopus.Action.IISWebSite.ApplicationPoolName";
+                public static readonly string ApplicationPoolUserName = "Octopus.Action.IISWebSite.ApplicationPoolUsername";
+                public static readonly string Bindings = "Octopus.Action.IISWebSite.Bindings";
+                public static readonly string ApplicationPoolIdentityType = "Octopus.Action.IISWebSite.ApplicationPoolIdentityType";
+
+                public static class Output
+                {
+                    public static readonly string CertificateStoreName = "Octopus.Action.IISWebSite.CertificateStoreName";
+                }
+            }
 
             public static class Azure
             {
@@ -241,6 +261,16 @@
                 public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile";
             }
 
+            public static class Certificate
+            {
+                public static readonly string CertificateVariable = "Octopus.Action.Certificate.Variable";
+                public static readonly string PrivateKeyExportable = "Octopus.Action.Certificate.PrivateKeyExportable";
+                public static readonly string StoreLocation = "Octopus.Action.Certificate.StoreLocation";
+                public static readonly string StoreName = "Octopus.Action.Certificate.StoreName";
+                public static readonly string StoreUser = "Octopus.Action.Certificate.StoreUser";
+                public static readonly string PrivateKeyAccessRules = "Octopus.Action.Certificate.PrivateKeyAccessRules";
+            }
+
             public static class Script
             {
                 public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
@@ -261,6 +291,17 @@
         public static class Release
         {
             public static readonly string Number = "Octopus.Release.Number";
+        }
+
+        public static class Certificate
+        {
+            public static class Properties
+            {
+                public static readonly string Thumbprint = "Thumbprint";
+                public static readonly string Pfx = "Pfx";
+                public static readonly string Password = "Password";
+                public static readonly string Subject = "Subject";
+            }
         }
     }
 }

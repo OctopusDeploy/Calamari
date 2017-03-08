@@ -161,8 +161,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         static void WriteVariableAssignment(StringBuilder writer, string key, string variableName)
         {
+            if (string.IsNullOrWhiteSpace(key)) // we can end up with an empty key if everything was stripped by the IsValidPowerShellIdentifierChar check in WriteLocalVariables
+                return;
             writer.Append("if (-Not (test-path variable:global:").Append(key).AppendLine(")) {");
-            writer.Append("  $").Append(key).Append(" = $OctopusParameters[").Append(EncodeValue(variableName)).AppendLine("]");
+            writer.Append("  ${").Append(key).Append("} = $OctopusParameters[").Append(EncodeValue(variableName)).AppendLine("]");
             writer.AppendLine("}");
         }
 

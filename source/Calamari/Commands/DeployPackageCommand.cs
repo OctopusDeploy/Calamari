@@ -59,7 +59,7 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var generator = new JsonConfigurationVariableReplacer();
             var substituter = new FileSubstituter(fileSystem);
-            var configurationTransformer = new ConfigurationTransformer(variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors), variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging));
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
@@ -68,7 +68,7 @@ namespace Calamari.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-            
+
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
@@ -77,28 +77,28 @@ namespace Calamari.Commands
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractor(), fileSystem, semaphore),
-                new FeatureScriptConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureScriptConvention(DeploymentStages.AfterPreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPreDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(generator, fileSystem),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
-                new FeatureScriptConvention(DeploymentStages.BeforeDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforeDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureScriptConvention(DeploymentStages.AfterDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
 #if IIS_SUPPORT
                 new LegacyIisWebSiteConvention(fileSystem, iis),
 #endif
-                new FeatureScriptConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureScriptConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
                 new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureScriptRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner, embeddedResources)
+                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner, embeddedResources)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

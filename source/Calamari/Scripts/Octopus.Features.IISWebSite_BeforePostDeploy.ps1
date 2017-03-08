@@ -72,6 +72,13 @@ if ($sleepBetweenFailures -gt 60) {
 	$sleepBetweenFailures = 60
 }
 
+# Not available on Server 2008
+$hasWebCommitDelay = $false
+If(Get-Command "Start-WebCommitDelay" -ErrorAction SilentlyContinue){
+    $hasWebCommitDelay = $true
+}
+
+
 function Execute-WithRetry([ScriptBlock] $command) {
 	$attemptCount = 0
 	$operationIncomplete = $true
@@ -90,6 +97,9 @@ function Execute-WithRetry([ScriptBlock] $command) {
 
 			$operationIncomplete = $false
 		} catch [System.Exception] {
+            if($hasWebCommitDelay){
+                Stop-WebCommitDelay -Commit $false -ErrorAction SilentlyContinue
+            }
 			if ($attemptCount -lt ($maxFailures)) {
 				Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
 			} else {
@@ -109,14 +119,15 @@ function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityTyp
 	# Set App Pool
 	Execute-WithRetry { 
 		Write-Verbose "Loading Application pool"
-		$pool = Get-Item $appPoolPath -ErrorAction SilentlyContinue
-		if (!$pool) { 
+		$exists = Test-Path $appPoolPath -ErrorAction SilentlyContinue
+		if (!$exists) { 
 			Write-Host "Application pool `"$applicationPoolName`" does not exist, creating..." 
-			new-item $appPoolPath -confirm:$false
-			$pool = Get-Item $appPoolPath
+			New-Item $appPoolPath -confirm:$false
 		} else {
 			Write-Host "Application pool `"$applicationPoolName`" already exists"
 		}
+        # Confirm it's there. Get-Item can pause if the app-pool is suspended, so use Get-WebAppPoolState
+        $pool = Get-WebAppPoolState $applicationPoolName
 	}
 
 	# Set App Pool Identity
@@ -189,11 +200,13 @@ function Assert-ParentSegmentsExist($sitePath, $virtualPathSegments) {
 
 function Assert-WebsiteExists($SitePath, $SiteName)
 {
-	Write-Verbose "Looking for the parent Site `"$SiteName`" at `"$SitePath`"..."
-	$site = Get-Item $SitePath -ErrorAction SilentlyContinue
-	if (!$site) 
-	{ 
-		throw "The Web Site `"$SiteName`" does not exist in IIS and this step cannot create the Web Site because the necessary details are not available. Add a step which makes sure the parent Web Site exists before this step attempts to add a child to it." 
+	Execute-WithRetry { 
+		Write-Verbose "Looking for the parent Site `"$SiteName`" at `"$SitePath`"..."
+		$site = Get-Item $SitePath -ErrorAction SilentlyContinue
+		if (!$site) 
+		{ 
+			throw "The Web Site `"$SiteName`" does not exist in IIS and this step cannot create the Web Site because the necessary details are not available. Add a step which makes sure the parent Web Site exists before this step attempts to add a child to it." 
+		}
 	}
 }
 
@@ -370,27 +383,27 @@ if ($deployAsWebSite)
 			$sslFlagPart = @{$true=1;$false=0}[[Bool]::Parse($binding.requireSni)]  
 			$bindingIpAddress =  @{$true="*";$false=$binding.ipAddress}[[string]::IsNullOrEmpty($binding.ipAddress)]
 			$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
-		
+
+			$bindingObj = @{
+				protocol=$binding.protocol;
+				ipAddress=$bindingIpAddress;
+				port=$binding.port;
+				host=$binding.host;
+				bindingInformation=$bindingInformation;
+			};
+
+			if ($binding.certificateVariable) {
+				$bindingObj.certificateVariable = $binding.certificateVariable.Trim();
+			} elseif ($binding.thumbprint){
+				$bindingObj.thumbprint=$binding.thumbprint.Trim();
+			}
+
+			if ([Bool]::Parse($supportsSNI)) {
+				$bindingObj.sslFlags=$sslFlagPart;
+			}
+			
 			if([Bool]::Parse($binding.enabled)) {
-				Write-IISBinding "Found binding: " $binding
-				if ([Bool]::Parse($supportsSNI)) {
-					$wsbindings.Add(@{ 
-						protocol=$binding.protocol;
-						ipAddress=$bindingIpAddress;
-						port=$binding.port;
-						host=$binding.host;
-						bindingInformation=$bindingInformation;
-						thumbprint=$binding.thumbprint.Trim();
-						sslFlags=$sslFlagPart }) | Out-Null
-				} else {
-					$wsbindings.Add(@{ 
-						protocol=$binding.protocol;
-						ipAddress=$bindingIpAddress;
-						port=$binding.port;
-						host=$binding.host;
-						bindingInformation=$bindingInformation;
-						thumbprint=$binding.thumbprint.Trim() }) | Out-Null
-				}
+				$wsbindings.Add($bindingObj) | Out-Null
 			} else {
 				Write-IISBinding "Ignore binding: " $binding
 			}
@@ -441,12 +454,20 @@ if ($deployAsWebSite)
 		}
 	}
 
-
 	# For any HTTPS bindings, ensure the certificate is configured for the IP/port combination
 	$wsbindings | where-object { $_.protocol -eq "https" } | foreach-object {
-		$sslCertificateThumbprint = $_.thumbprint.Trim()
+
+		# If an Octopus-managed certificate variable is supplied, it will have been installed in the store earlier
+		# in the deployment process
+		if ($_.certificateVariable) {
+			$sslCertificateThumbprint = $OctopusParameters[$_.certificateVariable + ".Thumbprint"]
+		} else {
+			# Otherwise, the certificate thumbprint was supplied directly in the binding
+			$sslCertificateThumbprint = $_.thumbprint.Trim()
+		}
+
 		Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
-    
+	
 		$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
 		if (! $certificate) 
 		{
@@ -522,6 +543,7 @@ if ($deployAsWebSite)
 					$appid = [System.Guid]::NewGuid().ToString("b")
 					& netsh http add sslcert ipport="$($ipAddress):$port" certhash="$($certificate.Thumbprint)" appid="$appid" certstorename="$certStoreName"
 					if ($LastExitCode -ne 0 ){
+						Write-Host "Failed adding new SSL binding for certificate with thumbprint '$($certificate.Thumbprint)'. Exit code: $LastExitCode"
 						throw
 					}
 				}	
@@ -555,17 +577,30 @@ if ($deployAsWebSite)
 	Assign-ToApplicationPool -iisPath $sitePath -applicationPoolName $applicationPoolName
 	Set-Path -virtualPath $sitePath -physicalPath $webRoot
 
-	function Bindings-AreEqual($bindingA, $bindingB) {
-		return ($bindingA.protocol -eq $bindingB.protocol) -and ($bindingA.bindingInformation -eq $bindingB.bindinginformation) -and ($bindingA.sslFlags -eq $bindingB.sslFlags)
+	function Convert-ToHashTable($bindingArray) {
+		$hash = @{}
+		$bindingArray | %{
+		    $key = Get-BindingKey $_
+		    $hash[$key] = $_
+		}
+		return $hash
+	}
+
+	function Get-BindingKey($binding) {
+		return $binding.protocol + "|" + $binding.bindingInformation + "|" + $binding.sslFlags
 	}
 
 	# Returns $true if existing IIS bindings are as specified in configuration, otherwise $false
 	function Bindings-AreCorrect($existingBindings, $configuredBindings) {
+		$existingBindingsLookup = Convert-ToHashTable $existingBindings.Collection
+		$configuredBindingsLookup = Convert-ToHashTable $configuredBindings
+	
 		# Are there existing assigned bindings that are not configured
 		for ($i = 0; $i -lt $existingBindings.Collection.Count; $i = $i+1) {
 			$binding = $existingBindings.Collection[$i]
+			$bindingKey = Get-BindingKey $binding
 
-			$matching = $configuredBindings | Where-Object {Bindings-AreEqual $binding $_ }
+			$matching = $configuredBindingsLookup[$bindingKey]
 		
 			if ($matching -eq $null) {
 				Write-Host "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
@@ -576,8 +611,9 @@ if ($deployAsWebSite)
 		# Are there configured bindings which are not assigned
 		for ($i = 0; $i -lt $configuredBindings.Count; $i = $i+1) {
 			$wsbinding = $configuredBindings[$i]
+            		$wsBindingKey = Get-BindingKey $wsbinding
 
-			$matching = $existingBindings.Collection | Where-Object {Bindings-AreEqual $wsbinding $_ }
+			$matching = $existingBindingsLookup[$wsBindingKey]
 
 			if ($matching -eq $null) {
 				Write-Host "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
@@ -599,10 +635,16 @@ if ($deployAsWebSite)
 			Write-Host "Clearing IIS bindings"
 			Clear-ItemProperty $sitePath -name bindings
 
+            If($hasWebCommitDelay){
+                Start-WebCommitDelay
+            }
        		for ($i = 0; $i -lt $wsbindings.Count; $i = $i+1) {
 				Write-Host ("Assigning binding: " + ($wsbindings[$i].protocol + " " + $wsbindings[$i].bindingInformation))
 				New-ItemProperty $sitePath -name bindings -value ($wsbindings[$i])
 			}
+            If($hasWebCommitDelay){
+                Stop-WebCommitDelay -Commit $true
+            }
 		} else {
 			Write-Host "Bindings are as configured. No changes required."
 		}

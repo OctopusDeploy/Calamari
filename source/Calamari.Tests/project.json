@@ -8,7 +8,7 @@
     "dotnet-test-nunit": "3.4.0-beta-2",
     "NuGet.CommandLine": "2.8.3",
     "OctoDiff": "1.1.1",
-    "Octostache": "2.0.14",
+    "Octostache": "2.1.0",
     "Assent": "0.4.0",
     "SharpCompress": "0.15.1"
   },
@@ -36,33 +36,33 @@
       }
     },
      "net451": {
-      "frameworkAssemblies": {
-        "System.Core": "*",
-        "System.Net": "*",
-        "System.ServiceProcess": "*",
-        "System.Xml.Linq": "*",
-        "System.Data.DataSetExtensions": "*",
-        "Microsoft.CSharp": "*",
-        "System.Data": "*",
-        "System.Xml": "*",
+       "frameworkAssemblies": {
+         "System.Core": "*",
+         "System.Net": "*",
+         "System.ServiceProcess": "*",
+         "System.Xml.Linq": "*",
+         "System.Data.DataSetExtensions": "*",
+         "Microsoft.CSharp": "*",
+         "System.Data": "*",
+         "System.Xml": "*",
         "WindowsBase": "*",
         "System.IO.Compression": "*",
         "System.IO.Compression.FileSystem": "*"
-      },
+       },
        "dependencies": {
          "GitVersionTask": "3.3.0",
          "MarkdownSharp": "1.13.0.0",
-         "Microsoft.Bcl": "1.1.9",
+         "Microsoft.Bcl": "1.1.10",
          "Microsoft.Bcl.Async": "1.0.168",
          "Microsoft.Bcl.Build": "1.0.14",
-         "Microsoft.Net.Http": "2.2.22",
+         "Microsoft.Net.Http": "2.2.29",
          "Microsoft.Web.Administration": "7.0.0.0",
          "Microsoft.Web.Deployment": "3.6.0",
          "Microsoft.Web.Xdt": "2.1.1",
          "Polly": "4.3.0" 
        },
       "buildOptions": {
-        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE", "CAN_GET_PHYSICAL_MEMORY" ]
+        "define": [ "NET40", "IIS_SUPPORT", "USE_NUGET_V2_LIBS", "USE_OCTODIFF_EXE", "CAN_GET_PHYSICAL_MEMORY", "WINDOWS_CERTIFICATE_STORE_SUPPORT" ]
       }
     }
   },
@@ -95,7 +95,8 @@
         "Fixtures/PowerShell/Packages/**",
         "Fixtures/PowerShell/Scripts/**",
         "Fixtures/ScriptCS/Scripts/**",
-        "Fixtures/Substitutions/Samples/**"
+        "Fixtures/Substitutions/Samples/**",
+        "Helpers/Certificates/SampleCertificateFiles/**"
       ],
       "mappings": {
         "FSharp/": "../Tools/FSharp.Compiler.Tools**/",

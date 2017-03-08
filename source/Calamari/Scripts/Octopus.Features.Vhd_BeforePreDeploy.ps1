@@ -1,16 +1,23 @@
 ﻿$ErrorActionPreference = "Stop"
 
-$vhds = @(Get-ChildItem * -Include *.vhd, *.vhdx)
+if (-not (Get-Command Mount-DiskImage -errorAction SilentlyContinue))
+{
+    Write-Error "VHD deployment requires Windows Server 2012 or newer"
+	exit -1
+}
+
+$extractionDir = $OctopusParameters["OctopusOriginalPackageDirectoryPath"]
+$vhds = @(Get-ChildItem "$extractionDir\*" -Include *.vhd, *.vhdx)
 If($vhds.Length -lt 1)
 {
 	Write-Error "No VHDs found. A single VHD must be in the root of the package deployed to use this step"
-	exit -1
+	exit -2
 }
 
 If($vhds.Length -gt 1)
 {
 	Write-Error "More than one VHD found ($vhds.Length). A single VHD must be in the root of the package deployed to use this step"
-	exit -2
+	exit -3
 }
 
 function EvaluateFlagDefaultTrue([string]$flag){
@@ -24,7 +31,13 @@ function EvaluateFlagDefaultTrue([string]$flag){
 
 # attach a partition to a drive letter
 function AddMountPoint($partition){
-    $partition | Add-PartitionAccessPath -AssignDriveLetter | Out-Null
+    try {
+        $partition | Add-PartitionAccessPath -AssignDriveLetter | Out-Null
+    }
+    catch {
+        Write-Error "Could not assign a drive letter, ensure that no other VHD with the same partition signature ($($partition.DiskId)) is mounted"
+        throw "Could not assign a drive letter: $($_.Exception.Message)"
+    }
     $volume = Get-Volume -partition $partition
     $driveLetter = $volume.DriveLetter
     $mountPoint = $driveLetter + ":\"

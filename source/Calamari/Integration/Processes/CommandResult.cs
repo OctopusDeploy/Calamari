@@ -27,6 +27,11 @@
             get { return additionalErrors; }
         }
 
+        public bool HasErrors
+        {
+            get { return string.IsNullOrWhiteSpace(additionalErrors); }
+        }
+
         public CommandResult VerifySuccess()
         {
             if (exitCode != 0)

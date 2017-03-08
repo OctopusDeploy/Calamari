@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             foreach (var feature in features)
             {
-                var scriptPath = Path.Combine(stagingDirectory, FeatureScriptConvention.GetScriptName(feature, suffix, "ps1"));
+                var scriptPath = Path.Combine(stagingDirectory, FeatureConvention.GetScriptName(feature, suffix, "ps1"));
                 scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner);
             }
         }
@@ -63,7 +63,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string deployStage = "BeforePostDeploy";
             const string feature = "doTheThing";
-            var scriptPath = Path.Combine(stagingDirectory, FeatureScriptConvention.GetScriptName(feature, deployStage, "ps1")); 
+            var scriptPath = Path.Combine(stagingDirectory, FeatureConvention.GetScriptName(feature, deployStage, "ps1")); 
             variables.Set(SpecialVariables.Package.EnabledFeatures, feature);
 
             Arrange(new List<string>{ feature }, deployStage);
@@ -81,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string deployStage = "BeforeDeploy";
             const string feature = "doTheThing";
-            var scriptPath = Path.Combine(stagingDirectory, FeatureScriptConvention.GetScriptName(feature, deployStage, "ps1")); 
+            var scriptPath = Path.Combine(stagingDirectory, FeatureConvention.GetScriptName(feature, deployStage, "ps1")); 
 
             Arrange(new List<string>{ feature }, deployStage);
             fileSystem.FileExists(scriptPath).Returns(true);
@@ -99,7 +99,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string deployStage = "BeforeDeploy";
             const string feature = "doTheThing";
-            var scriptPath = Path.Combine(stagingDirectory, FeatureScriptConvention.GetScriptName(feature, deployStage, "ps1")); 
+            var scriptPath = Path.Combine(stagingDirectory, FeatureConvention.GetScriptName(feature, deployStage, "ps1")); 
 
             Arrange(new List<string>{ feature }, deployStage);
             var convention = CreateConvention(deployStage);
@@ -117,8 +117,8 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             foreach (var feature in features)
             {
-                var scriptName = FeatureScriptConvention.GetScriptName(feature, suffix, "ps1");
-                var embeddedResourceName = FeatureScriptConvention.GetEmbeddedResourceName(scriptName);
+                var scriptName = FeatureConvention.GetScriptName(feature, suffix, "ps1");
+                var embeddedResourceName = FeatureConvention.GetEmbeddedResourceName(scriptName);
                 embeddedResources.GetEmbeddedResourceText(Arg.Any<Assembly>(), embeddedResourceName).Returns(scriptContents);
                 embeddedResourceNames.Add(embeddedResourceName);
                 var scriptPath = Path.Combine(stagingDirectory, scriptName);
@@ -129,9 +129,9 @@ namespace Calamari.Tests.Fixtures.Conventions
             embeddedResources.GetEmbeddedResourceNames(Arg.Any<Assembly>()).Returns(embeddedResourceNames.ToArray());
         }
 
-        private FeatureScriptConvention CreateConvention(string deployStage)
+        private FeatureConvention CreateConvention(string deployStage)
         {
-            return new FeatureScriptConvention(deployStage, fileSystem, scriptEngine, commandLineRunner, embeddedResources);
+            return new FeatureConvention(deployStage, fileSystem, scriptEngine, commandLineRunner, embeddedResources);
         }
     }
 }

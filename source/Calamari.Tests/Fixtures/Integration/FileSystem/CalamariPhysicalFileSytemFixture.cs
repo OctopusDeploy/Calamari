@@ -91,5 +91,57 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             return filename;
         }
 
+        [Test]
+        [TestCase(@"**/*.txt", "f1.txt", 2)]
+        [TestCase(@"**/*.txt", "r.txt", 2)]
+        [TestCase(@"*.txt", "r.txt")]
+        [TestCase(@"**/*.config", "root.config", 5)]
+        [TestCase(@"*.config", "root.config")]
+        [TestCase(@"Config/*.config", "c.config")]
+        [TestCase(@"Config/Feature1/*.config", "f1-a.config", 2)]
+        [TestCase(@"Config/Feature1/*.config", "f1-b.config", 2)]
+        [TestCase(@"Config/Feature2/*.config", "f2.config")]
+        public void GlobTestMutiple(string pattern, string expectedFileMatchName, int expectedQty = 1)
+        {
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var rootPath = fileSystem.CreateTemporaryDirectory();
+            var content = "file-content" + Environment.NewLine;
+
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                pattern = pattern.Replace(@"/", @"\");
+            }
+
+            try
+            {
+                var configPath = Path.Combine(rootPath, "Config");
+
+                Directory.CreateDirectory(configPath);
+                Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
+                Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
+
+                Action<string, string, string> writeFile = (p1, p2, p3) =>
+                    fileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
+
+                // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
+                writeFile(rootPath, "root.config", null);
+                writeFile(rootPath, "r.txt", null);
+                writeFile(configPath, "c.config", null);
+
+                writeFile(configPath, "Feature1", "f1.txt");
+                writeFile(configPath, "Feature1", "f1-a.config");
+                writeFile(configPath, "Feature1", "f1-b.config");
+                writeFile(configPath, "Feature2", "f2.config");
+
+                var result = Glob.Expand(Path.Combine(rootPath, pattern)).ToList();
+
+                Assert.AreEqual(expectedQty, result.Count, $"{pattern} should have found {expectedQty}, but found {result.Count}");
+                Assert.True(result.Any(r => r.Name.Equals(expectedFileMatchName)), $"{pattern} should have found {expectedFileMatchName}, but didn't");
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(rootPath);
+            }
+        }
     }
 }
