@@ -41,6 +41,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
         [TestCase(@"c:\FOO\a.txt", @"c:\foo", false)]
         [TestCase(@"c:\foo\a.txt", @"c:\FOO", false)]
+        [TestCase(@"/", @"/", true)]
+        [TestCase(@"/foo", @"/", true)]
+        [TestCase(@"/", @"/foo", false)]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void IsChildDirectoryOfTestUnix(string child, string parent, bool result)
