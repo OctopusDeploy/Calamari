@@ -30,18 +30,25 @@ namespace Calamari.Deployment.Retention
 
             if (days.HasValue && days.Value > 0)
             {
+                Log.Info($"Keeping deployments from the last {days} days");
                 deployments = deployments
                     .Where(InstalledBeforePolicyDayCutoff(days.Value, preservedEntries))
                     .ToList();
             }
             else if (releases.HasValue && releases.Value > 0)
             {
+                Log.Info($"Keeping this deployment and the previous {releases} successful deployments");
                 // Keep the current release, plus specified releases value
                 // Unsuccessful releases are not included in the count of releases to keep
                 deployments = deployments
                     .OrderByDescending(deployment => deployment.InstalledOn)
                     .SkipWhile(SuccessfulCountLessThanPolicyCount(releases.Value, preservedEntries))
                     .ToList();
+            }
+            else
+            {
+                Log.Info($"Keeping all releases");
+                return;
             }
 
             if (!deployments.Any())
@@ -59,8 +66,8 @@ namespace Calamari.Deployment.Retention
 
         void DeleteExtractionSource(JournalEntry deployment, List<JournalEntry> preservedEntries)
         {
-            if (string.IsNullOrWhiteSpace(deployment.ExtractedFrom) 
-                || !fileSystem.FileExists(deployment.ExtractedFrom) 
+            if (string.IsNullOrWhiteSpace(deployment.ExtractedFrom)
+                || !fileSystem.FileExists(deployment.ExtractedFrom)
                 || preservedEntries.Any(entry => deployment.ExtractedFrom.Equals(entry.ExtractedFrom, StringComparison.Ordinal)))
                 return;
 
@@ -70,7 +77,7 @@ namespace Calamari.Deployment.Retention
 
         void DeleteExtractionDestination(JournalEntry deployment, List<JournalEntry> preservedEntries)
         {
-            if (!fileSystem.DirectoryExists(deployment.ExtractedTo) 
+            if (!fileSystem.DirectoryExists(deployment.ExtractedTo)
                 || preservedEntries.Any(entry => deployment.ExtractedTo.Equals(entry.ExtractedTo, StringComparison.Ordinal)))
                 return;
 
@@ -93,11 +100,15 @@ namespace Calamari.Deployment.Retention
             return journalEntry =>
             {
                 if (preservedEntries.Count() > releases)
+                {
                     return false;
+                }
 
                 if (journalEntry.WasSuccessful)
+                {
                     preservedEntries.Add(journalEntry);
-
+                    Log.Verbose($"Keeping {journalEntry.ExtractedTo} and {journalEntry.ExtractedFrom} as it is the {FormatWithThPostfix(preservedEntries.Count)}most recent successful release");
+                }
                 return true;
             };
         }
@@ -106,12 +117,37 @@ namespace Calamari.Deployment.Retention
         {
             return journalEntry =>
             {
-                if (journalEntry.InstalledOn < clock.GetUtcTime().AddDays(-days))
+                var installedAgo = (clock.GetUtcTime() - journalEntry.InstalledOn);
+
+                if (installedAgo.TotalDays > days)
                     return true;
+
+                Log.Verbose($"Keeping {journalEntry.ExtractedTo} and {journalEntry.ExtractedFrom} as it was installed {installedAgo.Days} days and {installedAgo.Hours} hours ago");
 
                 preservedEntries.Add(journalEntry);
                 return false;
             };
+        }
+
+        static string FormatWithThPostfix(int value)
+        {
+            if (value == 1)
+                return "";
+
+            if (value == 11 || value == 12 || value == 13)
+                return value + "th ";
+
+            switch (value % 10)
+            {
+                case 1:
+                    return value + "st ";
+                case 2:
+                    return value + "nd ";
+                case 3:
+                    return value + "rd ";
+                default:
+                    return value + "th ";
+            }
         }
     }
 }
