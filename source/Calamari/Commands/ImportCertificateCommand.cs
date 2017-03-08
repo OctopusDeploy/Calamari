@@ -8,6 +8,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Commands
 {
@@ -86,15 +87,24 @@ namespace Calamari.Commands
             }
         }
 
-        static ICollection<PrivateKeyAccessRule> GetPrivateKeyAccessRules(CalamariVariableDictionary variables)
+        internal static ICollection<PrivateKeyAccessRule> GetPrivateKeyAccessRules(VariableDictionary variables)
         {
-            var json = variables.Get(SpecialVariables.Action.Certificate.PrivateKeyAccessRules);
+            // The private-key access-rules are stored as escaped JSON. However, they may contain nested
+            // variables (for example the user-name may be an Octopus variable) which may not be escaped,
+            // causing JSON parsing to fail.
 
-            return string.IsNullOrWhiteSpace(json) 
-                ? new List<PrivateKeyAccessRule>() 
-                : PrivateKeyAccessRule.FromJson(json);
+            // So, we get the raw text
+            var raw = variables.GetRaw(SpecialVariables.Action.Certificate.PrivateKeyAccessRules);
+
+            if (string.IsNullOrWhiteSpace(raw))
+                return new List<PrivateKeyAccessRule>(); 
+
+            // Unescape it (we only care about backslashes)
+            var unescaped = raw.Replace(@"\\", @"\");
+            // Perform variable-substitution and re-escape
+            var escapedAndSubstituted = variables.Evaluate(unescaped).Replace(@"\", @"\\");
+            return PrivateKeyAccessRule.FromJson(escapedAndSubstituted);
         }
-
 
         string GetMandatoryVariable(CalamariVariableDictionary variables, string variableName)
         {

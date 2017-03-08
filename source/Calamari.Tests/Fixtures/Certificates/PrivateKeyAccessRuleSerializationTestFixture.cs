@@ -1,7 +1,10 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 using System.Linq;
+using Calamari.Commands;
+using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
+using Octostache;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
@@ -22,6 +25,23 @@ namespace Calamari.Tests.Fixtures.Certificates
             Assert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
             Assert.AreEqual("BUILTIN\\Users", result[1].Identity.ToString());
             Assert.AreEqual(PrivateKeyAccess.ReadOnly, result[1].Access);
+        }
+
+        [Test]
+        public void CanDeserializeNestedVariable()
+        {
+            var variables = new VariableDictionary();
+            const string json = @"[
+                {""Identity"": ""#{UserName}"", ""Access"": ""FullControl""}
+            ]";
+            variables.Set("UserName", "AmericanEagles\\RogerRamjet");
+            variables.Set(SpecialVariables.Action.Certificate.PrivateKeyAccessRules, json);
+
+            var result = ImportCertificateCommand.GetPrivateKeyAccessRules(variables).ToList();
+
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual("AmericanEagles\\RogerRamjet", result[0].Identity.ToString());
+            Assert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
         }
     }
 }
