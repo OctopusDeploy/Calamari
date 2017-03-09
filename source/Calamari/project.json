@@ -24,6 +24,7 @@
         "WindowsBase": "*"
       },
       "dependencies": {
+        "BouncyCastle": "1.8.1",
         "GitVersionTask": "3.3.0",
         "MarkdownSharp": "1.13.0.0",
         "Microsoft.Bcl": "1.1.10",

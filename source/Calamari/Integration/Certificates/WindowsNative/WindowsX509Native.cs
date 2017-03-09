@@ -16,11 +16,11 @@ namespace Calamari.Integration.Certificates.WindowsNative
         [DllImport("Crypt32.dll", SetLastError = true)]
         public static extern SafeCertStoreHandle PFXImportCertStore(ref CryptoData pPfx, [MarshalAs(UnmanagedType.LPWStr)] string szPassword, PfxImportFlags dwFlags);
 
-        [DllImport("Crypt32.DLL", SetLastError = true)]
-        public static extern SafeCertContextHandle CertEnumCertificatesInStore(SafeCertStoreHandle storeProvider, IntPtr prevCertContext);
-
         [DllImport("Crypt32.dll", SetLastError = true)]
         public static extern bool CertAddCertificateContextToStore(SafeCertStoreHandle hCertStore, SafeCertContextHandle pCertContext, AddCertificateDisposition dwAddDisposition, ref IntPtr ppStoreContext);
+
+        [DllImport("Crypt32.dll", SetLastError = true)]
+        public static extern SafeCertContextHandle CertFindCertificateInStore(SafeCertStoreHandle hCertStore, CertificateEncodingType dwCertEncodingType, IntPtr notUsed, IntPtr notUsed2, CertificateFindType dwFindType, ref CryptoData pvFindPara, IntPtr pPrevCertContext);
 
         [DllImport("Crypt32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeCertContextHandle CertDuplicateCertificateContext(IntPtr pCertContext);
@@ -96,6 +96,19 @@ namespace Calamari.Integration.Certificates.WindowsNative
             UserGroupPolicy = 7 << 16, // CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY
             MachineGroupPolicy = 8 << 16, // CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY
             LocalMachineEnterprise = 9 << 16, // CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE
+        }
+
+        internal enum CertificateFindType
+        {
+            Sha1Hash = 1 << 16 // CERT_FIND_SHA1_HASH  
+        }
+
+        [Flags]
+        internal enum CertificateEncodingType
+        {
+           X509AsnEncoding = 0x00000001, // X509_ASN_ENCODING
+           Pkcs7AsnEncoding = 0x00010000, // PKCS_7_ASN_ENCODING
+           Pkcs7OrX509AsnEncoding = X509AsnEncoding | Pkcs7AsnEncoding
         }
 
         // typedef struct _CRYPTOAPI_BLOB
