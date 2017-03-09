@@ -9,10 +9,11 @@
 ##   OctopusAzureTargetScriptParameters
 ##   OctopusFabricConnectionEndpoint                         // The connection endpoint
 ##   OctopusFabricIsSecure                                   // Indicates whether the fabric connection is secured by an X509 cert
-##   OctopusFabricServerCertificateThumbprint                // The server cert thumbprint
-##   OctopusFabricClientCertificateThumbprint                // The client cert thumbprint
-##   OctopusFabricCertificateStoreLocation                  // The cert store location
-##   OctopusFabricCertificateStoreName                      // The cert store name
+##   OctopusFabricServerCertThumbprint                       // The server certificate thumbprint
+##   OctopusFabricCertificateFindType                        // The client certificate lookup type
+##   OctopusFabricCertificateFindValue                       // The client certificate thumbprint
+##   OctopusFabricCertificateStoreLocation                   // The cert store location
+##   OctopusFabricCertificateStoreName                       // The cert store name
 
 $ErrorActionPreference = "Stop"
 
@@ -54,12 +55,12 @@ Execute-WithRetry{
     If ([System.Convert]::ToBoolean($OctopusFabricIsSecure)) {
         # Secure (client certificate)
         Write-Verbose "Connect to Service Fabric securely (client certificate)"
-		$ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertificateThumbprint
+		$ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
 		$ClusterConnectionParameters["X509Credential"] = $true
 		$ClusterConnectionParameters["StoreLocation"] = $OctopusFabricCertificateStoreLocation
 		$ClusterConnectionParameters["StoreName"] = $OctopusFabricCertificateStoreName
-		$ClusterConnectionParameters["FindType"] = "FindByThumbprint"
-		$ClusterConnectionParameters["FindValue"] = $OctopusFabricClientCertificateThumbprint
+		$ClusterConnectionParameters["FindType"] = $OctopusFabricCertificateFindType
+		$ClusterConnectionParameters["FindValue"] = $OctopusFabricCertificateFindValue
     } Else {
         # Unsecure
         Write-Verbose "Connect to Service Fabric unsecurely"
