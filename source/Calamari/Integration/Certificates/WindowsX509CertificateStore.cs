@@ -8,11 +8,9 @@ using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
-using System.Text;
 using Calamari.Integration.Certificates.WindowsNative;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Utilities.Encoders;
 using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 
@@ -20,31 +18,30 @@ namespace Calamari.Integration.Certificates
 {
     public class WindowsX509CertificateStore
     {
+        const string IntermediateAuthorityStoreName = "CA";
+        const string RootAuthorityStoreName = "Root";
+
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
             string storeName, bool privateKeyExportable)
         {
-            CertificateSystemStoreLocations systemStoreLocation;
+            CertificateSystemStoreLocation systemStoreLocation;
             bool useUserKeyStore;
 
             switch (storeLocation)
             {
                 case StoreLocation.CurrentUser:
-                    systemStoreLocation = CertificateSystemStoreLocations.CurrentUser;
+                    systemStoreLocation = CertificateSystemStoreLocation.CurrentUser;
                     useUserKeyStore = true;
                     break;
                 case StoreLocation.LocalMachine:
-                    systemStoreLocation = CertificateSystemStoreLocations.LocalMachine;
+                    systemStoreLocation = CertificateSystemStoreLocation.LocalMachine;
                     useUserKeyStore = false;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(storeLocation), storeLocation, null);
             }
 
-            using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
-                systemStoreLocation, storeName))
-            {
-                ImportPfxToStore(store, pfxBytes, password, useUserKeyStore, privateKeyExportable);
-            }
+            ImportPfxToStore(systemStoreLocation, storeName, pfxBytes, password, useUserKeyStore, privateKeyExportable);
         }
 
         /// <summary>
@@ -57,18 +54,14 @@ namespace Calamari.Integration.Certificates
             var sid = (SecurityIdentifier)account.Translate(typeof(SecurityIdentifier));
             var userStoreName = sid + "\\" + storeName;
 
-            using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
-                CertificateSystemStoreLocations.Users, userStoreName))
-            {
-                // Note we use the machine key-store. There is no way to store the private-key in 
-                // another user's key-store.  
-                var certificate = ImportPfxToStore(store, pfxBytes, password, false, privateKeyExportable);
+            // Note we use the machine key-store. There is no way to store the private-key in 
+            // another user's key-store.  
+            var certificate = ImportPfxToStore(CertificateSystemStoreLocation.Users, userStoreName, pfxBytes, password, false, privateKeyExportable);
 
-                // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-                var keySecurity =
-                    PrivateKeyAccessRule.CreateCryptoKeySecurity(new [] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) }); 
-                SetPrivateKeySecurity(keySecurity, certificate);
-            }
+            // Because we have to store the private-key in the machine key-store, we must grant the user access to it
+            var keySecurity =
+                PrivateKeyAccessRule.CreateCryptoKeySecurity(new [] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) }); 
+            SetPrivateKeySecurity(keySecurity, certificate);
         }
 
         public static void SetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName, 
@@ -161,15 +154,15 @@ namespace Calamari.Integration.Certificates
         {
             var callback = new CertEnumSystemStoreCallBackProto(CertEnumSystemStoreCallBack); 
             var names = new List<string>();
-            CertificateSystemStoreLocations locationFlags;
+            CertificateSystemStoreLocation locationFlags;
 
             switch (location)
             {
                 case StoreLocation.CurrentUser:
-                    locationFlags = CertificateSystemStoreLocations.CurrentUser; 
+                    locationFlags = CertificateSystemStoreLocation.CurrentUser; 
                     break;
                 case StoreLocation.LocalMachine:
-                    locationFlags = CertificateSystemStoreLocations.LocalMachine; 
+                    locationFlags = CertificateSystemStoreLocation.LocalMachine; 
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(location), location, null);
@@ -185,7 +178,7 @@ namespace Calamari.Integration.Certificates
             return names;
         }
 
-        static SafeCertContextHandle ImportPfxToStore(SafeCertStoreHandle store, byte[] pfxBytes, string password,
+        static SafeCertContextHandle ImportPfxToStore(CertificateSystemStoreLocation storeLocation, string storeName, byte[] pfxBytes, string password,
             bool useUserKeyStore, bool privateKeyExportable)
         {
             var pfxImportFlags = useUserKeyStore
@@ -199,9 +192,20 @@ namespace Calamari.Integration.Certificates
 
             var certificates = GetCertificatesFromPfx(pfxBytes, password, pfxImportFlags);
 
-            foreach (var certificate in certificates)
+            // Import the first certificate into the specified store
+            AddCertificateToStore(storeLocation, storeName, certificates.First());
+
+            for (var i = 1; i < certificates.Count; i++)
             {
-                AddCertificateToStore(store, certificate);
+                var certificate = certificates[i];
+
+                if (i < (certificates.Count - 1))
+                {
+                    AddCertificateToStore(storeLocation, IntermediateAuthorityStoreName, certificate);
+                    continue;
+                }
+
+                AddCertificateToStore(storeLocation, RootAuthorityStoreName, certificate);
             }
 
             return certificates.First();
@@ -226,15 +230,19 @@ namespace Calamari.Integration.Certificates
             return true;
         }
 
-        static void AddCertificateToStore(SafeCertStoreHandle store, SafeCertContextHandle certificate)
+        static void AddCertificateToStore(CertificateSystemStoreLocation storeLocation, string storeName, SafeCertContextHandle certificate)
         {
             try
             {
-                var storeContext = IntPtr.Zero;
-                if (!CertAddCertificateContextToStore(store, certificate,
-                    AddCertificateDisposition.CERT_STORE_ADD_REPLACE_EXISTING, ref storeContext))
+                using (var store = CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
+                        storeLocation, storeName))
                 {
-                    throw new CryptographicException(Marshal.GetLastWin32Error());
+                    var storeContext = IntPtr.Zero;
+                    if (!CertAddCertificateContextToStore(store, certificate,
+                        AddCertificateDisposition.CERT_STORE_ADD_REPLACE_EXISTING, ref storeContext))
+                    {
+                        throw new CryptographicException(Marshal.GetLastWin32Error());
+                    }
                 }
             }
             catch (Exception ex)
@@ -277,9 +285,14 @@ namespace Calamari.Integration.Certificates
 
                         Marshal.Copy(thumbprint, 0, thumbprintData.pbData, thumbprint.Length);
 
-                        certificates.Add(CertFindCertificateInStore(memoryStore,
+                        var certificateHandle = CertFindCertificateInStore(memoryStore,
                             CertificateEncodingType.Pkcs7OrX509AsnEncoding,
-                            IntPtr.Zero, IntPtr.Zero, CertificateFindType.Sha1Hash, ref thumbprintData, IntPtr.Zero));
+                            IntPtr.Zero, CertificateFindType.Sha1Hash, ref thumbprintData, IntPtr.Zero);
+
+                        if (certificateHandle == null || certificateHandle.IsInvalid)
+                            throw new Exception("Could not find certificate");
+
+                        certificates.Add(certificateHandle);
 
                         Marshal.FreeHGlobal(thumbprintData.pbData);
                     }
@@ -379,7 +392,7 @@ namespace Calamari.Integration.Certificates
         {
             using (var memoryStream = new MemoryStream(pfxBytes))
             {
-               var pkcs12Store = new Pkcs12Store(memoryStream, password?.ToCharArray()); 
+               var pkcs12Store = new Pkcs12Store(memoryStream, password?.ToCharArray() ?? "".ToCharArray() ); 
 
                 if (pkcs12Store.Count < 1)
                     throw new Exception("No certificates were found in PFX");

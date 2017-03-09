@@ -22,11 +22,8 @@ namespace Calamari.Tests.Helpers.Certificates
         public const string CapiWithPrivateKeyId = "CapiWithPrivateKey";
         public static readonly SampleCertificate CapiWithPrivateKey = new SampleCertificate("capi_self_signed_privatekey_password.pfx", "Password01!", "3FF420AB600A6C14E6EAF6AC25EF42EDCB96EE60", true);
 
-        public const string CapiWithPrivateKeyNoPasswordId = "CngWithPrivateKeyNoPassword";
+        public const string CapiWithPrivateKeyNoPasswordId = "CapiWithPrivateKeyNoPassword";
         public static readonly SampleCertificate CapiWithPrivateKeyNoPassword = new SampleCertificate("capi_self_signed_privatekey_no_password.pfx", null, "E7D0BF9F1A62AED35BA22BED80F9795012A53636", true);
-
-        public const string FabrikamNoPrivateKeyId = "FabrikamNoPrivateKey";
-        public static readonly SampleCertificate FabrikamNoPrivateKey = new SampleCertificate("fabrikam_no_private_key_password.pfx", "password", "00567BA9BA571F9F53278067DB8C0871A72A3C51", false);
 
         public const string CertificateChainId = "CertificateChain";
         public static readonly SampleCertificate CertificateChain = new SampleCertificate("3-cert-chain.pfx", "hello world", "A11C309EFDF2864B1641F43A7A5B5019EB4CB816", true);
@@ -36,7 +33,6 @@ namespace Calamari.Tests.Helpers.Certificates
             {CngPrivateKeyId, CngWithPrivateKey},
             {CapiWithPrivateKeyId, CapiWithPrivateKey},
             {CapiWithPrivateKeyNoPasswordId, CapiWithPrivateKeyNoPassword},
-            {FabrikamNoPrivateKeyId, FabrikamNoPrivateKey},
             {CertificateChainId, CertificateChain},
         };
 

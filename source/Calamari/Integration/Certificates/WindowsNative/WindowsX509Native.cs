@@ -8,7 +8,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
     internal static class WindowsX509Native
     {
         [DllImport("Crypt32.dll", SetLastError = true)]
-        public static extern SafeCertStoreHandle CertOpenStore(CertStoreProviders lpszStoreProvider, IntPtr notUsed, IntPtr notUsed2, CertificateSystemStoreLocations location, [MarshalAs(UnmanagedType.LPWStr)]string storeName);
+        public static extern SafeCertStoreHandle CertOpenStore(CertStoreProviders lpszStoreProvider, IntPtr notUsed, IntPtr notUsed2, CertificateSystemStoreLocation location, [MarshalAs(UnmanagedType.LPWStr)]string storeName);
 
         [DllImport("Crypt32.dll", SetLastError = true)]
         public static extern bool CertCloseStore(IntPtr hCertStore, int dwFlags);
@@ -20,7 +20,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
         public static extern bool CertAddCertificateContextToStore(SafeCertStoreHandle hCertStore, SafeCertContextHandle pCertContext, AddCertificateDisposition dwAddDisposition, ref IntPtr ppStoreContext);
 
         [DllImport("Crypt32.dll", SetLastError = true)]
-        public static extern SafeCertContextHandle CertFindCertificateInStore(SafeCertStoreHandle hCertStore, CertificateEncodingType dwCertEncodingType, IntPtr notUsed, IntPtr notUsed2, CertificateFindType dwFindType, ref CryptoData pvFindPara, IntPtr pPrevCertContext);
+        public static extern SafeCertContextHandle CertFindCertificateInStore(SafeCertStoreHandle hCertStore, CertificateEncodingType dwCertEncodingType, IntPtr notUsed, CertificateFindType dwFindType, ref CryptoData pvFindPara, IntPtr pPrevCertContext);
 
         [DllImport("Crypt32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeCertContextHandle CertDuplicateCertificateContext(IntPtr pCertContext);
@@ -60,7 +60,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         [DllImport("Crypt32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern
-        bool CertEnumSystemStore(CertificateSystemStoreLocations dwFlags, IntPtr notUsed1, IntPtr notUsed2, CertEnumSystemStoreCallBackProto fn);
+        bool CertEnumSystemStore(CertificateSystemStoreLocation dwFlags, IntPtr notUsed1, IntPtr notUsed2, CertEnumSystemStoreCallBackProto fn);
 
         /// <summary>
         /// signature of call back function used by CertEnumSystemStore
@@ -85,8 +85,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
             CERT_STORE_ADD_REPLACE_EXISTING = 3
         }
 
-        [Flags]
-        internal enum CertificateSystemStoreLocations
+        internal enum CertificateSystemStoreLocation
         {
             CurrentUser = 1 << 16, // CERT_SYSTEM_STORE_CURRENT_USER
             LocalMachine = 2 << 16, // CERT_SYSTEM_STORE_LOCAL_MACHINE

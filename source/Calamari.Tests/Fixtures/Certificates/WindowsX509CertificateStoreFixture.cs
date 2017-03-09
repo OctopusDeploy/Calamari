@@ -20,7 +20,6 @@ namespace Calamari.Tests.Fixtures.Certificates
         [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.CurrentUser, "My")]
         [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.CurrentUser, "Foo")]
         [TestCase(SampleCertificate.CapiWithPrivateKeyNoPasswordId, StoreLocation.LocalMachine, "My")]
-        [TestCase(SampleCertificate.FabrikamNoPrivateKeyId, StoreLocation.LocalMachine, "My")]
         public void CanImportCertificate(string sampleCertificateId, StoreLocation storeLocation, string storeName)
         {
             var sampleCertificate = SampleCertificate.SampleCertificates[sampleCertificateId];
