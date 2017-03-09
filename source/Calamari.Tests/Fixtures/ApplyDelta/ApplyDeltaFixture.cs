@@ -16,14 +16,19 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
         const string NewFileName = "Acme.Web.1.0.0.1.nupkg";
 
-        CalamariResult ApplyDelta(string basisFile, string fileHash, string deltaFile, string newFile)
+        CalamariResult ApplyDelta(string basisFile, string fileHash, string deltaFile, string newFile, bool messageOnError = false)
         {
-            return Invoke(Calamari()
+            var command = Calamari()
                 .Action("apply-delta")
                 .Argument("basisFileName", basisFile)
                 .Argument("fileHash", fileHash)
                 .Argument("deltaFileName", deltaFile)
-                .Argument("newFileName", newFile));
+                .Argument("newFileName", newFile);
+
+            if (messageOnError)
+                command = command.Flag("serviceMessageOnError");
+
+            return Invoke(command);
         }
 
         [OneTimeSetUp]
@@ -173,6 +178,27 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
                 result.AssertFailure();
                 result.AssertErrorOutput("Basis file hash {0} does not match the file hash specified {1}", basisFile.Hash, otherBasisFileHash);
+            }
+        }
+
+        [Test]
+        public void ShouldWriteErrorWhenBasisFileHashDoesNotMatchSpecifiedFileHash()
+        {
+            var otherBasisFileHash = "2e9407c9eae20ffa94bf050283f9b4292a48504c";
+            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
+            {
+                var deltaFilePath = Path.Combine(DownloadPath,
+                    "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
+                using (var deltaFile = File.CreateText(deltaFilePath))
+                {
+                    deltaFile.WriteLine("This is a delta file!");
+                    deltaFile.Flush();
+                }
+
+                var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName, messageOnError: true);
+
+                result.AssertSuccess();
+                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"Basis file hash {basisFile.Hash} does not match the file hash specified {otherBasisFileHash}");
             }
         }
 
