@@ -199,6 +199,8 @@
                 public static readonly string FabricIsSecure = "Octopus.Action.Azure.FabricIsSecure";
                 public static readonly string FabricServerCertificateThumbprint = "Octopus.Action.Azure.FabricServerCertificateThumbprint";
                 public static readonly string FabricClientCertificateThumbprint = "Octopus.Action.Azure.FabricClientCertificateThumbprint";
+                public static readonly string FabricCertificateStoreLocation = "Octopus.Action.Azure.FabricCertificateStoreLocation";
+                public static readonly string FabricCertificateStoreName = "Octopus.Action.Azure.FabricCertificateStoreName";
                 public static readonly string FabricPublishProfileFile = "Octopus.Action.Azure.FabricPublishProfileFile";
                 public static readonly string FabricApplicationPackagePath = "Octopus.Action.Azure.FabricApplicationPackagePath";
                 public static readonly string FabricDeployOnly = "Octopus.Action.Azure.FabricDeployOnly";

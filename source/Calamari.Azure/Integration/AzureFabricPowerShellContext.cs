@@ -36,7 +36,9 @@ namespace Calamari.Azure.Integration
             SetOutputVariable("OctopusFabricIsSecure", variables.Get(SpecialVariables.Action.Azure.FabricIsSecure), variables);
             SetOutputVariable("OctopusFabricServerCertificateThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricServerCertificateThumbprint), variables);
             SetOutputVariable("OctopusFabricClientCertificateThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricClientCertificateThumbprint), variables);
-            
+            SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreLocation, "LocalMachine"), variables);
+            SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreName, "MY"), variables);
+
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
