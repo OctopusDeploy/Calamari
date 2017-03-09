@@ -10,10 +10,10 @@
 ##   OctopusFabricConnectionEndpoint                         // The connection endpoint
 ##   OctopusFabricIsSecure                                   // Indicates whether the fabric connection is secured by an X509 cert
 ##   OctopusFabricServerCertThumbprint                       // The server certificate thumbprint
-##   OctopusFabricCertificateFindType                        // The client certificate lookup type
-##   OctopusFabricCertificateFindValue                       // The client certificate thumbprint
-##   OctopusFabricCertificateStoreLocation                   // The cert store location
-##   OctopusFabricCertificateStoreName                       // The cert store name
+##   OctopusFabricClientCertThumbprint                       // The client certificate thumbprint
+##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
+##   OctopusFabricCertificateStoreLocation                   // The certificate store location (should be 'LocalMachine' by default)
+##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
 
 $ErrorActionPreference = "Stop"
 
@@ -60,7 +60,7 @@ Execute-WithRetry{
 		$ClusterConnectionParameters["StoreLocation"] = $OctopusFabricCertificateStoreLocation
 		$ClusterConnectionParameters["StoreName"] = $OctopusFabricCertificateStoreName
 		$ClusterConnectionParameters["FindType"] = $OctopusFabricCertificateFindType
-		$ClusterConnectionParameters["FindValue"] = $OctopusFabricCertificateFindValue
+		$ClusterConnectionParameters["FindValue"] = $OctopusFabricClientCertThumbprint
     } Else {
         # Unsecure
         Write-Verbose "Connect to Service Fabric unsecurely"

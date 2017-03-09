@@ -35,8 +35,8 @@ namespace Calamari.Azure.Integration
             SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
             SetOutputVariable("OctopusFabricIsSecure", variables.Get(SpecialVariables.Action.Azure.FabricIsSecure), variables);
             SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricServerCertThumbprint), variables);
+            SetOutputVariable("OctopusFabricClientCertThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricClientCertThumbprint), variables);
             SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.Azure.FabricCertificateFindType, "FindByThumbprint"), variables);
-            SetOutputVariable("OctopusFabricCertificateFindValue", variables.Get(SpecialVariables.Action.Azure.FabricCertificateFindValue), variables);
             SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreLocation, "LocalMachine"), variables);
             SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreName, "MY"), variables);
 
