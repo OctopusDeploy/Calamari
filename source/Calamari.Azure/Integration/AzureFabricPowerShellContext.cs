@@ -7,6 +7,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octostache;
 using Calamari.Deployment;
+using Calamari.Azure.Util;
 
 namespace Calamari.Azure.Integration
 {
@@ -23,11 +24,14 @@ namespace Calamari.Azure.Integration
 
         public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
         {
+            if (!ServiceFabricHelper.IsServiceFabricSDKKeyInRegistry())
+                throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
+
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            // Set output variables for our script to access (these vars should exist from our step/action).
+            // Set output variables for our script to access.
             SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
             SetOutputVariable("OctopusFabricIsSecure", variables.Get(SpecialVariables.Action.Azure.FabricIsSecure), variables);
             SetOutputVariable("OctopusFabricServerCertificateThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricServerCertificateThumbprint), variables);

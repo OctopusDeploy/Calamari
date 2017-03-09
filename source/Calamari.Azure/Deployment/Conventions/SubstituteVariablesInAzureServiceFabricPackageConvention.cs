@@ -18,11 +18,10 @@ namespace Calamari.Azure.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            //TODO: markse - review this, it seems too easy :/
             var configurationFiles = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config", "*.xml");
             foreach (var configurationFile in configurationFiles)
             {
-                Log.Info("Performing variable substitution on '{0}'", configurationFile);
+                Log.Verbose($"Performing variable substitution on '{configurationFile}'");
                 substituter.PerformSubstitution(configurationFile, deployment.Variables);
             }
         }

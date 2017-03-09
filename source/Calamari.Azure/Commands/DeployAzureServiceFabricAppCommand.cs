@@ -14,6 +14,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
+using Calamari.Azure.Util;
 
 namespace Calamari.Azure.Commands
 {
@@ -36,6 +37,9 @@ namespace Calamari.Azure.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
+
+            if (!ServiceFabricHelper.IsServiceFabricSDKKeyInRegistry())
+                throw new CommandException("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
             Guard.NotNullOrWhiteSpace(packageFile,
                 "No package file was specified. Please pass --package YourPackage.nupkg");
