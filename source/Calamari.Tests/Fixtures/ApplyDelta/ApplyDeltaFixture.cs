@@ -103,81 +103,60 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         }
 
         [Test]
-        public void ShouldFailWhenNoBasisFileIsSpecified()
+        public void ShouldWriteErrorWhenNoBasisFileIsSpecified()
         {
             var result = ApplyDelta("", "Hash", "Delta", "New");
 
-            result.AssertFailure();
-            result.AssertErrorOutput("No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
+            result.AssertSuccess();
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
         }
 
         [Test]
-        public void ShouldFailWhenNoFileHashIsSpecified()
+        public void ShouldWriteErrorWhenNoFileHashIsSpecified()
         {
             var result = ApplyDelta("Basis", "", "Delta", "New");
 
-            result.AssertFailure();
-            result.AssertErrorOutput("No file hash was specified. Please pass --fileHash MyFileHash");
+            result.AssertSuccess();
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No file hash was specified. Please pass --fileHash MyFileHash");
         }
         [Test]
-        public void ShouldFailWhenNoDeltaFileIsSpecified()
+        public void ShouldWriteErrorWhenNoDeltaFileIsSpecified()
         {
             var result = ApplyDelta("Basis", "Hash", "", "New");
 
-            result.AssertFailure();
-            result.AssertErrorOutput("No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
+            result.AssertSuccess();
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
         }
 
         [Test]
-        public void ShouldFailWhenNoNewFileIsSpecified()
+        public void ShouldWriteErrorWhenNoNewFileIsSpecified()
         {
             var result = ApplyDelta("Basis", "Hash", "Delta", "");
 
-            result.AssertFailure();
-            result.AssertErrorOutput("No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
+            result.AssertSuccess();
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
         }
 
         [Test]
-        public void ShouldFailWhenBasisFileCannotBeFound()
+        public void ShouldWriteErrorWhenBasisFileCannotBeFound()
         {
             var basisFile = Path.Combine(DownloadPath, "MyPackage.1.0.0.0.nupkg");
             var result = ApplyDelta(basisFile, "Hash", "Delta", "New");
 
-            result.AssertFailure();
-            result.AssertErrorOutput("Could not find basis file: " + basisFile);
+            result.AssertSuccess();
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "Could not find basis file: " + basisFile);
         }
 
         [Test]
-        public void ShouldFailWhenDeltaFileCannotBeFound()
+        public void ShouldWriteErrorWhenDeltaFileCannotBeFound()
         {
             using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
             {
                 var deltaFilePath = Path.Combine(DownloadPath, "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, "New");
 
-                result.AssertFailure();
-                result.AssertErrorOutput("Could not find delta file: " + deltaFilePath);
-            }
-        }
-
-        [Test]
-        public void ShouldFailWhenBasisFileHashDoesNotMatchSpecifiedFileHash()
-        {
-            var otherBasisFileHash = "2e9407c9eae20ffa94bf050283f9b4292a48504c";
-            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
-            {
-                var deltaFilePath = Path.Combine(DownloadPath,
-                    "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
-                using (var deltaFile = File.CreateText(deltaFilePath))
-                {
-                    deltaFile.WriteLine("This is a delta file!");
-                    deltaFile.Flush();
-                }
-
-                var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName);
-
-                result.AssertFailure();
-                result.AssertErrorOutput("Basis file hash {0} does not match the file hash specified {1}", basisFile.Hash, otherBasisFileHash);
+                result.AssertSuccess();
+                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "Could not find delta file: " + deltaFilePath);
             }
         }
 

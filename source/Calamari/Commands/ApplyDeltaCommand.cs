@@ -16,7 +16,6 @@ namespace Calamari.Commands
         string newFileName;
         bool showProgress;
         bool skipVerification;
-        bool serviceMessageOnError;
         readonly PackageStore packageStore = new PackageStore(new GenericPackageExtractor());
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -27,9 +26,6 @@ namespace Calamari.Commands
             Options.Add("deltaFileName=", "The delta to apply to the basis file", v => deltaFileName = v);
             Options.Add("newFileName=", "The file to write the result to.", v => newFileName = v);
             Options.Add("progress", "Whether progress should be written to stdout", v => showProgress = true);
-            Options.Add("serviceMessageOnError",
-                "Write a service message on error rather than returning a non-zero exit code",
-                v => serviceMessageOnError = true);
             Options.Add("skipVerification",
                 "Skip checking whether the basis file is the same as the file used to produce the signature that created the delta.",
                 v => skipVerification = true);
@@ -81,12 +77,8 @@ namespace Calamari.Commands
             }
             catch (CommandException e)
             {
-                if(serviceMessageOnError)
-                {
-                    Log.ServiceMessages.DeltaVerificationError(e.Message);
-                    return 0;
-                }
-                throw;
+                Log.ServiceMessages.DeltaVerificationError(e.Message);
+                return 0;
             }
 
             var package = packageStore.GetPackage(newFilePath);
