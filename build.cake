@@ -60,7 +60,7 @@ Task("__Clean")
 });
 
 Task("__Restore")
-    .Does(() => DotNetCoreRestore("source"));
+    .Does(() => DotNetCoreRestore());
 
 Task("__UpdateAssemblyVersionInformation")
     .Does(() =>
