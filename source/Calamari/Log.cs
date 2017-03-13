@@ -179,7 +179,6 @@ namespace Calamari
                     ConvertServiceMessageValue(packageHash),
                     ConvertServiceMessageValue(packageFullPath),
                     ConvertServiceMessageValue(packageFileExtension));
-
             }
 
             public static void DeltaVerification(string remotePath, string hash, long size)
@@ -188,6 +187,11 @@ namespace Calamari
                     ConvertServiceMessageValue(remotePath),
                     ConvertServiceMessageValue(hash),
                     ConvertServiceMessageValue(size.ToString(CultureInfo.InvariantCulture)));
+            }
+
+            public static void DeltaVerificationError(string error)
+            {
+                VerboseFormat("##octopus[deltaVerification error=\"{0}\"]", ConvertServiceMessageValue(error));
             }
         }
     }
