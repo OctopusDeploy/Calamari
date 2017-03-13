@@ -196,10 +196,10 @@
                 // Service Fabric
                 public static readonly string FabricPackagePath = "Octopus.Action.Azure.FabricPackagePath";
                 public static readonly string FabricConnectionEndpoint = "Octopus.Action.Azure.FabricConnectionEndpoint";
-                public static readonly string FabricIsSecure = "Octopus.Action.Azure.FabricIsSecure";
+                public static readonly string FabricSecurityMode = "Octopus.Action.Azure.FabricSecurityMode";
                 public static readonly string FabricServerCertThumbprint = "Octopus.Action.Azure.FabricServerCertThumbprint";
-                public static readonly string FabricCertificateFindType = "Octopus.Action.Azure.FabricCertificateFindType";
                 public static readonly string FabricClientCertThumbprint = "Octopus.Action.Azure.FabricClientCertThumbprint";
+                public static readonly string FabricCertificateFindType = "Octopus.Action.Azure.FabricCertificateFindType";
                 public static readonly string FabricCertificateStoreLocation = "Octopus.Action.Azure.FabricCertificateStoreLocation";
                 public static readonly string FabricCertificateStoreName = "Octopus.Action.Azure.FabricCertificateStoreName";
                 public static readonly string FabricPublishProfileFile = "Octopus.Action.Azure.FabricPublishProfileFile";
@@ -212,6 +212,10 @@
                 public static readonly string FabricSecurityToken = "Octopus.Action.Azure.FabricSecurityToken";
                 public static readonly string FabricCopyPackageTimeoutSec = "Octopus.Action.Azure.FabricCopyPackageTimeoutSec";
                 public static readonly string FabricLogExtractedApplicationPackage = "Octopus.Action.Azure.FabricLogExtractedApplicationPackage";
+                public static readonly string FabricAadClientId = "Octopus.Action.Azure.FabricAadClientId";
+                public static readonly string FabricAadEnvironment = "Octopus.Action.Azure.FabricAadEnvironment";
+                public static readonly string FabricAadResourceUrl = "Octopus.Action.Azure.FabricAadResourceUrl";
+                public static readonly string FabricAadTenantId = "Octopus.Action.Azure.FabricAadTenantId";
 
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";

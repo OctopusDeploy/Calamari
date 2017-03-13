@@ -51,7 +51,7 @@ $CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
 Write-Verbose "TODO: markse - remove this logging"
 Write-Verbose "FabricPackagePath = $($FabricPackagePath)"
 Write-Verbose "FabricConnectionEndpoint = $($FabricConnectionEndpoint)"
-Write-Verbose "FabricIsSecure = $($FabricIsSecure)"
+Write-Verbose "FabricSecurityMode = $($FabricSecurityMode)"
 Write-Verbose "FabricServerCertThumbprint = $($FabricServerCertThumbprint)"
 Write-Verbose "FabricClientCertThumbprint = $($FabricClientCertThumbprint)"
 Write-Verbose "PublishProfileFile = $($PublishProfileFile)"

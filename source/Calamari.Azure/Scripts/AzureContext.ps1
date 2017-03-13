@@ -67,7 +67,7 @@ Execute-WithRetry{
         $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
         if (!$AzureEnvironment)
         {
-            Write-Error "No Azure environment could be matched given name $OctopusAzureEnvironment"
+            Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
             exit -2
         }
 
