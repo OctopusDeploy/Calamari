@@ -195,17 +195,20 @@ namespace Calamari.Integration.Certificates
             // Import the first certificate into the specified store
             AddCertificateToStore(storeLocation, storeName, certificates.First());
 
+            // Any other certificates in the chain are imported into the Intermediate Authority and Root stores
             for (var i = 1; i < certificates.Count; i++)
             {
                 var certificate = certificates[i];
 
-                if (i < (certificates.Count - 1))
+                // If it is the last certificate in the chain and is self-signed then it goes into the Root store
+                if (i == certificates.Count - 1 && IsSelfSigned(certificate))
                 {
-                    AddCertificateToStore(storeLocation, IntermediateAuthorityStoreName, certificate);
+                    AddCertificateToStore(storeLocation, RootAuthorityStoreName, certificate);
                     continue;
                 }
 
-                AddCertificateToStore(storeLocation, RootAuthorityStoreName, certificate);
+                // Otherwise into the Intermediate Authority store
+                AddCertificateToStore(storeLocation, IntermediateAuthorityStoreName, certificate);
             }
 
             return certificates.First();
@@ -243,6 +246,10 @@ namespace Calamari.Integration.Certificates
                     {
                         throw new CryptographicException(Marshal.GetLastWin32Error());
                     }
+
+                    var subjectName = CertificatePal.GetSubjectName(certificate);
+
+                    Log.Info($"Imported certificate '{subjectName}' into store '{storeName}'");
                 }
             }
             catch (Exception ex)
@@ -409,6 +416,12 @@ namespace Calamari.Integration.Certificates
 
                 return new List<Org.BouncyCastle.X509.X509Certificate> {pkcs12Store.GetCertificate(aliases.First()).Certificate};
             }
+        }
+
+        static bool IsSelfSigned(SafeCertContextHandle certificate)
+        {
+            var certificateInfo = (CERT_INFO)Marshal.PtrToStructure(certificate.CertificateContext.pCertInfo, typeof(CERT_INFO));
+            return CertCompareCertificateName(CertificateEncodingType.Pkcs7OrX509AsnEncoding, ref certificateInfo.Subject, ref certificateInfo.Issuer);
         }
 
         static byte[] CalculateThumbprint(Org.BouncyCastle.X509.X509Certificate certificate)
