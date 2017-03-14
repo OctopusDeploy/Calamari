@@ -89,7 +89,7 @@ namespace Calamari.Tests.Helpers
                 case ServiceMessageNames.PackageDeltaVerification.Name:
                     if (!string.IsNullOrWhiteSpace(message))
                     {
-                        Assert.That(captured.DeltaError, Is.EqualTo(message));
+                        Assert.That(captured.DeltaError.Replace("\r\n", "\n"), Is.EqualTo(message));
                         break;
                     }
 

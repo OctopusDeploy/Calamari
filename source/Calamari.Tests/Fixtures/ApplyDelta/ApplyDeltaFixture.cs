@@ -182,7 +182,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         }
 
         [Test]
-        public void ShouldFailWhenDeltaFileIsInvalid()
+        public void ShouldWriteErrorWhenDeltaFileIsInvalid()
         {
             using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
             {
@@ -196,12 +196,13 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, NewFileName);
 
-                result.AssertFailure();
+                result.AssertSuccess();
                 result.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}",
                     basisFile.FilePath,
                     basisFile.Hash,
                     Path.Combine(DownloadPath, NewFileName));
                 result.AssertOutput("The delta file appears to be corrupt.");
+                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "The following command:OctoDiff\nFailed with exit code: 2\n");
             }
         }
     }
