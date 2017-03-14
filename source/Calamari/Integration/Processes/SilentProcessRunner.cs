@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
+using Calamari.Util;
 
 namespace Calamari.Integration.Processes
 {
@@ -75,25 +76,45 @@ namespace Calamari.Integration.Processes
                     {
                         process.OutputDataReceived += (sender, e) =>
                         {
-                            if (e.Data == null)
+                            try
                             {
-                                outputWaitHandle.Set();
+                                if (e.Data == null)
+                                    outputWaitHandle.Set();
+                                else
+                                    output(e.Data);
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                output(e.Data);
+                                try
+                                {
+                                    error($"Error occured handling message: {ex.PrettyPrint()}");
+                                }
+                                catch
+                                {
+                                    // Ignore
+                                }
                             }
                         };
 
                         process.ErrorDataReceived += (sender, e) =>
                         {
-                            if (e.Data == null)
+                            try
                             {
-                                errorWaitHandle.Set();
+                                if (e.Data == null)
+                                    errorWaitHandle.Set();
+                                else
+                                    error(e.Data);
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                error(e.Data);
+                                try
+                                {
+                                    error($"Error occured handling message: {ex.PrettyPrint()}");
+                                }
+                                catch
+                                {
+                                    // Ignore
+                                }
                             }
                         };
 
