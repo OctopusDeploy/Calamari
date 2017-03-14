@@ -75,7 +75,7 @@ namespace Calamari.Commands
                     throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " +
                                                basisFilePath);
             }
-            catch (CommandException e)
+            catch (Exception e) when (e is CommandLineException || e is CommandException)
             {
                 Log.ServiceMessages.DeltaVerificationError(e.Message);
                 return 0;
