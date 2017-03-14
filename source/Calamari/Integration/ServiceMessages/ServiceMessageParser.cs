@@ -80,13 +80,12 @@ namespace Calamari.Integration.ServiceMessages
                 // Ignore
             }
         }
-    }
 
-    enum State
-    {
-        Default,
-        PossibleMessage,
-        InMessage
-    }
+        enum State
+        {
+            Default,
+            PossibleMessage,
+            InMessage
+        }
     }
 }
