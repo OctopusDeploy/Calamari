@@ -108,6 +108,7 @@ Execute-WithRetry{
 			Exit
 		}
 
+		#TODO: markse - we need to include this lib in our bundle somehow.
 		# Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
 		Try
 		{
