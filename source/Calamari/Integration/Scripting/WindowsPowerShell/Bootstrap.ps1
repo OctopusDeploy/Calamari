@@ -12,6 +12,32 @@ $ErrorActionPreference = 'Stop'
 # Functions
 # -----------------------------------------------------------------
 
+function Wait-OnSemaphore
+{
+	param(
+	[parameter(Mandatory = $true)][string] $SemaphoreId
+	)
+
+	Try
+	{
+		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList  1, 1, $SemaphoreId
+
+		Write-Verbose "Acquired SemaphoreInstance $SemaphoreId"
+
+		while (-not $SemaphoreInstance.WaitOne(50))
+		{
+			Start-Sleep -m 50;
+		}
+
+		return $SemaphoreInstance
+	}
+	Catch [System.Threading.AbandonedMutexException]
+	{
+		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
+		return Wait-OnSemaphore -SemaphoreId $SemaphoreId
+	}
+}
+
 function Log-VersionTable
 {
 	Write-Verbose ($PSVersionTable | Out-String)
@@ -264,9 +290,17 @@ Initialize-ProxySettings
 Log-EnvironmentInformation
 
 # -----------------------------------------------------------------
-# Invoke target script
+# Invoke target script - must acquire semaphore for IIS related
 # -----------------------------------------------------------------
-. '{{TargetScriptFile}}' {{ScriptParameters}}
+$SemaphoreInstance = Wait-OnSemaphore -SemaphoreId 'Global\Octopus-IIS-Metabase'
+Try
+{
+	. '{{TargetScriptFile}}' {{ScriptParameters}}
+}
+Finally
+{
+    $SemaphoreInstance.Release()
+}
 
 # -----------------------------------------------------------------
 # Ensure we exit with whatever exit code the last exe used
