@@ -59,21 +59,24 @@ namespace Calamari.Tests.Fixtures.Certificates
         }
 
         [Test]
-        public void CanImportCertificateChain()
+        [TestCase(StoreLocation.LocalMachine, "My")]
+        [TestCase(StoreLocation.CurrentUser, "My")]
+        [TestCase(StoreLocation.LocalMachine, "Foo")]
+        [TestCase(StoreLocation.CurrentUser, "Foo")]
+        public void CanImportCertificateChain(StoreLocation storeLocation, string storeName)
         {
-            var storeLocation = StoreLocation.LocalMachine;
-            var storeName = "My";
             var sampleCertificate = SampleCertificate.CertificateChain;
             const string intermediateAuthorityThumbprint = "2E5DEC036985A4028351FD8DF3532E49D7B34049";
             const string rootAuthorityThumbprint = "CC7ED077F0F292595A8166B01709E20C0884A5F8";
-            var intermediateAuthorityStore = new X509Store(StoreName.CertificateAuthority, storeLocation);
-            var rootAuthorityStore = new X509Store(StoreName.Root, storeLocation);
+            // intermediate and root authority certificates are always imported to LocalMachine
+            var intermediateAuthorityStore = new X509Store(StoreName.CertificateAuthority, StoreLocation.LocalMachine);
+            var rootAuthorityStore = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
             intermediateAuthorityStore.Open(OpenFlags.ReadWrite);
             rootAuthorityStore.Open(OpenFlags.ReadWrite);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
-            WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, storeLocation, intermediateAuthorityStore.Name);
-            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, storeLocation, rootAuthorityStore.Name);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, StoreLocation.LocalMachine, intermediateAuthorityStore.Name);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, StoreLocation.LocalMachine, rootAuthorityStore.Name);
 
             WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
                 storeLocation, storeName, sampleCertificate.HasPrivateKey);
@@ -88,8 +91,8 @@ namespace Calamari.Tests.Fixtures.Certificates
             Assert.True(certificate.HasPrivateKey);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
-            WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, storeLocation, intermediateAuthorityStore.Name);
-            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, storeLocation, rootAuthorityStore.Name);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, StoreLocation.LocalMachine, intermediateAuthorityStore.Name);
+            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, StoreLocation.LocalMachine, rootAuthorityStore.Name);
         }
 
         private static void AssertCertificateInStore(X509Store store, string thumbprint)

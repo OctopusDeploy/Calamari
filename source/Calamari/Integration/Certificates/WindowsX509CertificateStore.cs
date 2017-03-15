@@ -196,6 +196,7 @@ namespace Calamari.Integration.Certificates
             AddCertificateToStore(storeLocation, storeName, certificates.First());
 
             // Any other certificates in the chain are imported into the Intermediate Authority and Root stores
+            // of the Local Machine (importing into user CA stores causes a security-warning dialog to be shown)
             for (var i = 1; i < certificates.Count; i++)
             {
                 var certificate = certificates[i];
@@ -203,12 +204,12 @@ namespace Calamari.Integration.Certificates
                 // If it is the last certificate in the chain and is self-signed then it goes into the Root store
                 if (i == certificates.Count - 1 && IsSelfSigned(certificate))
                 {
-                    AddCertificateToStore(storeLocation, RootAuthorityStoreName, certificate);
+                    AddCertificateToStore(CertificateSystemStoreLocation.LocalMachine, RootAuthorityStoreName, certificate);
                     continue;
                 }
 
                 // Otherwise into the Intermediate Authority store
-                AddCertificateToStore(storeLocation, IntermediateAuthorityStoreName, certificate);
+                AddCertificateToStore(CertificateSystemStoreLocation.LocalMachine, IntermediateAuthorityStoreName, certificate);
             }
 
             return certificates.First();
