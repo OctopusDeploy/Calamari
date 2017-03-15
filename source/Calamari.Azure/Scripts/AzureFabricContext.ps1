@@ -5,8 +5,8 @@
 ##
 ## The script is passed the following parameters. 
 ##
-##   OctopusAzureTargetScript
-##   OctopusAzureTargetScriptParameters
+##   OctopusFabricTargetScript
+##   OctopusFabricTargetScriptParameters
 ##   OctopusFabricConnectionEndpoint                         // The connection endpoint
 ##   OctopusFabricSecurityMode                               // The security mode used to connect to the cluster
 ##   OctopusFabricServerCertThumbprint                       // The server certificate thumbprint
@@ -18,13 +18,25 @@
 ##   OctopusFabricAadEnvironment                             // The azure environment for AAD auth (should be 'AzureCloud' by default)
 ##   OctopusFabricAadResourceUrl                             // The resource URL for AAD auth
 ##   OctopusFabricAadTenantId                                // The tenant ID for AAD auth
+##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 $ErrorActionPreference = "Stop"
 
-# Providing a fallback, as some customers reported this $PSScriptRoot was not available for them.
-if (!$PSScriptRoot) {
-    $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
-}
+Write-Verbose "TODO: markse - remove this logging"
+Write-Verbose "OctopusFabricTargetScript = $($OctopusFabricTargetScript)"
+Write-Verbose "OctopusFabricTargetScriptParameters = $($OctopusFabricTargetScriptParameters)"
+Write-Verbose "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
+Write-Verbose "OctopusFabricSecurityMode = $($OctopusFabricSecurityMode)"
+Write-Verbose "OctopusFabricServerCertThumbprint = $($OctopusFabricServerCertThumbprint)"
+Write-Verbose "OctopusFabricClientCertThumbprint = $($OctopusFabricClientCertThumbprint)"
+Write-Verbose "OctopusFabricCertificateFindType = $($OctopusFabricCertificateFindType)"
+Write-Verbose "OctopusFabricCertificateStoreLocation = $($OctopusFabricCertificateStoreLocation)"
+Write-Verbose "OctopusFabricCertificateStoreName = $($OctopusFabricCertificateStoreName)"
+Write-Verbose "OctopusFabricAadClientId = $($OctopusFabricAadClientId)"
+Write-Verbose "OctopusFabricAadEnvironment = $($OctopusFabricAadEnvironment)"
+Write-Verbose "OctopusFabricAadResourceUrl = $($OctopusFabricAadResourceUrl)"
+Write-Verbose "OctopusFabricAadTenantId = $($OctopusFabricAadTenantId)"
+Write-Verbose "OctopusFabricActiveDirectoryLibraryPath = $($OctopusFabricActiveDirectoryLibraryPath)"
 
 function Execute-WithRetry([ScriptBlock] $command) {
     $attemptCount = 0
@@ -93,6 +105,11 @@ Execute-WithRetry{
 		# Secure Azure AD
 		Write-Verbose "Loading connection parameters for the 'Azure AD' security mode."
 		
+		if (!$OctopusFabricAadEnvironment) {
+			Write-Warning "Failed to find a value for the Azure environment."
+			Exit
+		}
+		
 		if (!$OctopusFabricAadClientId) {
 			Write-Warning "Failed to find a value for the client ID."
 			Exit
@@ -108,38 +125,38 @@ Execute-WithRetry{
 			Exit
 		}
 
-		#TODO: markse - we need to include this lib in our bundle somehow.
 		# Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
 		Try
 		{
-			$FilePath = Join-Path $PSScriptRoot "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+			$FilePath = Join-Path $OctopusFabricActiveDirectoryLibraryPath "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
 			Add-Type -Path $FilePath
 		}
 		Catch
 		{
-			Write-Error "Unable to load the Microsoft.IdentityModel.Clients.ActiveDirectory.dll. Please ensure Service Fabric SDK has been installed."
+			Write-Error "Unable to load the Microsoft.IdentityModel.Clients.ActiveDirectory.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
 			Exit
 		}
 
 		# Get the AD Authority URL based on our environment (uses Azure PS modules, not SF SDK).
-		$AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
+		$AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusFabricAadEnvironment
         if (!$AzureEnvironment)
         {
-            Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment."
+            Write-Error "No Azure environment could be matched given the name $OctopusFabricAadEnvironment."
             Exit
         }
-		#TODO: markse - use a join-path or something instead of string concat here, feels messy/dangerous.
+		#TODO: markse - use something instead of string concat here, feels messy/dangerous.
 		$AuthorityUrl = "$($AzureEnvironment.ActiveDirectoryAuthority)$($OctopusFabricAadTenantId)"
 		Write-Verbose "Using ActiveDirectoryAuthority $($AuthorityUrl)."
 		
-		$RedirectUrl = "urn:ietf:wg:oauth:2.0:oob"
+		$UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $OctopusFabricAadClientId, "DYBhrmVbf1PeRBclOMi6y6z9d8yWQMg/vS/1S8Fn8+w="
 		$AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
-		$AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceUrl, $OctopusFabricAadClientId, $RedirectUrl, [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::RefreshSession).AccessToken
+		$AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceUrl, $UserCred).AccessToken
 		if (!$AccessToken)
         {
             Write-Error "No access token could be found for Service Fabric to connect with."
             Exit
         }
+		$ClusterConnectionParameters["AzureActiveDirectory"] = $true
 		$ClusterConnectionParameters["SecurityToken"] = $AccessToken
 
     } Else {
@@ -166,5 +183,5 @@ Execute-WithRetry{
     }
 }
 
-Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters."
-Invoke-Expression ". $OctopusAzureTargetScript $OctopusAzureTargetScriptParameters"
+Write-Verbose "Invoking target script $OctopusFabricTargetScript with $OctopusFabricTargetScriptParameters parameters."
+Invoke-Expression ". $OctopusFabricTargetScript $OctopusFabricTargetScriptParameters"

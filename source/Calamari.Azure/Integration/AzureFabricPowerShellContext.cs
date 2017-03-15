@@ -28,11 +28,11 @@ namespace Calamari.Azure.Integration
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
             var workingDirectory = Path.GetDirectoryName(script.File);
-            variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
-            variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
+            variables.Set("OctopusFabricTargetScript", "\"" + script.File + "\"");
+            variables.Set("OctopusFabricTargetScriptParameters", script.Parameters);
 
             // Azure PS modules are required for looking up Azure environments (needed for AAD url lookup in Service Fabric world).
-            SetAzurePowerShellModulesLoadingMethod(variables);
+            SetAzureModulesLoadingMethod(variables);
 
             // Set output variables for our script to access.
             SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
@@ -69,12 +69,15 @@ namespace Calamari.Azure.Integration
             return azureContextScriptFile;
         }
 
-        static void SetAzurePowerShellModulesLoadingMethod(VariableDictionary variables)
+        static void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
             // By default use the Azure PowerShell modules bundled with Calamari
             // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
             SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
             SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, AzurePowerShellContext.BuiltInAzurePowershellModulePath, variables);
+
+            // Calamari dll references
+            SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(Program).Assembly.Location), variables);
         }
 
         static void SetOutputVariable(string name, string value, VariableDictionary variables)

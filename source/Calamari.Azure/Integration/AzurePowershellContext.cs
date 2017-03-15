@@ -38,7 +38,7 @@ namespace Calamari.Azure.Integration
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            SetAzurePowerShellModulesLoadingMethod(variables);
+            SetAzureModulesLoadingMethod(variables);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
@@ -70,7 +70,7 @@ namespace Calamari.Azure.Integration
             }
         }
 
-        static void SetAzurePowerShellModulesLoadingMethod(VariableDictionary variables)
+        static void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
             // By default use the Azure PowerShell modules bundled with Calamari
             // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
