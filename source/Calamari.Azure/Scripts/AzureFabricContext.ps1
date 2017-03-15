@@ -15,28 +15,30 @@
 ##   OctopusFabricCertificateStoreLocation                   // The certificate store location (should be 'LocalMachine' by default)
 ##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
 ##   OctopusFabricAadClientId                                // The client ID for AAD auth
+##   OctopusFabricAadClientSecret                            // The client secret for AAD auth
 ##   OctopusFabricAadEnvironment                             // The azure environment for AAD auth (should be 'AzureCloud' by default)
-##   OctopusFabricAadResourceUrl                             // The resource URL for AAD auth
+##   OctopusFabricAadResourceId                             // The resource URL for AAD auth
 ##   OctopusFabricAadTenantId                                // The tenant ID for AAD auth
 ##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 $ErrorActionPreference = "Stop"
 
-Write-Verbose "TODO: markse - remove this logging"
-Write-Verbose "OctopusFabricTargetScript = $($OctopusFabricTargetScript)"
-Write-Verbose "OctopusFabricTargetScriptParameters = $($OctopusFabricTargetScriptParameters)"
-Write-Verbose "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
-Write-Verbose "OctopusFabricSecurityMode = $($OctopusFabricSecurityMode)"
-Write-Verbose "OctopusFabricServerCertThumbprint = $($OctopusFabricServerCertThumbprint)"
-Write-Verbose "OctopusFabricClientCertThumbprint = $($OctopusFabricClientCertThumbprint)"
-Write-Verbose "OctopusFabricCertificateFindType = $($OctopusFabricCertificateFindType)"
-Write-Verbose "OctopusFabricCertificateStoreLocation = $($OctopusFabricCertificateStoreLocation)"
-Write-Verbose "OctopusFabricCertificateStoreName = $($OctopusFabricCertificateStoreName)"
-Write-Verbose "OctopusFabricAadClientId = $($OctopusFabricAadClientId)"
-Write-Verbose "OctopusFabricAadEnvironment = $($OctopusFabricAadEnvironment)"
-Write-Verbose "OctopusFabricAadResourceUrl = $($OctopusFabricAadResourceUrl)"
-Write-Verbose "OctopusFabricAadTenantId = $($OctopusFabricAadTenantId)"
-Write-Verbose "OctopusFabricActiveDirectoryLibraryPath = $($OctopusFabricActiveDirectoryLibraryPath)"
+#Write-Verbose "TODO: markse - remove this logging"
+#Write-Verbose "OctopusFabricTargetScript = $($OctopusFabricTargetScript)"
+#Write-Verbose "OctopusFabricTargetScriptParameters = $($OctopusFabricTargetScriptParameters)"
+#Write-Verbose "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
+#Write-Verbose "OctopusFabricSecurityMode = $($OctopusFabricSecurityMode)"
+#Write-Verbose "OctopusFabricServerCertThumbprint = $($OctopusFabricServerCertThumbprint)"
+#Write-Verbose "OctopusFabricClientCertThumbprint = $($OctopusFabricClientCertThumbprint)"
+#Write-Verbose "OctopusFabricCertificateFindType = $($OctopusFabricCertificateFindType)"
+#Write-Verbose "OctopusFabricCertificateStoreLocation = $($OctopusFabricCertificateStoreLocation)"
+#Write-Verbose "OctopusFabricCertificateStoreName = $($OctopusFabricCertificateStoreName)"
+#Write-Verbose "OctopusFabricAadClientId = $($OctopusFabricAadClientId)"
+#Write-Verbose "OctopusFabricAadClientSecret = $($OctopusFabricAadClientSecret)"
+#Write-Verbose "OctopusFabricAadEnvironment = $($OctopusFabricAadEnvironment)"
+#Write-Verbose "OctopusFabricAadResourceId = $($OctopusFabricAadResourceId)"
+#Write-Verbose "OctopusFabricAadTenantId = $($OctopusFabricAadTenantId)"
+#Write-Verbose "OctopusFabricActiveDirectoryLibraryPath = $($OctopusFabricActiveDirectoryLibraryPath)"
 
 # We need these PS modules for the AzureAD security mode (not available in SF SDK).
 if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
@@ -91,7 +93,10 @@ function ValidationMessageForAzureADParameters() {
 	if (!$OctopusFabricAadClientId) {
 		return "Failed to find a value for the client ID."
 	}
-	if (!$OctopusFabricAadResourceUrl) {
+	if (!$OctopusFabricAadClientSecret) {
+		return "Failed to find a value for the client secret."
+	}
+	if (!$OctopusFabricAadResourceId) {
 		return "Failed to find a value for the resource URL."
 	}
 	if (!$OctopusFabricAadTenantId) {
@@ -120,13 +125,14 @@ function GetAzureADAccessToken() {
         Write-Error "No Azure environment could be matched given the name $OctopusFabricAadEnvironment."
         Exit
     }
-	#TODO: markse - use something instead of string concat here, feels messy/dangerous.
-	$AuthorityUrl = "$($AzureEnvironment.ActiveDirectoryAuthority)$($OctopusFabricAadTenantId)"
+	#$AuthorityUrl = "$($AzureEnvironment.ActiveDirectoryAuthority)$($OctopusFabricAadTenantId)"
+    $AuthorityUrl = [System.IO.Path]::Combine($AzureEnvironment.ActiveDirectoryAuthority, $OctopusFabricAadTenantId)
+    $AuthorityUrl = $AuthorityUrl.Replace('\', '/')
 	Write-Verbose "Using ActiveDirectoryAuthority $($AuthorityUrl)."
 		
-	$UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $OctopusFabricAadClientId, "DYBhrmVbf1PeRBclOMi6y6z9d8yWQMg/vS/1S8Fn8+w="
+	$UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $OctopusFabricAadClientId, $OctopusFabricAadClientSecret
 	$AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
-	$AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceUrl, $UserCred).AccessToken
+	$AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceId, $UserCred).AccessToken
 	return $AccessToken
 }
 
@@ -139,7 +145,7 @@ Execute-WithRetry {
     If ($OctopusFabricSecurityMode -eq "SecureClientCertificate") {
 
 		# Secure client certificate
-		Write-Verbose "Loading connection parameters for the 'client certificate' security mode."
+		Write-Verbose "Loading connection parameters for the 'Client Certificate' security mode."
 
 		$validationMsg = ValidationMessageForClientCertificateParameters
 		if ($validationMsg) {
@@ -185,9 +191,9 @@ Execute-WithRetry {
     {
         Write-Verbose "Authenticating with Service Fabric."
 
-		#TODO: markse - remove this logging
-		#Write-Host $ClusterConnectionParameters.Keys
-		#Write-Host $ClusterConnectionParameters.Values
+		$EnvironmentNewLine = [Environment]::NewLine
+		$ClusterConnectionParametersText = ($ClusterConnectionParameters.GetEnumerator() | % { "$($_.Key)=$($_.Value)" }) -join "  $($EnvironmentNewLine)"
+		Write-Verbose "Using ConnectionParameters:$($EnvironmentNewLine)$($ClusterConnectionParametersText)"
 
         [void](Connect-ServiceFabricCluster @ClusterConnectionParameters)
 

@@ -209,12 +209,12 @@
                 public static readonly string FabricOverrideUpgradeBehavior = "Octopus.Action.Azure.FabricOverrideUpgradeBehavior";
                 public static readonly string FabricOverwriteBehavior = "Octopus.Action.Azure.FabricOverwriteBehavior";
                 public static readonly string FabricSkipPackageValidation = "Octopus.Action.Azure.FabricSkipPackageValidation";
-                public static readonly string FabricSecurityToken = "Octopus.Action.Azure.FabricSecurityToken";
                 public static readonly string FabricCopyPackageTimeoutSec = "Octopus.Action.Azure.FabricCopyPackageTimeoutSec";
                 public static readonly string FabricLogExtractedApplicationPackage = "Octopus.Action.Azure.FabricLogExtractedApplicationPackage";
                 public static readonly string FabricAadClientId = "Octopus.Action.Azure.FabricAadClientId";
+                public static readonly string FabricAadClientSecret = "Octopus.Action.Azure.FabricAadClientSecret";
                 public static readonly string FabricAadEnvironment = "Octopus.Action.Azure.FabricAadEnvironment";
-                public static readonly string FabricAadResourceUrl = "Octopus.Action.Azure.FabricAadResourceUrl";
+                public static readonly string FabricAadResourceId = "Octopus.Action.Azure.FabricAadResourceId";
                 public static readonly string FabricAadTenantId = "Octopus.Action.Azure.FabricAadTenantId";
 
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";

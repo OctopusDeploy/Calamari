@@ -42,7 +42,6 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverrideUpgradeBehavior, defaultValue: "None"), variables);
             Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
             Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation, defaultValue: false.ToString()), variables);
-            Log.SetOutputVariable("SecurityToken", variables.Get(SpecialVariables.Action.Azure.FabricSecurityToken, defaultValue: string.Empty), variables);
             Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.Azure.FabricCopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
 
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).

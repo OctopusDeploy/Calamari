@@ -43,7 +43,8 @@ namespace Calamari.Azure.Integration
             SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreLocation, "LocalMachine"), variables);
             SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreName, "MY"), variables);
             SetOutputVariable("OctopusFabricAadClientId", variables.Get(SpecialVariables.Action.Azure.FabricAadClientId), variables);
-            SetOutputVariable("OctopusFabricAadResourceUrl", variables.Get(SpecialVariables.Action.Azure.FabricAadResourceUrl), variables);
+            SetOutputVariable("OctopusFabricAadClientSecret", variables.Get(SpecialVariables.Action.Azure.FabricAadClientSecret), variables);
+            SetOutputVariable("OctopusFabricAadResourceId", variables.Get(SpecialVariables.Action.Azure.FabricAadResourceId), variables);
             SetOutputVariable("OctopusFabricAadTenantId", variables.Get(SpecialVariables.Action.Azure.FabricAadTenantId), variables);
 
             // Azure AD environment override.
