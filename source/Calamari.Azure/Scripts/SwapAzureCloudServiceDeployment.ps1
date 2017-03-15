@@ -27,7 +27,7 @@ if (($OctopusAzureSwapIfPossible -eq $true) -and ($OctopusAzureSlot -eq "Product
         Write-Verbose ("Current staging deployment: " + $staging.Label)
         if ($staging.Label -eq $OctopusAzureDeploymentLabel) {
             SwapDeployment
-			Set-OctopusVariable -name "OctopusAzureCloudServiceDeploymentSwapped" -value $true
+            Set-OctopusVariable -name "OctopusAzureCloudServiceDeploymentSwapped" -value $true
         }
     }
 }

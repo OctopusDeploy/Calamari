@@ -80,107 +80,106 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 function ValidationMessageForClientCertificateParameters() {
-	if (!$OctopusFabricClientCertThumbprint) {
-		return "Failed to find a value for the client certificate."
-	}
-	return $null
+    if (!$OctopusFabricClientCertThumbprint) {
+        return "Failed to find a value for the client certificate."
+    }
+    return $null
 }
 
 function ValidationMessageForAzureADParameters() {
-	if (!$OctopusFabricAadEnvironment) {
-		return "Failed to find a value for the Azure environment."
-	}
-	if (!$OctopusFabricAadClientId) {
-		return "Failed to find a value for the client ID."
-	}
-	if (!$OctopusFabricAadClientSecret) {
-		return "Failed to find a value for the client secret."
-	}
-	if (!$OctopusFabricAadResourceId) {
-		return "Failed to find a value for the resource URL."
-	}
-	if (!$OctopusFabricAadTenantId) {
-		return "Failed to find a value for the tenant ID."
-	}
-	return $null
+    if (!$OctopusFabricAadEnvironment) {
+        return "Failed to find a value for the Azure environment."
+    }
+    if (!$OctopusFabricAadClientId) {
+        return "Failed to find a value for the client ID."
+    }
+    if (!$OctopusFabricAadClientSecret) {
+        return "Failed to find a value for the client secret."
+    }
+    if (!$OctopusFabricAadResourceId) {
+        return "Failed to find a value for the resource URL."
+    }
+    if (!$OctopusFabricAadTenantId) {
+        return "Failed to find a value for the tenant ID."
+    }
+    return $null
 }
 
 function GetAzureADAccessToken() {
-	# Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
-	Try
-	{
-		$FilePath = Join-Path $OctopusFabricActiveDirectoryLibraryPath "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
-		Add-Type -Path $FilePath
-	}
-	Catch
-	{
-		Write-Error "Unable to load the Microsoft.IdentityModel.Clients.ActiveDirectory.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
-		Exit
-	}
+    # Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
+    Try
+    {
+        $FilePath = Join-Path $OctopusFabricActiveDirectoryLibraryPath "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+        Add-Type -Path $FilePath
+    }
+    Catch
+    {
+        Write-Error "Unable to load the Microsoft.IdentityModel.Clients.ActiveDirectory.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
+        Exit
+    }
 
-	# Get the AD Authority URL based on the Azure environment (this call uses Azure PS modules, not SF SDK).
-	$AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusFabricAadEnvironment
+    # Get the AD Authority URL based on the Azure environment (this call uses Azure PS modules, not SF SDK).
+    $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusFabricAadEnvironment
     if (!$AzureEnvironment)
     {
         Write-Error "No Azure environment could be matched given the name $OctopusFabricAadEnvironment."
         Exit
     }
-	#$AuthorityUrl = "$($AzureEnvironment.ActiveDirectoryAuthority)$($OctopusFabricAadTenantId)"
     $AuthorityUrl = [System.IO.Path]::Combine($AzureEnvironment.ActiveDirectoryAuthority, $OctopusFabricAadTenantId)
     $AuthorityUrl = $AuthorityUrl.Replace('\', '/')
-	Write-Verbose "Using ActiveDirectoryAuthority $($AuthorityUrl)."
-		
-	$UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $OctopusFabricAadClientId, $OctopusFabricAadClientSecret
-	$AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
-	$AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceId, $UserCred).AccessToken
-	return $AccessToken
+    Write-Verbose "Using ActiveDirectoryAuthority $($AuthorityUrl)."
+        
+    $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $OctopusFabricAadClientId, $OctopusFabricAadClientSecret
+    $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
+    $AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceId, $UserCred).AccessToken
+    return $AccessToken
 }
 
 Execute-WithRetry {
 
-	# Prepare a dictionary of connection parameters that we'll use to connect below.
-	$ClusterConnectionParameters = @{}
-	$ClusterConnectionParameters["ConnectionEndpoint"] = $OctopusFabricConnectionEndpoint
+    # Prepare a dictionary of connection parameters that we'll use to connect below.
+    $ClusterConnectionParameters = @{}
+    $ClusterConnectionParameters["ConnectionEndpoint"] = $OctopusFabricConnectionEndpoint
 
     If ($OctopusFabricSecurityMode -eq "SecureClientCertificate") {
 
-		# Secure client certificate
-		Write-Verbose "Loading connection parameters for the 'Client Certificate' security mode."
+        # Secure client certificate
+        Write-Verbose "Loading connection parameters for the 'Client Certificate' security mode."
 
-		$validationMsg = ValidationMessageForClientCertificateParameters
-		if ($validationMsg) {
-			Write-Warning $validationMsg
-			Exit
-		}
+        $validationMsg = ValidationMessageForClientCertificateParameters
+        if ($validationMsg) {
+            Write-Warning $validationMsg
+            Exit
+        }
 
-		$ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
-		$ClusterConnectionParameters["X509Credential"] = $true
-		$ClusterConnectionParameters["StoreLocation"] = $OctopusFabricCertificateStoreLocation
-		$ClusterConnectionParameters["StoreName"] = $OctopusFabricCertificateStoreName
-		$ClusterConnectionParameters["FindType"] = $OctopusFabricCertificateFindType
-		$ClusterConnectionParameters["FindValue"] = $OctopusFabricClientCertThumbprint
+        $ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
+        $ClusterConnectionParameters["X509Credential"] = $true
+        $ClusterConnectionParameters["StoreLocation"] = $OctopusFabricCertificateStoreLocation
+        $ClusterConnectionParameters["StoreName"] = $OctopusFabricCertificateStoreName
+        $ClusterConnectionParameters["FindType"] = $OctopusFabricCertificateFindType
+        $ClusterConnectionParameters["FindValue"] = $OctopusFabricClientCertThumbprint
 
-	} ElseIf ($OctopusFabricSecurityMode -eq "SecureAzureAD") {
+    } ElseIf ($OctopusFabricSecurityMode -eq "SecureAzureAD") {
 
-		# Secure Azure AD
-		Write-Verbose "Loading connection parameters for the 'Azure AD' security mode."
+        # Secure Azure AD
+        Write-Verbose "Loading connection parameters for the 'Azure AD' security mode."
 
-		$validationMsg = ValidationMessageForAzureADParameters
-		if ($validationMsg) {
-			Write-Warning $validationMsg
-			Exit
-		}
+        $validationMsg = ValidationMessageForAzureADParameters
+        if ($validationMsg) {
+            Write-Warning $validationMsg
+            Exit
+        }
 
-		$AccessToken = GetAzureADAccessToken
-		if (!$AccessToken)
+        $AccessToken = GetAzureADAccessToken
+        if (!$AccessToken)
         {
             Write-Error "No access token could be found for Service Fabric to connect with."
             Exit
         }
-		
-		$ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
-		$ClusterConnectionParameters["AzureActiveDirectory"] = $true
-		$ClusterConnectionParameters["SecurityToken"] = $AccessToken
+        
+        $ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
+        $ClusterConnectionParameters["AzureActiveDirectory"] = $true
+        $ClusterConnectionParameters["SecurityToken"] = $AccessToken
 
     } Else {
         # Unsecure
@@ -191,18 +190,18 @@ Execute-WithRetry {
     {
         Write-Verbose "Authenticating with Service Fabric."
 
-		$EnvironmentNewLine = [Environment]::NewLine
-		$ClusterConnectionParametersText = ($ClusterConnectionParameters.GetEnumerator() | % { "$($_.Key)=$($_.Value)" }) -join "  $($EnvironmentNewLine)"
-		Write-Verbose "Using ConnectionParameters:$($EnvironmentNewLine)$($ClusterConnectionParametersText)"
+        $EnvironmentNewLine = [Environment]::NewLine
+        $ClusterConnectionParametersText = ($ClusterConnectionParameters.GetEnumerator() | % { "$($_.Key)=$($_.Value)" }) -join "  $($EnvironmentNewLine)"
+        Write-Verbose "Using ConnectionParameters:$($EnvironmentNewLine)$($ClusterConnectionParametersText)"
 
         [void](Connect-ServiceFabricCluster @ClusterConnectionParameters)
 
-		# http://stackoverflow.com/questions/35711540/how-do-i-deploy-service-fabric-application-from-vsts-release-pipeline
-		# When the Connect-ServiceFabricCluster function is called, a local $clusterConnection variable is set after the call to Connect-ServiceFabricCluster. You can see that using Get-Variable.
-		# Unfortunately there is logic in some of the SDK scripts that expect that variable to be set but because they run in a different scope, that local variable isn't available.
-		# It works in Visual Studio because the Deploy-FabricApplication.ps1 script is called using dot source notation, which puts the $clusterConnection variable in the current scope.
-		# I'm not sure if there is a way to use dot sourcing when running a script though the release pipeline but you could, as a workaround, make the $clusterConnection variable global right after it's been set via the Connect-ServiceFabricCluster call.
-		$global:clusterConnection = $clusterConnection
+        # http://stackoverflow.com/questions/35711540/how-do-i-deploy-service-fabric-application-from-vsts-release-pipeline
+        # When the Connect-ServiceFabricCluster function is called, a local $clusterConnection variable is set after the call to Connect-ServiceFabricCluster. You can see that using Get-Variable.
+        # Unfortunately there is logic in some of the SDK scripts that expect that variable to be set but because they run in a different scope, that local variable isn't available.
+        # It works in Visual Studio because the Deploy-FabricApplication.ps1 script is called using dot source notation, which puts the $clusterConnection variable in the current scope.
+        # I'm not sure if there is a way to use dot sourcing when running a script though the release pipeline but you could, as a workaround, make the $clusterConnection variable global right after it's been set via the Connect-ServiceFabricCluster call.
+        $global:clusterConnection = $clusterConnection
     }
     catch [System.Fabric.FabricObjectClosedException]
     {

@@ -73,10 +73,10 @@ Execute-WithRetry{
 
         Write-Verbose "Authenticating with Service Principal"
 
-		# Force any output generated to be verbose in Octopus logs.
-		Write-Host "##octopus[stdout-verbose]"
-		Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-		Write-Host "##octopus[stdout-default]"
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
         
     } Else {
         # Authenticate via Management Certificate
