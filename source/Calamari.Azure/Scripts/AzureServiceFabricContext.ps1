@@ -16,7 +16,6 @@
 ##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
 ##   OctopusFabricAadClientId                                // The client ID for AAD auth
 ##   OctopusFabricAadClientSecret                            // The client secret for AAD auth
-##   OctopusFabricAadEnvironment                             // The azure environment for AAD auth (should be 'AzureCloud' by default)
 ##   OctopusFabricAadResourceId                              // The resource URL for AAD auth
 ##   OctopusFabricAadTenantId                                // The tenant ID for AAD auth
 ##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.IdentityModel.Clients.ActiveDirectory.dll
@@ -35,20 +34,19 @@ $ErrorActionPreference = "Stop"
 #Write-Verbose "OctopusFabricCertificateStoreName = $($OctopusFabricCertificateStoreName)"
 #Write-Verbose "OctopusFabricAadClientId = $($OctopusFabricAadClientId)"
 #Write-Verbose "OctopusFabricAadClientSecret = $($OctopusFabricAadClientSecret)"
-#Write-Verbose "OctopusFabricAadEnvironment = $($OctopusFabricAadEnvironment)"
 #Write-Verbose "OctopusFabricAadResourceId = $($OctopusFabricAadResourceId)"
 #Write-Verbose "OctopusFabricAadTenantId = $($OctopusFabricAadTenantId)"
 #Write-Verbose "OctopusFabricActiveDirectoryLibraryPath = $($OctopusFabricActiveDirectoryLibraryPath)"
 
-# We need these PS modules for the AzureAD security mode (not available in SF SDK).
-if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-    # Add bundled Azure PS modules to PSModulePath
-    $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Storage"
-    $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ServiceManagement"
-    $ResourceManagerModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ResourceManager" | Join-Path -ChildPath "AzureResourceManager"
-    Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
-    $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
-}
+## We need these PS modules for the AzureAD security mode (not available in SF SDK).
+#if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
+#    # Add bundled Azure PS modules to PSModulePath
+#    $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Storage"
+#    $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ServiceManagement"
+#    $ResourceManagerModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ResourceManager" | Join-Path -ChildPath "AzureResourceManager"
+#    Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
+#    $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
+#}
 
 function Execute-WithRetry([ScriptBlock] $command) {
     $attemptCount = 0
@@ -87,9 +85,6 @@ function ValidationMessageForClientCertificateParameters() {
 }
 
 function ValidationMessageForAzureADParameters() {
-    if (!$OctopusFabricAadEnvironment) {
-        return "Failed to find a value for the Azure environment."
-    }
     if (!$OctopusFabricAadClientId) {
         return "Failed to find a value for the client ID."
     }
@@ -117,18 +112,28 @@ function GetAzureADAccessToken() {
         Write-Error "Unable to load the Microsoft.IdentityModel.Clients.ActiveDirectory.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
         Exit
     }
-
-    # Get the AD Authority URL based on the Azure environment (this call uses Azure PS modules, not SF SDK).
-    $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusFabricAadEnvironment
-    if (!$AzureEnvironment)
+        
+    # ActiveDirectoryAuthority will change depending on which Azure environment the user belongs to.
+    # Get metadata for the cluster so we can determine the correct ActiveDirectoryAuthority to use.
+    $AuthorityUrl = ""
+    try
     {
-        Write-Error "No Azure environment could be matched given the name $OctopusFabricAadEnvironment."
+        $ClusterConnectionParameters = @{}
+        $ClusterConnectionParameters["ConnectionEndpoint"] = $OctopusFabricConnectionEndpoint
+        $ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
+        $ClusterConnectionParameters["AzureActiveDirectory"] = $true
+        $ClusterConnectionParameters["GetMetadata"] = $true
+
+        $ClusterMetaData = Connect-ServiceFabricCluster @ClusterConnectionParameters
+        $AuthorityUrl = $ClusterMetaData.AzureActiveDirectoryMetadata.Authority
+    }
+    catch [System.Fabric.FabricException]
+    {
+        Write-Error "Unable to get metadata for cluster (required for ActiveDirectoryAuthority)."
         Exit
     }
-    $AuthorityUrl = [System.IO.Path]::Combine($AzureEnvironment.ActiveDirectoryAuthority, $OctopusFabricAadTenantId)
-    $AuthorityUrl = $AuthorityUrl.Replace('\', '/')
     Write-Verbose "Using ActiveDirectoryAuthority $($AuthorityUrl)."
-        
+
     $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $OctopusFabricAadClientId, $OctopusFabricAadClientSecret
     $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
     $AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceId, $UserCred).AccessToken
@@ -176,7 +181,7 @@ Execute-WithRetry {
             Write-Error "No access token could be found for Service Fabric to connect with."
             Exit
         }
-        
+
         $ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
         $ClusterConnectionParameters["AzureActiveDirectory"] = $true
         $ClusterConnectionParameters["SecurityToken"] = $AccessToken

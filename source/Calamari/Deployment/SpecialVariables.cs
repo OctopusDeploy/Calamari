@@ -203,7 +203,6 @@
                 public static readonly string LogExtractedApplicationPackage = "Octopus.Action.ServiceFabric.LogExtractedApplicationPackage";
                 public static readonly string AadClientId = "Octopus.Action.ServiceFabric.AadClientId";
                 public static readonly string AadClientSecret = "Octopus.Action.ServiceFabric.AadClientSecret";
-                public static readonly string AadEnvironment = "Octopus.Action.ServiceFabric.AadEnvironment";
                 public static readonly string AadResourceId = "Octopus.Action.ServiceFabric.AadResourceId";
                 public static readonly string AadTenantId = "Octopus.Action.ServiceFabric.AadTenantId";
             }

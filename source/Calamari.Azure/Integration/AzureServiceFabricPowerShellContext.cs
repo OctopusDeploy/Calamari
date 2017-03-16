@@ -47,14 +47,6 @@ namespace Calamari.Azure.Integration
             SetOutputVariable("OctopusFabricAadResourceId", variables.Get(SpecialVariables.Action.ServiceFabric.AadResourceId), variables);
             SetOutputVariable("OctopusFabricAadTenantId", variables.Get(SpecialVariables.Action.ServiceFabric.AadTenantId), variables);
 
-            // Azure AD environment override.
-            var azureEnvironment = variables.Get(SpecialVariables.Action.ServiceFabric.AadEnvironment, AzurePowerShellContext.DefaultAzureEnvironment);
-            if (azureEnvironment != AzurePowerShellContext.DefaultAzureEnvironment)
-            {
-                Log.Info("Using Azure Environment override - {0}", azureEnvironment);
-            }
-            SetOutputVariable("OctopusFabricAadEnvironment", azureEnvironment, variables);
-
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
@@ -72,10 +64,10 @@ namespace Calamari.Azure.Integration
 
         static void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
-            // By default use the Azure PowerShell modules bundled with Calamari
-            // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
-            SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, AzurePowerShellContext.BuiltInAzurePowershellModulePath, variables);
+            //// By default use the Azure PowerShell modules bundled with Calamari
+            //// If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
+            //SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
+            //SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, AzurePowerShellContext.BuiltInAzurePowershellModulePath, variables);
 
             // Calamari dll references
             SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(Program).Assembly.Location), variables);
