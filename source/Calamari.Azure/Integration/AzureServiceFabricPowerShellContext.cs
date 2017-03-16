@@ -35,20 +35,20 @@ namespace Calamari.Azure.Integration
             SetAzureModulesLoadingMethod(variables);
 
             // Set output variables for our script to access.
-            SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint), variables);
-            SetOutputVariable("OctopusFabricSecurityMode", variables.Get(SpecialVariables.Action.Azure.FabricSecurityMode), variables);
-            SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricServerCertThumbprint), variables);
-            SetOutputVariable("OctopusFabricClientCertThumbprint", variables.Get(SpecialVariables.Action.Azure.FabricClientCertThumbprint), variables);
-            SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.Azure.FabricCertificateFindType, "FindByThumbprint"), variables);
-            SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreLocation, "LocalMachine"), variables);
-            SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.Azure.FabricCertificateStoreName, "MY"), variables);
-            SetOutputVariable("OctopusFabricAadClientId", variables.Get(SpecialVariables.Action.Azure.FabricAadClientId), variables);
-            SetOutputVariable("OctopusFabricAadClientSecret", variables.Get(SpecialVariables.Action.Azure.FabricAadClientSecret), variables);
-            SetOutputVariable("OctopusFabricAadResourceId", variables.Get(SpecialVariables.Action.Azure.FabricAadResourceId), variables);
-            SetOutputVariable("OctopusFabricAadTenantId", variables.Get(SpecialVariables.Action.Azure.FabricAadTenantId), variables);
+            SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint), variables);
+            SetOutputVariable("OctopusFabricSecurityMode", variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode), variables);
+            SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint), variables);
+            SetOutputVariable("OctopusFabricClientCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ClientCertThumbprint), variables);
+            SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindType, "FindByThumbprint"), variables);
+            SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, "LocalMachine"), variables);
+            SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreName, "MY"), variables);
+            SetOutputVariable("OctopusFabricAadClientId", variables.Get(SpecialVariables.Action.ServiceFabric.AadClientId), variables);
+            SetOutputVariable("OctopusFabricAadClientSecret", variables.Get(SpecialVariables.Action.ServiceFabric.AadClientSecret), variables);
+            SetOutputVariable("OctopusFabricAadResourceId", variables.Get(SpecialVariables.Action.ServiceFabric.AadResourceId), variables);
+            SetOutputVariable("OctopusFabricAadTenantId", variables.Get(SpecialVariables.Action.ServiceFabric.AadTenantId), variables);
 
             // Azure AD environment override.
-            var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.FabricAadEnvironment, AzurePowerShellContext.DefaultAzureEnvironment);
+            var azureEnvironment = variables.Get(SpecialVariables.Action.ServiceFabric.AadEnvironment, AzurePowerShellContext.DefaultAzureEnvironment);
             if (azureEnvironment != AzurePowerShellContext.DefaultAzureEnvironment)
             {
                 Log.Info("Using Azure Environment override - {0}", azureEnvironment);

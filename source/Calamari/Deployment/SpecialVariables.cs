@@ -182,6 +182,32 @@
                 }
             }
 
+            public static class ServiceFabric
+            {
+                public static readonly string PackagePath = "Octopus.Action.ServiceFabric.PackagePath";
+                public static readonly string ConnectionEndpoint = "Octopus.Action.ServiceFabric.ConnectionEndpoint";
+                public static readonly string SecurityMode = "Octopus.Action.ServiceFabric.SecurityMode";
+                public static readonly string ServerCertThumbprint = "Octopus.Action.ServiceFabric.ServerCertThumbprint";
+                public static readonly string ClientCertThumbprint = "Octopus.Action.ServiceFabric.ClientCertThumbprint";
+                public static readonly string CertificateFindType = "Octopus.Action.ServiceFabric.CertificateFindType";
+                public static readonly string CertificateStoreLocation = "Octopus.Action.ServiceFabric.CertificateStoreLocation";
+                public static readonly string CertificateStoreName = "Octopus.Action.ServiceFabric.CertificateStoreName";
+                public static readonly string PublishProfileFile = "Octopus.Action.ServiceFabric.PublishProfileFile";
+                public static readonly string ApplicationPackagePath = "Octopus.Action.ServiceFabric.ApplicationPackagePath";
+                public static readonly string DeployOnly = "Octopus.Action.ServiceFabric.DeployOnly";
+                public static readonly string UnregisterUnusedApplicationVersionsAfterUpgrade = "Octopus.Action.ServiceFabric.UnregisterUnusedApplicationVersionsAfterUpgrade";
+                public static readonly string OverrideUpgradeBehavior = "Octopus.Action.ServiceFabric.OverrideUpgradeBehavior";
+                public static readonly string OverwriteBehavior = "Octopus.Action.ServiceFabric.OverwriteBehavior";
+                public static readonly string SkipPackageValidation = "Octopus.Action.ServiceFabric.SkipPackageValidation";
+                public static readonly string CopyPackageTimeoutSec = "Octopus.Action.ServiceFabric.CopyPackageTimeoutSec";
+                public static readonly string LogExtractedApplicationPackage = "Octopus.Action.ServiceFabric.LogExtractedApplicationPackage";
+                public static readonly string AadClientId = "Octopus.Action.ServiceFabric.AadClientId";
+                public static readonly string AadClientSecret = "Octopus.Action.ServiceFabric.AadClientSecret";
+                public static readonly string AadEnvironment = "Octopus.Action.ServiceFabric.AadEnvironment";
+                public static readonly string AadResourceId = "Octopus.Action.ServiceFabric.AadResourceId";
+                public static readonly string AadTenantId = "Octopus.Action.ServiceFabric.AadTenantId";
+            }
+
             public static class Azure
             {
                 public static readonly string UseBundledAzurePowerShellModules = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
@@ -192,30 +218,6 @@
                 public static readonly string Password = "Octopus.Action.Azure.Password";
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
-
-                // Service Fabric
-                public static readonly string FabricPackagePath = "Octopus.Action.Azure.FabricPackagePath";
-                public static readonly string FabricConnectionEndpoint = "Octopus.Action.Azure.FabricConnectionEndpoint";
-                public static readonly string FabricSecurityMode = "Octopus.Action.Azure.FabricSecurityMode";
-                public static readonly string FabricServerCertThumbprint = "Octopus.Action.Azure.FabricServerCertThumbprint";
-                public static readonly string FabricClientCertThumbprint = "Octopus.Action.Azure.FabricClientCertThumbprint";
-                public static readonly string FabricCertificateFindType = "Octopus.Action.Azure.FabricCertificateFindType";
-                public static readonly string FabricCertificateStoreLocation = "Octopus.Action.Azure.FabricCertificateStoreLocation";
-                public static readonly string FabricCertificateStoreName = "Octopus.Action.Azure.FabricCertificateStoreName";
-                public static readonly string FabricPublishProfileFile = "Octopus.Action.Azure.FabricPublishProfileFile";
-                public static readonly string FabricApplicationPackagePath = "Octopus.Action.Azure.FabricApplicationPackagePath";
-                public static readonly string FabricDeployOnly = "Octopus.Action.Azure.FabricDeployOnly";
-                public static readonly string FabricUnregisterUnusedApplicationVersionsAfterUpgrade = "Octopus.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade";
-                public static readonly string FabricOverrideUpgradeBehavior = "Octopus.Action.Azure.FabricOverrideUpgradeBehavior";
-                public static readonly string FabricOverwriteBehavior = "Octopus.Action.Azure.FabricOverwriteBehavior";
-                public static readonly string FabricSkipPackageValidation = "Octopus.Action.Azure.FabricSkipPackageValidation";
-                public static readonly string FabricCopyPackageTimeoutSec = "Octopus.Action.Azure.FabricCopyPackageTimeoutSec";
-                public static readonly string FabricLogExtractedApplicationPackage = "Octopus.Action.Azure.FabricLogExtractedApplicationPackage";
-                public static readonly string FabricAadClientId = "Octopus.Action.Azure.FabricAadClientId";
-                public static readonly string FabricAadClientSecret = "Octopus.Action.Azure.FabricAadClientSecret";
-                public static readonly string FabricAadEnvironment = "Octopus.Action.Azure.FabricAadEnvironment";
-                public static readonly string FabricAadResourceId = "Octopus.Action.Azure.FabricAadResourceId";
-                public static readonly string FabricAadTenantId = "Octopus.Action.Azure.FabricAadTenantId";
 
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";

@@ -36,19 +36,19 @@ namespace Calamari.Azure.Deployment.Conventions
             var variables = deployment.Variables;
 
             // Set output variables for our script to access.
-            Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.Azure.FabricPublishProfileFile, "PublishProfiles\\Cloud.xml"), variables);
-            Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.Azure.FabricDeployOnly, defaultValue: false.ToString()), variables);
-            Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.Azure.FabricUnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
-            Log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverrideUpgradeBehavior, defaultValue: "None"), variables);
-            Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.Azure.FabricOverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
-            Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.Azure.FabricSkipPackageValidation, defaultValue: false.ToString()), variables);
-            Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.Azure.FabricCopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
+            Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.ServiceFabric.PublishProfileFile, "PublishProfiles\\Cloud.xml"), variables);
+            Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.ServiceFabric.DeployOnly, defaultValue: false.ToString()), variables);
+            Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.ServiceFabric.UnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
+            Log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverrideUpgradeBehavior, defaultValue: "None"), variables);
+            Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
+            Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.ServiceFabric.SkipPackageValidation, defaultValue: false.ToString()), variables);
+            Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.ServiceFabric.CopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
 
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
             var targetPath = Path.Combine(CrossPlatform.GetCurrentDirectory(), "staging");
             Log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
 
-            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.FabricLogExtractedApplicationPackage))
+            if (deployment.Variables.GetFlag(SpecialVariables.Action.ServiceFabric.LogExtractedApplicationPackage))
                 LogExtractedPackage(deployment.CurrentDirectory);
 
             // The user may supply the script, to override behaviour.
