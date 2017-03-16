@@ -28,7 +28,7 @@
     "Newtonsoft.Json": "9.0.1",
     "Octopus.Dependencies.AzureBinaries": "2.9.0",
     "Octopus.Dependencies.AzureCmdlets": "1.6.0",
-    "Octostache": "2.1.0",
+    "Octostache": "2.1.4",
     "Sprache": "2.1.0",
     "System.Spatial": "5.6.4",
     "WindowsAzure.Storage": "4.3.0",
