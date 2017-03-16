@@ -123,7 +123,7 @@ $ApplicationPackagePath = Resolve-Path $ApplicationPackagePath
 
 $publishProfile = Read-PublishProfile $PublishProfileFile
 
-# This global clusterConnection should be set by now, from our AzureFabricContext.
+# This global clusterConnection should be set by now, from our ServiceFabricContext.
 if (-not $global:clusterConnection)
 {
     Write-Warning "Service Fabric cluster may not be connected."

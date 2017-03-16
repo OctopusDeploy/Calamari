@@ -17,7 +17,7 @@ namespace Calamari.Azure.Integration
             var powerShellEngine = new PowerShellScriptEngine();
             if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.Azure.FabricConnectionEndpoint)))
             {
-                return new AzureFabricPowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
+                return new AzureServiceFabricPowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
             }
             else if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
             {

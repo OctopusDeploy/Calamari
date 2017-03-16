@@ -17,7 +17,7 @@
 ##   OctopusFabricAadClientId                                // The client ID for AAD auth
 ##   OctopusFabricAadClientSecret                            // The client secret for AAD auth
 ##   OctopusFabricAadEnvironment                             // The azure environment for AAD auth (should be 'AzureCloud' by default)
-##   OctopusFabricAadResourceId                             // The resource URL for AAD auth
+##   OctopusFabricAadResourceId                              // The resource URL for AAD auth
 ##   OctopusFabricAadTenantId                                // The tenant ID for AAD auth
 ##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 

@@ -51,13 +51,12 @@ namespace Calamari.Azure.Deployment.Conventions
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.FabricLogExtractedApplicationPackage))
                 LogExtractedPackage(deployment.CurrentDirectory);
 
-            // The script name 'DeployToAzure.ps1' is used for consistency with other Octopus Azure steps.
             // The user may supply the script, to override behaviour.
-            var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToAzure.ps1");
+            var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToServiceFabric.ps1");
             if (!fileSystem.FileExists(scriptFile))
             {
                 // Use our bundled version.
-                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureFabricApplication.ps1"));
+                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureServiceFabricApplication.ps1"));
             }
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);

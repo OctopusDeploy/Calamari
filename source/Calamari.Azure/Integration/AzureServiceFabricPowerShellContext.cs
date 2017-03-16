@@ -11,12 +11,12 @@ using Calamari.Azure.Util;
 
 namespace Calamari.Azure.Integration
 {
-    public class AzureFabricPowerShellContext
+    public class AzureServiceFabricPowerShellContext
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
 
-        public AzureFabricPowerShellContext()
+        public AzureServiceFabricPowerShellContext()
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.embeddedResources = new AssemblyEmbeddedResources();
@@ -64,8 +64,8 @@ namespace Calamari.Azure.Integration
 
         string CreateContextScriptFile(string workingDirectory)
         {
-            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureFabricContext.ps1");
-            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.AzureFabricContext.ps1");
+            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureServiceFabricContext.ps1");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.AzureServiceFabricContext.ps1");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }

@@ -82,7 +82,7 @@ namespace Calamari.Azure.Commands
                 // Deploy stage
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                
+
                 // Variable replacement
                 new SubstituteVariablesInAzureServiceFabricPackageConvention(fileSystem, substituter),
 
