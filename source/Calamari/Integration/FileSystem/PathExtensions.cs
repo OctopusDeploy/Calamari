@@ -27,6 +27,9 @@ namespace Calamari.Integration.FileSystem
 
         private static DirectoryInfo GetSanitizedDirInfo(string dir)
         {
+            if (dir == "/")
+                return new DirectoryInfo(dir);
+
             dir = dir.TrimEnd('\\', '/'); // normal paths need trailing path separator removed to match
             if (CalamariEnvironment.IsRunningOnWindows)
             {

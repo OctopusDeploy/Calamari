@@ -591,7 +591,7 @@ if ($deployAsWebSite)
 	}
 
 	# Returns $true if existing IIS bindings are as specified in configuration, otherwise $false
-	function Bindings-AreCorrect($existingBindings, $configuredBindings) {
+	function Bindings-AreCorrect($existingBindings, $configuredBindings, [System.Collections.ArrayList] $bindingsToRemove) {
 		$existingBindingsLookup = Convert-ToHashTable $existingBindings.Collection
 		$configuredBindingsLookup = Convert-ToHashTable $configuredBindings
 	
@@ -604,14 +604,18 @@ if ($deployAsWebSite)
 		
 			if ($matching -eq $null) {
 				Write-Host "Found existing non-configured binding: $($binding.protocol) $($binding.bindingInformation)"
-				return $false
+				$bindingsToRemove.Add($binding) | Out-Null
 			}
 		}
+
+		if($bindingsToRemove.Length -gt 0){
+            return $false
+        }
 
 		# Are there configured bindings which are not assigned
 		for ($i = 0; $i -lt $configuredBindings.Count; $i = $i+1) {
 			$wsbinding = $configuredBindings[$i]
-            		$wsBindingKey = Get-BindingKey $wsbinding
+            $wsBindingKey = Get-BindingKey $wsbinding
 
 			$matching = $existingBindingsLookup[$wsBindingKey]
 
@@ -619,7 +623,8 @@ if ($deployAsWebSite)
 				Write-Host "Found configured binding which is not assigned: $($wsbinding.protocol) $($wsbinding.bindingInformation)"
 				return $false
 			}
-		}
+		}        
+
 		Write-Host "Looks OK"
 
 		return $true
@@ -629,8 +634,9 @@ if ($deployAsWebSite)
 	Execute-WithRetry { 
 		Write-Host "Comparing existing IIS bindings with configured bindings..."
 		$existingBindings = Get-ItemProperty $sitePath -name bindings
+        $bindingsToRemove = new-object System.Collections.ArrayList
 
-		if (-not (Bindings-AreCorrect $existingBindings $wsbindings)) {
+		if (-not (Bindings-AreCorrect $existingBindings $wsbindings $bindingsToRemove)) {
 			Write-Host "Existing IIS bindings do not match configured bindings."
 			Write-Host "Clearing IIS bindings"
 			Clear-ItemProperty $sitePath -name bindings
@@ -647,6 +653,37 @@ if ($deployAsWebSite)
             }
 		} else {
 			Write-Host "Bindings are as configured. No changes required."
+		}
+
+		# try to remove ssl cert bindings for IIS bindings that are being removed
+		$bindingsToRemove | where-object { $_.protocol -eq "https" } | foreach-object {
+			$bindingParts = $_.bindingInformation.Split(':')
+			$ipAddress = $bindingParts[0]
+			if ((! $ipAddress) -or ($ipAddress -eq '*')) {
+				$ipAddress = "0.0.0.0"
+			}
+			$port = $bindingParts[1]
+			$hostname = $bindingParts[2]
+
+			if($_.sslFlags -eq 1){ # SNI on so we will have created against the hostname
+				$existing = & netsh http show sslcert hostnameport="$($hostname):$port"
+				if ($LastExitCode -eq 0) {
+					Write-Host ("Removing unused SSL certificate binding: $($hostname):$port")
+					& netsh http delete sslcert hostnameport="$($hostname):$port"
+					if ($LastExitCode -ne 0 ){
+						throw
+					}
+				}
+			} else { # SNI off so we will have created against the ip
+				$existing = & netsh http show sslcert ipport="$($ipAddress):$port"
+				if ($LastExitCode -eq 0) {
+					Write-Host ("Removing unused SSL certificate binding: $($ipAddress):$port")				
+					& netsh http delete sslcert ipport="$($ipAddress):$port"
+					if ($LastExitCode -ne 0 ){
+						throw
+					}
+				}
+			}
 		}
 	}
 

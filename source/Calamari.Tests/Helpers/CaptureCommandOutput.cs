@@ -58,6 +58,8 @@ namespace Calamari.Tests.Helpers
 
         public StoredPackage DeltaVerification { get; protected set; }
 
+        public string DeltaError { get; protected set; }
+
         void ParseServiceMessage(ServiceMessage message)
         {
             switch (message.Name)
@@ -89,11 +91,14 @@ namespace Calamari.Tests.Helpers
                 case ServiceMessageNames.PackageDeltaVerification.Name:
                     var pdvHash = message.GetValue(ServiceMessageNames.PackageDeltaVerification.HashAttribute);
                     var pdvSize = message.GetValue(ServiceMessageNames.PackageDeltaVerification.SizeAttribute);
-                    var pdvRemotePath =
-                        message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
-                    DeltaVerification =
-                        new StoredPackage(new ExtendedPackageMetadata { Hash = pdvHash},
-                            pdvRemotePath);
+                    var pdvRemotePath = message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
+                    DeltaError = message.GetValue(ServiceMessageNames.PackageDeltaVerification.Error);
+                    if (pdvHash != null)
+                    {
+                        DeltaVerification =
+                            new StoredPackage(new ExtendedPackageMetadata {Hash = pdvHash},
+                                pdvRemotePath);
+                    }
                     break;
             }
         }

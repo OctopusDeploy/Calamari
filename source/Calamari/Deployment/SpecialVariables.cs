@@ -267,6 +267,8 @@
             {
                 public static readonly string CustomPowerShellVersion = "Octopus.Action.PowerShell.CustomPowerShellVersion";
                 public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile";
+                public static readonly string UserName = "Octopus.Action.PowerShell.UserName";
+                public static readonly string Password = "Octopus.Action.PowerShell.Password";
             }
 
             public static class Certificate

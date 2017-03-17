@@ -20,6 +20,8 @@ namespace Calamari.Integration.Processes
                     invocation.Executable, 
                     invocation.Arguments,
                     invocation.WorkingDirectory,
+                    invocation.UserName,
+                    invocation.Password,
                     commandOutput.WriteInfo,
                     commandOutput.WriteError);
 

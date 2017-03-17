@@ -29,6 +29,7 @@
             public const string RemotePathAttribute = "remotePath";
             public const string HashAttribute = "hash";
             public const string SizeAttribute = "size";
+            public const string Error = "error";
         }
     }
 }

@@ -103,14 +103,10 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
         public void GlobTestMutiple(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var rootPath = fileSystem.CreateTemporaryDirectory();
-            var content = "file-content" + Environment.NewLine;
 
-            if (CalamariEnvironment.IsRunningOnWindows)
-            {
-                pattern = pattern.Replace(@"/", @"\");
-            }
+            var content = "file-content" + Environment.NewLine;
 
             try
             {

@@ -16,14 +16,11 @@ namespace Calamari.Util
 #if NET40
             var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 #else
-            var path = Environment.GetEnvironmentVariable("LOCALAPPDATA")
-                   ?? Environment.GetEnvironmentVariable("TMPDIR")
-                   ?? Environment.GetEnvironmentVariable("TEMP")
-                   ?? "/tmp";
+            var path = Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? Environment.GetEnvironmentVariable("TMPDIR") ?? "/tmp";
 #endif
-            path = Assembly.GetEntryAssembly()?.GetName().Name ?? Guid.NewGuid().ToString();
-
-            return Path.Combine(path, "Temp");
+            path = Path.Combine(path, Assembly.GetEntryAssembly()?.GetName().Name);
+            path = Path.Combine(path, "Temp");
+            return path;
         }
 
         public static string ExpandPathEnvironmentVariables(string path)
