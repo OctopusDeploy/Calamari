@@ -14,10 +14,10 @@
 ##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
 ##   OctopusFabricCertificateStoreLocation                   // The certificate store location (should be 'LocalMachine' by default)
 ##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
-##   OctopusFabricAadClientId                                // The client ID for AAD auth
-##   OctopusFabricAadClientSecret                            // The client secret for AAD auth
-##   OctopusFabricAadResourceId                              // The resource URL for AAD auth
-##   OctopusFabricAadTenantId                                // The tenant ID for AAD auth
+###   OctopusFabricAadClientId                                // The client ID for AAD auth
+###   OctopusFabricAadClientSecret                            // The client secret for AAD auth
+###   OctopusFabricAadResourceId                              // The resource URL for AAD auth
+###   OctopusFabricAadTenantId                                // The tenant ID for AAD auth
 ##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 $ErrorActionPreference = "Stop"
@@ -78,6 +78,9 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 function ValidationMessageForClientCertificateParameters() {
+    if (!$OctopusFabricServerCertThumbprint) {
+        return "Failed to find a value for the server certificate."
+    }
     if (!$OctopusFabricClientCertThumbprint) {
         return "Failed to find a value for the client certificate."
     }
@@ -85,18 +88,10 @@ function ValidationMessageForClientCertificateParameters() {
 }
 
 function ValidationMessageForAzureADParameters() {
-    if (!$OctopusFabricAadClientId) {
-        return "Failed to find a value for the client ID."
+    if (!$OctopusFabricServerCertThumbprint) {
+        return "Failed to find a value for the server certificate."
     }
-    if (!$OctopusFabricAadClientSecret) {
-        return "Failed to find a value for the client secret."
-    }
-    if (!$OctopusFabricAadResourceId) {
-        return "Failed to find a value for the resource URL."
-    }
-    if (!$OctopusFabricAadTenantId) {
-        return "Failed to find a value for the tenant ID."
-    }
+    #TODO: markse - add username/password checking here.
     return $null
 }
 
@@ -112,9 +107,13 @@ function GetAzureADAccessToken() {
         Write-Error "Unable to load the Microsoft.IdentityModel.Clients.ActiveDirectory.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
         Exit
     }
-        
+
     # ActiveDirectoryAuthority will change depending on which Azure environment the user belongs to.
     # Get metadata for the cluster so we can determine the correct ActiveDirectoryAuthority to use.
+    $TenantId = ""
+    $ClusterApplicationId = ""
+    $ClientApplicationId = ""
+    $ClientRedirect = ""
     $AuthorityUrl = ""
     try
     {
@@ -125,18 +124,36 @@ function GetAzureADAccessToken() {
         $ClusterConnectionParameters["GetMetadata"] = $true
 
         $ClusterMetaData = Connect-ServiceFabricCluster @ClusterConnectionParameters
+
+        $TenantId = $ClusterMetaData.AzureActiveDirectoryMetadata.TenantId
+        $ClusterApplicationId = $ClusterMetaData.AzureActiveDirectoryMetadata.ClusterApplication
+        $ClientApplicationId = $ClusterMetaData.AzureActiveDirectoryMetadata.ClientApplication
+        $ClientRedirect = $ClusterMetaData.AzureActiveDirectoryMetadata.ClientRedirect
         $AuthorityUrl = $ClusterMetaData.AzureActiveDirectoryMetadata.Authority
     }
     catch [System.Fabric.FabricException]
     {
-        Write-Error "Unable to get metadata for cluster (required for ActiveDirectoryAuthority)."
+        Write-Error "Unable to get metadata for cluster (required for AAD)."
         Exit
     }
-    Write-Verbose "Using ActiveDirectoryAuthority $($AuthorityUrl)."
+    Write-Verbose "Using TenantId $($TenantId)."
+    Write-Verbose "Using ClusterApplicationId $($ClusterApplicationId)."
+    Write-Verbose "Using ClientApplicationId $($ClientApplicationId)."
+    Write-Verbose "Using ClientRedirect $($ClientRedirect)."
+    Write-Verbose "Using AuthorityUrl $($AuthorityUrl)."
 
-    $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $OctopusFabricAadClientId, $OctopusFabricAadClientSecret
+    #TODO: markse - refactor these out into params
+    #$AadUsername = "marksedemo2@supportoctopusdeploy.onmicrosoft.com"
+    #$AadPassword = "Demo1234"
+
+    $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $ClientApplicationId, $OctopusFabricAadClientSecret
+    #$UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential -ArgumentList @($AadUsername, $AadPassword)
     $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
-    $AccessToken = $AuthenticationContext.AcquireToken($OctopusFabricAadResourceId, $UserCred).AccessToken
+    $AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $UserCred).AccessToken
+    #$AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $ClientApplicationId, $UserCred).AccessToken
+
+    ##$AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, "1950a258-227b-4e31-a9cf-717495945fc2", $ClientRedirect, [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Never).AccessToken
+
     return $AccessToken
 }
 

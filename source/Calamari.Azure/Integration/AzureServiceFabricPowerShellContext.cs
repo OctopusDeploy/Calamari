@@ -44,8 +44,6 @@ namespace Calamari.Azure.Integration
             SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreName, "MY"), variables);
             SetOutputVariable("OctopusFabricAadClientId", variables.Get(SpecialVariables.Action.ServiceFabric.AadClientId), variables);
             SetOutputVariable("OctopusFabricAadClientSecret", variables.Get(SpecialVariables.Action.ServiceFabric.AadClientSecret), variables);
-            SetOutputVariable("OctopusFabricAadResourceId", variables.Get(SpecialVariables.Action.ServiceFabric.AadResourceId), variables);
-            SetOutputVariable("OctopusFabricAadTenantId", variables.Get(SpecialVariables.Action.ServiceFabric.AadTenantId), variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
