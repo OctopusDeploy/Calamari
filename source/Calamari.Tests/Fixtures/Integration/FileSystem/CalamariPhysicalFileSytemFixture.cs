@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
@@ -101,7 +102,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"Config/Feature1/*.config", "f1-a.config", 2)]
         [TestCase(@"Config/Feature1/*.config", "f1-b.config", 2)]
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
-        public void GlobTestMutiple(string pattern, string expectedFileMatchName, int expectedQty = 1)
+        public void EnumerateFilesWithGlob(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
             var fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var rootPath = fileSystem.CreateTemporaryDirectory();
@@ -129,10 +130,63 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 writeFile(configPath, "Feature1", "f1-b.config");
                 writeFile(configPath, "Feature2", "f2.config");
 
-                var result = Glob.Expand(Path.Combine(rootPath, pattern)).ToList();
+                var result = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToList();
 
-                Assert.AreEqual(expectedQty, result.Count, $"{pattern} should have found {expectedQty}, but found {result.Count}");
-                Assert.True(result.Any(r => r.Name.Equals(expectedFileMatchName)), $"{pattern} should have found {expectedFileMatchName}, but didn't");
+                result.Should().HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {result.Count}");
+                result.Should().Contain(r => Path.GetFileName(r) == expectedFileMatchName, $"{pattern} should have found {expectedFileMatchName}, but didn't");
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(rootPath);
+            }
+        }
+
+        [TestCase(@"*")]
+        [TestCase(@"**")]
+        [TestCase(@"**/*")]
+        [TestCase(@"Dir/*")]
+        [TestCase(@"Dir/**")]
+        [TestCase(@"Dir/**/*")]
+        public void EnumerateFilesWithGlobShouldNotReturnDirectories(string pattern)
+        {
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var rootPath = Path.GetTempFileName();
+            File.Delete(rootPath);
+            Directory.CreateDirectory(rootPath);
+
+            try
+            {
+                Directory.CreateDirectory(Path.Combine(rootPath, "Dir"));
+                Directory.CreateDirectory(Path.Combine(rootPath, "Dir", "Sub"));
+                File.WriteAllText(Path.Combine(rootPath, "Dir", "File"), "");
+                File.WriteAllText(Path.Combine(rootPath, "Dir", "Sub", "File"), "");
+
+                var results = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToArray();
+
+                if(results.Length > 0)
+                    results.Should().OnlyContain(f => f.EndsWith("File"));
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(rootPath);
+            }
+        }
+
+        [Test]
+        public void EnumerateFilesWithGlobShouldNotReturnTheSameFileTwice()
+        {
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var rootPath = Path.GetTempFileName();
+            File.Delete(rootPath);
+            Directory.CreateDirectory(rootPath);
+
+            try
+            {
+                File.WriteAllText(Path.Combine(rootPath, "File"), "");
+
+                var results = fileSystem.EnumerateFilesWithGlob(rootPath, new[] {"*", "**"}).ToList();
+
+                results.Should().HaveCount(1);
             }
             finally
             {
