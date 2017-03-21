@@ -53,13 +53,13 @@ function Wait-OnSemaphore {
 	{
 		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
 
-		Write-Verbose "Acquired SemaphoreInstance $SemaphoreId"
-
-		while (-not $SemaphoreInstance.WaitOne(250))
+		while (-not $SemaphoreInstance.WaitOne(100))
 		{
-			Start-Sleep -m 250;
+			Write-Verbose "Cannot start this IIS website related task yet. There is already another task running that cannot be run in conjunction with any other task. Please wait..."
+			Start-Sleep -m 5000;
 		}
-
+		
+		Write-Verbose "Acquired SemaphoreInstance $SemaphoreId"
 		return $SemaphoreInstance
 	}
 	Catch [System.Threading.AbandonedMutexException]
