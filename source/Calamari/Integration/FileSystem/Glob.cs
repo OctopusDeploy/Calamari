@@ -186,7 +186,7 @@ namespace Calamari.Integration.FileSystem
             return regexOrString;
         }
 
-        private static char[] GlobCharacters = "*?[]{}".ToCharArray();
+        private static readonly char[] GlobCharacters = "*?".ToCharArray();
 
         private IEnumerable<FileSystemInfo> Expand(string path, bool dirOnly)
         {
@@ -343,19 +343,11 @@ namespace Calamari.Integration.FileSystem
         private static string GlobToRegex(string glob)
         {
             StringBuilder regex = new StringBuilder();
-            bool characterClass = false;
 
             regex.Append("^");
 
             foreach (var c in glob)
             {
-                if (characterClass)
-                {
-                    if (c == ']') characterClass = false;
-                    regex.Append(c);
-                    continue;
-                }
-
                 switch (c)
                 {
                     case '*':
@@ -363,10 +355,6 @@ namespace Calamari.Integration.FileSystem
                         break;
                     case '?':
                         regex.Append(".");
-                        break;
-                    case '[':
-                        characterClass = true;
-                        regex.Append(c);
                         break;
                     default:
                         if (RegexSpecialChars.Contains(c)) regex.Append('\\');
@@ -379,8 +367,6 @@ namespace Calamari.Integration.FileSystem
 
             return regex.ToString();
         }
-
-        private static Regex GroupRegex = new Regex(@"{([^}]*)}");
 
         private static IEnumerable<string> Ungroup(string path)
         {
@@ -458,29 +444,6 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        private static IEnumerable<string> ExpandGroups(string path)
-        {
-            var match = GroupRegex.Match(path);
-
-            if (!match.Success)
-            {
-                yield return path;
-                yield break;
-            }
-
-            var prefix = path.Substring(0, match.Index);
-            var postfix = path.Substring(match.Index + match.Length);
-            var postGroups = ExpandGroups(postfix);
-
-            foreach (var groupItem in match.Groups[1].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                foreach (var postGroup in postGroups)
-                {
-                    var s = prefix + groupItem + postGroup;
-                    yield return s;
-                }
-            }
-        }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
