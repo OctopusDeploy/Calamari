@@ -14,29 +14,29 @@
 ##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
 ##   OctopusFabricCertificateStoreLocation                   // The certificate store location (should be 'LocalMachine' by default)
 ##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
-###   OctopusFabricAadClientId                                // The client ID for AAD auth
-###   OctopusFabricAadClientSecret                            // The client secret for AAD auth
-###   OctopusFabricAadResourceId                              // The resource URL for AAD auth
-###   OctopusFabricAadTenantId                                // The tenant ID for AAD auth
+##   OctopusFabricAadCredentialType                          // The credential type for authentication
+##   OctopusFabricAadClientCredentialSecret                  // The client application secret for authentication
+##   OctopusFabricAadUserCredentialUsername                  // The username for authentication
+##   OctopusFabricAadUserCredentialPassword                  // The password for authentication
 ##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 $ErrorActionPreference = "Stop"
 
-#Write-Verbose "TODO: markse - remove this logging"
-#Write-Verbose "OctopusFabricTargetScript = $($OctopusFabricTargetScript)"
-#Write-Verbose "OctopusFabricTargetScriptParameters = $($OctopusFabricTargetScriptParameters)"
-#Write-Verbose "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
-#Write-Verbose "OctopusFabricSecurityMode = $($OctopusFabricSecurityMode)"
-#Write-Verbose "OctopusFabricServerCertThumbprint = $($OctopusFabricServerCertThumbprint)"
-#Write-Verbose "OctopusFabricClientCertThumbprint = $($OctopusFabricClientCertThumbprint)"
-#Write-Verbose "OctopusFabricCertificateFindType = $($OctopusFabricCertificateFindType)"
-#Write-Verbose "OctopusFabricCertificateStoreLocation = $($OctopusFabricCertificateStoreLocation)"
-#Write-Verbose "OctopusFabricCertificateStoreName = $($OctopusFabricCertificateStoreName)"
-#Write-Verbose "OctopusFabricAadClientId = $($OctopusFabricAadClientId)"
-#Write-Verbose "OctopusFabricAadClientSecret = $($OctopusFabricAadClientSecret)"
-#Write-Verbose "OctopusFabricAadResourceId = $($OctopusFabricAadResourceId)"
-#Write-Verbose "OctopusFabricAadTenantId = $($OctopusFabricAadTenantId)"
-#Write-Verbose "OctopusFabricActiveDirectoryLibraryPath = $($OctopusFabricActiveDirectoryLibraryPath)"
+Write-Verbose "TODO: markse - remove this logging"
+Write-Verbose "OctopusFabricTargetScript = $($OctopusFabricTargetScript)"
+Write-Verbose "OctopusFabricTargetScriptParameters = $($OctopusFabricTargetScriptParameters)"
+Write-Verbose "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
+Write-Verbose "OctopusFabricSecurityMode = $($OctopusFabricSecurityMode)"
+Write-Verbose "OctopusFabricServerCertThumbprint = $($OctopusFabricServerCertThumbprint)"
+Write-Verbose "OctopusFabricClientCertThumbprint = $($OctopusFabricClientCertThumbprint)"
+Write-Verbose "OctopusFabricCertificateFindType = $($OctopusFabricCertificateFindType)"
+Write-Verbose "OctopusFabricCertificateStoreLocation = $($OctopusFabricCertificateStoreLocation)"
+Write-Verbose "OctopusFabricCertificateStoreName = $($OctopusFabricCertificateStoreName)"
+Write-Verbose "OctopusFabricAadCredentialType = $($OctopusFabricAadCredentialType)"
+Write-Verbose "OctopusFabricAadClientCredentialSecret = $($OctopusFabricAadClientCredentialSecret)"
+Write-Verbose "OctopusFabricAadUserCredentialUsername = $($OctopusFabricAadUserCredentialUsername)"
+Write-Verbose "OctopusFabricAadUserCredentialPassword = $($OctopusFabricAadUserCredentialPassword)"
+Write-Verbose "OctopusFabricActiveDirectoryLibraryPath = $($OctopusFabricActiveDirectoryLibraryPath)"
 
 ## We need these PS modules for the AzureAD security mode (not available in SF SDK).
 #if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
@@ -142,17 +142,15 @@ function GetAzureADAccessToken() {
     Write-Verbose "Using ClientRedirect $($ClientRedirect)."
     Write-Verbose "Using AuthorityUrl $($AuthorityUrl)."
 
-    #TODO: markse - refactor these out into params
-    #$AadUsername = "marksedemo2@supportoctopusdeploy.onmicrosoft.com"
-    #$AadPassword = "Demo1234"
-
-    $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $ClientApplicationId, $OctopusFabricAadClientSecret
-    #$UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential -ArgumentList @($AadUsername, $AadPassword)
-    $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
-    $AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $UserCred).AccessToken
-    #$AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $ClientApplicationId, $UserCred).AccessToken
-
-    ##$AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, "1950a258-227b-4e31-a9cf-717495945fc2", $ClientRedirect, [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Never).AccessToken
+    if ($OctopusFabricAadCredentialType -eq "ClientCredential") {
+        $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $ClientApplicationId, $OctopusFabricAadClientCredentialSecret
+        $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
+        $AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $UserCred).AccessToken
+    } Else { # Fallback to username/password
+        $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential -ArgumentList @($OctopusFabricAadUserCredentialUsername, $OctopusFabricAadUserCredentialPassword)
+        $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
+        $AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $ClientApplicationId, $UserCred).AccessToken
+    }
 
     return $AccessToken
 }

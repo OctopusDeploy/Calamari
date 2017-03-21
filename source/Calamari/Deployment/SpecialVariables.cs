@@ -201,10 +201,10 @@
                 public static readonly string SkipPackageValidation = "Octopus.Action.ServiceFabric.SkipPackageValidation";
                 public static readonly string CopyPackageTimeoutSec = "Octopus.Action.ServiceFabric.CopyPackageTimeoutSec";
                 public static readonly string LogExtractedApplicationPackage = "Octopus.Action.ServiceFabric.LogExtractedApplicationPackage";
-                public static readonly string AadClientId = "Octopus.Action.ServiceFabric.AadClientId";
-                public static readonly string AadClientSecret = "Octopus.Action.ServiceFabric.AadClientSecret";
-                public static readonly string AadResourceId = "Octopus.Action.ServiceFabric.AadResourceId";
-                public static readonly string AadTenantId = "Octopus.Action.ServiceFabric.AadTenantId";
+                public static readonly string AadCredentialType = "Octopus.Action.ServiceFabric.AadCredentialType";
+                public static readonly string AadUserCredentialUsername = "Octopus.Action.ServiceFabric.AadUserCredentialUsername";
+                public static readonly string AadUserCredentialPassword = "Octopus.Action.ServiceFabric.AadUserCredentialPassword";
+                public static readonly string AadClientCredentialSecret = "Octopus.Action.ServiceFabric.AadClientCredentialSecret";
             }
 
             public static class Azure
