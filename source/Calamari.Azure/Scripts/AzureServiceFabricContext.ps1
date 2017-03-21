@@ -22,32 +22,6 @@
 
 $ErrorActionPreference = "Stop"
 
-Write-Verbose "TODO: markse - remove this logging"
-Write-Verbose "OctopusFabricTargetScript = $($OctopusFabricTargetScript)"
-Write-Verbose "OctopusFabricTargetScriptParameters = $($OctopusFabricTargetScriptParameters)"
-Write-Verbose "OctopusFabricConnectionEndpoint = $($OctopusFabricConnectionEndpoint)"
-Write-Verbose "OctopusFabricSecurityMode = $($OctopusFabricSecurityMode)"
-Write-Verbose "OctopusFabricServerCertThumbprint = $($OctopusFabricServerCertThumbprint)"
-Write-Verbose "OctopusFabricClientCertThumbprint = $($OctopusFabricClientCertThumbprint)"
-Write-Verbose "OctopusFabricCertificateFindType = $($OctopusFabricCertificateFindType)"
-Write-Verbose "OctopusFabricCertificateStoreLocation = $($OctopusFabricCertificateStoreLocation)"
-Write-Verbose "OctopusFabricCertificateStoreName = $($OctopusFabricCertificateStoreName)"
-Write-Verbose "OctopusFabricAadCredentialType = $($OctopusFabricAadCredentialType)"
-Write-Verbose "OctopusFabricAadClientCredentialSecret = $($OctopusFabricAadClientCredentialSecret)"
-Write-Verbose "OctopusFabricAadUserCredentialUsername = $($OctopusFabricAadUserCredentialUsername)"
-Write-Verbose "OctopusFabricAadUserCredentialPassword = $($OctopusFabricAadUserCredentialPassword)"
-Write-Verbose "OctopusFabricActiveDirectoryLibraryPath = $($OctopusFabricActiveDirectoryLibraryPath)"
-
-## We need these PS modules for the AzureAD security mode (not available in SF SDK).
-#if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-#    # Add bundled Azure PS modules to PSModulePath
-#    $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Storage"
-#    $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ServiceManagement"
-#    $ResourceManagerModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ResourceManager" | Join-Path -ChildPath "AzureResourceManager"
-#    Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
-#    $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
-#}
-
 function Execute-WithRetry([ScriptBlock] $command) {
     $attemptCount = 0
     $operationIncomplete = $true
@@ -91,7 +65,20 @@ function ValidationMessageForAzureADParameters() {
     if (!$OctopusFabricServerCertThumbprint) {
         return "Failed to find a value for the server certificate."
     }
-    #TODO: markse - add username/password checking here.
+
+    if ($OctopusFabricAadCredentialType -eq "ClientCredential") {
+        if (!$OctopusFabricAadClientCredentialSecret) {
+            return "Failed to find a value for the AAD client certificate."
+        }
+    } Elseif ($OctopusFabricAadCredentialType -eq "UserCredential") {
+        if (!$OctopusFabricAadUserCredentialUsername) {
+            return "Failed to find a value for the AAD username."
+        }
+        if (!$OctopusFabricAadUserCredentialPassword) {
+            return "Failed to find a value for the AAD password."
+        }
+    }
+
     return $null
 }
 

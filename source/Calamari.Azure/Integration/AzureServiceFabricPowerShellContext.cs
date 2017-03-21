@@ -64,12 +64,8 @@ namespace Calamari.Azure.Integration
 
         static void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
-            //// By default use the Azure PowerShell modules bundled with Calamari
-            //// If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
-            //SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
-            //SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, AzurePowerShellContext.BuiltInAzurePowershellModulePath, variables);
-
-            // Calamari dll references
+            // We don't bundle the standard Azure PS module for Service Fabric work. We do however need
+            // a certain Active Directory library that is bundled with Calamari.
             SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(Program).Assembly.Location), variables);
         }
 

@@ -48,23 +48,6 @@ $UseExistingClusterConnection = [System.Convert]::ToBoolean($UseExistingClusterC
 $SkipPackageValidation = [System.Convert]::ToBoolean($SkipPackageValidation)
 $CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
 
-#Write-Verbose "TODO: markse - remove this logging"
-#Write-Verbose "FabricPackagePath = $($FabricPackagePath)"
-#Write-Verbose "FabricConnectionEndpoint = $($FabricConnectionEndpoint)"
-#Write-Verbose "FabricSecurityMode = $($FabricSecurityMode)"
-#Write-Verbose "FabricServerCertThumbprint = $($FabricServerCertThumbprint)"
-#Write-Verbose "FabricClientCertThumbprint = $($FabricClientCertThumbprint)"
-#Write-Verbose "PublishProfileFile = $($PublishProfileFile)"
-#Write-Verbose "ApplicationPackagePath = $($ApplicationPackagePath)"
-#Write-Verbose "DeployOnly = $($DeployOnly)"
-#Write-Verbose "UnregisterUnusedApplicationVersionsAfterUpgrade = $($UnregisterUnusedApplicationVersionsAfterUpgrade)"
-#Write-Verbose "OverrideUpgradeBehavior = $($OverrideUpgradeBehavior)"
-#Write-Verbose "OverwriteBehavior = $($OverwriteBehavior)"
-#Write-Verbose "SkipPackageValidation = $($SkipPackageValidation)"
-#Write-Verbose "SecurityToken = $($SecurityToken)"
-#Write-Verbose "CopyPackageTimeoutSec = $($CopyPackageTimeoutSec)"
-#Write-Verbose "FabricLogExtractedApplicationPackage = $($FabricLogExtractedApplicationPackage)"
-
 function Read-XmlElementAsHashtable
 {
     Param (
