@@ -185,7 +185,11 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"{Configuration", @"{Configuration\\*.txt")]
         public void EnumerateFilesWithGlobShouldIgnoreGroups(string directory, string glob)
         {
+            if (!CalamariEnvironment.IsRunningOnWindows)
+                glob = glob.Replace("\\", "/");
+
             Directory.CreateDirectory(Path.Combine(rootPath, directory));
+
             File.WriteAllText(Path.Combine(rootPath, directory, "Foo.txt"), "");
 
             var results = fileSystem.EnumerateFilesWithGlob(rootPath, glob).ToList();
