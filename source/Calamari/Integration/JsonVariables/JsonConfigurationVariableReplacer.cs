@@ -125,7 +125,7 @@ namespace Calamari.Integration.JsonVariables
                 double doublevalue;
                 if (double.TryParse(t, out doublevalue))
                 {
-                    value.Replace(JToken.FromObject(longvalue));
+                    value.Replace(JToken.FromObject(doublevalue));
                     return;
                 }
                 value.Replace(JToken.FromObject(t));
