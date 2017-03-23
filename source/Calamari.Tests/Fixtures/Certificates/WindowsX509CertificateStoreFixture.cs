@@ -88,6 +88,8 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             var privateKeySecurity = WindowsX509CertificateStore.GetPrivateKeySecurity(sampleCertificate.Thumbprint, storeLocation, storeName);
             AssertHasPrivateKeyRights(privateKeySecurity, "BUILTIN\\Users", CryptoKeyRights.GenericAll);
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
         }
 
         void AssertHasPrivateKeyRights(CryptoKeySecurity privateKeySecurity, string identifier, CryptoKeyRights right)
