@@ -61,11 +61,11 @@ namespace Calamari.Integration.Certificates
 
                 // Because we have to store the private-key in the machine key-store, we must grant the user access to it
                 var keySecurity = new [] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) }; 
-                SetPrivateKeySecurity(keySecurity, certificate);
+                AddPrivateKeyAccessRules(keySecurity, certificate);
             }
         }
 
-        public static void SetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName, 
+        public static void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName, 
             ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
             var store = new X509Store(storeName, storeLocation);
@@ -81,7 +81,7 @@ namespace Calamari.Integration.Certificates
             if (!certificate.HasPrivateKey())
                 throw new Exception("Certificate does not have a private-key");
 
-            SetPrivateKeySecurity(privateKeyAccessRules, certificate);
+            AddPrivateKeyAccessRules(privateKeyAccessRules, certificate);
 
             store.Close();
         }
@@ -320,7 +320,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static void SetPrivateKeySecurity(ICollection<PrivateKeyAccessRule> accessRules , SafeCertContextHandle certificate)
+        static void AddPrivateKeyAccessRules(ICollection<PrivateKeyAccessRule> accessRules , SafeCertContextHandle certificate)
         {
             try
             {

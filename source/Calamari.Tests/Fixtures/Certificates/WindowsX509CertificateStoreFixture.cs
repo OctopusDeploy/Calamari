@@ -77,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
                 storeLocation, storeName, sampleCertificate.HasPrivateKey);
 
-            WindowsX509CertificateStore.SetPrivateKeySecurity(sampleCertificate.Thumbprint, storeLocation, storeName, 
+            WindowsX509CertificateStore.AddPrivateKeyAccessRules(sampleCertificate.Thumbprint, storeLocation, storeName, 
                 new List<PrivateKeyAccessRule>
                 {
                    new PrivateKeyAccessRule("BUILTIN\\Users", PrivateKeyAccess.FullControl) 
