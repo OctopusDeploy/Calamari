@@ -31,27 +31,6 @@ namespace Calamari.Integration.Certificates
             return JsonConvert.DeserializeObject<List<PrivateKeyAccessRule>>(json, JsonSerializerSettings);
         }
 
-        /*
-        internal static CryptoKeySecurity CreateCryptoKeySecurity(ICollection<PrivateKeyAccessRule> rules)
-        {
-            if (rules == null)
-                return new CryptoKeySecurity();
-
-           var security = new CryptoKeySecurity();
-
-            foreach (var rule in rules)
-            {
-                security.AddAccessRule(rule.ToCryptoKeyAccessRule());
-            }
-
-            // We will always grant full-control to machine admins
-            security.AddAccessRule(new CryptoKeyAccessRule(
-                new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), CryptoKeyRights.GenericAll, AccessControlType.Allow));
-
-            return security;
-        }
-        */
-
         internal CryptoKeyAccessRule ToCryptoKeyAccessRule()
         {
                 switch (Access)

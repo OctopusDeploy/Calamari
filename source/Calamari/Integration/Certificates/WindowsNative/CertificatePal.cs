@@ -60,6 +60,30 @@ namespace Calamari.Integration.Certificates.WindowsNative
             return buffer;
         }
 
+        public static SafeCspHandle GetCspPrivateKey(SafeCertContextHandle certificate)
+        {
+            SafeCspHandle cspHandle;
+            var keySpec = 0;
+            var freeKey = true;
+            if (!Native.CryptAcquireCertificatePrivateKey(certificate,
+                Native.AcquireCertificateKeyOptions.AcquireSilent,
+                IntPtr.Zero, out cspHandle, out keySpec, out freeKey))
+            {
+                throw new CryptographicException(Marshal.GetLastWin32Error());
+            }
+
+            if (cspHandle.IsInvalid)
+                throw new Exception("Could not acquire private key");
+
+            if (!freeKey)
+            {
+                var addedRef = false;
+                cspHandle.DangerousAddRef(ref addedRef);
+            }
+
+            return cspHandle;
+        }
+
         public static byte[] GetCspPrivateKeySecurity(SafeCspHandle cspHandle)
         {
             byte[] buffer = null;
