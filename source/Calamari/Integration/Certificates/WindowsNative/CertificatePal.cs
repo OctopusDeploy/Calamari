@@ -60,6 +60,89 @@ namespace Calamari.Integration.Certificates.WindowsNative
             return buffer;
         }
 
+        public static SafeCspHandle GetCspPrivateKey(SafeCertContextHandle certificate)
+        {
+            SafeCspHandle cspHandle;
+            var keySpec = 0;
+            var freeKey = true;
+            if (!Native.CryptAcquireCertificatePrivateKey(certificate,
+                Native.AcquireCertificateKeyOptions.AcquireSilent,
+                IntPtr.Zero, out cspHandle, out keySpec, out freeKey))
+            {
+                throw new CryptographicException(Marshal.GetLastWin32Error());
+            }
+
+            if (cspHandle.IsInvalid)
+                throw new Exception("Could not acquire private key");
+
+            if (!freeKey)
+            {
+                var addedRef = false;
+                cspHandle.DangerousAddRef(ref addedRef);
+            }
+
+            return cspHandle;
+        }
+
+        public static byte[] GetCspPrivateKeySecurity(SafeCspHandle cspHandle)
+        {
+            byte[] buffer = null;
+            var bufferSize = 0;
+
+            // ReSharper disable once ExpressionIsAlwaysNull
+            if (!Native.CryptGetProvParam(cspHandle, WindowsX509Native.CspProperties.SecurityDescriptor, buffer,
+                    ref bufferSize, WindowsX509Native.SecurityDesciptorParts.DACL_SECURITY_INFORMATION))
+            {
+                // ReSharper disable once InconsistentNaming
+                const int ERROR_MORE_DATA = 0x000000ea;
+                var errorCode = Marshal.GetLastWin32Error();
+
+                if (errorCode != ERROR_MORE_DATA)
+                {
+                    throw new CryptographicException(errorCode);
+                }
+            }
+
+            buffer = new byte[bufferSize];
+            if (!Native.CryptGetProvParam(cspHandle, WindowsX509Native.CspProperties.SecurityDescriptor, buffer,
+                ref bufferSize, WindowsX509Native.SecurityDesciptorParts.DACL_SECURITY_INFORMATION))
+            {
+                throw new CryptographicException(Marshal.GetLastWin32Error());
+            }
+
+            return buffer;
+        }
+
+        public static byte[] GetCngPrivateKeySecurity(SafeNCryptKeyHandle hObject)
+        {
+            int bufferSize = 0;
+            byte[] buffer = null;
+
+            var errorCode = Native.NCryptGetProperty(hObject, Native.NCryptProperties.SecurityDescriptor, null, 0,
+                ref bufferSize,
+                (int)Native.NCryptFlags.Silent |
+                (int)Native.SecurityDesciptorParts.DACL_SECURITY_INFORMATION);
+
+            if (errorCode != (int)Native.NCryptErrorCode.Success && errorCode != (int)Native.NCryptErrorCode.BufferTooSmall)
+            {
+                throw new CryptographicException(errorCode);
+            }
+
+            buffer = new byte[bufferSize];
+
+            errorCode = Native.NCryptGetProperty(hObject, Native.NCryptProperties.SecurityDescriptor, buffer, bufferSize,
+                ref bufferSize,
+                (int)Native.NCryptFlags.Silent |
+                (int)Native.SecurityDesciptorParts.DACL_SECURITY_INFORMATION);
+
+            if (errorCode != (int)Native.NCryptErrorCode.Success)
+            {
+                throw new CryptographicException(errorCode);
+            }
+
+            return buffer;
+        }
+
         public static SafeNCryptKeyHandle GetCngPrivateKey(SafeCertContextHandle certificate)
         {
             SafeNCryptKeyHandle key;

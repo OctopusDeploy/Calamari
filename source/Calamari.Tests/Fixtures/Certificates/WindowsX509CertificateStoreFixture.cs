@@ -1,6 +1,10 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
@@ -57,6 +61,45 @@ namespace Calamari.Tests.Fixtures.Certificates
             sampleCertificate.AssertCertificateIsInStore(storeName, StoreLocation.CurrentUser);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
+        }
+
+        [Test]
+        [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.LocalMachine, "My")]
+        [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.LocalMachine, "Foo")]
+        [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.LocalMachine, "My")]
+        [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.LocalMachine, "Foo")]
+        public void ImportExistingCertificateShouldNotOverwriteExistingPrivateKeyRights(string sampleCertificateId, StoreLocation storeLocation, string storeName)
+        {
+            var sampleCertificate = SampleCertificate.SampleCertificates[sampleCertificateId];
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
+
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
+                storeLocation, storeName, sampleCertificate.HasPrivateKey);
+
+            WindowsX509CertificateStore.AddPrivateKeyAccessRules(sampleCertificate.Thumbprint, storeLocation, storeName, 
+                new List<PrivateKeyAccessRule>
+                {
+                   new PrivateKeyAccessRule("BUILTIN\\Users", PrivateKeyAccess.FullControl) 
+                });
+
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
+                storeLocation, storeName, sampleCertificate.HasPrivateKey);
+
+            var privateKeySecurity = WindowsX509CertificateStore.GetPrivateKeySecurity(sampleCertificate.Thumbprint, storeLocation, storeName);
+            AssertHasPrivateKeyRights(privateKeySecurity, "BUILTIN\\Users", CryptoKeyRights.GenericAll);
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
+        }
+
+        void AssertHasPrivateKeyRights(CryptoKeySecurity privateKeySecurity, string identifier, CryptoKeyRights right)
+        {
+            var accessRules = privateKeySecurity.GetAccessRules(true, false, typeof(NTAccount));
+
+            var found = accessRules.Cast<CryptoKeyAccessRule>()
+                .Any(x => x.IdentityReference.Value == identifier && x.CryptoKeyRights.HasFlag(right));
+
+            Assert.True(found, "Private-Key right was not set");
         }
     }
 }
