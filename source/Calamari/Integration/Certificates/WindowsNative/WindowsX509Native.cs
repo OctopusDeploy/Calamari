@@ -38,6 +38,10 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool CryptGetProvParam(SafeCspHandle hProv, CspProperties dwParam, [Out, MarshalAs(UnmanagedType.LPArray)] byte[] pbData, ref int pdwDataLen, SecurityDesciptorParts dwFlags);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CryptSetProvParam(SafeCspHandle hProv, CspProperties dwParam, [In] byte[] pbData, SecurityDesciptorParts dwFlags);
 
         [DllImport("Crypt32.dll", SetLastError = true)]
@@ -69,6 +73,9 @@ namespace Calamari.Integration.Certificates.WindowsNative
         bool CertEnumSystemStoreCallBackProto([MarshalAs(UnmanagedType.LPWStr)] string storeName, uint dwFlagsNotUsed, IntPtr notUsed1, IntPtr notUsed2, IntPtr notUsed3);
 
         [DllImport("Ncrypt.dll", SetLastError = true, ExactSpelling = true)]
+        internal static extern int NCryptGetProperty(SafeNCryptHandle hObject, [MarshalAs(UnmanagedType.LPWStr)] string szProperty, [Out, MarshalAs(UnmanagedType.LPArray)] byte[] pbOutput, int cbOutput, ref int pcbResult, int flags);
+
+        [DllImport("Ncrypt.dll", SetLastError = true, ExactSpelling = true)]
         internal static extern int NCryptSetProperty(SafeNCryptHandle hObject, [MarshalAs(UnmanagedType.LPWStr)] string szProperty, IntPtr pbInputByteArray, int cbInput, int flags);
 
         [DllImport("Ncrypt.dll")]
@@ -82,6 +89,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         internal enum AddCertificateDisposition
         {
+            CERT_STORE_ADD_NEW = 1,
             CERT_STORE_ADD_REPLACE_EXISTING = 3
         }
 
@@ -191,6 +199,18 @@ namespace Calamari.Integration.Certificates.WindowsNative
         {
             DACL_SECURITY_INFORMATION = 0x00000004
         }
+
+        public enum NCryptErrorCode
+        {
+            Success = 0x00000000,                                   // ERROR_SUCCESS
+            BufferTooSmall = unchecked((int)0x80090028),            // NTE_BUFFER_TOO_SMALL
+        }
+
+        public enum CapiErrorCode
+        {
+            CRYPT_E_EXISTS = unchecked((int)0x80092005)
+        }
+
     }
 }
 #endif

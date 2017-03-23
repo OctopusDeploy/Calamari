@@ -31,6 +31,7 @@ namespace Calamari.Integration.Certificates
             return JsonConvert.DeserializeObject<List<PrivateKeyAccessRule>>(json, JsonSerializerSettings);
         }
 
+        /*
         internal static CryptoKeySecurity CreateCryptoKeySecurity(ICollection<PrivateKeyAccessRule> rules)
         {
             if (rules == null)
@@ -40,18 +41,7 @@ namespace Calamari.Integration.Certificates
 
             foreach (var rule in rules)
             {
-                switch (rule.Access)
-                {
-                    case PrivateKeyAccess.ReadOnly:
-                        security.AddAccessRule(new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow));
-                        break;
-                    case PrivateKeyAccess.FullControl:
-                        // We use 'GenericAll' here rather than 'FullControl' as 'FullControl' doesn't correctly set the access for CNG keys
-                        security.AddAccessRule(new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                security.AddAccessRule(rule.ToCryptoKeyAccessRule());
             }
 
             // We will always grant full-control to machine admins
@@ -59,6 +49,23 @@ namespace Calamari.Integration.Certificates
                 new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), CryptoKeyRights.GenericAll, AccessControlType.Allow));
 
             return security;
+        }
+        */
+
+        internal CryptoKeyAccessRule ToCryptoKeyAccessRule()
+        {
+                switch (Access)
+                {
+                    case PrivateKeyAccess.ReadOnly:
+                        return new CryptoKeyAccessRule(Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow);
+
+                    case PrivateKeyAccess.FullControl:
+                        // We use 'GenericAll' here rather than 'FullControl' as 'FullControl' doesn't correctly set the access for CNG keys
+                        return new CryptoKeyAccessRule(Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow);
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(Access));
+                }
         }
 
         private static JsonSerializerSettings JsonSerializerSettings => new JsonSerializerSettings
