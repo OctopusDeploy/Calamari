@@ -69,7 +69,7 @@
       "mappings": {
         "FSharp/": "../Tools/FSharp.Compiler.Tools**/",
         "ScriptCS/": "../Tools/ScriptCS**/",
-        "PowerShell/": "../Tools/Octopus.Dependencies.AzureCmdlets**/",
+        "PowerShell/": "../Tools/Octopus.Dependencies.AzureCmdlets**/"
       }
     }
   },
