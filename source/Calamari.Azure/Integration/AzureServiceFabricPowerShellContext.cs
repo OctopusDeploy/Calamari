@@ -8,6 +8,7 @@ using Calamari.Integration.Scripting;
 using Octostache;
 using Calamari.Deployment;
 using Calamari.Azure.Util;
+using Calamari.Commands.Support;
 
 namespace Calamari.Azure.Integration
 {
@@ -34,11 +35,20 @@ namespace Calamari.Azure.Integration
             // Azure PS modules are required for looking up Azure environments (needed for AAD url lookup in Service Fabric world).
             SetAzureModulesLoadingMethod(variables);
 
+            var securityMode = variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode);
+            if (securityMode == "SecureClientCertificate")
+            {
+                var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.CertificateVariable);
+                var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+                SetOutputVariable("OctopusFabricClientCertVariable", variables.Get(SpecialVariables.Action.ServiceFabric.ClientCertVariable), variables);
+            }
+
+
             // Set output variables for our script to access.
             SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint), variables);
             SetOutputVariable("OctopusFabricSecurityMode", variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode), variables);
             SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint), variables);
-            SetOutputVariable("OctopusFabricClientCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ClientCertThumbprint), variables);
+            SetOutputVariable("OctopusFabricClientCertVariable", variables.Get(SpecialVariables.Action.ServiceFabric.ClientCertVariable), variables);
             SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindType, "FindByThumbprint"), variables);
             SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, "LocalMachine"), variables);
             SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreName, "MY"), variables);
@@ -75,6 +85,16 @@ namespace Calamari.Azure.Integration
             {
                 Log.SetOutputVariable(name, value, variables);
             }
+        }
+
+        string GetMandatoryVariable(CalamariVariableDictionary variables, string variableName)
+        {
+            var value = variables.Get(variableName);
+
+            if (string.IsNullOrWhiteSpace(value))
+                throw new CommandException($"Variable {variableName} was not supplied");
+
+            return value;
         }
     }
 }

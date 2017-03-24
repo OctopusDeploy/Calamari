@@ -188,7 +188,7 @@
                 public static readonly string ConnectionEndpoint = "Octopus.Action.ServiceFabric.ConnectionEndpoint";
                 public static readonly string SecurityMode = "Octopus.Action.ServiceFabric.SecurityMode";
                 public static readonly string ServerCertThumbprint = "Octopus.Action.ServiceFabric.ServerCertThumbprint";
-                public static readonly string ClientCertThumbprint = "Octopus.Action.ServiceFabric.ClientCertThumbprint";
+                public static readonly string ClientCertVariable = "Octopus.Action.ServiceFabric.ClientCertVariable";
                 public static readonly string CertificateFindType = "Octopus.Action.ServiceFabric.CertificateFindType";
                 public static readonly string CertificateStoreLocation = "Octopus.Action.ServiceFabric.CertificateStoreLocation";
                 public static readonly string CertificateStoreName = "Octopus.Action.ServiceFabric.CertificateStoreName";

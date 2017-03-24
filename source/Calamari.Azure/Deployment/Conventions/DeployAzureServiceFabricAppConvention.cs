@@ -31,8 +31,6 @@ namespace Calamari.Azure.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
-
             var variables = deployment.Variables;
 
             // Set output variables for our script to access.
