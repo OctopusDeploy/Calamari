@@ -35,20 +35,20 @@ namespace Calamari.Azure.Integration
             // Azure PS modules are required for looking up Azure environments (needed for AAD url lookup in Service Fabric world).
             SetAzureModulesLoadingMethod(variables);
 
+            // Read thumbprint from our client cert variable (if applicable).
             var securityMode = variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode);
-            if (securityMode == "SecureClientCertificate")
+            var clientCertThumbprint = string.Empty;
+            if (securityMode == AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
             {
-                var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.CertificateVariable);
-                var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
-                SetOutputVariable("OctopusFabricClientCertVariable", variables.Get(SpecialVariables.Action.ServiceFabric.ClientCertVariable), variables);
+                var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.ServiceFabric.ClientCertVariable);
+                clientCertThumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
             }
-
 
             // Set output variables for our script to access.
             SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint), variables);
             SetOutputVariable("OctopusFabricSecurityMode", variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode), variables);
             SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint), variables);
-            SetOutputVariable("OctopusFabricClientCertVariable", variables.Get(SpecialVariables.Action.ServiceFabric.ClientCertVariable), variables);
+            SetOutputVariable("OctopusFabricClientCertThumbprint", clientCertThumbprint, variables);
             SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindType, "FindByThumbprint"), variables);
             SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, "LocalMachine"), variables);
             SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreName, "MY"), variables);

@@ -155,7 +155,7 @@ Execute-WithRetry {
 
         $validationMsg = ValidationMessageForClientCertificateParameters
         if ($validationMsg) {
-            Write-Warning $validationMsg
+            Write-Error $validationMsg
             Exit
         }
 
@@ -173,7 +173,7 @@ Execute-WithRetry {
 
         $validationMsg = ValidationMessageForAzureADParameters
         if ($validationMsg) {
-            Write-Warning $validationMsg
+            Write-Error $validationMsg
             Exit
         }
 

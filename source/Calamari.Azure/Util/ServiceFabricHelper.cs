@@ -16,4 +16,11 @@ namespace Calamari.Azure.Util
             return keyFound;
         }
     }
+
+    public enum AzureServiceFabricSecurityMode
+    {
+        Unsecure,
+        SecureClientCertificate,
+        SecureAzureAD,
+    }
 }
