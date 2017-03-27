@@ -1,6 +1,7 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
@@ -59,13 +60,12 @@ namespace Calamari.Integration.Certificates
                 var certificate = ImportPfxToStore(store, pfxBytes, password, false, privateKeyExportable);
 
                 // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-                var keySecurity =
-                    PrivateKeyAccessRule.CreateCryptoKeySecurity(new [] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) }); 
-                SetPrivateKeySecurity(keySecurity, certificate);
+                var keySecurity = new [] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) }; 
+                AddPrivateKeyAccessRules(keySecurity, certificate);
             }
         }
 
-        public static void SetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName, 
+        public static void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName, 
             ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
             var store = new X509Store(storeName, storeLocation);
@@ -81,9 +81,33 @@ namespace Calamari.Integration.Certificates
             if (!certificate.HasPrivateKey())
                 throw new Exception("Certificate does not have a private-key");
 
-            SetPrivateKeySecurity(PrivateKeyAccessRule.CreateCryptoKeySecurity(privateKeyAccessRules), certificate);
+            AddPrivateKeyAccessRules(privateKeyAccessRules, certificate);
 
             store.Close();
+        }
+
+        public static CryptoKeySecurity GetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName)
+        {
+            var store = new X509Store(storeName, storeLocation);
+            store.Open(OpenFlags.ReadOnly);
+
+            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+            store.Close();
+
+            if (found.Count == 0)
+                throw new Exception($"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
+
+            var certificate = new SafeCertContextHandle(found[0].Handle, false);
+
+            if (!certificate.HasPrivateKey())
+                throw new Exception("Certificate does not have a private-key");
+
+            var keyProvInfo = certificate.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
+
+            // If it is a CNG key
+            return keyProvInfo.dwProvType == 0 
+                ? GetCngPrivateKeySecurity(certificate) 
+                : GetCspPrivateKeySecurity(certificate);
         }
 
         /// <summary>
@@ -223,9 +247,17 @@ namespace Calamari.Integration.Certificates
             {
                 var storeContext = IntPtr.Zero;
                 if (!CertAddCertificateContextToStore(store, certificate,
-                    AddCertificateDisposition.CERT_STORE_ADD_REPLACE_EXISTING, ref storeContext))
+                    AddCertificateDisposition.CERT_STORE_ADD_NEW, ref storeContext))
                 {
-                    throw new CryptographicException(Marshal.GetLastWin32Error());
+                    var error = Marshal.GetLastWin32Error();
+
+                    if (error == (int) CapiErrorCode.CRYPT_E_EXISTS)
+                    {
+                        Log.Info("Certificate already exists in store.");
+                        return;
+                    }
+
+                    throw new CryptographicException(error);
                 }
             }
             catch (Exception ex)
@@ -288,7 +320,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static void SetPrivateKeySecurity(CryptoKeySecurity privateKeySecurity, SafeCertContextHandle certificate)
+        static void AddPrivateKeyAccessRules(ICollection<PrivateKeyAccessRule> accessRules , SafeCertContextHandle certificate)
         {
             try
             {
@@ -298,11 +330,11 @@ namespace Calamari.Integration.Certificates
                 // If it is a CNG key
                 if (keyProvInfo.dwProvType == 0)
                 {
-                    SetCngPrivateKeySecurity(certificate, privateKeySecurity);
+                    SetCngPrivateKeySecurity(certificate, accessRules);
                 }
                 else
                 {
-                    SetCspPrivateKeySecurity(certificate, privateKeySecurity);
+                    SetCspPrivateKeySecurity(certificate, accessRules);
                 }
             }
             catch (Exception ex)
@@ -311,10 +343,17 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static void SetCngPrivateKeySecurity(SafeCertContextHandle certificate, CryptoKeySecurity security)
+        static void SetCngPrivateKeySecurity(SafeCertContextHandle certificate, ICollection<PrivateKeyAccessRule> accessRules)
         {
             using (var key = CertificatePal.GetCngPrivateKey(certificate))
             {
+                var security = GetCngPrivateKeySecurity(certificate);
+
+                foreach (var cryptoKeyAccessRule in accessRules.Select(r => r.ToCryptoKeyAccessRule()))
+                {
+                   security.AddAccessRule(cryptoKeyAccessRule); 
+                }
+
                 var securityDescriptorBytes = security.GetSecurityDescriptorBinaryForm();
                 var gcHandle = GCHandle.Alloc(securityDescriptorBytes, GCHandleType.Pinned);
 
@@ -333,27 +372,15 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static void SetCspPrivateKeySecurity(SafeCertContextHandle certificate, CryptoKeySecurity security)
+        static void SetCspPrivateKeySecurity(SafeCertContextHandle certificate, ICollection<PrivateKeyAccessRule> accessRules)
         {
-            SafeCspHandle cspHandle;
-            var keySpec = 0;
-            var freeKey = true;
-            if (!CryptAcquireCertificatePrivateKey(certificate,
-                AcquireCertificateKeyOptions.AcquireSilent,
-                IntPtr.Zero, out cspHandle, out keySpec, out freeKey))
+            using (var cspHandle = CertificatePal.GetCspPrivateKey(certificate))
             {
-                throw new CryptographicException(Marshal.GetLastWin32Error());
-            }
+                var security = GetCspPrivateKeySecurity(certificate);
 
-            if (cspHandle.IsInvalid)
-                throw new Exception("Could not acquire private key");
-
-            using (cspHandle)
-            {
-                if (!freeKey)
+                foreach (var cryptoKeyAccessRule in accessRules.Select(r => r.ToCryptoKeyAccessRule()))
                 {
-                    var addedRef = false;
-                    cspHandle.DangerousAddRef(ref addedRef);
+                   security.AddAccessRule(cryptoKeyAccessRule); 
                 }
 
                 var securityDescriptorBytes = security.GetSecurityDescriptorBinaryForm();
@@ -363,6 +390,27 @@ namespace Calamari.Integration.Certificates
                 {
                     throw new CryptographicException(Marshal.GetLastWin32Error());
                 }
+            }
+        }
+
+        static CryptoKeySecurity GetCngPrivateKeySecurity(SafeCertContextHandle certificate)
+        {
+            using (var key = CertificatePal.GetCngPrivateKey(certificate))
+            {
+                var security = new CryptoKeySecurity();
+                security.SetSecurityDescriptorBinaryForm(CertificatePal.GetCngPrivateKeySecurity(key),
+                    AccessControlSections.Access);
+                return security;
+            }
+        }
+
+        static CryptoKeySecurity GetCspPrivateKeySecurity(SafeCertContextHandle certificate)
+        {
+            using (var cspHandle = CertificatePal.GetCspPrivateKey(certificate))
+            {
+                var security = new CryptoKeySecurity();
+                security.SetSecurityDescriptorBinaryForm(CertificatePal.GetCspPrivateKeySecurity(cspHandle), AccessControlSections.Access);
+                return security;
             }
         }
 

@@ -45,10 +45,9 @@ namespace Calamari.Deployment.Features
 
                 // The store-name variable was set by IisWebSiteBeforePostDeploy
                 var storeName = variables.Get(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName);
-                WindowsX509CertificateStore.SetPrivateKeySecurity(thumbprint, StoreLocation.LocalMachine, storeName, 
+                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, StoreLocation.LocalMachine, storeName, 
                     new List<PrivateKeyAccessRule> {privateKeyAccess});
             }
-            
         }
 
         static PrivateKeyAccessRule CreatePrivateKeyAccessForApplicationPoolAccount(VariableDictionary variables)

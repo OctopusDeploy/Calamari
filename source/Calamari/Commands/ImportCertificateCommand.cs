@@ -63,7 +63,7 @@ namespace Calamari.Commands
                         // Set private-key access
                         var privateKeyAccessRules = GetPrivateKeyAccessRules(variables);
                         if (privateKeyAccessRules.Any())
-                            WindowsX509CertificateStore.SetPrivateKeySecurity(thumbprint, storeLocation, storeName, privateKeyAccessRules);
+                            WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName, privateKeyAccessRules);
                     }
                 }
                 else // Import into a specific user's store
