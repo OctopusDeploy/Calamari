@@ -38,7 +38,7 @@ namespace Calamari.Azure.Commands
         {
             Options.Parse(commandLineArguments);
 
-            if (!ServiceFabricHelper.IsServiceFabricSDKKeyInRegistry())
+            if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
                 throw new CommandException("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
             Guard.NotNullOrWhiteSpace(packageFile,

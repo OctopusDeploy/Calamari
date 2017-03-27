@@ -190,6 +190,7 @@
                 public static readonly string ServerCertThumbprint = "Octopus.Action.ServiceFabric.ServerCertThumbprint";
                 public static readonly string ClientCertVariable = "Octopus.Action.ServiceFabric.ClientCertVariable";
                 public static readonly string CertificateFindType = "Octopus.Action.ServiceFabric.CertificateFindType";
+                public static readonly string CertificateFindValueOverride = "Octopus.Action.ServiceFabric.CertificateFindValueOverride";
                 public static readonly string CertificateStoreLocation = "Octopus.Action.ServiceFabric.CertificateStoreLocation";
                 public static readonly string CertificateStoreName = "Octopus.Action.ServiceFabric.CertificateStoreName";
                 public static readonly string PublishProfileFile = "Octopus.Action.ServiceFabric.PublishProfileFile";

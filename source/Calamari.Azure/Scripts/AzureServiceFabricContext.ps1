@@ -12,6 +12,7 @@
 ##   OctopusFabricServerCertThumbprint                       // The server certificate thumbprint
 ##   OctopusFabricClientCertThumbprint                       // The client certificate thumbprint
 ##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
+##   OctopusFabricCertificateFindValueOverride               // The type of FindValue for searching the certificate in the Azure certificate store (use this if you specify a FindType different to 'FindByThumbprint' and do NOT wish to use the client certificate thumbprint value)
 ##   OctopusFabricCertificateStoreLocation                   // The certificate store location (should be 'LocalMachine' by default)
 ##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
 ##   OctopusFabricAadCredentialType                          // The credential type for authentication
@@ -164,7 +165,12 @@ Execute-WithRetry {
         $ClusterConnectionParameters["StoreLocation"] = $OctopusFabricCertificateStoreLocation
         $ClusterConnectionParameters["StoreName"] = $OctopusFabricCertificateStoreName
         $ClusterConnectionParameters["FindType"] = $OctopusFabricCertificateFindType
-        $ClusterConnectionParameters["FindValue"] = $OctopusFabricClientCertThumbprint
+
+        if ($OctopusFabricCertificateFindValueOverride) {
+            $ClusterConnectionParameters["FindValue"] = $OctopusFabricCertificateFindValueOverride
+        } Else {
+            $ClusterConnectionParameters["FindValue"] = $OctopusFabricClientCertThumbprint
+        }
 
     } ElseIf ($OctopusFabricSecurityMode -eq "SecureAzureAD") {
 

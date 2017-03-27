@@ -4,7 +4,7 @@ namespace Calamari.Azure.Util
 {
     public static class ServiceFabricHelper
     {
-        public static bool IsServiceFabricSDKKeyInRegistry()
+        public static bool IsServiceFabricSdkKeyInRegistry()
         {
             var keyFound = false;
             using (var rootKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
