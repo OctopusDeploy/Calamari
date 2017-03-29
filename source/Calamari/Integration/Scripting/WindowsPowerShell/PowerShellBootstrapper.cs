@@ -60,9 +60,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             {
                 commandArguments.Append($"-Version {customPowerShellVersion} ");
             }
-            var debug = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
-            bool shouldDebug;
-            if (bool.TryParse(debug, out shouldDebug) && shouldDebug)
+            var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
+            bool noProfile;
+            if (bool.TryParse(executeWithoutProfile, out noProfile) && noProfile)
             {
                 commandArguments.Append("-NoProfile ");
             }
