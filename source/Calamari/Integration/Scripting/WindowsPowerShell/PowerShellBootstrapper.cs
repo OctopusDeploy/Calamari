@@ -81,7 +81,12 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         private static bool IsDebuggingEnabled(CalamariVariableDictionary variables)
         {
             var powershellDebugMode = variables[SpecialVariables.Action.PowerShell.DebugMode];
-            return !string.IsNullOrEmpty(powershellDebugMode);
+
+            if (string.IsNullOrEmpty(powershellDebugMode))
+                return false;
+            if (powershellDebugMode.Equals("False", StringComparison.OrdinalIgnoreCase) || powershellDebugMode.Equals("None", StringComparison.OrdinalIgnoreCase))
+                return false;
+            return true;
         }
 
         public static string PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
