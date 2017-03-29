@@ -104,6 +104,7 @@
       "include": [
         "Integration\\Scripting\\Bash\\Bootstrap.sh",
         "Integration\\Scripting\\WindowsPowerShell\\Bootstrap.ps1",
+        "Integration\\Scripting\\WindowsPowerShell\\DebugBootstrap.ps1",
         "Integration\\Scripting\\ScriptCS\\Bootstrap.csx",
         "Integration\\Scripting\\FSharp\\Bootstrap.fsx",
         "Scripts\\**"

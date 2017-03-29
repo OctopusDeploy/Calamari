@@ -245,6 +245,7 @@
                 public static readonly string ExecuteWithoutProfile = "Octopus.Action.PowerShell.ExecuteWithoutProfile";
                 public static readonly string UserName = "Octopus.Action.PowerShell.UserName";
                 public static readonly string Password = "Octopus.Action.PowerShell.Password";
+                public static readonly string DebugMode = "Octopus.Action.PowerShell.DebugMode";
             }
 
             public static class Certificate
