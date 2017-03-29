@@ -15,6 +15,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
         private static readonly string BootstrapScriptTemplate;
+        private static readonly string DebugBootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -22,6 +23,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         static PowerShellBootstrapper()
         {
             BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".Bootstrap.ps1");
+            DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
         }
 
         public static string PathToPowerShellExecutable()
@@ -49,7 +51,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return powerShellPath;
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, CalamariVariableDictionary variables)
+        public static string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
@@ -58,18 +60,28 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             {
                 commandArguments.Append($"-Version {customPowerShellVersion} ");
             }
-            var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
-            bool noProfile;
-            if (bool.TryParse(executeWithoutProfile, out noProfile) && noProfile)
+            var debug = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
+            bool shouldDebug;
+            if (bool.TryParse(debug, out shouldDebug) && shouldDebug)
             {
                 commandArguments.Append("-NoProfile ");
             }
             commandArguments.Append("-NoLogo ");
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
-            var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
-            commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", escapedBootstrapFile, encryptionKey);
+
+            var filetoExecute = IsDebuggingEnabled(variables)
+                ? debuggingBootstrapFile.Replace("'", "''")
+                : bootstrapFile.Replace("'", "''");
+
+            commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", filetoExecute, encryptionKey);
             return commandArguments.ToString();
+        }
+
+        private static bool IsDebuggingEnabled(CalamariVariableDictionary variables)
+        {
+            var powershellDebugMode = variables[SpecialVariables.Action.PowerShell.DebugMode];
+            return !string.IsNullOrEmpty(powershellDebugMode);
         }
 
         public static string PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
@@ -84,10 +96,66 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     .Replace("{{VariableDeclarations}}", DeclareVariables(variables))
                     .Replace("{{ScriptModules}}", DeclareScriptModules(variables));
 
+            builder = SetupDebugBreakpoints(builder, variables);
+
             CalamariFileSystem.OverwriteFile(bootstrapFile, builder.ToString(), new UTF8Encoding(true));
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             return bootstrapFile;
+        }
+
+        private static StringBuilder SetupDebugBreakpoints(StringBuilder builder, CalamariVariableDictionary variables)
+        {
+            const string powershellWaitForDebuggerCommand = "Wait-Debugger";
+            var startOfBootstrapScriptDebugLocation = string.Empty;
+            var beforeVariablesDebugLocation = string.Empty;
+            var beforeScriptModulesDebugLocation = string.Empty;
+            var beforeLaunchingUserScriptDebugLocation = string.Empty;
+
+            var powershellDebugMode = variables[SpecialVariables.Action.PowerShell.DebugMode];
+            if (!string.IsNullOrEmpty(powershellDebugMode))
+            {
+                switch (powershellDebugMode.ToLower())
+                {
+                    case "breakatstartofbootstrapscript":
+                        startOfBootstrapScriptDebugLocation = powershellWaitForDebuggerCommand;
+                        break;
+                    case "breakbeforesettingvariables":
+                        beforeVariablesDebugLocation = powershellWaitForDebuggerCommand;
+                        break;
+                    case "breakbeforeimportingscriptmodules":
+                        beforeScriptModulesDebugLocation = powershellWaitForDebuggerCommand;
+                        break;
+                    case "breakbeforelaunchinguserscript":
+                        beforeLaunchingUserScriptDebugLocation = powershellWaitForDebuggerCommand;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            builder.Replace("{{StartOfBootstrapScriptDebugLocation}}", startOfBootstrapScriptDebugLocation)
+                .Replace("{{BeforeVariablesDebugLocation}}", beforeVariablesDebugLocation)
+                .Replace("{{BeforeScriptModulesDebugLocation}}", beforeScriptModulesDebugLocation)
+                .Replace("{{BeforeLaunchingUserScriptDebugLocation}}", beforeLaunchingUserScriptDebugLocation);
+
+            return builder;
+        }
+
+        public static string PrepareDebuggingBootstrapFile(Script script)
+        {
+            var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
+            var name = Path.GetFileName(script.File);
+            var debugBootstrapFile = Path.Combine(parent, "DebugBootstrap." + name);
+            var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
+            var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
+
+            var builder = new StringBuilder(DebugBootstrapScriptTemplate);
+            builder.Replace("{{BootstrapFile}}", escapedBootstrapFile);
+
+            CalamariFileSystem.OverwriteFile(debugBootstrapFile, builder.ToString(), new UTF8Encoding(true));
+
+            File.SetAttributes(debugBootstrapFile, FileAttributes.Hidden);
+            return debugBootstrapFile;
         }
 
         static string DeclareVariables(CalamariVariableDictionary variables)

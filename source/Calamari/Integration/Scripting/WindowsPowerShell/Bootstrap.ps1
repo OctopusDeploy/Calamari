@@ -1,5 +1,6 @@
 ﻿param([string]$OctopusKey="")
 
+{{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
 
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
@@ -246,13 +247,13 @@ Log-VersionTable
 # -----------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------
-
+{{BeforeVariablesDebugLocation}}
 {{VariableDeclarations}}
 
 # -----------------------------------------------------------------
 # Script Modules - after variables
 # -----------------------------------------------------------------
-
+{{BeforeScriptModulesDebugLocation}}
 {{ScriptModules}}
 
 # -----------------------------------------------------------------
@@ -266,6 +267,7 @@ Log-EnvironmentInformation
 # -----------------------------------------------------------------
 # Invoke target script
 # -----------------------------------------------------------------
+{{BeforeLaunchingUserScriptDebugLocation}}
 . '{{TargetScriptFile}}' {{ScriptParameters}}
 
 # -----------------------------------------------------------------
