@@ -132,9 +132,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                         beforeScriptModulesDebugLocation = powershellWaitForDebuggerCommand;
                         break;
                     case "breakbeforelaunchinguserscript":
+                    case "true":
                         beforeLaunchingUserScriptDebugLocation = powershellWaitForDebuggerCommand;
-                        break;
-                    default:
                         break;
                 }
             }
