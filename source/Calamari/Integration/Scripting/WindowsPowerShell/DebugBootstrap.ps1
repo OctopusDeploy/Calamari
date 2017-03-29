@@ -5,6 +5,7 @@
 $ErrorActionPreference = 'Stop'
 
 $powershellEngine = [powershell]::Create([System.Management.Automation.RunspaceMode]::NewRunspace)
+$powershellEngine.Runspace.Name = "OctopusScript"
 
 Write-Host "##octopus[stdout-warning]"
 Write-Host "The Powershell execution engine is waiting for a PowerShell script debugger to attach."
