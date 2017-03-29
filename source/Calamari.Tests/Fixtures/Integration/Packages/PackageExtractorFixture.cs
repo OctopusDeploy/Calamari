@@ -56,7 +56,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 Assert.Less(fileInfo.LastWriteTime, timeBeforeExtraction);
             }
-            Assert.AreEqual(3, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 4 here.
+            Assert.AreEqual(4, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 5 here.
             Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
         }
 
@@ -98,6 +98,24 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             extractor.Extract(fileName, targetDir, true);
             var textFileName = Path.Combine(targetDir, "ChildFolder", "file-in-child-folder.txt");
             Assert.That(File.Exists(textFileName), Is.True, $"The file '{Path.GetFileName(textFileName)}' should have been extracted.");
+
+            //nupkg should not ignore files in the package folder unless they are in package/services/metadata
+            var packageFolderFileName = Path.Combine(targetDir, "package", "file-in-the-package-folder.txt");
+            Assert.That(File.Exists(packageFolderFileName), Is.True, $"The file '{Path.GetFileName(textFileName)}' should have been extracted.");
+        }
+
+        [Test]
+        [TestCase(typeof(NupkgExtractor), "nupkg", false)]
+        public void NupkgExtractDoesNotExtractMetadata(Type extractorType, string extension, bool preservesTimestamp)
+        {
+            var fileName = GetFileName(extension);
+
+            var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
+            var targetDir = GetTargetDir(extractorType, fileName);
+
+            extractor.Extract(fileName, targetDir, true);
+            var textFileName = Path.Combine(targetDir, "package", "services", "metadata", "core-properties", "8e89f0a759d94c1aaab0626891f7b81f.psmdcp");
+            Assert.That(File.Exists(textFileName), Is.False, $"The file '{Path.GetFileName(textFileName)}' should not have been extracted.");
         }
 
         [Test]

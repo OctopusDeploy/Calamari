@@ -130,12 +130,12 @@ namespace Calamari.Integration.Packages.NuGet
             return path;
         }
 
-        static readonly string[] ExcludePaths = new[]
+        static readonly string[] ExcludePaths =
         {
             "_rels/",
-            "package/",
+            "package/services/metadata/",
             @"_rels\",
-            @"package\",
+            @"package\services\metadata\",
             "[Content_Types].xml"
         };
 
