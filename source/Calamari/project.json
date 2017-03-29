@@ -4,7 +4,7 @@
     "OctoDiff": "1.1.1",
     "FSharp.Compiler.Tools": "4.0.0.1",
     "ScriptCS": "0.16.1",
-    "Octostache": "2.1.0",
+    "Octostache": "2.1.4",
     "SharpCompress": "0.15.1"
   },
   "frameworks": {
@@ -52,7 +52,8 @@
           "USE_NUGET_V2_LIBS",
           "IIS_SUPPORT",
           "USE_OCTODIFF_EXE",
-          "WINDOWS_CERTIFICATE_STORE_SUPPORT"
+          "WINDOWS_CERTIFICATE_STORE_SUPPORT",
+          "CAN_RUN_PROCESS_AS"
         ]
       }
     },
@@ -80,6 +81,7 @@
         "System.Runtime.Extensions": "4.1.0",
         "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
         "System.Runtime.Serialization.Formatters": "4.0.0-rc3-24212-01",
+        "System.Security.SecureString": "4.0.0",
         "System.Security.Cryptography.Primitives": "4.0.0",
         "System.Security.Cryptography.X509Certificates": "4.1.0",
         "System.Threading.AccessControl": "4.0.0",

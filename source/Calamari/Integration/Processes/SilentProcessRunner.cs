@@ -1,8 +1,11 @@
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading;
+using Calamari.Util;
 
 namespace Calamari.Integration.Processes
 {
@@ -35,6 +38,11 @@ namespace Calamari.Integration.Processes
 
         public static int ExecuteCommand(string executable, string arguments, string workingDirectory, Action<string> output, Action<string> error)
         {
+            return ExecuteCommand(executable, arguments, workingDirectory, null, null, output, error);
+        }
+
+        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, SecureString password, Action<string> output, Action<string> error)
+        {
             try
             {
                 using (var process = new Process())
@@ -49,30 +57,64 @@ namespace Calamari.Integration.Processes
                     process.StartInfo.StandardOutputEncoding = oemEncoding;
                     process.StartInfo.StandardErrorEncoding = oemEncoding;
 
+#if CAN_RUN_PROCESS_AS
+                    if (!string.IsNullOrEmpty(userName) && password != null)
+                    {
+                        process.StartInfo.UserName = userName;
+                        process.StartInfo.Password = password;
+
+                        WindowStationAndDesktopAccess.GrantAccessToWindowStationAndDesktop(userName);
+
+                        // Environment variables (such as {env:TentacleHome}) are usually inherited from the parent process.
+                        // When running as a different user they are not inherited, so manually add them to the process.
+                        AddTentacleEnvironmentVariablesToProcess(process.StartInfo);
+                    }
+#endif
+
                     using (var outputWaitHandle = new AutoResetEvent(false))
                     using (var errorWaitHandle = new AutoResetEvent(false))
                     {
                         process.OutputDataReceived += (sender, e) =>
                         {
-                            if (e.Data == null)
+                            try
                             {
-                                outputWaitHandle.Set();
+                                if (e.Data == null)
+                                    outputWaitHandle.Set();
+                                else
+                                    output(e.Data);
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                output(e.Data);
+                                try
+                                {
+                                    error($"Error occured handling message: {ex.PrettyPrint()}");
+                                }
+                                catch
+                                {
+                                    // Ignore
+                                }
                             }
                         };
 
                         process.ErrorDataReceived += (sender, e) =>
                         {
-                            if (e.Data == null)
+                            try
                             {
-                                errorWaitHandle.Set();
+                                if (e.Data == null)
+                                    errorWaitHandle.Set();
+                                else
+                                    error(e.Data);
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                error(e.Data);
+                                try
+                                {
+                                    error($"Error occured handling message: {ex.PrettyPrint()}");
+                                }
+                                catch
+                                {
+                                    // Ignore
+                                }
                             }
                         };
 
@@ -92,9 +134,24 @@ namespace Calamari.Integration.Processes
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format("Error when attempting to execute {0}: {1}", executable, ex.Message), ex);
+                throw new Exception($"Error when attempting to execute {executable}: {ex.Message}", ex);
             }
         }
+
+#if CAN_RUN_PROCESS_AS
+        static void AddTentacleEnvironmentVariablesToProcess(ProcessStartInfo processStartInfo)
+        {
+            foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process))
+            {
+                var key = environmentVariable.Key.ToString();
+                if (!key.StartsWith("Tentacle"))
+                {
+                    continue;
+                }
+                processStartInfo.EnvironmentVariables[key] = environmentVariable.Value.ToString();
+            }
+        }
+#endif
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GetCPInfoEx([MarshalAs(UnmanagedType.U4)] int CodePage, [MarshalAs(UnmanagedType.U4)] int dwFlags, out CPINFOEX lpCPInfoEx);

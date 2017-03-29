@@ -31,34 +31,20 @@ namespace Calamari.Integration.Certificates
             return JsonConvert.DeserializeObject<List<PrivateKeyAccessRule>>(json, JsonSerializerSettings);
         }
 
-        internal static CryptoKeySecurity CreateCryptoKeySecurity(ICollection<PrivateKeyAccessRule> rules)
+        internal CryptoKeyAccessRule ToCryptoKeyAccessRule()
         {
-            if (rules == null)
-                return new CryptoKeySecurity();
-
-           var security = new CryptoKeySecurity();
-
-            foreach (var rule in rules)
-            {
-                switch (rule.Access)
+                switch (Access)
                 {
                     case PrivateKeyAccess.ReadOnly:
-                        security.AddAccessRule(new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow));
-                        break;
+                        return new CryptoKeyAccessRule(Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow);
+
                     case PrivateKeyAccess.FullControl:
                         // We use 'GenericAll' here rather than 'FullControl' as 'FullControl' doesn't correctly set the access for CNG keys
-                        security.AddAccessRule(new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow));
-                        break;
+                        return new CryptoKeyAccessRule(Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow);
+
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(Access));
                 }
-            }
-
-            // We will always grant full-control to machine admins
-            security.AddAccessRule(new CryptoKeyAccessRule(
-                new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), CryptoKeyRights.GenericAll, AccessControlType.Allow));
-
-            return security;
         }
 
         private static JsonSerializerSettings JsonSerializerSettings => new JsonSerializerSettings

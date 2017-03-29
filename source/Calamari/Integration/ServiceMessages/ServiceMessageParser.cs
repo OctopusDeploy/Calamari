@@ -66,12 +66,19 @@ namespace Calamari.Integration.ServiceMessages
 
         void ProcessMessage(string message)
         {
-            message = message.Trim().TrimStart('[').Replace("\r", "").Replace("\n", "");
+            try
+            {
+                message = message.Trim().TrimStart('[').Replace("\r", "").Replace("\n", "");
 
-            var element = XElement.Parse("<" + message + "/>");
-            var name = element.Name.LocalName;
-            var values = element.Attributes().ToDictionary(s => s.Name.LocalName, s => Encoding.UTF8.GetString(Convert.FromBase64String(s.Value)), StringComparer.OrdinalIgnoreCase);
-            serviceMessage(new ServiceMessage(name, values));
+                var element = XElement.Parse("<" + message + "/>");
+                var name = element.Name.LocalName;
+                var values = element.Attributes().ToDictionary(s => s.Name.LocalName, s => Encoding.UTF8.GetString(Convert.FromBase64String(s.Value)), StringComparer.OrdinalIgnoreCase);
+                serviceMessage(new ServiceMessage(name, values));
+            }
+            catch
+            {
+                // Ignore
+            }
         }
 
         enum State

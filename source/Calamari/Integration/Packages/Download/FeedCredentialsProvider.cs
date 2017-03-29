@@ -75,7 +75,7 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        class DynamicCachedCredential : ICredentials
+        class DynamicCachedCredential : CredentialCache, ICredentials
         {
             readonly string url;
 
@@ -84,7 +84,7 @@ namespace Calamari.Integration.Packages.Download
                 this.url = url;
             }
 
-            public NetworkCredential GetCredential(Uri uri, string authType)
+            NetworkCredential ICredentials.GetCredential(Uri uri, string authType)
             {
                 var credential = Instance.GetCurrentCredentials(url);
                 return credential.GetCredential(uri, authType);

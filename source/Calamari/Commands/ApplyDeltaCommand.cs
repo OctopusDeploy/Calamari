@@ -36,41 +36,50 @@ namespace Calamari.Commands
             string deltaFilePath;
             string newFilePath;
             string basisFilePath;
-            ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
-            fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
 
-            var tempNewFilePath = newFilePath + ".partial";
-#if USE_OCTODIFF_EXE
-            var factory = new OctoDiffCommandLineRunner();
-#else
-            var factory = new OctoDiffLibraryCallRunner();
-#endif
-            var octoDiff = factory.OctoDiff
-                .Action("patch")
-                .PositionalArgument(basisFilePath)
-                .PositionalArgument(deltaFilePath)
-                .PositionalArgument(tempNewFilePath);
-
-            if(skipVerification)
-                octoDiff.Flag("skip-verification");
-            
-            if(showProgress)
-                octoDiff.Flag("progress");
-
-            Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
-
-            var result = factory.Execute();
-            if (result.ExitCode != 0)
+            try
             {
-                fileSystem.DeleteFile(tempNewFilePath, FailureOptions.ThrowOnFailure);
-                throw new CommandLineException("OctoDiff", result.ExitCode, result.Errors);
+                ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
+                fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
+
+                var tempNewFilePath = newFilePath + ".partial";
+#if USE_OCTODIFF_EXE
+                var factory = new OctoDiffCommandLineRunner();
+#else
+                var factory = new OctoDiffLibraryCallRunner();
+#endif
+                var octoDiff = factory.OctoDiff
+                    .Action("patch")
+                    .PositionalArgument(basisFilePath)
+                    .PositionalArgument(deltaFilePath)
+                    .PositionalArgument(tempNewFilePath);
+
+                if(skipVerification)
+                    octoDiff.Flag("skip-verification");
+            
+                if(showProgress)
+                    octoDiff.Flag("progress");
+
+                Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
+
+                var result = factory.Execute();
+                if (result.ExitCode != 0)
+                {
+                    fileSystem.DeleteFile(tempNewFilePath, FailureOptions.ThrowOnFailure);
+                    throw new CommandLineException("OctoDiff", result.ExitCode, result.Errors);
+                }
+
+                File.Move(tempNewFilePath, newFilePath);
+
+                if (!File.Exists(newFilePath))
+                    throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " +
+                                               basisFilePath);
             }
-
-            File.Move(tempNewFilePath, newFilePath);
-
-            if (!File.Exists(newFilePath))
-                throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " +
-                                           basisFilePath);
+            catch (Exception e) when (e is CommandLineException || e is CommandException)
+            {
+                Log.ServiceMessages.DeltaVerificationError(e.Message);
+                return 0;
+            }
 
             var package = packageStore.GetPackage(newFilePath);
             if (package == null) return 0;

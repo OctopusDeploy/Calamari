@@ -191,3 +191,4 @@ source/Octopus.Deploy.Scripts.Tests/Tests/Variables.vars
 tools/
 *.DS_Store
 **/.idea
+**launchSettings.json

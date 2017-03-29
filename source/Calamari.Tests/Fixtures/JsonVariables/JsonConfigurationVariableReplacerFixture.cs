@@ -262,6 +262,28 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             AssertJsonEquivalent(replaced, expected);
         }
 
+
+        [Test]
+        public void ShouldReplaceDecimal()
+        {
+            const string expected =
+                @"{" +
+                "  \"DecimalValue\": 50.0," +
+                "  \"FloatValue\": 456e-5," +
+                "  \"StringValue\": \"60.0\"," +
+                "  \"IntegerValue\": 70," +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("DecimalValue", "50.0");
+            variables.Set("FloatValue", "456e-5");
+            variables.Set("StringValue", "60.0");
+            variables.Set("IntegerValue", "70");
+
+            var replaced = Replace(variables, existingFile: "appsettings.decimals.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
         [Test]
         public void ShouldReplaceBoolean()
         {

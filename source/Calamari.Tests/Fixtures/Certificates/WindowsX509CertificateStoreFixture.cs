@@ -1,6 +1,10 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
@@ -26,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
-            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
                 storeLocation, storeName, sampleCertificate.HasPrivateKey);
 
             sampleCertificate.AssertCertificateIsInStore(storeName, storeLocation);
@@ -44,18 +48,51 @@ namespace Calamari.Tests.Fixtures.Certificates
         public void CanImportCertificateForUser()
         {
             // This test cheats a little bit, using the current user 
-            var user = System.Security.Principal.WindowsIdentity.GetCurrent().Name; 
+            var user = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
             var storeName = "My";
             var sampleCertificate = SampleCertificate.CapiWithPrivateKey;
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
 
-            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
                 user, storeName, sampleCertificate.HasPrivateKey);
 
             sampleCertificate.AssertCertificateIsInStore(storeName, StoreLocation.CurrentUser);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
+        }
+
+        [Test]
+        [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.LocalMachine, "My")]
+        [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.LocalMachine, "Foo")]
+        [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.LocalMachine, "My")]
+        [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.LocalMachine, "Foo")]
+        public void ImportExistingCertificateShouldNotOverwriteExistingPrivateKeyRights(string sampleCertificateId,
+            StoreLocation storeLocation, string storeName)
+        {
+            var sampleCertificate = SampleCertificate.SampleCertificates[sampleCertificateId];
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
+
+            WindowsX509CertificateStore.ImportCertificateToStore(
+                Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
+                storeLocation, storeName, sampleCertificate.HasPrivateKey);
+
+            WindowsX509CertificateStore.AddPrivateKeyAccessRules(sampleCertificate.Thumbprint, storeLocation, storeName,
+                new List<PrivateKeyAccessRule>
+                {
+                    new PrivateKeyAccessRule("BUILTIN\\Users", PrivateKeyAccess.FullControl)
+                });
+
+            WindowsX509CertificateStore.ImportCertificateToStore(
+                Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
+                storeLocation, storeName, sampleCertificate.HasPrivateKey);
+
+            var privateKeySecurity = WindowsX509CertificateStore.GetPrivateKeySecurity(sampleCertificate.Thumbprint,
+                storeLocation, storeName);
+            AssertHasPrivateKeyRights(privateKeySecurity, "BUILTIN\\Users", CryptoKeyRights.GenericAll);
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
         }
 
         [Test]
@@ -78,7 +115,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, StoreLocation.LocalMachine, intermediateAuthorityStore.Name);
             WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, StoreLocation.LocalMachine, rootAuthorityStore.Name);
 
-            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password, 
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
                 storeLocation, storeName, sampleCertificate.HasPrivateKey);
 
             sampleCertificate.AssertCertificateIsInStore(storeName, storeLocation);
@@ -99,6 +136,16 @@ namespace Calamari.Tests.Fixtures.Certificates
         {
             var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
             Assert.AreEqual(1, found.Count);
+        }
+
+        void AssertHasPrivateKeyRights(CryptoKeySecurity privateKeySecurity, string identifier, CryptoKeyRights right)
+        {
+            var accessRules = privateKeySecurity.GetAccessRules(true, false, typeof(NTAccount));
+
+            var found = accessRules.Cast<CryptoKeyAccessRule>()
+                .Any(x => x.IdentityReference.Value == identifier && x.CryptoKeyRights.HasFlag(right));
+
+            Assert.True(found, "Private-Key right was not set");
         }
     }
 }

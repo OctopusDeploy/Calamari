@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
@@ -13,13 +14,27 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
     public class CalamariPhysicalFileSytemFixture
     {
         static readonly string PurgeTestDirectory = TestEnvironment.GetTestPath("PurgeTestDirectory");
+        private CalamariPhysicalFileSystem fileSystem;
+        private string rootPath;
 
         [SetUp]
         public void SetUp()
         {
             if (Directory.Exists(PurgeTestDirectory))
                 Directory.Delete(PurgeTestDirectory, true);
+
+            fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            rootPath = Path.GetTempFileName();
+            File.Delete(rootPath);
+            Directory.CreateDirectory(rootPath);
         }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Directory.Delete(rootPath, true);
+        }
+
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
@@ -53,7 +68,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
         [Test]
         public void PurgeCanExcludeFile()
-        {          
+        {
             var importantFile = CreateFile("ImportantFile.txt");
             var purgableFile = CreateFile("WhoCaresFile.txt");
 
@@ -101,43 +116,85 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"Config/Feature1/*.config", "f1-a.config", 2)]
         [TestCase(@"Config/Feature1/*.config", "f1-b.config", 2)]
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
-        public void GlobTestMutiple(string pattern, string expectedFileMatchName, int expectedQty = 1)
+        public void EnumerateFilesWithGlob(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
-            var fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var rootPath = fileSystem.CreateTemporaryDirectory();
-
             var content = "file-content" + Environment.NewLine;
 
-            try
-            {
-                var configPath = Path.Combine(rootPath, "Config");
+            var configPath = Path.Combine(rootPath, "Config");
 
-                Directory.CreateDirectory(configPath);
-                Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
-                Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
+            Directory.CreateDirectory(configPath);
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
 
-                Action<string, string, string> writeFile = (p1, p2, p3) =>
-                    fileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
+            Action<string, string, string> writeFile = (p1, p2, p3) =>
+                fileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
 
-                // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
-                writeFile(rootPath, "root.config", null);
-                writeFile(rootPath, "r.txt", null);
-                writeFile(configPath, "c.config", null);
+            // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
+            writeFile(rootPath, "root.config", null);
+            writeFile(rootPath, "r.txt", null);
+            writeFile(configPath, "c.config", null);
 
-                writeFile(configPath, "Feature1", "f1.txt");
-                writeFile(configPath, "Feature1", "f1-a.config");
-                writeFile(configPath, "Feature1", "f1-b.config");
-                writeFile(configPath, "Feature2", "f2.config");
+            writeFile(configPath, "Feature1", "f1.txt");
+            writeFile(configPath, "Feature1", "f1-a.config");
+            writeFile(configPath, "Feature1", "f1-b.config");
+            writeFile(configPath, "Feature2", "f2.config");
 
-                var result = Glob.Expand(Path.Combine(rootPath, pattern)).ToList();
+            var result = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToList();
 
-                Assert.AreEqual(expectedQty, result.Count, $"{pattern} should have found {expectedQty}, but found {result.Count}");
-                Assert.True(result.Any(r => r.Name.Equals(expectedFileMatchName)), $"{pattern} should have found {expectedFileMatchName}, but didn't");
-            }
-            finally
-            {
-                fileSystem.DeleteDirectory(rootPath);
-            }
+            result.Should()
+                .HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {result.Count}");
+            result.Should()
+                .Contain(r => Path.GetFileName(r) == expectedFileMatchName, $"{pattern} should have found {expectedFileMatchName}, but didn't");
+        }
+
+        [TestCase(@"*")]
+        [TestCase(@"**")]
+        [TestCase(@"**/*")]
+        [TestCase(@"Dir/*")]
+        [TestCase(@"Dir/**")]
+        [TestCase(@"Dir/**/*")]
+        public void EnumerateFilesWithGlobShouldNotReturnDirectories(string pattern)
+        {
+            Directory.CreateDirectory(Path.Combine(rootPath, "Dir"));
+            Directory.CreateDirectory(Path.Combine(rootPath, "Dir", "Sub"));
+            File.WriteAllText(Path.Combine(rootPath, "Dir", "File"), "");
+            File.WriteAllText(Path.Combine(rootPath, "Dir", "Sub", "File"), "");
+
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToArray();
+
+            if (results.Length > 0)
+                results.Should().OnlyContain(f => f.EndsWith("File"));
+        }
+
+        [Test]
+        public void EnumerateFilesWithGlobShouldNotReturnTheSameFileTwice()
+        {
+            File.WriteAllText(Path.Combine(rootPath, "File"), "");
+
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, "*", "**").ToList();
+
+            results.Should().HaveCount(1);
+        }
+
+
+        [TestCase(@"[Configuration]", @"[Configuration]\\*.txt")]
+        [TestCase(@"Configuration]", @"Configuration]\\*.txt")]
+        [TestCase(@"[Configuration", @"[Configuration\\*.txt")]
+        [TestCase(@"{Configuration}", @"{Configuration}\\*.txt")]
+        [TestCase(@"Configuration}", @"Configuration}\\*.txt")]
+        [TestCase(@"{Configuration", @"{Configuration\\*.txt")]
+        public void EnumerateFilesWithGlobShouldIgnoreGroups(string directory, string glob)
+        {
+            if (!CalamariEnvironment.IsRunningOnWindows)
+                glob = glob.Replace("\\", "/");
+
+            Directory.CreateDirectory(Path.Combine(rootPath, directory));
+
+            File.WriteAllText(Path.Combine(rootPath, directory, "Foo.txt"), "");
+
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, glob).ToList();
+
+            results.Should().HaveCount(1);
         }
     }
 }

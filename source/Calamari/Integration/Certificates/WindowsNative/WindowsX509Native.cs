@@ -46,33 +46,36 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "CryptAcquireContextW")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool CryptAcquireContext(out IntPtr psafeProvHandle,
+        public static extern bool CryptAcquireContext(out IntPtr psafeProvHandle, 
             [MarshalAs(UnmanagedType.LPWStr)] string pszContainer,
             [MarshalAs(UnmanagedType.LPWStr)] string pszProvider,
             int dwProvType, CryptAcquireContextFlags dwFlags);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool CryptSetProvParam(SafeCspHandle hProv, CspProperties dwParam, [In] byte[] pbData,
-            SecurityDesciptorParts dwFlags);
+        public static extern bool CryptGetProvParam(SafeCspHandle hProv, CspProperties dwParam, [Out, MarshalAs(UnmanagedType.LPArray)] byte[] pbData, ref int pdwDataLen, SecurityDesciptorParts dwFlags);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool CryptSetProvParam(SafeCspHandle hProv, CspProperties dwParam, [In] byte[] pbData, SecurityDesciptorParts dwFlags);
 
         [DllImport("Crypt32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool CryptAcquireCertificatePrivateKey(SafeCertContextHandle pCert,
-            AcquireCertificateKeyOptions dwFlags,
+                                                                      AcquireCertificateKeyOptions dwFlags,
             IntPtr pvReserved, // void *
-            [Out] out SafeCspHandle phCryptProvOrNCryptKey,
-            [Out] out int dwKeySpec,
-            [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
+                                                                      [Out] out SafeCspHandle phCryptProvOrNCryptKey,
+                                                                      [Out] out int dwKeySpec,
+                                                                      [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
 
         [DllImport("Crypt32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool CryptAcquireCertificatePrivateKey(SafeCertContextHandle pCert,
-            AcquireCertificateKeyOptions dwFlags,
+                                                                      AcquireCertificateKeyOptions dwFlags,
             IntPtr pvReserved, // void *
-            [Out] out SafeNCryptKeyHandle phCryptProvOrNCryptKey,
-            [Out] out int dwKeySpec,
-            [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
+                                                                      [Out] out SafeNCryptKeyHandle phCryptProvOrNCryptKey,
+                                                                      [Out] out int dwKeySpec,
+                                                                      [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
 
         [DllImport("Crypt32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern
@@ -88,8 +91,10 @@ namespace Calamari.Integration.Certificates.WindowsNative
                 IntPtr notUsed2, IntPtr notUsed3);
 
         [DllImport("Ncrypt.dll", SetLastError = true, ExactSpelling = true)]
-        internal static extern int NCryptSetProperty(SafeNCryptHandle hObject,
-            [MarshalAs(UnmanagedType.LPWStr)] string szProperty, IntPtr pbInputByteArray, int cbInput, int flags);
+        internal static extern int NCryptGetProperty(SafeNCryptHandle hObject, [MarshalAs(UnmanagedType.LPWStr)] string szProperty, [Out, MarshalAs(UnmanagedType.LPArray)] byte[] pbOutput, int cbOutput, ref int pcbResult, int flags);
+
+        [DllImport("Ncrypt.dll", SetLastError = true, ExactSpelling = true)]
+        internal static extern int NCryptSetProperty(SafeNCryptHandle hObject, [MarshalAs(UnmanagedType.LPWStr)] string szProperty, IntPtr pbInputByteArray, int cbInput, int flags);
 
         [DllImport("Ncrypt.dll")]
         internal static extern int NCryptDeleteKey(SafeNCryptKeyHandle hKey, int flags);
@@ -102,6 +107,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         internal enum AddCertificateDisposition
         {
+            CERT_STORE_ADD_NEW = 1,
             CERT_STORE_ADD_REPLACE_EXISTING = 3
         }
 
@@ -214,7 +220,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
 
         [Flags]
-        internal enum CryptAcquireContextFlags
+        internal enum CryptAcquireContextFlags 
         {
             None = 0x00000000,
             Delete = 0x00000010, // CRYPT_DELETEKEYSET
@@ -243,6 +249,12 @@ namespace Calamari.Integration.Certificates.WindowsNative
             DACL_SECURITY_INFORMATION = 0x00000004
         }
 
+        public enum NCryptErrorCode
+        {
+            Success = 0x00000000, // ERROR_SUCCESS
+            BufferTooSmall = unchecked((int) 0x80090028), // NTE_BUFFER_TOO_SMALL
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         internal struct CERT_CONTEXT
         {
@@ -251,6 +263,11 @@ namespace Calamari.Integration.Certificates.WindowsNative
             public int cbCertEncoded;
             public IntPtr pCertInfo;
             public IntPtr hCertStore;
+    }
+
+        public enum CapiErrorCode
+        {
+            CRYPT_E_EXISTS = unchecked((int) 0x80092005)
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -268,7 +285,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
             public CRYPT_BIT_BLOB SubjectUniqueId;
             public int cExtension;
             public IntPtr rgExtension;
-        }
+}
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct FILETIME
