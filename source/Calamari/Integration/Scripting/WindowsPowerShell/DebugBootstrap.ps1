@@ -4,6 +4,11 @@
 
 $ErrorActionPreference = 'Stop'
 
+if ($PSVersionTable.PSVersion.Major -lt 5)
+{
+    throw "PowerShell debugging is only supported in PowerShell versions 5 and above. This server is currently running PowerShell version $($PSVersionTable.PSVersion.ToString())."
+}
+
 $powershellEngine = [powershell]::Create([System.Management.Automation.RunspaceMode]::NewRunspace)
 
 Write-Host "##octopus[stdout-warning]"
