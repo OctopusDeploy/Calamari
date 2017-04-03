@@ -37,9 +37,10 @@ try {
 		 Import-Module WebAdministration -ErrorAction Stop
 		} catch {
 			Write-Warning "We failed to load the WebAdministration module. This usually resolved by doing one of the following:"
-			Write-Warning "1. Install .NET Framework 3.5.1"
-			Write-Warning "2. Upgrade to PowerShell 3.0 (or greater)"
-			Write-Warning "3. On Windows 2008 you might need to install PowerShell SnapIn for IIS from http://www.iis.net/downloads/microsoft/powershell#additionalDownloads"
+			Write-Warning "1. Install IIS via Add Roles and Features, Web Server (IIS)"
+			Write-Warning "2. Install .NET Framework 3.5.1"
+			Write-Warning "3. Upgrade to PowerShell 3.0 (or greater)"
+			Write-Warning "4. On Windows 2008 you might need to install PowerShell SnapIn for IIS from http://www.iis.net/downloads/microsoft/powershell#additionalDownloads"
 			throw ($error | Select-Object -First 1)
     }
 }
