@@ -29,7 +29,7 @@ namespace Calamari.Deployment.Features
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT 
         static void EnsureCertificatesUsedInBindingsAreInStore(VariableDictionary variables)
         {
-            foreach (var binding in GetBindings(variables))
+            foreach (var binding in GetEnabledBindings(variables))
             {
                 string certificateVariable = binding.certificateVariable;
 
