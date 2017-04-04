@@ -417,6 +417,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test] // https://github.com/OctopusDeploy/Issues/issues/3378
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldNotFailIfDisabledBindingUsesUnavailableCertificateVariable()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
