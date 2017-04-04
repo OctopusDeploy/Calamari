@@ -163,7 +163,7 @@ namespace Calamari.Integration.ConfigurationTransforms
                 .Append(".*?").Append(Regex.Escape("."))
                 .Append(Regex.Escape(Path.GetFileName(pattern)?.TrimStart('.') ?? string.Empty));
 
-            return Regex.IsMatch(fileName, regexBuilder.ToString());
+            return Regex.IsMatch(fileName, regexBuilder.ToString(), RegexOptions.IgnoreCase);
         }
 
         static string GetDirectoryName(string path)
