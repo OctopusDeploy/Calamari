@@ -416,7 +416,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual(ObjectState.Started, website.State);
         }
 
-        [Test]
+        [Test] // https://github.com/OctopusDeploy/Issues/issues/3378
         public void ShouldNotFailIfDisabledBindingUsesUnavailableCertificateVariable()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
