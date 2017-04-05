@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 
@@ -50,25 +51,36 @@ namespace Calamari.Deployment.Conventions
                     $"The custom install directory '{customInstallationDirectory}' is a child directory of the base installation directory '{sourceDirectory}', please specify a different destination.");
             }
 
-            // Purge if requested
-            if (deployment.Variables.GetFlag(
-                SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
+            try
             {
-                Log.Info("Purging the directory '{0}'", customInstallationDirectory);
-                fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure);
+                // Purge if requested
+                if (deployment.Variables.GetFlag(
+                    SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
+                {
+                    Log.Info("Purging the directory '{0}'", customInstallationDirectory);
+                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure);
+                }
+
+                // Copy files from staging area to custom directory
+                Log.Info("Copying package contents to '{0}'", customInstallationDirectory);
+                int count = fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
+                Log.Info("Copied {0} files", count);
+
+                // From this point on, the current directory will be the custom-directory
+                deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
+
+                Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
+                Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
+                Log.SetOutputVariable(SpecialVariables.Package.Output.CopiedFileCount, count.ToString(), deployment.Variables);
             }
-
-            // Copy files from staging area to custom directory
-            Log.Info("Copying package contents to '{0}'", customInstallationDirectory);
-            int count = fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
-            Log.Info("Copied {0} files", count);
-
-            // From this point on, the current directory will be the custom-directory
-            deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
-
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.CopiedFileCount, count.ToString(), deployment.Variables);
+            catch (UnauthorizedAccessException uae) when (uae.Message.StartsWith("Access to the path"))
+            {
+                throw new CommandException(
+                    $"{uae.Message} Ensure that the application that uses this directory is not running. " +
+                    "If this is an IIS website, stop the application pool or use an app_offline.htm file " +
+                    "(see https://g.octopushq.com/TakingWebsiteOffline)."
+                );
+            }
         }
     }
 }
