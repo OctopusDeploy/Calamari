@@ -146,8 +146,9 @@ function New-OctopusArtifact([string]$path, [string]$name="""")
 
 	$path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
 	$path = [System.IO.Path]::GetFullPath($path)
-	$path = Convert-ServiceMessageValue($path)
-
+    Write-Verbose "Artifact $name will be collected from $path after this step completes"
+    
+    $path = Convert-ServiceMessageValue($path)
 	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)' length='$($length)']"
 }
 
