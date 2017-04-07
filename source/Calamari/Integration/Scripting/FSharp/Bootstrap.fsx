@@ -76,15 +76,20 @@ let setVariable name value =
     writeServiceMessage "setVariable" content
 
 let createArtifact path fileName =
-    let encodedFileName = match fileName with
-                            | Some value -> value |> encode
-                            | None -> System.IO.Path.GetFileName(path) |> encode
+    let plainFileName = match fileName with
+                            | Some value -> value
+                            | None -> System.IO.Path.GetFileName(path)
+    let encodedFileName = plainFileName |> encode
 
-    let encodedPath = System.IO.Path.GetFullPath(path) |> encode
+    let path = System.IO.Path.GetFullPath(path)
+    let encodedPath = path |> encode
 
     let encodedLength = (if System.IO.File.Exists(path) then (new System.IO.FileInfo(path)).Length else 0L) |> string |> encode
 
     let content = sprintf "path='%s' name='%s' length='%s'"  encodedPath encodedFileName encodedLength
+    printfn "##octopus[stdout-verbose]"
+    printfn "Artifact %s will be collected from %s after this step completes" plainFileName path
+    printfn "##octopus[stdout-default]"
     writeServiceMessage "createArtifact" content
 
 let private safelyLogEnvironmentVars () =

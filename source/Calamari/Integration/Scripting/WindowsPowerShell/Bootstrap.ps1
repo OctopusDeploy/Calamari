@@ -136,7 +136,7 @@ function New-OctopusArtifact([string]$path, [string]$name="""")
 	if ($name -eq """")	{
 		$name = [System.IO.Path]::GetFileName($path)
 	}
-	$name = Convert-ServiceMessageValue($name)
+	$servicename = Convert-ServiceMessageValue($name)
 
 	$length = ([System.IO.FileInfo]$path).Length;
 	if (!$length) {
@@ -146,10 +146,10 @@ function New-OctopusArtifact([string]$path, [string]$name="""")
 
 	$path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
 	$path = [System.IO.Path]::GetFullPath($path)
+    $servicepath = Convert-ServiceMessageValue($path)
+
     Write-Verbose "Artifact $name will be collected from $path after this step completes"
-    
-    $path = Convert-ServiceMessageValue($path)
-	Write-Host "##octopus[createArtifact path='$($path)' name='$($name)' length='$($length)']"
+	Write-Host "##octopus[createArtifact path='$($servicepath)' name='$($servicename)' length='$($length)']"
 }
 
 function Write-Debug([string]$message)
