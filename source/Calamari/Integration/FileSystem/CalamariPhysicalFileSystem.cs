@@ -9,6 +9,10 @@ using Calamari.Deployment;
 using Calamari.Integration.Retry;
 using Calamari.Util;
 using System.Runtime.InteropServices;
+#if LONG_FILE_PATHS
+using File = Alphaleonis.Win32.Filesystem.File;
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+#endif
 
 namespace Calamari.Integration.FileSystem
 {
@@ -36,7 +40,7 @@ namespace Calamari.Integration.FileSystem
         /// Windows services can hang on to files for ~30s after the service has stopped as background
         /// threads shutdown or are killed for not shutting down in a timely fashion
         /// </remarks>
-        static RetryTracker GetRetryTracker()
+        protected static RetryTracker GetRetryTracker()
         {
             return new RetryTracker(maxRetries:10000, 
                 timeLimit: TimeSpan.FromMinutes(1), 
@@ -70,7 +74,7 @@ namespace Calamari.Integration.FileSystem
             DeleteFile(path, FailureOptions.ThrowOnFailure);
         }
 
-        public void DeleteFile(string path, FailureOptions options)
+        public virtual void DeleteFile(string path, FailureOptions options)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;

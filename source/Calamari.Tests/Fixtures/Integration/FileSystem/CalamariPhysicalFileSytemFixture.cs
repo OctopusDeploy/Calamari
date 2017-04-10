@@ -196,5 +196,28 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             results.Should().HaveCount(1);
         }
+
+        [Test]
+        public void LongFilePathsShouldWork()
+        {
+            var paths = new Stack<string>();
+            var path = rootPath;
+
+            for (var i = 0; i <= 15; i++)
+            {
+                path += @"\ZZZZabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
+                fileSystem.EnsureDirectoryExists(path);
+                paths.Push(path);
+            }
+
+            fileSystem.OverwriteFile("Some sample text", path + @"\test.txt");
+            fileSystem.DeleteFile(path + @"\test.txt");
+
+            while (paths.Any())
+            {
+                var pathToRemove = paths.Pop();
+                fileSystem.DeleteDirectory(pathToRemove);
+            }
+        }
     }
 }
