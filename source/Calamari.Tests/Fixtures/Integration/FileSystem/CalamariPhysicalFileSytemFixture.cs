@@ -198,6 +198,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void LongFilePathsShouldWork()
         {
             var paths = new Stack<string>();
