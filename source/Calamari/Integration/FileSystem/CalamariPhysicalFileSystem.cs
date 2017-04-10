@@ -9,10 +9,6 @@ using Calamari.Deployment;
 using Calamari.Integration.Retry;
 using Calamari.Util;
 using System.Runtime.InteropServices;
-#if LONG_FILE_PATHS
-using File = Alphaleonis.Win32.Filesystem.File;
-using Directory = Alphaleonis.Win32.Filesystem.Directory;
-#endif
 
 namespace Calamari.Integration.FileSystem
 {
@@ -27,6 +23,9 @@ namespace Calamari.Integration.FileSystem
 
             return new WindowsPhysicalFileSystem();
         }
+
+        protected IFile File { get; set; } = new StandardFile();
+        protected IDirectory Directory { get; set; } = new StandardDirectory();
 
         /// <summary>
         /// For file operations, try again after 100ms and again every 200ms after that
@@ -118,7 +117,7 @@ namespace Calamari.Integration.FileSystem
 
         public void DeleteDirectory(string path)
         {
-            Directory.Delete(path, true);
+            Directory.Delete(path);
         }
 
         public void DeleteDirectory(string path, FailureOptions options)
@@ -161,7 +160,7 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        static void EnsureDirectoryDeleted(string path, FailureOptions failureOptions)
+        void EnsureDirectoryDeleted(string path, FailureOptions failureOptions)
         {
             var retry = GetRetryTracker(); 
 
@@ -218,7 +217,7 @@ namespace Calamari.Integration.FileSystem
 
         public IEnumerable<string> EnumerateDirectoriesRecursively(string parentDirectoryPath)
         {
-            return Directory.EnumerateDirectories(parentDirectoryPath, "*", SearchOption.AllDirectories);
+            return Directory.EnumerateDirectoriesRecursively(parentDirectoryPath);
         }
 
         public long GetFileSize(string path)
@@ -344,7 +343,7 @@ namespace Calamari.Integration.FileSystem
             return OpenFile(path, FileAccess.ReadWrite, FileShare.Read);
         }
 
-        static string GetTempBasePath()
+        string GetTempBasePath()
         {
             var path = CrossPlatform.GetApplicationTempDir();
             if (!Directory.Exists(path))
