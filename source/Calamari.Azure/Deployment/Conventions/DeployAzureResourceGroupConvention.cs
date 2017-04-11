@@ -152,6 +152,10 @@ namespace Calamari.Azure.Deployment.Conventions
                             throw new CommandException($"Azure Resource Group deployment {deploymentName} failed:\n" +
                                                        GetOperationResults(armClient, resourceGroupName, deploymentName));
 
+                        case "Canceled":
+                            throw new CommandException($"Azure Resource Group deployment {deploymentName} was canceled:\n" +
+                                                       GetOperationResults(armClient, resourceGroupName, deploymentName));
+
                         default:
                             if (currentPollWait < maxWaitSeconds)
                             {
