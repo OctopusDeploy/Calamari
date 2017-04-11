@@ -18,19 +18,6 @@ namespace Calamari.Integration.FileSystem
         Stream Open(string filePath, FileMode fileMode, FileAccess fileAccess, FileShare none);
     }
 
-    public class StandardFile : IFile
-    {
-        public void Delete(string path) => File.Delete(path);
-        public bool Exists(string path) => File.Exists(path);
-        public byte[] ReadAllBytes(string path) => File.ReadAllBytes(path);
-        public void WriteAllBytes(string path, byte[] bytes) => File.WriteAllBytes(path, bytes);
-        public void Move(string source, string destination) => File.Move(source, destination);
-        public void SetAttributes(string path, FileAttributes fileAttributes) => File.SetAttributes(path, fileAttributes);
-        public DateTime GetCreationTime(string path) => File.GetCreationTime(path);
-        public Stream Open(string path, FileMode mode, FileAccess access, FileShare share) => File.Open(path, mode, access, share);
-        public void Copy(string source, string destination, bool overwrite) => File.Copy(source, destination, overwrite);
-    }
-
     public interface IDirectory
     {
         void CreateDirectory(string path);
@@ -42,6 +29,19 @@ namespace Calamari.Integration.FileSystem
         IEnumerable<string> GetFiles(string sourceDirectory, string s);
         IEnumerable<string> GetDirectories(string path);
         string GetCurrentDirectory();
+    }
+
+    public class StandardFile : IFile
+    {
+        public void Delete(string path) => File.Delete(path);
+        public bool Exists(string path) => File.Exists(path);
+        public byte[] ReadAllBytes(string path) => File.ReadAllBytes(path);
+        public void WriteAllBytes(string path, byte[] bytes) => File.WriteAllBytes(path, bytes);
+        public void Move(string source, string destination) => File.Move(source, destination);
+        public void SetAttributes(string path, FileAttributes fileAttributes) => File.SetAttributes(path, fileAttributes);
+        public DateTime GetCreationTime(string path) => File.GetCreationTime(path);
+        public Stream Open(string path, FileMode mode, FileAccess access, FileShare share) => File.Open(path, mode, access, share);
+        public void Copy(string source, string destination, bool overwrite) => File.Copy(source, destination, overwrite);
     }
 
     public class StandardDirectory : IDirectory
