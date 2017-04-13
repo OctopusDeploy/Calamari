@@ -8,6 +8,7 @@ using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
@@ -32,22 +33,32 @@ namespace Calamari.Azure.Deployment.Conventions
             using (var originalPackage = Package.Open(originalPackagePath, FileMode.Open))
             using (var newPackage = Package.Open(newPackagePath, FileMode.CreateNew))
             {
-                var originalManifest = AzureCloudServiceConventions.ReadPackageManifest(originalPackage);
-
-                var newManifest = new PackageDefinition
+                try
                 {
-                    MetaData = {AzureVersion = originalManifest.MetaData.AzureVersion}
-                };
+                    var originalManifest = AzureCloudServiceConventions.ReadPackageManifest(originalPackage);
 
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.ServiceDefinition), 
-                    AzureCloudServiceConventions.PackageFolders.ServiceDefinition);
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.NamedStreams), 
-                    AzureCloudServiceConventions.PackageFolders.NamedStreams);
-                AddLocalContent(newPackage, newManifest, workingDirectory);
+                    var newManifest = new PackageDefinition
+                    {
+                        MetaData = {AzureVersion = originalManifest.MetaData.AzureVersion}
+                    };
 
-                AddPackageManifest(newPackage, newManifest);
+                    AddParts(newPackage, newManifest,
+                        Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.ServiceDefinition),
+                        AzureCloudServiceConventions.PackageFolders.ServiceDefinition);
+                    AddParts(newPackage, newManifest,
+                        Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.NamedStreams),
+                        AzureCloudServiceConventions.PackageFolders.NamedStreams);
+                    AddLocalContent(newPackage, newManifest, workingDirectory);
 
-                newPackage.Flush();
+                    AddPackageManifest(newPackage, newManifest);
+
+                    newPackage.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.PrettyPrint());
+                    throw new Exception("An exception occured re-packaging the cspkg");
+                }
             }
 
             fileSystem.OverwriteAndDelete(originalPackagePath, newPackagePath);
