@@ -117,7 +117,7 @@ namespace Calamari.Integration.FileSystem
 
         public void DeleteDirectory(string path)
         {
-            Directory.Delete(path);
+            Directory.Delete(path, true);
         }
 
         public void DeleteDirectory(string path, FailureOptions options)
@@ -413,7 +413,7 @@ namespace Calamari.Integration.FileSystem
 
                 if ((info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
                 {
-                    Directory.Delete(directory);
+                    Directory.Delete(directory, true);
                 }
                 else
                 {

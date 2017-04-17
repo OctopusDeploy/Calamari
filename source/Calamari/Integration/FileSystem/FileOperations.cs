@@ -21,7 +21,7 @@ namespace Calamari.Integration.FileSystem
     public interface IDirectory
     {
         void CreateDirectory(string path);
-        void Delete(string path);
+        void Delete(string path, bool recursive);
         bool Exists(string path);
         string[] GetFileSystemEntries(string path);
         IEnumerable<string> EnumerateDirectories(string path);
@@ -47,7 +47,7 @@ namespace Calamari.Integration.FileSystem
     public class StandardDirectory : IDirectory
     {
         public void CreateDirectory(string path) => Directory.CreateDirectory(path);
-        public void Delete(string path) => Directory.Delete(path, true);
+        public void Delete(string path, bool recursive) => Directory.Delete(path, recursive);
         public bool Exists(string path) => Directory.Exists(path);
         public string[] GetFileSystemEntries(string path) => Directory.GetFileSystemEntries(path);
         public IEnumerable<string> EnumerateDirectories(string path) => Directory.EnumerateDirectories(path);
@@ -74,7 +74,7 @@ namespace Calamari.Integration.FileSystem
     public class LongPathsDirectory : IDirectory
     {
         public void CreateDirectory(string path) => Alphaleonis.Win32.Filesystem.Directory.CreateDirectory(path);
-        public void Delete(string path) => Alphaleonis.Win32.Filesystem.Directory.Delete(path, true);
+        public void Delete(string path, bool recursive) => Alphaleonis.Win32.Filesystem.Directory.Delete(path, recursive);
         public bool Exists(string path) => Alphaleonis.Win32.Filesystem.Directory.Exists(path);
         public string[] GetFileSystemEntries(string path) => Alphaleonis.Win32.Filesystem.Directory.GetFileSystemEntries(path);
         public IEnumerable<string> EnumerateDirectories(string path) => Alphaleonis.Win32.Filesystem.Directory.EnumerateDirectories(path);
