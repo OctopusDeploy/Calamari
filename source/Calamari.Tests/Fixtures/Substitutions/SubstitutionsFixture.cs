@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
     [TestFixture]
     public class SubstitutionsFixture : CalamariFixture
     {
-        static readonly WindowsPhysicalFileSystem FileSystem = new WindowsPhysicalFileSystem();
+        static readonly CalamariPhysicalFileSystem FileSystem = CrossPlatform.IsWindows() ? (CalamariPhysicalFileSystem) new WindowsPhysicalFileSystem() : new NixCalamariPhysicalFileSystem();
 
         [Test]
         public void ShouldSubstitute()
