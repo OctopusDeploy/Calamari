@@ -2,19 +2,21 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Win32.SafeHandles;
+using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 
 namespace Calamari.Integration.Certificates.WindowsNative
 {
     internal static class CertificatePal
     {
-        public static bool HasProperty(IntPtr certificateContext, Native.CertificateProperty property)
+        public static bool HasProperty(IntPtr certificateContext, CertificateProperty property)
         {
             byte[] buffer = null;
             var bufferSize = 0;
             // ReSharper disable once ExpressionIsAlwaysNull
-            var hasProperty = Native.CertGetCertificateContextProperty(certificateContext, property, buffer, ref bufferSize);
+            var hasProperty = CertGetCertificateContextProperty(certificateContext, property, buffer, ref bufferSize);
 
             // ReSharper disable once InconsistentNaming
             const int ERROR_MORE_DATA = 0x000000ea;
@@ -24,7 +26,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
         /// <summary>
         ///     Get a property of a certificate formatted as a structure
         /// </summary>
-        public static T GetCertificateProperty<T>(IntPtr certificateContext, Native.CertificateProperty property) where T : struct
+        public static T GetCertificateProperty<T>(IntPtr certificateContext, CertificateProperty property) where T : struct
         {
             var rawProperty = GetCertificateProperty(certificateContext, property);
 
@@ -34,12 +36,12 @@ namespace Calamari.Integration.Certificates.WindowsNative
             return typedProperty;
         }
 
-        public static byte[] GetCertificateProperty(IntPtr certificateContext, Native.CertificateProperty property)
+        public static byte[] GetCertificateProperty(IntPtr certificateContext, CertificateProperty property)
         {
             byte[] buffer = null;
             var bufferSize = 0;
             // ReSharper disable once ExpressionIsAlwaysNull
-            if (!Native.CertGetCertificateContextProperty(certificateContext, property, buffer, ref bufferSize))
+            if (!CertGetCertificateContextProperty(certificateContext, property, buffer, ref bufferSize))
             {
                 // ReSharper disable once InconsistentNaming
                 const int ERROR_MORE_DATA = 0x000000ea;
@@ -52,7 +54,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
             }
 
             buffer = new byte[bufferSize];
-            if (!Native.CertGetCertificateContextProperty(certificateContext, property, buffer, ref bufferSize))
+            if (!CertGetCertificateContextProperty(certificateContext, property, buffer, ref bufferSize))
             {
                 throw new CryptographicException(Marshal.GetLastWin32Error());
             }
@@ -149,9 +151,9 @@ namespace Calamari.Integration.Certificates.WindowsNative
             int keySpec;
             var freeKey = true;
 
-            if (!Native.CryptAcquireCertificatePrivateKey(certificate,
-                Native.AcquireCertificateKeyOptions.AcquireOnlyNCryptKeys |
-                Native.AcquireCertificateKeyOptions.AcquireSilent,
+            if (!CryptAcquireCertificatePrivateKey(certificate,
+                AcquireCertificateKeyOptions.AcquireOnlyNCryptKeys |
+                AcquireCertificateKeyOptions.AcquireSilent,
                 IntPtr.Zero, out key, out keySpec, out freeKey))
             {
                 throw new CryptographicException(Marshal.GetLastWin32Error());
@@ -171,10 +173,25 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         public static void DeleteCngKey(SafeNCryptKeyHandle key)
         {
-            var errorCode = Native.NCryptDeleteKey(key, 0);
+            var errorCode = NCryptDeleteKey(key, 0);
 
             if (errorCode != 0)
                 throw new CryptographicException(errorCode);
+        }
+
+        public static string GetSubjectName(SafeCertContextHandle certificate)
+        {
+            var flags = CertNameFlags.None;
+            var stringType = CertNameStringType.CERT_X500_NAME_STR | CertNameStringType.CERT_NAME_STR_REVERSE_FLAG;
+
+            var cchCount = CertGetNameString(certificate, CertNameType.CERT_NAME_RDN_TYPE, flags, ref stringType, null, 0);
+            if (cchCount == 0)
+                throw new CryptographicException(Marshal.GetHRForLastWin32Error());
+
+            var sb = new StringBuilder(cchCount);
+            CertGetNameString(certificate, CertNameType.CERT_NAME_RDN_TYPE, flags, ref stringType, sb, cchCount);
+
+            return sb.ToString();
         }
     }
 }

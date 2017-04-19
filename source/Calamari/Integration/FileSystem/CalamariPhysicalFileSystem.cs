@@ -24,6 +24,9 @@ namespace Calamari.Integration.FileSystem
             return new WindowsPhysicalFileSystem();
         }
 
+        protected IFile File { get; set; } = new StandardFile();
+        protected IDirectory Directory { get; set; } = new StandardDirectory();
+
         /// <summary>
         /// For file operations, try again after 100ms and again every 200ms after that
         /// </summary>
@@ -36,7 +39,7 @@ namespace Calamari.Integration.FileSystem
         /// Windows services can hang on to files for ~30s after the service has stopped as background
         /// threads shutdown or are killed for not shutting down in a timely fashion
         /// </remarks>
-        static RetryTracker GetRetryTracker()
+        protected static RetryTracker GetRetryTracker()
         {
             return new RetryTracker(maxRetries:10000, 
                 timeLimit: TimeSpan.FromMinutes(1), 
@@ -70,7 +73,7 @@ namespace Calamari.Integration.FileSystem
             DeleteFile(path, FailureOptions.ThrowOnFailure);
         }
 
-        public void DeleteFile(string path, FailureOptions options)
+        public virtual void DeleteFile(string path, FailureOptions options)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
@@ -157,7 +160,7 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        static void EnsureDirectoryDeleted(string path, FailureOptions failureOptions)
+        void EnsureDirectoryDeleted(string path, FailureOptions failureOptions)
         {
             var retry = GetRetryTracker(); 
 
@@ -214,7 +217,7 @@ namespace Calamari.Integration.FileSystem
 
         public IEnumerable<string> EnumerateDirectoriesRecursively(string parentDirectoryPath)
         {
-            return Directory.EnumerateDirectories(parentDirectoryPath, "*", SearchOption.AllDirectories);
+            return Directory.EnumerateDirectoriesRecursively(parentDirectoryPath);
         }
 
         public long GetFileSize(string path)
@@ -340,7 +343,7 @@ namespace Calamari.Integration.FileSystem
             return OpenFile(path, FileAccess.ReadWrite, FileShare.Read);
         }
 
-        static string GetTempBasePath()
+        string GetTempBasePath()
         {
             var path = CrossPlatform.GetApplicationTempDir();
             if (!Directory.Exists(path))
@@ -410,7 +413,7 @@ namespace Calamari.Integration.FileSystem
 
                 if ((info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
                 {
-                    Directory.Delete(directory);
+                    Directory.Delete(directory, true);
                 }
                 else
                 {

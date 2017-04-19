@@ -143,15 +143,18 @@ public static class Octopus
             fileName = System.IO.Path.GetFileName(path);
         }
 
-        fileName = EncodeServiceMessageValue(fileName);
+        var serviceFileName = EncodeServiceMessageValue(fileName);
 
         var length = System.IO.File.Exists(path) ? new System.IO.FileInfo(path).Length.ToString() : "0";
         length = EncodeServiceMessageValue(length);
 
         path = System.IO.Path.GetFullPath(path);
-        path = EncodeServiceMessageValue(path);
+        var servicepath = EncodeServiceMessageValue(path);
 
-        Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", path, fileName, length);
+        Console.WriteLine("##octopus[stdout-verbose]");
+        Console.WriteLine("Artifact {0} will be collected from {1} after this step completes", fileName, path);
+        Console.WriteLine("##octopus[stdout-default]");
+        Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", servicepath, serviceFileName, length);
     }
 
     public static void InitializeDefaultProxy()

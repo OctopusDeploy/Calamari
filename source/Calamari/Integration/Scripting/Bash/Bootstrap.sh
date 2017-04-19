@@ -103,6 +103,9 @@ function new_octopusartifact
 	    ofn=`basename "$pth"`
 	fi
 
+	echo "##octopus[stdout-verbose]"
+	echo "Artifact $ofn will be collected from $pth after this step completes"
+	echo "##octopus[stdout-default]"
 	echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
 }
 

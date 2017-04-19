@@ -1,6 +1,7 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
@@ -8,6 +9,8 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Integration.Certificates.WindowsNative;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Security;
 using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 
@@ -15,31 +18,30 @@ namespace Calamari.Integration.Certificates
 {
     public class WindowsX509CertificateStore
     {
+        const string IntermediateAuthorityStoreName = "CA";
+        const string RootAuthorityStoreName = "Root";
+
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
             string storeName, bool privateKeyExportable)
         {
-            CertificateSystemStoreLocations systemStoreLocation;
+            CertificateSystemStoreLocation systemStoreLocation;
             bool useUserKeyStore;
 
             switch (storeLocation)
             {
                 case StoreLocation.CurrentUser:
-                    systemStoreLocation = CertificateSystemStoreLocations.CurrentUser;
+                    systemStoreLocation = CertificateSystemStoreLocation.CurrentUser;
                     useUserKeyStore = true;
                     break;
                 case StoreLocation.LocalMachine:
-                    systemStoreLocation = CertificateSystemStoreLocations.LocalMachine;
+                    systemStoreLocation = CertificateSystemStoreLocation.LocalMachine;
                     useUserKeyStore = false;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(storeLocation), storeLocation, null);
             }
 
-            using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
-                systemStoreLocation, storeName))
-            {
-                ImportPfxToStore(store, pfxBytes, password, useUserKeyStore, privateKeyExportable);
-            }
+            ImportPfxToStore(systemStoreLocation, storeName, pfxBytes, password, useUserKeyStore, privateKeyExportable);
         }
 
         /// <summary>
@@ -52,20 +54,16 @@ namespace Calamari.Integration.Certificates
             var sid = (SecurityIdentifier)account.Translate(typeof(SecurityIdentifier));
             var userStoreName = sid + "\\" + storeName;
 
-            using (var store = Native.CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
-                CertificateSystemStoreLocations.Users, userStoreName))
-            {
-                // Note we use the machine key-store. There is no way to store the private-key in 
-                // another user's key-store.  
-                var certificate = ImportPfxToStore(store, pfxBytes, password, false, privateKeyExportable);
+            // Note we use the machine key-store. There is no way to store the private-key in 
+            // another user's key-store.  
+            var certificate = ImportPfxToStore(CertificateSystemStoreLocation.Users, userStoreName, pfxBytes, password, false, privateKeyExportable);
 
-                // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-                var keySecurity = new [] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) }; 
-                AddPrivateKeyAccessRules(keySecurity, certificate);
-            }
+            // Because we have to store the private-key in the machine key-store, we must grant the user access to it
+            var keySecurity = new[] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) };
+            AddPrivateKeyAccessRules(keySecurity, certificate);
         }
 
-        public static void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName, 
+        public static void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName,
             ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
             var store = new X509Store(storeName, storeLocation);
@@ -105,8 +103,8 @@ namespace Calamari.Integration.Certificates
             var keyProvInfo = certificate.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
 
             // If it is a CNG key
-            return keyProvInfo.dwProvType == 0 
-                ? GetCngPrivateKeySecurity(certificate) 
+            return keyProvInfo.dwProvType == 0
+                ? GetCngPrivateKeySecurity(certificate)
                 : GetCspPrivateKeySecurity(certificate);
         }
 
@@ -177,17 +175,17 @@ namespace Calamari.Integration.Certificates
 
         public static ICollection<string> GetStoreNames(StoreLocation location)
         {
-            var callback = new CertEnumSystemStoreCallBackProto(CertEnumSystemStoreCallBack); 
+            var callback = new CertEnumSystemStoreCallBackProto(CertEnumSystemStoreCallBack);
             var names = new List<string>();
-            CertificateSystemStoreLocations locationFlags;
+            CertificateSystemStoreLocation locationFlags;
 
             switch (location)
             {
                 case StoreLocation.CurrentUser:
-                    locationFlags = CertificateSystemStoreLocations.CurrentUser; 
+                    locationFlags = CertificateSystemStoreLocation.CurrentUser;
                     break;
                 case StoreLocation.LocalMachine:
-                    locationFlags = CertificateSystemStoreLocations.LocalMachine; 
+                    locationFlags = CertificateSystemStoreLocation.LocalMachine;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(location), location, null);
@@ -203,7 +201,7 @@ namespace Calamari.Integration.Certificates
             return names;
         }
 
-        static SafeCertContextHandle ImportPfxToStore(SafeCertStoreHandle store, byte[] pfxBytes, string password,
+        static SafeCertContextHandle ImportPfxToStore(CertificateSystemStoreLocation storeLocation, string storeName, byte[] pfxBytes, string password,
             bool useUserKeyStore, bool privateKeyExportable)
         {
             var pfxImportFlags = useUserKeyStore
@@ -215,15 +213,33 @@ namespace Calamari.Integration.Certificates
                 pfxImportFlags = pfxImportFlags | PfxImportFlags.CRYPT_EXPORTABLE;
             }
 
-            var certificate = GetCertificateFromPfx(pfxBytes, password, pfxImportFlags);
+            var certificates = GetCertificatesFromPfx(pfxBytes, password, pfxImportFlags);
 
-            AddCertificateToStore(store, certificate);
+            // Import the first certificate into the specified store
+            AddCertificateToStore(storeLocation, storeName, certificates.First());
 
-            return certificate;
+            // Any other certificates in the chain are imported into the Intermediate Authority and Root stores
+            // of the Local Machine (importing into user CA stores causes a security-warning dialog to be shown)
+            for (var i = 1; i < certificates.Count; i++)
+            {
+                var certificate = certificates[i];
+
+                // If it is the last certificate in the chain and is self-signed then it goes into the Root store
+                if (i == certificates.Count - 1 && IsSelfSigned(certificate))
+                {
+                    AddCertificateToStore(CertificateSystemStoreLocation.LocalMachine, RootAuthorityStoreName, certificate);
+                    continue;
+                }
+
+                // Otherwise into the Intermediate Authority store
+                AddCertificateToStore(CertificateSystemStoreLocation.LocalMachine, IntermediateAuthorityStoreName, certificate);
+            }
+
+            return certificates.First();
         }
 
-        private static readonly IList<string> EnumeratedStoreNames  = new List<string>();
-        private static readonly object StoreNamesSyncLock = new object(); 
+        private static readonly IList<string> EnumeratedStoreNames = new List<string>();
+        private static readonly object StoreNamesSyncLock = new object();
 
         /// <summary>
         /// call back function used by CertEnumSystemStore
@@ -241,23 +257,32 @@ namespace Calamari.Integration.Certificates
             return true;
         }
 
-        static void AddCertificateToStore(SafeCertStoreHandle store, SafeCertContextHandle certificate)
+        static void AddCertificateToStore(CertificateSystemStoreLocation storeLocation, string storeName, SafeCertContextHandle certificate)
         {
             try
             {
-                var storeContext = IntPtr.Zero;
-                if (!CertAddCertificateContextToStore(store, certificate,
-                    AddCertificateDisposition.CERT_STORE_ADD_NEW, ref storeContext))
+                using (var store = CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
+                    storeLocation, storeName))
                 {
-                    var error = Marshal.GetLastWin32Error();
-
-                    if (error == (int) CapiErrorCode.CRYPT_E_EXISTS)
+                    var storeContext = IntPtr.Zero;
+                    if (!CertAddCertificateContextToStore(store, certificate,
+                        AddCertificateDisposition.CERT_STORE_ADD_NEW, ref storeContext))
                     {
-                        Log.Info("Certificate already exists in store.");
-                        return;
-                    }
+                        var error = Marshal.GetLastWin32Error();
 
-                    throw new CryptographicException(error);
+                        if (error == (int) CapiErrorCode.CRYPT_E_EXISTS)
+                        {
+                            Log.Info("Certificate already exists in store.");
+                            return;
+                        }
+
+                        throw new CryptographicException(error);
+
+
+                    }
+                    var subjectName = CertificatePal.GetSubjectName(certificate);
+
+                    Log.Info($"Imported certificate '{subjectName}' into store '{storeName}'");
                 }
             }
             catch (Exception ex)
@@ -266,7 +291,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static SafeCertContextHandle GetCertificateFromPfx(byte[] pfxBytes, string password, PfxImportFlags pfxImportFlags)
+        static IList<SafeCertContextHandle> GetCertificatesFromPfx(byte[] pfxBytes, string password, PfxImportFlags pfxImportFlags)
         {
             // Marshal PFX bytes into native data structure
             var pfxData = new CryptoData
@@ -276,6 +301,9 @@ namespace Calamari.Integration.Certificates
             };
 
             Marshal.Copy(pfxBytes, 0, pfxData.pbData, pfxBytes.Length);
+
+            var certificates = new List<SafeCertContextHandle>();
+
             try
             {
                 using (var memoryStore = PFXImportCertStore(ref pfxData, password, pfxImportFlags))
@@ -283,31 +311,33 @@ namespace Calamari.Integration.Certificates
                     if (memoryStore.IsInvalid)
                         throw new CryptographicException(Marshal.GetLastWin32Error());
 
-                    // Find the first certificate with a private-key.
-                    // If no certs have a private-key, then return the first certificate.
-                    // TODO: should really clean-up the key-containers of any certs we don't return
-                    SafeCertContextHandle chosenCertificate = null;
-                    SafeCertContextHandle currentCertificate = null;
+                    var certificatesToImport = GetCertificatesToImport(pfxBytes, password);
 
-                    while (EnumerateCertificatesInStore(memoryStore, ref currentCertificate))
+                    foreach (var certificate in certificatesToImport)
                     {
-                        // If the certificate has a private-key
-                        if (currentCertificate.HasPrivateKey())
+                        var thumbprint = CalculateThumbprint(certificate);
+                        // Marshal PFX bytes into native data structure
+                        var thumbprintData = new CryptoData
                         {
-                            return currentCertificate.Duplicate();
-                        }
-                        else
-                        {
-                            // Doesn't have a private key but hang on to it anyway in case we don't find any certs with a private key.
-                            if (chosenCertificate == null)
-                                chosenCertificate = currentCertificate.Duplicate();
-                        }
+                            cbData = thumbprint.Length,
+                            pbData = Marshal.AllocHGlobal(thumbprint.Length)
+                        };
+
+                        Marshal.Copy(thumbprint, 0, thumbprintData.pbData, thumbprint.Length);
+
+                        var certificateHandle = CertFindCertificateInStore(memoryStore,
+                            CertificateEncodingType.Pkcs7OrX509AsnEncoding,
+                            IntPtr.Zero, CertificateFindType.Sha1Hash, ref thumbprintData, IntPtr.Zero);
+
+                        if (certificateHandle == null || certificateHandle.IsInvalid)
+                            throw new Exception("Could not find certificate");
+
+                        certificates.Add(certificateHandle);
+
+                        Marshal.FreeHGlobal(thumbprintData.pbData);
                     }
 
-                    if (chosenCertificate == null || chosenCertificate.IsInvalid)
-                        throw new Exception("Did not find certificate in PFX");
-
-                    return chosenCertificate;
+                    return certificates;
                 }
             }
             catch (Exception ex)
@@ -320,7 +350,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static void AddPrivateKeyAccessRules(ICollection<PrivateKeyAccessRule> accessRules , SafeCertContextHandle certificate)
+        static void AddPrivateKeyAccessRules(ICollection<PrivateKeyAccessRule> accessRules, SafeCertContextHandle certificate)
         {
             try
             {
@@ -351,7 +381,7 @@ namespace Calamari.Integration.Certificates
 
                 foreach (var cryptoKeyAccessRule in accessRules.Select(r => r.ToCryptoKeyAccessRule()))
                 {
-                   security.AddAccessRule(cryptoKeyAccessRule); 
+                    security.AddAccessRule(cryptoKeyAccessRule);
                 }
 
                 var securityDescriptorBytes = security.GetSecurityDescriptorBinaryForm();
@@ -380,7 +410,7 @@ namespace Calamari.Integration.Certificates
 
                 foreach (var cryptoKeyAccessRule in accessRules.Select(r => r.ToCryptoKeyAccessRule()))
                 {
-                   security.AddAccessRule(cryptoKeyAccessRule); 
+                    security.AddAccessRule(cryptoKeyAccessRule);
                 }
 
                 var securityDescriptorBytes = security.GetSecurityDescriptorBinaryForm();
@@ -414,11 +444,43 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static bool EnumerateCertificatesInStore(SafeCertStoreHandle store, ref SafeCertContextHandle currentCertificate)
+        static IList<Org.BouncyCastle.X509.X509Certificate> GetCertificatesToImport(byte[] pfxBytes, string password)
         {
-            var previousCertificate = currentCertificate?.Disconnect() ?? IntPtr.Zero;
-            currentCertificate = CertEnumCertificatesInStore(store, previousCertificate);
-            return !currentCertificate.IsInvalid;
+            using (var memoryStream = new MemoryStream(pfxBytes))
+            {
+                var pkcs12Store = new Pkcs12Store(memoryStream, password?.ToCharArray() ?? "".ToCharArray());
+
+                if (pkcs12Store.Count < 1)
+                    throw new Exception("No certificates were found in PFX");
+
+                var aliases = pkcs12Store.Aliases.Cast<string>().ToList();
+
+                // Find the first bag which contains a private-key
+                var keyAlias = aliases.FirstOrDefault(alias => pkcs12Store.IsKeyEntry(alias));
+
+                if (keyAlias != null)
+                {
+                    return pkcs12Store.GetCertificateChain(keyAlias).Select(x => x.Certificate).ToList();
+
+                }
+
+                return new List<Org.BouncyCastle.X509.X509Certificate>
+                {
+                    pkcs12Store.GetCertificate(aliases.First()).Certificate
+                };
+            }
+        }
+
+        static bool IsSelfSigned(SafeCertContextHandle certificate)
+        {
+            var certificateInfo = (CERT_INFO)Marshal.PtrToStructure(certificate.CertificateContext.pCertInfo, typeof(CERT_INFO));
+            return CertCompareCertificateName(CertificateEncodingType.Pkcs7OrX509AsnEncoding, ref certificateInfo.Subject, ref certificateInfo.Issuer);
+        }
+
+        static byte[] CalculateThumbprint(Org.BouncyCastle.X509.X509Certificate certificate)
+        {
+            var der = certificate.GetEncoded();
+            return DigestUtilities.CalculateDigest("SHA1", der);
         }
     }
 }

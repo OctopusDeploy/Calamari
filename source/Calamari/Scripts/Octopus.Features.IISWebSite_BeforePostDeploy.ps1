@@ -37,13 +37,38 @@ try {
 		 Import-Module WebAdministration -ErrorAction Stop
 		} catch {
 			Write-Warning "We failed to load the WebAdministration module. This usually resolved by doing one of the following:"
-			Write-Warning "1. Install .NET Framework 3.5.1"
-			Write-Warning "2. Upgrade to PowerShell 3.0 (or greater)"
-			Write-Warning "3. On Windows 2008 you might need to install PowerShell SnapIn for IIS from http://www.iis.net/downloads/microsoft/powershell#additionalDownloads"
+			Write-Warning "1. Install IIS via Add Roles and Features, Web Server (IIS)"
+			Write-Warning "2. Install .NET Framework 3.5.1"
+			Write-Warning "3. Upgrade to PowerShell 3.0 (or greater)"
+			Write-Warning "4. On Windows 2008 you might need to install PowerShell SnapIn for IIS from http://www.iis.net/downloads/microsoft/powershell#additionalDownloads"
 			throw ($error | Select-Object -First 1)
     }
 }
 
+function Wait-OnSemaphore {
+	param(
+	[parameter(Mandatory = $true)][string] $SemaphoreId
+	)
+
+	Try
+	{
+		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
+
+		while (-not $SemaphoreInstance.WaitOne(100))
+		{
+			Write-Verbose "Cannot start this IIS website related task yet. There is already another task running that cannot be run in conjunction with any other task. Please wait..."
+			Start-Sleep -m 5000;
+		}
+		
+		Write-Verbose "Acquired SemaphoreInstance $SemaphoreId"
+		return $SemaphoreInstance
+	}
+	Catch [System.Threading.AbandonedMutexException]
+	{
+		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
+		return Wait-OnSemaphore -SemaphoreId $SemaphoreId
+	}
+}
 
 function Determine-Path($path) {
 	if (!$path) {
@@ -77,38 +102,51 @@ $hasWebCommitDelay = $false
 If(Get-Command "Start-WebCommitDelay" -ErrorAction SilentlyContinue){
     $hasWebCommitDelay = $true
 }
+	
+function Execute-WithRetry([ScriptBlock] $command, $noLock) {
 
-
-function Execute-WithRetry([ScriptBlock] $command) {
-	$attemptCount = 0
-	$operationIncomplete = $true
-
-	while ($operationIncomplete -and $attemptCount -lt $maxFailures) {
-		$attemptCount = ($attemptCount + 1)
-
-		if ($attemptCount -ge 2) {
-			Write-Host "Waiting for $sleepBetweenFailures seconds before retrying..."
-			Start-Sleep -s $sleepBetweenFailures
-			Write-Host "Retrying..."
-		}
-
-		try {
-			& $command
-
-			$operationIncomplete = $false
-		} catch [System.Exception] {
-            if($hasWebCommitDelay){
-                Stop-WebCommitDelay -Commit $false -ErrorAction SilentlyContinue
-            }
-			if ($attemptCount -lt ($maxFailures)) {
-				Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
-			} else {
-				throw
+	function Core-Execute-WithRetry([ScriptBlock] $command) {
+		$attemptCount = 0
+		$operationIncomplete = $true
+	
+		while ($operationIncomplete -and $attemptCount -lt $maxFailures) {
+			$attemptCount = ($attemptCount + 1)
+	
+			if ($attemptCount -ge 2) {
+				Write-Host "Waiting for $sleepBetweenFailures seconds before retrying..."
+				Start-Sleep -s $sleepBetweenFailures
+				Write-Host "Retrying..."
+			}
+	
+			try {
+				& $command
+	
+				$operationIncomplete = $false
+			} catch [System.Exception] {
+	            if($hasWebCommitDelay){
+	                Stop-WebCommitDelay -Commit $false -ErrorAction SilentlyContinue
+	            }
+				if ($attemptCount -lt ($maxFailures)) {
+					Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
+				} else {
+					throw
+				}
 			}
 		}
 	}
-}
 
+	if($noLock) {
+		Core-Execute-WithRetry -command $command
+	} else {
+		$SemaphoreInstance = Wait-OnSemaphore -SemaphoreId 'Global\Octopus-IIS-Metabase'
+		Try {
+			Core-Execute-WithRetry -command $command
+		}
+		Finally {
+			$SemaphoreInstance.Release()
+		}
+	}
+}
 function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityType, 
 								$applicationPoolUsername, $applicationPoolPassword,
 								$applicationPoolFrameworkVersion) 
@@ -178,7 +216,7 @@ function Start-ApplicationPool($applicationPoolName) {
 			Write-Host "Application pool is stopped. Attempting to start..."
 			Start-WebAppPool $applicationPoolName
 		}
-	}
+	} -noLock $true
 }
 
 function Get-FullPath($root, $segments)
@@ -731,7 +769,7 @@ if ($deployAsWebSite)
 			Write-Host "Web site is stopped. Attempting to start..."
 			Start-Website $webSiteName
 		}
-	}
+	} -noLock $true
 
     popd
 }

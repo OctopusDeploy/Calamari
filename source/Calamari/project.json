@@ -24,6 +24,7 @@
         "WindowsBase": "*"
       },
       "dependencies": {
+        "BouncyCastle": "1.8.1-octopus",
         "GitVersionTask": "3.3.0",
         "MarkdownSharp": "1.13.0.0",
         "Microsoft.Bcl": "1.1.10",
@@ -39,7 +40,8 @@
         "Newtonsoft.Json": "9.0.1",
         "NuGet.CommandLine": "2.8.3",
         "NuGet.Core": "2.11.1",
-        "System.Spatial": "5.6.2"
+        "System.Spatial": "5.6.2",
+        "AlphaFS": "2.1.2"
       },
       "buildOptions": {
         "platform": "anycpu",
@@ -52,7 +54,8 @@
           "IIS_SUPPORT",
           "USE_OCTODIFF_EXE",
           "WINDOWS_CERTIFICATE_STORE_SUPPORT",
-          "CAN_RUN_PROCESS_AS"
+          "CAN_RUN_PROCESS_AS",
+          "LONG_FILE_PATHS"
         ]
       }
     },
@@ -103,6 +106,7 @@
       "include": [
         "Integration\\Scripting\\Bash\\Bootstrap.sh",
         "Integration\\Scripting\\WindowsPowerShell\\Bootstrap.ps1",
+        "Integration\\Scripting\\WindowsPowerShell\\DebugBootstrap.ps1",
         "Integration\\Scripting\\ScriptCS\\Bootstrap.csx",
         "Integration\\Scripting\\FSharp\\Bootstrap.fsx",
         "Scripts\\**"

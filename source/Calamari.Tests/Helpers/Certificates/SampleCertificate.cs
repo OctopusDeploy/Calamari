@@ -22,18 +22,22 @@ namespace Calamari.Tests.Helpers.Certificates
         public const string CapiWithPrivateKeyId = "CapiWithPrivateKey";
         public static readonly SampleCertificate CapiWithPrivateKey = new SampleCertificate("capi_self_signed_privatekey_password.pfx", "Password01!", "3FF420AB600A6C14E6EAF6AC25EF42EDCB96EE60", true);
 
-        public const string CapiWithPrivateKeyNoPasswordId = "CngWithPrivateKeyNoPassword";
+        public const string CapiWithPrivateKeyNoPasswordId = "CapiWithPrivateKeyNoPassword";
         public static readonly SampleCertificate CapiWithPrivateKeyNoPassword = new SampleCertificate("capi_self_signed_privatekey_no_password.pfx", null, "E7D0BF9F1A62AED35BA22BED80F9795012A53636", true);
 
-        public const string FabrikamNoPrivateKeyId = "FabrikamNoPrivateKey";
-        public static readonly SampleCertificate FabrikamNoPrivateKey = new SampleCertificate("fabrikam_no_private_key_password.pfx", "password", "00567BA9BA571F9F53278067DB8C0871A72A3C51", false);
+        public const string CertificateChainId = "CertificateChain";
+        public static readonly SampleCertificate CertificateChain = new SampleCertificate("3-cert-chain.pfx", "hello world", "A11C309EFDF2864B1641F43A7A5B5019EB4CB816", true);
+
+        public const string ChainSignedByLegacySha1RsaId = "ChainSignedByLegacySha1Rsa";
+        public static readonly SampleCertificate ChainSignedByLegacySha1Rsa = new SampleCertificate("chain-signed-by-legacy-sha1-rsa.pfx", "Password01!", "47F51DED16E944AFC4B49B419D1C554974C895D2", true);
 
         public static readonly IDictionary<string, SampleCertificate> SampleCertificates = new Dictionary<string, SampleCertificate>
         {
             {CngPrivateKeyId, CngWithPrivateKey},
             {CapiWithPrivateKeyId, CapiWithPrivateKey},
             {CapiWithPrivateKeyNoPasswordId, CapiWithPrivateKeyNoPassword},
-            {FabrikamNoPrivateKeyId, FabrikamNoPrivateKey}
+            {CertificateChainId, CertificateChain},
+            {ChainSignedByLegacySha1RsaId, ChainSignedByLegacySha1Rsa},
         };
 
         public SampleCertificate(string fileName, string password, string thumbprint, bool hasPrivateKey)

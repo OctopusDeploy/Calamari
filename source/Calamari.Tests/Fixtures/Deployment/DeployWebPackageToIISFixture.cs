@@ -415,6 +415,31 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }
+
+        [Test] // https://github.com/OctopusDeploy/Issues/issues/3378
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldNotFailIfDisabledBindingUsesUnavailableCertificateVariable()
+        {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = "[{\"protocol\":\"http\",\"port\":1082,\"host\":\"\",\"thumbprint\":\"\",\"requireSni\":false,\"enabled\":true},{\"protocol\":\"https\",\"port\":1084,\"host\":\"\",\"certificateVariable\":\"AcmeSelfSigned\",\"requireSni\":false,\"enabled\":#{HTTPS Binding Enabled}}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables["HTTPS Binding Enabled"] = "false";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+        }
 #endif
 
         private string ToFirstLevelPath(string value)

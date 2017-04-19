@@ -22,7 +22,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
     ///         cref="X509CertificateExtensionMethods.GetCertificateContext" /> extension method.
     ///     </para>
     /// </summary>
-    public sealed class SafeCertContextHandle : SafeHandleZeroOrMinusOneIsInvalid
+    internal sealed class SafeCertContextHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
         private SafeCertContextHandle() : base(true)
         {
@@ -37,6 +37,8 @@ namespace Calamari.Integration.Certificates.WindowsNative
         [DllImport("crypt32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool CertFreeCertificateContext(IntPtr pCertContext);
+
+        public WindowsX509Native.CERT_CONTEXT CertificateContext => (WindowsX509Native.CERT_CONTEXT)Marshal.PtrToStructure(handle, typeof(WindowsX509Native.CERT_CONTEXT));
 
         protected override bool ReleaseHandle()
         {
