@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Calamari.Azure": {
-      "commandName": "Project",
-      "commandLineArgs": "run-script -script \"C:\\Octopus\\develop\\Work\\20170307035358-3\\Script.ps1\" -variables \"C:\\Octopus\\develop\\Work\\20170307035358-3\\Variables.json\""
-    }
-  }
-}
