@@ -127,6 +127,16 @@ function Set-OctopusVariable([string]$name, [string]$value)
 	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
 }
 
+function Fail-Step([string] $message)
+{
+	if($message)
+	{
+		$message = Convert-ServiceMessageValue($message)
+		Write-Host "##octopus[resultMessage message='$($message)']"
+	}
+	exit -1
+}
+
 function New-OctopusArtifact([string]$path, [string]$name="""") 
 {
 	if ((Test-Path $path) -eq $false) {

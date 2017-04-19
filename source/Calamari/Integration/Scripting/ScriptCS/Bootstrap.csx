@@ -126,6 +126,16 @@ public static class Octopus
         return Convert.ToBase64String(valueBytes);
     }
 
+    public static void FailStep(string message = null)
+    {
+        if (message != null)
+        {
+            message = EncodeServiceMessageValue(message);
+            Console.WriteLine("##octopus[resultMessage message='{0}']", message);
+        }
+        Environment.Exit(-1);
+    }
+
     public static void SetVariable(string name, string value)
     {
         name = EncodeServiceMessageValue(name);
