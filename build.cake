@@ -13,6 +13,8 @@ var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
 var framework = Argument("framework", "");
+var signingCertificatePath = Argument("signing_certificate_path", "");
+var signingCertificatePassword = Argument("signing_certificate_password", "");
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
@@ -94,16 +96,8 @@ Task("__Build")
     DotNetCoreBuild("**/project.json", settings);
 });
 
-Task("__BuildAndZipNET45TestProject")
+Task("__ZipNET45TestProject")
     .Does(() => {
-        var settings =  new DotNetCoreBuildSettings
-        {
-            Configuration = "Release",
-            Framework = "net451",
-            Runtime = "win7-x64"
-        };
-
-        DotNetCoreBuild("source/Calamari.Tests/project.json", settings);
         Zip("source/Calamari.Tests/bin/Release/net451/win7-x64/", Path.Combine(artifactsDir, "Binaries.zip"));
     });
 
@@ -141,7 +135,8 @@ private void DoPackage(string project, string framework, string version)
     {
         Configuration = configuration,
         OutputDirectory = Path.Combine(artifactsDir, project),
-        Framework = framework
+        Framework = framework,
+		NoBuild = true
     });
 
     TransformConfig(Path.Combine(artifactsDir, project, "project.json"), new TransformationCollection {
@@ -157,6 +152,24 @@ private void DoPackage(string project, string framework, string version)
     DeleteDirectory(Path.Combine(artifactsDir, project), true);
     DeleteFiles(artifactsDir + "*symbols*");
 }
+
+Task("__Sign")
+    .Does(() =>
+{
+	var files = new[] {
+			MakeAbsolute(File("./source/Calamari.Azure/bin/" + configuration + "/net45/Calamari.Azure.exe")), 
+			MakeAbsolute(File("./source/Calamari/bin/" + configuration + "/net40/Calamari.exe"))
+		};
+	var signtoolPath = MakeAbsolute(File("./source/Tools/signtool/signtool.exe"));
+
+	Sign(files, new SignToolSignSettings {
+			ToolPath = signtoolPath,
+            TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
+            CertPath = signingCertificatePath,
+            Password = signingCertificatePassword
+    });
+});
+
 
 Task("__Publish")
     .WithCriteria(isContinuousIntegrationBuild)
@@ -219,6 +232,7 @@ Task("Pack")
     .IsDependentOn("__Restore")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__Build")
+    .IsDependentOn("__Sign")
     .IsDependentOn("__Pack");
 
 Task("Publish")
@@ -226,6 +240,7 @@ Task("Publish")
     .IsDependentOn("__Restore")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__Build")
+    .IsDependentOn("__Sign")
     .IsDependentOn("__Pack")
     .IsDependentOn("__Publish");
 
@@ -239,7 +254,9 @@ Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("__Clean")
     .IsDependentOn("__Restore")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
-    .IsDependentOn("__BuildAndZipNET45TestProject")
+	.IsDependentOn("__Build")
+    .IsDependentOn("__ZipNET45TestProject")
+    .IsDependentOn("__Sign")
     .IsDependentOn("__Pack")
     .IsDependentOn("__CopyToLocalPackages");
 

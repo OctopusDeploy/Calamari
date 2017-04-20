@@ -53,10 +53,9 @@ Param(
     [Alias("DryRun","Noop")]
     [switch]$WhatIf,
     [switch]$Mono,
-    [switch]$SkipToolPackageRestore
-    # ,
-    # [Parameter(Position=0,Mandatory=$false,ValueFromRemainingArguments=$true)]
-    # [string[]]$ScriptArgs
+    [switch]$SkipToolPackageRestore,
+    [string]$SigningCertificatePath = "./certificates/OctopusDevelopment.pfx",
+    [string]$SigningCertificatePassword = "Password01!"
 )
 
 [Reflection.Assembly]::LoadWithPartialName("System.Security") | Out-Null
@@ -190,5 +189,5 @@ if (!(Test-Path $CAKE_EXE)) {
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -framework=`"$Framework`" -where=`"$Where`" $UseMono $UseDryRun $UseExperimental"# $ScriptArgs"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -framework=`"$Framework`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" $UseMono $UseDryRun $UseExperimental"
 exit $LASTEXITCODE
