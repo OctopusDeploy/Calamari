@@ -715,7 +715,7 @@ if ($deployAsWebSite)
 			} else { # SNI off so we will have created against the ip
 				# check if there are any other bindings to the same IP:Port so that
 				# we don't remove an ssl cert that's used by any other sites on the server
-				$existing = Get-WebBinding -IPAddress $ipAddress -Port $port
+				$existing = Get-WebBinding -IPAddress $ipAddress -Port $port -Protocol "https"
 				if (!$existing) {
 					Write-Host ("Removing unused SSL certificate binding: $($ipAddress):$port")
 					if ($ipAddress -eq '*') {
