@@ -130,15 +130,19 @@ Task("__Pack")
 });
 
 private void DoPackage(string project, string framework, string version)
-{
+{ 
+	var outputDirectory = Path.Combine(artifactsDir, project);
+	
     DotNetCorePublish(Path.Combine("./source", project), new DotNetCorePublishSettings
     {
         Configuration = configuration,
-        OutputDirectory = Path.Combine(artifactsDir, project),
+        OutputDirectory = outputDirectory,
         Framework = framework,
 		NoBuild = true
     });
 
+	SignBinaries(outputDirectory);
+	
     TransformConfig(Path.Combine(artifactsDir, project, "project.json"), new TransformationCollection {
         { "version", version }
     });
@@ -153,13 +157,9 @@ private void DoPackage(string project, string framework, string version)
     DeleteFiles(artifactsDir + "*symbols*");
 }
 
-Task("__Sign")
-    .Does(() =>
+private void SignBinaries(string outputDirectory)
 {
-	var files = new[] {
-			MakeAbsolute(File("./source/Calamari.Azure/bin/" + configuration + "/net45/Calamari.Azure.exe")), 
-			MakeAbsolute(File("./source/Calamari/bin/" + configuration + "/net40/Calamari.exe"))
-		};
+	var files = GetFiles(outputDirectory + "/*.exe");
 	var signtoolPath = MakeAbsolute(File("./source/Tools/signtool/signtool.exe"));
 
 	Sign(files, new SignToolSignSettings {
@@ -168,8 +168,7 @@ Task("__Sign")
             CertPath = signingCertificatePath,
             Password = signingCertificatePassword
     });
-});
-
+}
 
 Task("__Publish")
     .WithCriteria(isContinuousIntegrationBuild)
@@ -232,7 +231,6 @@ Task("Pack")
     .IsDependentOn("__Restore")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__Build")
-    .IsDependentOn("__Sign")
     .IsDependentOn("__Pack");
 
 Task("Publish")
@@ -240,7 +238,6 @@ Task("Publish")
     .IsDependentOn("__Restore")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
     .IsDependentOn("__Build")
-    .IsDependentOn("__Sign")
     .IsDependentOn("__Pack")
     .IsDependentOn("__Publish");
 
@@ -256,7 +253,6 @@ Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("__UpdateAssemblyVersionInformation")
 	.IsDependentOn("__Build")
     .IsDependentOn("__ZipNET45TestProject")
-    .IsDependentOn("__Sign")
     .IsDependentOn("__Pack")
     .IsDependentOn("__CopyToLocalPackages");
 
