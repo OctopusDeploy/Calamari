@@ -69,6 +69,15 @@ let initializeProxy () =
     proxy.Credentials <- (credentials :> ICredentials)
     WebRequest.DefaultWebProxy <- proxy
 
+let failStep message = 
+    match message with
+        | null -> Environment.Exit -1
+        | m -> 
+            let content = sprintf "message='%s'" (encode m)
+            writeServiceMessage "resultMessage" content
+            Environment.Exit -1
+    
+
 let setVariable name value = 
     let encodedName = encode name
     let encodedValue = encode value

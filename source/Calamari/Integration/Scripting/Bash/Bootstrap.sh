@@ -54,6 +54,23 @@ function get_octopusvariable
 }
 
 #	---------------------------------------------------------------------------
+# Function for failing a step with an optional message
+#   Accepts 2 arguments:
+#     string: value of the name of the octopus variable
+#     string: value of the value of the octopus variable
+#	---------------------------------------------------------------------------
+function fail_step
+{
+
+	if [ -n "$1" ]
+	then
+		echo "##octopus[resultMessage message='$(encode_servicemessagevalue "$1")']"
+	fi
+
+	exit 1;
+}
+
+#	---------------------------------------------------------------------------
 # Function for setting an octopus variable
 #   Accepts 2 arguments:
 #     string: value of the name of the octopus variable
