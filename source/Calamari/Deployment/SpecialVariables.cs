@@ -184,7 +184,6 @@
 
             public static class ServiceFabric
             {
-                public static readonly string PackagePath = "Octopus.Action.ServiceFabric.PackagePath";
                 public static readonly string ConnectionEndpoint = "Octopus.Action.ServiceFabric.ConnectionEndpoint";
                 public static readonly string SecurityMode = "Octopus.Action.ServiceFabric.SecurityMode";
                 public static readonly string ServerCertThumbprint = "Octopus.Action.ServiceFabric.ServerCertThumbprint";
