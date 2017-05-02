@@ -21,9 +21,9 @@ namespace Calamari.Azure.Integration
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
-        const string DefaultAzureEnvironment = "AzureCloud";
 
-        static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
+        public const string DefaultAzureEnvironment = "AzureCloud";
+        public static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
 
         public AzurePowerShellContext()
         {
@@ -38,7 +38,7 @@ namespace Calamari.Azure.Integration
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            SetAzureModuleLoadingMethod(variables);
+            SetAzureModulesLoadingMethod(variables);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
@@ -70,7 +70,7 @@ namespace Calamari.Azure.Integration
             }
         }
 
-        static void SetAzureModuleLoadingMethod(VariableDictionary variables)
+        static void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
             // By default use the Azure PowerShell modules bundled with Calamari
             // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
@@ -100,7 +100,6 @@ namespace Calamari.Azure.Integration
 
             fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificatePassword));
             return certificateFilePath;
-
         }
 
         static void SetOutputVariable(string name, string value, VariableDictionary variables)

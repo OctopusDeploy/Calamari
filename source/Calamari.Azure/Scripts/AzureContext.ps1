@@ -6,10 +6,10 @@
 ## The script is passed the following parameters. 
 ##
 ##   $OctopusUseBundledAzureModules = "true"
-##   $OctopusAzureModulePath = "....\Calamari\PowerShell\Azure.psd1"
+##   $OctopusAzureModulePath = "....\Calamari\PowerShell\"
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
-##   $UseServicePrincipal = "false"
+##   $OctopusUseServicePrincipal = "false"
 ##   $OctopusAzureSubscriptionId = "..."
 ##   $OctopusAzureStorageAccountName = "..."
 ##   $OctopusAzureCertificateFileName = "...."
@@ -50,9 +50,8 @@ function Execute-WithRetry([ScriptBlock] $command) {
     }
 }
 
-
 if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-    # Add bundled Azure modules to PSModulePath
+    # Add bundled Azure PowerShell modules to PSModulePath
     $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Storage"
     $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ServiceManagement"
     $ResourceManagerModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ResourceManager" | Join-Path -ChildPath "AzureResourceManager"
@@ -68,12 +67,17 @@ Execute-WithRetry{
         $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
         if (!$AzureEnvironment)
         {
-            Write-Error "No Azure environment could be matched given name $OctopusAzureEnvironment"
+            Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
             exit -2
         }
 
         Write-Verbose "Authenticating with Service Principal"
+
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
         Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
+        
     } Else {
         # Authenticate via Management Certificate
         Write-Verbose "Loading the management certificate"
