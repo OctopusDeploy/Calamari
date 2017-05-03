@@ -8,16 +8,20 @@ using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes.Semaphores;
+using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
     public class RePackageCloudServiceConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
+        private readonly ISemaphoreFactory semaphoreFactory;
 
-        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem)
+        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
         {
             this.fileSystem = fileSystem;
+            this.semaphoreFactory = semaphoreFactory;
         }
 
         public void Install(RunningDeployment deployment)
@@ -29,25 +33,37 @@ namespace Calamari.Azure.Deployment.Conventions
             var workingDirectory = deployment.CurrentDirectory;
             var originalPackagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             var newPackagePath = Path.Combine(Path.GetDirectoryName(originalPackagePath), Path.GetFileNameWithoutExtension(originalPackagePath) + "_repacked.cspkg");
+
+            using (semaphoreFactory.Acquire("Calamari - multi threaded packaging causes IsolatedStorage errors", "Waiting to re-package"))
             using (var originalPackage = Package.Open(originalPackagePath, FileMode.Open))
             using (var newPackage = Package.Open(newPackagePath, FileMode.CreateNew))
             {
-                var originalManifest = AzureCloudServiceConventions.ReadPackageManifest(originalPackage);
-
-                var newManifest = new PackageDefinition
+                try
                 {
-                    MetaData = {AzureVersion = originalManifest.MetaData.AzureVersion}
-                };
+                    var originalManifest = AzureCloudServiceConventions.ReadPackageManifest(originalPackage);
 
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.ServiceDefinition), 
-                    AzureCloudServiceConventions.PackageFolders.ServiceDefinition);
-                AddParts(newPackage, newManifest, Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.NamedStreams), 
-                    AzureCloudServiceConventions.PackageFolders.NamedStreams);
-                AddLocalContent(newPackage, newManifest, workingDirectory);
+                    var newManifest = new PackageDefinition
+                    {
+                        MetaData = {AzureVersion = originalManifest.MetaData.AzureVersion}
+                    };
 
-                AddPackageManifest(newPackage, newManifest);
+                    AddParts(newPackage, newManifest,
+                        Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.ServiceDefinition),
+                        AzureCloudServiceConventions.PackageFolders.ServiceDefinition);
+                    AddParts(newPackage, newManifest,
+                        Path.Combine(workingDirectory, AzureCloudServiceConventions.PackageFolders.NamedStreams),
+                        AzureCloudServiceConventions.PackageFolders.NamedStreams);
+                    AddLocalContent(newPackage, newManifest, workingDirectory);
 
-                newPackage.Flush();
+                    AddPackageManifest(newPackage, newManifest);
+
+                    newPackage.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.PrettyPrint());
+                    throw new Exception("An exception occured re-packaging the cspkg");
+                }
             }
 
             fileSystem.OverwriteAndDelete(originalPackagePath, newPackagePath);
