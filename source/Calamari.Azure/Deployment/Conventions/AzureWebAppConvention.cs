@@ -9,6 +9,7 @@ using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Retry;
 using Microsoft.Web.Deployment;
 using Octostache;
@@ -31,7 +32,6 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var publishProfile = GetPublishProfile(variables);
 
-            var retry = GetRetryTracker();
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
 
             try
@@ -39,46 +39,54 @@ namespace Calamari.Azure.Deployment.Conventions
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
 
-                while (retry.Try())
-                {
-                    try
-                    {
-                        var changeSummary = DeploymentManager
-                            .CreateObject("contentPath", deployment.CurrentDirectory)
-                            .SyncTo(
-                                "contentPath",
-                                BuildPath(siteName, variables),
-                                DeploymentOptions(siteName, publishProfile),
-                                DeploymentSyncOptions(variables)
-                            );
-
-                        Log.Info(
-                            "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
-                            changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
-
-                        break;
-                    }
-                    catch (DeploymentDetailedException ex)
-                    {
-                        if (retry.CanRetry())
-                        {
-                            if (retry.ShouldLogWarning())
-                            {
-                                Log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry,
-                                    ex.Message);
-                            }
-                            Thread.Sleep(retry.Sleep());
-                        }
-                        else
-                        {
-                            throw;
-                        }
-                    }
-                }
+                DeployToAzure(deployment, siteName, variables, publishProfile);
             }
             finally
             {
                 ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
+            }
+        }
+
+        private static void DeployToAzure(RunningDeployment deployment, string siteName, CalamariVariableDictionary variables,
+            SitePublishProfile publishProfile)
+        {
+            var retry = GetRetryTracker();
+
+            while (retry.Try())
+            {
+                try
+                {
+                    var changeSummary = DeploymentManager
+                        .CreateObject("contentPath", deployment.CurrentDirectory)
+                        .SyncTo(
+                            "contentPath",
+                            BuildPath(siteName, variables),
+                            DeploymentOptions(siteName, publishProfile),
+                            DeploymentSyncOptions(variables)
+                        );
+
+                    Log.Info(
+                        "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
+                        changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
+
+                    break;
+                }
+                catch (DeploymentDetailedException ex)
+                {
+                    if (retry.CanRetry())
+                    {
+                        if (retry.ShouldLogWarning())
+                        {
+                            Log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry,
+                                ex.Message);
+                        }
+                        Thread.Sleep(retry.Sleep());
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
             }
         }
 
@@ -91,7 +99,7 @@ namespace Calamari.Azure.Deployment.Conventions
 
             if (sslpolicyerrors == SslPolicyErrors.RemoteCertificateNameMismatch)
             {
-                Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://social.msdn.microsoft.com/Forums/sqlserver/en-US/ebd2bcf4-09ee-4b80-9492-82a465dbb345/incorrect-custom-certificate-on-mysitescmazurewebsitesnet?forum=windowsazurewebsitespreview");
+                Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
             }
 
             return false;
