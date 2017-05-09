@@ -9,7 +9,7 @@
 ## about this.
 ##
 ## If you want to customize the Azure deployment process, simply copy this script into
-## your deployment package as DeployToAzure.ps1. Octopus will invoke it instead of the default 
+## your deployment package as DeployToServiceFabric.ps1. Octopus will invoke it instead of the default 
 ## script. 
 ##
 ## The script will be passed the following parameters in addition to the normal Octopus 
