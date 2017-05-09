@@ -1,0 +1,13 @@
+<Project>
+  <Target Name="SignTarget" AfterTargets="Build" BeforeTargets="Pack">
+    <ItemGroup>
+      <Binaries Include="$(OutDir)*.exe" />
+    </ItemGroup>
+    <PropertyGroup>
+      <CertPath>../../certificates/OctopusDevelopment.pfx</CertPath>
+      <CertPassword>Password01!</CertPassword>
+      <SignCodeExeCommand>"../Tools/signtool/signtool.exe" sign /f "$(CertPath)" /p "$(CertPassword)" /t "http://timestamp.globalsign.com/scripts/timestamp.dll"</SignCodeExeCommand>
+    </PropertyGroup>
+    <Exec Command="$(SignCodeExeCommand) @(Binaries, ' ')" Condition="'@(Binaries)' != ''" />
+  </Target>
+</Project>

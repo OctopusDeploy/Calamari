@@ -1,8 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0009"
-#addin "MagicChunks"
+#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0011"
 
 using Path = System.IO.Path;
 
@@ -12,7 +11,6 @@ using Path = System.IO.Path;
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
-var framework = Argument("framework", "");
 var signingCertificatePath = Argument("signing_certificate_path", "");
 var signingCertificatePassword = Argument("signing_certificate_password", "");
 
@@ -22,38 +20,37 @@ var signingCertificatePassword = Argument("signing_certificate_password", "");
 var artifactsDir = "./built-packages/";
 var localPackagesDir = "../LocalPackages";
 var sourceFolder = "./source/";
-var projectsToPackage = new []{"Calamari", "Calamari.Azure"};
-var isContinuousIntegrationBuild = !BuildSystem.IsLocalBuild;
-var cleanups = new List<Action>();
-
-var gitVersionInfo = GitVersion(new GitVersionSettings {
-    OutputType = GitVersionOutput.Json
-});
-
-var nugetVersion = gitVersionInfo.NuGetVersion;
+GitVersion gitVersionInfo;
+string nugetVersion;
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
 Setup(context =>
 {
+	gitVersionInfo = GitVersion(new GitVersionSettings {
+        OutputType = GitVersionOutput.Json
+    });
+
+    if(BuildSystem.IsRunningOnTeamCity) {
+		BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
+	}
+	
+    nugetVersion = gitVersionInfo.NuGetVersion;
+	
     Information("Building Calamari v{0}", nugetVersion);
 });
 
 Teardown(context =>
 {
-    Information("Cleaning up");
-    foreach(var cleanup in cleanups)
-        cleanup();
-
-    Information("Finished running tasks for build v{0}", nugetVersion);
+    Information("Finished running tasks.");
 });
 
 //////////////////////////////////////////////////////////////////////
 //  PRIVATE TASKS
 //////////////////////////////////////////////////////////////////////
 
-Task("__Clean")
+Task("Clean")
     .Does(() =>
 {
     CleanDirectory(artifactsDir);
@@ -61,117 +58,40 @@ Task("__Clean")
     CleanDirectories("./**/obj");
 });
 
-Task("__Restore")
-    .Does(() => DotNetCoreRestore());
+Task("Restore")
+	.IsDependentOn("Clean")
+    .Does(() => DotNetCoreRestore("source"));
 
-Task("__UpdateAssemblyVersionInformation")
-    .Does(() =>
-{
-    foreach (var project in projectsToPackage)
-    {
-        var assemblyInfoFile = Path.Combine(sourceFolder, project, "Properties", "AssemblyInfo.cs");
-        RestoreFileOnCleanup(assemblyInfoFile);
-        GitVersion(new GitVersionSettings {
-            UpdateAssemblyInfo = true,
-            UpdateAssemblyInfoFilePath = assemblyInfoFile
-        });
-    }
-    
-    Information("AssemblyVersion -> {0}", gitVersionInfo.AssemblySemVer);
-    Information("AssemblyFileVersion -> {0}", $"{gitVersionInfo.MajorMinorPatch}.0");
-    Information("AssemblyInformationalVersion -> {0}", gitVersionInfo.InformationalVersion);
-});
-
-Task("__Build")
-    .Does(() =>
-{
-    var settings =  new DotNetCoreBuildSettings
-    {
-        Configuration = configuration
-    };
-
-    if(!string.IsNullOrEmpty(framework))
-        settings.Framework = framework;      
-
-    DotNetCoreBuild("**/project.json", settings);
-});
-
-Task("__ZipNET45TestProject")
+Task("Build")
+    .IsDependentOn("Restore")
     .Does(() => {
-        Zip("source/Calamari.Tests/bin/Release/net451/win7-x64/", Path.Combine(artifactsDir, "Binaries.zip"));
-    });
+		 DotNetCoreBuild("./source", new DotNetCoreBuildSettings
+		{
+			Configuration = configuration
+		});
+	});
 
-Task("__Test")
-    .Does(() =>
-{
-    var settings =  new DotNetCoreTestSettings
-    {
-        Configuration = configuration
-    };
-
-    if(!string.IsNullOrEmpty(framework))
-        settings.Framework = framework;  
-
-    if(!string.IsNullOrEmpty(testFilter))
-        settings.ArgumentCustomization = f => {
-            f.Append("-where");
-            f.AppendQuoted(testFilter);
-            return f;
-        };
-
-     DotNetCoreTest("source/Calamari.Tests/project.json", settings);
-});
-
-Task("__Pack")
-    .Does(() =>
-{
-    DoPackage("Calamari", "net40", nugetVersion);
-    DoPackage("Calamari.Azure", "net45", nugetVersion);   
-});
-
-private void DoPackage(string project, string framework, string version)
-{ 
-	var outputDirectory = Path.Combine(artifactsDir, project);
+Task("Test")
+    .IsDependentOn("Build")
+    .Does(() => {
+		var projects = GetFiles("./source/**/*Tests.csproj");
+		foreach(var project in projects)
+			DotNetCoreTest(project.FullPath, new DotNetCoreTestSettings
+			{
+				Configuration = configuration,
+				NoBuild = true,
+				ArgumentCustomization = args => {
+					if(!string.IsNullOrEmpty(testFilter)) {
+						args = args.Append("--where").AppendQuoted(testFilter);
+					}
+					return args.Append("--logger:trx");
+				}
+			});
+	});
 	
-    DotNetCorePublish(Path.Combine("./source", project), new DotNetCorePublishSettings
-    {
-        Configuration = configuration,
-        OutputDirectory = outputDirectory,
-        Framework = framework,
-		NoBuild = true
-    });
-
-	SignBinaries(outputDirectory);
-	
-    TransformConfig(Path.Combine(artifactsDir, project, "project.json"), new TransformationCollection {
-        { "version", version }
-    });
-
-    DotNetCorePack(Path.Combine(artifactsDir, project), new DotNetCorePackSettings
-    {
-        OutputDirectory = artifactsDir,
-        NoBuild = true
-    });
-
-    DeleteDirectory(Path.Combine(artifactsDir, project), true);
-    DeleteFiles(artifactsDir + "*symbols*");
-}
-
-private void SignBinaries(string outputDirectory)
-{
-	var files = GetFiles(outputDirectory + "/*.exe");
-	var signtoolPath = MakeAbsolute(File("./source/Tools/signtool/signtool.exe"));
-
-	Sign(files, new SignToolSignSettings {
-			ToolPath = signtoolPath,
-            TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
-            CertPath = signingCertificatePath,
-            Password = signingCertificatePassword
-    });
-}
-
-Task("__Publish")
-    .WithCriteria(isContinuousIntegrationBuild)
+Task("Publish")
+	.IsDependentOn("Build")
+    .WithCriteria(BuildSystem.IsRunningOnTeamCity)
     .Does(() =>
 {
     var isPullRequest = !String.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQUEST_NUMBER"));
@@ -192,18 +112,9 @@ Task("__Publish")
     }
 });
 
-private void RestoreFileOnCleanup(string file)
-{
-    var contents = System.IO.File.ReadAllBytes(file);
-    cleanups.Add(() => {
-        Information("Restoring {0}", file);
-        System.IO.File.WriteAllBytes(file, contents);
-    });
-}
-
-Task("__CopyToLocalPackages")
+Task("CopyToLocalPackages")
+	.IsDependentOn("Publish")
     .WithCriteria(BuildSystem.IsLocalBuild)
-    .IsDependentOn("__Pack")
     .Does(() =>
 {
     CreateDirectory(localPackagesDir);
@@ -217,44 +128,8 @@ Task("__CopyToLocalPackages")
 Task("Default")
     .IsDependentOn("BuildPackAndZipTestBinaries");
 
-Task("Clean")
-    .IsDependentOn("__Clean");
-
-Task("Restore")
-    .IsDependentOn("__Restore");
-
-Task("Build")
-    .IsDependentOn("__Build");
-
-Task("Pack")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__UpdateAssemblyVersionInformation")
-    .IsDependentOn("__Build")
-    .IsDependentOn("__Pack");
-
-Task("Publish")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__UpdateAssemblyVersionInformation")
-    .IsDependentOn("__Build")
-    .IsDependentOn("__Pack")
-    .IsDependentOn("__Publish");
-
-Task("SetTeamCityVersion")
-    .Does(() => {
-        if(BuildSystem.IsRunningOnTeamCity)
-            BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
-    });
-
 Task("BuildPackAndZipTestBinaries")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__UpdateAssemblyVersionInformation")
-	.IsDependentOn("__Build")
-    .IsDependentOn("__ZipNET45TestProject")
-    .IsDependentOn("__Pack")
-    .IsDependentOn("__CopyToLocalPackages");
+    .IsDependentOn("CopyToLocalPackages");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION

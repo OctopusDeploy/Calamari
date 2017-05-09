@@ -2,9 +2,8 @@
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
-using Calamari.Util;
 using Calamari.Util.Environments;
-using System.Reflection; // required by netcoreapp
+using System.Reflection;
 
 namespace Calamari
 {

@@ -1,6 +1,5 @@
 {
-  "projects": [ "source" ],
   "sdk": {
-    "version": "1.0.0-preview2-003133" // https://github.com/dotnet/core/blob/master/release-notes/download-archives/1.0.1-preview2-download.md
+    "version": "1.0.4" // VS2017 plus download latest from https://www.microsoft.com/net/download/core
   }
 }
