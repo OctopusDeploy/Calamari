@@ -417,6 +417,9 @@ if ($deployAsWebSite)
 			$startWebSite = $false
 			$startAppPool = $false
 		}
+		default {
+			throw "`"$startMode`" is an invalid OctopusParameter for 'Octopus.Action.IISWebSite.StartMode'."
+		}
 	}
 
 	Write-Host "Making sure a Website `"$webSiteName`" is configured in IIS..."
