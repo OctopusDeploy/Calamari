@@ -696,10 +696,6 @@ if ($deployAsWebSite)
 		# try to remove ssl cert bindings for IIS bindings that are being removed
 		$bindingsToRemove | where-object { $_.protocol -eq "https" } | foreach-object {
 			$bindingParts = $_.bindingInformation.Split(':')
-			$ipAddress = $bindingParts[0]
-			if ((! $ipAddress) -or ($ipAddress -eq '*')) {
-				$ipAddress = "0.0.0.0"
-			}
 			$port = $bindingParts[1]
 			$hostname = $bindingParts[2]
 
@@ -712,16 +708,7 @@ if ($deployAsWebSite)
 						throw
 					}
 				}
-			} else { # SNI off so we will have created against the ip
-				$existing = & netsh http show sslcert ipport="$($ipAddress):$port"
-				if ($LastExitCode -eq 0) {
-					Write-Host ("Removing unused SSL certificate binding: $($ipAddress):$port")				
-					& netsh http delete sslcert ipport="$($ipAddress):$port"
-					if ($LastExitCode -ne 0 ){
-						throw
-					}
-				}
-			}
+			} 
 		}
 	}
 
