@@ -401,27 +401,9 @@ if ($deployAsWebSite)
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolUsername"]
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
 	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
-	$startMode = if ($OctopusParameters.ContainsKey("Octopus.Action.IISWebSite.StartMode")) { $OctopusParameters["Octopus.Action.IISWebSite.StartMode"] } else { "both" }
-
-	switch ($startMode) 
-    { 
-        "both" {
-			$startWebSite = $true
-			$startAppPool = $true
-		} 
-		"appPool" {
-			$startWebSite = $false
-			$startAppPool = $true
-		}
-		"none" {
-			$startWebSite = $false
-			$startAppPool = $false
-		}
-		default {
-			throw "`"$startMode`" is an invalid OctopusParameter for 'Octopus.Action.IISWebSite.StartMode'."
-		}
-	}
-
+	$startAppPool = if ($OctopusParameters.ContainsKey("Octopus.Action.IISWebSite.StartApplicationPool")) { $OctopusParameters["Octopus.Action.IISWebSite.StartApplicationPool"] } else { $true }
+	$startWebSite = if ($OctopusParameters.ContainsKey("Octopus.Action.IISWebSite.StartWebSite")) { $OctopusParameters["Octopus.Action.IISWebSite.StartWebSite"] } else { $true }
+	
 	Write-Host "Making sure a Website `"$webSiteName`" is configured in IIS..."
 
 	#Assess SNI support (IIS 8 or greater)
