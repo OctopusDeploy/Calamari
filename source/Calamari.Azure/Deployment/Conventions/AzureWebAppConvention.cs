@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Retry;
 using Microsoft.Web.Deployment;
 using Octostache;
@@ -21,13 +25,31 @@ namespace Calamari.Azure.Deployment.Conventions
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
-            Log.Info("Deploying to Azure WebApp '{0}'{1}, using subscription-id '{2}'", 
-                siteName, 
-                string.IsNullOrEmpty(resourceGroupName) ? string.Empty : $" in Resource Group {resourceGroupName}", 
+            Log.Info("Deploying to Azure WebApp '{0}'{1}, using subscription-id '{2}'",
+                siteName,
+                string.IsNullOrEmpty(resourceGroupName) ? string.Empty : $" in Resource Group {resourceGroupName}",
                 subscriptionId);
 
             var publishProfile = GetPublishProfile(variables);
 
+            RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
+
+            try
+            {
+                originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
+                ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
+
+                DeployToAzure(deployment, siteName, variables, publishProfile);
+            }
+            finally
+            {
+                ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
+            }
+        }
+
+        private static void DeployToAzure(RunningDeployment deployment, string siteName, CalamariVariableDictionary variables,
+            SitePublishProfile publishProfile)
+        {
             var retry = GetRetryTracker();
 
             while (retry.Try())
@@ -43,7 +65,8 @@ namespace Calamari.Azure.Deployment.Conventions
                             DeploymentSyncOptions(variables)
                         );
 
-                    Log.Info("Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
+                    Log.Info(
+                        "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                         changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
 
                     break;
@@ -54,7 +77,8 @@ namespace Calamari.Azure.Deployment.Conventions
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry, ex.Message);
+                            Log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry,
+                                ex.Message);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
@@ -64,6 +88,21 @@ namespace Calamari.Azure.Deployment.Conventions
                     }
                 }
             }
+        }
+
+        private bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
+        {
+            if (sslpolicyerrors == SslPolicyErrors.None)
+            {
+                return true;
+            }
+
+            if (sslpolicyerrors == SslPolicyErrors.RemoteCertificateNameMismatch)
+            {
+                Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
+            }
+
+            return false;
         }
 
         private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
