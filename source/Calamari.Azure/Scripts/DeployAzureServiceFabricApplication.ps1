@@ -9,7 +9,7 @@
 ## about this.
 ##
 ## If you want to customize the Azure deployment process, simply copy this script into
-## your deployment package as DeployToAzure.ps1. Octopus will invoke it instead of the default 
+## your deployment package as DeployToServiceFabric.ps1. Octopus will invoke it instead of the default 
 ## script. 
 ##
 ## The script will be passed the following parameters in addition to the normal Octopus 
@@ -133,7 +133,7 @@ if ($IsUpgrade -and $AppExists)
     {
         $Action = "Register"
     }
-    
+
     $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
 
     if ($OverrideUpgradeBehavior -eq 'ForceUpgrade')
@@ -144,11 +144,11 @@ if ($IsUpgrade -and $AppExists)
 
     if ($CopyPackageTimeoutSec)
     {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParametersFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
+        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
     }
     else
     {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParametersFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
+        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
     }
 }
 else
