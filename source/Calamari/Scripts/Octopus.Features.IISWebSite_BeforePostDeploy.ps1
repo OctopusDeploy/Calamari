@@ -697,8 +697,8 @@ if ($deployAsWebSite)
 		$bindingsToRemove | where-object { $_.protocol -eq "https" } | foreach-object {
 			$bindingParts = $_.bindingInformation.Split(':')
 			$ipAddress = $bindingParts[0]
-			if ((! $ipAddress) -or ($ipAddress -eq '*')) {
-				$ipAddress = "0.0.0.0"
+			if (!$ipAddress) {
+				$ipAddress = "*"
 			}
 			$port = $bindingParts[1]
 			$hostname = $bindingParts[2]
@@ -713,10 +713,16 @@ if ($deployAsWebSite)
 					}
 				}
 			} else { # SNI off so we will have created against the ip
-				$existing = & netsh http show sslcert ipport="$($ipAddress):$port"
-				if ($LastExitCode -eq 0) {
-					Write-Host ("Removing unused SSL certificate binding: $($ipAddress):$port")				
+				# check if there are any other bindings to the same IP:Port so that
+				# we don't remove an ssl cert that's used by any other sites on the server
+				$existing = Get-WebBinding -IPAddress $ipAddress -Port $port -Protocol "https"
+				if (!$existing) {
+					Write-Host ("Removing unused SSL certificate binding: $($ipAddress):$port")
+					if ($ipAddress -eq '*') {
+						$ipAddress = "0.0.0.0"
+					}
 					& netsh http delete sslcert ipport="$($ipAddress):$port"
+
 					if ($LastExitCode -ne 0 ){
 						throw
 					}
