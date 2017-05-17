@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFramework>net452</TargetFramework>
+    <TargetFramework>net451</TargetFramework>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Azure</AssemblyName>
     <OutputType>Exe</OutputType>
@@ -19,11 +19,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\AzureContext.ps1"/>
-    <EmbeddedResource Include="Scripts\AzureServiceFabricContext.ps1"/>
-    <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1"/>
-    <EmbeddedResource Include="Scripts\DeployAzureServiceFabricApplication.ps1"/>
-    <EmbeddedResource Include="Scripts\SwapAzureCloudServiceDeployment.ps1"/>
+    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
+    <EmbeddedResource Include="Scripts\AzureServiceFabricContext.ps1" />
+    <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
+    <EmbeddedResource Include="Scripts\DeployAzureServiceFabricApplication.ps1" />
+    <EmbeddedResource Include="Scripts\SwapAzureCloudServiceDeployment.ps1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,7 +67,7 @@
     <PackageReference Include="OctoDiff" Version="1.1.2" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
