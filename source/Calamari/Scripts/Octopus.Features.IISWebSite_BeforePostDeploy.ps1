@@ -147,9 +147,10 @@ function Execute-WithRetry([ScriptBlock] $command, $noLock) {
 		}
 	}
 }
+
 function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityType, 
 								$applicationPoolUsername, $applicationPoolPassword,
-								$applicationPoolFrameworkVersion) 
+								$applicationPoolFrameworkVersion,  $startPool) 
 {
 
 	$appPoolPath = ("IIS:\AppPools\" + $applicationPoolName)
@@ -166,6 +167,13 @@ function SetUp-ApplicationPool($applicationPoolName, $applicationPoolIdentityTyp
 		}
         # Confirm it's there. Get-Item can pause if the app-pool is suspended, so use Get-WebAppPoolState
         $pool = Get-WebAppPoolState $applicationPoolName
+
+		if ($startPool -eq $false) {
+			if ($pool.Value -eq "Started") {
+				Write-Host "Application pool is started. Attempting to stop..."
+				Stop-WebAppPool $applicationPoolName
+			}
+		}
 	}
 
 	# Set App Pool Identity
@@ -319,6 +327,7 @@ if ($deployAsWebApplication)
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.WebSiteName"]
 	$physicalPath = Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.PhysicalPath"]
 	$virtualPath = $OctopusParameters["Octopus.Action.IISWebSite.WebApplication.VirtualPath"]
+	$startAppPool = if ($OctopusParameters.ContainsKey("Octopus.Action.IISWebSite.StartApplicationPool")) { $OctopusParameters["Octopus.Action.IISWebSite.StartApplicationPool"] } else { $true }
 
 	Write-Host "Making sure a Web Application `"$virtualPath`" is configured as a child of `"$webSiteName`" at `"$physicalPath`"..."
     
@@ -340,7 +349,7 @@ if ($deployAsWebApplication)
 	$fullPathToLastVirtualPathSegment = Get-FullPath -root $sitePath -segments $virtualPathSegments
 	$lastSegment = Get-Item $fullPathToLastVirtualPathSegment -ErrorAction SilentlyContinue
 
-	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion
+	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion -startPool $startAppPool
 
 	if (!$lastSegment) {
 		Write-Host "`"$virtualPath`" does not exist. Creating Web Application pointing to $fullPathToLastVirtualPathSegment ..."
@@ -370,8 +379,11 @@ if ($deployAsWebApplication)
 	}
 
 	Assign-ToApplicationPool -iisPath $fullPathToLastVirtualPathSegment -applicationPoolName $applicationPoolName					
-	Start-ApplicationPool $applicationPoolName
-    
+	
+	if($startAppPool -eq $true) {
+		Start-ApplicationPool $applicationPoolName
+    }
+
     popd
 }
 
@@ -389,7 +401,9 @@ if ($deployAsWebSite)
 	$applicationPoolUsername = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolUsername"]
 	$applicationPoolPassword = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolPassword"]
 	$applicationPoolFrameworkVersion = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"]
-
+	$startAppPool = if ($OctopusParameters.ContainsKey("Octopus.Action.IISWebSite.StartApplicationPool")) { $OctopusParameters["Octopus.Action.IISWebSite.StartApplicationPool"] } else { $true }
+	$startWebSite = if ($OctopusParameters.ContainsKey("Octopus.Action.IISWebSite.StartWebSite")) { $OctopusParameters["Octopus.Action.IISWebSite.StartWebSite"] } else { $true }
+	
 	Write-Host "Making sure a Website `"$webSiteName`" is configured in IIS..."
 
 	#Assess SNI support (IIS 8 or greater)
@@ -595,7 +609,7 @@ if ($deployAsWebSite)
 
 	pushd IIS:\
 	
-	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword 
+	SetUp-ApplicationPool -applicationPoolName $applicationPoolName -applicationPoolIdentityType $applicationPoolIdentityType -applicationPoolFrameworkVersion $applicationPoolFrameworkVersion -applicationPoolUsername $applicationPoolUsername -applicationPoolPassword $applicationPoolPassword -startPool $startAppPool
 
 	$sitePath = ("IIS:\Sites\" + $webSiteName)
 
@@ -610,6 +624,17 @@ if ($deployAsWebSite)
 		} else {
 			Write-Host "Site `"$webSiteName`" already exists"
 		}
+	}
+
+	if($startWebSite -eq $false) {
+		# Stop Website
+		Execute-WithRetry { 
+			$state = Get-WebsiteState $webSiteName
+			if ($state.Value -eq "Started") {
+				Write-Host "Web site is started. Attempting to stop..."
+				Stop-Website $webSiteName
+			}
+		} -noLock $true
 	}
 
 	Assign-ToApplicationPool -iisPath $sitePath -applicationPoolName $applicationPoolName
@@ -766,16 +791,20 @@ if ($deployAsWebSite)
 		throw
 	}
 
-	Start-ApplicationPool $applicationPoolName
+	if($startAppPool -eq $true) {
+		Start-ApplicationPool $applicationPoolName
+	}
 
-	# Start Website
-	Execute-WithRetry { 
-		$state = Get-WebsiteState $webSiteName
-		if ($state.Value -eq "Stopped") {
-			Write-Host "Web site is stopped. Attempting to start..."
-			Start-Website $webSiteName
-		}
-	} -noLock $true
+	if($startWebSite -eq $true) {
+		# Start Website
+		Execute-WithRetry { 
+			$state = Get-WebsiteState $webSiteName
+			if ($state.Value -eq "Stopped") {
+				Write-Host "Web site is stopped. Attempting to start..."
+				Start-Website $webSiteName
+			}
+		} -noLock $true
+	}
 
     popd
 }
