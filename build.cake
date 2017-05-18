@@ -59,7 +59,7 @@ Task("Restore")
     .Does(() => DotNetCoreRestore("source"));
 
 Task("Build")
-    .IsDependentOn("Restore")
+    .IsDependentOn("Clean")
     .Does(() => {
 		 MSBuild("./source/Calamari.sln", new MSBuildSettings()
 			.UseToolVersion(MSBuildToolVersion.VS2017)
