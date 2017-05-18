@@ -19,7 +19,6 @@
     <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">True</GeneratePackageOnBuild>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
     <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
-    <NuspecBasePath>$(MSBuildProjectDir)</NuspecBasePath>
     <NuspecProperties>id=$(PackageId);configuration=$(Configuration);version=$(Version);description=$(Description);authors=$(Authors);licenseUrl=$(PackageLicenseUrl);copyright=$(Copyright);tags=$(PackageTags);projectUrl=$(PackageProjectUrl)</NuspecProperties>
   </PropertyGroup>
 

@@ -3,8 +3,6 @@
 //////////////////////////////////////////////////////////////////////
 #tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0011"
 
-using Path = System.IO.Path;
-
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -17,7 +15,6 @@ var signingCertificatePassword = Argument("signing_certificate_password", "");
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////
-var artifactsDir = "./built-packages/";
 var localPackagesDir = "../LocalPackages";
 var sourceFolder = "./source/";
 GitVersion gitVersionInfo;
@@ -53,7 +50,6 @@ Teardown(context =>
 Task("Clean")
     .Does(() =>
 {
-    CleanDirectory(artifactsDir);
     CleanDirectories("./**/bin");
     CleanDirectories("./**/obj");
 });
@@ -65,10 +61,9 @@ Task("Restore")
 Task("Build")
     .IsDependentOn("Restore")
     .Does(() => {
-		 DotNetCoreBuild("./source", new DotNetCoreBuildSettings
-		{
-			Configuration = configuration
-		});
+		 MSBuild("./source/Calamari.sln", new MSBuildSettings()
+			.UseToolVersion(MSBuildToolVersion.VS2017)
+			.SetConfiguration(configuration));
 	});
 
 Task("Test")
@@ -101,14 +96,13 @@ Task("Publish")
 
     if (shouldPushToMyGet)
     {
-        NuGetPush("artifacts/Calamari." + nugetVersion + ".nupkg", new NuGetPushSettings {
-            Source = "https://octopus.myget.org/F/octopus-dependencies/api/v3/index.json",
-            ApiKey = EnvironmentVariable("MyGetApiKey")
-        });
-        NuGetPush("artifacts/Calamari.Azure." + nugetVersion + ".nupkg", new NuGetPushSettings {
-            Source = "https://octopus.myget.org/F/octopus-dependencies/api/v3/index.json",
-            ApiKey = EnvironmentVariable("MyGetApiKey")
-        });
+		var nupkgs = GetFiles("./source/**/*.nupkg");
+		foreach(var nupkg in nupkgs)
+			NuGetPush(nupkg.FullPath, new NuGetPushSettings {
+				Source = "https://octopus.myget.org/F/octopus-dependencies/api/v3/index.json",
+				ApiKey = EnvironmentVariable("MyGetApiKey")
+			});
+        
     }
 });
 
@@ -118,8 +112,9 @@ Task("CopyToLocalPackages")
     .Does(() =>
 {
     CreateDirectory(localPackagesDir);
-    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.{nugetVersion}.nupkg"), localPackagesDir);
-    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.Azure.{nugetVersion}.nupkg"), localPackagesDir);
+	var nupkgs = GetFiles("./source/**/*.nupkg");
+	foreach(var nupkg in nupkgs)
+		CopyFileToDirectory(nupkg.FullPath, localPackagesDir);
 });
 
 //////////////////////////////////////////////////////////////////////
@@ -127,7 +122,13 @@ Task("CopyToLocalPackages")
 //////////////////////////////////////////////////////////////////////
 Task("Default")
     .IsDependentOn("BuildPackAndZipTestBinaries");
-
+	
+Task("SetTeamCityVersion")
+    .Does(() => {
+        if(BuildSystem.IsRunningOnTeamCity)
+            BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
+    });
+	
 Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("CopyToLocalPackages");
 

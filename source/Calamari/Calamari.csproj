@@ -20,7 +20,6 @@
     <Description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</Description>
     <Product>Calamari</Product>
     <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
-    <NuspecBasePath>$(MSBuildProjectDir)</NuspecBasePath>
     <NuspecProperties>id=$(PackageId);configuration=$(Configuration);version=$(Version);description=$(Description);authors=$(Authors);licenseUrl=$(PackageLicenseUrl);copyright=$(Copyright);tags=$(PackageTags);projectUrl=$(PackageProjectUrl)</NuspecProperties>
   </PropertyGroup>
 
@@ -128,6 +127,8 @@
     <PropertyGroup>
       <NuspecProperties>id=$(PackageId);configuration=$(Configuration);version=$(GitVersion_NuGetVersion);description=$(Description);authors=$(Authors);licenseUrl=$(PackageLicenseUrl);copyright=$(Copyright);tags=$(PackageTags);projectUrl=$(PackageProjectUrl)</NuspecProperties>
     </PropertyGroup>
+    
+    <Message Text="$(NuspecBasePath)" Importance="High" />
   </Target>
 
   <Import Project="../Sign.targets" Condition="'$(Configuration)' == 'Release'" />
