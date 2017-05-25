@@ -48,13 +48,18 @@ namespace Calamari.Commands
             var storeName = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.StoreName);
             var privateKeyExportable = variables.GetFlag(SpecialVariables.Action.Certificate.PrivateKeyExportable, false);
 
+            // Either a store-location (LocalMachine or CurrentUser) or a user can be supplied
+            StoreLocation storeLocation;
+            var locationSpecified = Enum.TryParse(variables.Get(SpecialVariables.Action.Certificate.StoreLocation), out storeLocation);
+
+            ValidateStore(locationSpecified ? (StoreLocation?)storeLocation : null, storeName);
+
             try
             {
-                // Either a store-location (LocalMachine or CurrentUser) or a user can be supplied
-                StoreLocation storeLocation;
-                if (Enum.TryParse(variables.Get(SpecialVariables.Action.Certificate.StoreLocation), out storeLocation))
+                if (locationSpecified)
                 {
-                    Log.Info($"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
+                    Log.Info(
+                        $"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
                     WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName,
                         privateKeyExportable);
 
@@ -63,7 +68,8 @@ namespace Calamari.Commands
                         // Set private-key access
                         var privateKeyAccessRules = GetPrivateKeyAccessRules(variables);
                         if (privateKeyAccessRules.Any())
-                            WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName, privateKeyAccessRules);
+                            WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName,
+                                privateKeyAccessRules);
                     }
                 }
                 else // Import into a specific user's store
@@ -72,11 +78,14 @@ namespace Calamari.Commands
 
                     if (string.IsNullOrWhiteSpace(storeUser))
                     {
-                        throw new CommandException($"Either '{SpecialVariables.Action.Certificate.StoreLocation}' or '{SpecialVariables.Action.Certificate.StoreUser}' must be supplied");
+                        throw new CommandException(
+                            $"Either '{SpecialVariables.Action.Certificate.StoreLocation}' or '{SpecialVariables.Action.Certificate.StoreUser}' must be supplied");
                     }
 
-                    Log.Info($"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
-                    WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName, privateKeyExportable);
+                    Log.Info(
+                        $"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
+                    WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName,
+                        privateKeyExportable);
                 }
 
             }
@@ -116,6 +125,18 @@ namespace Calamari.Commands
             }
 
             return value;
+        }
+
+        static void ValidateStore(StoreLocation? storeLocation, string storeName)
+        {
+            // Windows wants to launch an interactive confirmation dialog when importing into the Root store for a user.
+            // https://github.com/OctopusDeploy/Issues/issues/3347 
+            if ((!storeLocation.HasValue || storeLocation.Value != StoreLocation.LocalMachine)
+                && storeName == WindowsX509CertificateStore.RootAuthorityStoreName)
+            {
+                throw new CommandException($"When importing certificate into {WindowsX509CertificateStore.RootAuthorityStoreName} store, location must be '{StoreLocation.LocalMachine}'. " +
+                    $"Windows security restrictions prevent importing into the {WindowsX509CertificateStore.RootAuthorityStoreName} store for a user.");
+            }
         }
     }
 }

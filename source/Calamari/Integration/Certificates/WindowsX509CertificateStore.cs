@@ -19,7 +19,7 @@ namespace Calamari.Integration.Certificates
     public class WindowsX509CertificateStore
     {
         const string IntermediateAuthorityStoreName = "CA";
-        const string RootAuthorityStoreName = "Root";
+        public const string RootAuthorityStoreName = "Root";
 
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
             string storeName, bool privateKeyExportable)
