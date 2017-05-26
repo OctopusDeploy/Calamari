@@ -35,6 +35,7 @@ namespace Calamari.Integration.FileSystem
         void PurgeDirectory(string targetDirectory, FailureOptions options);
         void PurgeDirectory(string targetDirectory, FailureOptions options, CancellationToken cancel);
         void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options);
+        void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs);
         void EnsureDirectoryExists(string directoryPath);
         void EnsureDiskHasEnoughFreeSpace(string directoryPath);
         void EnsureDiskHasEnoughFreeSpace(string directoryPath, long requiredSpaceInBytes);

@@ -94,6 +94,24 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             return File.Exists(testFile);
         }
 
+        [Test]
+        [TestCase("SimilarFolder", "WhoCaresFile", "Similar*", Description = "Different file in Similar folder should be kept", ExpectedResult = true)]
+        [TestCase("SimilarFolder", "SimilarFile", "Similar*", Description = "Similar file in Similar folder should still be kept", ExpectedResult = true)]
+        [TestCase("WhoCaresFolder", "WhoCaresFile", "Similar*", Description = "Similar file in purgable folder should still be removed", ExpectedResult = false)]
+        [TestCase("WhoCaresFolder", "SimilarFile", "Similar*", Description = "Different file in purgable folder should be removed", ExpectedResult = false)]
+        [TestCase("WhoCaresFolder", "WhoCaresFile", "**/Similar*", Description = "Different file in different folder should be removed", ExpectedResult = false)]
+        [TestCase("WhoCaresFolder", "SimilarFile", "**/Similar*", Description = "Similar file in different folder should be kept", ExpectedResult = true)]
+        public bool PurgeDirectoryWithFolderUsingGlobs(string folderName, string fileName, string glob)
+        {
+            var testFile = CreateFile(folderName, fileName);
+
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
+            fileSystem.PurgeDirectory(PurgeTestDirectory, FailureOptions.IgnoreFailure, glob);
+
+            return File.Exists(testFile);
+        }
+
         string CreateFile(params string[] relativePath)
         {
             var filename = Path.Combine(PurgeTestDirectory, Path.Combine(relativePath));

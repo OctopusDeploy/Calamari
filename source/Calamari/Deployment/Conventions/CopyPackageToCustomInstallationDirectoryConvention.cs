@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 
@@ -45,7 +46,7 @@ namespace Calamari.Deployment.Conventions
                     $"The custom install directory '{customInstallationDirectory}' is a relative path, please specify the path as an absolute path or a UNC path.");
             }
 
-            if (customInstallationDirectory.IsChildDirectoryOf(sourceDirectory))
+            if (customInstallationDirectory.IsChildOf(sourceDirectory))
             {
                 throw new CommandException(
                     $"The custom install directory '{customInstallationDirectory}' is a child directory of the base installation directory '{sourceDirectory}', please specify a different destination.");
@@ -58,7 +59,12 @@ namespace Calamari.Deployment.Conventions
                     SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
                 {
                     Log.Info("Purging the directory '{0}'", customInstallationDirectory);
-                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure);
+                    var purgeExlusions = deployment.Variables.GetPaths(SpecialVariables.Package.CustomInstallationDirectoryPurgeExclusions).ToArray();
+                    if (purgeExlusions.Any())
+                    {
+                        Log.Info("Leaving files and directories that match any of: '{0}'", string.Join(", ", purgeExlusions));
+                    }
+                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, purgeExlusions);
                 }
 
                 // Copy files from staging area to custom directory

@@ -183,13 +183,18 @@ namespace Calamari.Integration.FileSystem
 
         public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPattern)
         {
-            var results = globPattern.Length == 0
-                ? Glob.Expand(Path.Combine(parentDirectoryPath, "*")).Select(fi => fi.FullName)
-                : globPattern
-                    .SelectMany(pattern => Glob.Expand(Path.Combine(parentDirectoryPath, pattern))
-                    .Select(fi => fi.FullName));
+            return EnumerateWithGlob(parentDirectoryPath, globPattern).Select(fi => fi.FullName).Where(FileExists);
+        }
 
-            return results.Distinct().Where(FileExists);
+        private IEnumerable<FileSystemInfo> EnumerateWithGlob(string parentDirectoryPath, params string[] globPattern)
+        {
+            var results = globPattern.Length == 0
+                ? Glob.Expand(Path.Combine(parentDirectoryPath, "*"))
+                : globPattern.SelectMany(pattern => Glob.Expand(Path.Combine(parentDirectoryPath, pattern)));
+
+            return results
+                .GroupBy(fi => fi.FullName) // use groupby + first to do .Distinct using fullname
+                .Select(g => g.First());
         }
 
         public virtual IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
@@ -376,6 +381,21 @@ namespace Calamari.Integration.FileSystem
         public void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options)
         {
             PurgeDirectory(targetDirectory, exclude, options, CancellationToken.None);
+        }
+
+        public void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs)
+        {
+            Predicate<IFileSystemInfo> check = null;
+            if (globs.Any())
+            {
+                var keep = EnumerateWithGlob(targetDirectory, globs);
+                check = fsi =>
+                {
+                    return keep.Any(k => k is DirectoryInfo && fsi.FullName.IsChildOf(k.FullName) ||
+                                         k.FullName == fsi.FullName);
+                };
+            }
+            PurgeDirectory(targetDirectory, check, options, CancellationToken.None);
         }
 
         void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options, CancellationToken cancel, bool includeTarget = false)
