@@ -4,7 +4,7 @@ namespace Calamari.Integration.FileSystem
 {
     public static class PathExtensions
     {
-        public static bool IsChildDirectoryOf(this string child, string parent)
+        public static bool IsChildOf(this string child, string parent)
         {
             var childDir = GetSanitizedDirInfo(child);
             var parentDir = GetSanitizedDirInfo(parent);

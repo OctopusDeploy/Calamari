@@ -4,6 +4,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using NSubstitute;
+using NSubstitute.Core.Arguments;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Conventions
@@ -51,7 +52,21 @@ namespace Calamari.Tests.Fixtures.Conventions
             CreateConvention().Install(deployment);
 
             // Assert directory was purged
-            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>());
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), new string[0]);
+        }
+
+        [Test]
+        public void ShouldPassGlobsToPurgeWhenSet()
+        {
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryPurgeExclusions, "firstglob\nsecondglob");
+
+
+            CreateConvention().Install(deployment);
+
+            // Assert we handed in the exclusion globs
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), Arg.Is<string[]>(a => a[0] == "firstglob" && a[1] == "secondglob"));
         }
 
         [Test]
