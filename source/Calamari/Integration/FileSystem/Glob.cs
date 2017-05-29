@@ -206,7 +206,7 @@ namespace Calamari.Integration.FileSystem
 
                 try
                 {
-                    fsi = dirOnly ? (FileSystemInfo)new DirectoryInfo(path) : new FileInfo(path);
+                    fsi = dirOnly || Directory.Exists(path) ? (FileSystemInfo)new DirectoryInfo(path) : new FileInfo(path);
                     exists = fsi.Exists;
                 }
                 catch (Exception ex)

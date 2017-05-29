@@ -101,6 +101,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase("WhoCaresFolder", "SimilarFile", "Similar*", Description = "Different file in purgable folder should be removed", ExpectedResult = false)]
         [TestCase("WhoCaresFolder", "WhoCaresFile", "**/Similar*", Description = "Different file in different folder should be removed", ExpectedResult = false)]
         [TestCase("WhoCaresFolder", "SimilarFile", "**/Similar*", Description = "Similar file in different folder should be kept", ExpectedResult = true)]
+        [TestCase("ExactFolder", "WhoCaresFile", "ExactFolder", Description = "Different file in exact folder should be kept", ExpectedResult = true)]
         public bool PurgeDirectoryWithFolderUsingGlobs(string folderName, string fileName, string glob)
         {
             var testFile = CreateFile(folderName, fileName);
