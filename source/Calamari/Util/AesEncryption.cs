@@ -12,6 +12,8 @@ namespace Calamari.Util
         static readonly byte[] PasswordPaddingSalt = Encoding.UTF8.GetBytes("Octopuss");
         static readonly byte[] IvPrefix = Encoding.UTF8.GetBytes("IV__");
 
+        static readonly Random RandomGenerator = new Random();
+
         readonly byte[] key;
         public AesEncryption(string password)
         {
@@ -93,6 +95,15 @@ namespace Calamari.Util
         {
             var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations);
             return passwordGenerator.GetBytes(16);
+        }
+
+        public static string RandomString(int length)
+        {
+            const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+            return new string(
+                Enumerable.Repeat(chars, length)
+                  .Select(s => s[RandomGenerator.Next(s.Length)])
+                  .ToArray());
         }
     }
 }
