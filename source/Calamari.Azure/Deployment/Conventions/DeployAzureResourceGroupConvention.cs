@@ -88,7 +88,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 new string(deploymentName.Select(x => (char.IsLetterOrDigit(x) || x == '-') ? x : '-').ToArray());
             deploymentName = Regex.Replace(deploymentName, "-+", "-");
             deploymentName = deploymentName.Trim('-', '/');
-            deploymentName = deploymentName + "-" + AesEncryption.RandomString(6);
+            deploymentName = deploymentName + "-" + Guid.NewGuid().ToString();
             return deploymentName;
         }
 
