@@ -100,6 +100,7 @@ Task("Pack")
 {
     DoPackage("Calamari", "net40", nugetVersion);
     DoPackage("Calamari.Azure", "net451", nugetVersion);   
+    Zip("source/Calamari.Tests/bin/Release/net451/", Path.Combine(artifactsDir, "Binaries.zip"));
 });
 
 Task("CopyToLocalPackages")
