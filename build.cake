@@ -34,10 +34,6 @@ Setup(context =>
         OutputType = GitVersionOutput.Json
     });
 
-    if(BuildSystem.IsRunningOnTeamCity) {
-		BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
-	}
-	
     nugetVersion = gitVersionInfo.NuGetVersion;
 	
     Information("Building Calamari v{0}", nugetVersion);
@@ -52,7 +48,14 @@ Teardown(context =>
 //  PRIVATE TASKS
 //////////////////////////////////////////////////////////////////////
 
+Task("SetTeamCityVersion")
+    .Does(() => {
+        if(BuildSystem.IsRunningOnTeamCity)
+            BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
+    });
+
 Task("Clean")
+	.IsDependentOn("SetTeamCityVersion")
     .Does(() =>
 {
     CleanDirectories(publishDir);
@@ -141,6 +144,7 @@ private void DoPackage(string project, string framework, string version)
 // TASKS
 //////////////////////////////////////////////////////////////////////
 Task("Default")
+    .IsDependentOn("SetTeamCityVersion");
     .IsDependentOn("CopyToLocalPackages");
 
 	
