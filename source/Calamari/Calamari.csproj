@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net451;netcoreapp1.0</TargetFrameworks>
+    <TargetFrameworks>net40;netcoreapp1.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>Calamari</AssemblyName>
     <OutputType>Exe</OutputType>
@@ -19,8 +19,6 @@
     <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">True</GeneratePackageOnBuild>
     <Description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</Description>
     <Product>Calamari</Product>
-    <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
-    <NuspecProperties>id=$(PackageId);configuration=$(Configuration);version=$(Version);description=$(Description);authors=$(Authors);licenseUrl=$(PackageLicenseUrl);copyright=$(Copyright);tags=$(PackageTags);projectUrl=$(PackageProjectUrl)</NuspecProperties>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +30,7 @@
     <EmbeddedResource Include="Scripts\**" />
   </ItemGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net451' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <DefineConstants>$(DefineConstants);NET40;HAS_SERIALIZABLE_EXCEPTIONS;CAPI_AES;HAS_DEFAULT_ENCODING;USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;CAN_RUN_PROCESS_AS;LONG_FILE_PATHS</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
@@ -42,10 +40,6 @@
   </PropertyGroup>
  
   <ItemGroup>
-    <PackageReference Include="GitVersionTask" Version="[4.0.0-beta0011,)">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="ScriptCS" Version="0.16.1" />
@@ -54,11 +48,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <PackageReference Include="BouncyCastle" Version="1.8.1-octopus" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
-    <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
-    <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
     <PackageReference Include="Microsoft.Data.Edm" Version="5.6.4" />
     <PackageReference Include="Microsoft.Data.OData" Version="5.6.4" />
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.6.4" />
@@ -124,9 +116,6 @@
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
-    <PropertyGroup>
-      <NuspecProperties>id=$(PackageId);configuration=$(Configuration);version=$(GitVersion_NuGetVersion);description=$(Description);authors=$(Authors);licenseUrl=$(PackageLicenseUrl);copyright=$(Copyright);tags=$(PackageTags);projectUrl=$(PackageProjectUrl)</NuspecProperties>
-    </PropertyGroup>
     
     <Message Text="$(NuspecBasePath)" Importance="High" />
   </Target>

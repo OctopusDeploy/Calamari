@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 #tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0011"
 
+using Path = System.IO.Path;
+
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -17,6 +19,9 @@ var signingCertificatePassword = Argument("signing_certificate_password", "");
 ///////////////////////////////////////////////////////////////////////////////
 var localPackagesDir = "../LocalPackages";
 var sourceFolder = "./source/";
+var artifactsDir = "./artifacts";
+var publishDir = "./publish";
+
 GitVersion gitVersionInfo;
 string nugetVersion;
 
@@ -50,6 +55,8 @@ Teardown(context =>
 Task("Clean")
     .Does(() =>
 {
+    CleanDirectories(publishDir);
+    CleanDirectories(artifactsDir);
     CleanDirectories("./**/bin");
     CleanDirectories("./**/obj");
 });
@@ -59,11 +66,14 @@ Task("Restore")
     .Does(() => DotNetCoreRestore("source"));
 
 Task("Build")
-    .IsDependentOn("Clean")
-    .Does(() => {
-		 MSBuild("./source/Calamari.sln", new MSBuildSettings()
-			.UseToolVersion(MSBuildToolVersion.VS2017)
-			.SetConfiguration(configuration));
+    .IsDependentOn("Restore")
+    .Does(() => 
+	{
+		DotNetCoreBuild("./source/Calamari.sln", new DotNetCoreBuildSettings
+		{
+			Configuration = configuration,
+			ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+		});
 	});
 
 Task("Test")
@@ -84,54 +94,55 @@ Task("Test")
 			});
 	});
 	
-Task("Publish")
+Task("Pack")
 	.IsDependentOn("Build")
-    .WithCriteria(BuildSystem.IsRunningOnTeamCity)
     .Does(() =>
 {
-    var isPullRequest = !String.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQUEST_NUMBER"));
-    var isMasterBranch = EnvironmentVariable("APPVEYOR_REPO_BRANCH") == "master" && !isPullRequest;
-    var shouldPushToMyGet = !BuildSystem.IsLocalBuild;
-    var shouldPushToNuGet = !BuildSystem.IsLocalBuild && isMasterBranch;
-
-    if (shouldPushToMyGet)
-    {
-		var nupkgs = GetFiles("./source/**/*.nupkg");
-		foreach(var nupkg in nupkgs)
-			NuGetPush(nupkg.FullPath, new NuGetPushSettings {
-				Source = "https://octopus.myget.org/F/octopus-dependencies/api/v3/index.json",
-				ApiKey = EnvironmentVariable("MyGetApiKey")
-			});
-        
-    }
+    DoPackage("Calamari", "net40", nugetVersion);
+    DoPackage("Calamari.Azure", "net451", nugetVersion);   
 });
 
 Task("CopyToLocalPackages")
-	.IsDependentOn("Publish")
     .WithCriteria(BuildSystem.IsLocalBuild)
+    .IsDependentOn("Pack")
     .Does(() =>
+
 {
     CreateDirectory(localPackagesDir);
-	var nupkgs = GetFiles("./source/**/*.nupkg");
-	foreach(var nupkg in nupkgs)
-		CopyFileToDirectory(nupkg.FullPath, localPackagesDir);
+    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.{nugetVersion}.nupkg"), localPackagesDir);
+    CopyFileToDirectory(Path.Combine(artifactsDir, $"Calamari.Azure.{nugetVersion}.nupkg"), localPackagesDir);
 });
+
+private void DoPackage(string project, string framework, string version)
+{ 
+	var publishedTo = Path.Combine(publishDir, project, framework);
+	var projectDir = Path.Combine("./source", project);
+
+    DotNetCorePublish(projectDir, new DotNetCorePublishSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = publishedTo,
+        Framework = framework,
+    });
+
+	var nuspec = $"{publishedTo}/{project}.nuspec";
+	CopyFile($"{projectDir}/{project}.nuspec", nuspec);
+
+    NuGetPack(nuspec, new NuGetPackSettings
+    {
+        OutputDirectory = artifactsDir,
+		BasePath = publishedTo,
+		Version = nugetVersion
+    });
+}
 
 //////////////////////////////////////////////////////////////////////
 // TASKS
 //////////////////////////////////////////////////////////////////////
 Task("Default")
-    .IsDependentOn("BuildPackAndZipTestBinaries");
-	
-Task("SetTeamCityVersion")
-    .Does(() => {
-        if(BuildSystem.IsRunningOnTeamCity)
-            BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
-    });
-	
-Task("BuildPackAndZipTestBinaries")
     .IsDependentOn("CopyToLocalPackages");
 
+	
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
 //////////////////////////////////////////////////////////////////////

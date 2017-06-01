@@ -16,10 +16,7 @@
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">True</GeneratePackageOnBuild>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
-    <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
-    <NuspecProperties>id=$(PackageId);configuration=$(Configuration);version=$(Version);description=$(Description);authors=$(Authors);licenseUrl=$(PackageLicenseUrl);copyright=$(Copyright);tags=$(PackageTags);projectUrl=$(PackageProjectUrl)</NuspecProperties>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,9 +32,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitVersionTask" Version="[4.0.0-beta0011,)">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Hyak.Common" Version="1.0.3" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Azure.Common" Version="2.1.0" />
@@ -71,7 +65,7 @@
     <PackageReference Include="OctoDiff" Version="1.1.2" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
+  <ItemGroup>
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
@@ -104,10 +98,6 @@
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
-
-    <PropertyGroup>
-      <NuspecProperties>id=$(PackageId);configuration=$(Configuration);version=$(GitVersion_NuGetVersion);description=$(Description);authors=$(Authors);licenseUrl=$(PackageLicenseUrl);copyright=$(Copyright);tags=$(PackageTags);projectUrl=$(PackageProjectUrl)</NuspecProperties>
-    </PropertyGroup>
   </Target>
   
   <Import Project="../Sign.targets" Condition="'$(Configuration)' == 'Release'" />

@@ -1,5 +1,5 @@
 {
   "sdk": {
-    "version": "1.0.1" // VS2017 plus download latest from https://www.microsoft.com/net/download/core
+    "version": "1.0.4" // VS2017 plus dotnet-1.1.1-sdk (1.1.1 with SDK 1.0.1)
   }
 }
