@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using Calamari.Util;
 using NuGet;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 using SharpCompress.Readers.Zip;
@@ -31,14 +33,14 @@ namespace Calamari.Integration.Packages.NuGet
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
-            var filesExtracted = 0; 
+            var filesExtracted = 0;
 
             using (var packageStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
-            using (var reader = ZipReader.Open(packageStream))
+            using (var archive = ZipArchive.Open(packageStream))
             {
-                while (reader.MoveToNextEntry())
+                foreach (var entry in archive.Entries)
                 {
-                    var unescapedKey = UnescapePath(reader.Entry.Key);
+                    var unescapedKey = UnescapePath(entry.Key);
 
                     if (IsExcludedPath(unescapedKey))
                         continue;
@@ -50,13 +52,13 @@ namespace Calamari.Integration.Packages.NuGet
                         Directory.CreateDirectory(targetDirectory);
                     }
 
-                    if (reader.Entry.IsDirectory || !IsPackageFile(reader.Entry.Key))
+                    if (entry.IsDirectory || !IsPackageFile(entry.Key))
                         continue;
 
                     var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
-                    reader.WriteEntryToFile(targetFile, new ExtractionOptions {Overwrite = true});
+                    entry.WriteToFile(targetFile, new ExtractionOptions { Overwrite = true });
 
-                    SetFileLastModifiedTime(reader.Entry, targetFile);
+                    SetFileLastModifiedTime(entry, targetFile);
 
                     filesExtracted++;
 
