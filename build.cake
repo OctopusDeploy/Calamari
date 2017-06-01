@@ -144,7 +144,7 @@ private void DoPackage(string project, string framework, string version)
 // TASKS
 //////////////////////////////////////////////////////////////////////
 Task("Default")
-    .IsDependentOn("SetTeamCityVersion");
+    .IsDependentOn("SetTeamCityVersion")
     .IsDependentOn("CopyToLocalPackages");
 
 	
