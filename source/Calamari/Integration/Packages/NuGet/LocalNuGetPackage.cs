@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Calamari.Util;
+using SharpCompress.Archives.Zip;
 using SharpCompress.Readers.Zip;
 #if USE_NUGET_V3_LIBS
 using NuGet.Packaging;
@@ -39,14 +41,14 @@ namespace Calamari.Integration.Packages.NuGet
         static ManifestMetadata ReadMetadata(string filePath)
         {
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            using (var reader = ZipReader.Open(fileStream))
+            using (var archive = ZipArchive.Open(fileStream))
             {
-                while (reader.MoveToNextEntry())
+                foreach (var entry in archive.Entries)
                 {
-                    if (reader.Entry.IsDirectory || !IsManifest(reader.Entry.Key))
+                    if (entry.IsDirectory || !IsManifest(entry.Key))
                         continue;
 
-                    using (var manifestStream = reader.OpenEntryStream())
+                    using (var manifestStream = entry.OpenEntryStream())
                     {
                         var manifest = Manifest.ReadFrom(manifestStream, true);
                         return manifest.Metadata;
