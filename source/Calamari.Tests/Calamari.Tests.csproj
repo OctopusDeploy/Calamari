@@ -15,7 +15,61 @@
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloVariableSubstitution.fsx" />
     
-    <None Update="Fixtures\ConfigurationVariables\Samples\**;Fixtures\ConfigurationTransforms\Samples\**;Fixtures\ConfigurationTransforms\Approved\**.approved.*;Fixtures\Bash\Scripts\**;Fixtures\Conventions\ConfigTransforms\**;Fixtures\Deployment\Packages\Acme.Service\**;Fixtures\Deployment\Packages\Acme.Vhd\**;Fixtures\Deployment\Packages\Acme.Web\**;Fixtures\Deployment\Packages\Acme.Web.Tests\**;Fixtures\Deployment\Packages\Acme.Package\**;Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\**;Fixtures\FSharp\Scripts\**;Fixtures\Integration\Packages\Samples\**;Fixtures\JsonVariables\Samples\**;Fixtures\PowerShell\Packages\**;Fixtures\PowerShell\Scripts\**;Fixtures\ScriptCS\Scripts\**;Fixtures\Substitutions\Samples\**;Helpers\Certificates\SampleCertificateFiles\**">
+    <None Include="Fixtures\ConfigurationVariables\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ConfigurationTransforms\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ConfigurationTransforms\Approved\*.approved.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Bash\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Service\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Vhd\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web.Tests\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Package\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\FSharp\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Integration\Packages\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\JsonVariables\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\PowerShell\Packages\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\PowerShell\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ScriptCS\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Substitutions\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Helpers\Certificates\SampleCertificateFiles\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
