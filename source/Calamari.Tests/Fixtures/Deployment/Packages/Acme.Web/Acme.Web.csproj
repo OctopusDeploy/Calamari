@@ -16,9 +16,6 @@
     <None Update="**\*.*">
       <Pack>true</Pack>
     </None>
-    <None Update="project.json;project.lock.json;*.nuspec">
-      <Pack>false</Pack>
-    </None>
   </ItemGroup>
 
 </Project>
