@@ -108,7 +108,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta("", "Hash", "Delta", "New");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.nupkg");
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta("Basis", "Hash", "", "New");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0_to_1.0.1.octodelta");
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
         }
 
         [Test]
@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta("Basis", "Hash", "Delta", "");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No new file name was specified. Please pass --newFileName MyPackage.1.0.1.nupkg");
+            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
         }
 
         [Test]

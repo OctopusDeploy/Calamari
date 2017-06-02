@@ -1,9 +1,11 @@
 using System.IO;
+using System.Linq;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Util;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Calamari.Integration.Processes
 {
@@ -23,14 +25,19 @@ namespace Calamari.Integration.Processes
             return result;
         }
 
-        public static string FindOctoDiffExecutable()
+        public static string FindOctoDiffExecutable([CallerFilePath] string callerPath = null)
         {
             var basePath = Path.GetDirectoryName(typeof(ApplyDeltaCommand).GetTypeInfo().Assembly.Location);
             var executable = Path.GetFullPath(Path.Combine(basePath, "Octodiff.exe"));
             if (File.Exists(executable))
                 return executable;
 
-            throw new CommandException(string.Format("Unable to find Octodiff.exe at {0}.", executable));
+            var alternatePath = Path.Combine(Path.GetDirectoryName(callerPath), @"..\bin"); // Resharper uses a weird path
+            executable = Directory.EnumerateFiles(alternatePath, "Octodiff.exe", SearchOption.AllDirectories).FirstOrDefault();
+            if (executable != null)
+                return executable;
+
+            throw new CommandException($"Could not find Octodiff.exe at {executable} or {alternatePath}.");
         }
     }
 }
