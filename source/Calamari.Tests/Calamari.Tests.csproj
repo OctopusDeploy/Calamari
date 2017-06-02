@@ -8,6 +8,7 @@
     <PackageId>Calamari.Tests</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <OutputType>Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
     <RuntimeIdentifiers>win7-x64;win7-x86;osx.10.10-x64;ubuntu.14.04-x64;ubuntu.16.04-x64;rhel.7.2-x64;debian.8-x64;fedora.23-x64;opensuse.13.2-x64;linuxmint.17-x64;centos.7-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
@@ -105,7 +106,7 @@
     <PackageReference Include="Polly" Version="5.1.0" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' ">
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="Octopus.Web.XmlTransform" Version="1.0.0-ci0018" />
@@ -113,7 +114,7 @@
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />

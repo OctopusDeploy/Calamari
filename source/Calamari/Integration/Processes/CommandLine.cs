@@ -11,24 +11,12 @@ namespace Calamari.Integration.Processes
         readonly Func<string[], int> func;
         string action;
         readonly List<string> arguments = new List<string>();
-#if NET40
-#else
-        bool dotnet;
-#endif
         bool rawArgList;
         bool doubleDash;
+        bool useDotnet;
 
-        public static CommandLine Execute(string executable)
-        {
-            return new CommandLine(executable);
-        }
 
-        public static CommandLine Execute(Func<string[], int> func)
-        {
-            return new CommandLine(func);
-        }
-
-        private CommandLine(Func<string[], int> func)
+        public CommandLine(Func<string[], int> func)
         {
             this.func = func;
             rawArgList = true;
@@ -54,14 +42,7 @@ namespace Calamari.Integration.Processes
             return this;
         }
 
-        public CommandLine DotNet()
-        {
-#if NET40
-#else
-            dotnet = true;
-#endif
-            return this;
-        }
+
 
         public CommandLine DoubleDash()
         {
@@ -72,6 +53,12 @@ namespace Calamari.Integration.Processes
         public CommandLine Flag(string flagName)
         {
             arguments.Add(MakeFlag(flagName));
+            return this;
+        }
+
+        public CommandLine UseDotnet()
+        {
+            useDotnet = true;
             return this;
         }
 
@@ -173,23 +160,19 @@ namespace Calamari.Integration.Processes
         public CommandLineInvocation Build()
         {
             var argLine = new List<string>();
-#if NET40
-#else
-            if(dotnet && !CrossPlatform.IsWindows())
-            {
-                argLine.Add(executable);
-                if (action != null)
-                    argLine.Add(action);
-                argLine.AddRange(arguments);
+            var actualExe = executable;
 
-                return new CommandLineInvocation("dotnet", string.Join(" ", argLine));
+            if (useDotnet)
+            {
+                argLine.Add(MakePositionalArg(executable));
+                actualExe = "dotnet";
             }
-#endif
+
             if (action != null)
                 argLine.Add(action);
             argLine.AddRange(arguments);
 
-            return new CommandLineInvocation(executable, string.Join(" ", argLine));
+            return new CommandLineInvocation(actualExe, string.Join(" ", argLine));
         }
 
         public LibraryCallInvocation BuildLibraryCall()

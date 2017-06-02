@@ -11,7 +11,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     public class PackageExtractorFixture : CalamariFixture
     {
         private const string PackageId = "Acme.Core";
-        private const string PackageVersion = "1.0.0.0-bugfix";
+        private const string PackageVersion = "1.0.0-bugfix";
 
 
         [Test]

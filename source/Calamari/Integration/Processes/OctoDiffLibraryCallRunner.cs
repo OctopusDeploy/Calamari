@@ -6,7 +6,7 @@ namespace Calamari.Integration.Processes
 
         public OctoDiffLibraryCallRunner()
         {
-            OctoDiff = CommandLine.Execute(Octodiff.Program.Main);
+            OctoDiff = new CommandLine(Octodiff.Program.Main);
         }
 
         public CommandResult Execute()

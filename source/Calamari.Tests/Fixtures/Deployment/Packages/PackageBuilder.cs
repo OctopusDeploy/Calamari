@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
 #if !NET40
-            var restoreResult = runner.Execute(CommandLine.Execute(nugetCommandLine)
+            var restoreResult = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("restore")
                 .Argument(target)
                 .Build());
@@ -44,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
 #endif
 
-            var result = runner.Execute(CommandLine.Execute(nugetCommandLine)
+            var result = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("pack")
                 .Argument(target)
 #if NET40
