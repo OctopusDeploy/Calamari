@@ -13,12 +13,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="**\*.*">
-      <Pack>true</Pack>
-    </None>
-    <None Update="*.csproj;*.nuspec">
-      <Pack>false</Pack>
-    </None>
+    <None Include="**\*.*" Pack="true" PackagePath="/" />
+    <None Remove="*.csproj;*.nuspec" Pack="false" />
   </ItemGroup>
 
 </Project>

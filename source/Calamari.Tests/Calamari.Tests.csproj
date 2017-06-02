@@ -74,6 +74,11 @@
     <None Include="Helpers\Certificates\SampleCertificateFiles\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+
+
+    <None Remove="Fixtures\Deployment\Packages\**\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\**\obj\**" />
+
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
