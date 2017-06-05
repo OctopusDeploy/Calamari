@@ -66,7 +66,10 @@ Task("Clean")
 
 Task("Restore")
 	.IsDependentOn("Clean")
-    .Does(() => DotNetCoreRestore("source"));
+    .Does(() => DotNetCoreRestore("source", new DotNetCoreRestoreSettings
+    {
+	    ArgumentCustomization = args => args.Append($"--verbosity normal")
+    }));
 
 Task("Build")
     .IsDependentOn("Restore")
@@ -75,7 +78,7 @@ Task("Build")
 		DotNetCoreBuild("./source/Calamari.sln", new DotNetCoreBuildSettings
 		{
 			Configuration = configuration,
-			ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+			ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
 		});
 	});
 
@@ -92,7 +95,8 @@ Task("Test")
 					if(!string.IsNullOrEmpty(testFilter)) {
 						args = args.Append("--where").AppendQuoted(testFilter);
 					}
-					return args.Append("--logger:trx");
+					return args.Append("--logger:trx")
+                        .Append($"--verbosity normal");
 				}
 			});
 	});
@@ -127,6 +131,7 @@ private void DoPackage(string project, string framework, string version)
         Configuration = configuration,
         OutputDirectory = publishedTo,
         Framework = framework,
+		ArgumentCustomization = args => args.Append($"--verbosity normal")
     });
 
 	var nuspec = $"{publishedTo}/{project}.nuspec";
@@ -136,7 +141,8 @@ private void DoPackage(string project, string framework, string version)
     {
         OutputDirectory = artifactsDir,
 		BasePath = publishedTo,
-		Version = nugetVersion
+		Version = nugetVersion,
+		Verbosity = NuGetVerbosity.Normal
     });
 }
 
