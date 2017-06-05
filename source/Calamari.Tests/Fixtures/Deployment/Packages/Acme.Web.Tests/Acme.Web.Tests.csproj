@@ -3,23 +3,14 @@
   <PropertyGroup>
     <Description>Test project for Calamari.</Description>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <VersionPrefix>1.0.0.0</VersionPrefix>
     <Authors>Octopus Deploy</Authors>
     <TargetFramework>netstandard1.0</TargetFramework>
     <AssemblyName>Acme.Web.Tests</AssemblyName>
     <PackageId>Acme.Web.Tests</PackageId>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
+    <NuspecFile>Acme.Web.Tests.nuspec</NuspecFile>
     <NuspecProperties>Version=$(Version)</NuspecProperties>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Update="**\*.*">
-      <Pack>true</Pack>
-    </None>
-    <None Update="*.csproj;*.nuspec">
-      <Pack>false</Pack>
-    </None>
-  </ItemGroup>
 
 </Project>
