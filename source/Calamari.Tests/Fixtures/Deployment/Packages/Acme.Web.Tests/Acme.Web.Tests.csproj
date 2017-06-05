@@ -10,6 +10,7 @@
     <PackageId>Acme.Web.Tests</PackageId>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
+    <NuspecProperties>Version=$(Version)</NuspecProperties>
   </PropertyGroup>
 
   <ItemGroup>

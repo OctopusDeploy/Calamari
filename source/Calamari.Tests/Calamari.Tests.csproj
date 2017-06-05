@@ -84,11 +84,20 @@
     <None Include="Helpers\Certificates\SampleCertificateFiles\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
+    <EmbeddedResource Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
 
 
-    <None Remove="Fixtures\Deployment\Packages\**\bin\**" />
-    <None Remove="Fixtures\Deployment\Packages\**\obj\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Service\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Service\obj\**" />
 
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\obj\**" />
+
+    <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\obj\**" />
   </ItemGroup>
 
   <ItemGroup>
