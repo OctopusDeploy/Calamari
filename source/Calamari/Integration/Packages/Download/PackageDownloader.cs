@@ -86,13 +86,13 @@ namespace Calamari.Integration.Packages.Download
                 var idMatches = string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase);
                 var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
 #if USE_NUGET_V2_LIBS
-                var semverMatches = SemanticVersion.TryParse(package.Metadata.Version, out SemanticVersion packageVersion) &&
-                        VersionComparer.Default.Equals(new Calamari.NuGet.Versioning.NuGetVersion(version), packageVersion);
+                var nugetVerMatches = NuGetVersion.TryParse(package.Metadata.Version, out NuGetVersion packageVersion) &&
+                        VersionComparer.Default.Equals(version, packageVersion);
 #else
-                var semverMatches = package.Metadata.Version.Equals(version);
+                var nugetVerMatches = package.Metadata.Version.Equals(version);
 #endif
 
-                if (idMatches && (semverMatches || versionExactMatch))
+                if (idMatches && (nugetVerMatches || versionExactMatch))
                 {
                     downloaded = package;
                     downloadedTo = file;
