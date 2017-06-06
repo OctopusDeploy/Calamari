@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -8,6 +9,8 @@ using Calamari.Util;
 #if USE_NUGET_V2_LIBS
 using NuGet;
 using Calamari.NuGet.Versioning;
+using VersionComparer = NuGet.Versioning.VersionComparer;
+using SemanticVersion = NuGet.Versioning.SemanticVersion;
 #else
 using NuGet.Packaging;
 using NuGet.Versioning;
@@ -79,11 +82,22 @@ namespace Calamari.Integration.Packages.Download
                 if (package == null)
                     continue;
 
-                if (!string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase) || !string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase))
-                    continue;
+               
+                var idMatches = string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase);
+                var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
+#if USE_NUGET_V2_LIBS
+                var semverMatches = SemanticVersion.TryParse(package.Metadata.Version, out SemanticVersion packageVersion) &&
+                        VersionComparer.Default.Equals(new Calamari.NuGet.Versioning.NuGetVersion(version), packageVersion);
+#else
+                var semverMatches = package.Metadata.Version.Equals(version);
+#endif
 
-                downloaded = package;
-                downloadedTo = file;
+                if (idMatches && (semverMatches || versionExactMatch))
+                {
+                    downloaded = package;
+                    downloadedTo = file;
+                    return;
+                }
             }
         }
 
