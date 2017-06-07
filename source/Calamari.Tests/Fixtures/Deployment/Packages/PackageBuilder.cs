@@ -28,7 +28,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             Assert.That(Directory.Exists(target), string.Format("Project for {0} is not available (expected at {1}.", name, target));      
 #endif                 
 
-            var output = Path.GetTempPath();
+            var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
+            Directory.CreateDirectory(output);
             var path = Path.Combine(output, name + "." + version + ".nupkg");
             if (File.Exists(path))
                 File.Delete(path);
@@ -91,7 +92,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
         {
             Assert.That(Directory.Exists(directory), string.Format("Package {0} is not available (expected at {1}).", name, directory));
 
-            var output = Path.GetTempPath();
+            var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
+            Directory.CreateDirectory(output);
             var path = Path.Combine(output, name + "." + version + ".zip");
             if (File.Exists(path))
                 File.Delete(path);
