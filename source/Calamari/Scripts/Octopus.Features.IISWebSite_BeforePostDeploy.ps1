@@ -45,28 +45,53 @@ try {
     }
 }
 
+function Recover-Semaphore {
+	param(
+	[parameter(Mandatory = $true)][string] $SemaphoreId
+	)
+
+	Try	{
+		Write-Verbose "Possible case of semaphore $SemaphoreId having not been released by a terminated/failed process, attempting to take control"
+		$suspectedAbandonedSemaphore = [System.Threading.Semaphore]::OpenExisting($SemaphoreId);
+		$result = $suspectedAbandonedSemaphore.Release()
+		Write-Verbose "Forcing semaphore release, the result was (it should be zero): $result"
+	}
+	Catch [System.UnauthorizedAccessException] {
+		Write-Verbose "Sempahore timeout cleanup failed or wasn't needed"
+	}
+}
+
 function Wait-OnSemaphore {
 	param(
 	[parameter(Mandatory = $true)][string] $SemaphoreId
 	)
 
-	Try
-	{
+	Try	{
+		$attemptCount = 0
+		$maxFailures = 25 #25*5sec sleep = ~2 min
 		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
 
 		while (-not $SemaphoreInstance.WaitOne(100))
 		{
-			Write-Verbose "Cannot start this IIS website related task yet. There is already another task running that cannot be run in conjunction with any other task. Please wait..."
+			$attemptCount++;
+			Write-Verbose "Cannot start this IIS website related task yet. There is already another task running that cannot be run in conjunction with any other task. Attempt $attemptCount. Please wait..."
 			Start-Sleep -m 5000;
+			if($attemptCount -gt $maxFailures)
+			{
+				Recover-Semaphore -SemaphoreId $SemaphoreId
+				$attemptCount = 0
+			}
 		}
 		
 		Write-Verbose "Acquired SemaphoreInstance $SemaphoreId"
 		return $SemaphoreInstance
 	}
-	Catch [System.Threading.AbandonedMutexException]
-	{
+	Catch [System.Threading.AbandonedMutexException] {
 		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
 		return Wait-OnSemaphore -SemaphoreId $SemaphoreId
+	}
+	Catch [System.SystemException]{
+		Write-Verbose "Wait-OnSemaphore had a major issue, possibly not running with sufficient privileges to force the semaphore unlock, details: $_.Exception.Message"
 	}
 }
 
@@ -138,12 +163,18 @@ function Execute-WithRetry([ScriptBlock] $command, $noLock) {
 	if($noLock) {
 		Core-Execute-WithRetry -command $command
 	} else {
-		$SemaphoreInstance = Wait-OnSemaphore -SemaphoreId 'Global\Octopus-IIS-Metabase'
+		$SemaphoreId = 'Global\Octopus-IIS-Metabase'
+		$SemaphoreInstance = Wait-OnSemaphore -SemaphoreId $SemaphoreId
 		Try {
 			Core-Execute-WithRetry -command $command
 		}
 		Finally {
-			$SemaphoreInstance.Release() | Out-Null
+			$result = $SemaphoreInstance.Release()
+			if($result -eq 0) {
+				Write-Verbose "SemaphoreInstance $SemaphoreId released"
+			} else {
+				Write-Verbose "SemaphoreInstance $SemaphoreId release attempted but result was: $result"
+			}
 		}
 	}
 }
