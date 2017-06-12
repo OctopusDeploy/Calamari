@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Calamari": {
-      "commandName": "Project",
-      "commandLineArgs": "download-package -packageId \"OctoFX.SmokeTests\" -packageVersion \"3.2.18987\" -feedId \"feeds-octopus-sampleps-v3\" -feedUri \"https://www.myget.org/F/octopus-samples/api/v3/index.json\" -attempts \"5\" -attemptBackoffSeconds \"10\"   "
-    }
-  }
-}

@@ -7,9 +7,9 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Util;
 using System.Reflection;
 using Calamari.Deployment.Features;
+using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions
 {

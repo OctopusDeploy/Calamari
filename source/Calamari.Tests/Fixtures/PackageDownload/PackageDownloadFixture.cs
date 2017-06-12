@@ -25,9 +25,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string FeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
         static readonly string ExpectedPackageHash = "40d78a00090ba7f17920a27cc05d5279bd9a4856";
         static readonly long ExpectedPackageSize = 6346;
-        static readonly Feed PublicFeed = new Feed() { Id = "feeds-myget", Version = "1.0.0.0", PackageId =  "OctoConsole" };
-        static readonly Feed FileShare = new Feed() { Id = "feeds-local", Version = "1.0.0.0", PackageId = "Acme.Web" };
-        static readonly Feed AuthFeed = new Feed() { Id = "feeds-authmyget", PackageId =  "OctoConsole", Version = "1.0.0.0" };
+        static readonly Feed PublicFeed = new Feed() { Id = "feeds-myget", Version = "1.0.0", PackageId =  "OctoConsole" };
+        static readonly Feed FileShare = new Feed() { Id = "feeds-local", Version = "1.0.0", PackageId = "Acme.Web" };
+        static readonly Feed AuthFeed = new Feed() { Id = "feeds-authmyget", PackageId =  "OctoConsole", Version = "1.0.0" };
 
         [SetUp]
         public void SetUp()
@@ -241,7 +241,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertFailure();
 
                 result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
-                result.AssertErrorOutput("Failed to download package Acme.Web 1.0.0.0 from feed: '{0}'", invalidFileShareUri);
+                result.AssertErrorOutput("Failed to download package Acme.Web 1.0.0 from feed: '{0}'", invalidFileShareUri);
                 result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
             }
         }
@@ -251,13 +251,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             return new TemporaryFile(PackageBuilder.BuildSamplePackage(FileShare.PackageId, FileShare.Version));
         }
 
-        [Test]
-        [Ignore("Need to get this setup and running somehow...need to think of a way to do it so it works across borders (aka TC or other members of the team)")]
-        public void FileShareFeedShouldFailDownloadPackageWhenNoPermissions()
-        {
-            //TODO: Yeah
-        }
-
+     
         [Test]
         public void ShouldFailWhenNoPackageId()
         {

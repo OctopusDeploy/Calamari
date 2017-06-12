@@ -15,8 +15,8 @@ namespace Calamari.Tests.Fixtures.FindPackage
         readonly static string tentacleHome = TestEnvironment.GetTestPath("temp", "FindPackage");
         readonly static string downloadPath = Path.Combine(tentacleHome, "Files");
         readonly string packageId = "Acme.Web";
-        readonly string packageVersion = "1.0.0.0";
-        readonly string newpackageVersion = "1.0.0.1";
+        readonly string packageVersion = "1.0.0";
+        readonly string newpackageVersion = "1.0.1";
 
         [OneTimeSetUp]
         public void TestFixtureSetUp()
@@ -170,7 +170,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [Test]
         public void ShouldFailWhenNoPackageIdIsSpecified()
         {
-            var result = FindPackages("", "1.0.0.0", "Hash");
+            var result = FindPackages("", "1.0.0", "Hash");
 
             result.AssertFailure();
             result.AssertErrorOutput("No package ID was specified. Please pass --packageId YourPackage");
@@ -188,16 +188,16 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [Test]
         public void ShouldFailWhenInvalidPackageVersionIsSpecified()
         {
-            var result = FindPackages("Calamari", "1.0.0.*", "Hash");
+            var result = FindPackages("Calamari", "1.0.*", "Hash");
 
             result.AssertFailure();
-            result.AssertErrorOutput("Package version '1.0.0.*' is not a valid Semantic Version");
+            result.AssertErrorOutput("Package version '1.0.*' is not a valid Semantic Version");
         }
 
         [Test]
         public void ShouldFailWhenNoPackageHashIsSpecified()
         {
-            var result = FindPackages("Calamari", "1.0.0.0", "");
+            var result = FindPackages("Calamari", "1.0.0", "");
 
             result.AssertFailure();
             result.AssertErrorOutput("No package hash was specified. Please pass --packageHash YourPackageHash");

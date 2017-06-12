@@ -12,28 +12,25 @@ namespace Calamari.Tests.Helpers
     {
         protected CommandLine Calamari()
         {
-            string calamariFullPath;
 #if NET40
-            calamariFullPath = typeof (DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
+            var calamariFullPath = typeof(DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
+            return new CommandLine(calamariFullPath);
+
 #else
             var folder = Path.GetDirectoryName(typeof(Program).GetTypeInfo().Assembly.FullLocalPath());
-            if(Util.CrossPlatform.IsWindows())
-            {
-                calamariFullPath = Path.Combine(folder, "Calamari.Tests.exe");
-            }
-            else
-            {
-                calamariFullPath = Path.Combine(folder, "Calamari.Tests.dll");
-            }
+            var calamariFullPath = Path.Combine(folder, "Calamari.Tests.dll");
+
+            if (!File.Exists(calamariFullPath))
+                throw new Exception($"Could not find Calamari test wrapper at {calamariFullPath}");
+            return new CommandLine(calamariFullPath).UseDotnet();
 #endif
-            return CommandLine.Execute(calamariFullPath).DotNet();
         }
 
         protected CommandLine OctoDiff()
         {
             var octoDiffExe = OctoDiffCommandLineRunner.FindOctoDiffExecutable();
 
-            return CommandLine.Execute(octoDiffExe);
+            return new CommandLine(octoDiffExe);
         }
 
         protected CalamariResult Invoke(CommandLine command, VariableDictionary variables)

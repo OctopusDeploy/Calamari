@@ -78,13 +78,6 @@ namespace Calamari.Util
 #endif
         }
 
-#if NET40
-        public static Type GetTypeInfo(this Type type)
-        {
-            return type;
-        }
-#endif
-
         public static string GetCurrentDirectory()
         {
 #if NET40
@@ -191,5 +184,12 @@ namespace Calamari.Util
                 ? Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%")
                 : Environment.GetEnvironmentVariable("HOME");
         }
+
+#if NET40
+        public static Type GetTypeInfo(this Type type)
+        {
+            return type;
+        }
+#endif
     }
 }

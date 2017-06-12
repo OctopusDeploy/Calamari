@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Acme.Service</id>
-    <version>1.9.6</version>
+    <version>$version$</version>
     <authors>ACME Corporation</authors>
     <owners>ACME Corporation</owners>
     <licenseUrl>http://tempuri.org/</licenseUrl>
@@ -11,8 +11,8 @@
     <description>A sample project containing a Windows service.</description>
     <language>en-US</language>
   </metadata>
-   <files>
-    <file src="**\*.*" target="" exclude="project.json;project.lock.json"/>
-    <file src="**/*.*" target="" exclude="project.json;project.lock.json"/>
+  <files>
+    <file src="**\*.*" target="" exclude="*.csproj;bin/**;obj/**"/>
+    <file src="**/*.*" target="" exclude="*.csproj;bin/**;obj/**"/>
   </files>
 </package>

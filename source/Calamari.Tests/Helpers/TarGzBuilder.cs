@@ -12,7 +12,10 @@ namespace Calamari.Tests.Helpers
         {
             var sourceDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
 
-            var outputTarFilename = Path.Combine(Path.GetTempPath(), name + "." + version + ".tar.gz");
+            var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
+            Directory.CreateDirectory(output);
+
+            var outputTarFilename = Path.Combine(output, name + "." + version + ".tar.gz");
             if (File.Exists(outputTarFilename))
                 File.Delete(outputTarFilename);
 

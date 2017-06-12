@@ -14,7 +14,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "ApplyDelta");
         static  readonly string DownloadPath = Path.Combine(TentacleHome, "Files");
 
-        const string NewFileName = "Acme.Web.1.0.0.1.nupkg";
+        const string NewFileName = "Acme.Web.1.0.1.nupkg";
 
         CalamariResult ApplyDelta(string basisFile, string fileHash, string deltaFile, string newFile, bool messageOnError = false)
         {
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         [Test]
         public void ShouldApplyDeltaToPreviousPackageToCreateNewPackage()
         {
-            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
+            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0")))
             using (var signatureFile = new TemporaryFile(basisFile.FilePath + ".octosig"))
             {
 #if USE_OCTODIFF_EXE
@@ -76,7 +76,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 #endif
                 Assert.That(File.Exists(signatureFile.FilePath));
 
-                using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.1", true)))
+                using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.1", true)))
                 using (var deltaFile = new TemporaryFile(basisFile.FilePath + "_to_" + NewFileName + ".octodelta"))
                 {
 #if USE_OCTODIFF_EXE
@@ -140,7 +140,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         [Test]
         public void ShouldWriteErrorWhenBasisFileCannotBeFound()
         {
-            var basisFile = Path.Combine(DownloadPath, "MyPackage.1.0.0.0.nupkg");
+            var basisFile = Path.Combine(DownloadPath, "MyPackage.1.0.0.nupkg");
             var result = ApplyDelta(basisFile, "Hash", "Delta", "New");
 
             result.AssertSuccess();
@@ -150,9 +150,9 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         [Test]
         public void ShouldWriteErrorWhenDeltaFileCannotBeFound()
         {
-            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
+            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0")))
             {
-                var deltaFilePath = Path.Combine(DownloadPath, "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
+                var deltaFilePath = Path.Combine(DownloadPath, "Acme.Web.1.0.0_to_1.0.1.octodelta");
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, "New");
 
                 result.AssertSuccess();
@@ -164,10 +164,10 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         public void ShouldWriteErrorWhenBasisFileHashDoesNotMatchSpecifiedFileHash()
         {
             var otherBasisFileHash = "2e9407c9eae20ffa94bf050283f9b4292a48504c";
-            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
+            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0")))
             {
                 var deltaFilePath = Path.Combine(DownloadPath,
-                    "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
+                    "Acme.Web.1.0.0_to_1.0.1.octodelta");
                 using (var deltaFile = File.CreateText(deltaFilePath))
                 {
                     deltaFile.WriteLine("This is a delta file!");
@@ -184,10 +184,10 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
         [Test]
         public void ShouldWriteErrorWhenDeltaFileIsInvalid()
         {
-            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0.0")))
+            using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0")))
             {
                 var deltaFilePath = Path.Combine(DownloadPath,
-                    "Acme.Web.1.0.0.0_to_1.0.0.1.octodelta");
+                    "Acme.Web.1.0.0_to_1.0.1.octodelta");
                 using (var deltaFile = File.CreateText(deltaFilePath))
                 {
                     deltaFile.WriteLine("This is a delta file!");

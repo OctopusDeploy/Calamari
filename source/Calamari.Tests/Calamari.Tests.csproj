@@ -1,0 +1,191 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>1.0.0.0</Version>
+    <TargetFrameworks>netcoreapp1.1;net452</TargetFrameworks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>Calamari.Tests</AssemblyName>
+    <PackageId>Calamari.Tests</PackageId>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <OutputType>Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
+    <DefineConstants>$(DefineConstants);NETCORE;USE_OCTOPUS_XMLT</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
+    <DefineConstants>$(DefineConstants);NET40;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;CAN_GET_PHYSICAL_MEMORY;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+  </PropertyGroup>
+
+  
+  <ItemGroup>
+    <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1" />
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx" />
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx" />
+    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloVariableSubstitution.fsx" />
+    
+    <None Include="Fixtures\ConfigurationVariables\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ConfigurationTransforms\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ConfigurationTransforms\Approved\*.approved.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Bash\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Conventions\ConfigTransforms\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Service\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Vhd\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Web.Tests\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.Package\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\FSharp\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Integration\Packages\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\JsonVariables\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\PowerShell\Packages\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\PowerShell\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\ScriptCS\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Substitutions\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Helpers\Certificates\SampleCertificateFiles\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
+    <EmbeddedResource Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
+
+
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Service\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Service\obj\**" />
+
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\obj\**" />
+
+    <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\obj\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari\Calamari.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
+    <PackageReference Include="NSubstitute" Version="2.0.3" />
+    <PackageReference Include="NUnit" Version="3.6.1" />
+    <PackageReference Include="FluentAssertions" Version="4.19.2" />
+    <PackageReference Include="NuGet.CommandLine" Version="2.8.6" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
+    <PackageReference Include="OctoDiff" Version="1.1.2" />
+    <PackageReference Include="Octostache" Version="2.1.5" />
+    <PackageReference Include="Assent" Version="0.8.0" />
+    <PackageReference Include="SharpCompress" Version="0.15.2" />
+    <PackageReference Include="Polly" Version="5.1.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' ">
+    <PackageReference Include="Markdown" Version="2.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="Octopus.Web.XmlTransform" Version="1.0.0-ci0018" />
+    <PackageReference Include="Sprache" Version="2.1.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+    <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
+    <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
+    <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
+    <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
+    <PackageReference Include="Microsoft.Web.Administration" Version="7.0.0.0" />
+    <PackageReference Include="Microsoft.Web.Deployment" Version="3.6.0" />
+    <PackageReference Include="Microsoft.Web.Xdt" Version="2.1.1" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="TestResults\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+  </ItemGroup>
+
+  <Target Name="CopyTools" AfterTargets="Build">
+    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
+      <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
+    </CreateItem>
+    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
+      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
+    </CreateItem>
+    <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net452' And '%(Name)' == 'NuGet.CommandLine'">
+      <Output TaskParameter="Include" ItemName="NuGetCommandLineRef" />
+    </CreateItem>
+    <PropertyGroup>
+      <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
+      <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'netcoreapp1.1'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
+      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
+      <ScriptCSExe Condition="'$(TargetFramework)' == 'netcoreapp1.1'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
+      <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
+    </PropertyGroup>
+    <ItemGroup>
+      <FSharpFiles Include="$(FSharpCompilerTools)" />
+      <FSharpFilesExe Condition="'$(TargetFramework)' == 'netcoreapp1.1'" Include="$(FSharpCompilerToolsExe)" />
+      <ScriptCSFiles Include="$(ScriptCS)" />
+      <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'netcoreapp1.1'" Include="$(ScriptCSExe)" />
+      <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net452'" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
+    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
+    <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" Condition="'$(TargetFramework)' == 'net452'" />
+    <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp1.1'" />
+    <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp1.1'" />
+  </Target>
+            
+</Project>

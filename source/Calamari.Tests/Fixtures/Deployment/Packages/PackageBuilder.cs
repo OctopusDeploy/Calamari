@@ -24,47 +24,40 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 #else
             var nugetCommandLine = "dotnet";
 
-            var target = Path.Combine(packageDirectory, "project.json");
-            Assert.That(File.Exists(target), string.Format("Project.json for {0} is not available (expected at {1}.", name, target));      
-            
-            var json = File.ReadAllText(target);
-            dynamic jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
-            jsonObj["version"] = version;
-            json = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObj, Newtonsoft.Json.Formatting.Indented);
-            File.WriteAllText(target, json);      
+            var target = packageDirectory;
+            Assert.That(Directory.Exists(target), string.Format("Project for {0} is not available (expected at {1}.", name, target));      
 #endif                 
 
-            var output = Path.GetTempPath();
+            var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
+            Directory.CreateDirectory(output);
             var path = Path.Combine(output, name + "." + version + ".nupkg");
             if (File.Exists(path))
                 File.Delete(path);
 
-            string indexFilePath = null;
-            if (modifyPackage)
-            {
-                indexFilePath = AddFileToPackage(packageDirectory);
-            }
 
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
-            var result = runner.Execute(CommandLine.Execute(nugetCommandLine)
+#if !NET40
+            var restoreResult = runner.Execute(new CommandLine(nugetCommandLine)
+                .Action("restore")
+                .Argument(target)
+                .Build());
+            restoreResult.VerifySuccess();
+
+#endif
+
+            var result = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("pack")
                 .Argument(target)
-#if NET40            
+#if NET40
                 .Argument("Version", version)
                 .Flag("NoPackageAnalysis")
                 .Argument("OutputDirectory", output)
 #else
-                .DoubleDash()
-                .Argument("version-suffix", version)
-                .Argument("output", output)
+                .Argument("-output", output)
+                .PositionalArgument("/p:Version=" + version)
 #endif
                 .Build());
             result.VerifySuccess();
-
-            if (modifyPackage
-                && !String.IsNullOrWhiteSpace(indexFilePath) 
-                && File.Exists(indexFilePath))
-                File.Delete(indexFilePath);
 
             Assert.That(File.Exists(path), string.Format("The generated nupkg was unable to be found (expected at {0}).", path));
             return path;
@@ -99,7 +92,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
         {
             Assert.That(Directory.Exists(directory), string.Format("Package {0} is not available (expected at {1}).", name, directory));
 
-            var output = Path.GetTempPath();
+            var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
+            Directory.CreateDirectory(output);
             var path = Path.Combine(output, name + "." + version + ".zip");
             if (File.Exists(path))
                 File.Delete(path);
