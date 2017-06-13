@@ -51,8 +51,12 @@ function CreateNewDeployment()
 function WaitForComplete() 
 {
     $completeDeployment = Get-AzureDeployment -ServiceName $OctopusAzureServiceName -Slot $OctopusAzureSlot
-
     $completeDeploymentID = $completeDeployment.DeploymentId
+    $completeDeploymentUrl = $completeDeployment.Url
+        
+    Set-OctopusVariable -name "AzureDeploymentID" -value $completeDeploymentID
+    Set-OctopusVariable -name "AzureDeploymentUrl" -value $completeDeploymentUrl
+    
     Write-Host "Deployment complete; Deployment ID: $completeDeploymentID"
 }
 
