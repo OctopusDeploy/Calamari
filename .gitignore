@@ -193,3 +193,4 @@ tools/
 *.DS_Store
 **/.idea
 **launchSettings.json
+source/Calamari.Tests/Some sample text
