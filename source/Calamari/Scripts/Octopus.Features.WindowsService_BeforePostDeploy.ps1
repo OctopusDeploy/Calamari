@@ -8,6 +8,26 @@ if (!$isEnabled -or ![Bool]::Parse($isEnabled))
     exit 0
 }
 
+function WrapInQuotes([string]$arg){
+	"`"$arg`""
+}
+
+function EscapeArgumentForConsole([string]$arg){
+    ## For all ", double the number of \ immediately preceding the "
+    $arg = $arg -replace "(\\+)+`"",'$1$1"'
+
+    ## Add a single \ preceding all "
+    $arg = $arg.Replace("`"", "\`"");
+
+    ## Escape all $ with a ` (this is needed so PS does not get confused with variables)
+    $arg = $arg.Replace("$", "`$");
+
+    ## if string ends with \, double the number of all ending \  
+    $arg = $arg -replace "(\\+)+$",'$1$1"'
+    
+    return $arg
+}
+
 $serviceName = $OctopusParameters["Octopus.Action.WindowsService.ServiceName"]
 $displayName = $OctopusParameters["Octopus.Action.WindowsService.DisplayName"]
 $executablePath = $OctopusParameters["Octopus.Action.WindowsService.ExecutablePath"]
@@ -42,30 +62,30 @@ if (!$serviceName)
 
 if ($arguments) 
 {
-	$arguments = $arguments.Replace("`"", "\`"")
-	$binPath = ("\`"" + $fullPath + "\`" " + $arguments) # An extra set of escaped quotes added around the exe	
+	$arguments = (EscapeArgumentForConsole $arguments)
+	$binPath = (EscapeArgumentForConsole ((WrapInQuotes $fullPath) + " $arguments")) # An extra set of escaped quotes added around the exe	
 }
 else
 {
-    $binPath = $fullPath 
+    $binPath = (EscapeArgumentForConsole $fullPath)
 }
 
 
-$fullArguments = @("`"$serviceName`"", "binPath=", $binPath)
+$fullArguments = @((WrapInQuotes (EscapeArgumentForConsole $serviceName)), "binPath=", $binPath)
 if ($displayName) 
 {
-	$fullArguments += @("DisplayName=", "`"$displayName`"")
+	$fullArguments += @("DisplayName=", (EscapeArgumentForConsole $displayName))
 }
 
 if(!$dependencies)
 {
 	$dependencies = "/"
 }
-$fullArguments += @("depend=", "`"$dependencies`"")
+$fullArguments += @("depend=", (WrapInQuotes (EscapeArgumentForConsole $dependencies)))
 
 if ($startMode -and ($startMode -ne 'unchanged')) 
 {
-	$fullArguments += @("start=", "`"$startMode`"")
+	$fullArguments += @("start=", (WrapInQuotes $startMode))
 }
 
 $fullArgumentsSafeForConsole = $fullArguments
@@ -73,7 +93,7 @@ if ($serviceAccount -ne "_CUSTOM")
 {
 	if ($serviceAccount) 
 	{
-		$fullArguments += @("obj=", "`"$serviceAccount`"")
+		$fullArguments += @("obj=", (WrapInQuotes $serviceAccount))
 	}	
 	$fullArgumentsSafeForConsole = $fullArguments
 }
@@ -81,13 +101,12 @@ else
 {
 	if ($customAccountName) 
 	{
-		$fullArguments += @("obj=", "`"$customAccountName`"")
+		$fullArguments += @("obj=", (WrapInQuotes $customAccountName))
 	}	
 	$fullArgumentsSafeForConsole = $fullArguments
 	if ($customAccountPassword) 
 	{
-		$customAccountPassword = $customAccountPassword.Replace('"', '""')
-		$fullArguments += @("password=", "`"$customAccountPassword`"")
+		$fullArguments += @("password=", (EscapeArgumentForConsole $customAccountPassword))
 		$fullArgumentsSafeForConsole += "password= `"************`""
 	}
 }
@@ -136,7 +155,8 @@ else
 if ($description) 
 {
 	Write-Host "Updating the service description"
-	& "sc.exe" description $serviceName $description
+	$fullArguments = @((WrapInQuotes(EscapeArgumentForConsole $serviceName)), (EscapeArgumentForConsole $description))
+	& "sc.exe" description ($fullArguments)
 	if ($LastExitCode -ne 0) {
 		throw "sc.exe description failed with exit code: $LastExitCode"
 	}
