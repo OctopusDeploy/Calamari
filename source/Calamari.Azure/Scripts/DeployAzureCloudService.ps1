@@ -54,8 +54,8 @@ function WaitForComplete()
     $completeDeploymentID = $completeDeployment.DeploymentId
     $completeDeploymentUrl = $completeDeployment.Url
         
-    Set-OctopusVariable -name "AzureDeploymentID" -value $completeDeploymentID
-    Set-OctopusVariable -name "AzureDeploymentUrl" -value $completeDeploymentUrl
+    Set-OctopusVariable -name "OctopusAzureCloudServiceDeploymentID" -value $completeDeploymentID
+    Set-OctopusVariable -name "OctopusAzureCloudServiceDeploymentUrl" -value $completeDeploymentUrl
     
     Write-Host "Deployment complete; Deployment ID: $completeDeploymentID"
 }
