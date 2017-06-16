@@ -1,9 +1,10 @@
-﻿using Calamari.Azure.Deployment.Conventions;
+﻿#if AZURE
+using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Integration.FileSystem;
 using NUnit.Framework;
 
-namespace Calamari.Azure.Tests.Fixtures.Conventions
+namespace Calamari.Tests.AzureFixtures
 {
     public class GenerateDeploymentNameFromStepNameTestWrapper : DeployAzureResourceGroupConvention
     {
@@ -56,3 +57,5 @@ namespace Calamari.Azure.Tests.Fixtures.Conventions
         }
     }
 }
+
+#endif
