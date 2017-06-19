@@ -78,7 +78,7 @@ if ($arguments)
 }
 else
 {
-    $binPath = (EscapeArgumentForConsole $fullPath)
+    $binPath = (EscapeArgumentForConsole ((WrapInQuotes $fullPath) + " "))
 }
 
 $fullArguments = @((WrapInQuotes (EscapeArgumentForConsole $serviceName)), "binPath=", $binPath)
