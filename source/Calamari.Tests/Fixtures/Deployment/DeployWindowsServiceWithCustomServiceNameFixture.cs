@@ -8,7 +8,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     [Category(TestEnvironment.CompatibleOS.Windows)]
     public class DeployWindowsServiceWithCustomServiceNameFixture : DeployWindowsServiceAbstractFixture
     {
-        protected override string ServiceName => @"foo$bar";
+        protected override string ServiceName => @"[f`o]o$b[a]r";
 
         [Test]
         public void ShouldEscapeBackslashesAndDollarSignsInArgumentsPassedToScExe()
@@ -16,6 +16,15 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[SpecialVariables.Action.WindowsService.Arguments] = @"""c:\foo $dr bar\"" ArgumentWithoutSpace";
             Variables["Octopus.Action.WindowsService.DisplayName"] = @"""c:\foo $dr bar\"" ArgumentWithoutSpace";
             Variables["Octopus.Action.WindowsService.Description"] = @"""c:\foo $dr bar\"" ArgumentWithoutSpace";
+            RunDeployment();
+        }
+
+        [Test]
+        public void ShouldUpdateExistingServiceWithFunnyCharactersInServiceName()
+        {
+            RunDeployment();
+            
+            //Simulate an update
             RunDeployment();
         }
     }

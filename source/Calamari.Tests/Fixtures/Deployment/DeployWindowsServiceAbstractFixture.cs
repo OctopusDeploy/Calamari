@@ -24,8 +24,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TearDown]
         public override void CleanUp()
         {
-            //DeleteExistingService();
-           // base.CleanUp();
+            DeleteExistingService();
+            base.CleanUp();
         }
 
         protected abstract string ServiceName { get; }

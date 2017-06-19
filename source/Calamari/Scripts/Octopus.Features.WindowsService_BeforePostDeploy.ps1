@@ -12,15 +12,26 @@ function WrapInQuotes([string]$arg){
 	"`"$arg`""
 }
 
+function EscapeArgumentForPS([string]$arg){
+    
+	## Escape all ` with another ` (this is needed so PS does not get confused with variables)
+    $arg = $arg.Replace("``", "````");
+
+	## Escape all [ with a ` (this is needed so PS does not get confused with variables)
+    $arg = $arg.Replace("[", "``[");
+
+    ## Escape all $ with a ` (this is needed so PS does not get confused with variables)
+    $arg = $arg.Replace("$", "`$");
+
+    return $arg
+}
+
 function EscapeArgumentForConsole([string]$arg){
     ## For all ", double the number of \ immediately preceding the "
     $arg = $arg -replace "(\\+)+`"",'$1$1"'
 
     ## Add a single \ preceding all "
     $arg = $arg.Replace("`"", "\`"");
-
-    ## Escape all $ with a ` (this is needed so PS does not get confused with variables)
-    $arg = $arg.Replace("$", "`$");
 
     ## if string ends with \, double the number of all ending \  
     $arg = $arg -replace "(\\+)+$",'$1$1"'
@@ -70,7 +81,6 @@ else
     $binPath = (EscapeArgumentForConsole $fullPath)
 }
 
-
 $fullArguments = @((WrapInQuotes (EscapeArgumentForConsole $serviceName)), "binPath=", $binPath)
 if ($displayName) 
 {
@@ -111,7 +121,9 @@ else
 	}
 }
 
-$service = Get-Service $serviceName -ErrorAction SilentlyContinue
+$psServiceName = (EscapeArgumentForPS $serviceName)
+
+$service = Get-Service $psServiceName -ErrorAction SilentlyContinue
 
 if (!$service)
 {
@@ -124,7 +136,7 @@ if (!$service)
 		throw "sc.exe create failed with exit code: $LastExitCode"
 	}
 
-	$service = Get-Service $serviceName -ErrorAction SilentlyContinue
+	$service = Get-Service $psServiceName -ErrorAction SilentlyContinue
 }
 else
 {
@@ -133,7 +145,7 @@ else
 	If ($service.Status -ne 'Stopped')
 	{
 		Write-Host "Stopping the $serviceName service"
-		Stop-Service $ServiceName -Force
+		Stop-Service $psServiceName -Force
 		## Wait up to 30 seconds for the service to stop
 		$service.WaitForStatus('Stopped', '00:00:30')
 		If ($service.Status -ne 'Stopped') 
@@ -180,7 +192,7 @@ elseif ($startMode -eq "demand")
 else
 {
 	Write-Host "Starting the $serviceName service"
-	Start-Service $ServiceName
+	Start-Service $psServiceName
 
 	$service.WaitForStatus('Running', '00:00:30')
 	If ($service.Status -ne 'Running') 
