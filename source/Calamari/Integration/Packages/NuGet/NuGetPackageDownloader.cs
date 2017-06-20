@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Retry;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
@@ -20,11 +21,13 @@ namespace Calamari.Integration.Packages.NuGet
             DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts, downloadAttemptBackoff, DownloadPackageAction);
         }
 
-        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, Action<string, NuGetVersion, Uri, ICredentials, string> action)
+        internal void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, Action<string, NuGetVersion, Uri, ICredentials, string> action)
         {
             if (maxDownloadAttempts <= 0)
                 throw new ArgumentException($"The number of download attempts should be greater than zero, but was {maxDownloadAttempts}", nameof(maxDownloadAttempts));
-            
+
+            var tempTargetFilePath = targetFilePath + PackageDownloader.DownloadingExtension;
+
             // The RetryTracker is a bit finicky to set up...
             var numberOfRetriesOnFailure = maxDownloadAttempts-1;
             var retry = new RetryTracker(numberOfRetriesOnFailure, timeLimit: null, retryInterval: new LinearRetryInterval(downloadAttemptBackoff));
@@ -34,13 +37,15 @@ namespace Calamari.Integration.Packages.NuGet
 
                 try
                 {
-                    action(packageId, version, feedUri, feedCredentials, targetFilePath);
+                    action(packageId, version, feedUri, feedCredentials, tempTargetFilePath);
+                    fileSystem.MoveFile(tempTargetFilePath, targetFilePath);
                     return;
                 }
                 catch (Exception ex)
                 {
                     Log.Verbose($"Attempt {retry.CurrentTry} of {maxDownloadAttempts}: {ex.Message}");
 
+                    fileSystem.DeleteFile(tempTargetFilePath, FailureOptions.IgnoreFailure);
                     fileSystem.DeleteFile(targetFilePath, FailureOptions.IgnoreFailure);
 
                     if (retry.CanRetry())

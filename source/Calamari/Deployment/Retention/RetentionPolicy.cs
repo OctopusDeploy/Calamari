@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Time;
 
 namespace Calamari.Deployment.Retention
@@ -62,6 +64,8 @@ namespace Calamari.Deployment.Retention
                 DeleteExtractionSource(deployment, preservedEntries);
             }
             deploymentJournal.RemoveJournalEntries(deployments.Select(x => x.Id));
+
+            RemovedFailedPackageDownloads();
         }
 
         void DeleteExtractionSource(JournalEntry deployment, List<JournalEntry> preservedEntries)
@@ -147,6 +151,24 @@ namespace Calamari.Deployment.Retention
                     return value + "rd ";
                 default:
                     return value + "th ";
+            }
+        }
+
+        private void RemovedFailedPackageDownloads()
+        {
+            var pattern = "*" + PackageDownloader.DownloadingExtension;
+
+            if (fileSystem.DirectoryExists(PackageDownloader.RootDirectory))
+            {
+                var toDelete = fileSystem.EnumerateFilesRecursively(PackageDownloader.RootDirectory, pattern)
+                    .Where(f => fileSystem.GetCreationTime(f) <= DateTime.Now.AddDays(-1))
+                    .ToArray();
+
+                foreach (var file in toDelete)
+                {
+                    Log.Verbose($"Removing the failed to download file {file}");
+                    fileSystem.DeleteFile(file, FailureOptions.IgnoreFailure);
+                }
             }
         }
     }
