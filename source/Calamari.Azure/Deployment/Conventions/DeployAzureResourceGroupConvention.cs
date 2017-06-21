@@ -11,7 +11,6 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Util;
 using Microsoft.Azure;
 using Microsoft.Azure.Management.Resources;
 using Microsoft.Azure.Management.Resources.Models;
@@ -79,16 +78,17 @@ namespace Calamari.Azure.Deployment.Conventions
             PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
         }
 
-        static string GenerateDeploymentNameFromStepName(string stepName)
+        protected static string GenerateDeploymentNameFromStepName(string stepName)
         {
             var deploymentName = stepName ?? string.Empty;
             deploymentName = deploymentName.ToLower();
             deploymentName = Regex.Replace(deploymentName, "\\s", "-");
-            deploymentName =
-                new string(deploymentName.Select(x => (char.IsLetterOrDigit(x) || x == '-') ? x : '-').ToArray());
+            deploymentName = new string(deploymentName.Select(x => (char.IsLetterOrDigit(x) || x == '-') ? x : '-').ToArray());
             deploymentName = Regex.Replace(deploymentName, "-+", "-");
             deploymentName = deploymentName.Trim('-', '/');
-            deploymentName = deploymentName + "-" + Guid.NewGuid().ToString();
+            // Azure Deployment Namese can only be 64 characters == 31 chars + "-" (1) + Guid (32 chars)
+            deploymentName = deploymentName.Length <= 31 ? deploymentName : deploymentName.Substring(0, 31);
+            deploymentName = deploymentName + "-" + Guid.NewGuid().ToString("N");
             return deploymentName;
         }
 

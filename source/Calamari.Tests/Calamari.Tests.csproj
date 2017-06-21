@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);NET40;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;CAN_GET_PHYSICAL_MEMORY;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NET40;AZURE;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;CAN_GET_PHYSICAL_MEMORY;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
 
   
@@ -102,6 +102,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
