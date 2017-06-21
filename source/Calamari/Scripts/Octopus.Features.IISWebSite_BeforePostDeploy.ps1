@@ -76,7 +76,7 @@ function Wait-OnSemaphore {
 			$attemptCount++;
 			Write-Verbose "Cannot start this IIS website related task yet. There is already another task running that cannot be run in conjunction with any other task. Attempt $attemptCount of $maxAttempts. Please wait..."
 			Start-Sleep -m 5000;
-			if($attemptCount -gt $maxAttempts)
+			if($attemptCount -ge $maxAttempts)
 			{
 				Recover-Semaphore -SemaphoreId $SemaphoreId
 				$attemptCount = 0
