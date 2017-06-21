@@ -6,7 +6,7 @@ You will need the .NET Core SDK `1.0.0-preview2-003133`, donwloadable from https
 
 Run `Build.cmd` to build the solution
   
-When the solution is built, a new Calamari package is created in the `built-packages` directory.
+When the solution is built, a new Calamari package is created in the `artifacts` directory.
 
 
 ## Usage
