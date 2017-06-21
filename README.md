@@ -6,7 +6,7 @@ You will need the .NET Core SDK `1.0.0-preview2-003133`, donwloadable from https
 
 Run `Build.cmd` to build the solution
   
-When the solution is built, a new Calamari package is created in the `built-packages` directory.
+When the solution is built, a new Calamari package is created in the `artifacts` directory.
 
 
 ## Usage
@@ -14,7 +14,7 @@ When the solution is built, a new Calamari package is created in the `built-pack
 To use your own Calamari package with an Octopus 3.0 server, run the following commands
 ```
 Octopus.Server.exe service --instance <instance> --stop --nologo --console
-Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory <directory> --nologo --console
+Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory=<directory> --nologo --console
 Octopus.Server.exe service --instance <instance> --start --nologo --console
 ```
 
