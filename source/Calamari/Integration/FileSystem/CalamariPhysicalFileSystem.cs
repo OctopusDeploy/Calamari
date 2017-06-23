@@ -276,7 +276,7 @@ namespace Calamari.Integration.FileSystem
             }
             // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage! 
             // this probably something like Windows 1252 on Windows, but is Encoding.Default is UTF8 on Linux so this probably isn't right in Linux.
-            encoding = CrossPlatform.GetDefaultEncoding();
+            encoding = Encoding.Default;
 
             return encoding.GetString(b);
         }

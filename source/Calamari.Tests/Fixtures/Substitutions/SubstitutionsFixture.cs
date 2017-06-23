@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), encoding);
+            Assert.AreEqual(Encoding.Default, encoding);
         }
 
         [Test]
@@ -144,8 +144,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), encoding);
-            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), result.Encoding);
+            Assert.AreEqual(Encoding.Default, encoding);
+            Assert.AreEqual(Encoding.Default, result.Encoding);
         }
 
         [Test]

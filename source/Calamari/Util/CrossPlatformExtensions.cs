@@ -40,16 +40,6 @@ namespace Calamari.Util
             return Environment.ExpandEnvironmentVariables(path);
         }
 
-        public static Encoding GetDefaultEncoding()
-        {
-#if HAS_DEFAULT_ENCODING
-            return Encoding.Default;
-#else
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            return Encoding.GetEncoding(0); // returns windows-1251 for windows
-#endif
-        }
-
         public static void Replace(string sourceFileName, string destinationFileName, string destinationBackupFileName)
         {
 #if NET40
