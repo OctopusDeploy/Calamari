@@ -28,12 +28,5 @@ namespace Calamari.Util
             return Environment.ExpandEnvironmentVariables(path);
         }
 
-
-#if NET40
-        public static Type GetTypeInfo(this Type type)
-        {
-            return type;
-        }
-#endif
     }
 }

@@ -53,7 +53,7 @@ namespace Calamari.Deployment.Conventions
         readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
         readonly ICollection<IFeature> featureClasses;
-        static readonly Assembly Assembly = typeof(FeatureConventionBase).GetTypeInfo().Assembly; 
+        static readonly Assembly Assembly = typeof(FeatureConventionBase).Assembly; 
 
         protected FeatureConventionBase(string deploymentStage, ICalamariFileSystem fileSystem, 
             IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
