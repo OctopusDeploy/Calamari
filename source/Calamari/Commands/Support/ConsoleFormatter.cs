@@ -21,7 +21,6 @@ namespace Calamari.Commands.Support
                 foreach (var loaderException in ((ReflectionTypeLoadException)ex).LoaderExceptions)
                 {
                     Log.Error(loaderException.ToString());
-#if NET40
                     if (!(loaderException is FileNotFoundException))
                         continue;
 
@@ -30,7 +29,6 @@ namespace Calamari.Commands.Support
                     {
                         Log.Error(exFileNotFound.FusionLog);
                     }
-#endif
                 }
 
                 return 43;

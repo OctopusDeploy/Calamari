@@ -40,14 +40,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             public new string CreateTemporaryDirectory()
             {
-#if NET40
-        var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-#else
-                var path = Environment.GetEnvironmentVariable("LOCALAPPDATA")
-                            ?? Environment.GetEnvironmentVariable("TMPDIR")
-                            ?? Environment.GetEnvironmentVariable("TEMP")
-                            ?? @"C:\temp";
-#endif
+               var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
                 path = Path.Combine(path, Assembly.GetEntryAssembly()?.GetName().Name ?? Guid.NewGuid().ToString());
 
                 path = Path.Combine(path, Guid.NewGuid().ToString());

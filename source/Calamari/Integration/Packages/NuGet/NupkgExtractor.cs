@@ -17,7 +17,7 @@ namespace Calamari.Integration.Packages.NuGet
 {
     public class NupkgExtractor : IPackageExtractor
     {
-        public string[] Extensions => new[] {CrossPlatform.GetPackageExtension()};
+        public string[] Extensions => new[] {".nupkg"};
 
         public PackageMetadata GetMetadata(string packageFile)
         {
@@ -112,7 +112,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static bool IsManifest(string path)
         {
-            return Path.GetExtension(path).Equals(CrossPlatform.GetManifestExtension(), StringComparison.OrdinalIgnoreCase);
+            return Path.GetExtension(path).Equals(".nuspec", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string UnescapePath(string path)

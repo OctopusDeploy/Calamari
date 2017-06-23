@@ -12,7 +12,7 @@ namespace Calamari.Tests.Helpers
     {
         protected CommandLine Calamari()
         {
-#if NET40
+#if NETFX
             var calamariFullPath = typeof(DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
             return new CommandLine(calamariFullPath);
 

@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -37,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var service = GetInstalledService();
             if (service != null)
             {
-                var system32 = CrossPlatform.GetSystemFolderPath();
+                var system32 = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 var sc = Path.Combine(system32, "sc.exe");
 
                 Process.Start(new ProcessStartInfo(sc, $"stop {ServiceName}") {CreateNoWindow = true, UseShellExecute = false })?.WaitForExit();

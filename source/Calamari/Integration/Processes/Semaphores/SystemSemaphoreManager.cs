@@ -22,7 +22,6 @@ namespace Calamari.Integration.Processes.Semaphores
             this.initialWaitBeforeShowingLogMessage = (int)initialWaitBeforeShowingLogMessage.TotalMilliseconds;
         }
 
-#if NET40
         public IDisposable Acquire(string name, string waitMessage)
         {
             Semaphore semaphore;
@@ -54,8 +53,9 @@ namespace Calamari.Integration.Processes.Semaphores
             semaphoreSecurity.AddAccessRule(rule);
 
             bool createdNew;
-
-            var semaphore = new Semaphore(1, 1, name, out createdNew, semaphoreSecurity);
+            
+            var semaphore = new Semaphore(1, 1, name, out createdNew);
+            semaphore.SetAccessControl(semaphoreSecurity);
             return semaphore;
         }
 
@@ -74,59 +74,5 @@ namespace Calamari.Integration.Processes.Semaphores
                 semaphore.Dispose();
             }
         }
-#else
-         public IDisposable Acquire(string name, string waitMessage)
-        {
-            Mutex semaphore;
-            var globalName = $"Global\\{name}";
-            try
-            {
-                semaphore = CreateGlobalMutexAccessibleToEveryone(globalName);
-            }
-            catch (Exception)
-            {
-                semaphore = new Mutex(false, globalName);
-            }
-
-            if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
-            {
-                log.Verbose(waitMessage);
-                semaphore.WaitOne();
-            }
-
-            return new SystemSemaphoreReleaser(semaphore);
-        }
-
-        static Mutex CreateGlobalMutexAccessibleToEveryone(string name)
-        {
-            var semaphoreSecurity = new MutexSecurity();
-            var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-            var rule = new MutexAccessRule(everyone, MutexRights.FullControl, AccessControlType.Allow);
-
-            semaphoreSecurity.AddAccessRule(rule);
-
-            bool createdNew;
-
-            var mutex = new Mutex(false, name, out createdNew);
-            mutex.SetAccessControl(semaphoreSecurity);
-            return mutex;
-        }
-
-        class SystemSemaphoreReleaser : IDisposable
-        {
-            readonly Mutex semaphore;
-
-            public SystemSemaphoreReleaser(Mutex semaphore)
-            {
-                this.semaphore = semaphore;
-            }
-
-            public void Dispose()
-            {
-                semaphore.ReleaseMutex();
-                semaphore.Dispose();
-            }
-        }
-#endif
     }
 }

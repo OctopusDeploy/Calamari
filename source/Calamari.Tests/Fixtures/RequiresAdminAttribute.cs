@@ -29,12 +29,12 @@ namespace Calamari.Tests.Fixtures
     {
         public void BeforeTest(ITest testDetails)
         {
-            if (!Calamari.Util.CrossPlatform.IsWindows())
+            if (!CalamariEnvironment.IsRunningOnWindows)
             {
                 Assert.Ignore("Requires Windows");
             }
 
-#if NET40
+#if NETFX
             var decimalVersion = Environment.OSVersion.Version.Major + Environment.OSVersion.Version.Minor * 0.1;
             if(decimalVersion < 6.2)
             {
