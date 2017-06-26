@@ -57,7 +57,7 @@ namespace Calamari.Integration.FileSystem
         public string GetCurrentDirectory() => Directory.GetCurrentDirectory();
     }
 
-#if LONG_FILE_PATHS
+#if USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT
     public class LongPathsFile : IFile
     {
         public void Delete(string path) => Alphaleonis.Win32.Filesystem.File.Delete(path);
