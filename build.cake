@@ -132,8 +132,8 @@ Task("CopyToLocalPackages")
 
 private void DoPackage(string project, string framework, string version, string runtimeId = null)
 { 
-	var publishedTo = Path.Combine(publishDir, project, framework);
-	var projectDir = Path.Combine("./source", project);
+    var publishedTo = Path.Combine(publishDir, project, framework);
+    var projectDir = Path.Combine("./source", project);
     var packageId = $"{project}"; 
     var nugetPackProperties = new Dictionary<string,string>();
     var publishSettings = new DotNetCorePublishSettings
@@ -161,8 +161,8 @@ private void DoPackage(string project, string framework, string version, string 
         Properties = nugetPackProperties
     };
     DotNetCorePublish(projectDir, publishSettings);
-	var nuspec = $"{publishedTo}/{packageId}.nuspec";
-	CopyFile($"{projectDir}/{project}.nuspec", nuspec);
+    var nuspec = $"{publishedTo}/{packageId}.nuspec";
+    CopyFile($"{projectDir}/{project}.nuspec", nuspec);
     NuGetPack(nuspec, nugetPackSettings);
 }
 
