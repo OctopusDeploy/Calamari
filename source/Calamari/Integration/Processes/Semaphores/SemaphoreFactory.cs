@@ -4,8 +4,7 @@ namespace Calamari.Integration.Processes.Semaphores
     {
         public static ISemaphoreFactory Get()
         {
-            // TODO: Should we always use the system semaphore?
-            if (CalamariEnvironment.IsRunningOnMono)
+            if (CalamariEnvironment.IsRunningOnMono || CalamariEnvironment.IsRunningOnMac || CalamariEnvironment.IsRunningOnNix)
                 return new FileBasedSempahoreManager();
             return new SystemSemaphoreManager();
         }
