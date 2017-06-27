@@ -4,7 +4,7 @@ namespace Calamari.Integration.Processes.Semaphores
     {
         public static ISemaphoreFactory Get()
         {
-            if (CalamariEnvironment.IsRunningOnMono || CalamariEnvironment.IsRunningOnMac || CalamariEnvironment.IsRunningOnNix)
+            if (CalamariEnvironment.IsRunningOnMono)
                 return new FileBasedSempahoreManager();
             return new SystemSemaphoreManager();
         }
