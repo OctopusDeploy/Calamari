@@ -8,16 +8,25 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
     public class SemaphoreFactoryFixture
     {
         [Test]
-        [RequiresMono]
-        public void ReturnsFileBasedSemaphoreManagerForMono()
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void ReturnsFileBasedSemaphoreManagerForNix()
         {
-            if (!CalamariEnvironment.IsRunningOnMono)
-                Assert.Ignore("This test is designed to run on mono");
+            if (!CalamariEnvironment.IsRunningOnNix)
+                Assert.Ignore("This test is designed to run on Nix");
             var result = SemaphoreFactory.Get();
             Assert.That(result, Is.InstanceOf<FileBasedSempahoreManager>());
         }
 
-#if NETFX
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ReturnsFileBasedSemaphoreManagerForMac()
+        {
+            if (!CalamariEnvironment.IsRunningOnNix)
+                Assert.Ignore("This test is designed to run on Mac");
+            var result = SemaphoreFactory.Get();
+            Assert.That(result, Is.InstanceOf<FileBasedSempahoreManager>());
+        }
+
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ReturnsSystemSemaphoreManagerForWindows()
@@ -27,13 +36,6 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var result = SemaphoreFactory.Get();
             Assert.That(result, Is.InstanceOf<SystemSemaphoreManager>());
         }
-#else
-        [Test]
-        public void ReturnsSystemSemaphoreManagerForAllPlatformsUnderNetCore()
-        {
-            var result = SemaphoreFactory.Get();
-            Assert.That(result, Is.InstanceOf<SystemSemaphoreManager>());
-        }
-#endif
+      
     }
 }
