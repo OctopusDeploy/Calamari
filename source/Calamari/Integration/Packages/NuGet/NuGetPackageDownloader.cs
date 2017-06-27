@@ -14,7 +14,12 @@ namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetPackageDownloader
     {
-        private readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        private readonly ICalamariFileSystem fileSystem;
+
+        public NuGetPackageDownloader(ICalamariFileSystem fileSystem)
+        {
+            this.fileSystem = fileSystem;
+        }
 
         public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
         {

@@ -86,6 +86,9 @@ namespace Calamari.Tests.Fixtures.Retention
                 fileSystem.FileExists(journalEntry.ExtractedFrom).Returns(true);
                 fileSystem.DirectoryExists(journalEntry.ExtractedTo).Returns(true);
             }
+
+            Environment.SetEnvironmentVariable("TentacleHome", @"Q:\TentacleHome");
+
         }
 
 

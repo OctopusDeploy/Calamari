@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Net;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Tests.Fixtures.Integration.FileSystem;
+using NSubstitute;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -21,9 +24,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var feedUri = new Uri("http://www.myget.org");
             var feedCredentials = new CredentialCache();
             var targetFilePath = "FakeTargetFilePath";
+            var filesystem = Substitute.For<ICalamariFileSystem>();
 
             var calledCount = 0;
-            var downloader = new NuGetPackageDownloader();
+            var downloader = new NuGetPackageDownloader(filesystem);
             downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: 5, downloadAttemptBackoff: TimeSpan.Zero, action: (arg1, arg2, arg3, arg4, arg5) =>
             {
                 calledCount++;
@@ -43,11 +47,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var feedUri = new Uri("http://www.myget.org");
             var feedCredentials = new CredentialCache();
             var targetFilePath = "FakeTargetFilePath";
+            var filesystem = Substitute.For<ICalamariFileSystem>();
 
             var calledCount = 0;
             Assert.Throws<Exception>(() =>
             {
-                var downloader = new NuGetPackageDownloader();
+                var downloader = new NuGetPackageDownloader(filesystem);
                 downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: maxDownloadAttempts, downloadAttemptBackoff: TimeSpan.Zero,
                     action: (arg1, arg2, arg3, arg4, arg5) =>
                     {
