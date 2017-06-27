@@ -23,7 +23,7 @@ namespace Calamari.Integration.Packages.Download
     {
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        public static readonly string RootDirectory = Path.Combine(TentacleHome, "Files");
+        public static string RootDirectory => Path.Combine(TentacleHome, "Files");
         public static readonly string DownloadingExtension = ".downloading";
 
         private static string TentacleHome

@@ -36,6 +36,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             fileSystem.PurgeDirectory(tentacleHiddenDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(tentacleHiddenDirectory, "DeploymentJournal.xml" ));
+            Environment.SetEnvironmentVariable("TentacleHome", tentacleHiddenDirectory);
 
             variables = new VariableDictionary();
             variables.EnrichWithEnvironmentVariables();
