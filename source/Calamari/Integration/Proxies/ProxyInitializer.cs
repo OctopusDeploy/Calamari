@@ -1,8 +1,4 @@
-﻿#if NET40
-#else
-using NuGet.Configuration;
-#endif
-using System;
+﻿using System;
 using System.Net;
 
 namespace Calamari.Integration.Proxies
@@ -19,13 +15,8 @@ namespace Calamari.Integration.Proxies
             int.TryParse(proxyPortText, out proxyPort);
 
             var useSystemProxy = string.IsNullOrWhiteSpace(proxyHost);
-
             var proxy = useSystemProxy
-#if NET40
                 ? WebRequest.GetSystemWebProxy()
-#else
-                ? WebRequest.DefaultWebProxy
-#endif
                 : new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri);
 
             var useDefaultCredentials = string.IsNullOrWhiteSpace(proxyUsername);

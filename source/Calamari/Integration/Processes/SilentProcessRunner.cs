@@ -57,7 +57,6 @@ namespace Calamari.Integration.Processes
                     process.StartInfo.StandardOutputEncoding = oemEncoding;
                     process.StartInfo.StandardErrorEncoding = oemEncoding;
 
-#if CAN_RUN_PROCESS_AS
                     if (!string.IsNullOrEmpty(userName) && password != null)
                     {
                         process.StartInfo.UserName = userName;
@@ -69,7 +68,6 @@ namespace Calamari.Integration.Processes
                         // When running as a different user they are not inherited, so manually add them to the process.
                         AddTentacleEnvironmentVariablesToProcess(process.StartInfo);
                     }
-#endif
 
                     using (var outputWaitHandle = new AutoResetEvent(false))
                     using (var errorWaitHandle = new AutoResetEvent(false))
@@ -138,7 +136,6 @@ namespace Calamari.Integration.Processes
             }
         }
 
-#if CAN_RUN_PROCESS_AS
         static void AddTentacleEnvironmentVariablesToProcess(ProcessStartInfo processStartInfo)
         {
             foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process))
@@ -151,7 +148,6 @@ namespace Calamari.Integration.Processes
                 processStartInfo.EnvironmentVariables[key] = environmentVariable.Value.ToString();
             }
         }
-#endif
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GetCPInfoEx([MarshalAs(UnmanagedType.U4)] int CodePage, [MarshalAs(UnmanagedType.U4)] int dwFlags, out CPINFOEX lpCPInfoEx);

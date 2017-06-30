@@ -24,7 +24,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             if (!ScriptingEnvironment.IsNet45OrNewer())
                 throw new CommandException("ScriptCS scripts require the Roslyn CTP, which requires .NET framework 4.5");
 
-            var myPath = typeof(ScriptCSScriptEngine).GetTypeInfo().Assembly.Location;
+            var myPath = typeof(ScriptCSScriptEngine).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
             var executable = Path.GetFullPath(Path.Combine(parent, "ScriptCS", "scriptcs.exe"));
 

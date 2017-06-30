@@ -12,12 +12,12 @@ namespace Calamari.Tests.Helpers
     {
         protected CommandLine Calamari()
         {
-#if NET40
-            var calamariFullPath = typeof(DeployPackageCommand).GetTypeInfo().Assembly.FullLocalPath();
+#if NETFX
+            var calamariFullPath = typeof(DeployPackageCommand).Assembly.FullLocalPath();
             return new CommandLine(calamariFullPath);
 
 #else
-            var folder = Path.GetDirectoryName(typeof(Program).GetTypeInfo().Assembly.FullLocalPath());
+            var folder = Path.GetDirectoryName(typeof(Program).Assembly.FullLocalPath());
             var calamariFullPath = Path.Combine(folder, "Calamari.Tests.dll");
 
             if (!File.Exists(calamariFullPath))

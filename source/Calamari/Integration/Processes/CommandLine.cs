@@ -140,8 +140,7 @@ namespace Calamari.Integration.Processes
                 last -= 1;
             }
 
-#if NET40
-#else
+#if WORKAROUND_FOR_EMPTY_STRING_BUG
             // linux under bash on netcore empty "" gets eaten, hand "\0"
             // which gets through as a null string
             if(argValue == "")

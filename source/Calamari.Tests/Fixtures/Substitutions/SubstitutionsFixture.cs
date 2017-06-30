@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
     [TestFixture]
     public class SubstitutionsFixture : CalamariFixture
     {
-        static readonly CalamariPhysicalFileSystem FileSystem = CrossPlatform.IsWindows() ? (CalamariPhysicalFileSystem) new WindowsPhysicalFileSystem() : new NixCalamariPhysicalFileSystem();
+        static readonly CalamariPhysicalFileSystem FileSystem = CalamariEnvironment.IsRunningOnWindows ? (CalamariPhysicalFileSystem) new WindowsPhysicalFileSystem() : new NixCalamariPhysicalFileSystem();
 
         [Test]
         public void ShouldSubstitute()
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), encoding);
+            Assert.AreEqual(Encoding.Default, encoding);
         }
 
         [Test]
@@ -144,8 +144,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
-            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), encoding);
-            Assert.AreEqual(CrossPlatform.GetDefaultEncoding(), result.Encoding);
+            Assert.AreEqual(Encoding.Default, encoding);
+            Assert.AreEqual(Encoding.Default, result.Encoding);
         }
 
         [Test]

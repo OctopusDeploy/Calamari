@@ -32,7 +32,7 @@ namespace Calamari.Commands.Support
 
         public int Execute(string[] commandLineArguments)
         {
-            var executable = Path.GetFileNameWithoutExtension(typeof (HelpCommand).GetTypeInfo().Assembly.Location);
+            var executable = Path.GetFileNameWithoutExtension(typeof (HelpCommand).Assembly.Location);
 
             var commandName = commandLineArguments.FirstOrDefault();
 

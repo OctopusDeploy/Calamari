@@ -17,34 +17,13 @@ namespace Calamari
         /// Based on some internal methods used my mono itself
         /// https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Environment.cs
         /// </summary>
-        internal static bool IsRunningOnNix
-        {
-            get
-            {
-#if NET40
-                return (Environment.OSVersion.Platform == PlatformID.Unix) && !IsRunningOnMac;
-#else
-                return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-#endif
-            }
-        }
+        internal static bool IsRunningOnNix => (Environment.OSVersion.Platform == PlatformID.Unix) && !IsRunningOnMac;
 
-        public static bool IsRunningOnWindows
-        {
-            get
-            {
-#if NET40
-                return Environment.OSVersion.Platform == PlatformID.Win32NT ||
-                       Environment.OSVersion.Platform == PlatformID.Win32S ||
-                       Environment.OSVersion.Platform == PlatformID.Win32Windows ||
-                       Environment.OSVersion.Platform == PlatformID.WinCE;
-#else
-                return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#endif
-            }
-        }
+        public static bool IsRunningOnWindows => Environment.OSVersion.Platform == PlatformID.Win32NT ||
+                                                 Environment.OSVersion.Platform == PlatformID.Win32S ||
+                                                 Environment.OSVersion.Platform == PlatformID.Win32Windows ||
+                                                 Environment.OSVersion.Platform == PlatformID.WinCE;
 
-#if NET40
         //from https://github.com/jpobst/Pinta/blob/master/Pinta.Core/Managers/SystemManager.cs#L162
         //(MIT license)
         [DllImport("libc")]//From Managed.Windows.Forms/XplatUI
@@ -83,16 +62,5 @@ namespace Calamari
                 return false;
             }
         }
-#else
-
-        public static bool IsRunningOnMac
-        {
-            get
-            {
-
-                return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-            }
-        }
-#endif
     }
 }

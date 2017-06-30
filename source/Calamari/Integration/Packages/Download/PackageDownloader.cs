@@ -152,7 +152,7 @@ namespace Calamari.Integration.Packages.Download
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version)
         {
-            var name = packageId + "." + version + "_" + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + CrossPlatform.GetPackageExtension();
+            var name = packageId + "." + version + "_" + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg";
             return Path.Combine(cacheDirectory, name);
         }
 

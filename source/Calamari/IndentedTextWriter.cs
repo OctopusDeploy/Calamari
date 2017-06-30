@@ -146,12 +146,10 @@ namespace Calamari
         ///       Closes the document being written to.
         ///    </para>
         /// </devdoc>
-#if net40
         public override void Close()
         {
             writer.Close();
         }
-#endif
 
         /// <devdoc>
         ///    <para>[To be supplied.]</para>

@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
             Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
 
-#if NET40
+#if NETFX
             var nugetCommandLine = TestEnvironment.GetTestPath("NuGet", "NuGet.exe");
             Assert.That(File.Exists(nugetCommandLine), string.Format("NuGet.exe is not available (expected at {0}).", nugetCommandLine));
 
@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
 
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
-#if !NET40
+#if NETCORE
             var restoreResult = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("restore")
                 .Argument(target)
@@ -48,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var result = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("pack")
                 .Argument(target)
-#if NET40
+#if NETFX
                 .Argument("Version", version)
                 .Flag("NoPackageAnalysis")
                 .Argument("OutputDirectory", output)
