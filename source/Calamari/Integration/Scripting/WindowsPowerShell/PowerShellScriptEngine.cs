@@ -19,9 +19,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var workingDirectory = Path.GetDirectoryName(script.File);
 
             var executable = PowerShellBootstrapper.PathToPowerShellExecutable();
-            var bootstrapFile = PowerShellBootstrapper.PrepareBootstrapFile(script, variables);
+            /*
+                The script hash passed to PowerShellBootstrapper.FormatCommandArguments() to
+                catch race conditions where the script is overwritten.
+            */
+            string hash;
+            var bootstrapFile = PowerShellBootstrapper.PrepareBootstrapFile(script, variables, out hash);
             var debuggingBootstrapFile = PowerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
-            var arguments = PowerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
+            var arguments = PowerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables, hash);
 
             var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
             var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));

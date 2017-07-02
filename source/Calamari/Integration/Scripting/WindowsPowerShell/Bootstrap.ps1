@@ -1,4 +1,26 @@
-﻿param([string]$OctopusKey="")
+﻿param(
+    [string]$OctopusKey="",
+    [string]$ScriptHash
+)
+
+# This part of the template is replaced with the hash of the resulting 
+# script. So the process is:
+# 1. Build the template (i.e. replace all the other template placeholders other 
+#    than {{ScriptFileHash}})
+# 2. Compute the hash
+# 3. Save the hash in the {{ScriptFileHash}} placeholder
+#
+# The hash is then compared with the $ScriptHash parameter to ensure that we are executing the
+# the same script file, and not running into race conditions where the script was overwritten
+# (making the $OctopusKey parameter invalid, among other things).
+{{ScriptFileHash}}
+
+if ($ScriptHash -ne $ComputedStringHash)
+{
+    Throw "The $ScriptHash hash did not match the $ComputedStringHash. " +
+        "This most likely means that the script file was overwritten. " +
+        "Maybe you have two Tentacle instances on one target?"
+}
 
 {{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
