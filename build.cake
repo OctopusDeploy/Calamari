@@ -78,7 +78,7 @@ Task("Build")
 		DotNetCoreBuild("./source/Calamari.sln", new DotNetCoreBuildSettings
 		{
 			Configuration = configuration,
-			ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
+			ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
 		});
 	});
 
