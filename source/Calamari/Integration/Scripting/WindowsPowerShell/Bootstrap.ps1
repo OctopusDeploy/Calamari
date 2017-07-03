@@ -17,7 +17,7 @@
 
 if ($ScriptHash -ne $ComputedStringHash)
 {
-    Throw "The $ScriptHash hash did not match the $ComputedStringHash. " +
+    Write-Error "The $ScriptHash hash did not match the $ComputedStringHash. " +
         "This most likely means that the script file was overwritten. " +
         "Maybe you have two Tentacle instances on one target?"
 }
