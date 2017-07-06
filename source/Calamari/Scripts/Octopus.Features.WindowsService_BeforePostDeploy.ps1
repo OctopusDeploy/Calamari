@@ -73,7 +73,6 @@ if (!$serviceName)
 
 if ($arguments) 
 {
-	$arguments = (EscapeArgumentForConsole $arguments)
 	$binPath = (EscapeArgumentForConsole ((WrapInQuotes $fullPath) + " $arguments")) # An extra set of escaped quotes added around the exe	
 }
 else
