@@ -1,0 +1,44 @@
+using System;
+using System.IO;
+using Calamari.Deployment;
+using Calamari.Tests.Helpers;
+using NUnit.Framework;
+using Assent;
+using Assent.Reporters;
+using Assent.Reporters.DiffPrograms;
+
+namespace Calamari.Tests.Fixtures.Deployment
+{
+    [TestFixture]
+    [Category(TestEnvironment.CompatibleOS.Windows)]
+    public class DeployWindowsServiceArgumentsFixture : DeployWindowsServiceAbstractFixture
+    {
+        protected override string ServiceName => "DumpArgs";
+
+        protected override string PackageName => "DumpArgs";
+
+        [Test]
+        public void ShouldDeployAndInstallWhenThereAreArguments()
+        {
+            Variables[SpecialVariables.Action.WindowsService.Arguments] = "--SomeArg -Foo \"path somewhere\"";
+            RunDeployment(() =>
+            {
+                var argsFilePath = Path.Combine(StagingDirectory, PackageName, "1.0.0", "Args.txt");
+                Assert.IsTrue(File.Exists(argsFilePath));
+                this.Assent(File.ReadAllText(argsFilePath), TestEnvironment.AssentConfiguration);
+            });
+        }
+
+        [Test]
+        public void ShouldDeployAndInstallWhenThereAreSpacesInArguments()
+        {
+            Variables[SpecialVariables.Action.WindowsService.Arguments] = "\"Argument with Space\" ArgumentWithoutSpace";
+            RunDeployment(() =>
+            {
+                var argsFilePath = Path.Combine(StagingDirectory, PackageName, "1.0.0", "Args.txt");
+                Assert.IsTrue(File.Exists(argsFilePath));
+                this.Assent(File.ReadAllText(argsFilePath), TestEnvironment.AssentConfiguration);
+            });
+        }
+    }
+}

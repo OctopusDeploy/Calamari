@@ -16,21 +16,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             RunDeployment();
         }
-
-        [Test]
-        public void ShouldDeployAndInstallWhenThereAreArguments()
-        {
-            Variables[SpecialVariables.Action.WindowsService.Arguments] = "--SomeArg";
-            RunDeployment();
-        }
-
-        [Test]
-        public void ShouldDeployAndInstallWhenThereAreSpacesInArguments()
-        {
-            Variables[SpecialVariables.Action.WindowsService.Arguments] = "\"Argument with Space\" ArgumentWithoutSpace";
-            RunDeployment();
-        }
-
+        
         [Test]
         public void ShouldDeployAndInstallWhenThereAreSpacesInThePath()
         {
