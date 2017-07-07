@@ -12,8 +12,6 @@ namespace Calamari.Tests.Fixtures.Deployment
 {
     public abstract class DeployWindowsServiceAbstractFixture : DeployPackageFixture
     {
-        private const string PackageName = "Acme.Service";
-
         [SetUp]
         public override void SetUp()
         {
@@ -27,6 +25,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             DeleteExistingService();
             base.CleanUp();
         }
+
+        protected virtual string PackageName => "Acme.Service";
 
         protected abstract string ServiceName { get; }
 
@@ -43,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
         }
 
-        protected void RunDeployment()
+        protected void RunDeployment(Action extraAsserts = null)
         {
             if (string.IsNullOrEmpty(Variables[SpecialVariables.Package.EnabledFeatures]))
                 Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.WindowsService";
@@ -71,6 +71,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                     Assert.NotNull(installedService, "Service is installed");
                     Assert.AreEqual(ServiceControllerStatus.Running, installedService.Status);
                 }
+
+                extraAsserts?.Invoke();
             }
         }
 
