@@ -145,11 +145,11 @@ if (!(Test-Path $NUGET_EXE)) {
 
 # Try download NuGet.exe if not exists
 if (!(Test-Path $NUGET_EXE)) {
-    Write-Verbose -Message "Downloading NuGet.exe..."
+    Write-Verbose -Message "Downloading NuGet.exe from $NUGET_URL to $NUGET_EXE..."
     try {
         (New-Object System.Net.WebClient).DownloadFile($NUGET_URL, $NUGET_EXE)
     } catch {
-        Throw "Could not download NuGet.exe."
+        Throw "Could not download NuGet.exe from $NUGET_URL to $NUGET_EXE " + $_.Exception.Message
     }
 }
 
