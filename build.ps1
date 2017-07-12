@@ -88,6 +88,7 @@ if(!$PSScriptRoot){
 }
 
 $TOOLS_DIR = Join-Path $PSScriptRoot "tools"
+$ARTIFACTS_DIR = Join-Path $PSScriptRoot "artifacts"
 $ADDINS_DIR = Join-Path $TOOLS_DIR "addins"
 $MODULES_DIR = Join-Path $TOOLS_DIR "modules"
 $NUGET_EXE = Join-Path $TOOLS_DIR "nuget.exe"
@@ -122,6 +123,12 @@ if($WhatIf.IsPresent) {
 if ((Test-Path $PSScriptRoot) -and !(Test-Path $TOOLS_DIR)) {
     Write-Verbose -Message "Creating tools directory..."
     New-Item -Path $TOOLS_DIR -Type directory | out-null
+}
+
+# Make sure artifacts folder exists
+if ((Test-Path $PSScriptRoot) -and !(Test-Path $ARTIFACTS_DIR)) {
+    Write-Verbose -Message "Creating artifacts directory..."
+    New-Item -Path $ARTIFACTS_DIR -Type directory | out-null
 }
 
 # Make sure that packages.config exist.
