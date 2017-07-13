@@ -11,7 +11,7 @@ namespace Calamari.Integration.Packages
     {
         public string[] Extensions
         {
-            get { return extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
+            get { return Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
         }
 
         public PackageMetadata GetMetadata(string packageFile)
@@ -61,7 +61,7 @@ namespace Calamari.Integration.Packages
         }
 
         /// Order is important here since .tar.gz should be checked for before .gz
-        private readonly List<IPackageExtractor> extractors = new List<IPackageExtractor>
+        protected virtual IList<IPackageExtractor> Extractors => new List<IPackageExtractor>
         {
             new NupkgExtractor(),
             new TarGzipPackageExtractor(),
@@ -73,12 +73,12 @@ namespace Calamari.Integration.Packages
 
         private IPackageExtractor ExtensionWithHashSuffix(string packageFile)
         {
-            return extractors.FirstOrDefault(p => p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + "-[a-z0-9\\-]*$").IsMatch(packageFile)));
+            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + "-[a-z0-9\\-]*$").IsMatch(packageFile)));
         }
 
         private IPackageExtractor ExtensionSuffix(string packageFile)
         {
-            return extractors.FirstOrDefault(
+            return Extractors.FirstOrDefault(
                 p => p.Extensions.Any(ext =>
                     packageFile.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
         }

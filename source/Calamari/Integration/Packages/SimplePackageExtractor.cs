@@ -11,7 +11,7 @@ namespace Calamari.Integration.Packages
 {
     public abstract class SimplePackageExtractor : IPackageExtractor
     {
-        public PackageMetadata GetMetadata(string packageFile)
+        public virtual PackageMetadata GetMetadata(string packageFile)
         {
             var pkg = new PackageMetadata();
 
@@ -34,7 +34,7 @@ namespace Calamari.Integration.Packages
             return pkg;
         }
 
-        private string ExtractMatchingExtension(string packageFile, PackageMetadata pkg)
+        protected string ExtractMatchingExtension(string packageFile, PackageMetadata pkg)
         {
             var fileName = Path.GetFileName(packageFile);
             var matchingExtension = Extensions.FirstOrDefault(fileName.EndsWith);

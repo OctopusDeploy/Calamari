@@ -287,6 +287,11 @@
             {
                 public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
             }
+
+            public static class Java
+            {
+                public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
+            }
         }
 
         public static class Machine
