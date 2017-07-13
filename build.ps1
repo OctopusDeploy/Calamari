@@ -88,6 +88,7 @@ if(!$PSScriptRoot){
 }
 
 $TOOLS_DIR = Join-Path $PSScriptRoot "tools"
+$ARTIFACTS_DIR = Join-Path $PSScriptRoot "artifacts"
 $ADDINS_DIR = Join-Path $TOOLS_DIR "addins"
 $MODULES_DIR = Join-Path $TOOLS_DIR "modules"
 $NUGET_EXE = Join-Path $TOOLS_DIR "nuget.exe"
@@ -124,6 +125,12 @@ if ((Test-Path $PSScriptRoot) -and !(Test-Path $TOOLS_DIR)) {
     New-Item -Path $TOOLS_DIR -Type directory | out-null
 }
 
+# Make sure artifacts folder exists
+if ((Test-Path $PSScriptRoot) -and !(Test-Path $ARTIFACTS_DIR)) {
+    Write-Verbose -Message "Creating artifacts directory..."
+    New-Item -Path $ARTIFACTS_DIR -Type directory | out-null
+}
+
 # Make sure that packages.config exist.
 if (!(Test-Path $PACKAGES_CONFIG)) {
     Write-Verbose -Message "Downloading packages.config..."
@@ -145,11 +152,11 @@ if (!(Test-Path $NUGET_EXE)) {
 
 # Try download NuGet.exe if not exists
 if (!(Test-Path $NUGET_EXE)) {
-    Write-Verbose -Message "Downloading NuGet.exe..."
+    Write-Verbose -Message "Downloading NuGet.exe from $NUGET_URL to $NUGET_EXE..."
     try {
         (New-Object System.Net.WebClient).DownloadFile($NUGET_URL, $NUGET_EXE)
     } catch {
-        Throw "Could not download NuGet.exe."
+        Throw "Could not download NuGet.exe from $NUGET_URL to $NUGET_EXE " + $_.Exception.Message
     }
 }
 

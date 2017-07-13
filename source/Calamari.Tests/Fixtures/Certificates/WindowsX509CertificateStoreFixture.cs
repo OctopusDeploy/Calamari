@@ -1,10 +1,13 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
+using System.Threading;
 using Calamari.Integration.Certificates;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
@@ -42,6 +45,118 @@ namespace Calamari.Tests.Fixtures.Certificates
             }
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
+        }
+
+        [Test(Description = "This test proves, to a degree of certainty, the WindowsX509CertificateStore is safe for concurrent operations. We were seeing exceptions when multiple processes attempted to get/set private key ACLs at the same time.")]
+        public void SafeForConcurrentOperations()
+        {
+            var maxTimeAllowedForTest = TimeSpan.FromSeconds(20);
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                using (var cts = new CancellationTokenSource(maxTimeAllowedForTest))
+                {
+                    var cancellationToken = cts.Token;
+                    var sampleCertificate = SampleCertificate.SampleCertificates[SampleCertificate.CngPrivateKeyId];
+
+                    var numThreads = 20;
+                    var numIterationsPerThread = 1;
+                    var exceptions = new BlockingCollection<Exception>();
+                    void Log(string message) => Console.WriteLine($"{sw.Elapsed} {Thread.CurrentThread.Name}: {message}");
+
+                    WindowsX509CertificateStore.ImportCertificateToStore(
+                        Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
+                        StoreLocation.LocalMachine, "My", sampleCertificate.HasPrivateKey);
+
+                    CountdownEvent allThreadsReady = null;
+                    CountdownEvent allThreadsFinished = null;
+                    ManualResetEventSlim goForIt = new ManualResetEventSlim(false);
+
+                    Thread[] CreateThreads(int number, string name, Action action) => Enumerable.Range(0, number)
+                        .Select(i => new Thread(() =>
+                            {
+                                allThreadsReady.Signal();
+                                goForIt.Wait(cancellationToken);
+                                for (int j = 0; j < numIterationsPerThread; j++)
+                                {
+                                    try
+                                    {
+                                        Log($"{name} {j}");
+                                        action();
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Log(e.ToString());
+                                        exceptions.Add(e);
+                                    }
+                                }
+                                allThreadsFinished.Signal();
+                            })
+                            {Name = $"{name}#{i}"}).ToArray();
+
+                    var threads =
+                        CreateThreads(numThreads, "ImportCertificateToStore", () =>
+                            {
+                                WindowsX509CertificateStore.ImportCertificateToStore(
+                                    Convert.FromBase64String(sampleCertificate.Base64Bytes()),
+                                    sampleCertificate.Password,
+                                    StoreLocation.LocalMachine, "My", sampleCertificate.HasPrivateKey);
+                            })
+                            .Concat(CreateThreads(numThreads, "AddPrivateKeyAccessRules", () =>
+                            {
+                                WindowsX509CertificateStore.AddPrivateKeyAccessRules(
+                                    sampleCertificate.Thumbprint, StoreLocation.LocalMachine, "My",
+                                    new List<PrivateKeyAccessRule>
+                                    {
+                                        new PrivateKeyAccessRule("BUILTIN\\Users", PrivateKeyAccess.FullControl)
+                                    });
+                            }))
+                            .Concat(CreateThreads(numThreads, "GetPrivateKeySecurity", () =>
+                            {
+                                var unused = WindowsX509CertificateStore.GetPrivateKeySecurity(
+                                    sampleCertificate.Thumbprint, StoreLocation.LocalMachine, "My");
+                            })).ToArray();
+
+                    allThreadsReady = new CountdownEvent(threads.Length);
+                    allThreadsFinished = new CountdownEvent(threads.Length);
+
+                    foreach (var thread in threads)
+                    {
+                        thread.Start();
+                    }
+
+                    allThreadsReady.Wait(cancellationToken);
+                    goForIt.Set();
+                    allThreadsFinished.Wait(cancellationToken);
+
+                    foreach (var thread in threads)
+                    {
+                        Log($"Waiting for {thread.Name} to join...");
+                        if (!thread.Join(TimeSpan.FromSeconds(1)))
+                        {
+                            Log($"Aborting {thread.Name}");
+                            thread.Abort();
+                        }
+                    }
+
+                    sw.Stop();
+
+                    sampleCertificate.EnsureCertificateNotInStore("My", StoreLocation.LocalMachine);
+
+                    if (exceptions.Any())
+                        throw new AssertionException(
+                            $"The following exceptions were thrown during the test causing it to fail:{Environment.NewLine}{string.Join($"{Environment.NewLine}{new string('=', 80)}", exceptions.GroupBy(ex => ex.Message).Select(g => g.First().ToString()))}");
+
+                    if (sw.Elapsed > maxTimeAllowedForTest)
+                        throw new TimeoutException(
+                            $"This test exceeded the {maxTimeAllowedForTest} allowed for this test to complete.");
+                }
+
+            }
+            catch (OperationCanceledException)
+            {
+                throw new TimeoutException($"This test took longer than {maxTimeAllowedForTest} to run");
+            }
         }
 
         [Test]
