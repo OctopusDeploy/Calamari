@@ -124,17 +124,13 @@
 //
 
 using System;
-#if HAS_SERIALIZABLE_EXCEPTIONS
 using System.Runtime.Serialization;
 using System.Security.Permissions;
-#endif
 
 
 namespace Calamari.Commands.Support
 {
-#if HAS_SERIALIZABLE_EXCEPTIONS
     [Serializable]
-#endif
     public class OptionException : Exception
     {
         readonly string option;
@@ -160,7 +156,6 @@ namespace Calamari.Commands.Support
             get { return option; }
         }
 
-#if HAS_SERIALIZABLE_EXCEPTIONS
         protected OptionException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -173,6 +168,5 @@ namespace Calamari.Commands.Support
             base.GetObjectData(info, context);
             info.AddValue("OptionName", option);
         }
-#endif
     }
 }

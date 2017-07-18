@@ -61,11 +61,7 @@ namespace Calamari.Util
 
         Aes GetCryptoProvider(byte[] iv = null)
         {
-#if CAPI_AES
             var provider = new AesCryptoServiceProvider();
-#else
-            var provider = Aes.Create();
-#endif
             provider.Mode = CipherMode.CBC;
             provider.Padding = PaddingMode.PKCS7;
             provider.KeySize = 128;

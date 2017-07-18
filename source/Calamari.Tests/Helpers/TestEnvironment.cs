@@ -9,7 +9,7 @@ namespace Calamari.Tests.Helpers
 {
     public static class TestEnvironment 
     {
-        public static readonly string AssemblyLocalPath = typeof(TestEnvironment).GetTypeInfo().Assembly.FullLocalPath();
+        public static readonly string AssemblyLocalPath = typeof(TestEnvironment).Assembly.FullLocalPath();
         public static readonly string CurrentWorkingDirectory = Path.GetDirectoryName(AssemblyLocalPath);
         public static readonly bool IsCI = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TEAMCITY_VERSION"));
 

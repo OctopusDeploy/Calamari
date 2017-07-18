@@ -76,7 +76,7 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        public string GetEvironmentExpandedPath(string variableName, string defaultValue = null)
+        public string GetEnvironmentExpandedPath(string variableName, string defaultValue = null)
         {
             return CrossPlatform.ExpandPathEnvironmentVariables(Get(variableName, defaultValue));
         }

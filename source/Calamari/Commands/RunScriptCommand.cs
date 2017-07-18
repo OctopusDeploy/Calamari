@@ -59,9 +59,9 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find package file: " + packageFile);
 
             var extractor = new GenericPackageExtractor();
-            extractor.GetExtractor(packageFile).Extract(packageFile, CrossPlatform.GetCurrentDirectory(), true);
+            extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);
 
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, CrossPlatform.GetCurrentDirectory());
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
         }
 
         private void SubstituteVariablesInScript(CalamariVariableDictionary variables)

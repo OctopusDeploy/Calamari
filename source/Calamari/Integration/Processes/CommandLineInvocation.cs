@@ -1,3 +1,4 @@
+using System;
 using System.Security;
 using Calamari.Util;
 
@@ -33,7 +34,7 @@ namespace Calamari.Integration.Processes
         /// The initial working-directory for the invocation.
         /// Defaults to Environment.CurrentDirectory
         /// </summary>
-        public string WorkingDirectory => workingDirectory ?? CrossPlatform.GetCurrentDirectory();
+        public string WorkingDirectory => workingDirectory ?? Environment.CurrentDirectory;
 
         public override string ToString()
         {

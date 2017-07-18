@@ -32,15 +32,13 @@ namespace Calamari.Util.Environments
 
         static IEnumerable<string> GetEnvironmentVars()
         {
-#if NET40
             yield return SafelyGet(() => $"OperatingSystem: {Environment.OSVersion}");
             yield return SafelyGet(() => $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
             yield return SafelyGet(() => $"Is64BitProcess: {Environment.Is64BitProcess}");
-#else
-            yield return SafelyGet(() => $"OperatingSystem: {System.Runtime.InteropServices.RuntimeInformation.OSDescription.ToString()}");
-            yield return SafelyGet(() => $"OsBitVersion: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()}");
-#endif
-            yield return SafelyGet(() => $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
+            if(CalamariEnvironment.IsRunningOnWindows)
+                yield return SafelyGet(() => $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
+            else
+                yield return SafelyGet(() => $"CurrentUser: {Environment.UserName}");
             yield return SafelyGet(() => $"MachineName: {Environment.MachineName}");
             yield return SafelyGet(() => $"ProcessorCount: {Environment.ProcessorCount}");
         }

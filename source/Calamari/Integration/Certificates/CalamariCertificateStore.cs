@@ -65,11 +65,7 @@ namespace Calamari.Integration.Certificates
             }
             finally
             {
-#if NET40
                 store.Close();
-#else
-                store.Dispose();
-#endif
             }
         }
 
@@ -101,7 +97,7 @@ namespace Calamari.Integration.Certificates
                             message.AppendLine("However, the current user does not appear to be able to access the private key file, or it does not exist.");
                         }
 
-                        message.AppendLine("Attempting to grant the user " + CrossPlatform.GetUserDomainName() + "\\" + CrossPlatform.GetUserName() + " access to the certificate private key directory.");
+                        message.AppendLine("Attempting to grant the user " + Environment.UserDomainName + "\\" + Environment.UserName + " access to the certificate private key directory.");
 
                         try
                         {
@@ -137,11 +133,7 @@ namespace Calamari.Integration.Certificates
         {
             try
             {
-#if NET40
                 return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
-#else
-                return certificate2.HasPrivateKey && (certificate2.GetECDsaPrivateKey() != null || certificate2.GetRSAPrivateKey() != null);
-#endif
             }
             catch (Exception)
             {
@@ -240,13 +232,13 @@ namespace Calamari.Integration.Certificates
 
             static string GetKeyFileDirectory(string keyFileName)
             {
-                string folderPath = CrossPlatform.GetCommonApplicationDataFolderPath();
+                string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
                 string text = Path.Combine(folderPath, "Microsoft", "Crypto", "RSA", "MachineKeys");
                 string[] array = Directory.GetFiles(text, keyFileName);
                 string result;
                 if (array.Length <= 0)
                 {
-                    string folderPath2 = CrossPlatform.GetApplicationDataFolderPath();
+                    string folderPath2 = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                     string path = Path.Combine(folderPath2, "Microsoft", "Crypto", "RSA");
                     array = Directory.GetDirectories(path);
                     if (array.Length > 0)

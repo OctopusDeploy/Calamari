@@ -6,7 +6,7 @@ namespace Calamari.Integration.FileSystem
     {
         public WindowsPhysicalFileSystem()
         {
-#if LONG_FILE_PATHS
+#if USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT
             File = new LongPathsFile();
             Directory = new LongPathsDirectory();
 #endif

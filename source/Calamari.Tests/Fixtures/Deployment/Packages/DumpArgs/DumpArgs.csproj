@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A sample project containing a Windows service.</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Authors>ACME Corporation</Authors>
+    <TargetFramework>net40</TargetFramework>
+    <AssemblyName>DumpArgs</AssemblyName>
+    <PackageId>DumpArgs</PackageId>
+    <NuspecFile>DumpArgs.nuspec</NuspecFile>
+    <NuspecProperties>Version=$(Version)</NuspecProperties>
+  </PropertyGroup>
+</Project>

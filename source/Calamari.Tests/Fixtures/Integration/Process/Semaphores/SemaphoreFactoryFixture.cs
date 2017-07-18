@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             Assert.That(result, Is.InstanceOf<FileBasedSempahoreManager>());
         }
 
-#if NET40
+#if NETFX
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ReturnsSystemSemaphoreManagerForWindows()

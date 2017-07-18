@@ -61,7 +61,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static bool IsManifest(string path)
         {
-            return Path.GetExtension(path).Equals(CrossPlatform.GetManifestExtension(), StringComparison.OrdinalIgnoreCase);
+            return Path.GetExtension(path).Equals(".nuspec", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

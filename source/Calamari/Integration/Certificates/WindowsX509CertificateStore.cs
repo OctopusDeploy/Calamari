@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Integration.Certificates.WindowsNative;
+using Calamari.Integration.Processes.Semaphores;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
@@ -18,30 +19,42 @@ namespace Calamari.Integration.Certificates
 {
     public class WindowsX509CertificateStore
     {
+        public static readonly ISemaphoreFactory Semaphores = SemaphoreFactory.Get();
+        public static readonly string SemaphoreName = nameof(WindowsX509CertificateStore);
+
         const string IntermediateAuthorityStoreName = "CA";
-        public const string RootAuthorityStoreName = "Root";
+        public static readonly string RootAuthorityStoreName = "Root";
+
+        private static IDisposable AcquireSemaphore()
+        {
+            return Semaphores.Acquire(SemaphoreName, "Another process is working with the certificate store, please wait...");
+        }
 
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
             string storeName, bool privateKeyExportable)
         {
-            CertificateSystemStoreLocation systemStoreLocation;
-            bool useUserKeyStore;
-
-            switch (storeLocation)
+            using (AcquireSemaphore())
             {
-                case StoreLocation.CurrentUser:
-                    systemStoreLocation = CertificateSystemStoreLocation.CurrentUser;
-                    useUserKeyStore = true;
-                    break;
-                case StoreLocation.LocalMachine:
-                    systemStoreLocation = CertificateSystemStoreLocation.LocalMachine;
-                    useUserKeyStore = false;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(storeLocation), storeLocation, null);
-            }
+                CertificateSystemStoreLocation systemStoreLocation;
+                bool useUserKeyStore;
 
-            ImportPfxToStore(systemStoreLocation, storeName, pfxBytes, password, useUserKeyStore, privateKeyExportable);
+                switch (storeLocation)
+                {
+                    case StoreLocation.CurrentUser:
+                        systemStoreLocation = CertificateSystemStoreLocation.CurrentUser;
+                        useUserKeyStore = true;
+                        break;
+                    case StoreLocation.LocalMachine:
+                        systemStoreLocation = CertificateSystemStoreLocation.LocalMachine;
+                        useUserKeyStore = false;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(storeLocation), storeLocation, null);
+                }
+
+                ImportPfxToStore(systemStoreLocation, storeName, pfxBytes, password, useUserKeyStore,
+                    privateKeyExportable);
+            }
         }
 
         /// <summary>
@@ -50,62 +63,75 @@ namespace Calamari.Integration.Certificates
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, string userName,
             string storeName, bool privateKeyExportable)
         {
-            var account = new NTAccount(userName);
-            var sid = (SecurityIdentifier)account.Translate(typeof(SecurityIdentifier));
-            var userStoreName = sid + "\\" + storeName;
+            using (AcquireSemaphore())
+            {
+                var account = new NTAccount(userName);
+                var sid = (SecurityIdentifier) account.Translate(typeof(SecurityIdentifier));
+                var userStoreName = sid + "\\" + storeName;
 
-            // Note we use the machine key-store. There is no way to store the private-key in 
-            // another user's key-store.  
-            var certificate = ImportPfxToStore(CertificateSystemStoreLocation.Users, userStoreName, pfxBytes, password, false, privateKeyExportable);
+                // Note we use the machine key-store. There is no way to store the private-key in 
+                // another user's key-store.  
+                var certificate = ImportPfxToStore(CertificateSystemStoreLocation.Users, userStoreName, pfxBytes,
+                    password, false, privateKeyExportable);
 
-            // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-            var keySecurity = new[] { new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl) };
-            AddPrivateKeyAccessRules(keySecurity, certificate);
+                // Because we have to store the private-key in the machine key-store, we must grant the user access to it
+                var keySecurity = new[] {new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl)};
+                AddPrivateKeyAccessRules(keySecurity, certificate);
+            }
         }
 
         public static void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName,
             ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
-            var store = new X509Store(storeName, storeLocation);
-            store.Open(OpenFlags.ReadWrite);
+            using (AcquireSemaphore())
+            {
+                var store = new X509Store(storeName, storeLocation);
+                store.Open(OpenFlags.ReadWrite);
 
-            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
 
-            if (found.Count == 0)
-                throw new Exception($"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
+                if (found.Count == 0)
+                    throw new Exception(
+                        $"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
 
-            var certificate = new SafeCertContextHandle(found[0].Handle, false);
+                var certificate = new SafeCertContextHandle(found[0].Handle, false);
 
-            if (!certificate.HasPrivateKey())
-                throw new Exception("Certificate does not have a private-key");
+                if (!certificate.HasPrivateKey())
+                    throw new Exception("Certificate does not have a private-key");
 
-            AddPrivateKeyAccessRules(privateKeyAccessRules, certificate);
+                AddPrivateKeyAccessRules(privateKeyAccessRules, certificate);
 
-            store.Close();
+                store.Close();
+            }
         }
 
         public static CryptoKeySecurity GetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName)
         {
-            var store = new X509Store(storeName, storeLocation);
-            store.Open(OpenFlags.ReadOnly);
+            using (AcquireSemaphore())
+            {
+                var store = new X509Store(storeName, storeLocation);
+                store.Open(OpenFlags.ReadOnly);
 
-            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-            store.Close();
+                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                store.Close();
 
-            if (found.Count == 0)
-                throw new Exception($"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
+                if (found.Count == 0)
+                    throw new Exception(
+                        $"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
 
-            var certificate = new SafeCertContextHandle(found[0].Handle, false);
+                var certificate = new SafeCertContextHandle(found[0].Handle, false);
 
-            if (!certificate.HasPrivateKey())
-                throw new Exception("Certificate does not have a private-key");
+                if (!certificate.HasPrivateKey())
+                    throw new Exception("Certificate does not have a private-key");
 
-            var keyProvInfo = certificate.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
+                var keyProvInfo =
+                    certificate.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
 
-            // If it is a CNG key
-            return keyProvInfo.dwProvType == 0
-                ? GetCngPrivateKeySecurity(certificate)
-                : GetCspPrivateKeySecurity(certificate);
+                // If it is a CNG key
+                return keyProvInfo.dwProvType == 0
+                    ? GetCngPrivateKeySecurity(certificate)
+                    : GetCspPrivateKeySecurity(certificate);
+            }
         }
 
         /// <summary>
@@ -113,64 +139,68 @@ namespace Calamari.Integration.Certificates
         /// </summary>
         public static void RemoveCertificateFromStore(string thumbprint, StoreLocation storeLocation, string storeName)
         {
-            var store = new X509Store(storeName, storeLocation);
-            store.Open(OpenFlags.ReadWrite);
-
-            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-
-            if (found.Count == 0)
-                return;
-
-            var certificate = found[0];
-            var certificateHandle = new SafeCertContextHandle(found[0].Handle, false);
-
-            // If the certificate has a private-key, remove it
-            if (certificateHandle.HasPrivateKey())
+            using (AcquireSemaphore())
             {
-                var keyProvInfo = certificateHandle.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
+                var store = new X509Store(storeName, storeLocation);
+                store.Open(OpenFlags.ReadWrite);
 
-                // If it is a CNG key
-                if (keyProvInfo.dwProvType == 0)
+                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+
+                if (found.Count == 0)
+                    return;
+
+                var certificate = found[0];
+                var certificateHandle = new SafeCertContextHandle(found[0].Handle, false);
+
+                // If the certificate has a private-key, remove it
+                if (certificateHandle.HasPrivateKey())
                 {
-                    try
-                    {
-                        var key = CertificatePal.GetCngPrivateKey(certificateHandle);
-                        CertificatePal.DeleteCngKey(key);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("Exception while deleting CNG private key", ex);
-                    }
-                }
-                else // CAPI key
-                {
-                    try
-                    {
-                        IntPtr providerHandle;
-                        var acquireContextFlags = CryptAcquireContextFlags.Delete | CryptAcquireContextFlags.Silent;
-                        if (storeLocation == StoreLocation.LocalMachine)
-                            acquireContextFlags = acquireContextFlags | CryptAcquireContextFlags.MachineKeySet;
+                    var keyProvInfo =
+                        certificateHandle.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
 
-                        var success = Native.CryptAcquireContext(out providerHandle, keyProvInfo.pwszContainerName,
-                            keyProvInfo.pwszProvName,
-                            keyProvInfo.dwProvType, acquireContextFlags);
-
-                        if (!success)
-                            throw new CryptographicException(Marshal.GetLastWin32Error());
-                    }
-                    catch (Exception ex)
+                    // If it is a CNG key
+                    if (keyProvInfo.dwProvType == 0)
                     {
-                        // Swallow keyset does not exist
-                        if (!(ex is CryptographicException && ex.Message.Contains("Keyset does not exist")))
+                        try
                         {
-                            throw new Exception("Exception while deleting CAPI private key", ex);
+                            var key = CertificatePal.GetCngPrivateKey(certificateHandle);
+                            CertificatePal.DeleteCngKey(key);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception("Exception while deleting CNG private key", ex);
+                        }
+                    }
+                    else // CAPI key
+                    {
+                        try
+                        {
+                            IntPtr providerHandle;
+                            var acquireContextFlags = CryptAcquireContextFlags.Delete | CryptAcquireContextFlags.Silent;
+                            if (storeLocation == StoreLocation.LocalMachine)
+                                acquireContextFlags = acquireContextFlags | CryptAcquireContextFlags.MachineKeySet;
+
+                            var success = Native.CryptAcquireContext(out providerHandle, keyProvInfo.pwszContainerName,
+                                keyProvInfo.pwszProvName,
+                                keyProvInfo.dwProvType, acquireContextFlags);
+
+                            if (!success)
+                                throw new CryptographicException(Marshal.GetLastWin32Error());
+                        }
+                        catch (Exception ex)
+                        {
+                            // Swallow keyset does not exist
+                            if (!(ex is CryptographicException && ex.Message.Contains("Keyset does not exist")))
+                            {
+                                throw new Exception("Exception while deleting CAPI private key", ex);
+                            }
                         }
                     }
                 }
-            }
 
-            store.Remove(certificate);
-            store.Close();
+                store.Remove(certificate);
+                store.Close();
+            }
         }
 
         public static ICollection<string> GetStoreNames(StoreLocation location)

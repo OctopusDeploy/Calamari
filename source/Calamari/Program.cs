@@ -23,7 +23,7 @@ namespace Calamari
 
         static int Main(string[] args)
         {
-            var program = new Program("Calamari", typeof(Program).GetTypeInfo().Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation());
+            var program = new Program("Calamari", typeof(Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation());
             return program.Execute(args);
         }
 
@@ -52,7 +52,7 @@ namespace Calamari
 
         protected virtual void RegisterCommandAssemblies()
         {
-            CommandLocator.Instance.RegisterAssemblies(typeof(Program).GetTypeInfo().Assembly);
+            CommandLocator.Instance.RegisterAssemblies(typeof(Program).Assembly);
         }
 
         private static string GetFirstArgument(string[] args)

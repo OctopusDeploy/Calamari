@@ -35,7 +35,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             try
             {
-                var systemFolder = CrossPlatform.GetSystemFolderPath();
+                var systemFolder = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 powerShellPath = Path.Combine(systemFolder, @"WindowsPowershell\v1.0\", EnvPowerShellPath);
 
                 if (!File.Exists(powerShellPath))

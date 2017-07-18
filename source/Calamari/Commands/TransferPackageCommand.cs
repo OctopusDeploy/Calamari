@@ -35,7 +35,7 @@ namespace Calamari.Commands
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-            var packageFile = variables.GetEvironmentExpandedPath(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
+            var packageFile = variables.GetEnvironmentExpandedPath(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
             if(string.IsNullOrEmpty(packageFile))
             {
                 throw new CommandException($"No package file was specified. Please provide `{SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath}` variable");

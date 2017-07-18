@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -43,7 +44,7 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.ServiceFabric.CopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
 
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
-            var targetPath = Path.Combine(CrossPlatform.GetCurrentDirectory(), "staging");
+            var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
             Log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
 
             if (deployment.Variables.GetFlag(SpecialVariables.Action.ServiceFabric.LogExtractedApplicationPackage))

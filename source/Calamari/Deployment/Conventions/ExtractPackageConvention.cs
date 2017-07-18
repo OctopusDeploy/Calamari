@@ -1,5 +1,8 @@
-﻿using Calamari.Integration.FileSystem;
+﻿using System;
+using System.Linq;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -22,20 +25,42 @@ namespace Calamari.Deployment.Conventions
                return;
             }
 
-            var metadata = extractor.GetMetadata(deployment.PackageFilePath);
+            try
+            {
+                var metadata = extractor.GetMetadata(deployment.PackageFilePath);
 
-            var targetPath = GetTargetPath(deployment, metadata);
+                var targetPath = GetTargetPath(deployment, metadata);
 
-            Log.Verbose("Extracting package to: " + targetPath);
+                Log.Verbose("Extracting package to: " + targetPath);
 
-            var filesExtracted = extractor.Extract(deployment.PackageFilePath, targetPath, deployment.Variables.GetFlag(SpecialVariables.Package.SuppressNestedScriptWarning, false));
+                var filesExtracted = extractor.Extract(deployment.PackageFilePath, targetPath,
+                    deployment.Variables.GetFlag(SpecialVariables.Package.SuppressNestedScriptWarning, false));
 
-            Log.Verbose("Extracted " + filesExtracted + " files");
+                Log.Verbose("Extracted " + filesExtracted + " files");
 
-            deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath, deployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, targetPath, deployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.ExtractedFileCount, filesExtracted.ToString(), deployment.Variables);
+                deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
+                Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath,
+                    deployment.Variables);
+                Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, targetPath,
+                    deployment.Variables);
+                Log.SetOutputVariable(SpecialVariables.Package.Output.ExtractedFileCount, filesExtracted.ToString(),
+                    deployment.Variables);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                LogAccessDenied();
+                throw;
+            }
+            catch (Exception ex) when (ex.Message.ContainsIgnoreCase("Access is denied"))
+            {
+                LogAccessDenied();
+                throw;
+            }
+        }
+
+        void LogAccessDenied()
+        {
+            Log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
         }
 
         protected abstract string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata);

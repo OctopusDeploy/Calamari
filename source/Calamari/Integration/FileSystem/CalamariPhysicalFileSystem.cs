@@ -276,7 +276,7 @@ namespace Calamari.Integration.FileSystem
             }
             // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage! 
             // this probably something like Windows 1252 on Windows, but is Encoding.Default is UTF8 on Linux so this probably isn't right in Linux.
-            encoding = CrossPlatform.GetDefaultEncoding();
+            encoding = Encoding.Default;
 
             return encoding.GetString(b);
         }
@@ -350,7 +350,10 @@ namespace Calamari.Integration.FileSystem
 
         string GetTempBasePath()
         {
-            var path = CrossPlatform.GetApplicationTempDir();
+            var path1 = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            path1 = Path.Combine(path1, Assembly.GetEntryAssembly()?.GetName().Name);
+            path1 = Path.Combine(path1, "Temp");
+            var path = path1;
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
@@ -452,7 +455,9 @@ namespace Calamari.Integration.FileSystem
             if (!File.Exists(originalFile))
                 File.Copy(temporaryReplacement, originalFile, true);
             else
-                CrossPlatform.Replace(temporaryReplacement, originalFile, backup);
+            {
+                System.IO.File.Replace(temporaryReplacement, originalFile, backup);
+            }
 
             File.Delete(temporaryReplacement);
             if (File.Exists(backup))
