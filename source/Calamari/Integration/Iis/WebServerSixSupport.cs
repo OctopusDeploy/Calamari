@@ -1,5 +1,4 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using System.DirectoryServices;
 using System.Linq;
 
@@ -201,4 +200,3 @@ namespace Calamari.Integration.Iis
         }
     }
 }
-#endif

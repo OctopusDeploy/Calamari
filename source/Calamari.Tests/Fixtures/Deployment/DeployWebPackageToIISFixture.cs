@@ -1,5 +1,4 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
@@ -483,4 +482,3 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
     }
 }
-#endif

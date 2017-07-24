@@ -8,6 +8,8 @@
     <OutputType>Exe</OutputType>
     <PackageId>Calamari</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <DisableImplicitPackageTargetFallback>true</DisableImplicitPackageTargetFallback><!-- Will be replaced with DisableImplicitAssetTargetFallback in 2.0.0-Preview2 -->
+    <DisableImplicitAssetTargetFallback>true</DisableImplicitAssetTargetFallback>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
     <Authors>Octopus Deploy</Authors>
@@ -31,12 +33,12 @@
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
-    <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
   </PropertyGroup>
  
   <ItemGroup>
@@ -83,6 +85,8 @@
     <PackageReference Include="NuGet.Protocol.Core.v3" Version="3.5.0" />
     <PackageReference Include="Octopus.Web.XmlTransform" Version="1.0.0-ci0018" />
     <PackageReference Include="Sprache" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Web.Administration" Version="10.0.0.0" />
+    <PackageReference Include="System.DirectoryServices" Version="4.5.0-preview2-25517-02" />
     <PackageReference Include="System.Threading.AccessControl" Version="4.3.0" />
     <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />    
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
