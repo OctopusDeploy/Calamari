@@ -9,7 +9,9 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
 using Calamari.Tests.Helpers.Certificates;
+#endif
 using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
