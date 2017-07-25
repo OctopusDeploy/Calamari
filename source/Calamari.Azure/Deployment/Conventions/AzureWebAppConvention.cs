@@ -52,6 +52,12 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var retry = GetRetryTracker();
 
+            if (deployment.Variables.GetFlag("AllowUntrustedCertificate"))
+            {
+                Log.Info("Bypassing SSL validation check");
+                System.Net.ServicePointManager.ServerCertificateValidationCallback = (senderX, certificate, chain, sslPolicyErrors) => true;
+            }
+
             while (retry.Try())
             {
                 try
