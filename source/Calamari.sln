@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26621.2
+VisualStudioVersion = 15.0.26724.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari", "Calamari\Calamari.csproj", "{14044371-F1D7-436F-98FB-23823CDDA19C}"
 EndProject
@@ -8,7 +8,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Azure", "Calamari.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{E5718705-45DC-4A06-8A7A-ACC29663672A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Java", "Calamari.Java\Calamari.Java.csproj", "{0A65EC64-DA3A-4A57-BC67-115D6970BED5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Java", "Calamari.Java\Calamari.Java.csproj", "{0A65EC64-DA3A-4A57-BC67-115D6970BED5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
