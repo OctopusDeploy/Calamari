@@ -2,9 +2,11 @@
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
@@ -23,6 +25,8 @@ namespace Calamari.Commands
         private string packageFile;
         private bool substituteVariables;
         private string scriptParameters;
+        private DeploymentJournal journal;
+        private RunningDeployment deployment;
 
         public RunScriptCommand()
         {
@@ -43,6 +47,10 @@ namespace Calamari.Commands
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
+            var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var semaphore = SemaphoreFactory.Get();
+            journal = new DeploymentJournal(filesystem, semaphore, variables);
+
             ExtractPackage(variables);
             SubstituteVariablesInScript(variables);
             return InvokeScript(variables);
@@ -58,6 +66,7 @@ namespace Calamari.Commands
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
 
+            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
             var extractor = new GenericPackageExtractor();
             extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);
 
@@ -87,8 +96,14 @@ namespace Calamari.Commands
 
             if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
             {
+                if(!(deployment?.SkipJournal ?? true))
+                    journal.AddJournalEntry(new JournalEntry(deployment, false));
+
                 return -1;
             }
+
+            if (!(deployment?.SkipJournal ?? true))
+                journal.AddJournalEntry(new JournalEntry(deployment, true));
 
             return result.ExitCode;
         }
