@@ -93,16 +93,17 @@ namespace Calamari.Commands
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", validatedScriptFilePath);
             var result = scriptEngine.Execute(new Script(validatedScriptFilePath, scriptParameters), variables, runner);
+            var writeJournal = deployment != null && !deployment.SkipJournal;
 
             if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
             {
-                if(!(deployment?.SkipJournal ?? true))
+                if(writeJournal)
                     journal.AddJournalEntry(new JournalEntry(deployment, false));
 
                 return -1;
             }
 
-            if (!(deployment?.SkipJournal ?? true))
+            if (writeJournal)
                 journal.AddJournalEntry(new JournalEntry(deployment, true));
 
             return result.ExitCode;
