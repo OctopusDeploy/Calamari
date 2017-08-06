@@ -5,6 +5,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
+using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Processes;
@@ -55,6 +56,7 @@ namespace Calamari.Java.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
             var packageExtractor = new JavaPackageExtractor();
+            var embeddedResources = new AssemblyEmbeddedResources();
 
             var conventions = new List<IConvention>
             {
@@ -64,16 +66,23 @@ namespace Calamari.Java.Commands
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
+                new FeatureConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new FeatureConvention(DeploymentStages.AfterPreDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new RePackArchiveConvention(fileSystem, packageExtractor),
+                new FeatureConvention(DeploymentStages.BeforeDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new FeatureConvention(DeploymentStages.AfterDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new FeatureConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
+                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
             };
 
             var deployment = new RunningDeployment(archiveFile, variables);
