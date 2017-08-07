@@ -4,6 +4,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Deployment.Features;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
@@ -14,6 +15,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Java.Deployment.Conventions;
+using Calamari.Java.Deployment.Features;
 using Calamari.Java.Integration.Packages;
 
 namespace Calamari.Java.Commands
@@ -58,6 +60,8 @@ namespace Calamari.Java.Commands
             var packageExtractor = new JavaPackageExtractor();
             var embeddedResources = new AssemblyEmbeddedResources();
 
+            var featureClasses = new List<IFeature> { new TomcatFeature(commandLineRunner) };
+
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
@@ -66,21 +70,21 @@ namespace Calamari.Java.Commands
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
-                new FeatureConvention(DeploymentStages.BeforePreDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterPreDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new RePackArchiveConvention(fileSystem, packageExtractor),
-                new FeatureConvention(DeploymentStages.BeforeDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new FeatureConvention(DeploymentStages.BeforePostDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterPostDeploy, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
             };

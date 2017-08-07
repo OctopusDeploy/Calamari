@@ -291,6 +291,14 @@
             public static class Java
             {
                 public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
+
+                public static class Tomcat
+                {
+                    public static readonly string DeployName = "Tomcat.Deploy.Name";
+                    public static readonly string Controller = "Tomcat.Deploy.Controller";
+                    public static readonly string User = "Tomcat.Deploy.User";
+                    public static readonly string Password = "Tomcat.Deploy.Password";
+                }
             }
         }
 
