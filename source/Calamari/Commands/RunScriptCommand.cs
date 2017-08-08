@@ -93,17 +93,17 @@ namespace Calamari.Commands
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", validatedScriptFilePath);
             var result = scriptEngine.Execute(new Script(validatedScriptFilePath, scriptParameters), variables, runner);
-            var writeJournal = deployment != null && !deployment.SkipJournal;
+            var shouldWriteJournal = CanWriteJournal(variables) && deployment != null && !deployment.SkipJournal;
 
             if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
             {
-                if(writeJournal)
+                if(shouldWriteJournal)
                     journal.AddJournalEntry(new JournalEntry(deployment, false));
 
                 return -1;
             }
 
-            if (writeJournal)
+            if (shouldWriteJournal)
                 journal.AddJournalEntry(new JournalEntry(deployment, true));
 
             return result.ExitCode;
@@ -115,6 +115,11 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find script file: " + scriptFile);
 
             return scriptFile;
+        }
+
+        private bool CanWriteJournal(VariableDictionary variables)
+        {
+            return variables.Get(SpecialVariables.Tentacle.Agent.JournalPath) != null;
         }
     }
 }
