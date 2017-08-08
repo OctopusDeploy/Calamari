@@ -57,7 +57,7 @@ namespace Calamari.Java.Commands
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var packageExtractor = new JavaPackageExtractor(commandLineRunner);
+            var packageExtractor = new JavaPackageExtractor(commandLineRunner, fileSystem);
             var embeddedResources = new AssemblyEmbeddedResources();
 
             var featureClasses = new List<IFeature> { new TomcatFeature(commandLineRunner) };

@@ -4,21 +4,22 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Commands.Support;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Util;
 using NuGet.Versioning;
-using SharpCompress.Readers.Zip;
 
 namespace Calamari.Java.Integration.Packages
 {
     public class JarExtractor : IPackageExtractor
     {
         private readonly ICommandLineRunner commandLineRunner;
+        private readonly ICalamariFileSystem fileSystem;
 
-        public JarExtractor(ICommandLineRunner commandLineRunner)
+        public JarExtractor(ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
         {
             this.commandLineRunner = commandLineRunner;
+            this.fileSystem = fileSystem;
         }
 
         public string[] Extensions => new[] {".jar", ".war"}; 
@@ -52,44 +53,38 @@ namespace Calamari.Java.Integration.Packages
             var metadataAndExtension = PackageIdentifier.ExtractPackageExtensionAndMetadata(packageFile, Extensions);
 
             var idAndVersion = metadataAndExtension.Item1;
-            var pkg = new PackageMetadata {FileExtension = metadataAndExtension.Item2};
 
-            if (string.IsNullOrEmpty(pkg.FileExtension))
+            if (string.IsNullOrEmpty(metadataAndExtension.Item2))
             {
                 throw new CommandException(string.Format("Unable to determine filetype of file \"{0}\"", packageFile));
             }
 
-            using (var fileStream = new FileStream(packageFile, FileMode.Open)) 
+            var manifest = ReadManifest(packageFile);
+
+            string packageId;
+            var packageVersion = GetVersionFromManifest(manifest);;
+
+            if (packageVersion != null)
             {
-                DeterminePackageIdAndVersion(idAndVersion, fileStream, out string packageId, out NuGetVersion packageVersion);
-
-                pkg.Id = packageId;
-                pkg.Version = packageVersion.ToString();
-                return pkg;
-            }
-        }
-
-        static void DeterminePackageIdAndVersion(string fileNameWithoutExtension, Stream fileStream, out string packageId, out NuGetVersion packageVersion)
-        {
-            var manifest = ReadManifest(fileStream);
-            var versionFromManifest = GetVersionFromManifest(manifest);
-
-            if (versionFromManifest != null)
-            {
-                packageVersion = versionFromManifest;
-
-                if (!PackageIdentifier.TryParsePackageIdAndVersion(fileNameWithoutExtension, out packageId, out NuGetVersion ignoredVersionFromFileName))
+                if (!PackageIdentifier.TryParsePackageIdAndVersion(idAndVersion, out packageId, out NuGetVersion ignoredVersionFromFileName))
                 {
-                    throw new CommandException($"Could not parse package ID from '{fileNameWithoutExtension}'");
+                    throw new CommandException($"Could not parse package ID from '{idAndVersion}'");
                 }
             }
             else
             {
-                if (!PackageIdentifier.TryParsePackageIdAndVersion(fileNameWithoutExtension, out packageId, out packageVersion))
+                if (!PackageIdentifier.TryParsePackageIdAndVersion(idAndVersion, out packageId, out packageVersion))
                 {
-                    throw new CommandException($"Could not parse package ID and version from '{fileNameWithoutExtension}'");
+                    throw new CommandException($"Could not parse package ID and version from '{idAndVersion}'");
                 }
             }
+
+            return new PackageMetadata
+            {
+                FileExtension = metadataAndExtension.Item2,
+                Id = packageId,
+                Version = packageVersion.ToString()
+            };
         }
 
         static NuGetVersion GetVersionFromManifest(IDictionary<string, string> manifest)
@@ -102,50 +97,61 @@ namespace Calamari.Java.Integration.Packages
                 : semanticVersion;
         }
 
-        static bool IsManifest(string path)
-        {
-            return path.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase);
-        }
-
-        static IDictionary<string, string> ReadManifest(Stream jarFile)
+        IDictionary<string, string> ReadManifest(string jarFile)
         {
             var map = new Dictionary<string, string>();
 
-            using (var reader = ZipReader.Open(jarFile))
+            var manifest = ExtractManifest(jarFile);
+
+            foreach (var line in manifest.Split(new[] {"\r\n", "\n"}, StringSplitOptions.RemoveEmptyEntries))
             {
-                while (reader.MoveToNextEntry())
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                var match = Regex.Match(line, @"^(?<key>(.*)):\s?(?<value>.*)");
+
+                var keyMatch = match.Groups["key"];
+                var valueMatch = match.Groups["value"];
+
+                if (!keyMatch.Success || !valueMatch.Success)
                 {
-                    if (reader.Entry.IsDirectory || !IsManifest(reader.Entry.Key))
-                        continue;
-
-                    using (var manifestStream = reader.OpenEntryStream())
-                    using (var manifest = new StreamReader(manifestStream))
-                    {
-                        while (!manifest.EndOfStream)
-                        {
-                            var line = manifest.ReadLine();
-
-                            if (string.IsNullOrWhiteSpace(line))
-                                continue;
-
-                            var match = Regex.Match(line, @"^(?<key>(.*)):\s?(?<value>.*)");
-
-                            var keyMatch = match.Groups["key"];
-                            var valueMatch = match.Groups["value"];
-
-                            if (!keyMatch.Success || !valueMatch.Success)
-                            {
-                                throw new Exception($"Could not parse manifest line: '{line}'");
-                            }
-
-                            map.Add(keyMatch.Value, valueMatch.Value);
-                        }
-
-                        return map;
-                    }
+                    throw new Exception($"Could not parse manifest line: '{line}'");
                 }
 
-                return map;
+                map.Add(keyMatch.Value, valueMatch.Value);
+            }
+
+            return map;
+        }
+
+        string ExtractManifest(string jarFile)
+        {
+            const string manifestJarPath = "META-INF/MANIFEST.MF";
+
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+
+            var extractJarCommand =
+                new CommandLineInvocation("java", $"-cp tools.jar sun.tools.jar.Main xf \"{jarFile}\" \"{manifestJarPath}\"", tempDirectory);
+
+            try
+            {
+                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{manifestJarPath}'");
+                var result = commandLineRunner.Execute(extractJarCommand);
+                result.VerifySuccess();
+
+                // Ensure our slashes point in the correct direction
+                var extractedManifestPathComponents = new List<string>{tempDirectory}; 
+                extractedManifestPathComponents.AddRange(manifestJarPath.Split('/'));
+
+                return File.ReadAllText(Path.Combine(extractedManifestPathComponents.ToArray()));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error invoking '{extractJarCommand}'", ex);
+            }
+            finally
+            {
+               fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure); 
             }
         }
     }
