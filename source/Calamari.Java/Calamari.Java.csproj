@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.1.1" />
-    <PackageReference Include="Octopus.Calamari.Java.Library" Version="1.0.5" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
 

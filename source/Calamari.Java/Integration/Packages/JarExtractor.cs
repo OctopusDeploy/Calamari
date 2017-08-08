@@ -1,24 +1,58 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
 using Calamari.Util;
 using NuGet.Versioning;
 using SharpCompress.Readers.Zip;
 
 namespace Calamari.Java.Integration.Packages
 {
-    public class JarExtractor : ZipPackageExtractor
+    public class JarExtractor : IPackageExtractor
     {
-        public override string[] Extensions => new[] {".jar", ".war"}; 
+        private readonly ICommandLineRunner commandLineRunner;
 
-        public override PackageMetadata GetMetadata(string packageFile)
+        public JarExtractor(ICommandLineRunner commandLineRunner)
         {
-            var pkg = new PackageMetadata();
+            this.commandLineRunner = commandLineRunner;
+        }
 
-            var fileNameWithoutExtension = ExtractMatchingExtension(packageFile, pkg);
+        public string[] Extensions => new[] {".jar", ".war"}; 
+
+        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        {
+            var extractJarCommand =
+                new CommandLineInvocation("java", $"-cp tools.jar sun.tools.jar.Main xf \"{packageFile}\"", directory);
+
+            Log.Verbose($"Invoking '{extractJarCommand}' to extract '{packageFile}'");
+            var result = commandLineRunner.Execute(extractJarCommand);
+            result.VerifySuccess();
+
+            var count = -1;
+
+            try
+            {
+                count = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories).Count(); 
+            }
+            catch (Exception ex)
+            {
+                Log.Verbose(
+                    $"Unable to return extracted file count. Error while enumerating '{directory}':\n{ex.Message}");
+            }
+
+            return count;
+        }
+
+        public PackageMetadata GetMetadata(string packageFile)
+        {
+            var metadataAndExtension = PackageIdentifier.ExtractPackageExtensionAndMetadata(packageFile, Extensions);
+
+            var idAndVersion = metadataAndExtension.Item1;
+            var pkg = new PackageMetadata {FileExtension = metadataAndExtension.Item2};
 
             if (string.IsNullOrEmpty(pkg.FileExtension))
             {
@@ -27,7 +61,7 @@ namespace Calamari.Java.Integration.Packages
 
             using (var fileStream = new FileStream(packageFile, FileMode.Open)) 
             {
-                DeterminePackageIdAndVersion(fileNameWithoutExtension, fileStream, out string packageId, out NuGetVersion packageVersion);
+                DeterminePackageIdAndVersion(idAndVersion, fileStream, out string packageId, out NuGetVersion packageVersion);
 
                 pkg.Id = packageId;
                 pkg.Version = packageVersion.ToString();
