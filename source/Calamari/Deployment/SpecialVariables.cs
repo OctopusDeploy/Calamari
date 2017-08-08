@@ -294,6 +294,7 @@
 
                 public static class Tomcat
                 {
+                    public static readonly string Feature = "Octopus.Features.Tomcat";
                     public static readonly string DeployName = "Tomcat.Deploy.Name";
                     public static readonly string Controller = "Tomcat.Deploy.Controller";
                     public static readonly string User = "Tomcat.Deploy.User";
