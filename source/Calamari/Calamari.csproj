@@ -19,6 +19,7 @@
     <Description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</Description>
     <Product>Calamari</Product>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
+    <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
@@ -88,6 +89,12 @@
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
     <PackageReference Include="System.IO.Packaging" Version="4.3.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Calamari.exe.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 

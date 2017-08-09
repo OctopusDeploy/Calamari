@@ -17,6 +17,7 @@
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
+    <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
@@ -79,6 +80,12 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Calamari.Azure.exe.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="CopyTools" AfterTargets="Build">
