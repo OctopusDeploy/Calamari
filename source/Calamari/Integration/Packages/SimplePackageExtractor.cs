@@ -9,7 +9,7 @@ namespace Calamari.Integration.Packages
 {
     public abstract class SimplePackageExtractor : IPackageExtractor
     {
-        public virtual PackageMetadata GetMetadata(string packageFile)
+        public PackageMetadata GetMetadata(string packageFile)
         {
 
             var metadataAndExtension = PackageIdentifier.ExtractPackageExtensionAndMetadata(packageFile, Extensions);
