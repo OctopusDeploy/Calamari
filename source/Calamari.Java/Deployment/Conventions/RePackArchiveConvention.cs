@@ -3,10 +3,8 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using SharpCompress.Archives;
-using SharpCompress.Archives.Zip;
-using SharpCompress.Common;
-using SharpCompress.Writers;
+using Calamari.Integration.Processes;
+using Calamari.Java.Integration.Packages;
 
 namespace Calamari.Java.Deployment.Conventions
 {
@@ -14,11 +12,13 @@ namespace Calamari.Java.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IPackageExtractor packageExtractor;
+        readonly JarTool jarTool;
 
-        public RePackArchiveConvention(ICalamariFileSystem fileSystem, IPackageExtractor packageExtractor)
+        public RePackArchiveConvention(ICalamariFileSystem fileSystem, IPackageExtractor packageExtractor, ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
             this.packageExtractor = packageExtractor;
+            this.jarTool = new JarTool(commandLineRunner, fileSystem); 
         }
 
         public void Install(RunningDeployment deployment)
@@ -29,18 +29,12 @@ namespace Calamari.Java.Deployment.Conventions
             var packageMetadata = packageExtractor.GetMetadata(deployment.PackageFilePath);
             var applicationDirectory = ApplicationDirectory.GetApplicationDirectory(packageMetadata, deployment.Variables, fileSystem);
             var targetFilePath = Path.Combine(applicationDirectory,
-                $"{packageMetadata.Id}.{packageMetadata.Version}.{Path.GetExtension(deployment.PackageFilePath)}");
+                $"{packageMetadata.Id}.{packageMetadata.Version}{Path.GetExtension(deployment.PackageFilePath)}");
 
             Log.Info($"Re-packaging archive: '{targetFilePath}'");
             var stagingDirectory = deployment.CurrentDirectory;
 
-
-            using (var archive = ZipArchive.Create())
-            {
-                archive.AddAllFromDirectory(stagingDirectory);
-                // We may want to read the compression-type of the original jar and match it?
-                archive.SaveTo(targetFilePath, new WriterOptions(CompressionType.Deflate));
-            }
+            jarTool.CreateJar(stagingDirectory, targetFilePath);
         }
     }
 }
