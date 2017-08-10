@@ -16,19 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="C:\Users\matth\.nuget\packages\octopus.calamari.java.library\1.0.3\contentFiles\any\any\calamari-1.0.1.jar">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="C:\Users\mjr\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\calamari.jar">
+    <None Update="$(HOMEDRIVE)$(HOMEPATH)\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\calamari.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="C:\Users\mjr\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\jboss-cli.xml">
+    <None Update="$(HOMEDRIVE)$(HOMEPATH)\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\jboss-cli.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="C:\Users\mjr\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\tools.jar">
+    <None Update="$(HOMEDRIVE)$(HOMEPATH)\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\tools.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

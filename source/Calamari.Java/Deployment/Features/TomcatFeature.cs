@@ -14,7 +14,7 @@ namespace Calamari.Java.Deployment.Features
             this.commandLineRunner = commandLineRunner;
         }
 
-        public string Name => "Octopus.Features.Tomcat";
+        public string Name => SpecialVariables.Action.Java.Tomcat.Feature;
 
         public string DeploymentStage => DeploymentStages.BeforeDeploy; 
 
