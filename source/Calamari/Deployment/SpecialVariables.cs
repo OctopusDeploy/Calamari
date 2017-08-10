@@ -299,6 +299,8 @@
                     public static readonly string Controller = "Tomcat.Deploy.Controller";
                     public static readonly string User = "Tomcat.Deploy.User";
                     public static readonly string Password = "Tomcat.Deploy.Password";
+                    public static readonly string Debug = "Tomcat.Deploy.Debug";
+                    public static readonly string Enabled = "Tomcat.Deploy.Enabled";
                 }
             }
         }
