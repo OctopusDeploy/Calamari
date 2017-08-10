@@ -36,9 +36,9 @@ namespace Calamari.Java.Deployment.Features
 
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
             /*
-                The precondition script will set the OctopusEnvironment_JAVA_BIN environment variable based
+                The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
                 on where it found the java executable based on the JAVA_HOME environment
-                variable. If OctopusEnvironment_JAVA_BIN is empty or null, it means that the precondition
+                variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
                 found java on the path.
             */
             var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
@@ -49,7 +49,8 @@ namespace Calamari.Java.Deployment.Features
             var calamariDir = AppDomain.CurrentDomain.BaseDirectory;
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 javaBin.Trim() + "java", 
-                "-cp " + calamariDir + Path.DirectorySeparatorChar + "calamari.jar com.octopus.calamari.tomcat.TomcatDeploy"));
+                "-cp " + calamariDir + "calamari.jar com.octopus.calamari.tomcat.TomcatDeploy",
+                calamariDir));
             result.VerifySuccess();
         }
 
