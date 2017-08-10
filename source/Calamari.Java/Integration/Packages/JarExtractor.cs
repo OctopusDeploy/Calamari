@@ -13,39 +13,23 @@ namespace Calamari.Java.Integration.Packages
 {
     public class JarExtractor : IPackageExtractor
     {
-        private readonly ICommandLineRunner commandLineRunner;
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly ICalamariFileSystem fileSystem;
+        readonly JarTool jarTool;
+
 
         public JarExtractor(ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
         {
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.jarTool = new JarTool(commandLineRunner, fileSystem);
         }
 
         public string[] Extensions => new[] {".jar", ".war"}; 
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
-            var extractJarCommand =
-                new CommandLineInvocation("java", $"-cp tools.jar sun.tools.jar.Main xf \"{packageFile}\"", directory);
-
-            Log.Verbose($"Invoking '{extractJarCommand}' to extract '{packageFile}'");
-            var result = commandLineRunner.Execute(extractJarCommand);
-            result.VerifySuccess();
-
-            var count = -1;
-
-            try
-            {
-                count = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories).Count(); 
-            }
-            catch (Exception ex)
-            {
-                Log.Verbose(
-                    $"Unable to return extracted file count. Error while enumerating '{directory}':\n{ex.Message}");
-            }
-
-            return count;
+            return jarTool.ExtractJar(packageFile, directory);
         }
 
         public PackageMetadata GetMetadata(string packageFile)
@@ -101,7 +85,7 @@ namespace Calamari.Java.Integration.Packages
         {
             var map = new Dictionary<string, string>();
 
-            var manifest = ExtractManifest(jarFile);
+            var manifest = jarTool.ExtractManifest(jarFile);
 
             foreach (var line in manifest.Split(new[] {"\r\n", "\n"}, StringSplitOptions.RemoveEmptyEntries))
             {
@@ -122,37 +106,6 @@ namespace Calamari.Java.Integration.Packages
             }
 
             return map;
-        }
-
-        string ExtractManifest(string jarFile)
-        {
-            const string manifestJarPath = "META-INF/MANIFEST.MF";
-
-            var tempDirectory = fileSystem.CreateTemporaryDirectory();
-
-            var extractJarCommand =
-                new CommandLineInvocation("java", $"-cp tools.jar sun.tools.jar.Main xf \"{jarFile}\" \"{manifestJarPath}\"", tempDirectory);
-
-            try
-            {
-                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{manifestJarPath}'");
-                var result = commandLineRunner.Execute(extractJarCommand);
-                result.VerifySuccess();
-
-                // Ensure our slashes point in the correct direction
-                var extractedManifestPathComponents = new List<string>{tempDirectory}; 
-                extractedManifestPathComponents.AddRange(manifestJarPath.Split('/'));
-
-                return File.ReadAllText(Path.Combine(extractedManifestPathComponents.ToArray()));
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error invoking '{extractJarCommand}'", ex);
-            }
-            finally
-            {
-               fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure); 
-            }
         }
     }
 }
