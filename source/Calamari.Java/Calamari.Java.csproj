@@ -16,13 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="$(HOMEDRIVE)$(HOMEPATH)\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\calamari.jar">
+    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\calamari.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="$(HOMEDRIVE)$(HOMEPATH)\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\jboss-cli.xml">
+    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\jboss-cli.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="$(HOMEDRIVE)$(HOMEPATH)\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\tools.jar">
+    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.10-alpha1\contentFiles\any\any\tools.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
