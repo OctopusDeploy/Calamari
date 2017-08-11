@@ -108,7 +108,7 @@ Task("Pack")
 {
     DoPackage("Calamari", "net40", nugetVersion);
     DoPackage("Calamari.Azure", "net451", nugetVersion); 
-	DoPackage("Calamari.Java", "netcoreapp2.0", nugetVersion);   	
+	DoPackage("Calamari.Java", "net40", nugetVersion);   	
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj

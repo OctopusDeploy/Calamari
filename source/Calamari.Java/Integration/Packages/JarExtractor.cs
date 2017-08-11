@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+#if USE_NUGET_V2_LIBS
+using Calamari.NuGet.Versioning;
+#else
 using NuGet.Versioning;
+#endif
 
 namespace Calamari.Java.Integration.Packages
 {
