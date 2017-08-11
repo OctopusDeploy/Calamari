@@ -29,7 +29,7 @@ namespace Calamari.Java.Deployment.Conventions
             var packageMetadata = packageExtractor.GetMetadata(deployment.PackageFilePath);
             var applicationDirectory = ApplicationDirectory.GetApplicationDirectory(packageMetadata, deployment.Variables, fileSystem);
             var targetFilePath = Path.Combine(applicationDirectory,
-                $"{packageMetadata.Id}.{packageMetadata.Version}{Path.GetExtension(deployment.PackageFilePath)}");
+                $"{packageMetadata.Id}.{packageMetadata.Version}{packageMetadata.FileExtension}");
 
             Log.Info($"Re-packaging archive: '{targetFilePath}'");
             var stagingDirectory = deployment.CurrentDirectory;

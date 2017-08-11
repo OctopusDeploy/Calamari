@@ -53,6 +53,9 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         {
             DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
             Assert.AreEqual(0, ReturnCode);
+
+            //Archive is re-packed
+            ProxyLog.AssertContains($"Re-packaging archive: '{Path.Combine(ApplicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar")}'");
         }
 
         [Test]
