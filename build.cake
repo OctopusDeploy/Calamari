@@ -164,7 +164,19 @@ private void DoPackage(string project, string framework, string version, string 
 		Verbosity = NuGetVerbosity.Normal,
         Properties = nugetPackProperties
     };
+
     DotNetCorePublish(projectDir, publishSettings);
+
+    // Hackity hack hack
+    // The output for linux and osx targets was being produced as Calamari.Java.Java
+    // This hack is until https://github.com/dotnet/cli/issues/6397 is resolved
+    if (project == "Calamari.Java" && runtimeId != null)
+    {
+        var incorrectFileName = Path.Combine(publishedTo, "Calamari.Java.Java");
+        CopyFile(incorrectFileName, Path.Combine(publishedTo, "Calamari.Java"));
+        DeleteFile(incorrectFileName);
+    }
+
     var nuspec = $"{publishedTo}/{packageId}.nuspec";
     CopyFile($"{projectDir}/{project}.nuspec", nuspec);
     NuGetPack(nuspec, nugetPackSettings);

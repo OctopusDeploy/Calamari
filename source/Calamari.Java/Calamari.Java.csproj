@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyName>Calamari.Java</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net40;netcoreapp2.0</TargetFrameworks>
     <RuntimeIdentifiers>linux-x64;osx-x64</RuntimeIdentifiers>
