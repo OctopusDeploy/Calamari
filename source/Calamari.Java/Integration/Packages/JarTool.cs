@@ -23,8 +23,10 @@ namespace Calamari.Java.Integration.Packages
 
         public void CreateJar(string contentsDirectory, string targetJarPath)
         {
-           var createJarCommand =
-                new CommandLineInvocation("java", $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" *", contentsDirectory);
+           var createJarCommand = new CommandLineInvocation(
+               "java", 
+               $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .", 
+               contentsDirectory);
 
             Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
             var result = commandLineRunner.Execute(createJarCommand);
