@@ -23,8 +23,15 @@ namespace Calamari.Java.Integration.Packages
 
         public void CreateJar(string contentsDirectory, string targetJarPath)
         {
-           var createJarCommand = new CommandLineInvocation(
-               "java", 
+            /*
+                 The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
+                 on where it found the java executable based on the JAVA_HOME environment
+                 variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
+                 found java on the path.
+             */
+            var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+            var createJarCommand = new CommandLineInvocation(
+               $"{javaBin}java", 
                $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .", 
                contentsDirectory);
 
@@ -39,8 +46,17 @@ namespace Calamari.Java.Integration.Packages
         /// <returns>Count of files extracted</returns>
         public int ExtractJar(string jarPath, string targetDirectory)
         {
-            var extractJarCommand =
-                new CommandLineInvocation("java", $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"", targetDirectory);
+            /*
+                 The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
+                 on where it found the java executable based on the JAVA_HOME environment
+                 variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
+                 found java on the path.
+             */
+            var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+            var extractJarCommand = new CommandLineInvocation(
+                $"{javaBin.Trim()}java", 
+                $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"", 
+                targetDirectory);
 
             Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
             var result = commandLineRunner.Execute(extractJarCommand);

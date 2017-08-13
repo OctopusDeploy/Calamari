@@ -33,8 +33,8 @@ namespace Calamari.Java.Deployment.Features
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Controller", variables.Get(SpecialVariables.Action.Java.Tomcat.Controller));
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_User", variables.Get(SpecialVariables.Action.Java.Tomcat.User));
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Password", variables.Get(SpecialVariables.Action.Java.Tomcat.Password));
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Debug", variables.Get(SpecialVariables.Action.Java.Tomcat.Debug));
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Enabled", variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled));
+            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Debug", variables.Get(SpecialVariables.Action.Java.Tomcat.Debug));
+            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Enabled", variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled));
 
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
             /*
@@ -50,7 +50,7 @@ namespace Calamari.Java.Deployment.Features
             */
             var calamariDir = AppDomain.CurrentDomain.BaseDirectory;
             var result = commandLineRunner.Execute(new CommandLineInvocation(
-                javaBin.Trim() + "java", 
+                $"{javaBin.Trim().Trim()}java", 
                 "-cp " + calamariDir + "calamari.jar com.octopus.calamari.tomcat.TomcatDeploy",
                 calamariDir));
             result.VerifySuccess();
