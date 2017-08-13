@@ -436,7 +436,7 @@ namespace Calamari.Integration.FileSystem
 
                 if ((info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
                 {
-                    Directory.Delete(directory, true);
+                    Directory.Delete(directory, false);
                 }
                 else
                 {

@@ -111,6 +111,9 @@ Task("Pack")
 	DoPackage("Calamari.Java", "net40", nugetVersion);   	
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
+    // Create a portable .NET Core package
+    DoPackage("Calamari", "netcoreapp2.0", nugetVersion, "portable");
+
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
@@ -151,7 +154,8 @@ private void DoPackage(string project, string framework, string version, string 
     {
         publishedTo = Path.Combine(publishedTo, runtimeId);
         publishSettings.OutputDirectory = publishedTo;
-        publishSettings.Runtime = runtimeId;
+        // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
+        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable") ? runtimeId : null;
         packageId = $"{project}.{runtimeId}";
         nugetPackProperties.Add("runtimeId", runtimeId);
     }

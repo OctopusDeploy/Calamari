@@ -43,7 +43,7 @@
     <PackageReference Include="Castle.Core" Version="4.1.1" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-    <PackageReference Include="ScriptCS" Version="0.16.1" />
+    <PackageReference Include="ScriptCS" Version="0.17.1" />
     <PackageReference Include="Octostache" Version="2.1.5" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />

@@ -35,6 +35,8 @@ namespace Calamari.Util.Environments
             yield return SafelyGet(() => $"OperatingSystem: {Environment.OSVersion}");
             yield return SafelyGet(() => $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
             yield return SafelyGet(() => $"Is64BitProcess: {Environment.Is64BitProcess}");
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+                yield return SafelyGet(() => $"Running on Mono: {CalamariEnvironment.IsRunningOnMono}");
             if(CalamariEnvironment.IsRunningOnWindows)
                 yield return SafelyGet(() => $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
             else
