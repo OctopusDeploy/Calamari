@@ -301,6 +301,11 @@
                     public static readonly string Password = "Tomcat.Deploy.Password";
                     public static readonly string Debug = "Tomcat.Deploy.Debug";
                     public static readonly string Enabled = "Tomcat.Deploy.Enabled";
+                    public static readonly string Version = "Tomcat.Deploy.TomcatVersion";
+                    public static readonly string CustomVersion = "Tomcat.Deploy.CustomVersion";
+                    public static readonly string PackageVersionValue = "Package";
+                    public static readonly string CustomVersionValue = "Custom";
+                    public static readonly string NoVersionValue = "None";
                 }
             }
         }
