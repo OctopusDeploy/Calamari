@@ -11,7 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.1.1" />
-    <PackageReference Include="Octopus.Dependencies.Java" Version="1.0.12-alpha1" />
+    <PackageReference Include="Octopus.Dependencies.Java" Version="1.0.13-alpha1" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
     <PackageReference Include="System.ComponentModel.TypeConverter">
@@ -20,25 +20,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\calamari.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\jboss-cli.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\tools.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\matth\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\calamari.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\matth\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\jboss-cli.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\matth\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\tools.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>
