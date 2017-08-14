@@ -69,7 +69,7 @@ namespace Calamari.Java.Deployment.Features
             */
             var calamariDir = AppDomain.CurrentDomain.BaseDirectory;
             var result = commandLineRunner.Execute(new CommandLineInvocation(
-                $"{javaBin.Trim().Trim()}java", 
+                $"{javaBin.Trim()}java", 
                 "-cp " + calamariDir + "calamari.jar com.octopus.calamari.tomcat.TomcatDeploy",
                 calamariDir));
             result.VerifySuccess();
