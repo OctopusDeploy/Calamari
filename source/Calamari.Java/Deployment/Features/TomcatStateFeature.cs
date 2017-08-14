@@ -6,16 +6,16 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Java.Deployment.Features
 {
-    public class TomcatFeature : IFeature
+    public class TomcatStateFeature : IFeature
     {
         private readonly ICommandLineRunner commandLineRunner;
 
-        public TomcatFeature(ICommandLineRunner commandLineRunner)
+        public TomcatStateFeature(ICommandLineRunner commandLineRunner)
         {
             this.commandLineRunner = commandLineRunner;
         }
 
-        public string Name => SpecialVariables.Action.Java.Tomcat.Feature;
+        public string Name => SpecialVariables.Action.Java.Tomcat.StateFeature;
 
         public string DeploymentStage => DeploymentStages.BeforeDeploy; 
 
@@ -23,7 +23,7 @@ namespace Calamari.Java.Deployment.Features
         {
             var variables = deployment.Variables;
 
-            if (!variables.GetFlag(SpecialVariables.Action.Java.Tomcat.Feature))
+            if (!variables.GetFlag(SpecialVariables.Action.Java.Tomcat.StateFeature))
                 return;
 
             // Environment variables are used to pass parameters to the Java library
@@ -41,26 +41,8 @@ namespace Calamari.Java.Deployment.Features
                 variables.Get(SpecialVariables.Action.Java.Tomcat.Debug));
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Enabled", 
                 variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled));
-            
-            /*
-                Versions can either be disabled, use the package version, or use a custom 
-                version number.
-            */
-            var versionType = variables.Get(SpecialVariables.Action.Java.Tomcat.Version)?.ToLower();
-            if (SpecialVariables.Action.Java.Tomcat.PackageVersionValue.ToLower().Equals(versionType))
-            {
-                SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
-                    variables.Get(SpecialVariables.Package.NuGetPackageVersion));
-            } 
-            else if (SpecialVariables.Action.Java.Tomcat.CustomVersionValue.ToLower().Equals(versionType))
-            {
-                SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
-                    variables.Get(SpecialVariables.Action.Java.Tomcat.CustomVersion));
-            }
-            else
-            {
-                SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version", "");
-            }
+            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
+                variables.Get(SpecialVariables.Action.Java.Tomcat.CustomVersion));
 
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
             /*
@@ -77,7 +59,7 @@ namespace Calamari.Java.Deployment.Features
             var calamariDir = AppDomain.CurrentDomain.BaseDirectory;
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 $"{javaBin.Trim()}java", 
-                "-cp " + calamariDir + "calamari.jar com.octopus.calamari.tomcat.TomcatDeploy",
+                "-cp " + calamariDir + "calamari.jar com.octopus.calamari.tomcat.TomcatState",
                 calamariDir));
             result.VerifySuccess();
         }

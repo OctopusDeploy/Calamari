@@ -295,6 +295,7 @@
                 public static class Tomcat
                 {
                     public static readonly string Feature = "Octopus.Features.TomcatDeployManager";
+                    public static readonly string StateFeature = "Octopus.Features.TomcatStateManager";
                     public static readonly string DeployName = "Tomcat.Deploy.Name";
                     public static readonly string Controller = "Tomcat.Deploy.Controller";
                     public static readonly string User = "Tomcat.Deploy.User";
@@ -306,6 +307,22 @@
                     public static readonly string PackageVersionValue = "Package";
                     public static readonly string CustomVersionValue = "Custom";
                     public static readonly string NoVersionValue = "None";
+                }
+                
+                public static class Wildfly
+                {
+                    public static readonly string Feature = "Octopus.Features.WildflyDeployCLI";
+                    public static readonly string StateFeature = "Octopus.Features.WildflyStateCLI";
+                    public static readonly string DeployName = "WildFly.Deploy.Name";
+                    public static readonly string Controller = "WildFly.Deploy.Controller";
+                    public static readonly string Port = "WildFly.Deploy.Port";
+                    public static readonly string User = "WildFly.Deploy.User";
+                    public static readonly string Password = "WildFly.Deploy.Password";
+                    public static readonly string Debug = "WildFly.Deploy.Debug";
+                    public static readonly string Protocol = "WildFly.Deploy.Protocol";
+                    public static readonly string Enabled = "WildFly.Deploy.Enabled";
+                    public static readonly string EnabledServerGroup = "WildFly.Deploy.EnabledServerGroup";
+                    public static readonly string DisabledServerGroup = "WildFly.Deploy.DisabledServerGroup";
                 }
             }
         }

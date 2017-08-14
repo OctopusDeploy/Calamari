@@ -20,32 +20,23 @@ using Calamari.Java.Integration.Packages;
 
 namespace Calamari.Java.Commands
 {
-    [Command("deploy-java-archive", Description = "Deploys a Java archive (.jar, .war, .ear)")]
-    public class DeployJavaArchiveCommand : Command
+    [Command("set-java-deployment-state", Description = "Enables or disables an existing deployment")]
+    public class SetJavaDeploymentStateCommand : Command
     {
         string variablesFile;
-        string archiveFile;
         string sensitiveVariablesFile;
         string sensitiveVariablesPassword;
 
-        public DeployJavaArchiveCommand()
+        public SetJavaDeploymentStateCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
 
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
-
-            Guard.NotNullOrWhiteSpace(archiveFile, "No archive file was specified. Please pass --archive YourPackage.jar");
-
-            if (!File.Exists(archiveFile))
-                throw new CommandException("Could not find archive file: " + archiveFile);
-
-            Log.Info("Deploying:    " + archiveFile);
+            Options.Parse(commandLineArguments);       
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -54,16 +45,13 @@ namespace Calamari.Java.Commands
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var scriptEngine = new CombinedScriptEngine();
-            var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var packageExtractor = new JavaPackageExtractor(commandLineRunner, fileSystem);
             var embeddedResources = new AssemblyEmbeddedResources();
 
             var featureClasses = new List<IFeature>
             {
-                new TomcatFeature(commandLineRunner),
-                new WildflyFeature(commandLineRunner)
+                new TomcatStateFeature(commandLineRunner),
+                new WildflyStateFeature(commandLineRunner)
             };
 
             var conventions = new List<IConvention>
@@ -71,29 +59,16 @@ namespace Calamari.Java.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new ContributePreviousInstallationConvention(journal),
                 new ContributePreviousSuccessfulInstallationConvention(journal),
-                new LogVariablesConvention(),
-                new AlreadyInstalledConvention(journal),
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
-                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new SubstituteInFilesConvention(fileSystem, substituter),
-                new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
-                new RePackArchiveConvention(fileSystem, packageExtractor, commandLineRunner),
-                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new LogVariablesConvention(),               
+                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),                
                 new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),              
                 new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
             };
 
-            var deployment = new RunningDeployment(archiveFile, variables);
+            var deployment = new RunningDeployment(null, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
 
             try
