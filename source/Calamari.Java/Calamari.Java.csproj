@@ -21,24 +21,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\calamari.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\jboss-cli.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\agentuser\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\tools.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\matth\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\calamari.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\matth\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\jboss-cli.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="C:\Users\matth\.nuget\packages\octopus.dependencies.java\1.0.12-alpha1\contentFiles\any\any\tools.jar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>
