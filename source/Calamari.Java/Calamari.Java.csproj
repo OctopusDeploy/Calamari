@@ -11,7 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.1.1" />
-    <PackageReference Include="Octopus.Dependencies.Java" Version="1.0.14-alpha1" />
+    <PackageReference Include="Octopus.Dependencies.Java" Version="1.0.22" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
     <PackageReference Include="System.ComponentModel.TypeConverter">
