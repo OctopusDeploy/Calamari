@@ -41,6 +41,8 @@ namespace Calamari.Java.Deployment.Features
                 variables.Get(SpecialVariables.Action.Java.Tomcat.Debug));
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Enabled", 
                 variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled));
+            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Context", 
+                variables.Get(SpecialVariables.Action.Java.Tomcat.Context));
             
             /*
                 Versions can either be disabled, use the package version, or use a custom 
