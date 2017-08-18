@@ -6,13 +6,12 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Java.Deployment.Features
 {
-    public class TomcatStateFeature : IFeature
+    public class TomcatStateFeature : JavaBaseFeature, IFeature
     {
-        private readonly ICommandLineRunner commandLineRunner;
-
         public TomcatStateFeature(ICommandLineRunner commandLineRunner)
+            : base(commandLineRunner)
         {
-            this.commandLineRunner = commandLineRunner;
+
         }
 
         public string Name => SpecialVariables.Action.Java.Tomcat.StateFeature;
@@ -45,22 +44,7 @@ namespace Calamari.Java.Deployment.Features
                 variables.Get(SpecialVariables.Action.Java.Tomcat.CustomVersion));
 
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
-            /*
-                The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
-                on where it found the java executable based on the JAVA_HOME environment
-                variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
-                found java on the path.
-            */
-            var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
-            /*
-                The precondition script will also set the location of the calamari.jar file
-            */
-            var javaLib = Environment.GetEnvironmentVariable("CalmariDependencyPathOctopusDependenciesJava") ?? "";
-            var result = commandLineRunner.Execute(new CommandLineInvocation(
-                $"{javaBin.Trim()}java", 
-                "-cp " + javaLib + "contentFiles\\any\\any\\calamari.jar com.octopus.calamari.tomcat.TomcatState",
-                javaLib + "contentFiles\\any\\any"));
-            result.VerifySuccess();
+            runJava("com.octopus.calamari.tomcat.TomcatState");
         }
 
         static void SetEnvironmentVariable(string name, string value)

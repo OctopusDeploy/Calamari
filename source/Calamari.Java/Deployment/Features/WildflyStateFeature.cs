@@ -6,13 +6,13 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Java.Deployment.Features
 {
-    public class WildflyStateFeature : IFeature
+    public class WildflyStateFeature : JavaBaseFeature, IFeature
     {
-        private readonly ICommandLineRunner commandLineRunner;
 
         public WildflyStateFeature(ICommandLineRunner commandLineRunner)
+            : base(commandLineRunner)
         {
-            this.commandLineRunner = commandLineRunner;
+
         }
 
         public string Name => SpecialVariables.Action.Java.Wildfly.StateFeature;
@@ -49,22 +49,7 @@ namespace Calamari.Java.Deployment.Features
                 variables.Get(SpecialVariables.Action.Java.Wildfly.DisabledServerGroup));                     
 
             Log.Verbose("Invoking java.exe to perform WildFly integration");
-            /*
-                The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
-                on where it found the java executable based on the JAVA_HOME environment
-                variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
-                found java on the path.
-            */
-            var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
-            /*
-                The precondition script will also set the location of the calamari.jar file
-            */
-            var javaLib = Environment.GetEnvironmentVariable("CalmariDependencyPathOctopusDependenciesJava") ?? "";
-            var result = commandLineRunner.Execute(new CommandLineInvocation(
-                $"{javaBin.Trim()}java", 
-                "-cp " + javaLib + "contentFiles\\any\\any\\calamari.jar com.octopus.calamari.wildfly.WildflyState",
-                javaLib + "contentFiles\\any\\any"));
-            result.VerifySuccess();
+            runJava("com.octopus.calamari.wildfly.WildflyState");
         }
 
         static void SetEnvironmentVariable(string name, string value)
