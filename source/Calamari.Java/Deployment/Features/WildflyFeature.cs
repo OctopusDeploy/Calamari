@@ -59,14 +59,13 @@ namespace Calamari.Java.Deployment.Features
             */
             var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
             /*
-                The calamari.jar file must be next to the Calamari.Java executable. This
-                is the path of the entry point of the application (i.e. Calamari.Java.exe)
+                The precondition script will also set the location of the calamari.jar file
             */
-            var calamariDir = AppDomain.CurrentDomain.BaseDirectory;
+            var javaLib = Environment.GetEnvironmentVariable("CalmariDependencyPathOctopusDependenciesJava") ?? "";
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 $"{javaBin.Trim()}java", 
-                "-cp " + calamariDir + "calamari.jar com.octopus.calamari.wildfly.WildflyDeploy",
-                calamariDir));
+                "-cp " + javaLib + "calamari.jar com.octopus.calamari.wildfly.WildflyDeploy",
+                javaLib));
             result.VerifySuccess();
         }
 
