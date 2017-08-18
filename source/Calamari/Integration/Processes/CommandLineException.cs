@@ -25,7 +25,8 @@ namespace Calamari.Integration.Processes
             
             if (!String.IsNullOrEmpty(workingDirectory))
             {
-                sb.Append("With the working firectory of ").Append(workingDirectory);
+                sb.Append("With the working firectory of: ")
+                    .AppendLine(workingDirectory);
             }
             
             sb.Append("Failed with exit code: ").Append(exitCode).AppendLine();
