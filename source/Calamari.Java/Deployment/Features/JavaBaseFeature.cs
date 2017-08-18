@@ -1,5 +1,5 @@
 ﻿using System;
-using Alphaleonis.Win32.Filesystem;
+using System.IO;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Java.Deployment.Features
@@ -38,7 +38,7 @@ namespace Calamari.Java.Deployment.Features
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 $"{javaBin.Trim()}java", 
                 $"-cp calamari.jar {mainClass}",
-                $"{javaLib}contentFiles{Path.DirectorySeparator}any{Path.DirectorySeparator}any"));
+                $"{javaLib}contentFiles{Path.DirectorySeparatorChar}any{Path.DirectorySeparatorChar}any"));
             result.VerifySuccess();
         }
     }
