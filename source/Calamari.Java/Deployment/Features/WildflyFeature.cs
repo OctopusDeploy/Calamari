@@ -64,8 +64,8 @@ namespace Calamari.Java.Deployment.Features
             var javaLib = Environment.GetEnvironmentVariable("CalmariDependencyPathOctopusDependenciesJava") ?? "";
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 $"{javaBin.Trim()}java", 
-                "-cp " + javaLib + "calamari.jar com.octopus.calamari.wildfly.WildflyDeploy",
-                javaLib));
+                "-cp " + javaLib + "contentFiles\\any\\any\\calamari.jar com.octopus.calamari.wildfly.WildflyDeploy",
+                javaLib + "contentFiles\\any\\any"));
             result.VerifySuccess();
         }
 
