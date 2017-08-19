@@ -73,7 +73,7 @@ namespace Calamari.Integration.Packages
 
         private IPackageExtractor ExtensionWithHashSuffix(string packageFile)
         {
-            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + "-[a-z0-9\\-]*$").IsMatch(packageFile)));
+            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + "-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$").IsMatch(packageFile)));
         }
 
         private IPackageExtractor ExtensionSuffix(string packageFile)
