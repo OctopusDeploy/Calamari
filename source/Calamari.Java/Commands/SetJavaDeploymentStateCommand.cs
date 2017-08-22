@@ -14,6 +14,7 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
+using Calamari.Java.Conventions;
 using Calamari.Java.Deployment.Conventions;
 using Calamari.Java.Deployment.Features;
 using Calamari.Java.Integration.Packages;
@@ -47,6 +48,7 @@ namespace Calamari.Java.Commands
             var scriptEngine = new CombinedScriptEngine();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var embeddedResources = new AssemblyEmbeddedResources();
+            var packageExtractor = new JavaPackageExtractor(commandLineRunner, fileSystem);
 
             var featureClasses = new List<IFeature>
             {
@@ -59,7 +61,8 @@ namespace Calamari.Java.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new ContributePreviousInstallationConvention(journal),
                 new ContributePreviousSuccessfulInstallationConvention(journal),
-                new LogVariablesConvention(),     
+                new LogVariablesConvention(),
+                new InitialiseDirectoryVariables(),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
