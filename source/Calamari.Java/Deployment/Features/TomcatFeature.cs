@@ -42,26 +42,8 @@ namespace Calamari.Java.Deployment.Features
                 variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled));
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Context", 
                 variables.Get(SpecialVariables.Action.Java.Tomcat.Context));
-            
-            /*
-                Versions can either be disabled, use the package version, or use a custom 
-                version number.
-            */
-            var versionType = variables.Get(SpecialVariables.Action.Java.Tomcat.Version)?.ToLower();
-            if (SpecialVariables.Action.Java.Tomcat.PackageVersionValue.ToLower().Equals(versionType))
-            {
-                SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
-                    variables.Get(SpecialVariables.Package.NuGetPackageVersion));
-            } 
-            else if (SpecialVariables.Action.Java.Tomcat.CustomVersionValue.ToLower().Equals(versionType))
-            {
-                SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
-                    variables.Get(SpecialVariables.Action.Java.Tomcat.CustomVersion));
-            }
-            else
-            {
-                SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version", "");
-            }
+            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
+                variables.Get(SpecialVariables.Action.Java.Tomcat.CustomVersion));
 
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
             runJava("com.octopus.calamari.tomcat.TomcatDeploy");
