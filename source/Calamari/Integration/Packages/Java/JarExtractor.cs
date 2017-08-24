@@ -1,8 +1,7 @@
 ﻿using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Java.Integration.Packages
+namespace Calamari.Integration.Packages.Java
 {
     public class JarExtractor : SimplePackageExtractor
     {

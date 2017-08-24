@@ -3,8 +3,8 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
-using Calamari.Java.Integration.Packages;
 
 namespace Calamari.Java.Deployment.Conventions
 {

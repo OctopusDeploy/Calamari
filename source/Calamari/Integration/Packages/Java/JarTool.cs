@@ -5,7 +5,7 @@ using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Java.Integration.Packages
+namespace Calamari.Integration.Packages.Java
 {
     /// <summary>
     /// Wrapper class for invoking the Java Archive Tool http://docs.oracle.com/javase/7/docs/technotes/tools/windows/jar.html  

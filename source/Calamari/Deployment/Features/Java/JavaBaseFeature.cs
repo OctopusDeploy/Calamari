@@ -2,7 +2,7 @@
 using System.IO;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Java.Deployment.Features
+namespace Calamari.Deployment.Features.Java
 {
     /// <summary>
     /// A base class for features that run Java against the Octopus Deploy 

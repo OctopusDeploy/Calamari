@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Java.Integration.Packages
+namespace Calamari.Integration.Packages.Java
 {
     public class JavaPackageExtractor : GenericPackageExtractor
     {
