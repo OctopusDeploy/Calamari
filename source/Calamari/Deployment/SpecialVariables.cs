@@ -291,6 +291,7 @@
             public static class Java
             {
                 public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
+                public static readonly string JavaRepackedArchiveLocation = "Octopus.Action.Java.JavaRepackedArchiveLocation";
 
                 public static class Tomcat
                 {

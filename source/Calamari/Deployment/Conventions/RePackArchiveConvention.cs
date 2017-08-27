@@ -30,6 +30,10 @@ namespace Calamari.Java.Deployment.Conventions
             var applicationDirectory = ApplicationDirectory.GetApplicationDirectory(packageMetadata, deployment.Variables, fileSystem);
             var targetFilePath = Path.Combine(applicationDirectory,
                 $"{packageMetadata.Id}.{packageMetadata.Version}{packageMetadata.FileExtension}");
+            
+            deployment.Variables.Set(
+                SpecialVariables.Action.Java.JavaRepackedArchiveLocation, 
+                targetFilePath);
 
             Log.Info($"Re-packaging archive: '{targetFilePath}'");
             var stagingDirectory = deployment.CurrentDirectory;
