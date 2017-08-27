@@ -1,6 +1,4 @@
-﻿using Calamari.Integration.Packages;
-
-namespace Calamari.Java.Integration.Packages
+﻿namespace Calamari.Integration.Packages.Java
 {
     public interface IJavaPackageExtractor : IGenericPackageExtractor
     {

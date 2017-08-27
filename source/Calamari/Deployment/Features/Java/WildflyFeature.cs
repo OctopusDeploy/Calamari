@@ -1,10 +1,7 @@
 ﻿using System;
-using System.IO;
-using Calamari.Deployment;
-using Calamari.Deployment.Features;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Java.Deployment.Features
+namespace Calamari.Deployment.Features.Java
 {
     public class WildflyFeature : JavaBaseFeature, IFeature
     {
