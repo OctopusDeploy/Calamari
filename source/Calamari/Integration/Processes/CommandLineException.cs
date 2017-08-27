@@ -25,7 +25,7 @@ namespace Calamari.Integration.Processes
             
             if (!String.IsNullOrEmpty(workingDirectory))
             {
-                sb.Append("With the working firectory of: ")
+                sb.Append("With the working directory of: ")
                     .AppendLine(workingDirectory);
             }
             

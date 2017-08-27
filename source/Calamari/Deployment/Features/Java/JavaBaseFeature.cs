@@ -38,7 +38,7 @@ namespace Calamari.Deployment.Features.Java
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 $"{javaBin.Trim()}java", 
                 $"-cp calamari.jar {mainClass}",
-                $"{javaLib}contentFiles{Path.DirectorySeparatorChar}any{Path.DirectorySeparatorChar}any"));
+                Path.Combine(javaLib, "contentFiles", "any", "any")));
             result.VerifySuccess();
         }
     }
