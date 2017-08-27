@@ -10,7 +10,7 @@ namespace Calamari.Deployment.Features.Java
     /// </summary>
     public abstract class JavaBaseFeature
     {
-        private const string JavaLibraryEnvVar = "CalmariDependencyPathOctopusDependenciesJava";
+        private const string JavaLibraryEnvVar = "JavaIntegrationLibraryPackagePath";
         private const string JavaBinEnvVar = "OctopusEnvironment_Java_Bin";
         private readonly ICommandLineRunner commandLineRunner;
         
