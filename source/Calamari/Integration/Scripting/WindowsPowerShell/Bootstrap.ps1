@@ -2,6 +2,7 @@
 
 {{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
+$VerbosePreference = 'Continue'
 
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
@@ -177,8 +178,11 @@ function Write-Verbose([string]$message)
 	Write-Host "##octopus[stdout-default]"
 }
 
-function Write-Warning([string]$message)
+function Write-Warning()
 {
+	[CmdletBinding()]
+	param([string]$message)
+
 	if ($WarningPreference -eq 'SilentlyContinue') {
 		return
 	}
