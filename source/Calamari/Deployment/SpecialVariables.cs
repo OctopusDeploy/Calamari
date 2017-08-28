@@ -33,6 +33,7 @@
         }
 
         public const string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
+        public const string RepackedArchiveLocation = "OctopusRepackedArchiveLocation";
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
 
         public static readonly string RetentionPolicySet = "OctopusRetentionPolicySet";
@@ -163,8 +164,7 @@
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
             public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
-            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";
-
+            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";            
 
             public static class IisWebSite
             {
@@ -291,7 +291,7 @@
             public static class Java
             {
                 public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
-                public static readonly string JavaRepackedArchiveLocation = "Octopus.Action.Java.JavaRepackedArchiveLocation";
+                
 
                 public static class Tomcat
                 {

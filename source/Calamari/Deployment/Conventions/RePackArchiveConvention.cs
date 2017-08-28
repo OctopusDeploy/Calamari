@@ -32,7 +32,7 @@ namespace Calamari.Java.Deployment.Conventions
                 $"{packageMetadata.Id}.{packageMetadata.Version}{packageMetadata.FileExtension}");
             
             deployment.Variables.Set(
-                SpecialVariables.Action.Java.JavaRepackedArchiveLocation, 
+                SpecialVariables.RepackedArchiveLocation, 
                 targetFilePath);
 
             Log.Info($"Re-packaging archive: '{targetFilePath}'");

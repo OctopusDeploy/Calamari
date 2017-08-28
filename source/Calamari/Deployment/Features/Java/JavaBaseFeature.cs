@@ -36,7 +36,7 @@ namespace Calamari.Deployment.Features.Java
             */
             var javaLib = Environment.GetEnvironmentVariable(JavaLibraryEnvVar) ?? "";
             var result = commandLineRunner.Execute(new CommandLineInvocation(
-                $"{javaBin.Trim()}java", 
+                Path.Combine(javaBin, "java"), 
                 $"-cp calamari.jar {mainClass}",
                 Path.Combine(javaLib, "contentFiles", "any", "any")));
             result.VerifySuccess();
