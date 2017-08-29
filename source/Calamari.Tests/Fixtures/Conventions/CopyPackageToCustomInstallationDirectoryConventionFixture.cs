@@ -1,6 +1,5 @@
 ﻿using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Conventions.CopyConventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;

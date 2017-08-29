@@ -31,11 +31,12 @@ namespace Calamari.Integration.Packages.Java
              */
             var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
             var createJarCommand = new CommandLineInvocation(
-               $"{javaBin}java", 
-               $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .", 
-               contentsDirectory);
+                Path.Combine(javaBin, "java"),
+                $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
+                contentsDirectory);
 
             Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
+            
             var result = commandLineRunner.Execute(createJarCommand);
             result.VerifySuccess();
         }
@@ -54,11 +55,19 @@ namespace Calamari.Integration.Packages.Java
              */
             var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
             var extractJarCommand = new CommandLineInvocation(
-                $"{javaBin.Trim()}java", 
-                $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"", 
+                Path.Combine(javaBin, "java"),
+                $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"",
                 targetDirectory);
 
             Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
+            
+            /*
+                We don't really want to see all the java compression output by default, so set all
+                output to verbose.
+            */
+            Console.Out.WriteLine("##octopus[stdout-verbose]");
+            Console.Out.Flush();
+            
             var result = commandLineRunner.Execute(extractJarCommand);
             result.VerifySuccess();
 
@@ -66,7 +75,7 @@ namespace Calamari.Integration.Packages.Java
 
             try
             {
-                count = Directory.EnumerateFiles(targetDirectory, "*", SearchOption.AllDirectories).Count(); 
+                count = Directory.EnumerateFiles(targetDirectory, "*", SearchOption.AllDirectories).Count();
             }
             catch (Exception ex)
             {

@@ -5,7 +5,6 @@ using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Conventions.CopyConventions;
 using Calamari.Deployment.Features;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.ConfigurationTransforms;

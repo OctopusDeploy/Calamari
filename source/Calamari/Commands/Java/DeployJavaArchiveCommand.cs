@@ -4,7 +4,6 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Conventions.CopyConventions;
 using Calamari.Deployment.Features;
 using Calamari.Deployment.Features.Java;
 using Calamari.Deployment.Journal;
@@ -81,8 +80,7 @@ namespace Calamari.Commands.Java
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
-                new RePackArchiveConvention(fileSystem, packageExtractor, commandLineRunner),
-                new CopyRepackedPackageToCustomInstallationDirectoryConvention(fileSystem),
+                new RePackArchiveConvention(fileSystem, packageExtractor, commandLineRunner),                
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
