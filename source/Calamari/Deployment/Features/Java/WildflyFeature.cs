@@ -35,8 +35,6 @@ namespace Calamari.Deployment.Features.Java
                 variables.Get(SpecialVariables.Action.Java.Wildfly.User));
             SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_Password", 
                 variables.Get(SpecialVariables.Action.Java.Wildfly.Password));
-            SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_Debug", 
-                variables.Get(SpecialVariables.Action.Java.Wildfly.Debug));
             SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_Enabled", 
                 variables.Get(SpecialVariables.Action.Java.Wildfly.Enabled));
             SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_Port", 
