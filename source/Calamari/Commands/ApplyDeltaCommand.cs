@@ -119,9 +119,9 @@ namespace Calamari.Commands
             newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), newFileName + "-" + Guid.NewGuid());
 
             var previousPackage = packageStore.GetPackage(basisFilePath);
-            if (previousPackage.Metadata.Hash != fileHash)
+            if (previousPackage?.Metadata.Hash != fileHash)
             {
-                throw new CommandException("Basis file hash " + previousPackage.Metadata.Hash +
+                throw new CommandException("Basis file hash " + previousPackage?.Metadata.Hash +
                                            " does not match the file hash specified " + fileHash);
             }
         }
