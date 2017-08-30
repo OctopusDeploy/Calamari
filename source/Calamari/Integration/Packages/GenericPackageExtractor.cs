@@ -3,12 +3,31 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Packages.NuGet;
 
 namespace Calamari.Integration.Packages
 {
     public class GenericPackageExtractor : IGenericPackageExtractor
     {
+        private readonly List<IPackageExtractor> additionalExtractors = 
+            new List<IPackageExtractor>();
+        
+        public GenericPackageExtractor()
+        {
+            
+        }
+
+        /// <summary>
+        /// Construct a generic extractor supplying a list of additional extractors
+        /// that should be considered after the generic list has been exhausted.
+        /// </summary>
+        /// <param name="additionalExtractors">A list of additional extractors that are to be considered when dealing with packages</param>
+        public GenericPackageExtractor(List<IPackageExtractor> additionalExtractors)
+        {
+            this.additionalExtractors.AddRange(additionalExtractors);
+        }
+        
         public string[] Extensions
         {
             get { return Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
@@ -69,7 +88,7 @@ namespace Calamari.Integration.Packages
             //new TarLzwPackageExtractor(), // For some reason this doesnt currently work...
             new ZipPackageExtractor(),
             new TarPackageExtractor()
-        };
+        }.Concat(additionalExtractors).ToList();
 
         private IPackageExtractor ExtensionWithHashSuffix(string packageFile)
         {

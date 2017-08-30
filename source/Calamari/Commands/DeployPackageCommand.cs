@@ -14,6 +14,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
