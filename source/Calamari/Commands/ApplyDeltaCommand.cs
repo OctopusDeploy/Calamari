@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
+using Calamari.Integration.ServiceMessages;
 
 namespace Calamari.Commands
 {
@@ -16,7 +19,7 @@ namespace Calamari.Commands
         string newFileName;
         bool showProgress;
         bool skipVerification;
-        readonly PackageStore packageStore = new PackageStore(new GenericPackageExtractor());
+        private readonly PackageStore packageStore;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public ApplyDeltaCommand()
@@ -29,6 +32,16 @@ namespace Calamari.Commands
             Options.Add("skipVerification",
                 "Skip checking whether the basis file is the same as the file used to produce the signature that created the delta.",
                 v => skipVerification = true);
+            
+            packageStore = new PackageStore(new GenericPackageExtractor(new List<IPackageExtractor>
+            {
+                new JarExtractor(new CommandLineRunner(
+                    new SplitCommandOutput(
+                        new ConsoleCommandOutput(), 
+                        new ServiceMessageCommandOutput(
+                            new CalamariVariableDictionary()))), 
+                    fileSystem)
+            }));
         }
         public override int Execute(string[] commandLineArguments)
         {
