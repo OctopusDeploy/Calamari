@@ -50,10 +50,7 @@ namespace Calamari.Commands
                 throw new CommandException(String.Format("Package version '{0}' is not a valid Semantic Version", packageVersion));
 
             var packageStore = new PackageStore(
-                new GenericPackageExtractor(new List<IPackageExtractor>
-                {
-                    new JarExtractor(commandLineRunner, fileSystem)
-                }));
+                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
             var packageMetadata = new ExtendedPackageMetadata() {Id = packageId, Version = packageVersion, Hash = packageHash};
             var package = packageStore.GetPackage(packageMetadata);
             if (package == null)

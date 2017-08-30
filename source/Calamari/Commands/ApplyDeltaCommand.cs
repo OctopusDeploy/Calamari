@@ -32,16 +32,9 @@ namespace Calamari.Commands
             Options.Add("skipVerification",
                 "Skip checking whether the basis file is the same as the file used to produce the signature that created the delta.",
                 v => skipVerification = true);
-            
-            packageStore = new PackageStore(new GenericPackageExtractor(new List<IPackageExtractor>
-            {
-                new JarExtractor(new CommandLineRunner(
-                    new SplitCommandOutput(
-                        new ConsoleCommandOutput(), 
-                        new ServiceMessageCommandOutput(
-                            new CalamariVariableDictionary()))), 
-                    fileSystem)
-            }));
+
+            packageStore = new PackageStore(
+                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
         }
         public override int Execute(string[] commandLineArguments)
         {

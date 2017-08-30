@@ -67,7 +67,7 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find package file: " + packageFile);
 
             deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
-            var extractor = new GenericPackageExtractor();
+            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);
 
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
