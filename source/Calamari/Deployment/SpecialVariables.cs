@@ -320,6 +320,7 @@
                     public static readonly string Enabled = "WildFly.Deploy.Enabled";
                     public static readonly string EnabledServerGroup = "WildFly.Deploy.EnabledServerGroup";
                     public static readonly string DisabledServerGroup = "WildFly.Deploy.DisabledServerGroup";
+                    public static readonly string ServerType = "WildFly.Deploy.ServerType";
                 }
             }
         }

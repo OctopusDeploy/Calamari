@@ -45,6 +45,8 @@ namespace Calamari.Deployment.Features.Java
                 variables.Get(SpecialVariables.Action.Java.Wildfly.EnabledServerGroup));
             SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_DisabledServerGroup", 
                 variables.Get(SpecialVariables.Action.Java.Wildfly.DisabledServerGroup));
+            SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_ServerType", 
+                variables.Get(SpecialVariables.Action.Java.Wildfly.ServerType));
 
             Log.Verbose("Invoking java.exe to perform WildFly integration");
             runJava("com.octopus.calamari.wildfly.WildflyDeploy");
