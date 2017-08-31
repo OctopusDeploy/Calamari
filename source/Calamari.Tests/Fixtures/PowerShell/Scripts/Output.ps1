@@ -7,15 +7,11 @@ Write-Warning "Hello, write-warning!"
 
 Write-Warning "This warning should not appear in logs!" -WarningAction $SilentlyContinuePreference
 
-$VerbosePreferenceToRestore = $VerbosePreference
-$VerbosePreference = $SilentlyContinuePreference
 $WarningPreferenceToRestore = $WarningPreference
 $WarningPreference = $SilentlyContinuePreference
 
 Write-Warning "This warning should not appear in logs!"
-Write-Verbose "This verbose should not appear in logs!"
 
-$VerbosePreference = $VerbosePreferenceToRestore
 $WarningPreference = $WarningPreferenceToRestore
 
 # It would be nice to support the following but I haven't figure it out:

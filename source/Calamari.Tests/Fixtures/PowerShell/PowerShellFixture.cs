@@ -168,7 +168,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertErrorOutput("Hello-Error!");
 
             output.AssertNoOutput("This warning should not appear in logs!");
-            output.AssertNoOutput("This verbose should not appear in logs!");
         }
 
         [Test]
