@@ -87,11 +87,31 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        protected virtual int Copy(RunningDeployment deployment)
+        protected int Copy(RunningDeployment deployment)
         {
-            // Copy files from staging area to custom directory
-            Log.Info("Copying package contents to '{0}'", deployment.CustomDirectory);
-            return fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
+            var variables = deployment.Variables;
+
+            var customPackageFileName = variables.Get(SpecialVariables.Package.CustomPackageFileName);
+
+            // If we are not using a custom package filename 
+            if (string.IsNullOrWhiteSpace(customPackageFileName))
+            {
+                // Copy files from staging area to custom directory
+                Log.Info("Copying package contents to '{0}'", deployment.CustomDirectory);
+                return fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
+            }
+
+            // We are using a custom file-name, so we are only dealing with the single package file
+            var originalPackageLocation = variables.Get(SpecialVariables.Package.Output.InstallationPackagePath);
+
+            var targetPath = Path.Combine(deployment.CustomDirectory, customPackageFileName);
+
+            Log.Info($"Copying package to custom installation location '{targetPath}'");
+
+            Log.Verbose($"Copying from '{originalPackageLocation}'");
+            fileSystem.CopyFile(originalPackageLocation, targetPath);
+
+            return 1;
         }
     }
 }

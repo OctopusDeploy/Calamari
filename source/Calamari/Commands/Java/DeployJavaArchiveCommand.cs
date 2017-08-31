@@ -87,7 +87,7 @@ namespace Calamari.Commands.Java
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new RePackArchiveConvention(fileSystem, packageExtractor, commandLineRunner),                
-                new CopyPackageToCustomInstallationDirectoryWithRenameConvention(fileSystem),
+                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
