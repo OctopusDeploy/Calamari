@@ -8,7 +8,6 @@ namespace Calamari.Deployment.Features.Java
         public TomcatFeature(ICommandLineRunner commandLineRunner)
             : base(commandLineRunner)
         {
-            
         }
 
         public string Name => SpecialVariables.Action.Java.Tomcat.Feature;
@@ -24,9 +23,7 @@ namespace Calamari.Deployment.Features.Java
 
             // Environment variables are used to pass parameters to the Java library
             SetEnvironmentVariable("OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", 
-                deployment.Variables.Get(
-                    SpecialVariables.RepackedArchiveLocation, 
-                    deployment.PackageFilePath));
+                deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath));
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Name", 
                 variables.Get(SpecialVariables.Action.Java.Tomcat.DeployName));             
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Controller", 

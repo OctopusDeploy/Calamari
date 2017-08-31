@@ -66,6 +66,8 @@ namespace Calamari.Commands.Java
                 new WildflyFeature(commandLineRunner)
             };
 
+            var deployExploded = variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
+
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
@@ -73,7 +75,11 @@ namespace Calamari.Commands.Java
                 new ContributePreviousSuccessfulInstallationConvention(journal),
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
+                // If we are deploying the package exploded then extract directly to the application directory.
+                // Else, if we are going to re-pack, then we extract initially to a temporary directory 
+                deployExploded
+                    ? (IInstallConvention)new ExtractPackageToApplicationDirectoryConvention(packageExtractor, fileSystem) 
+                    : new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
@@ -81,6 +87,7 @@ namespace Calamari.Commands.Java
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new RePackArchiveConvention(fileSystem, packageExtractor, commandLineRunner),                
+                new CopyPackageToCustomInstallationDirectoryWithRenameConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),

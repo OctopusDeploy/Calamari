@@ -33,7 +33,6 @@
         }
 
         public const string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
-        public const string RepackedArchiveLocation = "OctopusRepackedArchiveLocation";
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
 
         public static readonly string RetentionPolicySet = "OctopusRetentionPolicySet";
@@ -102,7 +101,6 @@
             public static readonly string UpdateIisWebsite = "Octopus.Action.Package.UpdateIisWebsite";
             public static readonly string UpdateIisWebsiteName = "Octopus.Action.Package.UpdateIisWebsiteName";
             public static readonly string CustomInstallationDirectory = "Octopus.Action.Package.CustomInstallationDirectory";
-            public static readonly string CustomPackageInstallationDirectory = "Octopus.Action.Package.CustomPackageInstallationDirectory";
             public static readonly string CustomPackageFileName = "Octopus.Action.Package.CustomPackageFileName";
             public static readonly string CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment";
             public static readonly string CustomInstallationDirectoryPurgeExclusions = "Octopus.Action.Package.CustomInstallationDirectoryPurgeExclusions";
@@ -126,6 +124,7 @@
             {
                 public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
                 public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
+                public static readonly string InstallationPackagePath = "Octopus.Action.Package.InstallationPackagePath";
                 public static readonly string ExtractedFileCount = "Package.ExtractedFileCount";
                 public static readonly string CopiedFileCount = "Package.CopiedFileCount";
                 public static readonly string DirectoryPath = "Package.DirectoryPath";
@@ -293,7 +292,8 @@
             public static class Java
             {
                 public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
-                
+
+                public static readonly string DeployExploded = "Octopus.Action.JavaArchive.DeployExploded"; 
 
                 public static class Tomcat
                 {

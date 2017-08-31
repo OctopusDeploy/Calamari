@@ -25,8 +25,7 @@ namespace Calamari.Deployment.Features.Java
             // Environment variables are used to pass parameters to the Java library
             SetEnvironmentVariable("OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", 
                 deployment.Variables.Get(
-                    SpecialVariables.RepackedArchiveLocation, 
-                    deployment.PackageFilePath));
+                    SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath));
             SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_Name", 
                 variables.Get(SpecialVariables.Action.Java.Wildfly.DeployName));             
             SetEnvironmentVariable("OctopusEnvironment_WildFly_Deploy_Controller", 
