@@ -8,7 +8,7 @@ namespace Calamari.Deployment.Conventions
 {
     public class CopyPackageToCustomInstallationDirectoryConvention : IInstallConvention
     {
-        protected readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
 
         public CopyPackageToCustomInstallationDirectoryConvention(ICalamariFileSystem fileSystem)
         {
@@ -68,7 +68,9 @@ namespace Calamari.Deployment.Conventions
                 }
 
                 // Copy files from staging area to custom directory
-                var count = Copy(deployment);
+                Log.Info("Copying package contents to '{0}'", customInstallationDirectory);
+                int count = fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
+                Log.Info("Copied {0} files", count);
 
                 // From this point on, the current directory will be the custom-directory
                 deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
@@ -85,33 +87,6 @@ namespace Calamari.Deployment.Conventions
                     "(see https://g.octopushq.com/TakingWebsiteOffline)."
                 );
             }
-        }
-
-        protected int Copy(RunningDeployment deployment)
-        {
-            var variables = deployment.Variables;
-
-            var customPackageFileName = variables.Get(SpecialVariables.Package.CustomPackageFileName);
-
-            // If we are not using a custom package filename 
-            if (string.IsNullOrWhiteSpace(customPackageFileName))
-            {
-                // Copy files from staging area to custom directory
-                Log.Info("Copying package contents to '{0}'", deployment.CustomDirectory);
-                return fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
-            }
-
-            // We are using a custom file-name, so we are only dealing with the single package file
-            var originalPackageLocation = variables.Get(SpecialVariables.Package.Output.InstallationPackagePath);
-
-            var targetPath = Path.Combine(deployment.CustomDirectory, customPackageFileName);
-
-            Log.Info($"Copying package to custom installation location '{targetPath}'");
-
-            Log.Verbose($"Copying from '{originalPackageLocation}'");
-            fileSystem.CopyFile(originalPackageLocation, targetPath);
-
-            return 1;
         }
     }
 }

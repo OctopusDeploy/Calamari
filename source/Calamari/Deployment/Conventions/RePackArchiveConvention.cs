@@ -53,7 +53,18 @@ namespace Calamari.Java.Deployment.Conventions
                 packageMetadata, 
                 deployment.Variables, 
                 fileSystem);
-            var targetFileName = $"{packageMetadata.Id}.{packageMetadata.Version}{packageMetadata.FileExtension}";
+
+            var customPackageFileName = deployment.Variables.Get(SpecialVariables.Package.CustomPackageFileName);
+
+            if (!string.IsNullOrWhiteSpace(customPackageFileName))
+            {
+                Log.Verbose($"Using custom package file-name: '{customPackageFileName}'");
+            }
+
+            var targetFileName = !string.IsNullOrWhiteSpace(customPackageFileName) 
+                ? customPackageFileName
+                : $"{packageMetadata.Id}.{packageMetadata.Version}{packageMetadata.FileExtension}";
+
             var targetFilePath = Path.Combine(applicationDirectory, targetFileName);
                         
             var stagingDirectory = deployment.CurrentDirectory;
