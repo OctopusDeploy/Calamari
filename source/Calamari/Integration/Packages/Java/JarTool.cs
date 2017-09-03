@@ -54,19 +54,24 @@ namespace Calamari.Integration.Packages.Java
                  found java on the path.
              */
             var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+            
+            /*
+                Start by verifiying the archive is valid.
+            */
+            commandLineRunner.Execute(new CommandLineInvocation(
+                Path.Combine(javaBin, "java"),
+                $"-cp tools.jar sun.tools.jar.Main tf \"{jarPath}\"",
+                targetDirectory)).VerifySuccess();
+            
+            /*
+                If it is valid, go ahead an extract it
+            */
             var extractJarCommand = new CommandLineInvocation(
                 Path.Combine(javaBin, "java"),
                 $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"",
                 targetDirectory);
 
-            Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
-            
-            /*
-                We don't really want to see all the java compression output by default, so set all
-                output to verbose.
-            */
-            Console.Out.WriteLine("##octopus[stdout-verbose]");
-            Console.Out.Flush();
+            Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");           
             
             var result = commandLineRunner.Execute(extractJarCommand);
             result.VerifySuccess();
