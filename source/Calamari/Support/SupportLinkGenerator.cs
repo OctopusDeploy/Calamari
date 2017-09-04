@@ -1,6 +1,4 @@
-﻿using EnsureThat;
-
-namespace Calamari.Support
+﻿namespace Calamari.Support
 {
     public class SupportLinkGenerator : ISupportLinkGenerator
     {
@@ -12,9 +10,6 @@ namespace Calamari.Support
         
         public string GenerateSupportMessage(string baseMessage, string errorCode)
         {
-            EnsureArg.IsNotNullOrWhiteSpace(baseMessage);
-            EnsureArg.IsNotNullOrWhiteSpace(errorCode);
-
             if (errorCode.StartsWith(JavaErrorCodePrefix))
             {
                 return $"{errorCode}: {baseMessage} {JavaSupportLink + "#" + errorCode.ToLower()}";
