@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Support;
 
 namespace Calamari.Integration.Packages
 {
@@ -14,6 +15,8 @@ namespace Calamari.Integration.Packages
         private const string ExtensionRegex = "(.*?)" + UUIDSuffix;
         private readonly List<IPackageExtractor> additionalExtractors = 
             new List<IPackageExtractor>();
+
+        private readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
         
         public GenericPackageExtractor()
         {
@@ -63,13 +66,15 @@ namespace Calamari.Integration.Packages
 
             var extensionMatch = Regex.Match(Path.GetExtension(packageFile), ExtensionRegex);
             
-            throw new FileFormatException(string.Format(
-                "This step supports packages with the following extenions: {0}.\n" +
-                "The supplied package has the extension \"{1}\" which is not supported.", 
-                Extractors.SelectMany(e => e.Extensions)
-                    .Distinct()
-                    .Aggregate((result, e) => result + ", " + e),
-                extensionMatch.Success ? extensionMatch.Groups[1].Value : Path.GetExtension(packageFile)));
+            throw new FileFormatException(supportLinkGenerator.GenerateSupportMessage(
+                string.Format(
+                    "This step supports packages with the following extenions: {0}.\n" +
+                    "The supplied package has the extension \"{1}\" which is not supported.", 
+                    Extractors.SelectMany(e => e.Extensions)
+                        .Distinct()
+                        .Aggregate((result, e) => result + ", " + e),
+                    extensionMatch.Success ? extensionMatch.Groups[1].Value : Path.GetExtension(packageFile)),
+                "JAVA-DEPLOY-ERROR-0001"));
         }
 
         internal static void WarnIfScriptInSubFolder(string path)
