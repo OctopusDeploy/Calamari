@@ -35,7 +35,7 @@ namespace Calamari.Deployment.Features.Java
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Enabled", 
                 variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled));
             SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
-                variables.Get(SpecialVariables.Action.Java.Tomcat.CustomVersion));
+                variables.Get(SpecialVariables.Action.Java.Tomcat.Version));
 
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
             runJava("com.octopus.calamari.tomcat.TomcatDeploy");

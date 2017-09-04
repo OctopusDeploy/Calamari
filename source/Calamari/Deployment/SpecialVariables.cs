@@ -304,7 +304,6 @@
                     public static readonly string Password = "Tomcat.Deploy.Password";
                     public static readonly string Enabled = "Tomcat.Deploy.Enabled";
                     public static readonly string Version = "Tomcat.Deploy.TomcatVersion";
-                    public static readonly string CustomVersion = "Tomcat.Deploy.CustomVersion";
                 }
                 
                 public static class Wildfly
