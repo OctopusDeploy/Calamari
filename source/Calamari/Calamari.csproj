@@ -37,6 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.1.1" />
+    <PackageReference Include="Ensure.That" Version="5.0.0" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
