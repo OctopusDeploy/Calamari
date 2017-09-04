@@ -10,6 +10,8 @@ namespace Calamari.Integration.Packages
 {
     public class GenericPackageExtractor : IGenericPackageExtractor
     {
+        private const string UUIDSuffix = "-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$";
+        private const string ExtensionRegex = "(.*?)" + UUIDSuffix;
         private readonly List<IPackageExtractor> additionalExtractors = 
             new List<IPackageExtractor>();
         
@@ -59,7 +61,15 @@ namespace Calamari.Integration.Packages
             if (extractor != null)
                 return extractor;
 
-            throw new FileFormatException(string.Format("Unsupported file extension \"{0}\"", Path.GetExtension(packageFile)));
+            var extensionMatch = Regex.Match(Path.GetExtension(packageFile), ExtensionRegex);
+            
+            throw new FileFormatException(string.Format(
+                "This step supports packages with the following extenions: {0}.\n" +
+                "The supplied package has the extension \"{1}\" which is not supported.", 
+                Extractors.SelectMany(e => e.Extensions)
+                    .Distinct()
+                    .Aggregate((result, e) => result + ", " + e),
+                extensionMatch.Success ? extensionMatch.Groups[1].Value : Path.GetExtension(packageFile)));
         }
 
         internal static void WarnIfScriptInSubFolder(string path)
@@ -92,7 +102,7 @@ namespace Calamari.Integration.Packages
 
         private IPackageExtractor ExtensionWithHashSuffix(string packageFile)
         {
-            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + "-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$").IsMatch(packageFile)));
+            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + UUIDSuffix).IsMatch(packageFile)));
         }
 
         private IPackageExtractor ExtensionSuffix(string packageFile)
