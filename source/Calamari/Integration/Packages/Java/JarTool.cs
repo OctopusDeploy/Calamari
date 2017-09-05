@@ -28,11 +28,6 @@ namespace Calamari.Integration.Packages.Java
             try
             {
                 /*
-                     All extraction messages should be verbose
-                 */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]");
-
-                /*
                      The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
                      on where it found the java executable based on the JAVA_HOME environment
                      variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
@@ -45,6 +40,11 @@ namespace Calamari.Integration.Packages.Java
                     contentsDirectory);
 
                 Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
+                
+                /*
+                     All extraction messages should be verbose
+                 */
+                commandOutput.WriteInfo("##octopus[stdout-verbose]");                
 
                 var result = commandLineRunner.Execute(createJarCommand);
                 result.VerifySuccess();
@@ -72,11 +72,6 @@ namespace Calamari.Integration.Packages.Java
             try
             {
                 /*
-                     All extraction messages should be verbose
-                 */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]");
-
-                /*
                     Start by verifiying the archive is valid.
                 */
                 commandLineRunner.Execute(new CommandLineInvocation(
@@ -92,7 +87,12 @@ namespace Calamari.Integration.Packages.Java
                         $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"",
                         targetDirectory);
                 
-                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");           
+                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");     
+                
+                /*
+                     All extraction messages should be verbose
+                 */
+                commandOutput.WriteInfo("##octopus[stdout-verbose]");                
             
                 var result = commandLineRunner.Execute(extractJarCommand);
                 result.VerifySuccess();
