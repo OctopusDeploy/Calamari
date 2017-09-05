@@ -8,16 +8,18 @@ namespace Calamari.Integration.Packages.Java
     {
         private readonly ICommandLineRunner commandLineRunner;
         private readonly ICalamariFileSystem fileSystem;
+        private readonly ICommandOutput commandOutput;
 
-        public JavaPackageExtractor(ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public JavaPackageExtractor(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, ICalamariFileSystem fileSystem)
         {
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.commandOutput = commandOutput;
         }
 
         protected override IList<IPackageExtractor> Extractors => new List<IPackageExtractor>
         {
-            new JarExtractor(commandLineRunner, fileSystem)
+            new JarExtractor(commandLineRunner, commandOutput, fileSystem)
         }; 
     }
 }

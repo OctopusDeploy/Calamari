@@ -55,9 +55,11 @@ namespace Calamari.Commands.Java
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+            var commandOutput =
+                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));
+            var commandLineRunner = new CommandLineRunner(commandOutput);
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var packageExtractor = new JavaPackageExtractor(commandLineRunner, fileSystem);
+            var packageExtractor = new JavaPackageExtractor(commandLineRunner, commandOutput, fileSystem);
             var embeddedResources = new AssemblyEmbeddedResources();
 
             var featureClasses = new List<IFeature>
@@ -86,7 +88,7 @@ namespace Calamari.Commands.Java
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
-                new RePackArchiveConvention(fileSystem, packageExtractor, commandLineRunner),                
+                new RePackArchiveConvention(fileSystem, commandOutput, packageExtractor, commandLineRunner),                
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),

@@ -14,31 +14,45 @@ namespace Calamari.Integration.Packages.Java
     {
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
+        private readonly ICommandOutput commandOutput;
 
-        public JarTool(ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public JarTool(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, ICalamariFileSystem fileSystem)
         {
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.commandOutput = commandOutput;
         }
 
         public void CreateJar(string contentsDirectory, string targetJarPath)
         {
-            /*
-                 The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
-                 on where it found the java executable based on the JAVA_HOME environment
-                 variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
-                 found java on the path.
-             */
-            var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
-            var createJarCommand = new CommandLineInvocation(
-                Path.Combine(javaBin, "java"),
-                $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
-                contentsDirectory);
+            try
+            {
+                /*
+                     All extraction messages should be verbose
+                 */
+                commandOutput.WriteInfo("##octopus[stdout-verbose]");
 
-            Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
-            
-            var result = commandLineRunner.Execute(createJarCommand);
-            result.VerifySuccess();
+                /*
+                     The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
+                     on where it found the java executable based on the JAVA_HOME environment
+                     variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
+                     found java on the path.
+                 */
+                var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+                var createJarCommand = new CommandLineInvocation(
+                    Path.Combine(javaBin, "java"),
+                    $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
+                    contentsDirectory);
+
+                Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
+
+                var result = commandLineRunner.Execute(createJarCommand);
+                result.VerifySuccess();
+            }
+            finally
+            {
+                commandOutput.WriteInfo("##octopus[stdout-default]");
+            }
         }
 
         /// <summary>
@@ -54,27 +68,39 @@ namespace Calamari.Integration.Packages.Java
                  found java on the path.
              */
             var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
-            
-            /*
-                Start by verifiying the archive is valid.
-            */
-            commandLineRunner.Execute(new CommandLineInvocation(
-                Path.Combine(javaBin, "java"),
-                $"-cp tools.jar sun.tools.jar.Main tf \"{jarPath}\"",
-                targetDirectory)).VerifySuccess();
-            
-            /*
-                If it is valid, go ahead an extract it
-            */
-            var extractJarCommand = new CommandLineInvocation(
-                Path.Combine(javaBin, "java"),
-                $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"",
-                targetDirectory);
 
-            Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");           
+            try
+            {
+                /*
+                     All extraction messages should be verbose
+                 */
+                commandOutput.WriteInfo("##octopus[stdout-verbose]");
+
+                /*
+                    Start by verifiying the archive is valid.
+                */
+                commandLineRunner.Execute(new CommandLineInvocation(
+                    Path.Combine(javaBin, "java"),
+                    $"-cp tools.jar sun.tools.jar.Main tf \"{jarPath}\"",
+                    targetDirectory)).VerifySuccess();
+
+                /*
+                    If it is valid, go ahead an extract it
+                */
+                var extractJarCommand = new CommandLineInvocation(
+                        Path.Combine(javaBin, "java"),
+                        $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"",
+                        targetDirectory);
+                
+                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");           
             
-            var result = commandLineRunner.Execute(extractJarCommand);
-            result.VerifySuccess();
+                var result = commandLineRunner.Execute(extractJarCommand);
+                result.VerifySuccess();
+            }
+            finally
+            {
+                commandOutput.WriteInfo("##octopus[stdout-default]");
+            }
 
             var count = -1;
 

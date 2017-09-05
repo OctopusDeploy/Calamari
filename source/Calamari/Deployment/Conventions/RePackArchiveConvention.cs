@@ -15,11 +15,15 @@ namespace Calamari.Java.Deployment.Conventions
         readonly IPackageExtractor packageExtractor;
         readonly JarTool jarTool;
 
-        public RePackArchiveConvention(ICalamariFileSystem fileSystem, IPackageExtractor packageExtractor, ICommandLineRunner commandLineRunner)
+        public RePackArchiveConvention(
+            ICalamariFileSystem fileSystem, 
+            ICommandOutput commandOutput, 
+            IPackageExtractor packageExtractor, 
+            ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
             this.packageExtractor = packageExtractor;
-            this.jarTool = new JarTool(commandLineRunner, fileSystem); 
+            this.jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem); 
         }
 
         public void Install(RunningDeployment deployment)

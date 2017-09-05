@@ -8,9 +8,9 @@ namespace Calamari.Integration.Packages.Java
     {
         readonly JarTool jarTool;
 
-        public JarExtractor(ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public JarExtractor(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, ICalamariFileSystem fileSystem)
         {
-            jarTool = new JarTool(commandLineRunner, fileSystem);
+            jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
         }
 
         public override string[] Extensions => new[] {".jar", ".war", ".ear", ".rar"}; 

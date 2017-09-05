@@ -15,14 +15,12 @@ namespace Calamari.Integration.Packages
 
         public GenericPackageExtractor createJavaGenericPackageExtractor(ICalamariFileSystem fileSystem)
         {
+            var commandOutput = new SplitCommandOutput(new ConsoleCommandOutput(),
+                new ServiceMessageCommandOutput(
+                    new CalamariVariableDictionary()));
             return new GenericPackageExtractor(new List<IPackageExtractor>
-            {
-                new JarExtractor(new CommandLineRunner(
-                        new SplitCommandOutput(
-                            new ConsoleCommandOutput(),
-                            new ServiceMessageCommandOutput(
-                                new CalamariVariableDictionary()))),
-                    fileSystem)
+            {                            
+                new JarExtractor(new CommandLineRunner(commandOutput), commandOutput, fileSystem)
             });
         }
     }
