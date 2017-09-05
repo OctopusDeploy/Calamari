@@ -72,6 +72,11 @@ namespace Calamari.Integration.Packages.Java
             try
             {
                 /*
+                     All extraction messages should be verbose
+                 */
+                commandOutput.WriteInfo("##octopus[stdout-verbose]"); 
+                
+                /*
                     Start by verifiying the archive is valid.
                 */
                 commandLineRunner.Execute(new CommandLineInvocation(
