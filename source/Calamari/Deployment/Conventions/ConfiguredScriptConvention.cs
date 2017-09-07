@@ -26,7 +26,8 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures)
+                .Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
             if (!features.Contains(SpecialVariables.Features.CustomScripts))
                 return;
@@ -38,7 +39,10 @@ namespace Calamari.Deployment.Conventions
                 string error;
                 var scriptBody = deployment.Variables.Get(scriptName, out error);
                 if (!string.IsNullOrEmpty(error))
-                    Log.VerboseFormat("Parsing script for phase {0} with Octostache returned the following error: `{1}`", deploymentStage, error);
+                    Log.VerboseFormat(
+                        "Parsing script for phase {0} with Octostache returned the following error: `{1}`", 
+                        deploymentStage, 
+                        error);
 
                 if (string.IsNullOrWhiteSpace(scriptBody))
                     continue;

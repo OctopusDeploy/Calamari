@@ -5,15 +5,30 @@ namespace Calamari.Integration.Processes
 {
     public class CommandLineException : Exception
     {
-        public CommandLineException(string commandLine, int exitCode, string additionalInformation)
-            : base(FormatMessage(commandLine, exitCode, additionalInformation))
+        public CommandLineException(
+            string commandLine, 
+            int exitCode, 
+            string additionalInformation, 
+            string workingDirectory = null)
+            : base(FormatMessage(commandLine, exitCode, additionalInformation, workingDirectory))
         {
         }
 
-        private static string FormatMessage(string commandLine, int exitCode, string additionalInformation)
+        private static string FormatMessage(
+            string commandLine, 
+            int exitCode, 
+            string additionalInformation,
+            string workingDirectory)
         {
-            var sb = new StringBuilder("The following command:");
+            var sb = new StringBuilder("The following command: ");
             sb.AppendLine(commandLine);
+            
+            if (!String.IsNullOrEmpty(workingDirectory))
+            {
+                sb.Append("With the working directory of: ")
+                    .AppendLine(workingDirectory);
+            }
+            
             sb.Append("Failed with exit code: ").Append(exitCode).AppendLine();
             if (!string.IsNullOrWhiteSpace(additionalInformation))
             {

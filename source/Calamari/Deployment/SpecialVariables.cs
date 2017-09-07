@@ -101,6 +101,7 @@
             public static readonly string UpdateIisWebsite = "Octopus.Action.Package.UpdateIisWebsite";
             public static readonly string UpdateIisWebsiteName = "Octopus.Action.Package.UpdateIisWebsiteName";
             public static readonly string CustomInstallationDirectory = "Octopus.Action.Package.CustomInstallationDirectory";
+            public static readonly string CustomPackageFileName = "Octopus.Action.Package.CustomPackageFileName";
             public static readonly string CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment";
             public static readonly string CustomInstallationDirectoryPurgeExclusions = "Octopus.Action.Package.CustomInstallationDirectoryPurgeExclusions";
             public static readonly string AutomaticallyUpdateAppSettingsAndConnectionStrings = "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings";
@@ -123,6 +124,7 @@
             {
                 public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
                 public static readonly string InstallationDirectoryPath = "Octopus.Action.Package.InstallationDirectoryPath";
+                public static readonly string InstallationPackagePath = "Octopus.Action.Package.InstallationPackagePath";
                 public static readonly string ExtractedFileCount = "Package.ExtractedFileCount";
                 public static readonly string CopiedFileCount = "Package.CopiedFileCount";
                 public static readonly string DirectoryPath = "Package.DirectoryPath";
@@ -163,8 +165,7 @@
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string SkipJournal = "Octopus.Action.SkipJournal";
             public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
-            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";
-
+            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";            
 
             public static class IisWebSite
             {
@@ -286,6 +287,40 @@
             public static class Script
             {
                 public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
+            }
+
+            public static class Java
+            {
+                public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
+
+                public static readonly string DeployExploded = "Octopus.Action.JavaArchive.DeployExploded"; 
+
+                public static class Tomcat
+                {
+                    public static readonly string Feature = "Octopus.Features.TomcatDeployManager";
+                    public static readonly string DeployName = "Tomcat.Deploy.Name";
+                    public static readonly string Controller = "Tomcat.Deploy.Controller";
+                    public static readonly string User = "Tomcat.Deploy.User";
+                    public static readonly string Password = "Tomcat.Deploy.Password";
+                    public static readonly string Enabled = "Tomcat.Deploy.Enabled";
+                    public static readonly string Version = "Tomcat.Deploy.Version";
+                }
+                
+                public static class Wildfly
+                {
+                    public static readonly string Feature = "Octopus.Features.WildflyDeployCLI";
+                    public static readonly string StateFeature = "Octopus.Features.WildflyStateCLI";
+                    public static readonly string DeployName = "WildFly.Deploy.Name";
+                    public static readonly string Controller = "WildFly.Deploy.Controller";
+                    public static readonly string Port = "WildFly.Deploy.Port";
+                    public static readonly string User = "WildFly.Deploy.User";
+                    public static readonly string Password = "WildFly.Deploy.Password";
+                    public static readonly string Protocol = "WildFly.Deploy.Protocol";
+                    public static readonly string Enabled = "WildFly.Deploy.Enabled";
+                    public static readonly string EnabledServerGroup = "WildFly.Deploy.EnabledServerGroup";
+                    public static readonly string DisabledServerGroup = "WildFly.Deploy.DisabledServerGroup";
+                    public static readonly string ServerType = "WildFly.Deploy.ServerType";
+                }
             }
         }
 

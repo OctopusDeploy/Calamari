@@ -107,17 +107,14 @@ Task("Pack")
     .Does(() =>
 {
     DoPackage("Calamari", "net40", nugetVersion);
-    DoPackage("Calamari.Azure", "net451", nugetVersion);   
+    DoPackage("Calamari.Azure", "net451", nugetVersion); 
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
     DoPackage("Calamari", "netcoreapp2.0", nugetVersion, "portable");
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-    var doc = new XmlDocument();
-    doc.Load(@".\source\Calamari\Calamari.csproj");
-    var rids = doc.SelectSingleNode("Project/PropertyGroup/RuntimeIdentifiers").InnerText;
-    foreach (var rid in rids.Split(';'))
+    foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
         DoPackage("Calamari", "netcoreapp2.0", nugetVersion, rid);
     }
@@ -164,10 +161,21 @@ private void DoPackage(string project, string framework, string version, string 
 		Verbosity = NuGetVerbosity.Normal,
         Properties = nugetPackProperties
     };
+
     DotNetCorePublish(projectDir, publishSettings);
+
     var nuspec = $"{publishedTo}/{packageId}.nuspec";
     CopyFile($"{projectDir}/{project}.nuspec", nuspec);
     NuGetPack(nuspec, nugetPackSettings);
+}
+
+// Returns the runtime identifiers from the project file
+private IEnumerable<string> GetProjectRuntimeIds(string projectFile)
+{
+    var doc = new XmlDocument();
+    doc.Load(projectFile);
+    var rids = doc.SelectSingleNode("Project/PropertyGroup/RuntimeIdentifiers").InnerText;
+    return rids.Split(';');
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -131,7 +131,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private FeatureConvention CreateConvention(string deployStage)
         {
-            return new FeatureConvention(deployStage, fileSystem, scriptEngine, commandLineRunner, embeddedResources);
+            return new FeatureConvention(deployStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources);
         }
     }
 }

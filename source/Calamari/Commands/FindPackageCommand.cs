@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Java;
+using Calamari.Integration.Processes;
+using Calamari.Integration.ServiceMessages;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -33,11 +38,19 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
             
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var commandLineRunner = new CommandLineRunner(
+                new SplitCommandOutput(
+                    new ConsoleCommandOutput(), 
+                    new ServiceMessageCommandOutput(
+                        new CalamariVariableDictionary())));
+            
             NuGetVersion version;
             if(!NuGetVersion.TryParse(packageVersion, out version))
                 throw new CommandException(String.Format("Package version '{0}' is not a valid Semantic Version", packageVersion));
 
-            var packageStore = new PackageStore(new GenericPackageExtractor());
+            var packageStore = new PackageStore(
+                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
             var packageMetadata = new ExtendedPackageMetadata() {Id = packageId, Version = packageVersion, Hash = packageHash};
             var package = packageStore.GetPackage(packageMetadata);
             if (package == null)

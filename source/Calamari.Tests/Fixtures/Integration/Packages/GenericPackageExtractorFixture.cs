@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [SetUp]
         public void SetUp()
         {
-            extractor = new GenericPackageExtractor();
+            extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
         }
 
         [Test]

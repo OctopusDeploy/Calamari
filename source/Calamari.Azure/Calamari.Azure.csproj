@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Castle.Core" Version="4.1.1" />
     <PackageReference Include="Hyak.Common" Version="1.0.3" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Azure.Common" Version="2.1.0" />
@@ -61,6 +62,7 @@
     <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="3.4.0" />
     <PackageReference Include="Octostache" Version="2.1.5" />
     <PackageReference Include="Sprache" Version="2.1.0" />
+    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="System.Spatial" Version="5.6.4" />
     <PackageReference Include="WindowsAzure.Storage" Version="4.3.0" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />

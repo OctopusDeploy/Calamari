@@ -1,4 +1,8 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -37,6 +41,40 @@ namespace Calamari.Integration.Packages
             packageId = packageIdMatch.Value;
 
             return NuGetVersion.TryParse(versionMatch.Value, out version);
+        }
+
+        /// <summary>
+        /// Given a package-file path and a list of valid extensions extracts the package-metadata component and the extension.  
+        /// E.g: Given `C:\HelloWorld.1.0.0.zip-0d0010a3-d421-4e3d-9b28-49dad989281c` would return `{ "HelloWorld.1.0.0", ".zip" }` 
+        /// (assuming `.zip` was in the list of valid extensions).
+        /// </summary>
+        /// <param name="packageFilePath">A package file path</param>
+        /// <param name="validExtensions">A list of valid extensions</param>
+        /// <returns>a Tuple where Item1 is the package metadata component and Item2 is the extension</returns>
+        public static Tuple<string,string> ExtractPackageExtensionAndMetadata(string packageFilePath, ICollection<string> validExtensions)
+        {
+            var fileName = Path.GetFileName(packageFilePath);
+            var matchingExtension = validExtensions.FirstOrDefault(fileName.EndsWith);
+            var metaDataSection = string.Empty;
+            if (matchingExtension != null)
+            {
+                metaDataSection = fileName.Substring(0, fileName.Length - matchingExtension.Length);
+            }
+            else
+            {
+                foreach (var ext in validExtensions)
+                {
+                    var match = new Regex("(?<extension>" + Regex.Escape(ext) + ")-[a-z0-9\\-]*$").Match(fileName);
+                    if (match.Success)
+                    {
+                        matchingExtension = match.Groups["extension"].Value;
+                        metaDataSection = fileName.Substring(0, match.Index);
+                        break;
+                    }
+                }
+            }
+
+            return new Tuple<string, string>(metaDataSection, matchingExtension);
         }
     }
 }

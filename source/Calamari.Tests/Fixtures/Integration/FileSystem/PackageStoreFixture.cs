@@ -43,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("1.0.0.2")))
             using (new TemporaryFile(CreatePackage("2.0.0.2")))
             {
-                var store = new PackageStore(new GenericPackageExtractor());
+                var store = new PackageStore(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
 
                 var packages = store.GetNearestPackages("Acme.Web", new NuGetVersion(1, 1, 1, 1));
 
@@ -57,7 +57,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("1.0.0.1")))
             using (new TemporaryFile(CreateEmptyFile("1.0.0.2")))
             {
-                var store = new PackageStore(new GenericPackageExtractor());
+                var store = new PackageStore(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
 
                 var packages = store.GetNearestPackages("Acme.Web", new NuGetVersion(1, 1, 1, 1));
 
@@ -67,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
         private string CreateEmptyFile(string version)
         {
-            var destinationPath = Path.Combine(PackagePath, "Acme.Web.nupkg-x");
+            var destinationPath = Path.Combine(PackagePath, "Acme.Web.nupkg-12345678-1234-1234-1234-1234567890ab");
             File.WriteAllText(destinationPath, "FAKESTUFF");
             return destinationPath;
         }
@@ -75,7 +75,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         private string CreatePackage(string version)
         {
             var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version, true);
-            var destinationPath = Path.Combine(PackagePath, Path.GetFileName(sourcePackage) + "-x");
+            var destinationPath = Path.Combine(
+                PackagePath, 
+                Path.GetFileName(sourcePackage) + "-12345678-1234-1234-1234-1234567890ab");
 
             if(File.Exists(destinationPath))
                 File.Delete(destinationPath);

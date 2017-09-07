@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
+using Calamari.Integration.ServiceMessages;
 
 namespace Calamari.Commands
 {
@@ -16,7 +19,7 @@ namespace Calamari.Commands
         string newFileName;
         bool showProgress;
         bool skipVerification;
-        readonly PackageStore packageStore = new PackageStore(new GenericPackageExtractor());
+        private readonly PackageStore packageStore;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public ApplyDeltaCommand()
@@ -29,6 +32,9 @@ namespace Calamari.Commands
             Options.Add("skipVerification",
                 "Skip checking whether the basis file is the same as the file used to produce the signature that created the delta.",
                 v => skipVerification = true);
+
+            packageStore = new PackageStore(
+                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
         }
         public override int Execute(string[] commandLineArguments)
         {
@@ -119,9 +125,9 @@ namespace Calamari.Commands
             newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), newFileName + "-" + Guid.NewGuid());
 
             var previousPackage = packageStore.GetPackage(basisFilePath);
-            if (previousPackage.Metadata.Hash != fileHash)
+            if (previousPackage?.Metadata.Hash != fileHash)
             {
-                throw new CommandException("Basis file hash " + previousPackage.Metadata.Hash +
+                throw new CommandException("Basis file hash " + previousPackage?.Metadata.Hash +
                                            " does not match the file hash specified " + fileHash);
             }
         }

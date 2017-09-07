@@ -25,13 +25,21 @@ namespace Calamari.Integration.Processes
                     commandOutput.WriteInfo,
                     commandOutput.WriteError);
 
-                return new CommandResult(invocation.ToString(), exitCode, null);
+                return new CommandResult(
+                    invocation.ToString(), 
+                    exitCode, 
+                    null, 
+                    invocation.WorkingDirectory);
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex);
                 Console.Error.WriteLine("The command that caused the exception was: " + invocation);
-                return new CommandResult(invocation.ToString(), -1, ex.ToString());
+                return new CommandResult(
+                    invocation.ToString(), 
+                    -1, 
+                    ex.ToString(),
+                    invocation.WorkingDirectory);
             }
         }
     }

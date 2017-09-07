@@ -202,7 +202,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     basisFile.Hash,
                     Path.Combine(DownloadPath, NewFileName));
                 result.AssertOutput("The delta file appears to be corrupt.");
-                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "The following command:OctoDiff\nFailed with exit code: 2\n");
+                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "The following command: OctoDiff\nFailed with exit code: 2\n");
             }
         }
     }
