@@ -36,7 +36,7 @@ Setup(context =>
     });
 
     nugetVersion = gitVersionInfo.NuGetVersion;
-	
+
     Information("Building Calamari v{0}", nugetVersion);
 });
 
@@ -74,7 +74,7 @@ Task("Restore")
 
 Task("Build")
     .IsDependentOn("Restore")
-    .Does(() => 
+    .Does(() =>
 	{
 		DotNetCoreBuild("./source/Calamari.sln", new DotNetCoreBuildSettings
 		{
@@ -101,13 +101,13 @@ Task("Test")
 				}
 			});
 	});
-	
+
 Task("Pack")
 	.IsDependentOn("Build")
     .Does(() =>
 {
     DoPackage("Calamari", "net40", nugetVersion);
-    DoPackage("Calamari.Azure", "net451", nugetVersion); 
+    DoPackage("Calamari.Azure", "net451", nugetVersion);
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
@@ -131,17 +131,17 @@ Task("CopyToLocalPackages")
 });
 
 private void DoPackage(string project, string framework, string version, string runtimeId = null)
-{ 
+{
     var publishedTo = Path.Combine(publishDir, project, framework);
     var projectDir = Path.Combine("./source", project);
-    var packageId = $"{project}"; 
+    var packageId = $"{project}";
     var nugetPackProperties = new Dictionary<string,string>();
     var publishSettings = new DotNetCorePublishSettings
     {
         Configuration = configuration,
         OutputDirectory = publishedTo,
         Framework = framework,
-		ArgumentCustomization = args => args.Append($"--verbosity normal")
+		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
     };
     if (!string.IsNullOrEmpty(runtimeId))
     {
@@ -185,7 +185,7 @@ Task("Default")
     .IsDependentOn("SetTeamCityVersion")
     .IsDependentOn("CopyToLocalPackages");
 
-	
+
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
 //////////////////////////////////////////////////////////////////////
