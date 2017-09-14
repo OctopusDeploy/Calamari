@@ -25,7 +25,7 @@ namespace Calamari.Integration.Packages.Java
             this.commandOutput = commandOutput;
             
             /*
-                The precondition script will also set the location of the calamari.jar file
+                The precondition script will also set the location of the java libray files
             */
             toolsPath = Path.Combine(
                 Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaLibraryEnvVar) ?? "", 
@@ -45,7 +45,7 @@ namespace Calamari.Integration.Packages.Java
                      variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
                      found java on the path.
                  */
-                var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+                var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
                 var createJarCommand = new CommandLineInvocation(
                     Path.Combine(javaBin, "java"),
                     $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
@@ -79,7 +79,7 @@ namespace Calamari.Integration.Packages.Java
                  variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
                  found java on the path.
              */
-            var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+            var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
 
             try
             {
