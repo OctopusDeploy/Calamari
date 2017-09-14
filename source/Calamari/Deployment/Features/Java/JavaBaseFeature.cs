@@ -10,8 +10,7 @@ namespace Calamari.Deployment.Features.Java
     /// </summary>
     public abstract class JavaBaseFeature
     {
-        private const string JavaLibraryEnvVar = "JavaIntegrationLibraryPackagePath";
-        private const string JavaBinEnvVar = "OctopusEnvironment_Java_Bin";
+        
         private readonly ICommandLineRunner commandLineRunner;
         
         protected JavaBaseFeature(ICommandLineRunner commandLineRunner)
@@ -30,11 +29,11 @@ namespace Calamari.Deployment.Features.Java
                 variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
                 found java on the path.
             */
-            var javaBin = Environment.GetEnvironmentVariable(JavaBinEnvVar) ?? "";
+            var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
             /*
                 The precondition script will also set the location of the calamari.jar file
             */
-            var javaLib = Environment.GetEnvironmentVariable(JavaLibraryEnvVar) ?? "";
+            var javaLib = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaLibraryEnvVar) ?? "";
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 Path.Combine(javaBin, "java"), 
                 $"-cp calamari.jar {mainClass}",
