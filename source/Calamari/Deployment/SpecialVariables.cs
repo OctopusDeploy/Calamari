@@ -291,6 +291,9 @@
 
             public static class Java
             {
+                public static readonly string JavaLibraryEnvVar = "JavaIntegrationLibraryPackagePath";
+                public static readonly string JavaBinEnvVar = "OctopusEnvironment_Java_Bin";
+                
                 public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
 
                 public static readonly string DeployExploded = "Octopus.Action.JavaArchive.DeployExploded"; 

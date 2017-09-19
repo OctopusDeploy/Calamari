@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
@@ -15,12 +16,23 @@ namespace Calamari.Integration.Packages.Java
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
         private readonly ICommandOutput commandOutput;
+        private readonly string toolsPath;
 
         public JarTool(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, ICalamariFileSystem fileSystem)
         {
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
             this.commandOutput = commandOutput;
+            
+            /*
+                The precondition script will also set the location of the java libray files
+            */
+            toolsPath = Path.Combine(
+                Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaLibraryEnvVar) ?? "", 
+                "contentFiles", 
+                "any", 
+                "any",
+                "tools.jar");
         }
 
         public void CreateJar(string contentsDirectory, string targetJarPath)
@@ -33,10 +45,10 @@ namespace Calamari.Integration.Packages.Java
                      variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
                      found java on the path.
                  */
-                var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+                var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
                 var createJarCommand = new CommandLineInvocation(
                     Path.Combine(javaBin, "java"),
-                    $"-cp tools.jar sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
+                    $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
                     contentsDirectory);
 
                 Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
@@ -67,7 +79,7 @@ namespace Calamari.Integration.Packages.Java
                  variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
                  found java on the path.
              */
-            var javaBin = Environment.GetEnvironmentVariable("OctopusEnvironment_Java_Bin") ?? "";
+            var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
 
             try
             {
@@ -81,7 +93,7 @@ namespace Calamari.Integration.Packages.Java
                 */
                 commandLineRunner.Execute(new CommandLineInvocation(
                     Path.Combine(javaBin, "java"),
-                    $"-cp tools.jar sun.tools.jar.Main tf \"{jarPath}\"",
+                    $"-cp \"{toolsPath}\" sun.tools.jar.Main tf \"{jarPath}\"",
                     targetDirectory)).VerifySuccess();
 
                 /*
@@ -89,7 +101,7 @@ namespace Calamari.Integration.Packages.Java
                 */
                 var extractJarCommand = new CommandLineInvocation(
                         Path.Combine(javaBin, "java"),
-                        $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\"",
+                        $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\"",
                         targetDirectory);
                 
                 Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");     
@@ -132,7 +144,7 @@ namespace Calamari.Integration.Packages.Java
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             var extractJarCommand =
-                new CommandLineInvocation("java", $"-cp tools.jar sun.tools.jar.Main xf \"{jarPath}\" \"{manifestJarPath}\"", tempDirectory);
+                new CommandLineInvocation("java", $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\" \"{manifestJarPath}\"", tempDirectory);
 
             try
             {
