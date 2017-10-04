@@ -333,6 +333,30 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldShowFriendlyErrorWithInvalidSyntaxInScriptModule()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Octopus.Script.Module[Foo]", "function SayHello() { Write-Host \"Hello from module! }");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "UseModule.ps1"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertFailure();
+                output.AssertOutput("Failed to import Script Module 'Foo'");
+                output.AssertErrorOutput("Write-Host \"Hello from module!");
+                output.AssertErrorOutput("The string is missing the terminator: \".");
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldFailIfAModuleHasASyntaxError()
         {
             var variablesFile = Path.GetTempFileName();
