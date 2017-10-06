@@ -113,6 +113,20 @@ function SafelyLog-ComputerInfoVars
 	}
 }
 
+function Import-ScriptModule([string]$moduleName, [string]$moduleFilePath)
+{
+	Try 
+	{
+		Write-Verbose "Importing Script Module '$moduleName' from '$moduleFilePath'"
+		Import-Module $moduleFilePath
+	}
+	Catch
+	{
+		Write-Warning "Failed to import Script Module '$moduleName'"
+		Throw
+	}
+}
+
 function Convert-ServiceMessageValue([string]$value)
 {
 	$valueBytes = [System.Text.Encoding]::UTF8.GetBytes($value)

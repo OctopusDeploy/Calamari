@@ -99,7 +99,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             builder.Replace("{{TargetScriptFile}}", script.File.Replace("'", "''"))
                     .Replace("{{ScriptParameters}}", script.Parameters)
                     .Replace("{{VariableDeclarations}}", DeclareVariables(variables))
-                    .Replace("{{ScriptModules}}", DeclareScriptModules(variables));
+                    .Replace("{{ScriptModules}}", DeclareScriptModules(variables, parent));
 
             builder = SetupDebugBreakpoints(builder, variables);
 
@@ -173,23 +173,24 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return output.ToString();
         }
 
-        static string DeclareScriptModules(CalamariVariableDictionary variables)
+        static string DeclareScriptModules(CalamariVariableDictionary variables, string parentDirectory)
         {
             var output = new StringBuilder();
 
-            WriteScriptModules(variables, output);
+            WriteScriptModules(variables, parentDirectory, output);
 
             return output.ToString();
         }
 
-        static void WriteScriptModules(VariableDictionary variables, StringBuilder output)
+        static void WriteScriptModules(VariableDictionary variables, string parentDirectory, StringBuilder output)
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
                 var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
-                output.Append("New-Module -Name ").Append(name).Append(" -ScriptBlock {");
-                output.AppendLine(variables.Get(variableName));
-                output.AppendLine("} | Import-Module");
+                var moduleFileName = $"{name}.psm1";
+                var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
+                CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName));
+                output.AppendLine($"Import-ScriptModule '{SpecialVariables.GetLibraryScriptModuleName(variableName)}' '{moduleFilePath}'");
                 output.AppendLine();
             }
         }
