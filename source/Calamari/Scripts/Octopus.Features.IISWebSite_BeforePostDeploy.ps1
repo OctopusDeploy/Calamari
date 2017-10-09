@@ -452,88 +452,41 @@ if ($deployAsWebSite)
 		}
 	}
 
-	if($bindingString.StartsWith("[{")) {
-	
-		if(Get-Command ConvertFrom-Json -errorAction SilentlyContinue){
-			$bindingArray = (ConvertFrom-Json $bindingString)
-		} else {
-			add-type -assembly system.web.extensions
-			$serializer=new-object system.web.script.serialization.javascriptSerializer
-			$bindingArray = ($serializer.DeserializeObject($bindingString))
+	if(Get-Command ConvertFrom-Json -errorAction SilentlyContinue){
+		$bindingArray = (ConvertFrom-Json $bindingString)
+	} else {
+		add-type -assembly system.web.extensions
+		$serializer=new-object system.web.script.serialization.javascriptSerializer
+		$bindingArray = ($serializer.DeserializeObject($bindingString))
+	}
+
+	ForEach($binding in $bindingArray){
+		$sslFlagPart = @{$true=1;$false=0}[[Bool]::Parse($binding.requireSni)]  
+		$bindingIpAddress =  @{$true="*";$false=$binding.ipAddress}[[string]::IsNullOrEmpty($binding.ipAddress)]
+		$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
+
+		$bindingObj = @{
+			protocol=$binding.protocol;
+			ipAddress=$bindingIpAddress;
+			port=$binding.port;
+			host=$binding.host;
+			bindingInformation=$bindingInformation;
+		};
+
+		if ($binding.certificateVariable) {
+			$bindingObj.certificateVariable = $binding.certificateVariable.Trim();
+		} elseif ($binding.thumbprint){
+			$bindingObj.thumbprint=$binding.thumbprint.Trim();
 		}
 
-		ForEach($binding in $bindingArray){
-			$sslFlagPart = @{$true=1;$false=0}[[Bool]::Parse($binding.requireSni)]  
-			$bindingIpAddress =  @{$true="*";$false=$binding.ipAddress}[[string]::IsNullOrEmpty($binding.ipAddress)]
-			$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
-
-			$bindingObj = @{
-				protocol=$binding.protocol;
-				ipAddress=$bindingIpAddress;
-				port=$binding.port;
-				host=$binding.host;
-				bindingInformation=$bindingInformation;
-			};
-
-			if ($binding.certificateVariable) {
-				$bindingObj.certificateVariable = $binding.certificateVariable.Trim();
-			} elseif ($binding.thumbprint){
-				$bindingObj.thumbprint=$binding.thumbprint.Trim();
-			}
-
-			if ([Bool]::Parse($supportsSNI)) {
-				$bindingObj.sslFlags=$sslFlagPart;
-			}
+		if ([Bool]::Parse($supportsSNI)) {
+			$bindingObj.sslFlags=$sslFlagPart;
+		}
 			
-			if([Bool]::Parse($binding.enabled)) {
-				$wsbindings.Add($bindingObj) | Out-Null
-			} else {
-				Write-IISBinding "Ignore binding: " $binding
-			}
-		}
-
-	} else {	
-		# Each binding string consists of a protocol/binding information (IP, port, hostname)/SSL thumbprint/enabled/sslFlags
-		# Binding strings are pipe (|) separated to allow multiple to be specified
-		$bindingString.Split("|") | foreach-object {
-			$bindingParts = $_.split("/")
-			$skip = $false
-			if ($bindingParts.Length -ge 4) {
-				if (![String]::IsNullOrEmpty($bindingParts[3]) -and [Bool]::Parse($bindingParts[3]) -eq $false) {
-					$skip = $true
-				}
-			}
-		
-			if ($skip -eq $false) {
-				$addressParts = $bindingParts[1].split(':')
-				$sslFlagPart = 0
-				if($bindingParts.Length -ge 5){
-					if (![String]::IsNullOrEmpty($bindingParts[4]) -and [Bool]::Parse($bindingParts[4]) -eq $true){
-						$sslFlagPart = 1
-					}
-				}
-				if ($supportsSNI -eq $true ){
-					$wsbindings.Add(@{ 
-						protocol=$bindingParts[0];
-						bindingInformation=$bindingParts[1];
-						thumbprint=$bindingParts[2].Trim();
-						ipAddress=$addressParts[0];
-						port= $addressParts[1];
-						host=$addressParts[2];
-						sslFlags=$sslFlagPart }) | Out-Null
-					}
-				else{
-					$wsbindings.Add(@{ 
-						protocol=$bindingParts[0];
-						bindingInformation=$bindingParts[1];
-						ipAddress=$addressParts[0];
-						port= $addressParts[1];
-						host=$addressParts[2];
-						thumbprint=$bindingParts[2].Trim() }) | Out-Null
-				}
-			} else {
-				Write-Host "Ignore binding: $_"
-			}
+		if([Bool]::Parse($binding.enabled)) {
+			$wsbindings.Add($bindingObj) | Out-Null
+		} else {
+			Write-IISBinding "Ignore binding: " $binding
 		}
 	}
 
