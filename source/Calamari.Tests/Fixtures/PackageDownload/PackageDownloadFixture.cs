@@ -20,6 +20,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string DownloadPath = TestEnvironment.GetTestPath(TentacleHome, "Files");
 
         static readonly string PublicFeedUri = "https://www.myget.org/F/octopusdeploy-tests";
+        static readonly string NuGetFeedUri = "https://api.nuget.org/v3/index.json";
         static readonly string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
         static readonly string FeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
         static readonly string FeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
@@ -28,6 +29,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly Feed PublicFeed = new Feed() { Id = "feeds-myget", Version = "1.0.0", PackageId =  "OctoConsole" };
         static readonly Feed FileShare = new Feed() { Id = "feeds-local", Version = "1.0.0", PackageId = "Acme.Web" };
         static readonly Feed AuthFeed = new Feed() { Id = "feeds-authmyget", PackageId =  "OctoConsole", Version = "1.0.0" };
+        static readonly Feed NuGetFeed = new Feed() {Id = "feeds-nuget", Version = "2.1.0", PackageId = "abp.castle.log4net" };
 
         [SetUp]
         public void SetUp()
@@ -65,6 +67,20 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, PublicFeed.File);
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
+        }
+
+        [Test]
+        public void ShouldDownloadPackageWithRepositoryMetadata()
+        {
+            var result = DownloadPackage(NuGetFeed.PackageId, NuGetFeed.Version, NuGetFeed.Id, NuGetFeedUri);
+            result.AssertSuccess();
+
+            result.AssertOutput(
+                $"Downloading NuGet package {NuGetFeed.PackageId} {NuGetFeed.Version} from feed: '{NuGetFeedUri}'");
+            result.AssertOutput($"Downloaded package will be stored in: '{NuGetFeed.DownloadFolder}");
+
+            AssertStagePackageOutputVariableSet(result, NuGetFeed.File);
+            result.AssertOutput($"Package {NuGetFeed.PackageId} {NuGetFeed.Version} successfully downloaded from feed: '{NuGetFeedUri}'");
         }
 
         [Test]
