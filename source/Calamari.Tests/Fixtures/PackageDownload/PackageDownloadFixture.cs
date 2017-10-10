@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string DownloadPath = TestEnvironment.GetTestPath(TentacleHome, "Files");
 
         static readonly string PublicFeedUri = "https://www.myget.org/F/octopusdeploy-tests";
-        static readonly string NuGetFeedUri = "https://api.nuget.org/v3/index.json";
+        static readonly string NuGetFeedUri = "https://www.nuget.org/api/v2/";
         static readonly string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
         static readonly string FeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
         static readonly string FeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
@@ -73,6 +73,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldDownloadPackageWithRepositoryMetadata()
         {
             var result = DownloadPackage(NuGetFeed.PackageId, NuGetFeed.Version, NuGetFeed.Id, NuGetFeedUri);
+
             result.AssertSuccess();
 
             result.AssertOutput(
