@@ -45,53 +45,27 @@ try {
     }
 }
 
-function Recover-Semaphore {
+function Wait-OnMutex {
 	param(
-	[parameter(Mandatory = $true)][string] $SemaphoreId
+	[parameter(Mandatory = $true)][string] $mutexId
 	)
 
 	Try	{
-		Write-Verbose "Possible case of semaphore $SemaphoreId having not been released by a terminated/failed process, attempting to take control"
-		$suspectedAbandonedSemaphore = [System.Threading.Semaphore]::OpenExisting($SemaphoreId);
-		$result = $suspectedAbandonedSemaphore.Release()
-		Write-Verbose "Forcing semaphore release, the result was (it should be zero): $result"
-	}
-	Catch [System.UnauthorizedAccessException] {
-		Write-Verbose "Semaphore timeout cleanup failed or wasn't needed"
-	}
-}
+		$mutex = New-Object System.Threading.Mutex -ArgumentList false, $mutexId
 
-function Wait-OnSemaphore {
-	param(
-	[parameter(Mandatory = $true)][string] $SemaphoreId
-	)
-
-	Try	{
-		$attemptCount = 0
-		$maxAttempts = 25 #25*5sec sleep = ~2 min
-		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
-
-		while (-not $SemaphoreInstance.WaitOne(100))
+		while (-not $mutex.WaitOne(5000))
 		{
-			$attemptCount++;
-			Write-Verbose "Cannot start this IIS website related task yet. There is already another task running that cannot be run in conjunction with any other task. Attempt $attemptCount of $maxAttempts. Please wait..."
-			Start-Sleep -m 5000;
-			if($attemptCount -ge $maxAttempts)
-			{
-				Recover-Semaphore -SemaphoreId $SemaphoreId
-				$attemptCount = 0
-			}
+			Write-Verbose "Cannot start this IIS website related task yet. There is already another task running that cannot be run in conjunction with any other task. Please wait..."
 		}
 		
-		Write-Verbose "Acquired SemaphoreInstance $SemaphoreId"
-		return $SemaphoreInstance
+		Write-Verbose "Acquired mutex $mutexId"
+		return $mutex
 	}
 	Catch [System.Threading.AbandonedMutexException] {
-		$SemaphoreInstance = New-Object System.Threading.Semaphore -ArgumentList 1, 1, $SemaphoreId
-		return Wait-OnSemaphore -SemaphoreId $SemaphoreId
+		return Wait-OnMutex $mutexId
 	}
 	Catch [System.SystemException]{
-		Write-Verbose "Wait-OnSemaphore had a major issue, possibly not running with sufficient privileges recover the semaphore, details: $_.Exception.Message"
+		Write-Verbose "Wait-OnMutex had a major issue, possibly not running with sufficient privileges recover the mutex, details: $_.Exception.Message"
 	}
 }
 
@@ -163,18 +137,14 @@ function Execute-WithRetry([ScriptBlock] $command, $noLock) {
 	if($noLock) {
 		Core-Execute-WithRetry -command $command
 	} else {
-		$SemaphoreId = 'Global\Octopus-IIS-Metabase'
-		$SemaphoreInstance = Wait-OnSemaphore -SemaphoreId $SemaphoreId
+		$mutexId = 'Global\Octopus-IIS-Metabase-Mutex'
+		$mutex = Wait-OnMutex $mutexId
 		Try {
 			Core-Execute-WithRetry -command $command
 		}
 		Finally {
-			$result = $SemaphoreInstance.Release()
-			if($result -eq 0) {
-				Write-Verbose "SemaphoreInstance $SemaphoreId released"
-			} else {
-				Write-Verbose "SemaphoreInstance $SemaphoreId release attempted but result was: $result"
-			}
+			$result = $mutex.ReleaseMutex()
+			$mutex.Dispose()
 		}
 	}
 }
