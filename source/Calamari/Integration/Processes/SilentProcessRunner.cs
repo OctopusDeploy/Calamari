@@ -57,17 +57,7 @@ namespace Calamari.Integration.Processes
                     process.StartInfo.StandardOutputEncoding = oemEncoding;
                     process.StartInfo.StandardErrorEncoding = oemEncoding;
 
-                    if (!string.IsNullOrEmpty(userName) && password != null)
-                    {
-                        process.StartInfo.UserName = userName;
-                        process.StartInfo.Password = password;
-
-                        WindowStationAndDesktopAccess.GrantAccessToWindowStationAndDesktop(userName);
-
-                        // Environment variables (such as {env:TentacleHome}) are usually inherited from the parent process.
-                        // When running as a different user they are not inherited, so manually add them to the process.
-                        AddTentacleEnvironmentVariablesToProcess(process.StartInfo);
-                    }
+                    RunProcessWithCredentials(process.StartInfo, userName, password);
 
                     using (var outputWaitHandle = new AutoResetEvent(false))
                     using (var errorWaitHandle = new AutoResetEvent(false))
@@ -134,6 +124,39 @@ namespace Calamari.Integration.Processes
             {
                 throw new Exception($"Error when attempting to execute {executable}: {ex.Message}", ex);
             }
+        }
+
+        static void RunProcessWithCredentials(ProcessStartInfo processStartInfo, string userName, SecureString password)
+        {
+            if (string.IsNullOrEmpty(userName) || password == null)
+            {
+                return;
+            }
+
+            var parts = userName.Split(new[] { '\\' }, 2, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2)
+            {
+                var domainPart = parts[0];
+                var userNamePart = parts[1];
+                processStartInfo.Domain = domainPart;
+                processStartInfo.UserName = userNamePart;
+
+                WindowStationAndDesktopAccess.GrantAccessToWindowStationAndDesktop(userNamePart, domainPart);
+            }
+            else
+            {
+                processStartInfo.UserName = userName;
+
+                WindowStationAndDesktopAccess.GrantAccessToWindowStationAndDesktop(userName);
+            }
+
+            processStartInfo.Password = password;
+
+            
+
+            // Environment variables (such as {env:TentacleHome}) are usually inherited from the parent process.
+            // When running as a different user they are not inherited, so manually add them to the process.
+            AddTentacleEnvironmentVariablesToProcess(processStartInfo);
         }
 
         static void AddTentacleEnvironmentVariablesToProcess(ProcessStartInfo processStartInfo)
