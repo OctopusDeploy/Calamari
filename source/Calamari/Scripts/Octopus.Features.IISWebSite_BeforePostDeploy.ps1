@@ -143,7 +143,7 @@ function Execute-WithRetry([ScriptBlock] $command, $noLock) {
 			Core-Execute-WithRetry -command $command
 		}
 		Finally {
-			$result = $mutex.ReleaseMutex()
+			$mutex.ReleaseMutex()
 			$mutex.Dispose()
 		}
 	}
