@@ -10,24 +10,28 @@ namespace Calamari.Integration.Processes
 {
     public class WindowStationAndDesktopAccess
     {
-        public static void GrantAccessToWindowStationAndDesktop(string username)
+        public static void GrantAccessToWindowStationAndDesktop(string username, string domainName = null)
         {
             const int windowStationAllAccess = 0x000f037f;
-            GrantAccess(username, GetProcessWindowStation(), windowStationAllAccess);
+            GrantAccess(username, domainName, GetProcessWindowStation(), windowStationAllAccess);
             const int desktopRightsAllAccess = 0x000f01ff;
-            GrantAccess(username, GetThreadDesktop(GetCurrentThreadId()), desktopRightsAllAccess);
+            GrantAccess(username, domainName, GetThreadDesktop(GetCurrentThreadId()), desktopRightsAllAccess);
         }
 
-        private static void GrantAccess(string username, IntPtr handle, int accessMask)
+        private static void GrantAccess(string username, string domainName, IntPtr handle, int accessMask)
         {
             SafeHandle safeHandle = new NoopSafeHandle(handle);
             GenericSecurity security =
                 new GenericSecurity(
                     false, ResourceType.WindowObject, safeHandle, AccessControlSections.Access);
 
+            var account = string.IsNullOrEmpty(domainName)
+                ? new NTAccount(username)
+                : new NTAccount(domainName, username);
+
             security.AddAccessRule(
                 new GenericAccessRule(
-                    new NTAccount(username), accessMask, AccessControlType.Allow));
+                    account, accessMask, AccessControlType.Allow));
             security.Persist(safeHandle, AccessControlSections.Access);
         }
 
