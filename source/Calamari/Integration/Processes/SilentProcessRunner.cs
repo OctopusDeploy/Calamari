@@ -152,8 +152,6 @@ namespace Calamari.Integration.Processes
 
             processStartInfo.Password = password;
 
-            
-
             // Environment variables (such as {env:TentacleHome}) are usually inherited from the parent process.
             // When running as a different user they are not inherited, so manually add them to the process.
             AddTentacleEnvironmentVariablesToProcess(processStartInfo);
