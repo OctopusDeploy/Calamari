@@ -60,7 +60,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="Octopus.Dependencies.AzureBinaries" Version="2.9.0" />
     <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="3.4.0" />
-    <PackageReference Include="Octostache" Version="2.1.5" />
+    <PackageReference Include="Octostache" Version="2.1.8" />
     <PackageReference Include="Sprache" Version="2.1.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="System.Spatial" Version="5.6.4" />
