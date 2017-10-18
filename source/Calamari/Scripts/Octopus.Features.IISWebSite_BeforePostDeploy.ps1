@@ -144,7 +144,7 @@ function Execute-WithRetry([ScriptBlock] $command, $noLock) {
 		}
 		Finally {
 			$mutex.ReleaseMutex()
-			$mutex.Dispose()
+			$mutex.Close()
 		}
 	}
 }
