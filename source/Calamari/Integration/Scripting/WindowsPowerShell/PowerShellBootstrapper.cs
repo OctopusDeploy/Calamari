@@ -189,7 +189,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
                 var moduleFileName = $"{name}.psm1";
                 var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
-                CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName));
+                CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                 output.AppendLine($"Import-ScriptModule '{SpecialVariables.GetLibraryScriptModuleName(variableName)}' '{moduleFilePath}'");
                 output.AppendLine();
             }
