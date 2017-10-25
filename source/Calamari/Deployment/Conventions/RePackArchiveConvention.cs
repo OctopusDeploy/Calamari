@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Calamari.Constants;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -67,7 +68,7 @@ namespace Calamari.Java.Deployment.Conventions
 
             var targetFileName = !string.IsNullOrWhiteSpace(customPackageFileName) 
                 ? customPackageFileName
-                : $"{packageMetadata.Id}.{packageMetadata.Version}{packageMetadata.FileExtension}";
+                : $"{packageMetadata.Id}{JavaConstants.JAVA_FILENAME_DELIMITER}{packageMetadata.Version}{packageMetadata.FileExtension}";
 
             var targetFilePath = Path.Combine(applicationDirectory, targetFileName);
                         
