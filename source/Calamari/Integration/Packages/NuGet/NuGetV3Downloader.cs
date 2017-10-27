@@ -9,19 +9,20 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Calamari.Commands.Support;
-using Calamari.NuGet.Versioning;
+using Calamari.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Versioning;
+using Octopus.Core.Resources.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetV3Downloader
     {
-        public static void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
         {
             var normalizedId = packageId.ToLowerInvariant();
-            var normalizedVersion = version.ToNormalizedString().ToLowerInvariant();
+            var normalizedVersion = version.ToNuGetVersion().ToNormalizedString().ToLowerInvariant();
             var packageBaseUri = GetPackageBaseUri(feedUri, feedCredentials).AbsoluteUri.TrimEnd('/');
             var downloadUri = new Uri($"{packageBaseUri}/{normalizedId}/{normalizedVersion}/{normalizedId}.{normalizedVersion}.nupkg");
 

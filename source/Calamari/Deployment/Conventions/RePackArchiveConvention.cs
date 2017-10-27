@@ -6,6 +6,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Java.Deployment.Conventions

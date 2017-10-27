@@ -2,6 +2,7 @@
 using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions

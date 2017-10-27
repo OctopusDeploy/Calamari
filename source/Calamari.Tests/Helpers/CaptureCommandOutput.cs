@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;

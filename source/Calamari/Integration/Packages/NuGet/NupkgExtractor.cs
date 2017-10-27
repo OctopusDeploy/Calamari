@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Util;
 using NuGet;
 using SharpCompress.Archives;

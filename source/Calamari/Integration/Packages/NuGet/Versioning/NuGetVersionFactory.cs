@@ -7,12 +7,17 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Calamari.Extensions;
 using NuGet.Versioning;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 
 namespace Calamari.NuGet.Versioning
 {
     public partial class NuGetVersion
     {
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
+        
         /// <summary>
         /// Creates a NuGetVersion from a string representing the semantic version.
         /// </summary>
@@ -23,8 +28,7 @@ namespace Calamari.NuGet.Versioning
                 throw new ArgumentException("Value cannot be null or an empty string", nameof(value));
             }
 
-            NuGetVersion ver = null;
-            if (!TryParse(value, out ver))
+            if (!TryParse(value, out var ver))
             {
                 throw new ArgumentException($"'{value}' is not a valid version string", nameof(value));
             }
@@ -84,10 +88,11 @@ namespace Calamari.NuGet.Versioning
                             originalVersion = value.Replace(" ", "");
                         }
 
-                        version = new NuGetVersion(version: ver,
-                            releaseLabels: sections.Item2,
-                            metadata: sections.Item3 ?? string.Empty,
-                            originalVersion: originalVersion);
+                        version = VersionFactory.CreateSemanticVersion(
+                            ver,
+                            sections.Item2,
+                            sections.Item3 ?? string.Empty,
+                            originalVersion).ToNuGetVersion();                       
 
                         return true;
                     }
@@ -107,7 +112,11 @@ namespace Calamari.NuGet.Versioning
             SemanticVersion semVer = null;
             if (TryParse(value, out semVer))
             {
-                version = new NuGetVersion(semVer.Major, semVer.Minor, semVer.Patch, 0, semVer.ReleaseLabels, semVer.Metadata);
+                version = VersionFactory.CreateSemanticVersion(
+                    new Version(semVer.Major, semVer.Minor, semVer.Patch, 0), 
+                    semVer.ReleaseLabels, 
+                    semVer.Metadata, 
+                    value).ToNuGetVersion();
             }
 
             return true;

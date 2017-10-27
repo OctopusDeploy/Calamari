@@ -2,8 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Util;
+using Octopus.Core.Resources;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -17,6 +22,7 @@ namespace Calamari.Integration.FileSystem
         private readonly IPackageExtractor packageExtractorFactory;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
 
         private static string TentacleHome
         {
@@ -65,7 +71,10 @@ namespace Calamari.Integration.FileSystem
                 if (storedPackage == null)
                     continue;
 
-                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || NuGetVersion.Parse(storedPackage.Metadata.Version) != NuGetVersion.Parse(metadata.Version))
+                
+                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || 
+                    !VersionFactory.CanCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.FeedType) ||
+                    !packageVersion.Equals(VersionFactory.CreateVersion(metadata.Version, metadata.FeedType)))
                     continue;
 
                 if (string.IsNullOrWhiteSpace(metadata.Hash))
@@ -84,13 +93,18 @@ namespace Calamari.Integration.FileSystem
             return fileSystem.EnumerateFilesRecursively(rootDirectory, patterns);
         }
 
-        public IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version, int take = 5)
+        public IEnumerable<StoredPackage> GetNearestPackages(PackageMetadata metadata, int take = 5)
         {
+            if (!VersionFactory.CanCreateVersion(metadata.Version, out var version, metadata.FeedType))
+            {
+                throw new CommandException(string.Format($"Package version '{metadata.Version}' is not a valid version string"));
+            }
+            
             fileSystem.EnsureDirectoryExists(rootDirectory);
             var zipPackages =
-                from filePath in PackageFiles(packageId +"*")
+                from filePath in PackageFiles(metadata.Id +"*")
                 let zip = PackageMetadata(filePath)
-                where zip != null && zip.Id == packageId && new NuGetVersion(zip.Version) <= version
+                where zip != null && zip.Id == metadata.Id && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) < 0
                 orderby zip.Version descending
                 select new {zip, filePath};
 

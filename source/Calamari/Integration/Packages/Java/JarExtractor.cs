@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Constants;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Packages.Java

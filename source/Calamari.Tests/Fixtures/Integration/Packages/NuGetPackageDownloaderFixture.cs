@@ -10,17 +10,20 @@ using Calamari.NuGet.Versioning;
 using NuGet.Versioning;
 #endif
 using NUnit.Framework;
+using Octopus.Core.Resources.Versioning.Factories;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
     public class NuGetPackageDownloaderFixture
     {
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
+        
         [Test]
         public void AttemptsOnlyOnceIfSuccessful()
         {
             var packageId = "FakePackageId";
-            var version = new NuGetVersion(1, 2, 3);
+            var version = VersionFactory.CreateSemanticVersion(1, 2, 3);
             var feedUri = new Uri("http://www.myget.org");
             var feedCredentials = new CredentialCache();
             var targetFilePath = "FakeTargetFilePath";
@@ -43,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public int AttemptsTheRightNumberOfTimesOnError(int maxDownloadAttempts)
         {
             var packageId = "FakePackageId";
-            var version = new NuGetVersion(1, 2, 3);
+            var version = VersionFactory.CreateSemanticVersion(1, 2, 3);
             var feedUri = new Uri("http://www.myget.org");
             var feedCredentials = new CredentialCache();
             var targetFilePath = "FakeTargetFilePath";

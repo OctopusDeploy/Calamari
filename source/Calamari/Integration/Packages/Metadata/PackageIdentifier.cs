@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Integration.Packages.Metadata
 {
     public class PackageIdentifier
     {
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
+        
         /// <summary>
         /// Takes a string containing a concatenated package ID and version (e.g. a filename or database-key) and 
         /// attempts to parse a package ID and semantic version.  
@@ -21,7 +20,7 @@ namespace Calamari.Integration.Packages
         /// <param name="packageId">The parsed package ID</param>
         /// <param name="version">The parsed semantic version</param>
         /// <returns>True if parsing was successful, else False</returns>
-        public static bool TryParsePackageIdAndVersion(string idAndVersion, out string packageId, out NuGetVersion version)
+        public static bool TryParsePackageIdAndVersion(string idAndVersion, out string packageId, out IVersion version)
         {
             packageId = null;
             version = null;
@@ -40,7 +39,7 @@ namespace Calamari.Integration.Packages
 
             packageId = packageIdMatch.Value;
 
-            return NuGetVersion.TryParse(versionMatch.Value, out version);
+            return VersionFactory.CanCreateSemanticVersion(versionMatch.Value, out version);
         }
 
         /// <summary>

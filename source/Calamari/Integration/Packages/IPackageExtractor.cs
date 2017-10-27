@@ -1,4 +1,6 @@
-﻿namespace Calamari.Integration.Packages
+﻿using Calamari.Integration.Packages.Metadata;
+
+namespace Calamari.Integration.Packages
 {
     public interface IPackageExtractor
     {

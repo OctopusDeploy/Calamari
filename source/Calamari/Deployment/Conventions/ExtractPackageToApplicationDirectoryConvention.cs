@@ -1,5 +1,6 @@
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Metadata;
 
 namespace Calamari.Deployment.Conventions
 {

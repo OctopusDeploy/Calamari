@@ -1,4 +1,6 @@
 using System.IO;
+using Calamari.Integration.Packages.Metadata;
+using Octopus.Core.Resources.Versioning;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -22,7 +24,7 @@ namespace Calamari.Integration.Packages
                 throw new FileFormatException($"Unable to determine filetype of file \"{packageFile}\"");
             }
 
-            if (!PackageIdentifier.TryParsePackageIdAndVersion(idAndVersion, out string packageId, out NuGetVersion version))
+            if (!PackageIdentifier.TryParsePackageIdAndVersion(idAndVersion, out string packageId, out IVersion version))
             {
                 throw new FileFormatException($"Unable to extract the package ID and version from file \"{packageFile}\"");
             }

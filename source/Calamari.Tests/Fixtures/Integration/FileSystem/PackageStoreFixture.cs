@@ -3,8 +3,11 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using Octopus.Core.Resources;
+using Octopus.Core.Resources.Versioning.Factories;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -16,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
     [TestFixture]
     public class PackageStoreFixture
-    {
+    {        
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "FileSystem");
         static readonly string PackagePath = Path.Combine(TentacleHome, "Files");
 
@@ -43,11 +46,18 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("1.0.0.2")))
             using (new TemporaryFile(CreatePackage("2.0.0.2")))
             {
-                var store = new PackageStore(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
+                var store = new PackageStore(
+                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
 
-                var packages = store.GetNearestPackages("Acme.Web", new NuGetVersion(1, 1, 1, 1));
+                var packages = store.GetNearestPackages(new PackageMetadata()
+                {
+                    Id = "Acme.Web",
+                    Version = "1.1.1.1",
+                    FeedType = FeedType.NuGet
+                });
 
-                CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()), new[] { "1.0.0.1", "1.0.0.2" });
+                CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()),
+                    new[] {"1.0.0.1", "1.0.0.2"});
             }
         }
 
@@ -57,11 +67,17 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("1.0.0.1")))
             using (new TemporaryFile(CreateEmptyFile("1.0.0.2")))
             {
-                var store = new PackageStore(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
+                var store = new PackageStore(
+                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
 
-                var packages = store.GetNearestPackages("Acme.Web", new NuGetVersion(1, 1, 1, 1));
+                var packages = store.GetNearestPackages(new PackageMetadata()
+                {
+                    Id = "Acme.Web",
+                    Version = "1.1.1.1",
+                    FeedType = FeedType.NuGet
+                });
 
-                CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()), new[] { "1.0.0.1" });
+                CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()), new[] {"1.0.0.1"});
             }
         }
 
@@ -76,10 +92,10 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version, true);
             var destinationPath = Path.Combine(
-                PackagePath, 
+                PackagePath,
                 Path.GetFileName(sourcePackage) + "-12345678-1234-1234-1234-1234567890ab");
 
-            if(File.Exists(destinationPath))
+            if (File.Exists(destinationPath))
                 File.Delete(destinationPath);
 
             File.Move(sourcePackage, destinationPath);

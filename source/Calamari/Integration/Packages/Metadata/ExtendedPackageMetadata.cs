@@ -1,4 +1,4 @@
-namespace Calamari.Integration.Packages
+namespace Calamari.Integration.Packages.Metadata
 {
     public class ExtendedPackageMetadata : PackageMetadata
     {

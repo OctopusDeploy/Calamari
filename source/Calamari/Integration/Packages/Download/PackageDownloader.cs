@@ -4,8 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Util;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 #if USE_NUGET_V2_LIBS
 using NuGet;
 using Calamari.NuGet.Versioning;
@@ -21,6 +24,7 @@ namespace Calamari.Integration.Packages.Download
 {
     class PackageDownloader
     {
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         public static string RootDirectory => Path.Combine(TentacleHome, "Files");
@@ -39,7 +43,18 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        public void DownloadPackage(string packageId, NuGetVersion version, string feedId, Uri feedUri, ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, out string downloadedTo, out string hash, out long size)
+        public void DownloadPackage(
+            string packageId, 
+            IVersion version, 
+            string feedId, 
+            Uri feedUri, 
+            ICredentials feedCredentials, 
+            bool forcePackageDownload, 
+            int maxDownloadAttempts, 
+            TimeSpan downloadAttemptBackoff, 
+            out string downloadedTo, 
+            out string hash, 
+            out long size)
         {
             var cacheDirectory = GetPackageRoot(feedId);
             
@@ -65,7 +80,7 @@ namespace Calamari.Integration.Packages.Download
             hash = packageHash;
         }
 
-        private void AttemptToGetPackageFromCache(string packageId, NuGetVersion version, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
+        private void AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
         {
             downloaded = null;
             downloadedTo = null;
@@ -87,8 +102,9 @@ namespace Calamari.Integration.Packages.Download
                 var idMatches = string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase);
                 var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
 #if USE_NUGET_V2_LIBS
-                var nugetVerMatches = NuGetVersion.TryParse(package.Metadata.Version, out NuGetVersion packageVersion) &&
-                        VersionComparer.Default.Equals(version, packageVersion);
+                var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
+                var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version, out IVersion packageVersion, packageMetadata.FeedType) &&
+                        version.Equals(packageVersion);
 #else
                 var nugetVerMatches = package.Metadata.Version.Equals(version);
 #endif
@@ -132,7 +148,16 @@ namespace Calamari.Integration.Packages.Download
             return $"{packageId}.{version}_";
         }
 
-        private void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string cacheDirectory, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, out LocalNuGetPackage downloaded, out string downloadedTo)
+        private void DownloadPackage(
+            string packageId, 
+            IVersion version, 
+            Uri feedUri, 
+            ICredentials feedCredentials, 
+            string cacheDirectory, 
+            int maxDownloadAttempts, 
+            TimeSpan downloadAttemptBackoff, 
+            out LocalNuGetPackage downloaded, 
+            out string downloadedTo)
         {
             Log.Info("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);

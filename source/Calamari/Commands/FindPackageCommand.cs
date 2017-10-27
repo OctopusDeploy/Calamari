@@ -6,8 +6,11 @@ using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
+using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -18,7 +21,7 @@ namespace Calamari.Commands
 {
     [Command("find-package", Description = "Finds the package that matches the specified ID and version. If no exact match is found, it returns a list of the nearest packages that matches the ID")]
     public class FindPackageCommand : Command
-    {
+    {       
         string packageId;
         string packageVersion;
         string packageHash;
@@ -44,22 +47,27 @@ namespace Calamari.Commands
                     new ConsoleCommandOutput(), 
                     new ServiceMessageCommandOutput(
                         new CalamariVariableDictionary())));
-            
-            NuGetVersion version;
-            if(!NuGetVersion.TryParse(packageVersion, out version))
-                throw new CommandException(String.Format("Package version '{0}' is not a valid Semantic Version", packageVersion));
 
-            var packageStore = new PackageStore(
-                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
-            var packageMetadata = new ExtendedPackageMetadata() {Id = packageId, Version = packageVersion, Hash = packageHash};
+            var basePackageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
+            var packageMetadata = new ExtendedPackageMetadata()
+            {
+                Id = basePackageMetadata.Id,
+                FeedType = basePackageMetadata.FeedType, 
+                Version = packageVersion, 
+                Hash = packageHash
+            };
+            
+            var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem);
+            var packageStore = new PackageStore(extractor);                        
             var package = packageStore.GetPackage(packageMetadata);
+                      
             if (package == null)
             {
                 Log.VerboseFormat("Package {0} version {1} hash {2} has not been uploaded.", 
                     packageMetadata.Id, packageMetadata.Version, packageMetadata.Hash);
 
                 Log.VerboseFormat("Finding earlier packages that have been uploaded to this Tentacle.");
-                var nearestPackages = packageStore.GetNearestPackages(packageId, version).ToList();
+                var nearestPackages = packageStore.GetNearestPackages(packageMetadata).ToList();
                 if (!nearestPackages.Any())
                 {
                     Log.VerboseFormat("No earlier packages for {0} has been uploaded", packageId);

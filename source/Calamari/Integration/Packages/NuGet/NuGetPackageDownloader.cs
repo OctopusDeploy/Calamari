@@ -4,6 +4,7 @@ using System.Threading;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Retry;
+using Octopus.Core.Resources.Versioning;
 #if USE_NUGET_V2_LIBS
 using Calamari.NuGet.Versioning;
 #else
@@ -21,12 +22,35 @@ namespace Calamari.Integration.Packages.NuGet
             this.fileSystem = fileSystem;
         }
 
-        public void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
+        public void DownloadPackage(
+            string packageId, 
+            IVersion version, 
+            Uri feedUri, 
+            ICredentials feedCredentials, 
+            string targetFilePath, 
+            int maxDownloadAttempts, 
+            TimeSpan downloadAttemptBackoff)
         {
-            DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts, downloadAttemptBackoff, DownloadPackageAction);
+            DownloadPackage(
+                packageId, 
+                version, 
+                feedUri, 
+                feedCredentials, 
+                targetFilePath,
+                maxDownloadAttempts, 
+                downloadAttemptBackoff,
+                DownloadPackageAction);
         }
 
-        internal void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, Action<string, NuGetVersion, Uri, ICredentials, string> action)
+        internal void DownloadPackage(
+            string packageId, 
+            IVersion version, 
+            Uri feedUri, 
+            ICredentials feedCredentials,
+            string targetFilePath, 
+            int maxDownloadAttempts, 
+            TimeSpan downloadAttemptBackoff, 
+            Action<string, IVersion, Uri, ICredentials, string> action)
         {
             if (maxDownloadAttempts <= 0)
                 throw new ArgumentException($"The number of download attempts should be greater than zero, but was {maxDownloadAttempts}", nameof(maxDownloadAttempts));
@@ -70,7 +94,7 @@ namespace Calamari.Integration.Packages.NuGet
             }
         }
 
-        private void DownloadPackageAction(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        private void DownloadPackageAction(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
         {
             // FileSystem feed 
             if (feedUri.IsFile)
