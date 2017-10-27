@@ -124,7 +124,7 @@ namespace Calamari.Commands
             var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
             if (!VersionFactory.CanCreateVersion(packageVersion, out version, packageMetadata.FeedType))
             {
-                throw new CommandException($"Package version '{packageVersion}' specified is not a valid semantic version"); 
+                throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string"); 
             }
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))

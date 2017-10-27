@@ -191,7 +191,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
             var result = FindPackages("Calamari", "1.0.*", "Hash");
 
             result.AssertFailure();
-            result.AssertErrorOutput("Package version '1.0.*' is not a valid Semantic Version");
+            result.AssertErrorOutput("Package version '1.0.*' is not a valid version string");
         }
 
         [Test]

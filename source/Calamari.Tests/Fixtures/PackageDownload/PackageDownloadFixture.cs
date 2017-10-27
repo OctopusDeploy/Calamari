@@ -287,7 +287,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = DownloadPackage(PublicFeed.PackageId, invalidFeedVersion, PublicFeed.Id, PublicFeedUri);
             result.AssertFailure();
 
-            result.AssertErrorOutput("Package version '{0}' specified is not a valid semantic version", invalidFeedVersion);
+            result.AssertErrorOutput("Package version '{0}' specified is not a valid version string", invalidFeedVersion);
         }
 
         [Test]
