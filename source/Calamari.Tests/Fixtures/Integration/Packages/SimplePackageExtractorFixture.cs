@@ -14,7 +14,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [SetUp]
         public void SetUp()
         {
-            extractor = Substitute.For<SimplePackageExtractor>();
+            extractor = Substitute.ForPartsOf<SimplePackageExtractor>();
             extractor.Extensions.Returns(new string[] { ".tar.gz" });
         }
 
