@@ -76,6 +76,11 @@ namespace Calamari.Java.Deployment.Conventions
                 ? customPackageFileName
                 : new StringBuilder()
                     .Append(packageMetadata.Id)
+                    /*
+                     * If this package was sourced from a maven feed, we use the # char as a delimiter between
+                     * the package id and the version. If it is not from a maven feed, we use the default of
+                     * a period.
+                     */
                     .Append(packageMetadata.FeedType == FeedType.Maven ? JavaConstants.JAVA_FILENAME_DELIMITER : '.')
                     .Append(packageMetadata.Version)
                     .Append(packageMetadata.FileExtension)

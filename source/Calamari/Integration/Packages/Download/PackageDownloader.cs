@@ -94,21 +94,18 @@ namespace Calamari.Integration.Packages.Download
 
             foreach (var file in files)
             {
-                var package = ReadPackageFile(file);
+                var package = ReadPackageFile(file);              
                 if (package == null)
                     continue;
 
                
                 var idMatches = string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase);
                 var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
-#if USE_NUGET_V2_LIBS
-                var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
-                var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version, out IVersion packageVersion, packageMetadata.FeedType) &&
-                        version.Equals(packageVersion);
-#else
-                var nugetVerMatches = package.Metadata.Version.Equals(version);
-#endif
 
+                var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
+                var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version.ToString(), out IVersion packageVersion, packageMetadata.FeedType) &&
+                        version.Equals(packageVersion);
+                
                 if (idMatches && (nugetVerMatches || versionExactMatch))
                 {
                     downloaded = package;

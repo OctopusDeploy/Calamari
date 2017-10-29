@@ -17,7 +17,7 @@ namespace Calamari.Integration.Packages.Java
             jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
         }
 
-        public override string[] Extensions => new[] {".jar", ".war", ".ear", ".rar"};
+        public override string[] Extensions => new[] {".jar", ".war", ".ear", ".rar", ".zip"};
 
         public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
