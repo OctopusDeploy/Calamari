@@ -1,19 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Calamari.Commands.Support;
 using Calamari.Integration.Packages.Metadata;
-using Calamari.Util;
-using NuGet;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
 
 namespace Calamari.Integration.Packages.NuGet
 {

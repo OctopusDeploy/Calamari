@@ -5,11 +5,6 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Retry;
 using Octopus.Core.Resources.Versioning;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
 
 namespace Calamari.Integration.Packages.NuGet
 {

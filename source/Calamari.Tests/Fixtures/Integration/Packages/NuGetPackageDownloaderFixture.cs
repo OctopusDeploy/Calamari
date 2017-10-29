@@ -2,13 +2,7 @@
 using System.Net;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
-using Calamari.Tests.Fixtures.Integration.FileSystem;
 using NSubstitute;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
 using NUnit.Framework;
 using Octopus.Core.Resources.Versioning.Factories;
 

@@ -11,12 +11,8 @@ using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
 #if USE_NUGET_V2_LIBS
 using NuGet;
-using Calamari.NuGet.Versioning;
-using VersionComparer = NuGet.Versioning.VersionComparer;
-using SemanticVersion = NuGet.Versioning.SemanticVersion;
 #else
 using NuGet.Packaging;
-using NuGet.Versioning;
 #endif
 
 

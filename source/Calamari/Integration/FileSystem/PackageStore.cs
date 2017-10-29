@@ -6,14 +6,8 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Metadata;
 using Calamari.Util;
-using Octopus.Core.Resources;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
 
 namespace Calamari.Integration.FileSystem
 {

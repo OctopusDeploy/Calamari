@@ -1,11 +1,6 @@
 using System.IO;
 using Calamari.Integration.Packages.Metadata;
 using Octopus.Core.Resources.Versioning;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
 
 namespace Calamari.Integration.Packages
 {
