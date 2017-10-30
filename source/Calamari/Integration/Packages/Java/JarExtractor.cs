@@ -4,12 +4,15 @@ using Calamari.Constants;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
+using Octopus.Core.Resources;
 
 namespace Calamari.Integration.Packages.Java
 {
     public class JarExtractor : SimplePackageExtractor
     {
-        readonly JarTool jarTool;
+        static readonly string[] EXTENSIONS = new[] {".jar", ".war", ".ear", ".rar", ".zip"};
+        readonly JarTool jarTool;        
+        readonly IPackageIDParser mavenPackageIdParser = new MavenPackageIDParser();
 
         public JarExtractor(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput,
             ICalamariFileSystem fileSystem)
@@ -17,7 +20,7 @@ namespace Calamari.Integration.Packages.Java
             jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
         }
 
-        public override string[] Extensions => new[] {".jar", ".war", ".ear", ".rar", ".zip"};
+        public override string[] Extensions => EXTENSIONS;
 
         public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
@@ -46,7 +49,7 @@ namespace Calamari.Integration.Packages.Java
             }
             catch
             {
-                return GetMavenMetadata(packageFile);
+                return mavenPackageIdParser.GetMetadataFromPackageName(packageFile, EXTENSIONS);
             }           
         }
 
@@ -73,6 +76,7 @@ namespace Calamari.Integration.Packages.Java
 
             pkg.Id = idAndVersionSplit[0] + JavaConstants.JAVA_FILENAME_DELIMITER + idAndVersionSplit[1];
             pkg.Version = idAndVersionSplit[2];
+            pkg.FeedType = FeedType.Maven;
 
             return pkg;
         }

@@ -10,7 +10,7 @@
                  * Try the maven parsing first. Maven package IDs have been
                  * constructed so the NuGet packages will fail this parsing.
                  */
-                return new MavenPackageIDParser().GetyMetadata(packageId);
+                return new MavenPackageIDParser().GetMetadataFromPackageID(packageId);
             }
             catch
             {
@@ -18,7 +18,7 @@
                  * NuGet is the default format, and if all other package identification
                  * fails, NuGet will be assumed.
                  */
-                return new NuGetPackageIDParser().GetyMetadata(packageId);    
+                return new NuGetPackageIDParser().GetMetadataFromPackageID(packageId);    
             }            
         }
     }
