@@ -47,7 +47,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 {
                     PackageId = "Acme.Web",
                     Version = "1.1.1.1",
-                    FeedType = FeedType.NuGet
+                    FeedType = FeedType.NuGet,
+                    PackageSearchPattern = "Acme.Web*"
                 });
 
                 CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()),
@@ -68,7 +69,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 {
                     PackageId = "Acme.Web",
                     Version = "1.1.1.1",
-                    FeedType = FeedType.NuGet
+                    FeedType = FeedType.NuGet,
+                    PackageSearchPattern = "Acme.Web*"
                 });
 
                 CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()), new[] {"1.0.0.1"});
