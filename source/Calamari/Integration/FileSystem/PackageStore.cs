@@ -115,7 +115,7 @@ namespace Calamari.Integration.FileSystem
             }
             catch (Exception)
             {
-                Log.Error("Could not extract metadata for " + file);
+                Log.Verbose($"Could not extract metadata for {file}. This file may not have a recognised filename.");
                 return null;
             }
         }
