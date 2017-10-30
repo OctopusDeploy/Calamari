@@ -73,10 +73,10 @@ namespace Calamari.Integration.Packages.Java
                     $"Unable to extract the package ID and version from file \"{packageFile}\"");
             }
 
-            pkg.Id = idAndVersionSplit[0] + JavaConstants.JAVA_FILENAME_DELIMITER + idAndVersionSplit[1];
+            pkg.PackageId = idAndVersionSplit[0] + JavaConstants.JAVA_FILENAME_DELIMITER + idAndVersionSplit[1];
             pkg.Version = idAndVersionSplit[2];
             pkg.FeedType = FeedType.Maven;
-            pkg.PackageSearchPattern = pkg.Id + JavaConstants.JAVA_FILENAME_DELIMITER + pkg.Version + "*";
+            pkg.PackageSearchPattern = pkg.PackageId + JavaConstants.JAVA_FILENAME_DELIMITER + pkg.Version + "*";
 
             return pkg;
         }

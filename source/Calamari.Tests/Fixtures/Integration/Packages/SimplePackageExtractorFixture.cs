@@ -23,7 +23,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var metaData = extractor.GetMetadata("octofxjs.2.3.41.tar.gz-e7e75d07-6b62-4219-81c6-121698876868");
 
-            Assert.AreEqual("octofxjs", metaData.Id);
+            Assert.AreEqual("octofxjs", metaData.PackageId);
             Assert.AreEqual("2.3.41", metaData.Version);
             Assert.AreEqual(".tar.gz", metaData.FileExtension);
         }
@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var metaData = extractor.GetMetadata("octofxjs.2.3.41.tar.gz");
 
-            Assert.AreEqual("octofxjs", metaData.Id);
+            Assert.AreEqual("octofxjs", metaData.PackageId);
             Assert.AreEqual("2.3.41", metaData.Version);
             Assert.AreEqual(".tar.gz", metaData.FileExtension);
         }

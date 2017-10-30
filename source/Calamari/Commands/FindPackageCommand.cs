@@ -5,6 +5,7 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
+using Octopus.Core.Resources.Metadata;
 
 namespace Calamari.Commands
 {
@@ -38,9 +39,9 @@ namespace Calamari.Commands
                         new CalamariVariableDictionary())));
 
             var basePackageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
-            var packageMetadata = new ExtendedPackageMetadata()
+            var packageMetadata = new PhysicalPackageMetadata()
             {
-                Id = basePackageMetadata.Id,
+                PackageId = basePackageMetadata.PackageId,
                 FeedType = basePackageMetadata.FeedType, 
                 Version = packageVersion, 
                 Hash = packageHash
@@ -53,7 +54,7 @@ namespace Calamari.Commands
             if (package == null)
             {
                 Log.VerboseFormat("Package {0} version {1} hash {2} has not been uploaded.", 
-                    packageMetadata.Id, packageMetadata.Version, packageMetadata.Hash);
+                    packageMetadata.PackageId, packageMetadata.Version, packageMetadata.Hash);
 
                 Log.VerboseFormat("Finding earlier packages that have been uploaded to this Tentacle.");
                 var nearestPackages = packageStore.GetNearestPackages(packageMetadata).ToList();
@@ -68,14 +69,25 @@ namespace Calamari.Commands
                 foreach(var nearestPackage in nearestPackages)
                 {
                     Log.VerboseFormat("  - {0}: {1}", nearestPackage.Metadata.Version, nearestPackage.FullPath);
-                    Log.ServiceMessages.PackageFound(nearestPackage.Metadata.Id, nearestPackage.Metadata.Version, nearestPackage.Metadata.Hash, nearestPackage.Metadata.FileExtension, nearestPackage.FullPath);
+                    Log.ServiceMessages.PackageFound(
+                        nearestPackage.Metadata.PackageId, 
+                        nearestPackage.Metadata.Version, 
+                        nearestPackage.Metadata.Hash,
+                        nearestPackage.Metadata.FileExtension,
+                        nearestPackage.FullPath);
                 }
 
                 return 0;
             }
 
-            Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash);
-            Log.ServiceMessages.PackageFound(package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash, package.Metadata.FileExtension, package.FullPath, true);
+            Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.Metadata.PackageId, package.Metadata.Version, package.Metadata.Hash);
+            Log.ServiceMessages.PackageFound(
+                package.Metadata.PackageId, 
+                package.Metadata.Version,
+                package.Metadata.Hash, 
+                package.Metadata.FileExtension,
+                package.FullPath, 
+                true);
             return 0;
         }
     }

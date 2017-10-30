@@ -7,6 +7,7 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Metadata;
 using Calamari.Util;
 using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
 
@@ -55,7 +56,7 @@ namespace Calamari.Integration.FileSystem
             return new StoredPackage(package, packageFullPath);
         }
 
-        public StoredPackage GetPackage(ExtendedPackageMetadata metadata)
+        public StoredPackage GetPackage(PhysicalPackageMetadata metadata)
         {
             fileSystem.EnsureDirectoryExists(rootDirectory);
 
@@ -65,7 +66,7 @@ namespace Calamari.Integration.FileSystem
                 if (storedPackage == null)
                     continue;
                 
-                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || 
+                if (!string.Equals(storedPackage.Metadata.PackageId, metadata.PackageId, StringComparison.OrdinalIgnoreCase) || 
                     !VersionFactory.CanCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.FeedType) ||
                     !packageVersion.Equals(VersionFactory.CreateVersion(metadata.Version, metadata.FeedType)))
                     continue;
@@ -95,9 +96,9 @@ namespace Calamari.Integration.FileSystem
             
             fileSystem.EnsureDirectoryExists(rootDirectory);
             var zipPackages =
-                from filePath in PackageFiles(metadata.Id + "*")
+                from filePath in PackageFiles(metadata.PackageId + "*")
                 let zip = PackageMetadata(filePath)
-                where zip != null && zip.Id == metadata.Id && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) <= 0
+                where zip != null && zip.PackageId == metadata.PackageId && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) <= 0
                 orderby zip.Version descending
                 select new {zip, filePath};
 
@@ -121,15 +122,15 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        static ExtendedPackageMetadata ExtendedPackageMetadata(string file, PackageMetadata metadata)
+        static PhysicalPackageMetadata ExtendedPackageMetadata(string file, PackageMetadata metadata)
         {
             try
             {
                 using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
                 {
-                    return new ExtendedPackageMetadata
+                    return new PhysicalPackageMetadata
                     {
-                        Id = metadata.Id,
+                        PackageId = metadata.PackageId,
                         Version = metadata.Version,
                         FileExtension = metadata.FileExtension,
                         PackageSearchPattern = metadata.PackageSearchPattern,

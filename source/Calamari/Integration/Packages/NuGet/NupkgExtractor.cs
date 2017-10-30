@@ -23,7 +23,7 @@ namespace Calamari.Integration.Packages.NuGet
             var packageMetadata = package.Metadata;
             return new PackageMetadata
             {
-                Id = packageMetadata.Id,
+                PackageId = packageMetadata.Id,
                 Version = packageMetadata.Version.ToString(),
                 FileExtension = Extensions.First()
             };

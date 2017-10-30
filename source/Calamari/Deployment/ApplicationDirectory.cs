@@ -19,7 +19,7 @@ namespace Calamari.Deployment
         {
             return EnsureTargetPathExistsAndIsEmpty(
                 Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables), 
-                package.Id, package.Version), fileSystem);
+                package.PackageId, package.Version), fileSystem);
         }
 
         /// This will be specific to Tenant and/or Environment if these variables are available.

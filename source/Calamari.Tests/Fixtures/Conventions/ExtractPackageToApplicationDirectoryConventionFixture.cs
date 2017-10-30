@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             extractor = Substitute.For<IPackageExtractor>();
-            extractor.GetMetadata(PackageLocation).Returns(new PackageMetadata { Id = "Acme.Web", Version = "1.0.0" });
+            extractor.GetMetadata(PackageLocation).Returns(new PackageMetadata { PackageId = "Acme.Web", Version = "1.0.0" });
 
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));

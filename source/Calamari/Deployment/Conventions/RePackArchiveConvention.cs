@@ -75,7 +75,7 @@ namespace Calamari.Java.Deployment.Conventions
             var targetFileName = !string.IsNullOrWhiteSpace(customPackageFileName)
                 ? customPackageFileName
                 : new StringBuilder()
-                    .Append(packageMetadata.Id)
+                    .Append(packageMetadata.PackageId)
                     /*
                      * If this package was sourced from a maven feed, we use the # char as a delimiter between
                      * the package id and the version. If it is not from a maven feed, we use the default of

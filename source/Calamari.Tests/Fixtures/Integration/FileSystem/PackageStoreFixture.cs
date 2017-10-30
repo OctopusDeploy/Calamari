@@ -45,7 +45,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
                 var packages = store.GetNearestPackages(new PackageMetadata()
                 {
-                    Id = "Acme.Web",
+                    PackageId = "Acme.Web",
                     Version = "1.1.1.1",
                     FeedType = FeedType.NuGet
                 });
@@ -66,7 +66,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
                 var packages = store.GetNearestPackages(new PackageMetadata()
                 {
-                    Id = "Acme.Web",
+                    PackageId = "Acme.Web",
                     Version = "1.1.1.1",
                     FeedType = FeedType.NuGet
                 });
