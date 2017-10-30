@@ -1,4 +1,4 @@
-﻿using Calamari.Integration.Packages.Metadata;
+﻿using Octopus.Core.Resources;
 
 namespace Calamari.Integration.Packages
 {

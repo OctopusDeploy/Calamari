@@ -1,11 +1,9 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Calamari.Constants;
-using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
 using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
 
 namespace Calamari.Integration.Packages.Java
 {

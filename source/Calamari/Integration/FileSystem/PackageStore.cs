@@ -6,6 +6,7 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Metadata;
 using Calamari.Util;
+using Octopus.Core.Resources;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
 

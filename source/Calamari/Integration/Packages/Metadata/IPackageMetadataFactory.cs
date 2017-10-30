@@ -1,4 +1,6 @@
-﻿namespace Calamari.Integration.Packages.Metadata
+﻿using Octopus.Core.Resources;
+
+namespace Calamari.Integration.Packages.Metadata
 {
     /// <summary>
     /// Defines a factory that is used to parse the metadata from a package id, typically using 

@@ -5,14 +5,11 @@
 using System;
 using System.IO;
 using System.Linq;
-using Calamari.Integration.Packages.Metadata;
-using Calamari.Util;
-using NuGet;
+using Octopus.Core.Resources;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using SharpCompress.Readers;
-using SharpCompress.Readers.Zip;
 
 namespace Calamari.Integration.Packages.NuGet
 {

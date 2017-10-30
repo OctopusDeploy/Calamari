@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Calamari.Integration.Packages.Java;
-using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Support;
 using Octopus.Core.Resources;

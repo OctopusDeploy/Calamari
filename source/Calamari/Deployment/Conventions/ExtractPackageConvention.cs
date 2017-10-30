@@ -4,6 +4,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Metadata;
 using Calamari.Util;
+using Octopus.Core.Resources;
 
 namespace Calamari.Deployment.Conventions
 {

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes.Semaphores;
+using Octopus.Core.Resources;
 using Octostache;
 
 namespace Calamari.Deployment

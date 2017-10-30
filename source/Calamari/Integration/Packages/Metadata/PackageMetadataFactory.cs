@@ -1,4 +1,7 @@
-﻿namespace Calamari.Integration.Packages.Metadata
+﻿using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
+
+namespace Calamari.Integration.Packages.Metadata
 {
     public class PackageMetadataFactory : IPackageMetadataFactory
     {
