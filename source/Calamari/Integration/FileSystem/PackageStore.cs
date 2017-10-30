@@ -60,7 +60,7 @@ namespace Calamari.Integration.FileSystem
         {
             fileSystem.EnsureDirectoryExists(rootDirectory);
 
-            foreach (var file in PackageFiles(metadata.PackageSearchPattern))
+            foreach (var file in PackageFiles(metadata.PackageAndVersionSearchPattern))
             {
                 var storedPackage = GetPackage(file);
                 if (storedPackage == null)
@@ -96,7 +96,7 @@ namespace Calamari.Integration.FileSystem
             
             fileSystem.EnsureDirectoryExists(rootDirectory);
             var zipPackages =
-                from filePath in PackageFiles(metadata.PackageId + "*")
+                from filePath in PackageFiles(metadata.PackageSearchPattern)
                 let zip = PackageMetadata(filePath)
                 where zip != null && zip.PackageId == metadata.PackageId && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) <= 0
                 orderby zip.Version descending
@@ -128,15 +128,7 @@ namespace Calamari.Integration.FileSystem
             {
                 using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
                 {
-                    return new PhysicalPackageMetadata
-                    {
-                        PackageId = metadata.PackageId,
-                        Version = metadata.Version,
-                        FileExtension = metadata.FileExtension,
-                        PackageSearchPattern = metadata.PackageSearchPattern,
-                        FeedType = metadata.FeedType,
-                        Hash = HashCalculator.Hash(stream),
-                    };
+                    return new PhysicalPackageMetadata(metadata, 0, HashCalculator.Hash(stream));
                 }
             }
             catch (IOException)

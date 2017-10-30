@@ -50,35 +50,6 @@ namespace Calamari.Integration.Packages.Java
             {
                 return mavenPackageIdParser.GetMetadataFromPackageName(packageFile, EXTENSIONS);
             }           
-        }
-
-        PackageMetadata GetMavenMetadata(string packageFile)
-        {
-            var metadataAndExtension =
-                PackageIdentifier.ExtractPackageExtensionAndMetadata(packageFile, Extensions);
-
-            var idAndVersion = metadataAndExtension.Item1;
-            var pkg = new PackageMetadata {FileExtension = metadataAndExtension.Item2};
-
-            if (string.IsNullOrEmpty(pkg.FileExtension))
-            {
-                throw new FileFormatException($"Unable to determine filetype of file \"{packageFile}\"");
-            }
-
-            var idAndVersionSplit = idAndVersion.Split(JavaConstants.JAVA_FILENAME_DELIMITER);
-
-            if (idAndVersionSplit.Length != 3)
-            {
-                throw new FileFormatException(
-                    $"Unable to extract the package ID and version from file \"{packageFile}\"");
-            }
-
-            pkg.PackageId = idAndVersionSplit[0] + JavaConstants.JAVA_FILENAME_DELIMITER + idAndVersionSplit[1];
-            pkg.Version = idAndVersionSplit[2];
-            pkg.FeedType = FeedType.Maven;
-            pkg.PackageSearchPattern = pkg.PackageId + JavaConstants.JAVA_FILENAME_DELIMITER + pkg.Version + "*";
-
-            return pkg;
-        }
+        }      
     }
 }

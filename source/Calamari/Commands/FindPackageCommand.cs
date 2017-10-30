@@ -42,9 +42,10 @@ namespace Calamari.Commands
             var packageMetadata = new PhysicalPackageMetadata()
             {
                 PackageId = basePackageMetadata.PackageId,
-                FeedType = basePackageMetadata.FeedType, 
+                FeedType = basePackageMetadata.FeedType,
+                PackageSearchPattern = basePackageMetadata.PackageSearchPattern,
                 Version = packageVersion, 
-                Hash = packageHash
+                Hash = packageHash                
             };
             
             var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem);
