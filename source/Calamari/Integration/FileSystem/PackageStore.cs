@@ -98,7 +98,7 @@ namespace Calamari.Integration.FileSystem
             var zipPackages =
                 from filePath in PackageFiles(metadata.Id +"*")
                 let zip = PackageMetadata(filePath)
-                where zip != null && zip.Id == metadata.Id && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) < 0
+                where zip != null && zip.Id == metadata.Id && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) <= 0
                 orderby zip.Version descending
                 select new {zip, filePath};
 
