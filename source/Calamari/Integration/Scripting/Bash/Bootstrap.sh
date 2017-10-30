@@ -48,7 +48,7 @@ function get_octopusvariable
   case $INPUT in
 #### VariableDeclarations ####
     *)
-      echo "Unrecognized variable \"$1\""
+      echo ""
     ;;
     esac
 }
