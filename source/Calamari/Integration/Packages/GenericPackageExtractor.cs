@@ -7,6 +7,7 @@ using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Support;
+using Octopus.Core.Resources;
 
 namespace Calamari.Integration.Packages
 {
@@ -14,14 +15,14 @@ namespace Calamari.Integration.Packages
     {
         private const string UUIDSuffix = "-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$";
         private const string ExtensionRegex = "(.*?)" + UUIDSuffix;
-        private readonly List<IPackageExtractor> additionalExtractors = 
+
+        private readonly List<IPackageExtractor> additionalExtractors =
             new List<IPackageExtractor>();
 
         private readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
-        
+
         public GenericPackageExtractor()
         {
-            
         }
 
         /// <summary>
@@ -33,7 +34,7 @@ namespace Calamari.Integration.Packages
         {
             this.additionalExtractors.AddRange(additionalExtractors);
         }
-        
+
         public string[] Extensions
         {
             get { return Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
@@ -53,24 +54,42 @@ namespace Calamari.Integration.Packages
         {
             if (string.IsNullOrEmpty(Path.GetExtension(packageFile)))
             {
-                throw new FileFormatException("Package is missing file extension. This is needed to select the correct extraction algorithm.");
+                throw new FileFormatException(
+                    "Package is missing file extension. This is needed to select the correct extraction algorithm.");
             }
 
-            var extractor = ExtensionSuffix(packageFile);
-            if (extractor != null)
-                return extractor;
+            return ExtensionSuffix(packageFile)
+                       .Union(ExtensionWithHashSuffix(packageFile))
+                       .Select(extractor =>
+                       {
+                           try
+                           {
+                               /*
+                                * Different extractors can share extensions. Attempt to get the metadata from the package
+                                * file, and if no exception is thrown, then we have a valid extractor. 
+                                */
+                               return new Tuple<IPackageExtractor, PackageMetadata>(extractor,
+                                   extractor.GetMetadata(packageFile));
+                           }
+                           catch
+                           {
+                               return null;
+                           }
+                       })
+                       .Where(details => details != null)
+                       .OrderByDescending(details => details.Item2.FeedType.Precedence())
+                       .Select(details => details.Item1)
+                       .FirstOrDefault() ?? ReportInvalidExtension(packageFile);
+        }
 
-
-            extractor = ExtensionWithHashSuffix(packageFile);
-            if (extractor != null)
-                return extractor;
-
+        IPackageExtractor ReportInvalidExtension(string packageFile)
+        {
             var extensionMatch = Regex.Match(Path.GetExtension(packageFile), ExtensionRegex);
-            
+
             throw new FileFormatException(supportLinkGenerator.GenerateSupportMessage(
                 string.Format(
                     "This step supports packages with the following extenions: {0}.\n" +
-                    "The supplied package has the extension \"{1}\" which is not supported.", 
+                    "The supplied package has the extension \"{1}\" which is not supported.",
                     Extractors.SelectMany(e => e.Extensions)
                         .Distinct()
                         .Aggregate((result, e) => result + ", " + e),
@@ -90,7 +109,9 @@ namespace Calamari.Integration.Packages
                 var directoryName = Path.GetDirectoryName(path);
                 if (!string.IsNullOrWhiteSpace(directoryName))
                 {
-                    Log.WarnFormat("The script file \"{0}\" contained within the package will not be executed because it is contained within a child folder. As of Octopus Deploy 2.4, scripts in sub folders will not be executed.", path);
+                    Log.WarnFormat(
+                        "The script file \"{0}\" contained within the package will not be executed because it is contained within a child folder. As of Octopus Deploy 2.4, scripts in sub folders will not be executed.",
+                        path);
                 }
             }
         }
@@ -106,14 +127,15 @@ namespace Calamari.Integration.Packages
             new TarPackageExtractor()
         }.Concat(additionalExtractors).ToList();
 
-        private IPackageExtractor ExtensionWithHashSuffix(string packageFile)
+        private IEnumerable<IPackageExtractor> ExtensionWithHashSuffix(string packageFile)
         {
-            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + UUIDSuffix).IsMatch(packageFile)));
+            return Extractors.Where(p =>
+                p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + UUIDSuffix).IsMatch(packageFile)));
         }
 
-        private IPackageExtractor ExtensionSuffix(string packageFile)
+        private IEnumerable<IPackageExtractor> ExtensionSuffix(string packageFile)
         {
-            return Extractors.FirstOrDefault(
+            return Extractors.Where(
                 p => p.Extensions.Any(ext =>
                     packageFile.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
         }

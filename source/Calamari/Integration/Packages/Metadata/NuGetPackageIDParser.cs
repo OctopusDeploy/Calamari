@@ -42,6 +42,7 @@ namespace Calamari.Integration.Packages.Metadata
             pkg.Id = packageId;
             pkg.Version = version.ToString();
             pkg.FeedType = FeedType.NuGet;
+            pkg.PackageSearchPattern = pkg.Id + "." + pkg.Version + "*";
             return pkg;
         }
     }

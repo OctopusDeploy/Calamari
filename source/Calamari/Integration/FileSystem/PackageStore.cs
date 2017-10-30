@@ -56,15 +56,13 @@ namespace Calamari.Integration.FileSystem
 
         public StoredPackage GetPackage(ExtendedPackageMetadata metadata)
         {
-            var name = GetNameOfPackage(metadata);
             fileSystem.EnsureDirectoryExists(rootDirectory);
 
-            foreach (var file in PackageFiles(name))
+            foreach (var file in PackageFiles(metadata.PackageSearchPattern))
             {
                 var storedPackage = GetPackage(file);
                 if (storedPackage == null)
                     continue;
-
                 
                 if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || 
                     !VersionFactory.CanCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.FeedType) ||
@@ -96,7 +94,7 @@ namespace Calamari.Integration.FileSystem
             
             fileSystem.EnsureDirectoryExists(rootDirectory);
             var zipPackages =
-                from filePath in PackageFiles(metadata.Id +"*")
+                from filePath in PackageFiles(metadata.Id + "*")
                 let zip = PackageMetadata(filePath)
                 where zip != null && zip.Id == metadata.Id && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) <= 0
                 orderby zip.Version descending
@@ -117,6 +115,7 @@ namespace Calamari.Integration.FileSystem
             }
             catch (Exception)
             {
+                Log.Error("Could not extract metadata for " + file);
                 return null;
             }
         }
@@ -132,6 +131,8 @@ namespace Calamari.Integration.FileSystem
                         Id = metadata.Id,
                         Version = metadata.Version,
                         FileExtension = metadata.FileExtension,
+                        PackageSearchPattern = metadata.PackageSearchPattern,
+                        FeedType = metadata.FeedType,
                         Hash = HashCalculator.Hash(stream),
                     };
                 }
@@ -140,11 +141,6 @@ namespace Calamari.Integration.FileSystem
             {
                 return null;
             }
-        }
-
-        static string GetNameOfPackage(PackageMetadata metadata)
-        {
-            return metadata.Id + "." + metadata.Version + "*";
         }
     }
 }
