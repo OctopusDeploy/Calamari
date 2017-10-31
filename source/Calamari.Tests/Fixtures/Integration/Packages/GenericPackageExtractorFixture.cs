@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("nupkg", typeof(NupkgExtractor))]
         public void GettingFileByExtension(string extension, Type expectedType)
         {
-            var extractor = this.extractor.GetExtractor("foo."+ extension);
+            var extractor = this.extractor.GetExtractor("foo.1.0.0."+ extension);
 
             Assert.AreEqual(expectedType, extractor.GetType());
         }
