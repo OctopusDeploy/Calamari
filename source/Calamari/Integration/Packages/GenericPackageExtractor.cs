@@ -56,8 +56,16 @@ namespace Calamari.Integration.Packages
                     "Package is missing file extension. This is needed to select the correct extraction algorithm.");
             }
 
-            return ExtensionSuffix(packageFile)
-                       .Union(ExtensionWithHashSuffix(packageFile))
+            var combinedList = ExtensionSuffix(packageFile)
+                .Union(ExtensionWithHashSuffix(packageFile))
+                .ToList();
+
+            /*
+             * Start by finding an extractor that can successfully parse the metadata of the given file.
+             * This will work in practice, although fails for some tests where a mock package is
+             * supplied that may not actually be able to be extracted.
+             */
+            return combinedList
                        .Select(extractor =>
                        {
                            try
@@ -77,7 +85,16 @@ namespace Calamari.Integration.Packages
                        .Where(details => details != null)
                        .OrderByDescending(details => details.Item2.FeedType.Precedence())
                        .Select(details => details.Item1)
-                       .FirstOrDefault() ?? ReportInvalidExtension(packageFile);
+                       .FirstOrDefault() ?? 
+                   /*
+                    * If none of the extractors successfully parsed the metadata, fallback to the
+                    * first one that matches the extension
+                    */
+                   combinedList.FirstOrDefault() ??       
+                   /*
+                    * If all else fails then throw an exception
+                    */
+                   ReportInvalidExtension(packageFile);
         }
 
         IPackageExtractor ReportInvalidExtension(string packageFile)
