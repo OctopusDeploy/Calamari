@@ -90,7 +90,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
                         new Dictionary<string, object>
                     {
-                        {"Metadata.Id", packageId},
+                        {"Metadata.PackageId", packageId},
                         {"Metadata.Version", packageVersion},
                         {"Metadata.Hash", acmeWeb.Hash},
                         {"FullPath", destinationFilePath}
@@ -127,7 +127,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
                         new Dictionary<string, object>
                     {
-                        {"Metadata.Id", packageId},
+                        {"Metadata.PackageId", packageId},
                         {"Metadata.Version", packageVersion},
                         {"Metadata.Hash", acmeWeb.Hash},
                         {"FullPath", destinationFilePath}
