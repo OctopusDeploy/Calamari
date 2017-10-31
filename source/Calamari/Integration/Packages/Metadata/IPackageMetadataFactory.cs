@@ -1,4 +1,5 @@
 ﻿using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
 
 namespace Calamari.Integration.Packages.Metadata
 {
@@ -8,6 +9,7 @@ namespace Calamari.Integration.Packages.Metadata
     /// </summary>
     public interface IPackageMetadataFactory
     {
+        PhysicalPackageMetadata ParseMetadata(string packageId, string version, long size, string hash);
         BasePackageMetadata ParseMetadata(string packageId);
     }
 }

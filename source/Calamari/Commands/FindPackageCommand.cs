@@ -38,15 +38,7 @@ namespace Calamari.Commands
                     new ServiceMessageCommandOutput(
                         new CalamariVariableDictionary())));
 
-            var basePackageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
-            var packageMetadata = new PhysicalPackageMetadata()
-            {
-                PackageId = basePackageMetadata.PackageId,
-                FeedType = basePackageMetadata.FeedType,
-                PackageSearchPattern = basePackageMetadata.PackageSearchPattern,
-                Version = packageVersion, 
-                Hash = packageHash                
-            };
+            var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId, packageVersion, 0, packageHash);
             
             var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem);
             var packageStore = new PackageStore(extractor);                        
