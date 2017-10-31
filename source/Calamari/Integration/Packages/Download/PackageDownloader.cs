@@ -117,15 +117,7 @@ namespace Calamari.Integration.Packages.Download
             {
                 return new LocalNuGetPackage(filePath);
             }
-            catch (FileNotFoundException)
-            {
-                return null;
-            }
-            catch (IOException)
-            {
-                return null;
-            }
-            catch (FileFormatException)
+            catch (Exception)
             {
                 return null;
             }

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Fixtures.Util;
 using NSubstitute;
@@ -39,28 +40,28 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenUnknownExtension()
         {
             extractor.GetMetadata("octofxjs.2.3.41.doc");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenInvalidSeverVersion()
         {
             extractor.GetMetadata("octofxjs.2.3.other.tar.gz");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenMissingVersion()
         {
             extractor.GetMetadata("octofxjs.tar.gz");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenMissingPackageId()
         {
             extractor.GetMetadata("2.3.41.doc");
