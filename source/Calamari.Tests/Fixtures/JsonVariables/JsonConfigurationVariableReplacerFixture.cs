@@ -68,6 +68,24 @@ namespace Calamari.Tests.Fixtures.JsonVariables
         }
 
         [Test]
+        public void ShouldReplaceVariablesInTopLevelArray()
+        {
+            const string expected =
+                @"[" +
+                "{" +
+                "      \"Property\": \"NewValue\"" +
+                "      \"Property\": \"Value2\"" +
+                "}" +
+                "]";
+
+            var variables = new VariableDictionary();
+            variables.Set("0:Property", "NewValue");
+
+            var replaced = Replace(variables, existingFile: "appsettings.top-level-array.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
+        [Test]
         public void ShouldKeepExistingValues()
         {
             const string expected =
