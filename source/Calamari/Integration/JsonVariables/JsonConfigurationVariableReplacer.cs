@@ -21,7 +21,7 @@ namespace Calamari.Integration.JsonVariables
             SaveJson(jsonFilePath, root);
         }
 
-        static JObject LoadJson(string jsonFilePath)
+        static JToken LoadJson(string jsonFilePath)
         {
             if (!File.Exists(jsonFilePath))
                 return new JObject();
@@ -33,11 +33,11 @@ namespace Calamari.Integration.JsonVariables
             using (var reader = new StreamReader(file))
             using (var json = new JsonTextReader(reader))
             {
-                return JObject.Load(json);
+                return JToken.ReadFrom(json);
             }
         }
 
-        static void SaveJson(string jsonFilePath, JObject root)
+        static void SaveJson(string jsonFilePath, JToken root)
         {
             using (var file = new FileStream(jsonFilePath, FileMode.Create, FileAccess.Write))
             using (var writer = new StreamWriter(file))
@@ -55,19 +55,26 @@ namespace Calamari.Integration.JsonVariables
         private readonly Stack<string> path = new Stack<string>();
         private string key;
 
-        public void Load(JObject json)
+        public void Load(JToken json)
         {
-            MapObject(json, true);
+            if (json.Type == JTokenType.Array)
+            {
+                MapArray(json.Value<JArray>(), true);
+            }
+            else
+            {
+                MapObject(json, true);
+            }
         }
 
-        private void MapObject(JObject j, bool first = false)
+        private void MapObject(JToken j, bool first = false)
         {
             if (!first)
             {
                 map[key] = t => j.Replace(JToken.Parse(t));
             }
 
-            foreach (var property in j.Properties())
+            foreach (var property in j.Children<JProperty>())
             {
                 MapProperty(property);
             }
@@ -146,9 +153,12 @@ namespace Calamari.Integration.JsonVariables
             };
         }
 
-        private void MapArray(JContainer array)
+        private void MapArray(JContainer array, bool first = false)
         {
-            map[key] = t => array.Replace(JToken.Parse(t));
+            if (!first)
+            {
+                map[key] = t => array.Replace(JToken.Parse(t));
+            }
 
             for (var index = 0; index < array.Count; index++)
             {

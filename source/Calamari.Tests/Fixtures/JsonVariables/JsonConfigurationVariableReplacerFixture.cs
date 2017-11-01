@@ -74,6 +74,8 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 @"[" +
                 "{" +
                 "      \"Property\": \"NewValue\"" +
+                "}," +
+                "{" +
                 "      \"Property\": \"Value2\"" +
                 "}" +
                 "]";
