@@ -89,10 +89,11 @@ namespace Calamari.Tests.Fixtures.FindPackage
             var result = FindPackages(mavenPackageId, packageVersion, hash);
 
             result.AssertSuccess();
-            result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId,
+            result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", 
+                mavenPackageId,
                 packageVersion, hash);
             result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
-            result.AssertOutput("No earlier packages for {0} has been uploaded", packageId);
+            result.AssertOutput("No earlier packages for {0} has been uploaded", mavenPackageId);
         }
 
         [Test]
@@ -110,7 +111,8 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     var result = FindPackages(packageId, newpackageVersion, newAcmeWeb.Hash);
 
                     result.AssertSuccess();
-                    result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId,
+                    result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", 
+                        packageId,
                         newpackageVersion,
                         newAcmeWeb.Hash);
                     result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
