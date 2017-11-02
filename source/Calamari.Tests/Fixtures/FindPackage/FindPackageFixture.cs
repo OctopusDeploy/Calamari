@@ -71,6 +71,31 @@ namespace Calamari.Tests.Fixtures.FindPackage
         }
 
         [Test]
+        public void ShouldFindNoEarlierMavenPackageVersions()
+        {
+            var sourcePackage = TestEnvironment.GetTestPath(
+                "Java",
+                "Fixtures",
+                "Deployment",
+                "Packages",
+                "HelloWorld.0.0.1.jar");
+
+            string hash;
+            using (var file = File.OpenRead(sourcePackage))
+            {
+                hash = BitConverter.ToString(SHA1.Create().ComputeHash(file)).Replace("-", "").ToLowerInvariant();
+            }
+
+            var result = FindPackages(mavenPackageId, packageVersion, hash);
+
+            result.AssertSuccess();
+            result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId,
+                packageVersion, hash);
+            result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
+            result.AssertOutput("No earlier packages for {0} has been uploaded", packageId);
+        }
+
+        [Test]
         public void ShouldFindOneEarlierPackageVersion()
         {
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
@@ -102,6 +127,47 @@ namespace Calamari.Tests.Fixtures.FindPackage
                         });
                 }
             }
+        }
+
+        [Test]
+        public void ShouldFindOneEarlierMavenPackageVersion()
+        {
+            var sourcePackage = TestEnvironment.GetTestPath(
+                "Java",
+                "Fixtures",
+                "Deployment",
+                "Packages",
+                "HelloWorld.0.0.1.jar");
+
+            string hash;
+            using (var file = File.OpenRead(sourcePackage))
+            {
+                hash = BitConverter.ToString(SHA1.Create().ComputeHash(file)).Replace("-", "").ToLowerInvariant();
+            }
+
+            var destinationFilePath = Path.Combine(downloadPath,
+                mavenPackageId + "#" + packageVersion + ".jar-" + Guid.NewGuid());
+            File.Copy(sourcePackage, destinationFilePath);
+
+            var result = FindPackages(mavenPackageId, newpackageVersion, hash);
+
+            result.AssertSuccess();
+            result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.",
+                mavenPackageId,
+                newpackageVersion,
+                hash);
+            result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
+            result.AssertOutput("Found 1 earlier version of {0} on this Tentacle", mavenPackageId);
+            result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
+
+            result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
+                new Dictionary<string, object>
+                {
+                    {"Metadata.PackageId", mavenPackageId},
+                    {"Metadata.Version", packageVersion},
+                    {"Metadata.Hash", hash},
+                    {"FullPath", destinationFilePath}
+                });
         }
 
         [Test]
@@ -145,6 +211,51 @@ namespace Calamari.Tests.Fixtures.FindPackage
         }
 
         [Test]
+        public void ShouldFindTheCorrectMavenPackageWhenSimilarPackageExist()
+        {
+            var sourcePackage = TestEnvironment.GetTestPath(
+                "Java",
+                "Fixtures",
+                "Deployment",
+                "Packages",
+                "HelloWorld.0.0.1.jar");
+
+            string hash;
+            using (var file = File.OpenRead(sourcePackage))
+            {
+                hash = BitConverter.ToString(SHA1.Create().ComputeHash(file)).Replace("-", "").ToLowerInvariant();
+            }
+
+            var destinationFilePath = Path.Combine(downloadPath,
+                mavenPackageId + "#" + packageVersion + ".jar-" + Guid.NewGuid());
+            File.Copy(sourcePackage, destinationFilePath);
+
+            var destination2FilePath = Path.Combine(downloadPath,
+                mavenPackageId + ".Test#" + packageVersion + ".jar-" + Guid.NewGuid());
+            File.Copy(sourcePackage, destination2FilePath);
+
+            var result = FindPackages(mavenPackageId, newpackageVersion, hash);
+
+            result.AssertSuccess();
+            result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", 
+                mavenPackageId,
+                newpackageVersion,
+                hash);
+            result.AssertOutput("Finding earlier packages that have been uploaded to this Tentacle");
+            result.AssertOutput("Found 1 earlier version of {0} on this Tentacle", mavenPackageId);
+            result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
+
+            result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
+                new Dictionary<string, object>
+                {
+                    {"Metadata.PackageId", mavenPackageId},
+                    {"Metadata.Version", packageVersion},
+                    {"Metadata.Hash", hash},
+                    {"FullPath", destinationFilePath}
+                });
+        }
+
+        [Test]
         public void ShouldFindPackageAlreadyUploaded()
         {
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
@@ -179,10 +290,10 @@ namespace Calamari.Tests.Fixtures.FindPackage
         public void ShouldFindMavenPackageAlreadyUploaded()
         {
             var sourcePackage = TestEnvironment.GetTestPath(
-                "Java", 
-                "Fixtures", 
-                "Deployment", 
-                "Packages", 
+                "Java",
+                "Fixtures",
+                "Deployment",
+                "Packages",
                 "HelloWorld.0.0.1.jar");
 
             string hash;
@@ -190,7 +301,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
             {
                 hash = BitConverter.ToString(SHA1.Create().ComputeHash(file)).Replace("-", "").ToLowerInvariant();
             }
-            
+
             var destinationFilePath = Path.Combine(downloadPath,
                 mavenPackageId + "#" + packageVersion + ".jar-" + Guid.NewGuid());
             File.Copy(sourcePackage,
@@ -206,8 +317,8 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 args: ServiceMessageNames.CalamariFoundPackage.Name);
 
             result.AssertOutput(
-                "Package {0} {1} hash {2} has already been uploaded", 
-                mavenPackageId, 
+                "Package {0} {1} hash {2} has already been uploaded",
+                mavenPackageId,
                 packageVersion,
                 hash);
             result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
