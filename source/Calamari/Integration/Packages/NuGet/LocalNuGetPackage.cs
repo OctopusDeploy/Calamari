@@ -50,21 +50,8 @@ namespace Calamari.Integration.Packages.NuGet
 
                     using (var manifestStream = entry.OpenEntryStream())
                     {
-                        using (var ms = new MemoryStream())
-                        {
-                            manifestStream.CopyTo(ms);
-                            Manifest manifest;
-                            try
-                            {
-                                manifest = Manifest.ReadFrom(ms, true);
-                            }
-                            catch
-                            {
-                                ms.Seek(0, SeekOrigin.Begin);
-                                manifest = Manifest.ReadFrom(ms, false);
-                            }
-                            return manifest.Metadata;
-                        }
+                        var manifest = Manifest.ReadFrom(manifestStream, false);
+                        return manifest.Metadata;
                     }
                 }
 
