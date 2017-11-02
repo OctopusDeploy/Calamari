@@ -15,6 +15,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         readonly static string tentacleHome = TestEnvironment.GetTestPath("temp", "FindPackage");
         readonly static string downloadPath = Path.Combine(tentacleHome, "Files");
         readonly string packageId = "Acme.Web";
+        readonly string mavenPackageId = "Maven#com.acme#web";
         readonly string packageVersion = "1.0.0";
         readonly string newpackageVersion = "1.0.1";
 
@@ -146,6 +147,37 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 File.Copy(acmeWeb.FilePath, destinationFilePath);
 
                 var result = FindPackages(packageId, packageVersion, acmeWeb.Hash);
+
+                result.AssertSuccess();
+                result.AssertServiceMessage(
+                    ServiceMessageNames.CalamariFoundPackage.Name,
+                    Is.True,
+                    message: "Expected service message '{0}' to be True",
+                    args: ServiceMessageNames.CalamariFoundPackage.Name);
+
+                result.AssertOutput("Package {0} {1} hash {2} has already been uploaded", packageId, packageVersion,
+                    acmeWeb.Hash);
+                result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
+                    new Dictionary<string, object>
+                    {
+                        {"Metadata.PackageId", packageId},
+                        {"Metadata.Version", packageVersion},
+                        {"Metadata.Hash", acmeWeb.Hash},
+                        {"FullPath", destinationFilePath}
+                    });
+            }
+        }
+        
+        [Test]
+        public void ShouldFindMavenPackageAlreadyUploaded()
+        {
+            using (var acmeWeb = new TemporaryFile(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar")))
+            {
+                var destinationFilePath = Path.Combine(downloadPath,
+                    mavenPackageId + "#" + packageVersion + ".jar-" + Guid.NewGuid());
+                File.Copy(acmeWeb.FilePath, destinationFilePath);
+
+                var result = FindPackages(mavenPackageId, packageVersion, acmeWeb.Hash);
 
                 result.AssertSuccess();
                 result.AssertServiceMessage(
