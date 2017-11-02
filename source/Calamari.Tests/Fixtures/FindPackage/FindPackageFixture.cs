@@ -186,12 +186,12 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     message: "Expected service message '{0}' to be True",
                     args: ServiceMessageNames.CalamariFoundPackage.Name);
 
-                result.AssertOutput("Package {0} {1} hash {2} has already been uploaded", packageId, packageVersion,
+                result.AssertOutput("Package {0} {1} hash {2} has already been uploaded", mavenPackageId, packageVersion,
                     acmeWeb.Hash);
                 result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True,
                     new Dictionary<string, object>
                     {
-                        {"Metadata.PackageId", packageId},
+                        {"Metadata.PackageId", mavenPackageId},
                         {"Metadata.Version", packageVersion},
                         {"Metadata.Hash", acmeWeb.Hash},
                         {"FullPath", destinationFilePath}
