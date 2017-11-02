@@ -532,6 +532,27 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShoulPassOnStdInfoWithTreatScriptWarningsAsErrors()
+        {
+            var variablesFile = Path.GetTempFileName();
+            var variables = new VariableDictionary();
+            variables.Set("Octopus.Action.FailScriptOnErrorOutput", "True");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("variables", variablesFile)
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello!");
+            }
+        }
+
+        [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ThrowsExceptionOnNixOrMac()
