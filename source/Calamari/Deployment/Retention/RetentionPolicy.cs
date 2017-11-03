@@ -156,11 +156,11 @@ namespace Calamari.Deployment.Retention
 
         private void RemovedFailedPackageDownloads()
         {
-            var pattern = "*" + PackageDownloader.DownloadingExtension;
+            var pattern = "*" + NuGetPackageDownloader.DownloadingExtension;
 
-            if (fileSystem.DirectoryExists(PackageDownloader.RootDirectory))
+            if (fileSystem.DirectoryExists(NuGetPackageDownloader.RootDirectory))
             {
-                var toDelete = fileSystem.EnumerateFilesRecursively(PackageDownloader.RootDirectory, pattern)
+                var toDelete = fileSystem.EnumerateFilesRecursively(NuGetPackageDownloader.RootDirectory, pattern)
                     .Where(f => fileSystem.GetCreationTime(f) <= DateTime.Now.AddDays(-1))
                     .ToArray();
 

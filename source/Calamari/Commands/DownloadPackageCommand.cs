@@ -2,17 +2,17 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Packages.Metadata;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
-using PackageDownloader = Calamari.Integration.Packages.Download.PackageDownloader;
 
 namespace Calamari.Commands
 {
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
     public class DownloadPackageCommand : Command
     {
-        static readonly PackageDownloader PackageDownloader = new PackageDownloader();
+        static readonly IPackageDownloader PackageDownloader = new PackageDownloaderStrategy();
         static readonly IVersionFactory VersionFactory = new VersionFactory();
         string packageId;
         string packageVersion;

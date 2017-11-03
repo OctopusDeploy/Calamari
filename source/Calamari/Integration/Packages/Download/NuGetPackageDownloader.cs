@@ -18,7 +18,7 @@ using NuGet.Packaging;
 
 namespace Calamari.Integration.Packages.Download
 {
-    class PackageDownloader
+    class NuGetPackageDownloader : IPackageDownloader
     {
         static readonly IVersionFactory VersionFactory = new VersionFactory();
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
@@ -151,7 +151,7 @@ namespace Calamari.Integration.Packages.Download
 
             var fullPathToDownloadTo = GetFilePathToDownloadPackageTo(cacheDirectory, packageId, version.ToString());
 
-            var downloader = new NuGetPackageDownloader(fileSystem);
+            var downloader = new NuGet.NuGetPackageDownloader(fileSystem);
             downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo, maxDownloadAttempts, downloadAttemptBackoff); 
 
             downloaded = new LocalNuGetPackage(fullPathToDownloadTo);
