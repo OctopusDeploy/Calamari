@@ -29,6 +29,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly Feed FileShare = new Feed() { Id = "feeds-local", Version = "1.0.0", PackageId = "Acme.Web" };
         static readonly Feed AuthFeed = new Feed() { Id = "feeds-authmyget", PackageId =  "OctoConsole", Version = "1.0.0" };
 
+        static readonly string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
+        static readonly long ExpectedMavenPackageSize = 2575022;
         static readonly string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
         static readonly Feed MavenPublicFeed = new Feed() { Id = "feeds-maven", Version = "22.0", PackageId =  "Maven#com.google.guava#guava" };
         
@@ -81,18 +83,18 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", 
+            result.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", 
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", 
                 MavenPublicFeed.DownloadFolder);
             result.AssertOutput("Found package {0} version {1}", 
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version);
 
-            AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
-            AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(result, MavenPublicFeed.File);
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", 
-                MavenPublicFeed.PackageId, MavenPublicFeed.Version, PublicFeedUri);
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
 
         [Test]

@@ -17,6 +17,7 @@ namespace Calamari.Integration.Packages.Download
     public class MavenPackageDownloader : IPackageDownloader
     {
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
+        private static readonly IMavenURLParser MavenUrlParser = new MavenURLParser();
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public void DownloadPackage(
@@ -34,7 +35,6 @@ namespace Calamari.Integration.Packages.Download
         {
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
 
-            LocalNuGetPackage downloaded = null;
             downloadedTo = null;
             if (!forcePackageDownload)
             {
@@ -45,7 +45,7 @@ namespace Calamari.Integration.Packages.Download
                     out downloadedTo);
             }
 
-            if (downloaded == null)
+            if (downloadedTo == null)
             {
                 DownloadPackage(
                     packageId,
@@ -63,9 +63,10 @@ namespace Calamari.Integration.Packages.Download
             }
 
             size = fileSystem.GetFileSize(downloadedTo);
-            string packageHash = null;
-            downloaded.GetStream(stream => packageHash = HashCalculator.Hash(stream));
-            hash = packageHash;
+            hash = downloadedTo
+                .Map(path => FunctionalExtensions.Using(
+                    () => fileSystem.OpenFile(path, FileAccess.Read),
+                    stream => HashCalculator.Hash(stream)));
         }
 
         private void AttemptToGetPackageFromCache(
@@ -92,47 +93,20 @@ namespace Calamari.Integration.Packages.Download
             fileSystem.EnsureDirectoryExists(cacheDirectory);
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            var mavenPackageId = new MavenPackageID(packageId, version);
-
             try
             {
-                /*
-                 * Maven artifacts can have multiple package types. We don't know what the type
-                 * is, but it has to be one of the extensions supported by the Java package
-                 * extractor. So we loop over all the extensions that the Java package step
-                 * supports and find the first one that is a valid artifact.
-                 */
-                var mavenGavFirst = JarExtractor.EXTENSIONS.AsParallel()
-                                        .Select(extension => new MavenPackageID(
-                                            mavenPackageId.Group,
-                                            mavenPackageId.Artifact,
-                                            mavenPackageId.Version,
-                                            Regex.Replace(extension, "^\\.", "")))
-                                        .FirstOrDefault(mavenGavParser =>
-                                        {
-                                            return new HttpClient().SendAsync(
-                                                    new HttpRequestMessage(
-                                                        HttpMethod.Head,
-                                                        feedUri + mavenGavParser.ArtifactPath))
-                                                .Result
-                                                .IsSuccessStatusCode;
-                                        }) ?? throw new Exception("Failed to find the maven artifact");
-
-                
-                downloadedTo = GetFilePathToDownloadPackageTo(
-                        cacheDirectory,
+                downloadedTo = new MavenPackageID(packageId, version)
+                    .Map(mavenPackageId => FirstToRespond(mavenPackageId, feedUri))
+                    .Tee(mavenGavFirst => Log.VerboseFormat("Found package {0} version {1}", packageId, version))
+                    .Map(mavenGavFirst => DownloadArtifact(
+                        mavenGavFirst,
                         packageId,
-                        version.ToString(),
-                        mavenGavFirst.Packaging);
-
-                using (var file = fileSystem.OpenFile(downloadedTo, FileAccess.Write))
-                {
-                    var data = (feedUri + mavenGavFirst.ArtifactPath).ToEnumerable()
-                    .Select(uri => new HttpClient().GetAsync(uri).Result)
-                        .Select(result => result.Content.ReadAsByteArrayAsync().Result)
-                        .First();
-                    file.Write(data, 0, data.Length);
-                }
+                        version,
+                        feedUri,
+                        feedCredentials,
+                        cacheDirectory,
+                        maxDownloadAttempts,
+                        downloadAttemptBackoff));
             }
             catch (Exception ex)
             {
@@ -140,14 +114,54 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
+        string DownloadArtifact(
+            MavenPackageID mavenGavFirst,
+            string packageId,
+            IVersion version,
+            Uri feedUri,
+            ICredentials feedCredentials,
+            string cacheDirectory,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff) =>
+            GetFilePathToDownloadPackageTo(
+                    cacheDirectory,
+                    packageId,
+                    version.ToString(),
+                    mavenGavFirst.Packaging)
+                .Tee(path => FunctionalExtensions.Using(
+                    () => fileSystem.OpenFile(path, FileAccess.Write),
+                    myStream =>
+                    {
+                        return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                            .Map(uri => uri + mavenGavFirst.ArtifactPath)
+                            .Map(uri => new HttpClient().GetAsync(uri).Result)
+                            .Map(result => result.Content.ReadAsByteArrayAsync().Result)
+                            .Tee(content => myStream.Write(content, 0, content.Length));
+                    }
+                ));
+
+        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri) =>
+            JarExtractor.EXTENSIONS.AsParallel()
+                .Select(extension => new MavenPackageID(
+                    mavenPackageId.Group,
+                    mavenPackageId.Artifact,
+                    mavenPackageId.Version,
+                    Regex.Replace(extension, "^\\.", "")))
+                .FirstOrDefault(mavenGavParser =>
+                {
+                    return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                        .Map(uri => uri + mavenGavParser.ArtifactPath)
+                        .Map(uri => new HttpRequestMessage(HttpMethod.Head, uri))
+                        .Map(request => new HttpClient().SendAsync(request).Result)
+                        .Map(result => result.IsSuccessStatusCode);
+                }) ?? throw new Exception("Failed to find the maven artifact");
+
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
         {
-            var name = packageId + "." +
-                       version + "_" +
-                       BitConverter.ToString(Guid.NewGuid().ToByteArray())
-                           .Replace("-", string.Empty) + 
-                       "." + extension;
-            return Path.Combine(cacheDirectory, name);
+            return (packageId + "." + version + "_" +
+                    BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) +
+                    "." + extension)
+                .Map(package => Path.Combine(cacheDirectory, package));
         }
     }
 }

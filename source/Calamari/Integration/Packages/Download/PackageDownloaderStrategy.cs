@@ -25,9 +25,25 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff,
             out string downloadedTo,
-            out string hash, out long size)
+            out string hash, 
+            out long size)
         {
-            if (nugetPackageIdParser.CanGetMetadataFromPackageID(packageId, out var nugetMetadata))
+            if (mavenPackageIdParser.CanGetMetadataFromPackageID(packageId, out var mavenMetadata))
+            {
+                new MavenPackageDownloader().DownloadPackage(
+                    packageId,
+                    version, 
+                    feedId, 
+                    feedUri, 
+                    feedCredentials, 
+                    forcePackageDownload, 
+                    maxDownloadAttempts, 
+                    downloadAttemptBackoff, 
+                    out downloadedTo, 
+                    out hash, 
+                    out size);
+            }
+            else if (nugetPackageIdParser.CanGetMetadataFromPackageID(packageId, out var nugetMetadata))
             {
                 new NuGetPackageDownloader().DownloadPackage(
                     packageId,
@@ -42,13 +58,9 @@ namespace Calamari.Integration.Packages.Download
                     out hash, 
                     out size);
             }
-            else if (mavenPackageIdParser.CanGetMetadataFromPackageID(packageId, out var mavenMetadata))
-            {
-                throw new NotImplementedException();
-            }
             else
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException($"Package ID {packageId} is not recognised.");
             }
         }
     }
