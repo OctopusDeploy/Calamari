@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
@@ -12,16 +11,14 @@ using Calamari.Util;
 using Octopus.Core.Extensions;
 using Octopus.Core.Resources.Parsing.Maven;
 using Octopus.Core.Resources.Versioning;
-using Polly;
-
 
 namespace Calamari.Integration.Packages.Download
 {
     public class MavenPackageDownloader : IPackageDownloader
     {
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
-        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        
+        readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
         public void DownloadPackage(
             string packageId,
             IVersion version,
@@ -42,22 +39,22 @@ namespace Calamari.Integration.Packages.Download
             if (!forcePackageDownload)
             {
                 AttemptToGetPackageFromCache(
-                    packageId, 
-                    version, 
-                    cacheDirectory, 
+                    packageId,
+                    version,
+                    cacheDirectory,
                     out downloadedTo);
             }
 
             if (downloaded == null)
             {
                 DownloadPackage(
-                    packageId, 
-                    version, 
-                    feedUri, 
-                    feedCredentials, 
-                    cacheDirectory, 
+                    packageId,
+                    version,
+                    feedUri,
+                    feedCredentials,
+                    cacheDirectory,
                     maxDownloadAttempts,
-                    downloadAttemptBackoff, 
+                    downloadAttemptBackoff,
                     out downloadedTo);
             }
             else
@@ -72,12 +69,12 @@ namespace Calamari.Integration.Packages.Download
         }
 
         private void AttemptToGetPackageFromCache(
-            string packageId, 
-            IVersion version, 
-            string cacheDirectory, 
+            string packageId,
+            IVersion version,
+            string cacheDirectory,
             out string downloadedTo)
         {
-            throw new NotImplementedException();
+            downloadedTo = null;
         }
 
         private void DownloadPackage(
@@ -90,7 +87,12 @@ namespace Calamari.Integration.Packages.Download
             TimeSpan downloadAttemptBackoff,
             out string downloadedTo)
         {
-            var mavenPackageID = new MavenPackageID(packageId, version);
+            Log.Info("Downloading Maven package {0} {1} from feed: '{2}'", packageId, version, feedUri);
+            Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
+            fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
+
+            var mavenPackageId = new MavenPackageID(packageId, version);
 
             try
             {
@@ -102,9 +104,9 @@ namespace Calamari.Integration.Packages.Download
                  */
                 var mavenGavFirst = JarExtractor.EXTENSIONS.AsParallel()
                                         .Select(extension => new MavenPackageID(
-                                            mavenPackageID.Group,
-                                            mavenPackageID.Artifact,
-                                            mavenPackageID.Version,
+                                            mavenPackageId.Group,
+                                            mavenPackageId.Artifact,
+                                            mavenPackageId.Version,
                                             Regex.Replace(extension, "^\\.", "")))
                                         .FirstOrDefault(mavenGavParser =>
                                         {
@@ -117,13 +119,35 @@ namespace Calamari.Integration.Packages.Download
                                         }) ?? throw new Exception("Failed to find the maven artifact");
 
                 
+                downloadedTo = GetFilePathToDownloadPackageTo(
+                        cacheDirectory,
+                        packageId,
+                        version.ToString(),
+                        mavenGavFirst.Packaging);
+
+                using (var file = fileSystem.OpenFile(downloadedTo, FileAccess.Write))
+                {
+                    var data = (feedUri + mavenGavFirst.ArtifactPath).ToEnumerable()
+                    .Select(uri => new HttpClient().GetAsync(uri).Result)
+                        .Select(result => result.Content.ReadAsByteArrayAsync().Result)
+                        .First();
+                    file.Write(data, 0, data.Length);
+                }
             }
             catch (Exception ex)
             {
                 throw new Exception($"Unable to download package {packageId}", ex);
             }
-            
-            throw new NotImplementedException();
+        }
+
+        string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
+        {
+            var name = packageId + "." +
+                       version + "_" +
+                       BitConverter.ToString(Guid.NewGuid().ToByteArray())
+                           .Replace("-", string.Empty) + 
+                       "." + extension;
+            return Path.Combine(cacheDirectory, name);
         }
     }
 }
