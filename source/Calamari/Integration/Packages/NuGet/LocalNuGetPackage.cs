@@ -50,7 +50,11 @@ namespace Calamari.Integration.Packages.NuGet
 
                     using (var manifestStream = entry.OpenEntryStream())
                     {
-                        var manifest = Manifest.ReadFrom(manifestStream, true);
+                        // NuGet keeps adding new elements to the NuSpec schema,
+                        // which in turn breaks us when we try to read the manifest,
+                        // so we now read the manifest without schema validation
+                        // https://github.com/OctopusDeploy/Issues/issues/3487
+                        var manifest = Manifest.ReadFrom(manifestStream, false);
                         return manifest.Metadata;
                     }
                 }
