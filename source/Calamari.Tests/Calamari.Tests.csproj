@@ -1,13 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<!--
+  <!--
 		Fixes this error:
 		Could not locate ...\packages.config. Ensure that this project has Microsoft.Bcl.Build installed and packages.config is located next to the project file.
 	 -->
-	<PropertyGroup>
-	  <SkipValidatePackageReferences>true</SkipValidatePackageReferences>
-	</PropertyGroup>
-
+  <PropertyGroup>
+    <SkipValidatePackageReferences>true</SkipValidatePackageReferences>
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -18,23 +16,17 @@
     <GenerateProgramFile>false</GenerateProgramFile>
     <NoWarn>NU1603</NoWarn>
   </PropertyGroup>
-
-
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);NETCORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <DefineConstants>$(DefineConstants);NETFX;AZURE;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
-
-  
   <ItemGroup>
     <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloVariableSubstitution.fsx" />
-    
     <None Include="Fixtures\ConfigurationVariables\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -100,28 +92,21 @@
     </None>
     <Compile Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
     <EmbeddedResource Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
-
-
     <None Remove="Fixtures\Deployment\Packages\Acme.Web\bin\**" />
     <None Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
     <None Remove="Fixtures\Deployment\Packages\Acme.Service\bin\**" />
     <None Remove="Fixtures\Deployment\Packages\Acme.Service\obj\**" />
-
     <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\bin\**" />
     <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\obj\**" />
-
     <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\bin\**" />
     <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\obj\**" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
   </ItemGroup>
-
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.1.1" />
     <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
@@ -134,11 +119,10 @@
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="Octostache" Version="2.1.8" />
     <PackageReference Include="Assent" Version="1.0.1" />
+    <PackageReference Include="Polly" Version="5.4.0" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
-    <PackageReference Include="Polly" Version="5.1.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
-
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' ">
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
@@ -146,7 +130,6 @@
     <PackageReference Include="Sprache" Version="2.1.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
   </ItemGroup>
-
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
@@ -168,21 +151,17 @@
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System" />
   </ItemGroup>
-
   <ItemGroup>
     <None Remove="TestResults\**" />
   </ItemGroup>
-
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
-
   <ItemGroup>
     <None Update="Java\Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
   <Target Name="CopyTools" AfterTargets="Build">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
@@ -213,5 +192,4 @@
     <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.0'" />
     <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.0'" />
   </Target>
-            
 </Project>

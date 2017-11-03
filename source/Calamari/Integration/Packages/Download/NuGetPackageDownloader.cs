@@ -20,24 +20,11 @@ namespace Calamari.Integration.Packages.Download
 {
     class NuGetPackageDownloader : IPackageDownloader
     {
+        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         static readonly IVersionFactory VersionFactory = new VersionFactory();
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        public static string RootDirectory => Path.Combine(TentacleHome, "Files");
         public static readonly string DownloadingExtension = ".downloading";
-
-        private static string TentacleHome
-        {
-            get
-            {
-                var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
-                if (tentacleHome == null)
-                {
-                    Log.Error("Environment variable 'TentacleHome' has not been set.");
-                }
-                return tentacleHome;
-            }
-        }
 
         public void DownloadPackage(
             string packageId, 
@@ -52,7 +39,7 @@ namespace Calamari.Integration.Packages.Download
             out string hash, 
             out long size)
         {
-            var cacheDirectory = GetPackageRoot(feedId);
+            var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             
             LocalNuGetPackage downloaded = null;
             downloadedTo = null;
@@ -121,11 +108,6 @@ namespace Calamari.Integration.Packages.Download
             {
                 return null;
             }
-        }
-
-        private string GetPackageRoot(string prefix)
-        {
-            return string.IsNullOrWhiteSpace(prefix) ? RootDirectory : Path.Combine(RootDirectory, prefix);
         }
 
         private string GetNameOfPackage(string packageId, string version)

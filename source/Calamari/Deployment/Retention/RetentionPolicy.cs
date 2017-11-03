@@ -11,6 +11,7 @@ namespace Calamari.Deployment.Retention
 {
     public class RetentionPolicy : IRetentionPolicy
     {
+        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         readonly ICalamariFileSystem fileSystem;
         readonly IDeploymentJournal deploymentJournal;
         readonly IClock clock;
@@ -158,9 +159,9 @@ namespace Calamari.Deployment.Retention
         {
             var pattern = "*" + NuGetPackageDownloader.DownloadingExtension;
 
-            if (fileSystem.DirectoryExists(NuGetPackageDownloader.RootDirectory))
+            if (fileSystem.DirectoryExists(PackageDownloaderUtils.RootDirectory))
             {
-                var toDelete = fileSystem.EnumerateFilesRecursively(NuGetPackageDownloader.RootDirectory, pattern)
+                var toDelete = fileSystem.EnumerateFilesRecursively(PackageDownloaderUtils.RootDirectory, pattern)
                     .Where(f => fileSystem.GetCreationTime(f) <= DateTime.Now.AddDays(-1))
                     .ToArray();
 

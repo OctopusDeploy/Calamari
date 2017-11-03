@@ -9,7 +9,7 @@ namespace Calamari.Integration.Packages.Java
 {
     public class JarExtractor : SimplePackageExtractor
     {
-        static readonly string[] EXTENSIONS = new[] {".jar", ".war", ".ear", ".rar", ".zip"};
+        public static readonly string[] EXTENSIONS = {".jar", ".war", ".ear", ".rar", ".zip"};
         static readonly IPackageIDParser mavenPackageIdParser = new MavenPackageIDParser();
         readonly JarTool jarTool;        
         
