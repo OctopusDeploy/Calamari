@@ -4,20 +4,27 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Calamari.Constants;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
-using Calamari.Integration.Packages.NuGet;
 using Calamari.Util;
+using Octopus.Core.Constants;
 using Octopus.Core.Extensions;
+using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
 using Octopus.Core.Resources.Parsing.Maven;
 using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
+using JavaConstants = Octopus.Core.Constants.JavaConstants;
 
 namespace Calamari.Integration.Packages.Download
 {
     public class MavenPackageDownloader : IPackageDownloader
     {
-        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
-        private static readonly IMavenURLParser MavenUrlParser = new MavenURLParser();
+        static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
+        static readonly IMavenURLParser MavenUrlParser = new MavenURLParser();
+        static readonly IPackageIDParser PackageIdParser = new MavenPackageIDParser();
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public void DownloadPackage(
@@ -75,7 +82,33 @@ namespace Calamari.Integration.Packages.Download
             string cacheDirectory,
             out string downloadedTo)
         {
-            downloadedTo = null;
+            Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
+
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
+
+            downloadedTo = new MavenPackageID(packageId).FileSystemName
+                .ToEnumerable()
+                // Convert the filename to a search pattern
+                .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
+                // Convert the search pattern to matching file paths
+                .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
+                // Try and extract the package metadata from the file path
+                .Select(file => new Tuple<string, Tuple<bool, PackageMetadata>>(file,
+                    PackageIdParser.CanGetMetadataFromServerPackageName(file, new string[] {Path.GetExtension(file)})))
+                // Only keep results where the parsing was successful
+                .Where(fileAndParseResult => fileAndParseResult.Item2.Item1)
+                // Keep the filename and the package metadata
+                .Select(fileAndParseResult =>
+                    new Tuple<string, PackageMetadata>(fileAndParseResult.Item1, fileAndParseResult.Item2.Item2))
+                // Only keep results that match the package id and version
+                .Where(fileAndMetadata => fileAndMetadata.Item2.PackageId == packageId)
+                .Where(fileAndMetadata => VersionFactory.CanCreateVersion(fileAndMetadata.Item2.Version.ToString(),
+                                              out IVersion packageVersion, fileAndMetadata.Item2.FeedType) &&
+                                          version.Equals(packageVersion))
+                // We only need the filename
+                .Select(fileAndMetadata => fileAndMetadata.Item1)
+                // Get the filename or null
+                .FirstOrDefault();
         }
 
         private void DownloadPackage(
@@ -157,8 +190,8 @@ namespace Calamari.Integration.Packages.Download
                 }) ?? throw new Exception("Failed to find the maven artifact");
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
-        {
-            return (packageId + "." + version + "_" +
+        {           
+            return (packageId + JavaConstants.MavenFilenameDelimiter + version + ServerConstants.SERVER_CACHE_DELIMITER +
                     BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) +
                     "." + extension)
                 .Map(package => Path.Combine(cacheDirectory, package));

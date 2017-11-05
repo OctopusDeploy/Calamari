@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
         static readonly long ExpectedMavenPackageSize = 2575022;
         static readonly string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
-        static readonly Feed MavenPublicFeed = new Feed() { Id = "feeds-maven", Version = "22.0", PackageId =  "Maven#com.google.guava#guava" };
+        static readonly Feed MavenPublicFeed = new Feed("#") { Id = "feeds-maven", Version = "22.0", PackageId =  "Maven#com.google.guava#guava" };
         
         [SetUp]
         public void SetUp()
@@ -99,7 +99,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         [Test]
         public void ShouldUsePackageFromCache()
-        {
+        {           
             DownloadPackage(AuthFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri).AssertSuccess();
 
             var result = DownloadPackage(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.Id, PublicFeedUri);
@@ -111,6 +111,22 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, PublicFeed.File);
+        }
+        
+        [Test]
+        public void ShouldUseMavenPackageFromCache()
+        {
+            DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri).AssertSuccess();
+
+            var result = DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Checking package cache for package {0} {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}", MavenPublicFeed.File);
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(result, MavenPublicFeed.File);
         }
 
         [Test]
@@ -405,6 +421,18 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         class Feed
         {
+            public Feed()
+            {
+                Delimiter = ".";
+            }
+            
+            public Feed(string delimiter)
+            {
+                Delimiter = delimiter;
+            }
+
+            private string Delimiter { get; set; }
+            
             public string Id { get; set; }
 
             public string PackageId { get; set; }
@@ -413,7 +441,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             public string DownloadFolder { get { return Path.Combine(DownloadPath, Id); } }
 
-            public string File { get { return Path.Combine(DownloadFolder, PackageId + '.' + Version); } }
+            public string File { get { return Path.Combine(DownloadFolder, PackageId + Delimiter + Version); } }
 
         }
     }
