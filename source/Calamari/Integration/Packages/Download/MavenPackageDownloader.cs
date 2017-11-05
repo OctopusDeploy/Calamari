@@ -41,6 +41,15 @@ namespace Calamari.Integration.Packages.Download
             out long size)
         {
             Log.Info("Getting cache directory");
+            try
+            {
+                PackageDownloaderUtils.GetPackageRoot(feedId);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.ToString());
+            }
+
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
 
             downloadedTo = null;
@@ -85,33 +94,43 @@ namespace Calamari.Integration.Packages.Download
             string cacheDirectory,
             out string downloadedTo)
         {
-            Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
+            try
+            {
+                Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
 
-            fileSystem.EnsureDirectoryExists(cacheDirectory);
+                fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-            downloadedTo = new MavenPackageID(packageId).FileSystemName
-                .ToEnumerable()
-                // Convert the filename to a search pattern
-                .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
-                // Convert the search pattern to matching file paths
-                .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
-                // Try and extract the package metadata from the file path
-                .Select(file => new Tuple<string, Tuple<bool, PackageMetadata>>(file,
-                    PackageIdParser.CanGetMetadataFromServerPackageName(file, new string[] {Path.GetExtension(file)})))
-                // Only keep results where the parsing was successful
-                .Where(fileAndParseResult => fileAndParseResult.Item2.Item1)
-                // Keep the filename and the package metadata
-                .Select(fileAndParseResult =>
-                    new Tuple<string, PackageMetadata>(fileAndParseResult.Item1, fileAndParseResult.Item2.Item2))
-                // Only keep results that match the package id and version
-                .Where(fileAndMetadata => fileAndMetadata.Item2.PackageId == packageId)
-                .Where(fileAndMetadata => VersionFactory.CanCreateVersion(fileAndMetadata.Item2.Version.ToString(),
-                                              out IVersion packageVersion, fileAndMetadata.Item2.FeedType) &&
-                                          version.Equals(packageVersion))
-                // We only need the filename
-                .Select(fileAndMetadata => fileAndMetadata.Item1)
-                // Get the filename or null
-                .FirstOrDefault();
+
+                downloadedTo = new MavenPackageID(packageId).FileSystemName
+                    .ToEnumerable()
+                    // Convert the filename to a search pattern
+                    .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
+                    // Convert the search pattern to matching file paths
+                    .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
+                    // Try and extract the package metadata from the file path
+                    .Select(file => new Tuple<string, Tuple<bool, PackageMetadata>>(file,
+                        PackageIdParser.CanGetMetadataFromServerPackageName(file,
+                            new string[] {Path.GetExtension(file)})))
+                    // Only keep results where the parsing was successful
+                    .Where(fileAndParseResult => fileAndParseResult.Item2.Item1)
+                    // Keep the filename and the package metadata
+                    .Select(fileAndParseResult =>
+                        new Tuple<string, PackageMetadata>(fileAndParseResult.Item1, fileAndParseResult.Item2.Item2))
+                    // Only keep results that match the package id and version
+                    .Where(fileAndMetadata => fileAndMetadata.Item2.PackageId == packageId)
+                    .Where(fileAndMetadata => VersionFactory.CanCreateVersion(fileAndMetadata.Item2.Version.ToString(),
+                                                  out IVersion packageVersion, fileAndMetadata.Item2.FeedType) &&
+                                              version.Equals(packageVersion))
+                    // We only need the filename
+                    .Select(fileAndMetadata => fileAndMetadata.Item1)
+                    // Get the filename or null
+                    .FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Log.Info(ex.ToString());
+                throw ex;
+            }
         }
 
         private void DownloadPackage(
@@ -163,7 +182,8 @@ namespace Calamari.Integration.Packages.Download
                     {
                         return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
                             .Map(uri => uri + mavenGavFirst.ArtifactPath)
-                            .Map(uri => new HttpClient().GetAsync(uri).Result)
+                            .Map(uri => new HttpClient(new HttpClientHandler {Credentials = feedCredentials})
+                                .GetAsync(uri).Result)
                             .Map(result => result.Content.ReadAsByteArrayAsync().Result)
                             .Tee(content => myStream.Write(content, 0, content.Length));
                     }
