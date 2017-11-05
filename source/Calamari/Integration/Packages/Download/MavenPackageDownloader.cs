@@ -165,11 +165,19 @@ namespace Calamari.Integration.Packages.Download
                     () => fileSystem.OpenFile(path, FileAccess.Write),
                     myStream =>
                     {
-                        return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
-                            .Map(uri => uri + mavenGavFirst.ArtifactPath)
-                            .Map(uri => new HttpClient().GetAsync(uri).Result)
-                            .Map(result => result.Content.ReadAsByteArrayAsync().Result)
-                            .Tee(content => myStream.Write(content, 0, content.Length));
+                        try
+                        {
+                            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                                .Map(uri => uri + mavenGavFirst.ArtifactPath)
+                                .Map(uri => new HttpClient().GetAsync(uri).Result)
+                                .Map(result => result.Content.ReadAsByteArrayAsync().Result)
+                                .Tee(content => myStream.Write(content, 0, content.Length));
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error("Failed to download maven artifact");
+                            throw ex;
+                        }
                     }
                 ));
 
