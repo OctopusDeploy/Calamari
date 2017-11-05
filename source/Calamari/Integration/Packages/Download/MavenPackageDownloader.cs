@@ -143,6 +143,7 @@ namespace Calamari.Integration.Packages.Download
             }
             catch (Exception ex)
             {
+                Log.Error($"Failed to download maven artifact {packageId}");
                 throw new Exception($"Unable to download package {packageId}", ex);
             }
         }
@@ -175,7 +176,7 @@ namespace Calamari.Integration.Packages.Download
                         }
                         catch (Exception ex)
                         {
-                            Log.Error("Failed to download maven artifact");
+                            Log.Error($"Failed to download maven artifact to {path}");
                             throw ex;
                         }
                     }
