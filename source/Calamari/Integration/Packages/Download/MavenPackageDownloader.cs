@@ -40,11 +40,13 @@ namespace Calamari.Integration.Packages.Download
             out string hash,
             out long size)
         {
+            Log.Info("Getting cache directory");
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
 
             downloadedTo = null;
             if (!forcePackageDownload)
             {
+                Log.Info("Attempting to get from cache");
                 AttemptToGetPackageFromCache(
                     packageId,
                     version,
@@ -54,6 +56,7 @@ namespace Calamari.Integration.Packages.Download
 
             if (downloadedTo == null)
             {
+                Log.Info("Downloading from repo");
                 DownloadPackage(
                     packageId,
                     version,
@@ -126,26 +129,18 @@ namespace Calamari.Integration.Packages.Download
             fileSystem.EnsureDirectoryExists(cacheDirectory);
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            try
-            {
-                downloadedTo = new MavenPackageID(packageId, version)
-                    .Map(mavenPackageId => FirstToRespond(mavenPackageId, feedUri))
-                    .Tee(mavenGavFirst => Log.VerboseFormat("Found package {0} version {1}", packageId, version))
-                    .Map(mavenGavFirst => DownloadArtifact(
-                        mavenGavFirst,
-                        packageId,
-                        version,
-                        feedUri,
-                        feedCredentials,
-                        cacheDirectory,
-                        maxDownloadAttempts,
-                        downloadAttemptBackoff));
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Failed to download maven artifact {packageId}");
-                throw new Exception($"Unable to download package {packageId}", ex);
-            }
+            downloadedTo = new MavenPackageID(packageId, version)
+                .Map(mavenPackageId => FirstToRespond(mavenPackageId, feedUri))
+                .Tee(mavenGavFirst => Log.VerboseFormat("Found package {0} version {1}", packageId, version))
+                .Map(mavenGavFirst => DownloadArtifact(
+                    mavenGavFirst,
+                    packageId,
+                    version,
+                    feedUri,
+                    feedCredentials,
+                    cacheDirectory,
+                    maxDownloadAttempts,
+                    downloadAttemptBackoff));
         }
 
         string DownloadArtifact(
@@ -166,19 +161,11 @@ namespace Calamari.Integration.Packages.Download
                     () => fileSystem.OpenFile(path, FileAccess.Write),
                     myStream =>
                     {
-                        try
-                        {
-                            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
-                                .Map(uri => uri + mavenGavFirst.ArtifactPath)
-                                .Map(uri => new HttpClient().GetAsync(uri).Result)
-                                .Map(result => result.Content.ReadAsByteArrayAsync().Result)
-                                .Tee(content => myStream.Write(content, 0, content.Length));
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Error($"Failed to download maven artifact to {path}");
-                            throw ex;
-                        }
+                        return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                            .Map(uri => uri + mavenGavFirst.ArtifactPath)
+                            .Map(uri => new HttpClient().GetAsync(uri).Result)
+                            .Map(result => result.Content.ReadAsByteArrayAsync().Result)
+                            .Tee(content => myStream.Write(content, 0, content.Length));
                     }
                 ));
 
@@ -199,8 +186,9 @@ namespace Calamari.Integration.Packages.Download
                 }) ?? throw new Exception("Failed to find the maven artifact");
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
-        {           
-            return (packageId + JavaConstants.MavenFilenameDelimiter + version + ServerConstants.SERVER_CACHE_DELIMITER +
+        {
+            return (packageId + JavaConstants.MavenFilenameDelimiter + version +
+                    ServerConstants.SERVER_CACHE_DELIMITER +
                     BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) +
                     "." + extension)
                 .Map(package => Path.Combine(cacheDirectory, package));
