@@ -148,6 +148,24 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertStagePackageOutputVariableSet(result, PublicFeed.File);
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
         }
+        
+        [Test]
+        public void ShouldByPassCacheAndDownloadMavenPackage()
+        {
+            DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri).AssertSuccess();
+
+            var result = DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri, forcePackageDownload: true);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
+            result.AssertOutput("Found package {0} version {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(result, MavenPublicFeed.File);
+            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+        }
 
         [Test]
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
