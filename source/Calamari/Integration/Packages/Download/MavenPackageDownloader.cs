@@ -73,15 +73,14 @@ namespace Calamari.Integration.Packages.Download
             if (downloadedTo == null)
             {
                 Log.Info("Downloading from repo");
-                DownloadPackage(
+                downloadedTo = DownloadPackage(
                     packageId,
                     version,
                     feedUri,
                     feedCredentials,
                     cacheDirectory,
                     maxDownloadAttempts,
-                    downloadAttemptBackoff,
-                    out downloadedTo);
+                    downloadAttemptBackoff);
             }
             else
             {
@@ -143,15 +142,14 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        private void DownloadPackage(
+        private string DownloadPackage(
             string packageId,
             IVersion version,
             Uri feedUri,
             ICredentials feedCredentials,
             string cacheDirectory,
             int maxDownloadAttempts,
-            TimeSpan downloadAttemptBackoff,
-            out string downloadedTo)
+            TimeSpan downloadAttemptBackoff)
         {
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
             Guard.NotNull(version, "version can not be null");
@@ -163,7 +161,7 @@ namespace Calamari.Integration.Packages.Download
             fileSystem.EnsureDirectoryExists(cacheDirectory);
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            downloadedTo = new MavenPackageID(packageId, version)
+            return new MavenPackageID(packageId, version)
                 .Map(mavenPackageId => FirstToRespond(mavenPackageId, feedUri))
                 .Tee(mavenGavFirst => Log.VerboseFormat("Found package {0} version {1}", packageId, version))
                 .Map(mavenGavFirst => DownloadArtifact(
