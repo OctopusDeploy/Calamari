@@ -40,16 +40,6 @@ namespace Calamari.Integration.Packages.Download
             out string hash,
             out long size)
         {
-            Log.Info("Getting cache directory");
-            try
-            {
-                PackageDownloaderUtils.GetPackageRoot(feedId);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.ToString());
-            }
-
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
 
             downloadedTo = null;
@@ -66,13 +56,14 @@ namespace Calamari.Integration.Packages.Download
                 catch (Exception ex)
                 {
                     Log.Info("AttemptToGetPackageFromCache() failed");
+                    Log.Info("Exception starts");
                     Log.Info(ex.ToString());
+                    Log.Info("Exception ends");
                 }
             }
 
             if (downloadedTo == null)
             {
-                Log.Info("Downloading from repo");
                 downloadedTo = DownloadPackage(
                     packageId,
                     version,
