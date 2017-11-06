@@ -93,6 +93,17 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
             Guard.NotNull(version, "version can not be null");
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
+            
+            Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
+
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
+
+            new MavenPackageID(packageId).FileSystemName
+                .ToEnumerable()
+                // Convert the filename to a search pattern
+                .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
+                // Get the filename or null
+                .FirstOrDefault();
 
             return null;
         }
