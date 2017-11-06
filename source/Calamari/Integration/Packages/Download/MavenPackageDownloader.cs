@@ -2,9 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text.RegularExpressions;
-using Calamari.Constants;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
 using Calamari.Util;
@@ -16,7 +14,6 @@ using Octopus.Core.Resources.Parsing.Maven;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
 using Octopus.Core.Util;
-using JavaConstants = Octopus.Core.Constants.JavaConstants;
 
 namespace Calamari.Integration.Packages.Download
 {
@@ -41,7 +38,7 @@ namespace Calamari.Integration.Packages.Download
             out string hash,
             out long size)
         {
-            var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);           
+            var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
 
             downloadedTo = null;
             if (!forcePackageDownload)
@@ -85,7 +82,7 @@ namespace Calamari.Integration.Packages.Download
                 .Map(path => FunctionalExtensions.Using(
                     () => fileSystem.OpenFile(path, FileAccess.Read),
                     stream => HashCalculator.Hash(stream)));
-        }      
+        }
 
         bool FileMatchesDetails(string file, string packageId, IVersion version)
         {
@@ -105,7 +102,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
             Guard.NotNull(version, "version can not be null");
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
-            
+
             Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
 
             fileSystem.EnsureDirectoryExists(cacheDirectory);
@@ -133,7 +130,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(version, "version can not be null");
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
-            
+
             Log.Info("Downloading Maven package {0} {1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
@@ -168,7 +165,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(version, "version can not be null");
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
-            
+
             return GetFilePathToDownloadPackageTo(
                     cacheDirectory,
                     packageId,
@@ -177,7 +174,7 @@ namespace Calamari.Integration.Packages.Download
                 .Tee(path => MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
                     .Map(uri => uri + mavenGavFirst.ArtifactPath)
                     .Map(uri => FunctionalExtensions.Using(
-                        () => new WebClient(), 
+                        () => new WebClient(),
                         client => client
                             .Tee(c => c.Credentials = feedCredentials)
                             .Tee(c => c.DownloadFile(uri, path))))
@@ -188,33 +185,24 @@ namespace Calamari.Integration.Packages.Download
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
-                        
-            Log.Info("FirstToRespond - start");
 
-            var retValue = JarExtractor.EXTENSIONS
-                .Select(extension => new MavenPackageID(
-                    mavenPackageId.Group,
-                    mavenPackageId.Artifact,
-                    mavenPackageId.Version,
-                    Regex.Replace(extension, "^\\.", "")))
-                .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri, feedCredentials))
-                ?? throw new Exception("Failed to find the maven artifact");
-            
-            Log.Info("FirstToRespond - end");
-            return retValue;
+            return JarExtractor.EXTENSIONS
+                       .AsParallel()
+                       .Select(extension => new MavenPackageID(
+                           mavenPackageId.Group,
+                           mavenPackageId.Artifact,
+                           mavenPackageId.Version,
+                           Regex.Replace(extension, "^\\.", "")))
+                       .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri, feedCredentials))
+                   ?? throw new Exception("Failed to find the maven artifact");
         }
 
         bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials)
         {
-            Log.Info("MavenPackageExists - start");
-            
-            var retValue = MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
                 .Map(uri => uri + mavenGavParser.ArtifactPath)
-                .Map(uri => (HttpWebResponse)WebRequest.Create(uri).Tee(c => c.Method = "HEAD").GetResponse())
-                .Map(response => (int)response.StatusCode >= 200 && (int)response.StatusCode <= 299);
-            
-            Log.Info("MavenPackageExists - end");
-            return retValue;
+                .Map(uri => (HttpWebResponse) WebRequest.Create(uri).Tee(c => c.Method = "HEAD").GetResponse())
+                .Map(response => (int) response.StatusCode >= 200 && (int) response.StatusCode <= 299);
         }
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
@@ -223,7 +211,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
             Guard.NotNullOrWhiteSpace(version, "version can not be null");
             Guard.NotNullOrWhiteSpace(extension, "extension can not be null");
-            
+
             return (packageId + JavaConstants.MavenFilenameDelimiter + version +
                     ServerConstants.SERVER_CACHE_DELIMITER +
                     BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) +
