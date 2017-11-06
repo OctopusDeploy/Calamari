@@ -15,6 +15,7 @@ using Octopus.Core.Resources.Metadata;
 using Octopus.Core.Resources.Parsing.Maven;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
+using Octopus.Core.Util;
 using JavaConstants = Octopus.Core.Constants.JavaConstants;
 
 namespace Calamari.Integration.Packages.Download
@@ -123,7 +124,7 @@ namespace Calamari.Integration.Packages.Download
                 // Convert the search pattern to matching file paths
                 .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
                 // Try and extract the package metadata from the file path
-                .Select(file => new Tuple<string, Tuple<bool, PackageMetadata>>(file,
+                .Select(file => new Tuple<string, Maybe<PackageMetadata>>(file,
                     PackageIdParser.CanGetMetadataFromServerPackageName(file,
                         new string[] {Path.GetExtension(file)})))                
                 // Get the filename or null
@@ -152,18 +153,15 @@ namespace Calamari.Integration.Packages.Download
                 // Convert the search pattern to matching file paths
                 .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
                 // Try and extract the package metadata from the file path
-                .Select(file => new Tuple<string, Tuple<bool, PackageMetadata>>(file,
+                .Select(file => new Tuple<string, Maybe<PackageMetadata>>(file,
                     PackageIdParser.CanGetMetadataFromServerPackageName(file,
                         new string[] {Path.GetExtension(file)})))
                 // Only keep results where the parsing was successful
-                .Where(fileAndParseResult => fileAndParseResult.Item2.Item1)
-                // Keep the filename and the package metadata
-                .Select(fileAndParseResult =>
-                    new Tuple<string, PackageMetadata>(fileAndParseResult.Item1, fileAndParseResult.Item2.Item2))
+                .Where(fileAndParseResult => fileAndParseResult.Item2 != Maybe<PackageMetadata>.None)
                 // Only keep results that match the package id and version
-                .Where(fileAndMetadata => fileAndMetadata.Item2.PackageId == packageId)
-                .Where(fileAndMetadata => VersionFactory.CanCreateVersion(fileAndMetadata.Item2.Version.ToString(),
-                                              out IVersion packageVersion, fileAndMetadata.Item2.FeedType) &&
+                .Where(fileAndMetadata => fileAndMetadata.Item2.Value.PackageId == packageId)
+                .Where(fileAndMetadata => VersionFactory.CanCreateVersion(fileAndMetadata.Item2.Value.Version.ToString(),
+                                              out IVersion packageVersion, fileAndMetadata.Item2.Value.FeedType) &&
                                           version.Equals(packageVersion))
                 // We only need the filename
                 .Select(fileAndMetadata => fileAndMetadata.Item1)
