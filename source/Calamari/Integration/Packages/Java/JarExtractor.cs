@@ -1,6 +1,4 @@
-﻿using System.IO;
-using Calamari.Constants;
-using Calamari.Integration.FileSystem;
+﻿using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Octopus.Core.Resources;
 using Octopus.Core.Resources.Metadata;
