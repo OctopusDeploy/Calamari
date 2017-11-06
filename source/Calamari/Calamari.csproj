@@ -96,20 +96,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Polly, Version=5.1.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\..\.nuget\packages\polly\5.1.0\lib\net45\Polly.dll</HintPath>
-    </Reference>
-    <Reference Include="Polly, Version=5.3.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\..\.nuget\packages\polly\5.3.1\lib\net45\Polly.dll</HintPath>
-    </Reference>
-    <Reference Include="Polly, Version=5.3.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\..\.nuget\packages\polly\5.3.1\lib\net45\Polly.dll</HintPath>
-    </Reference>
-    <Reference Include="Polly.Net40Async, Version=0.0.0.0, Culture=neutral, PublicKeyToken=c8a3ffc3f8f825cc">
-      <HintPath>..\..\..\..\.nuget\packages\polly.net40async-signed\5.4.0\lib\net40\Polly.Net40Async.dll</HintPath>
-    </Reference>
-  </ItemGroup>
   <Target Name="GetToolFiles">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />

@@ -13,6 +13,7 @@ using Octopus.Core.Resources.Versioning.Factories;
 using NuGet;
 #else
 using NuGet.Packaging;
+
 #endif
 
 
@@ -27,20 +28,20 @@ namespace Calamari.Integration.Packages.Download
         public static readonly string DownloadingExtension = ".downloading";
 
         public void DownloadPackage(
-            string packageId, 
-            IVersion version, 
-            string feedId, 
-            Uri feedUri, 
-            ICredentials feedCredentials, 
-            bool forcePackageDownload, 
-            int maxDownloadAttempts, 
-            TimeSpan downloadAttemptBackoff, 
-            out string downloadedTo, 
-            out string hash, 
+            string packageId,
+            IVersion version,
+            string feedId,
+            Uri feedUri,
+            ICredentials feedCredentials,
+            bool forcePackageDownload,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff,
+            out string downloadedTo,
+            out string hash,
             out long size)
         {
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
-            
+
             LocalNuGetPackage downloaded = null;
             downloadedTo = null;
             if (!forcePackageDownload)
@@ -50,7 +51,8 @@ namespace Calamari.Integration.Packages.Download
 
             if (downloaded == null)
             {
-                DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts, downloadAttemptBackoff, out downloaded, out downloadedTo);
+                DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts,
+                    downloadAttemptBackoff, out downloaded, out downloadedTo);
             }
             else
             {
@@ -59,11 +61,12 @@ namespace Calamari.Integration.Packages.Download
 
             size = fileSystem.GetFileSize(downloadedTo);
             string packageHash = null;
-            downloaded.GetStream(stream=>  packageHash = HashCalculator.Hash(stream));
+            downloaded.GetStream(stream => packageHash = HashCalculator.Hash(stream));
             hash = packageHash;
         }
 
-        private void AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
+        private void AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory,
+            out LocalNuGetPackage downloaded, out string downloadedTo)
         {
             downloaded = null;
             downloadedTo = null;
@@ -72,23 +75,25 @@ namespace Calamari.Integration.Packages.Download
 
             var name = GetNameOfPackage(packageId, version.ToString());
             fileSystem.EnsureDirectoryExists(cacheDirectory);
-            
+
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, name + "*.nupkg");
 
             foreach (var file in files)
             {
-                var package = ReadPackageFile(file);              
+                var package = ReadPackageFile(file);
                 if (package == null)
                     continue;
 
-               
+
                 var idMatches = string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase);
-                var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
+                var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(),
+                    StringComparison.OrdinalIgnoreCase);
 
                 var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
-                var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version.ToString(), out IVersion packageVersion, packageMetadata.FeedType) &&
-                        version.Equals(packageVersion);
-                
+                var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version.ToString(),
+                                          out IVersion packageVersion, packageMetadata.FeedType) &&
+                                      version.Equals(packageVersion);
+
                 if (idMatches && (nugetVerMatches || versionExactMatch))
                 {
                     downloaded = package;
@@ -116,14 +121,14 @@ namespace Calamari.Integration.Packages.Download
         }
 
         private void DownloadPackage(
-            string packageId, 
-            IVersion version, 
-            Uri feedUri, 
-            ICredentials feedCredentials, 
-            string cacheDirectory, 
-            int maxDownloadAttempts, 
-            TimeSpan downloadAttemptBackoff, 
-            out LocalNuGetPackage downloaded, 
+            string packageId,
+            IVersion version,
+            Uri feedUri,
+            ICredentials feedCredentials,
+            string cacheDirectory,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff,
+            out LocalNuGetPackage downloaded,
             out string downloadedTo)
         {
             Log.Info("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
@@ -134,17 +139,19 @@ namespace Calamari.Integration.Packages.Download
             var fullPathToDownloadTo = GetFilePathToDownloadPackageTo(cacheDirectory, packageId, version.ToString());
 
             var downloader = new NuGet.NuGetPackageDownloader(fileSystem);
-            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo, maxDownloadAttempts, downloadAttemptBackoff); 
+            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo,
+                maxDownloadAttempts, downloadAttemptBackoff);
 
             downloaded = new LocalNuGetPackage(fullPathToDownloadTo);
-            downloadedTo = fullPathToDownloadTo; 
+            downloadedTo = fullPathToDownloadTo;
             CheckWhetherThePackageHasDependencies(downloaded.Metadata);
         }
 
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version)
         {
-            var name = packageId + "." + version + "_" + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg";
+            var name = packageId + "." + version + "_" +
+                       BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg";
             return Path.Combine(cacheDirectory, name);
         }
 
@@ -157,11 +164,12 @@ namespace Calamari.Integration.Packages.Download
 #endif
             if (dependencies.Any())
             {
-                Log.Info("NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
-                               downloaded.Id,
-                               downloaded.Version,
-                               string.Join(", ", dependencies.Select(dependency => dependency.ToString())),
-                               WhyAmINotAllowedToUseDependencies);
+                Log.Info(
+                    "NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
+                    downloaded.Id,
+                    downloaded.Version,
+                    string.Join(", ", dependencies.Select(dependency => dependency.ToString())),
+                    WhyAmINotAllowedToUseDependencies);
             }
         }
     }

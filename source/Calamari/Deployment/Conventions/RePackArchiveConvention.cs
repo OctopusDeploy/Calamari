@@ -1,14 +1,12 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
-using Calamari.Constants;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
-using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
+using Octopus.Core.Constants;
 using Octopus.Core.Resources;
 
 namespace Calamari.Java.Deployment.Conventions
@@ -81,7 +79,7 @@ namespace Calamari.Java.Deployment.Conventions
                      * the package id and the version. If it is not from a maven feed, we use the default of
                      * a period.
                      */
-                    .Append(packageMetadata.FeedType == FeedType.Maven ? JavaConstants.JAVA_FILENAME_DELIMITER : '.')
+                    .Append(packageMetadata.FeedType == FeedType.Maven ? JavaConstants.MavenFilenameDelimiter : '.')
                     .Append(packageMetadata.Version)
                     .Append(packageMetadata.FileExtension)
                     .ToString();

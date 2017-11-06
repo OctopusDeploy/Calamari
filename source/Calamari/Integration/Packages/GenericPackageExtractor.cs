@@ -63,7 +63,8 @@ namespace Calamari.Integration.Packages
             /*
              * Start by finding an extractor that can successfully parse the metadata of the given file.
              * This will work in practice, although fails for some tests where a mock package is
-             * supplied that may not actually be able to be extracted.
+             * supplied that may not actually be able to be extracted because the mock files don't contain
+             * metadata.
              */
             return combinedList
                        .Select(extractor =>
@@ -88,11 +89,11 @@ namespace Calamari.Integration.Packages
                        .FirstOrDefault() ?? 
                    /*
                     * If none of the extractors successfully parsed the metadata, fallback to the
-                    * first one that matches the extension
+                    * first one that matches the extension.
                     */
                    combinedList.FirstOrDefault() ??       
                    /*
-                    * If all else fails then throw an exception
+                    * If all else fails then throw an exception.
                     */
                    ReportInvalidExtension(packageFile);
         }

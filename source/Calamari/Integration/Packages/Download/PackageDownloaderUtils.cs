@@ -3,6 +3,10 @@ using System.IO;
 
 namespace Calamari.Integration.Packages.Download
 {
+    /// <summary>
+    /// Some common implementations used by package downloaders to find paths
+    /// to store and search for artifacts.
+    /// </summary>
     public class PackageDownloaderUtils : IPackageDownloaderUtils
     {
         public string RootDirectory => Path.Combine(TentacleHome, "Files");
