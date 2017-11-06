@@ -56,11 +56,18 @@ namespace Calamari.Integration.Packages.Download
             if (!forcePackageDownload)
             {
                 Log.Info("Attempting to get from cache");
-                AttemptToGetPackageFromCache(
-                    packageId,
-                    version,
-                    cacheDirectory,
-                    out downloadedTo);
+                try
+                {
+                    AttemptToGetPackageFromCache(
+                        packageId,
+                        version,
+                        cacheDirectory,
+                        out downloadedTo);
+                }
+                catch (Exception ex)
+                {
+                    Log.Info(ex.ToString());
+                }
             }
 
             if (downloadedTo == null)
