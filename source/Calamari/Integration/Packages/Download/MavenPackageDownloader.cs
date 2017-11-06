@@ -203,15 +203,22 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(feedUri, "feedUri can not be null");
             
             Log.Info("FirstToRespond");
-
-            return JarExtractor.EXTENSIONS
-                .Select(extension => new MavenPackageID(
+            
+            foreach (var extension in JarExtractor.EXTENSIONS)
+            {
+                var mavenGavParser = new MavenPackageID(
                     mavenPackageId.Group,
                     mavenPackageId.Artifact,
                     mavenPackageId.Version,
-                    Regex.Replace(extension, "^\\.", "")))
-                .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri))
-                ?? throw new Exception("Failed to find the maven artifact");
+                    Regex.Replace(extension, "^\\.", ""));
+
+                if (MavenPackageExists(mavenGavParser, feedUri))
+                {
+                    return mavenGavParser;
+                }
+            }
+            
+            throw new Exception("Failed to find the maven artifact");
         }
 
         bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri)
