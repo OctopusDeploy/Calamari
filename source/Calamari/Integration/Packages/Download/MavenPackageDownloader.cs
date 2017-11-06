@@ -122,7 +122,7 @@ namespace Calamari.Integration.Packages.Download
                 // Convert the filename to a search pattern
                 .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
                 // Convert the search pattern to matching file paths
-                //.SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
+                .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
                 // Filter out unparseable and unmatched results
                 //.FirstOrDefault(file => FileMatchesDetails(file, packageId, version));
                 .FirstOrDefault();
