@@ -14,8 +14,7 @@ namespace Calamari.Integration.Proxies
                 var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
                 var proxyHost = Environment.GetEnvironmentVariable("TentacleProxyHost");
                 var proxyPortText = Environment.GetEnvironmentVariable("TentacleProxyPort");
-                int proxyPort;
-                int.TryParse(proxyPortText, out proxyPort);
+                int.TryParse(proxyPortText, out var proxyPort);
 
                 var useSystemProxy = string.IsNullOrWhiteSpace(proxyHost);
                 var proxy = useSystemProxy
@@ -50,6 +49,8 @@ namespace Calamari.Integration.Proxies
                    at Calamari.Program.Execute(String[] args)
                    at Calamari.Program.Main(String[] args)                 
                  */
+                
+                Log.Error("Failed to get the system proxy settings. Calamari will not use any proxy settings.");
             }
         }
     }

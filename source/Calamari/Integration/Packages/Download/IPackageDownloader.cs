@@ -5,12 +5,12 @@ using Octopus.Core.Resources.Versioning;
 namespace Calamari.Integration.Packages.Download
 {
     /// <summary>
-    /// Defines a service for downloading packages locally
+    /// Defines a service for downloading packages locally.
     /// </summary>
     public interface IPackageDownloader
     {
         /// <summary>
-        /// Downloads the given file to the local cache
+        /// Downloads the given file to the local cache.
         /// </summary>
         void DownloadPackage(
             string packageId,
