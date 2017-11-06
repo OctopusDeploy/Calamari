@@ -115,6 +115,14 @@ namespace Calamari.Integration.Packages.Download
             Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
 
             fileSystem.EnsureDirectoryExists(cacheDirectory);
+
+            new MavenPackageID(packageId).FileSystemName
+                .ToEnumerable()
+                // Convert the filename to a search pattern
+                .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
+                // Convert the search pattern to matching file paths
+                .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
+                .FirstOrDefault();
             
             return String.Empty;
         }
