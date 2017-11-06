@@ -122,6 +122,23 @@ namespace Calamari.Integration.Packages.Download
                 .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
                 // Convert the search pattern to matching file paths
                 .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
+                // Try and extract the package metadata from the file path
+                .Select(file => new Tuple<string, Tuple<bool, PackageMetadata>>(file,
+                    PackageIdParser.CanGetMetadataFromServerPackageName(file,
+                        new string[] {Path.GetExtension(file)})))
+                // Only keep results where the parsing was successful
+                .Where(fileAndParseResult => fileAndParseResult.Item2.Item1)
+                // Keep the filename and the package metadata
+                .Select(fileAndParseResult =>
+                    new Tuple<string, PackageMetadata>(fileAndParseResult.Item1, fileAndParseResult.Item2.Item2))
+                // Only keep results that match the package id and version
+                .Where(fileAndMetadata => fileAndMetadata.Item2.PackageId == packageId)
+                .Where(fileAndMetadata => VersionFactory.CanCreateVersion(fileAndMetadata.Item2.Version.ToString(),
+                                              out IVersion packageVersion, fileAndMetadata.Item2.FeedType) &&
+                                          version.Equals(packageVersion))
+                // We only need the filename
+                .Select(fileAndMetadata => fileAndMetadata.Item1)
+                // Get the filename or null
                 .FirstOrDefault();
             
             return String.Empty;
