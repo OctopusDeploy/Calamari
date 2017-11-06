@@ -206,7 +206,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
 
-            return JarExtractor.EXTENSIONS
+            return JarExtractor.EXTENSIONS.AsParallel()
                 .Select(extension => new MavenPackageID(
                     mavenPackageId.Group,
                     mavenPackageId.Artifact,
