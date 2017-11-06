@@ -156,20 +156,20 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
 
-            var firstDownload = InvokeDirect(() => DownloadPackageDirect(
+            var firstDownload = DownloadPackage(
                 MavenPublicFeed.PackageId,
                 MavenPublicFeed.Version, 
                 MavenPublicFeed.Id,
-                MavenPublicFeedUri));
+                MavenPublicFeedUri);
             
             firstDownload.AssertSuccess();
             
-            var secondDownload = InvokeDirect(() => DownloadPackageDirect(
+            var secondDownload = DownloadPackage(
                 MavenPublicFeed.PackageId, 
                 MavenPublicFeed.Version, 
                 MavenPublicFeed.Id,
                 MavenPublicFeedUri, 
-                forcePackageDownload: true));
+                forcePackageDownload: true);
             
             secondDownload.AssertSuccess();
             
@@ -404,95 +404,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertFailure();
 
             result.AssertErrorOutput("A username was specified but no password was provided");
-        }
-
-        /// <summary>
-        /// Executes the calamari entry class instead of calling the external executable
-        /// </summary>
-        int DownloadPackageDirect(string packageId,
-            string packageVersion,
-            string feedId,
-            string feedUri,
-            string feedUsername = "",
-            string feedPassword = "",
-            bool forcePackageDownload = false,
-            int attempts = 5,
-            int attemptBackoffSeconds = 0)
-        {
-            return new Calamari.Program("CalamariTest", "Calamari Unit Tests", new string[] { })
-                .Execute(new string[]
-                {
-                    "download-package",
-                    "--packageId",
-                    packageId,
-                    "--packageVersion",
-                    packageVersion,
-                    "--feedId",
-                    feedId,
-                    "--feedUri",
-                    feedUri,
-                    "--attempts",
-                    attempts.ToString(),
-                    "--attemptBackoffSeconds",
-                    attemptBackoffSeconds.ToString(),
-                    "--forcePackageDownload",
-                    forcePackageDownload.ToString()
-                });
-        }
-        
-        CalamariResult InvokeDirect(Func<int> function)
-        {
-            var existingOut = Console.Out;
-            var existingError = Console.Error;
-
-            var outStrings = new StringBuilder();
-            var errorStrings = new StringBuilder();
-
-            using (TextWriter stdOut = new StringWriter(outStrings))
-            using (TextWriter stdErr = new StringWriter(errorStrings))
-            {
-                try
-                {
-                    Console.SetOut(stdOut);
-                    Console.SetError(stdErr);
-                    Log.SetWriters();
-
-                    var result = function();
-
-                    var processor = new CaptureCommandOutput();
-                    foreach (var s in outStrings.ToString()
-                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
-                    {
-                        processor.WriteInfo(s);
-                    }
-                    foreach (var s in errorStrings.ToString()
-                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
-                    {
-                        processor.WriteError(s);
-                    }
-
-                    return new CalamariResult(result, processor);
-                }
-                finally
-                {
-                    Console.SetOut(existingOut);
-                    Console.SetError(existingError);
-                    
-                    Console.Out.WriteLine("---std out---");
-                    foreach (var s in outStrings.ToString()
-                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
-                    {
-                        Console.Out.WriteLine(s);
-                    }
-                    
-                    Console.Out.WriteLine("---std err---");
-                    foreach (var s in errorStrings.ToString()
-                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
-                    {
-                        Console.Error.WriteLine(s);
-                    }
-                }                             
-            }           
         }
 
         CalamariResult DownloadPackage(string packageId,
