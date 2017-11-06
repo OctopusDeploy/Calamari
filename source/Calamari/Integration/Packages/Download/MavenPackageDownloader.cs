@@ -117,7 +117,7 @@ namespace Calamari.Integration.Packages.Download
 
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-            //new MavenPackageID(packageId).FileSystemName
+            var filename = new MavenPackageID(packageId).FileSystemName;
                 //.ToEnumerable()
                 // Convert the filename to a search pattern
                 //.SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
