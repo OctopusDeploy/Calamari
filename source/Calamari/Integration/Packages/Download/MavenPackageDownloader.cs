@@ -45,7 +45,7 @@ namespace Calamari.Integration.Packages.Download
             Log.Info("Running an empty method");
             try
             {
-                downloadedTo = AnEmptyFunction(
+                AnEmptyFunction(
                     packageId,
                     version,
                     cacheDirectory);
