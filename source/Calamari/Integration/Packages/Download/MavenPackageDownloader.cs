@@ -45,7 +45,7 @@ namespace Calamari.Integration.Packages.Download
             Log.Info("Running an empty method");
             try
             {
-                AnEmptyFunction(
+                downloadedTo = AnEmptyFunction(
                     packageId,
                     version,
                     cacheDirectory);
@@ -108,6 +108,14 @@ namespace Calamari.Integration.Packages.Download
             IVersion version,
             string cacheDirectory)
         {
+            Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
+            Guard.NotNull(version, "version can not be null");
+            Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
+            
+            Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
+
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
+            
             return String.Empty;
         }
 
