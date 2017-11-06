@@ -102,6 +102,8 @@ namespace Calamari.Integration.Packages.Download
                 .ToEnumerable()
                 // Convert the filename to a search pattern
                 .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
+                // Convert the search pattern to matching file paths
+                .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
                 // Get the filename or null
                 .FirstOrDefault();
 
