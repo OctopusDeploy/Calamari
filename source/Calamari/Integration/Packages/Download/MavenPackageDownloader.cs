@@ -140,7 +140,7 @@ namespace Calamari.Integration.Packages.Download
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
             return new MavenPackageID(packageId, version)
-                .Map(mavenPackageId => FirstToRespond(mavenPackageId, feedUri))
+                .Map(mavenPackageId => FirstToRespond(mavenPackageId, feedUri, feedCredentials))
                 .Tee(mavenGavFirst => Log.VerboseFormat("Found package {0} version {1}", packageId, version))
                 .Map(mavenGavFirst => DownloadArtifact(
                     mavenGavFirst,
@@ -174,30 +174,17 @@ namespace Calamari.Integration.Packages.Download
                     packageId,
                     version.ToString(),
                     mavenGavFirst.Packaging)
-                .Tee(path => FunctionalExtensions.Using(
-                    () => fileSystem.OpenFile(path, FileAccess.Write),
-                    myStream =>
-                    {
-                        try
-                        {
-                            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
-                                .Map(uri => uri + mavenGavFirst.ArtifactPath)
-                                .Map(uri => new HttpClient(new HttpClientHandler {Credentials = feedCredentials})
-                                    .GetAsync(uri).Result)
-                                .Map(result => result.Content.ReadAsByteArrayAsync().Result)
-                                .Tee(content => myStream.Write(content, 0, content.Length));
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Error("Failed to download artifact " + mavenGavFirst.ToString());
-                            Log.Error(ex.ToString());
-                            throw ex;
-                        }
-                    }
-                ));
+                .Tee(path => MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                    .Map(uri => uri + mavenGavFirst.ArtifactPath)
+                    .Map(uri => FunctionalExtensions.Using(
+                        () => new WebClient(), 
+                        client => client
+                            .Tee(c => c.Credentials = feedCredentials)
+                            .Tee(c => c.DownloadFile(uri, path))))
+                );
         }
 
-        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri)
+        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri, ICredentials feedCredentials)
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
@@ -210,22 +197,21 @@ namespace Calamari.Integration.Packages.Download
                     mavenPackageId.Artifact,
                     mavenPackageId.Version,
                     Regex.Replace(extension, "^\\.", "")))
-                .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri))
+                .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri, feedCredentials))
                 ?? throw new Exception("Failed to find the maven artifact");
             
             Log.Info("FirstToRespond - end");
             return retValue;
         }
 
-        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri)
+        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials)
         {
             Log.Info("MavenPackageExists - start");
             
             var retValue = MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
                 .Map(uri => uri + mavenGavParser.ArtifactPath)
-                .Map(uri => new HttpRequestMessage(HttpMethod.Head, uri))
-                .Map(request => new HttpClient().SendAsync(request).Result)
-                .Map(result => result.IsSuccessStatusCode);
+                .Map(uri => (HttpWebResponse)WebRequest.Create(uri).Tee(c => c.Method = "HEAD").GetResponse())
+                .Map(response => (int)response.StatusCode >= 200 && (int)response.StatusCode <= 299);
             
             Log.Info("MavenPackageExists - end");
             return retValue;
