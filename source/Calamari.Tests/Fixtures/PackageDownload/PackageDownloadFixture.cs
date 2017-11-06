@@ -74,7 +74,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
         
         [Test]
-        [Ignore("fails in mono")]
         public void ShouldDownloadMavenPackage()
         {
             var result = DownloadPackage(
@@ -116,7 +115,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
         
         [Test]
-        [Ignore("fails in mono")]
         public void ShouldUseMavenPackageFromCache()
         {
             DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri).AssertSuccess();
