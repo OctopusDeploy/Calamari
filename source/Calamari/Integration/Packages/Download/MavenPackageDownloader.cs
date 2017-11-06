@@ -101,6 +101,21 @@ namespace Calamari.Integration.Packages.Download
             string cacheDirectory,
             out string downloadedTo)
         {
+            if (packageId == null)
+            {
+                throw new ArgumentException("packageId can not be null");
+            }
+            
+            if (version == null)
+            {
+                throw new ArgumentException("version can not be null");
+            }
+            
+            if (cacheDirectory == null)
+            {
+                throw new ArgumentException("cacheDirectory can not be null");
+            }
+            
             try
             {
                 Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
