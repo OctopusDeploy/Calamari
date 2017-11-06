@@ -440,13 +440,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 });
         }
         
-        protected CalamariResult InvokeDirect(Func<int> function)
+        CalamariResult InvokeDirect(Func<int> function)
         {
             var existingOut = Console.Out;
             var existingError = Console.Error;
 
-            StringBuilder outStrings = new StringBuilder();
-            StringBuilder errorStrings = new StringBuilder();
+            var outStrings = new StringBuilder();
+            var errorStrings = new StringBuilder();
 
             using (TextWriter stdOut = new StringWriter(outStrings))
             using (TextWriter stdErr = new StringWriter(errorStrings))
@@ -478,11 +478,14 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                     Console.SetOut(existingOut);
                     Console.SetError(existingError);
                     
+                    Console.Out.WriteLine("---std out---");
                     foreach (var s in outStrings.ToString()
                         .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
                     {
                         Console.Out.WriteLine(s);
                     }
+                    
+                    Console.Out.WriteLine("---std err---");
                     foreach (var s in errorStrings.ToString()
                         .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
                     {
