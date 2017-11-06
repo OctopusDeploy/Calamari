@@ -74,6 +74,11 @@ namespace Calamari
 
         static Log()
         {
+            SetWriters();
+        }
+
+        public static void SetWriters()
+        {
             StdOut = new IndentedTextWriter(Console.Out, "  ");
             StdErr = new IndentedTextWriter(Console.Error, "  ");
         }

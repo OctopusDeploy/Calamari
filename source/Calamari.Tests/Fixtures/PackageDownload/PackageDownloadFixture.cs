@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -151,23 +152,34 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
         }
         
-        [Test]
-        [Ignore("fails in mono")]
+        [Test]        
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
-            DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri).AssertSuccess();
 
-            var result = DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri, forcePackageDownload: true);
-
-            result.AssertSuccess();
-
-            result.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
-            result.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
-            result.AssertOutput("Found package {0} version {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
-            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
-            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
-            AssertStagePackageOutputVariableSet(result, MavenPublicFeed.File);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            var firstDownload = InvokeDirect(() => DownloadPackageDirect(
+                MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version, 
+                MavenPublicFeed.Id,
+                MavenPublicFeedUri));
+            
+            firstDownload.AssertSuccess();
+            
+            var secondDownload = InvokeDirect(() => DownloadPackageDirect(
+                MavenPublicFeed.PackageId, 
+                MavenPublicFeed.Version, 
+                MavenPublicFeed.Id,
+                MavenPublicFeedUri, 
+                forcePackageDownload: true));
+            
+            secondDownload.AssertSuccess();
+            
+            secondDownload.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
+            secondDownload.AssertOutput("Found package {0} version {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertPackageHashMatchesExpected(secondDownload, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(secondDownload, MavenPublicFeed.File);
+            secondDownload.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
 
         [Test]
@@ -392,6 +404,92 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertFailure();
 
             result.AssertErrorOutput("A username was specified but no password was provided");
+        }
+
+        /// <summary>
+        /// Executes the calamari entry class instead of calling the external executable
+        /// </summary>
+        int DownloadPackageDirect(string packageId,
+            string packageVersion,
+            string feedId,
+            string feedUri,
+            string feedUsername = "",
+            string feedPassword = "",
+            bool forcePackageDownload = false,
+            int attempts = 5,
+            int attemptBackoffSeconds = 0)
+        {
+            return new Calamari.Program("CalamariTest", "Calamari Unit Tests", new string[] { })
+                .Execute(new string[]
+                {
+                    "download-package",
+                    "--packageId",
+                    packageId,
+                    "--packageVersion",
+                    packageVersion,
+                    "--feedId",
+                    feedId,
+                    "--feedUri",
+                    feedUri,
+                    "--attempts",
+                    attempts.ToString(),
+                    "--attemptBackoffSeconds",
+                    attemptBackoffSeconds.ToString(),
+                    "--forcePackageDownload",
+                    forcePackageDownload.ToString()
+                });
+        }
+        
+        protected CalamariResult InvokeDirect(Func<int> function)
+        {
+            var existingOut = Console.Out;
+            var existingError = Console.Error;
+
+            StringBuilder outStrings = new StringBuilder();
+            StringBuilder errorStrings = new StringBuilder();
+
+            using (TextWriter stdOut = new StringWriter(outStrings))
+            using (TextWriter stdErr = new StringWriter(errorStrings))
+            {
+                try
+                {
+                    Console.SetOut(stdOut);
+                    Console.SetError(stdErr);
+                    Log.SetWriters();
+
+                    var result = function();
+
+                    var processor = new CaptureCommandOutput();
+                    foreach (var s in outStrings.ToString()
+                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
+                    {
+                        processor.WriteInfo(s);
+                    }
+                    foreach (var s in errorStrings.ToString()
+                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
+                    {
+                        processor.WriteError(s);
+                    }
+
+                    return new CalamariResult(result, processor);
+                }
+                finally
+                {
+                    Console.SetOut(existingOut);
+                    Console.SetError(existingError);
+                    
+                    foreach (var s in outStrings.ToString()
+                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
+                    {
+                        Console.Out.WriteLine(s);
+                    }
+                    foreach (var s in errorStrings.ToString()
+                        .Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None))
+                    {
+                        Console.Error.WriteLine(s);
+                    }
+                }                             
+            }           
         }
 
         CalamariResult DownloadPackage(string packageId,
