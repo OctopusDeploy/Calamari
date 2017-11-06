@@ -41,6 +41,23 @@ namespace Calamari.Integration.Packages.Download
             out long size)
         {
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
+            
+            Log.Info("Running an empty method");
+            try
+            {
+                downloadedTo = AnEmptyFunction(
+                    packageId,
+                    version,
+                    cacheDirectory);
+            }
+            catch (Exception ex)
+            {
+                Log.Info("AnEmptyFunction() failed");
+                Log.Info("Exception starts");
+                Log.Info(ex.ToString());
+                Log.Info(ex.StackTrace);
+                Log.Info("Exception ends");
+            }
 
             downloadedTo = null;
             if (!forcePackageDownload)
@@ -84,6 +101,14 @@ namespace Calamari.Integration.Packages.Download
                 .Map(path => FunctionalExtensions.Using(
                     () => fileSystem.OpenFile(path, FileAccess.Read),
                     stream => HashCalculator.Hash(stream)));
+        }
+
+        string AnEmptyFunction(
+            string packageId,
+            IVersion version,
+            string cacheDirectory)
+        {
+            return String.Empty;
         }
 
         string SourceFromCache(
