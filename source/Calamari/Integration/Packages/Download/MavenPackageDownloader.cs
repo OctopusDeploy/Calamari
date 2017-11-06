@@ -66,6 +66,7 @@ namespace Calamari.Integration.Packages.Download
                 }
                 catch (Exception ex)
                 {
+                    Log.Info("AttemptToGetPackageFromCache() failed");
                     Log.Info(ex.ToString());
                 }
             }
@@ -204,12 +205,21 @@ namespace Calamari.Integration.Packages.Download
                     () => fileSystem.OpenFile(path, FileAccess.Write),
                     myStream =>
                     {
-                        return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
-                            .Map(uri => uri + mavenGavFirst.ArtifactPath)
-                            .Map(uri => new HttpClient(new HttpClientHandler {Credentials = feedCredentials})
-                                .GetAsync(uri).Result)
-                            .Map(result => result.Content.ReadAsByteArrayAsync().Result)
-                            .Tee(content => myStream.Write(content, 0, content.Length));
+                        try
+                        {
+                            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                                .Map(uri => uri + mavenGavFirst.ArtifactPath)
+                                .Map(uri => new HttpClient(new HttpClientHandler {Credentials = feedCredentials})
+                                    .GetAsync(uri).Result)
+                                .Map(result => result.Content.ReadAsByteArrayAsync().Result)
+                                .Tee(content => myStream.Write(content, 0, content.Length));
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error("Failed to download artifact " + mavenGavFirst.ToString());
+                            Log.Error(ex.ToString());
+                            throw ex;
+                        }
                     }
                 ));
         }
@@ -227,11 +237,18 @@ namespace Calamari.Integration.Packages.Download
                     Regex.Replace(extension, "^\\.", "")))
                 .FirstOrDefault(mavenGavParser =>
                 {
-                    return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
-                        .Map(uri => uri + mavenGavParser.ArtifactPath)
-                        .Map(uri => new HttpRequestMessage(HttpMethod.Head, uri))
-                        .Map(request => new HttpClient().SendAsync(request).Result)
-                        .Map(result => result.IsSuccessStatusCode);
+                    try
+                    {
+                        return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                            .Map(uri => uri + mavenGavParser.ArtifactPath)
+                            .Map(uri => new HttpRequestMessage(HttpMethod.Head, uri))
+                            .Map(request => new HttpClient().SendAsync(request).Result)
+                            .Map(result => result.IsSuccessStatusCode);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }) ?? throw new Exception("Failed to find the maven artifact");
         }
 
