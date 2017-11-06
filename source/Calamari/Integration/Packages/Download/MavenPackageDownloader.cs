@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
 using Calamari.Util;
-using Castle.Components.DictionaryAdapter.Xml;
 using Octopus.Core.Constants;
 using Octopus.Core.Extensions;
 using Octopus.Core.Resources;
