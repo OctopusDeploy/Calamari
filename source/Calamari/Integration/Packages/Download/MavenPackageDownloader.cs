@@ -201,6 +201,8 @@ namespace Calamari.Integration.Packages.Download
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
+            
+            Log.Info("FirstToRespond");
 
             return JarExtractor.EXTENSIONS
                 .Select(extension => new MavenPackageID(
@@ -208,21 +210,17 @@ namespace Calamari.Integration.Packages.Download
                     mavenPackageId.Artifact,
                     mavenPackageId.Version,
                     Regex.Replace(extension, "^\\.", "")))
-                .FirstOrDefault(mavenGavParser =>
-                {
-                    try
-                    {
-                        return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
-                            .Map(uri => uri + mavenGavParser.ArtifactPath)
-                            .Map(uri => new HttpRequestMessage(HttpMethod.Head, uri))
-                            .Map(request => new HttpClient().SendAsync(request).Result)
-                            .Map(result => result.IsSuccessStatusCode);
-                    }
-                    catch
-                    {
-                        return false;
-                    }
-                }) ?? throw new Exception("Failed to find the maven artifact");
+                .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri))
+                ?? throw new Exception("Failed to find the maven artifact");
+        }
+
+        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri)
+        {
+            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                .Map(uri => uri + mavenGavParser.ArtifactPath)
+                .Map(uri => new HttpRequestMessage(HttpMethod.Head, uri))
+                .Map(request => new HttpClient().SendAsync(request).Result)
+                .Map(result => result.IsSuccessStatusCode);
         }
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
