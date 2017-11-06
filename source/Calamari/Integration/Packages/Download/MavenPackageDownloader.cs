@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
 using Calamari.Util;
+using Castle.Components.DictionaryAdapter.Xml;
 using Octopus.Core.Constants;
 using Octopus.Core.Extensions;
 using Octopus.Core.Resources;
@@ -201,11 +202,22 @@ namespace Calamari.Integration.Packages.Download
         {
             return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
                 .Map(uri => uri + mavenGavParser.ArtifactPath)
-                .Map(uri => (HttpWebResponse) WebRequest.Create(uri)
-                    .Tee(c => c.Method = "HEAD")
-                    .Tee(c => c.Credentials = feedCredentials)
-                    .GetResponse())
-                .Map(response => (int) response.StatusCode >= 200 && (int) response.StatusCode <= 299);
+                .Map(uri =>
+                {
+                    try
+                    {
+                        return WebRequest.Create(uri)
+                            .Tee(c => c.Method = "HEAD")
+                            .Tee(c => c.Credentials = feedCredentials)
+                            .GetResponse()
+                            .Map(response => response as HttpWebResponse)
+                            .Map(response => (int) response.StatusCode >= 200 && (int) response.StatusCode <= 299);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
         }
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
