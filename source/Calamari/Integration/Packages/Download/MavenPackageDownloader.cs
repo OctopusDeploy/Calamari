@@ -124,9 +124,9 @@ namespace Calamari.Integration.Packages.Download
                 // Convert the search pattern to matching file paths
                 .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
                 // Try and extract the package metadata from the file path
-                .Select(file => new Tuple<string, Maybe<PackageMetadata>>(
-                    file,
-                    PackageIdParser.CanGetMetadataFromServerPackageName(file)))                
+                //.Select(file => new Tuple<string, Maybe<PackageMetadata>>(
+                //    file,
+                //    PackageIdParser.CanGetMetadataFromServerPackageName(file)))                
                 // Get the filename or null
                 .FirstOrDefault();
             
