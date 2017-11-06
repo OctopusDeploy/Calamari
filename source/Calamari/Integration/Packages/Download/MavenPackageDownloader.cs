@@ -120,7 +120,7 @@ namespace Calamari.Integration.Packages.Download
             new MavenPackageID(packageId).FileSystemName
                 .ToEnumerable()
                 // Convert the filename to a search pattern
-                //.SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
+                .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
                 // Convert the search pattern to matching file paths
                 //.SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
                 // Filter out unparseable and unmatched results
