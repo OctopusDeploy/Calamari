@@ -133,11 +133,6 @@ namespace Calamari.Integration.Packages.Download
                     new Tuple<string, PackageMetadata>(fileAndParseResult.Item1, fileAndParseResult.Item2.Item2))
                 // Only keep results that match the package id and version
                 .Where(fileAndMetadata => fileAndMetadata.Item2.PackageId == packageId)
-                .Where(fileAndMetadata => VersionFactory.CanCreateVersion(fileAndMetadata.Item2.Version.ToString(),
-                                              out IVersion packageVersion, fileAndMetadata.Item2.FeedType) &&
-                                          version.Equals(packageVersion))
-                // We only need the filename
-                .Select(fileAndMetadata => fileAndMetadata.Item1)
                 // Get the filename or null
                 .FirstOrDefault();
             
