@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 using Calamari.Commands.Support;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
@@ -83,11 +84,19 @@ namespace Calamari.Deployment.Features
                     return new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
 
                 case ApplicationPoolIdentityType.SpecificUser:
-                    return new NTAccount(variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolUserName));
+                    return new NTAccount(StripLocalAccountIdentifierFromUsername(variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolUserName)));
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(applicationPoolIdentityType), applicationPoolIdentityType, null);
             }
+        }
+
+        static string StripLocalAccountIdentifierFromUsername(string username)
+        {
+            //The NTAccount class doesnt work with local accounts represented in the format of .\username
+            //an exception is thrown when attempting to call NTAccount.Translate().
+            //The following expression is to remove .\ from the beginning of usernames, we still allow for usernames in the format of machine\user or domain\user
+            return Regex.Replace(username, "\\.\\\\(.*)", "$1", RegexOptions.None);
         }
 #endif
 
