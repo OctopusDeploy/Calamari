@@ -117,25 +117,13 @@ namespace Calamari.Integration.Packages.Download
 
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-            new MavenPackageID(packageId).FileSystemName
-                .ToEnumerable()
-                // Convert the filename to a search pattern
-                .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
+            var filename = new MavenPackageID(packageId).FileSystemName;
+
+            JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension)
                 // Convert the search pattern to matching file paths
-                .SelectMany(searchPattern =>
-                {
-                    try
-                    {
-                        return fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern);
-                    }
-                    catch
-                    {
-                        return Enumerable.Empty<string>();
-                    }
-                })
+                .SelectMany(searchPattern => fileSystem.EnumerateFilesRecursively(cacheDirectory, searchPattern))
                 // Filter out unparseable and unmatched results
-                //.FirstOrDefault(file => FileMatchesDetails(file, packageId, version));
-                .FirstOrDefault();
+                .FirstOrDefault(file => FileMatchesDetails(file, packageId, version));
             
             
             return String.Empty;
