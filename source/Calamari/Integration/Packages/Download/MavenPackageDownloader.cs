@@ -58,11 +58,10 @@ namespace Calamari.Integration.Packages.Download
                 Log.Info("Attempting to get from cache");
                 try
                 {
-                    AttemptToGetPackageFromCache(
+                    downloadedTo = AttemptToGetPackageFromCache(
                         packageId,
                         version,
-                        cacheDirectory,
-                        out downloadedTo);
+                        cacheDirectory);
                 }
                 catch (Exception ex)
                 {
@@ -96,11 +95,10 @@ namespace Calamari.Integration.Packages.Download
                     stream => HashCalculator.Hash(stream)));
         }
 
-        private void AttemptToGetPackageFromCache(
+        private string AttemptToGetPackageFromCache(
             string packageId,
             IVersion version,
-            string cacheDirectory,
-            out string downloadedTo)
+            string cacheDirectory)
         {
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
             Guard.NotNull(version, "version can not be null");
@@ -112,8 +110,7 @@ namespace Calamari.Integration.Packages.Download
 
                 fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-
-                downloadedTo = new MavenPackageID(packageId).FileSystemName
+                return new MavenPackageID(packageId).FileSystemName
                     .ToEnumerable()
                     // Convert the filename to a search pattern
                     .SelectMany(filename => JarExtractor.EXTENSIONS.Select(extension => filename + "*" + extension))
