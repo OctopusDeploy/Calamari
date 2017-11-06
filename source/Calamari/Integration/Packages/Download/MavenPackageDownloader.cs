@@ -101,20 +101,9 @@ namespace Calamari.Integration.Packages.Download
             string cacheDirectory,
             out string downloadedTo)
         {
-            if (packageId == null)
-            {
-                throw new ArgumentException("packageId can not be null");
-            }
-            
-            if (version == null)
-            {
-                throw new ArgumentException("version can not be null");
-            }
-            
-            if (cacheDirectory == null)
-            {
-                throw new ArgumentException("cacheDirectory can not be null");
-            }
+            Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
+            Guard.NotNull(version, "version can not be null");
+            Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             
             try
             {
@@ -150,6 +139,7 @@ namespace Calamari.Integration.Packages.Download
             }
             catch (Exception ex)
             {
+                Log.Info("Failed to scan cache for package");
                 Log.Info(ex.ToString());
                 throw ex;
             }
@@ -165,6 +155,11 @@ namespace Calamari.Integration.Packages.Download
             TimeSpan downloadAttemptBackoff,
             out string downloadedTo)
         {
+            Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
+            Guard.NotNull(version, "version can not be null");
+            Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
+            Guard.NotNull(feedUri, "feedUri can not be null");
+            
             Log.Info("Downloading Maven package {0} {1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
@@ -192,8 +187,15 @@ namespace Calamari.Integration.Packages.Download
             ICredentials feedCredentials,
             string cacheDirectory,
             int maxDownloadAttempts,
-            TimeSpan downloadAttemptBackoff) =>
-            GetFilePathToDownloadPackageTo(
+            TimeSpan downloadAttemptBackoff)
+        {
+            Guard.NotNull(mavenGavFirst, "mavenGavFirst can not be null");
+            Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
+            Guard.NotNull(version, "version can not be null");
+            Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
+            Guard.NotNull(feedUri, "feedUri can not be null");
+            
+            return GetFilePathToDownloadPackageTo(
                     cacheDirectory,
                     packageId,
                     version.ToString(),
@@ -210,9 +212,14 @@ namespace Calamari.Integration.Packages.Download
                             .Tee(content => myStream.Write(content, 0, content.Length));
                     }
                 ));
+        }
 
-        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri) =>
-            JarExtractor.EXTENSIONS.AsParallel()
+        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri)
+        {
+            Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
+            Guard.NotNull(feedUri, "feedUri can not be null");
+
+            return JarExtractor.EXTENSIONS.AsParallel()
                 .Select(extension => new MavenPackageID(
                     mavenPackageId.Group,
                     mavenPackageId.Artifact,
@@ -226,9 +233,15 @@ namespace Calamari.Integration.Packages.Download
                         .Map(request => new HttpClient().SendAsync(request).Result)
                         .Map(result => result.IsSuccessStatusCode);
                 }) ?? throw new Exception("Failed to find the maven artifact");
+        }
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
         {
+            Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
+            Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
+            Guard.NotNullOrWhiteSpace(version, "version can not be null");
+            Guard.NotNullOrWhiteSpace(extension, "extension can not be null");
+            
             return (packageId + JavaConstants.MavenFilenameDelimiter + version +
                     ServerConstants.SERVER_CACHE_DELIMITER +
                     BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) +

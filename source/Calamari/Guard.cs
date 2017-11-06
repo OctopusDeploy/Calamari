@@ -10,5 +10,11 @@ namespace Calamari
             if (String.IsNullOrWhiteSpace(value))
                 throw new CommandException(message);
         }
+        
+        public static void NotNull(object value, string message)
+        {
+            if (value == null)
+                throw new ArgumentException(message);
+        }
     }
 }
