@@ -48,14 +48,14 @@ namespace Calamari.Integration.Packages.Download
                 Log.Info("Attempting to get from cache");
                 try
                 {
-                    downloadedTo = AttemptToGetPackageFromCache(
+                    downloadedTo = SourceFromCache(
                         packageId,
                         version,
                         cacheDirectory);
                 }
                 catch (Exception ex)
                 {
-                    Log.Info("AttemptToGetPackageFromCache() failed");
+                    Log.Info("SourceFromCache() failed");
                     Log.Info("Exception starts");
                     Log.Info(ex.ToString());
                     Log.Info("Exception ends");
@@ -85,7 +85,7 @@ namespace Calamari.Integration.Packages.Download
                     stream => HashCalculator.Hash(stream)));
         }
 
-        public string AttemptToGetPackageFromCache(
+        string SourceFromCache(
             string packageId,
             IVersion version,
             string cacheDirectory)
@@ -133,7 +133,7 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        public string DownloadPackage(
+        string DownloadPackage(
             string packageId,
             IVersion version,
             Uri feedUri,
@@ -166,7 +166,7 @@ namespace Calamari.Integration.Packages.Download
                     downloadAttemptBackoff));
         }
 
-        public string DownloadArtifact(
+        string DownloadArtifact(
             MavenPackageID mavenGavFirst,
             string packageId,
             IVersion version,
@@ -210,7 +210,7 @@ namespace Calamari.Integration.Packages.Download
                 ));
         }
 
-        public MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri)
+        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri)
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
@@ -238,7 +238,7 @@ namespace Calamari.Integration.Packages.Download
                 }) ?? throw new Exception("Failed to find the maven artifact");
         }
 
-        public string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
+        string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
         {
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
