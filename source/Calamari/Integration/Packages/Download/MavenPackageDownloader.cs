@@ -201,7 +201,10 @@ namespace Calamari.Integration.Packages.Download
         {
             return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
                 .Map(uri => uri + mavenGavParser.ArtifactPath)
-                .Map(uri => (HttpWebResponse) WebRequest.Create(uri).Tee(c => c.Method = "HEAD").GetResponse())
+                .Map(uri => (HttpWebResponse) WebRequest.Create(uri)
+                    .Tee(c => c.Method = "HEAD")
+                    .Tee(c => c.Credentials = feedCredentials)
+                    .GetResponse())
                 .Map(response => (int) response.StatusCode >= 200 && (int) response.StatusCode <= 299);
         }
 
