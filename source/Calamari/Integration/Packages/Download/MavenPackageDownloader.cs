@@ -201,33 +201,34 @@ namespace Calamari.Integration.Packages.Download
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
-            
-            Log.Info("FirstToRespond");
-            
-            foreach (var extension in JarExtractor.EXTENSIONS)
-            {
-                var mavenGavParser = new MavenPackageID(
+                        
+            Log.Info("FirstToRespond - start");
+
+            var retValue = JarExtractor.EXTENSIONS
+                .Select(extension => new MavenPackageID(
                     mavenPackageId.Group,
                     mavenPackageId.Artifact,
                     mavenPackageId.Version,
-                    Regex.Replace(extension, "^\\.", ""));
-
-                if (MavenPackageExists(mavenGavParser, feedUri))
-                {
-                    return mavenGavParser;
-                }
-            }
+                    Regex.Replace(extension, "^\\.", "")))
+                .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri))
+                ?? throw new Exception("Failed to find the maven artifact");
             
-            throw new Exception("Failed to find the maven artifact");
+            Log.Info("FirstToRespond - end");
+            return retValue;
         }
 
         bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri)
         {
-            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+            Log.Info("MavenPackageExists - start");
+            
+            var retValue = MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
                 .Map(uri => uri + mavenGavParser.ArtifactPath)
                 .Map(uri => new HttpRequestMessage(HttpMethod.Head, uri))
                 .Map(request => new HttpClient().SendAsync(request).Result)
                 .Map(result => result.IsSuccessStatusCode);
+            
+            Log.Info("MavenPackageExists - end");
+            return retValue;
         }
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
