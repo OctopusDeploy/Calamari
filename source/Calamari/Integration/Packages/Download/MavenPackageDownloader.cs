@@ -58,6 +58,7 @@ namespace Calamari.Integration.Packages.Download
                     Log.Info("SourceFromCache() failed");
                     Log.Info("Exception starts");
                     Log.Info(ex.ToString());
+                    Log.Info(ex.StackTrace);
                     Log.Info("Exception ends");
                 }
             }
