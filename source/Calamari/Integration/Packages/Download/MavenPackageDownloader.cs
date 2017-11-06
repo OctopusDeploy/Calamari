@@ -85,7 +85,7 @@ namespace Calamari.Integration.Packages.Download
                     stream => HashCalculator.Hash(stream)));
         }
 
-        private string AttemptToGetPackageFromCache(
+        public string AttemptToGetPackageFromCache(
             string packageId,
             IVersion version,
             string cacheDirectory)
@@ -133,7 +133,7 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        private string DownloadPackage(
+        public string DownloadPackage(
             string packageId,
             IVersion version,
             Uri feedUri,
@@ -166,7 +166,7 @@ namespace Calamari.Integration.Packages.Download
                     downloadAttemptBackoff));
         }
 
-        string DownloadArtifact(
+        public string DownloadArtifact(
             MavenPackageID mavenGavFirst,
             string packageId,
             IVersion version,
@@ -210,7 +210,7 @@ namespace Calamari.Integration.Packages.Download
                 ));
         }
 
-        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri)
+        public MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri)
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
@@ -238,7 +238,7 @@ namespace Calamari.Integration.Packages.Download
                 }) ?? throw new Exception("Failed to find the maven artifact");
         }
 
-        string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
+        public string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
         {
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
