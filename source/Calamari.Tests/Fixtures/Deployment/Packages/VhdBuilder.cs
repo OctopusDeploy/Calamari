@@ -29,8 +29,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
                 // can't use New-VHD cmdlet as it requires the Hyper-V service which
                 // won't run in EC2
                 File.WriteAllText(scriptFile.FilePath, CreateVhdDiskPartScrtipt(vhdPath));
-                var exitCode = SilentProcessRunner.ExecuteCommand("diskpart", $"/s {scriptFile.FilePath}", output, Console.WriteLine, Console.Error.WriteLine);
-                exitCode.Should().Be(0);
+                var silentProcessResult = SilentProcessRunner.ExecuteCommand("diskpart", $"/s {scriptFile.FilePath}", output, Console.WriteLine, Console.Error.WriteLine);
+                silentProcessResult.ExitCode.Should().Be(0);
             }
 
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
