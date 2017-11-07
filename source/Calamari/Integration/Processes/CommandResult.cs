@@ -25,20 +25,11 @@
             this.workingDirectory = workingDirectory;
         }
 
-        public int ExitCode
-        {
-            get { return exitCode; }
-        }
+        public int ExitCode => exitCode;
 
-        public string Errors
-        {
-            get { return additionalErrors; }
-        }
+        public string Errors => additionalErrors;
 
-        public bool HasErrors
-        {
-            get { return string.IsNullOrWhiteSpace(additionalErrors); }
-        }
+        public bool HasErrors => !string.IsNullOrWhiteSpace(additionalErrors);
 
         public CommandResult VerifySuccess()
         {
