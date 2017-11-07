@@ -36,12 +36,12 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, Action<string> output, Action<string> error)
+        public static SilentProcessRunnerResult ExecuteCommand(string executable, string arguments, string workingDirectory, Action<string> output, Action<string> error)
         {
             return ExecuteCommand(executable, arguments, workingDirectory, null, null, output, error);
         }
 
-        public static int ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, SecureString password, Action<string> output, Action<string> error)
+        public static SilentProcessRunnerResult ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, SecureString password, Action<string> output, Action<string> error)
         {
             try
             {
@@ -62,6 +62,7 @@ namespace Calamari.Integration.Processes
                     using (var outputWaitHandle = new AutoResetEvent(false))
                     using (var errorWaitHandle = new AutoResetEvent(false))
                     {
+                        var errorData = new StringBuilder();
                         process.OutputDataReceived += (sender, e) =>
                         {
                             try
@@ -91,7 +92,10 @@ namespace Calamari.Integration.Processes
                                 if (e.Data == null)
                                     errorWaitHandle.Set();
                                 else
+                                {
+                                    errorData.AppendLine(e.Data);
                                     error(e.Data);
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -112,11 +116,10 @@ namespace Calamari.Integration.Processes
                         process.BeginErrorReadLine();
 
                         process.WaitForExit();
-
                         outputWaitHandle.WaitOne();
                         errorWaitHandle.WaitOne();
 
-                        return process.ExitCode;
+                        return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString());
                     }
                 }
             }

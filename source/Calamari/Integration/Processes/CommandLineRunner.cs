@@ -27,8 +27,8 @@ namespace Calamari.Integration.Processes
 
                 return new CommandResult(
                     invocation.ToString(), 
-                    exitCode, 
-                    null, 
+                    exitCode.ExitCode,
+                    exitCode.ErrorOutput, 
                     invocation.WorkingDirectory);
             }
             catch (Exception ex)
