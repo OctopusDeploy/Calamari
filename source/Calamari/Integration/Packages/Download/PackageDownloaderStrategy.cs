@@ -12,8 +12,8 @@ namespace Calamari.Integration.Packages.Download
     /// </summary>
     public class PackageDownloaderStrategy : IPackageDownloader
     {
-        static readonly IPackageIDParser mavenPackageIdParser = new MavenPackageIDParser();
-        static readonly IPackageIDParser nugetPackageIdParser = new NuGetPackageIDParser();
+        static readonly IPackageIDParser MavenPackageIdParser = new MavenPackageIDParser();
+        static readonly IPackageIDParser NugetPackageIdParser = new NuGetPackageIDParser();
 
         public void DownloadPackage(
             string packageId,
@@ -28,40 +28,32 @@ namespace Calamari.Integration.Packages.Download
             out string hash, 
             out long size)
         {
-            if (mavenPackageIdParser.CanGetMetadataFromPackageID(packageId, out var mavenMetadata))
+            IPackageDownloader downloader = null;
+            if (MavenPackageIdParser.CanGetMetadataFromPackageID(packageId, out var mavenMetadata))
             {
-                new MavenPackageDownloader().DownloadPackage(
-                    packageId,
-                    version, 
-                    feedId, 
-                    feedUri, 
-                    feedCredentials, 
-                    forcePackageDownload, 
-                    maxDownloadAttempts, 
-                    downloadAttemptBackoff, 
-                    out downloadedTo, 
-                    out hash, 
-                    out size);
+                downloader = new MavenPackageDownloader();
             }
-            else if (nugetPackageIdParser.CanGetMetadataFromPackageID(packageId, out var nugetMetadata))
+            else if (NugetPackageIdParser.CanGetMetadataFromPackageID(packageId, out var nugetMetadata))
             {
-                new NuGetPackageDownloader().DownloadPackage(
-                    packageId,
-                    version, 
-                    feedId, 
-                    feedUri, 
-                    feedCredentials, 
-                    forcePackageDownload, 
-                    maxDownloadAttempts, 
-                    downloadAttemptBackoff, 
-                    out downloadedTo, 
-                    out hash, 
-                    out size);
+                downloader = new NuGetPackageDownloader();                
             }
             else
             {
                 throw new NotImplementedException($"Package ID {packageId} is not recognised.");
             }
+            
+            downloader.DownloadPackage(
+                packageId,
+                version, 
+                feedId, 
+                feedUri, 
+                feedCredentials, 
+                forcePackageDownload, 
+                maxDownloadAttempts, 
+                downloadAttemptBackoff, 
+                out downloadedTo, 
+                out hash, 
+                out size);
         }
     }
 }
