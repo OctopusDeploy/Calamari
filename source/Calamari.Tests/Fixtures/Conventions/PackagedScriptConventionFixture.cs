@@ -28,7 +28,8 @@ namespace Calamari.Tests.Fixtures.Conventions
                 TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"),
                 TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"),
                 TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1")
+                TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"),
+                TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1")
             });
 
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
@@ -66,6 +67,31 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
+        public void ShouldDeleteScriptAfterCleanupExecution()
+        {
+            var convention = CreateRollbackConvention("DeployFailed");
+            convention.Cleanup(deployment);
+            fileSystem.Received().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1"), Arg.Any<FailureOptions>());
+        }
+
+        [Test]
+        public void ShouldRunScriptOnRollbackExecution()
+        {
+            var convention = CreateRollbackConvention("DeployFailed");
+            convention.Rollback(deployment);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1")), deployment.Variables, runner);
+        }
+
+        [Test]
+        public void ShouldNotDeleteDeployFailedScriptAfterExecutionIfSpecialVariableIsSet()
+        {
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            var convention = CreateRollbackConvention("DeployFailed");
+            convention.Cleanup(deployment);
+            fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1"), Arg.Any<FailureOptions>());
+        }
+
+        [Test]
         public void ShouldNotDeletePreDeployScriptAfterExecutionIfSpecialVariableIsSet()
         {
             deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
@@ -100,6 +126,11 @@ namespace Calamari.Tests.Fixtures.Conventions
         PackagedScriptConvention CreateConvention(string scriptName)
         {
             return new PackagedScriptConvention(scriptName, fileSystem, scriptEngine, runner);
+        }
+
+        RollbackScriptConvention CreateRollbackConvention(string scriptName)
+        {
+            return new RollbackScriptConvention(scriptName, fileSystem, scriptEngine, runner);
         }
     }
 }
