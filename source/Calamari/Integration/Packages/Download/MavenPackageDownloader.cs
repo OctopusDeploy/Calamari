@@ -25,7 +25,6 @@ namespace Calamari.Integration.Packages.Download
     public class MavenPackageDownloader : IPackageDownloader
     {
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
-        static readonly IMavenURLParser MavenUrlParser = new MavenURLParser();
         static readonly IPackageIDParser PackageIdParser = new MavenPackageIDParser();
         static readonly IVersionFactory VersionFactory = new VersionFactory();
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -219,7 +218,7 @@ namespace Calamari.Integration.Packages.Download
                             packageId,
                             version.ToString(),
                             mavenGavFirst.Packaging)
-                        .Tee(path => MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+                        .Tee(path => feedUri.ToString().TrimEnd('/')
                             .Map(uri => uri + mavenGavFirst.ArtifactPath)
                             .Map(uri => FunctionalExtensions.Using(
                                 () => new WebClient(),
@@ -271,7 +270,7 @@ namespace Calamari.Integration.Packages.Download
         /// <returns>true if the package exists, and false otherwise</returns>
         bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials)
         {
-            return MavenUrlParser.SanitiseFeedUri(feedUri).ToString().TrimEnd('/')
+            return feedUri.ToString().TrimEnd('/')
                 .Map(uri => uri + mavenGavParser.ArtifactPath)
                 .Map(uri =>
                 {
