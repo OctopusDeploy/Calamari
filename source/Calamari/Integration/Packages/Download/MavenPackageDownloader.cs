@@ -338,7 +338,7 @@ namespace Calamari.Integration.Packages.Download
                         .Select(response => response as HttpWebResponse)
                         .First(response => ((int) response.StatusCode >= 200 && (int) response.StatusCode <= 299) || (int) response.StatusCode == 404);
 
-                    if (metadataResponse != null)
+                    if ((int) metadataResponse.StatusCode >= 200 && (int) metadataResponse.StatusCode <= 299)
                     {
                         return metadataResponse.GetResponseStream()
                             .Map(stream => new XmlDocument().Tee(doc => doc.Load(stream)));
