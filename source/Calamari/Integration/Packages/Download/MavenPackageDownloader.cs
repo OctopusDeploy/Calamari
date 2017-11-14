@@ -336,20 +336,27 @@ namespace Calamari.Integration.Packages.Download
                         .Select(uri => WebRequest.Create(uri).Tee(request => request.Credentials = feedCredentials))
                         .Select(request => request.GetResponse())
                         .Select(response => response as HttpWebResponse)
-                        .First(response => ((int) response.StatusCode >= 200 && (int) response.StatusCode <= 299) || (int) response.StatusCode == 404);
+                        .First(response => response.IsSuccessStatusCode() || (int) response.StatusCode == 404);
 
-                    if ((int) metadataResponse.StatusCode >= 200 && (int) metadataResponse.StatusCode <= 299)
+                    if (metadataResponse.IsSuccessStatusCode())
                     {
-                        return metadataResponse.GetResponseStream()
-                            .Map(stream => new XmlDocument().Tee(doc => doc.Load(stream)));
+                        return FunctionalExtensions.Using(
+                            () => metadataResponse.GetResponseStream(),
+                            stream => new XmlDocument().Tee(doc => doc.Load(stream)));
                     }
-                    
-                    if ((int) metadataResponse.StatusCode == 404)
+
+                    return null;
+                }
+                catch (WebException ex)
+                {
+                    if ((int)(ex.Response as HttpWebResponse)?.StatusCode == 404)
                     {
                         return null;
                     }
+                    
+                    Thread.Sleep(downloadAttemptBackoff);
                 }
-                catch
+                catch 
                 {
                     Thread.Sleep(downloadAttemptBackoff);
                 }
