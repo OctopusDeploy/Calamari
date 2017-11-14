@@ -343,8 +343,11 @@ namespace Calamari.Integration.Packages.Download
                         return metadataResponse.GetResponseStream()
                             .Map(stream => new XmlDocument().Tee(doc => doc.Load(stream)));
                     }
-
-                    return null;
+                    
+                    if ((int) metadataResponse.StatusCode == 404)
+                    {
+                        return null;
+                    }
                 }
                 catch
                 {
