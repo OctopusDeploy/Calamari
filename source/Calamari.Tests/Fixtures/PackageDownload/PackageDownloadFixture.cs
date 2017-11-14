@@ -37,6 +37,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
         static readonly Feed MavenPublicFeed = new Feed("#") { Id = "feeds-maven", Version = "22.0", PackageId =  "Maven#com.google.guava#guava" };
         
+        static readonly string ExpectedMavenSnapshotPackageHash = "e211b82586ea564b0382cbc87d23854273fc8b2e";
+        static readonly long ExpectedMavenSnapshotPackageSize = 2592096;
+        static readonly string MavenSnapshotPublicFeedUri = "https://oss.sonatype.org/content/repositories/snapshots/";
+        static readonly Feed MavenSnapshotPublicFeed = new Feed("#") { Id = "feeds-maven", Version = "22.0-SNAPSHOT", PackageId =  "Maven#com.google.guava#guava" };
+        
         [SetUp]
         public void SetUp()
         {
@@ -195,6 +200,36 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(secondDownload, MavenPublicFeed.File);
             secondDownload.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+        }
+        
+        [Test]        
+        public void ShouldByPassCacheAndDownloadMavenSnapshotPackage()
+        {
+
+            var firstDownload = DownloadPackage(
+                MavenSnapshotPublicFeed.PackageId,
+                MavenSnapshotPublicFeed.Version, 
+                MavenSnapshotPublicFeed.Id,
+                MavenSnapshotPublicFeedUri);
+            
+            firstDownload.AssertSuccess();
+            
+            var secondDownload = DownloadPackage(
+                MavenSnapshotPublicFeed.PackageId, 
+                MavenSnapshotPublicFeed.Version, 
+                MavenSnapshotPublicFeed.Id,
+                MavenSnapshotPublicFeedUri, 
+                forcePackageDownload: true);
+            
+            secondDownload.AssertSuccess();
+            
+            secondDownload.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
+            secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenSnapshotPublicFeed.DownloadFolder);
+            secondDownload.AssertOutput("Found package {0} version {1}", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version);
+            AssertPackageHashMatchesExpected(secondDownload, ExpectedMavenSnapshotPackageHash);
+            AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenSnapshotPackageSize);
+            AssertStagePackageOutputVariableSet(secondDownload, MavenSnapshotPublicFeed.File);
+            secondDownload.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
         }
 
         [Test]
