@@ -104,6 +104,31 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", 
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
+        
+        [Test]
+        public void ShouldDownloadMavenSnapshotPackage()
+        {
+            var result = DownloadPackage(
+                MavenPublicFeed.PackageId, 
+                MavenPublicFeed.Version, 
+                MavenPublicFeed.Id, 
+                MavenPublicFeedUri);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", 
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", 
+                MavenPublicFeed.DownloadFolder);
+            result.AssertOutput("Found package {0} version {1}", 
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(result, MavenPublicFeed.File);
+            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", 
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+        }
 
         [Test]
         public void ShouldDownloadPackageWithRepositoryMetadata()
@@ -151,6 +176,23 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(result, MavenPublicFeed.File);
         }
+        
+        [Test]
+        public void ShouldUseMavenSnapshotPackageFromCache()
+        {
+            DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri).AssertSuccess();
+
+            var result = DownloadPackage(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.Id, MavenPublicFeedUri);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Checking package cache for package {0} {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}", MavenPublicFeed.File);
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(result, MavenPublicFeed.File);
+        }
+
 
         [Test]
         public void ShouldByPassCacheAndDownloadPackage()
