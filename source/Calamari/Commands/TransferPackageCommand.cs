@@ -8,9 +8,6 @@ using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Util;
 
 namespace Calamari.Commands
 {
@@ -46,8 +43,7 @@ namespace Calamari.Commands
 
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
-
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+            
             var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
             
             var conventions = new List<IConvention>
@@ -58,7 +54,6 @@ namespace Calamari.Commands
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new TransferPackageConvention(fileSystem),
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, new CombinedScriptEngine(), commandLineRunner),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
