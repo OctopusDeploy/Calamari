@@ -226,7 +226,10 @@ namespace Calamari.Integration.Packages.Download
                         .Tee(path => feedUri.ToString().TrimEnd('/')
                             .Map(uri => uri + (snapshotMetadata == null ? 
                                             mavenGavFirst.DefaultArtifactPath : 
-                                            mavenGavFirst.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(snapshotMetadata, mavenGavFirst.Packaging))))
+                                            mavenGavFirst.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(
+                                                snapshotMetadata, 
+                                                mavenGavFirst.Packaging,
+                                                mavenGavFirst.Version))))
                             .Map(uri => FunctionalExtensions.Using(
                                 () => new WebClient(),
                                 client => client
@@ -278,7 +281,10 @@ namespace Calamari.Integration.Packages.Download
             return feedUri.ToString().TrimEnd('/')
                 .Map(uri => uri + (snapshotMetadata == null ?
                                 mavenGavParser.DefaultArtifactPath : 
-                                mavenGavParser.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(snapshotMetadata, mavenGavParser.Packaging))))
+                                mavenGavParser.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(
+                                    snapshotMetadata, 
+                                    mavenGavParser.Packaging,
+                                    mavenGavParser.Version))))
                 .Map(uri =>
                 {
                     try
