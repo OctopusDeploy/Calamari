@@ -2,8 +2,10 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml;
 using Calamari.Exceptions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
@@ -27,6 +29,7 @@ namespace Calamari.Integration.Packages.Download
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         static readonly IPackageIDParser PackageIdParser = new MavenPackageIDParser();
         static readonly IVersionFactory VersionFactory = new VersionFactory();
+        static readonly IMetadataParser MetadataParser = new MetadataParser();
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public void DownloadPackage(
@@ -167,8 +170,16 @@ namespace Calamari.Integration.Packages.Download
             fileSystem.EnsureDirectoryExists(cacheDirectory);
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            return new MavenPackageID(packageId, version)
-                .Map(mavenPackageId => FirstToRespond(mavenPackageId, feedUri, feedCredentials))
+            var mavenPackageId = new MavenPackageID(packageId, version);
+            
+            var snapshotMetadata = GetSnapshotMetadata(
+                mavenPackageId, 
+                feedUri, 
+                feedCredentials, 
+                maxDownloadAttempts,
+                downloadAttemptBackoff);
+
+            return FirstToRespond(mavenPackageId, feedUri, feedCredentials, snapshotMetadata)
                 .Tee(mavenGavFirst => Log.VerboseFormat("Found package {0} version {1}", packageId, version))
                 .Map(mavenGavFirst => DownloadArtifact(
                     mavenGavFirst,
@@ -178,21 +189,14 @@ namespace Calamari.Integration.Packages.Download
                     feedCredentials,
                     cacheDirectory,
                     maxDownloadAttempts,
-                    downloadAttemptBackoff));
+                    downloadAttemptBackoff,
+                    snapshotMetadata));
         }
 
         /// <summary>
         /// Actually download the maven file.
         /// </summary>
-        /// <param name="mavenGavFirst">The details of the maven artifact to download</param>
-        /// <param name="packageId">The package id</param>
-        /// <param name="version">The package version</param>
-        /// <param name="feedUri">The maven repo uri</param>
-        /// <param name="feedCredentials">The mavben repo credentials</param>
-        /// <param name="cacheDirectory">The directory to download the file into</param>
-        /// <param name="maxDownloadAttempts">How many times to try the download</param>
-        /// <param name="downloadAttemptBackoff">How long to wait between attempts</param>
-        /// <returns></returns>
+        /// <returns>The path to the downloaded file</returns>
         string DownloadArtifact(
             MavenPackageID mavenGavFirst,
             string packageId,
@@ -201,13 +205,14 @@ namespace Calamari.Integration.Packages.Download
             ICredentials feedCredentials,
             string cacheDirectory,
             int maxDownloadAttempts,
-            TimeSpan downloadAttemptBackoff)
+            TimeSpan downloadAttemptBackoff,
+            XmlDocument snapshotMetadata)
         {
             Guard.NotNull(mavenGavFirst, "mavenGavFirst can not be null");
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
             Guard.NotNull(version, "version can not be null");
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
-            Guard.NotNull(feedUri, "feedUri can not be null");
+            Guard.NotNull(feedUri, "feedUri can not be null");           
 
             for (var retry = 0; retry < maxDownloadAttempts; ++retry)
             {
@@ -219,7 +224,9 @@ namespace Calamari.Integration.Packages.Download
                             version.ToString(),
                             mavenGavFirst.Packaging)
                         .Tee(path => feedUri.ToString().TrimEnd('/')
-                            .Map(uri => uri + mavenGavFirst.ArtifactPath)
+                            .Map(uri => uri + (snapshotMetadata == null ? 
+                                            mavenGavFirst.DefaultArtifactPath : 
+                                            mavenGavFirst.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(snapshotMetadata, mavenGavFirst.Packaging))))
                             .Map(uri => FunctionalExtensions.Using(
                                 () => new WebClient(),
                                 client => client
@@ -240,11 +247,12 @@ namespace Calamari.Integration.Packages.Download
         /// Find the first artifact to respond to a HTTP head request. We use this to find the extension
         /// of the artifact that we are trying to download.
         /// </summary>
-        /// <param name="mavenPackageId">The maven package id</param>
-        /// <param name="feedUri">The feed uri</param>
-        /// <param name="feedCredentials">The feed credentials</param>
         /// <returns>The details of the first (and only) artifact to respond to a head request</returns>
-        MavenPackageID FirstToRespond(MavenPackageID mavenPackageId, Uri feedUri, ICredentials feedCredentials)
+        MavenPackageID FirstToRespond(
+            MavenPackageID mavenPackageId, 
+            Uri feedUri, 
+            ICredentials feedCredentials,
+            XmlDocument snapshotMetadata)
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
@@ -256,7 +264,7 @@ namespace Calamari.Integration.Packages.Download
                            mavenPackageId.Artifact,
                            mavenPackageId.Version,
                            Regex.Replace(extension, "^\\.", "")))
-                       .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri, feedCredentials))
+                       .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri, feedCredentials, snapshotMetadata))
                    ?? throw new MavenDownloadException("Failed to find the Maven artifact");
         }
 
@@ -264,14 +272,13 @@ namespace Calamari.Integration.Packages.Download
         /// Performs the actual HTTP head request to check for the presence of a maven artifact with a 
         /// given extension.
         /// </summary>
-        /// <param name="mavenGavParser">The details of the artifact to download, including extension</param>
-        /// <param name="feedUri">The maven feed uri</param>
-        /// <param name="feedCredentials">The maven feed credentials</param>
         /// <returns>true if the package exists, and false otherwise</returns>
-        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials)
+        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials, XmlDocument snapshotMetadata)
         {
             return feedUri.ToString().TrimEnd('/')
-                .Map(uri => uri + mavenGavParser.ArtifactPath)
+                .Map(uri => uri + (snapshotMetadata == null ?
+                                mavenGavParser.DefaultArtifactPath : 
+                                mavenGavParser.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(snapshotMetadata, mavenGavParser.Packaging))))
                 .Map(uri =>
                 {
                     try
@@ -293,10 +300,6 @@ namespace Calamari.Integration.Packages.Download
         /// <summary>
         /// Creates the full file name of a downloaded file
         /// </summary>
-        /// <param name="cacheDirectory">The directory to save the file into</param>
-        /// <param name="packageId">The maven package id</param>
-        /// <param name="version">The maven package version</param>
-        /// <param name="extension">The maven package extension</param>
         /// <returns>The full path where the downloaded file will be saved</returns>
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
         {
@@ -310,6 +313,46 @@ namespace Calamari.Integration.Packages.Download
                     BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) +
                     "." + extension)
                 .Map(package => Path.Combine(cacheDirectory, package));
+        }
+
+        /// <summary>
+        /// Attempt to get the snapshot maven-metadata.xml file, which we will need to use to build up
+        /// the filenames of snapshot versions.
+        /// </summary>
+        /// <returns>The snapshot maven-metadata.xml file if it exists, and a null result otherwise</returns>
+        XmlDocument GetSnapshotMetadata(
+            MavenPackageID mavenPackageID, 
+            Uri feedUri,
+            ICredentials feedCredentials,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff)
+        {
+            for (var retry = 0; retry < maxDownloadAttempts; ++retry)
+            {
+                try
+                {
+                    var metadataResponse = (feedUri.ToString().TrimEnd('/') + mavenPackageID.GroupVersionMetadataPath)
+                        .ToEnumerable()
+                        .Select(uri => WebRequest.Create(uri).Tee(request => request.Credentials = feedCredentials))
+                        .Select(request => request.GetResponse())
+                        .Select(response => response as HttpWebResponse)
+                        .First(response => ((int) response.StatusCode >= 200 && (int) response.StatusCode <= 299) || (int) response.StatusCode == 404);
+
+                    if (metadataResponse != null)
+                    {
+                        return metadataResponse.GetResponseStream()
+                            .Map(stream => new XmlDocument().Tee(doc => doc.Load(stream)));
+                    }
+
+                    return null;
+                }
+                catch
+                {
+                    Thread.Sleep(downloadAttemptBackoff);
+                }
+            }
+
+            throw new MavenDownloadException("Failed to download the Maven artifact");
         }
     }
 }
