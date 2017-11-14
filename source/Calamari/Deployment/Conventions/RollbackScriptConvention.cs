@@ -18,6 +18,10 @@ namespace Calamari.Deployment.Conventions
 
         public void Cleanup(RunningDeployment deployment)
         {
+            if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
+            {
+                DeleteScripts(deployment);
+            }
         }
     }
 }
