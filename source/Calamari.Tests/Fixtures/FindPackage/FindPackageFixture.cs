@@ -53,6 +53,16 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 .Argument("packageHash", hash));
         }
 
+        CalamariResult FindPackagesExact(string id, string version, string hash, bool exactMatch)
+        {
+            return Invoke(Calamari()
+                .Action("find-package")
+                .Argument("packageId", id)
+                .Argument("packageVersion", version)
+                .Argument("packageHash", hash)
+                .Argument("exactMatch", exactMatch));
+        }
+
         [Test]
         public void ShouldFindNoEarlierPackageVersions()
         {
@@ -95,6 +105,27 @@ namespace Calamari.Tests.Fixtures.FindPackage
                         {"Metadata.Hash", acmeWeb.Hash},
                         {"FullPath", destinationFilePath}
                     });
+                }
+            }
+        }
+
+        [Test]
+        public void ShouldNotFindEarlierPackageVersionWhenExactMatchRequested()
+        {
+            using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
+            {
+                var destinationFilePath = Path.Combine(downloadPath,
+                    Path.GetFileName(acmeWeb.FilePath) + "-" + Guid.NewGuid());
+                File.Copy(acmeWeb.FilePath, destinationFilePath);
+
+                using (var newAcmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, newpackageVersion)))
+                {
+                    var result = FindPackagesExact(packageId, newpackageVersion, newAcmeWeb.Hash, true);
+
+                    result.AssertSuccess();
+                    result.AssertOutput("Package {0} version {1} hash {2} has not been uploaded.", packageId, newpackageVersion,
+                        newAcmeWeb.Hash);
+                    result.AssertNoOutput("Finding earlier packages that have been uploaded to this Tentacle");
                 }
             }
         }
