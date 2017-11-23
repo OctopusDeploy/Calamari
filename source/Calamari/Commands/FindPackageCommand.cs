@@ -2,7 +2,6 @@
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octopus.Core.Resources.Metadata;
@@ -34,13 +33,8 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var commandLineRunner = new CommandLineRunner(
-                new SplitCommandOutput(
-                    new ConsoleCommandOutput(), 
-                    new ServiceMessageCommandOutput(
-                        new CalamariVariableDictionary())));
 
-            var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId, packageVersion, 0, packageHash);
+            var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId, packageVersion, null, 0, packageHash);
             
             var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem);
             var packageStore = new PackageStore(extractor);                        

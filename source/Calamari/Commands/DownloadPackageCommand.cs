@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.Packages.Download;
-using Calamari.Integration.Packages.Metadata;
+using Octopus.Core.Resources.Metadata;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
 
@@ -116,7 +116,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
-            var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
+            var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId);
             if (!VersionFactory.CanCreateVersion(packageVersion, out version, packageMetadata.FeedType))
             {
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string"); 

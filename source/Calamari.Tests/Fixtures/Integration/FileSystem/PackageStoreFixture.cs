@@ -3,11 +3,10 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Metadata;
+using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Core.Resources;
-using PackageBuilder = Calamari.Tests.Fixtures.Deployment.Packages.PackageBuilder;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {

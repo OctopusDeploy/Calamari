@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Integration.Packages.Metadata;
+using Octopus.Core.Resources.Metadata;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
 
@@ -11,7 +11,7 @@ namespace Calamari.Integration.Packages.NuGet
     internal class NuGetFileSystemDownloader
     {
         static readonly IVersionFactory VersionFactory = new VersionFactory();
-        static readonly IPackageMetadataFactory PackageMetadataFactory = new PackageMetadataFactory();
+        static readonly IMetadataFactory PackageMetadataFactory = new MetadataFactory();
         
         public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, string targetFilePath)
         {
@@ -24,7 +24,7 @@ namespace Calamari.Integration.Packages.NuGet
             var package = (from path in GetPackageLookupPaths(packageId, version, feedUri)
                     let p = new LocalNuGetPackage(path) 
                     where p.Metadata.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase) && 
-                          VersionFactory.CreateVersion(p.Metadata.Version.ToString(), PackageMetadataFactory.ParseMetadata(packageId).FeedType).Equals(version)
+                          VersionFactory.CreateVersion(p.Metadata.Version.ToString(), PackageMetadataFactory.GetMetadataFromPackageID(packageId).FeedType).Equals(version)
                     select p).FirstOrDefault();
 
             if (package == null)
@@ -81,7 +81,7 @@ namespace Calamari.Integration.Packages.NuGet
                    VersionFactory.CanCreateVersion(
                        name.Substring(packageId.Length + 1), 
                        out IVersion parsedVersion, 
-                       PackageMetadataFactory.ParseMetadata(packageId).FeedType) &&
+                       PackageMetadataFactory.GetMetadataFromPackageID(packageId).FeedType) &&
                    parsedVersion.Equals(version);
         }
 

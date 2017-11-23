@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages.Metadata;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Util;
+using Octopus.Core.Resources.Metadata;
 using Octopus.Core.Resources.Versioning;
 using Octopus.Core.Resources.Versioning.Factories;
 #if USE_NUGET_V2_LIBS
@@ -89,7 +88,7 @@ namespace Calamari.Integration.Packages.Download
                 var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(),
                     StringComparison.OrdinalIgnoreCase);
 
-                var packageMetadata = new PackageMetadataFactory().ParseMetadata(packageId);
+                var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId);
                 var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version.ToString(),
                                           out IVersion packageVersion, packageMetadata.FeedType) &&
                                       version.Equals(packageVersion);
