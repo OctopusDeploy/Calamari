@@ -76,7 +76,56 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             CreateConvention().Install(deployment);
 
+            AssertTransformRun("bar.config", "bar.Release.config");
             AssertTransformRun("bar.config", "bar.Production.config");
+        }
+        
+        [Test]
+        public void ShouldApplyTenantTransform()
+        {
+            const string environment = "Production";
+            const string tenant = "Tenant-1";
+
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            variables.Set(SpecialVariables.Environment.Name, environment);
+            variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
+
+            CreateConvention().Install(deployment);
+
+            AssertTransformRun("bar.config", "bar.Release.config");
+            AssertTransformRun("bar.config", "bar.Production.config");
+            AssertTransformRun("bar.config", "bar.Tenant-1.config");
+        }
+        
+        [Test]
+        public void ShouldApplyNamingConventTransformsInTheRightOrder()
+        {
+            const string environment = "Production";
+            const string tenant = "Tenant-1";
+
+            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            variables.Set(SpecialVariables.Environment.Name, environment);
+            variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
+
+            CreateConvention().Install(deployment);
+
+            Received.InOrder(() =>
+            {
+                configurationTransformer.Received().PerformTransform(
+                    Arg.Any<string>(),
+                    Arg.Is<string>(s => s.Equals(BuildConfigPath("bar.Release.config"), StringComparison.OrdinalIgnoreCase)),
+                    Arg.Any<string>());
+                
+                configurationTransformer.Received().PerformTransform(
+                    Arg.Any<string>(),
+                    Arg.Is<string>(s => s.Equals(BuildConfigPath("bar.Production.config"), StringComparison.OrdinalIgnoreCase)),
+                    Arg.Any<string>());
+
+                configurationTransformer.Received().PerformTransform(
+                    Arg.Any<string>(),
+                    Arg.Is<string>(s => s.Equals(BuildConfigPath("bar.Tenant-1.config"), StringComparison.OrdinalIgnoreCase)),
+                    Arg.Any<string>());
+            });
         }
 
         [Test]
