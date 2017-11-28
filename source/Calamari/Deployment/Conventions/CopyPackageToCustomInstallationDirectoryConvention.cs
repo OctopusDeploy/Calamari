@@ -24,9 +24,7 @@ namespace Calamari.Deployment.Conventions
             if (string.IsNullOrWhiteSpace(customInstallationDirectory))
             {
                 Log.Verbose("The package has been installed to: " + sourceDirectory);
-                Log.VerboseFormat(
-                    "If you would like the package to be installed to an alternative location, please specify the variable '{0}'",
-                    SpecialVariables.Package.CustomInstallationDirectory);
+                Log.Verbose("If you would like the package to be installed to an alternative location, please use the 'Custom installation directory' feature");
                 // If the variable was not set then we set it, as it makes it simpler for anything to depend on it from this point on
                 deployment.Variables.Set(SpecialVariables.Package.CustomInstallationDirectory,
                     sourceDirectory);
