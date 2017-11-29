@@ -51,7 +51,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return powerShellPath;
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
+        public static string FormatCommandArguments(string bootstrapFile, 
+                                                    string debuggingBootstrapFile, 
+                                                    CalamariVariableDictionary variables,
+                                                    string hash)
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
@@ -74,7 +77,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 ? debuggingBootstrapFile.Replace("'", "''")
                 : bootstrapFile.Replace("'", "''");
 
-            commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", filetoExecute, encryptionKey);
+            commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}' -ScriptHash '{2}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", 
+                filetoExecute, 
+                encryptionKey,
+                hash);
             return commandArguments.ToString();
         }
 
@@ -89,7 +95,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return true;
         }
 
-        public static string PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
+        public static string PrepareBootstrapFile(Script script, CalamariVariableDictionary variables, out String scriptHash)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
@@ -102,7 +108,16 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     .Replace("{{ScriptModules}}", DeclareScriptModules(variables, parent));
 
             builder = SetupDebugBreakpoints(builder, variables);
-
+            
+            /*
+                Compute the hash of the script file at this point. We'll use this hash
+                to ensure that we are executing the script with the exepcted content.
+                See https://secure.helpscout.net/conversation/389181630 for an example
+                of a script being executed against rewritten content.
+            */
+            scriptHash = HashCalculator.SHA256Hash(builder.ToString());
+            builder.Replace("{{ScriptFileHash}}", String.Format("$ComputedStringHash = \"{0}\"", scriptHash));
+           
             CalamariFileSystem.OverwriteFile(bootstrapFile, builder.ToString(), new UTF8Encoding(true));
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
