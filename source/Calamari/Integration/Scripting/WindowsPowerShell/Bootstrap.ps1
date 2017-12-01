@@ -280,6 +280,33 @@ function Initialize-ProxySettings()
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
 }
 
+function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int] $sleepBetweenFailures = 1) {
+	$attemptCount = 0
+	$operationIncomplete = $true
+
+	while ($operationIncomplete -and $attemptCount -lt $maxFailures) {
+		$attemptCount = ($attemptCount + 1)
+
+		if ($attemptCount -ge 2) {
+			Write-Host "Waiting for $sleepBetweenFailures seconds before retrying..."
+			Start-Sleep -s $sleepBetweenFailures
+			Write-Host "Retrying..."
+		}
+
+		try {
+			& $command
+
+			$operationIncomplete = $false
+		} catch [System.Exception] {
+			if ($attemptCount -lt ($maxFailures)) {
+				Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
+			} else {
+				throw
+			}
+		}
+	}
+}
+
 Log-VersionTable
 
 # -----------------------------------------------------------------

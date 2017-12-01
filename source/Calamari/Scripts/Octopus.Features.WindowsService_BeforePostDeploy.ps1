@@ -144,9 +144,13 @@ else
 	If ($service.Status -ne 'Stopped')
 	{
 		Write-Host "Stopping the $serviceName service"
-		Stop-Service $psServiceName -Force
-		## Wait up to 30 seconds for the service to stop
-		$service.WaitForStatus('Stopped', '00:00:30')
+
+		Execute-WithRetry {
+			Stop-Service $psServiceName -Force
+			## Wait up to 30 seconds for the service to stop
+			$service.WaitForStatus('Stopped', '00:00:30')
+		}
+
 		If ($service.Status -ne 'Stopped') 
 		{
 			Write-Warning "Service $serviceName did not stop within 30 seconds"
@@ -191,9 +195,12 @@ elseif ($startMode -eq "demand")
 else
 {
 	Write-Host "Starting the $serviceName service"
-	Start-Service $psServiceName
 
-	$service.WaitForStatus('Running', '00:00:30')
+	Execute-WithRetry {
+		Start-Service $psServiceName
+		$service.WaitForStatus('Running', '00:00:30')
+	}
+
 	If ($service.Status -ne 'Running') 
 	{
 		Write-Warning "Service $serviceName did not start within 30 seconds"

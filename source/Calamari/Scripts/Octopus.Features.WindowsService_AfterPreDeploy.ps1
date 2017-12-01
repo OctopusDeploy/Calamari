@@ -40,9 +40,11 @@ else
     Write-Host "The $serviceName service already exists; it will be stopped"
     Write-Host "Stopping the $serviceName service"
 
-    Stop-Service $serviceName -Force
-	## Wait up to 30 seconds for the service to stop
-	$service.WaitForStatus('Stopped', '00:00:30')
+	Execute-WithRetry {
+		Stop-Service $serviceName -Force
+		## Wait up to 30 seconds for the service to stop
+		$service.WaitForStatus('Stopped', '00:00:30')
+	}
 
 	If ($service.Status -ne 'Stopped') 
 	{
