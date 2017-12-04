@@ -312,7 +312,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 
             var result = semaphore.WaitOne();
             Assert.That(result, Is.True);
-            Assert.That(stopwatch.ElapsedMilliseconds, Is.GreaterThan(200));
+            Assert.That(stopwatch.ElapsedMilliseconds, Is.GreaterThan(175));
         }
     }
 }
