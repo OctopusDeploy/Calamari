@@ -355,9 +355,12 @@ namespace Calamari.Integration.Packages.Download
                 }
                 catch (WebException ex)
                 {
-                    if ((int)(ex.Response as HttpWebResponse)?.StatusCode == 404)
+                    if (ex.Response is HttpWebResponse response)
                     {
-                        return null;
+                        if ((int)(response.StatusCode) == 404)
+                        {
+                            return null;
+                        }
                     }
                     
                     Thread.Sleep(downloadAttemptBackoff);
