@@ -2,11 +2,9 @@
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
+using Calamari.Integration.Processes;
+using Calamari.Integration.ServiceMessages;
+using Octopus.Core.Resources.Metadata;
 
 namespace Calamari.Commands
 {
@@ -33,48 +31,58 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
-
+            
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            if (!NuGetVersion.TryParse(packageVersion, out var version))
-                throw new CommandException($"Package version '{packageVersion}' is not a valid Semantic Version");
-
-            var packageStore = new PackageStore(
-                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
-            var packageMetadata = new ExtendedPackageMetadata {Id = packageId, Version = packageVersion, Hash = packageHash};
+            var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId, packageVersion, null, 0, packageHash);
+            
+            var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem);
+            var packageStore = new PackageStore(extractor);                        
             var package = packageStore.GetPackage(packageMetadata);
+                      
             if (package == null)
             {
-                Log.Verbose($"Package {packageMetadata.Id} version {packageMetadata.Version} hash {packageMetadata.Hash} has not been uploaded.");
+                Log.Verbose($"Package {packageMetadata.PackageId} version {packageMetadata.Version} hash {packageMetadata.Hash} has not been uploaded.");
 
                 if (exactMatchOnly)
                     return 0;
 
-                FindEarlierPackages(packageStore, version);
+                FindEarlierPackages(packageStore, packageMetadata);
 
                 return 0;
             }
 
-            Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash);
-            Log.ServiceMessages.PackageFound(package.Metadata.Id, package.Metadata.Version, package.Metadata.Hash, package.Metadata.FileExtension, package.FullPath, true);
-            return 0;
+            Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.Metadata.PackageId, package.Metadata.Version, package.Metadata.Hash);
+            Log.ServiceMessages.PackageFound(
+                package.Metadata.PackageId, 
+                package.Metadata.Version,
+                package.Metadata.Hash, 
+                package.Metadata.FileExtension,
+                package.FullPath, 
+                true);
+            return 0;                                   
         }
 
-        void FindEarlierPackages(PackageStore packageStore, NuGetVersion version)
+        void FindEarlierPackages(PackageStore packageStore, PhysicalPackageMetadata packageMetadata)
         {
-            Log.Verbose("Finding earlier packages that have been uploaded to this Tentacle.");
-            var nearestPackages = packageStore.GetNearestPackages(packageId, version).ToList();
+            Log.VerboseFormat("Finding earlier packages that have been uploaded to this Tentacle.");
+            var nearestPackages = packageStore.GetNearestPackages(packageMetadata).ToList();
             if (!nearestPackages.Any())
             {
                 Log.VerboseFormat("No earlier packages for {0} has been uploaded", packageId);
-                return;
             }
 
-            Log.Verbose($"Found {nearestPackages.Count} earlier {(nearestPackages.Count == 1 ? "version" : "versions")} of {packageId} on this Tentacle");
-            foreach (var nearestPackage in nearestPackages)
+            Log.VerboseFormat("Found {0} earlier {1} of {2} on this Tentacle", 
+                nearestPackages.Count, nearestPackages.Count == 1 ? "version" : "versions", packageId);
+            foreach(var nearestPackage in nearestPackages)
             {
                 Log.VerboseFormat("  - {0}: {1}", nearestPackage.Metadata.Version, nearestPackage.FullPath);
-                Log.ServiceMessages.PackageFound(nearestPackage.Metadata.Id, nearestPackage.Metadata.Version, nearestPackage.Metadata.Hash, nearestPackage.Metadata.FileExtension, nearestPackage.FullPath);
+                Log.ServiceMessages.PackageFound(
+                    nearestPackage.Metadata.PackageId, 
+                    nearestPackage.Metadata.Version, 
+                    nearestPackage.Metadata.Hash,
+                    nearestPackage.Metadata.FileExtension,
+                    nearestPackage.FullPath);
             }
         }
     }

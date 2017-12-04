@@ -1,6 +1,6 @@
 ﻿// Much of this class was based on code from https://github.com/NuGet/NuGet.Client. It was ported, as the NuGet libraries are .NET 4.5 and Calamari is .NET 4.0
 // Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.//
 #if USE_NUGET_V2_LIBS
 using System;
 using System.Collections.Generic;
@@ -9,19 +9,21 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Calamari.Commands.Support;
-using Calamari.NuGet.Versioning;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NuGet.Versioning;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 
 namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetV3Downloader
     {
-        public static void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        static readonly IVersionFactory VersionFactory = new VersionFactory();    
+    
+        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
         {
             var normalizedId = packageId.ToLowerInvariant();
-            var normalizedVersion = version.ToNormalizedString().ToLowerInvariant();
+            var normalizedVersion = version.ToString().ToLowerInvariant();
             var packageBaseUri = GetPackageBaseUri(feedUri, feedCredentials).AbsoluteUri.TrimEnd('/');
             var downloadUri = new Uri($"{packageBaseUri}/{normalizedId}/{normalizedVersion}/{normalizedId}.{normalizedVersion}.nupkg");
 
@@ -109,8 +111,7 @@ namespace Calamari.Integration.Packages.NuGet
             if (json.TryGetValue("version", out versionToken) &&
                 versionToken.Type == JTokenType.String)
             {
-                SemanticVersion version;
-                if (SemanticVersion.TryParse((string)versionToken, out version) && version.Major == 3)
+                if (VersionFactory.CanCreateSemanticVersion((string)versionToken, out var version)  && version.Major == 3)
                 {
                     return true;
                 }

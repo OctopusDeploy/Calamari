@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
+using Octopus.Core.Resources.Metadata;
 using Octostache;
 
 namespace Calamari.Tests.Helpers
@@ -81,9 +82,9 @@ namespace Calamari.Tests.Helpers
                     var foundPackageRemotePath = message.GetValue(ServiceMessageNames.FoundPackage.RemotePathAttribute);
                     FoundPackage =
                         new StoredPackage(
-                            new ExtendedPackageMetadata
+                            new PhysicalPackageMetadata
                             {
-                                Id = foundPackageId,
+                                PackageId = foundPackageId,
                                 Version = foundPackageVersion,
                                 Hash = foundPackageHash
                             }, foundPackageRemotePath);
@@ -96,7 +97,7 @@ namespace Calamari.Tests.Helpers
                     if (pdvHash != null)
                     {
                         DeltaVerification =
-                            new StoredPackage(new ExtendedPackageMetadata {Hash = pdvHash},
+                            new StoredPackage(new PhysicalPackageMetadata {Hash = pdvHash},
                                 pdvRemotePath);
                     }
                     break;

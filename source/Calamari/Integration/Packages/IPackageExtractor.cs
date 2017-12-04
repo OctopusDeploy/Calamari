@@ -1,4 +1,6 @@
-﻿namespace Calamari.Integration.Packages
+﻿using Octopus.Core.Resources;
+
+namespace Calamari.Integration.Packages
 {
     public interface IPackageExtractor
     {

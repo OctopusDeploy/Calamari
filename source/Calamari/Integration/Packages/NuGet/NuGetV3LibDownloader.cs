@@ -13,12 +13,14 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using System.IO;
+using Calamari.Extensions;
+using Octopus.Core.Resources.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {
     public class NuGetV3LibDownloader
     {
-        public static void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
         {
             ILogger logger = new NugetLogger();
             var sourceRepository = Repository.Factory.GetCoreV3(feedUri.AbsoluteUri);
@@ -29,7 +31,7 @@ namespace Calamari.Integration.Packages.NuGet
             }
 
             var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, new SourceCacheContext());
-            var libraryIdentity = new LibraryIdentity(packageId, version, LibraryType.Package);
+            var libraryIdentity = new LibraryIdentity(packageId, version.ToNuGetVersion(), LibraryType.Package);
 
             var targetPath = Directory.GetParent(targetFilePath).FullName;
             if (!Directory.Exists(targetPath))

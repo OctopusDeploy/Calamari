@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Fixtures.Util;
 using NSubstitute;
@@ -14,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [SetUp]
         public void SetUp()
         {
-            extractor = Substitute.For<SimplePackageExtractor>();
+            extractor = Substitute.ForPartsOf<SimplePackageExtractor>();
             extractor.Extensions.Returns(new string[] { ".tar.gz" });
         }
 
@@ -23,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var metaData = extractor.GetMetadata("octofxjs.2.3.41.tar.gz-e7e75d07-6b62-4219-81c6-121698876868");
 
-            Assert.AreEqual("octofxjs", metaData.Id);
+            Assert.AreEqual("octofxjs", metaData.PackageId);
             Assert.AreEqual("2.3.41", metaData.Version);
             Assert.AreEqual(".tar.gz", metaData.FileExtension);
         }
@@ -33,34 +34,34 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var metaData = extractor.GetMetadata("octofxjs.2.3.41.tar.gz");
 
-            Assert.AreEqual("octofxjs", metaData.Id);
+            Assert.AreEqual("octofxjs", metaData.PackageId);
             Assert.AreEqual("2.3.41", metaData.Version);
             Assert.AreEqual(".tar.gz", metaData.FileExtension);
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenUnknownExtension()
         {
             extractor.GetMetadata("octofxjs.2.3.41.doc");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenInvalidSeverVersion()
         {
             extractor.GetMetadata("octofxjs.2.3.other.tar.gz");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenMissingVersion()
         {
             extractor.GetMetadata("octofxjs.tar.gz");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException))]
+        [ExpectedException(typeof(Exception))]
         public void ThrowsWhenMissingPackageId()
         {
             extractor.GetMetadata("2.3.41.doc");

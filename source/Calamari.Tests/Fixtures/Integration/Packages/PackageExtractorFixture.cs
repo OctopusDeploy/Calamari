@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             var metadata = extractor.GetMetadata(fileName);
 
-            Assert.AreEqual(PackageId, metadata.Id);
+            Assert.AreEqual(PackageId, metadata.PackageId);
             Assert.AreEqual(PackageVersion, metadata.Version);
         }
 

@@ -1,11 +1,13 @@
-﻿namespace Calamari.Integration.Packages
+﻿using Octopus.Core.Resources.Metadata;
+
+namespace Calamari.Integration.Packages
 {
     public class StoredPackage
     {
-        public ExtendedPackageMetadata Metadata { get; set; }
+        public PhysicalPackageMetadata Metadata { get; set; }
         public string FullPath { get; set; }
 
-        public StoredPackage(ExtendedPackageMetadata metadata, string fullPath)
+        public StoredPackage(PhysicalPackageMetadata metadata, string fullPath)
         {
             Metadata = metadata;
             FullPath = fullPath;

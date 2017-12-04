@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes.Semaphores;
+using Octopus.Core.Resources;
 using Octostache;
 
 namespace Calamari.Deployment
@@ -19,7 +19,7 @@ namespace Calamari.Deployment
         {
             return EnsureTargetPathExistsAndIsEmpty(
                 Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables), 
-                package.Id, package.Version), fileSystem);
+                package.PackageId, package.Version), fileSystem);
         }
 
         /// This will be specific to Tenant and/or Environment if these variables are available.

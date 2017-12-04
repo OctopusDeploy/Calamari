@@ -2,19 +2,18 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
-using PackageDownloader = Calamari.Integration.Packages.Download.PackageDownloader;
+using Calamari.Integration.Packages.Download;
+using Octopus.Core.Resources.Metadata;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 
 namespace Calamari.Commands
 {
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
     public class DownloadPackageCommand : Command
     {
-        static readonly PackageDownloader PackageDownloader = new PackageDownloader();
+        static readonly IPackageDownloader PackageDownloader = new PackageDownloaderStrategy();
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
         string packageId;
         string packageVersion;
         bool forcePackageDownload;
@@ -44,15 +43,20 @@ namespace Calamari.Commands
 
             try
             {
-                NuGetVersion version;
-                Uri uri;
-                int parsedMaxDownloadAttempts;
-                TimeSpan parsedAttemptBackoff;
-                CheckArguments(packageId, packageVersion, feedId, feedUri, feedUsername, feedPassword, maxDownloadAttempts, attemptBackoffSeconds, out version, out uri, out parsedMaxDownloadAttempts, out parsedAttemptBackoff);
+                CheckArguments(
+                    packageId, 
+                    packageVersion, 
+                    feedId, 
+                    feedUri, 
+                    feedUsername, 
+                    feedPassword, 
+                    maxDownloadAttempts, 
+                    attemptBackoffSeconds, 
+                    out var version, 
+                    out var uri, 
+                    out var parsedMaxDownloadAttempts, 
+                    out var parsedAttemptBackoff);
 
-                string downloadedTo;
-                string hash;
-                long size;
                 PackageDownloader.DownloadPackage(
                     packageId,
                     version,
@@ -62,9 +66,9 @@ namespace Calamari.Commands
                     forcePackageDownload,
                     parsedMaxDownloadAttempts,
                     parsedAttemptBackoff,
-                    out downloadedTo,
-                    out hash,
-                    out size);
+                    out string downloadedTo,
+                    out string hash,
+                    out long size);
 
                 Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
                     feedUri);
@@ -93,15 +97,30 @@ namespace Calamari.Commands
         }
 
         // ReSharper disable UnusedParameter.Local
-        static void CheckArguments(string packageId, string packageVersion, string feedId, string feedUri, string feedUsername, string feedPassword, string maxDownloadAttempts, string attemptBackoffSeconds, out NuGetVersion version, out Uri uri, out int parsedMaxDownloadAttempts, out TimeSpan parsedAttemptBackoff)
+        static void CheckArguments(
+            string packageId, 
+            string packageVersion, 
+            string feedId, 
+            string feedUri, 
+            string feedUsername, 
+            string feedPassword,
+            string maxDownloadAttempts, 
+            string attemptBackoffSeconds, 
+            out IVersion version, 
+            out Uri uri, 
+            out int parsedMaxDownloadAttempts, 
+            out TimeSpan parsedAttemptBackoff)
         {
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
-            if (!NuGetVersion.TryParse(packageVersion, out version))
-                throw new CommandException($"Package version '{packageVersion}' specified is not a valid semantic version");
+            var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId);
+            if (!VersionFactory.CanCreateVersion(packageVersion, out version, packageMetadata.FeedType))
+            {
+                throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string"); 
+            }
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
                 throw new CommandException($"URI specified '{feedUri}' is not a valid URI");

@@ -86,8 +86,8 @@ namespace Calamari.Integration.Packages.Java
                 /*
                      All extraction messages should be verbose
                  */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]"); 
-                
+                commandOutput.WriteInfo("##octopus[stdout-verbose]");
+
                 /*
                     Start by verifiying the archive is valid.
                 */
@@ -100,19 +100,24 @@ namespace Calamari.Integration.Packages.Java
                     If it is valid, go ahead an extract it
                 */
                 var extractJarCommand = new CommandLineInvocation(
-                        Path.Combine(javaBin, "java"),
-                        $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\"",
-                        targetDirectory);
-                
-                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");     
-                
+                    Path.Combine(javaBin, "java"),
+                    $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\"",
+                    targetDirectory);
+
+                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
+
                 /*
                      All extraction messages should be verbose
                  */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]");                
-            
+                commandOutput.WriteInfo("##octopus[stdout-verbose]");
+
                 var result = commandLineRunner.Execute(extractJarCommand);
                 result.VerifySuccess();
+            }
+            catch (Exception ex)
+            {
+                commandOutput.WriteError($"Exception thrown while extracting a Java archive. {ex}");
+                throw ex;
             }
             finally
             {

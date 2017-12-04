@@ -36,7 +36,11 @@ namespace Calamari.Tests.Helpers
         protected CalamariResult Invoke(CommandLine command, VariableDictionary variables)
         {
             var capture = new CaptureCommandOutput();
-            var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables), capture));
+            var runner = new CommandLineRunner(
+                new SplitCommandOutput(
+                    new ConsoleCommandOutput(),
+                    new ServiceMessageCommandOutput(variables),
+                    capture));
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, capture);
         }

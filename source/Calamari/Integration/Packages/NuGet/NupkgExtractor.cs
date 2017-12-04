@@ -5,13 +5,12 @@
 using System;
 using System.IO;
 using System.Linq;
-using Calamari.Util;
-using NuGet;
+using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using SharpCompress.Readers;
-using SharpCompress.Readers.Zip;
 
 namespace Calamari.Integration.Packages.NuGet
 {
@@ -23,12 +22,11 @@ namespace Calamari.Integration.Packages.NuGet
         {
             var package = new LocalNuGetPackage(packageFile);
             var packageMetadata = package.Metadata;
-            return new PackageMetadata
-            {
-                Id = packageMetadata.Id,
-                Version = packageMetadata.Version.ToString(),
-                FileExtension = Extensions.First()
-            };
+
+            return new NuGetPackageIDParser().GetMetadataFromPackageID(
+                packageMetadata.Id,
+                packageMetadata.Version.ToString(),
+                Extensions.First());            
         }
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)

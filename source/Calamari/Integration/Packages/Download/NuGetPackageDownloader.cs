@@ -1,48 +1,46 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Util;
+using Octopus.Core.Resources.Metadata;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 #if USE_NUGET_V2_LIBS
 using NuGet;
-using Calamari.NuGet.Versioning;
-using VersionComparer = NuGet.Versioning.VersionComparer;
-using SemanticVersion = NuGet.Versioning.SemanticVersion;
 #else
 using NuGet.Packaging;
-using NuGet.Versioning;
+
 #endif
 
 
 namespace Calamari.Integration.Packages.Download
 {
-    class PackageDownloader
+    class NuGetPackageDownloader : IPackageDownloader
     {
+        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        public static string RootDirectory => Path.Combine(TentacleHome, "Files");
         public static readonly string DownloadingExtension = ".downloading";
 
-        private static string TentacleHome
+        public void DownloadPackage(
+            string packageId,
+            IVersion version,
+            string feedId,
+            Uri feedUri,
+            ICredentials feedCredentials,
+            bool forcePackageDownload,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff,
+            out string downloadedTo,
+            out string hash,
+            out long size)
         {
-            get
-            {
-                var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
-                if (tentacleHome == null)
-                {
-                    Log.Error("Environment variable 'TentacleHome' has not been set.");
-                }
-                return tentacleHome;
-            }
-        }
+            var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
 
-        public void DownloadPackage(string packageId, NuGetVersion version, string feedId, Uri feedUri, ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, out string downloadedTo, out string hash, out long size)
-        {
-            var cacheDirectory = GetPackageRoot(feedId);
-            
             LocalNuGetPackage downloaded = null;
             downloadedTo = null;
             if (!forcePackageDownload)
@@ -52,7 +50,8 @@ namespace Calamari.Integration.Packages.Download
 
             if (downloaded == null)
             {
-                DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts, downloadAttemptBackoff, out downloaded, out downloadedTo);
+                DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts,
+                    downloadAttemptBackoff, out downloaded, out downloadedTo);
             }
             else
             {
@@ -61,11 +60,12 @@ namespace Calamari.Integration.Packages.Download
 
             size = fileSystem.GetFileSize(downloadedTo);
             string packageHash = null;
-            downloaded.GetStream(stream=>  packageHash = HashCalculator.Hash(stream));
+            downloaded.GetStream(stream => packageHash = HashCalculator.Hash(stream));
             hash = packageHash;
         }
 
-        private void AttemptToGetPackageFromCache(string packageId, NuGetVersion version, string cacheDirectory, out LocalNuGetPackage downloaded, out string downloadedTo)
+        private void AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory,
+            out LocalNuGetPackage downloaded, out string downloadedTo)
         {
             downloaded = null;
             downloadedTo = null;
@@ -74,7 +74,7 @@ namespace Calamari.Integration.Packages.Download
 
             var name = GetNameOfPackage(packageId, version.ToString());
             fileSystem.EnsureDirectoryExists(cacheDirectory);
-            
+
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, name + "*.nupkg");
 
             foreach (var file in files)
@@ -83,15 +83,15 @@ namespace Calamari.Integration.Packages.Download
                 if (package == null)
                     continue;
 
-               
+
                 var idMatches = string.Equals(package.Metadata.Id, packageId, StringComparison.OrdinalIgnoreCase);
-                var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
-#if USE_NUGET_V2_LIBS
-                var nugetVerMatches = NuGetVersion.TryParse(package.Metadata.Version, out NuGetVersion packageVersion) &&
-                        VersionComparer.Default.Equals(version, packageVersion);
-#else
-                var nugetVerMatches = package.Metadata.Version.Equals(version);
-#endif
+                var versionExactMatch = string.Equals(package.Metadata.Version.ToString(), version.ToString(),
+                    StringComparison.OrdinalIgnoreCase);
+
+                var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId);
+                var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version.ToString(),
+                                          out IVersion packageVersion, packageMetadata.FeedType) &&
+                                      version.Equals(packageVersion);
 
                 if (idMatches && (nugetVerMatches || versionExactMatch))
                 {
@@ -108,23 +108,10 @@ namespace Calamari.Integration.Packages.Download
             {
                 return new LocalNuGetPackage(filePath);
             }
-            catch (FileNotFoundException)
+            catch (Exception)
             {
                 return null;
             }
-            catch (IOException)
-            {
-                return null;
-            }
-            catch (FileFormatException)
-            {
-                return null;
-            }
-        }
-
-        private string GetPackageRoot(string prefix)
-        {
-            return string.IsNullOrWhiteSpace(prefix) ? RootDirectory : Path.Combine(RootDirectory, prefix);
         }
 
         private string GetNameOfPackage(string packageId, string version)
@@ -132,7 +119,16 @@ namespace Calamari.Integration.Packages.Download
             return $"{packageId}.{version}_";
         }
 
-        private void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, ICredentials feedCredentials, string cacheDirectory, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff, out LocalNuGetPackage downloaded, out string downloadedTo)
+        private void DownloadPackage(
+            string packageId,
+            IVersion version,
+            Uri feedUri,
+            ICredentials feedCredentials,
+            string cacheDirectory,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff,
+            out LocalNuGetPackage downloaded,
+            out string downloadedTo)
         {
             Log.Info("Downloading NuGet package {0} {1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
@@ -141,18 +137,20 @@ namespace Calamari.Integration.Packages.Download
 
             var fullPathToDownloadTo = GetFilePathToDownloadPackageTo(cacheDirectory, packageId, version.ToString());
 
-            var downloader = new NuGetPackageDownloader(fileSystem);
-            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo, maxDownloadAttempts, downloadAttemptBackoff); 
+            var downloader = new NuGet.NuGetPackageDownloader(fileSystem);
+            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo,
+                maxDownloadAttempts, downloadAttemptBackoff);
 
             downloaded = new LocalNuGetPackage(fullPathToDownloadTo);
-            downloadedTo = fullPathToDownloadTo; 
+            downloadedTo = fullPathToDownloadTo;
             CheckWhetherThePackageHasDependencies(downloaded.Metadata);
         }
 
 
         string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version)
         {
-            var name = packageId + "." + version + "_" + BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg";
+            var name = packageId + "." + version + "_" +
+                       BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) + ".nupkg";
             return Path.Combine(cacheDirectory, name);
         }
 
@@ -165,11 +163,12 @@ namespace Calamari.Integration.Packages.Download
 #endif
             if (dependencies.Any())
             {
-                Log.Info("NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
-                               downloaded.Id,
-                               downloaded.Version,
-                               string.Join(", ", dependencies.Select(dependency => dependency.ToString())),
-                               WhyAmINotAllowedToUseDependencies);
+                Log.Info(
+                    "NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
+                    downloaded.Id,
+                    downloaded.Version,
+                    string.Join(", ", dependencies.Select(dependency => dependency.ToString())),
+                    WhyAmINotAllowedToUseDependencies);
             }
         }
     }

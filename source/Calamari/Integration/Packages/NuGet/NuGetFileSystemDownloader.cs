@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Calamari.Commands.Support;
-using Calamari.Util;
-using NuGet;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
+using Octopus.Core.Resources.Metadata;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 
 namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetFileSystemDownloader
     {
-        public static void DownloadPackage(string packageId, NuGetVersion version, Uri feedUri, string targetFilePath)
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
+        static readonly IMetadataFactory PackageMetadataFactory = new MetadataFactory();
+        
+        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, string targetFilePath)
         {
             if (!Directory.Exists(feedUri.LocalPath))
                 throw new Exception($"Path does not exist: '{feedUri}'");
@@ -26,7 +23,8 @@ namespace Calamari.Integration.Packages.NuGet
             // which would be the file name and extension.
             var package = (from path in GetPackageLookupPaths(packageId, version, feedUri)
                     let p = new LocalNuGetPackage(path) 
-                    where p.Metadata.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase) && new NuGetVersion(p.Metadata.Version).Equals(version)
+                    where p.Metadata.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase) && 
+                          VersionFactory.CreateVersion(p.Metadata.Version.ToString(), PackageMetadataFactory.GetMetadataFromPackageID(packageId).FeedType).Equals(version)
                     select p).FirstOrDefault();
 
             if (package == null)
@@ -44,14 +42,14 @@ namespace Calamari.Integration.Packages.NuGet
             }
         }
 
-        static IEnumerable<string> GetPackageLookupPaths(string packageId, NuGetVersion version, Uri feedUri)
+        static IEnumerable<string> GetPackageLookupPaths(string packageId, IVersion version, Uri feedUri)
         {
             // Files created by the path resolver. This would take into account the non-side-by-side scenario
             // and we do not need to match this for id and version.
             var packageFileName = GetPackageFileName(packageId, version);
             var filesMatchingFullName = GetPackageFiles(feedUri, packageFileName);
 
-            if (version != null && version.Version.Revision < 1)
+            if (version != null && version.Revision < 1)
             {
                 // If the build or revision number is not set, we need to look for combinations of the format
                 // * Foo.1.2.nupkg
@@ -60,9 +58,9 @@ namespace Calamari.Integration.Packages.NuGet
                 // * Foo.1.2.0.0.nupkg
                 // To achieve this, we would look for files named 1.2*.nupkg if both build and revision are 0 and
                 // 1.2.3*.nupkg if only the revision is set to 0.
-                string partialName = version.Version.Build < 1 ?
-                                        String.Join(".", packageId, version.Version.Major, version.Version.Minor) :
-                                        String.Join(".", packageId, version.Version.Major, version.Version.Minor, version.Version.Build);
+                string partialName = version.Patch < 1 ?
+                                        String.Join(".", packageId, version.Major, version.Minor) :
+                                        String.Join(".", packageId, version.Major, version.Minor, version.Patch);
                 partialName += "*" + ".nupkg";
 
                 // Partial names would result is gathering package with matching major and minor but different build and revision.
@@ -73,16 +71,18 @@ namespace Calamari.Integration.Packages.NuGet
             return filesMatchingFullName;
         }
 
-        static bool FileNameMatchesPattern(string packageId, NuGetVersion version, string path)
+        static bool FileNameMatchesPattern(string packageId, IVersion version, string path)
         {
             var name = Path.GetFileNameWithoutExtension(path);
-            NuGetVersion parsedVersion;
 
             // When matching by pattern, we will always have a version token. Packages without versions would be matched early on by the version-less path resolver
             // when doing an exact match.
             return name.Length > packageId.Length &&
-                   NuGetVersion.TryParse(name.Substring(packageId.Length + 1), out parsedVersion) &&
-                   parsedVersion == version;
+                   VersionFactory.CanCreateVersion(
+                       name.Substring(packageId.Length + 1), 
+                       out IVersion parsedVersion, 
+                       PackageMetadataFactory.GetMetadataFromPackageID(packageId).FeedType) &&
+                   parsedVersion.Equals(version);
         }
 
         static IEnumerable<string> GetPackageFiles(Uri feedUri, string filter = null)
@@ -123,7 +123,7 @@ namespace Calamari.Integration.Packages.NuGet
             return Enumerable.Empty<string>();
         }
 
-        static string GetPackageFileName(string packageId, NuGetVersion version)
+        static string GetPackageFileName(string packageId, IVersion version)
         {
             return packageId + "." + version + ".nupkg";
         }

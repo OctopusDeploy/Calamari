@@ -1,11 +1,13 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Text;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
+using Octopus.Core.Constants;
+using Octopus.Core.Resources;
 
 namespace Calamari.Java.Deployment.Conventions
 {
@@ -16,29 +18,30 @@ namespace Calamari.Java.Deployment.Conventions
         readonly JarTool jarTool;
 
         public RePackArchiveConvention(
-            ICalamariFileSystem fileSystem, 
-            ICommandOutput commandOutput, 
-            IPackageExtractor packageExtractor, 
+            ICalamariFileSystem fileSystem,
+            ICommandOutput commandOutput,
+            IPackageExtractor packageExtractor,
             ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
             this.packageExtractor = packageExtractor;
-            this.jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem); 
+            this.jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
         }
 
         public void Install(RunningDeployment deployment)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Java.JavaArchiveExtractionDisabled))
             {
-                Log.Verbose($"'{SpecialVariables.Action.Java.JavaArchiveExtractionDisabled}' is set. Skipping re-pack.");
+                Log.Verbose(
+                    $"'{SpecialVariables.Action.Java.JavaArchiveExtractionDisabled}' is set. Skipping re-pack.");
                 return;
-            }                
+            }
 
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Java.DeployExploded))
             {
                 Log.Verbose($"'{SpecialVariables.Action.Java.DeployExploded}' is set. Skipping re-pack.");
                 return;
-            }                
+            }
 
             var packageMetadata = packageExtractor.GetMetadata(deployment.PackageFilePath);
 
@@ -47,15 +50,17 @@ namespace Calamari.Java.Deployment.Conventions
             var repackedArchiveDirectory = Path.GetDirectoryName(repackedArchivePath);
 
             deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, repackedArchiveDirectory);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, repackedArchiveDirectory, deployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationPackagePath, repackedArchivePath, deployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, repackedArchiveDirectory,
+                deployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationPackagePath, repackedArchivePath,
+                deployment.Variables);
         }
 
         protected string CreateArchive(RunningDeployment deployment, PackageMetadata packageMetadata)
-        {            
+        {
             var applicationDirectory = ApplicationDirectory.GetApplicationDirectory(
-                packageMetadata, 
-                deployment.Variables, 
+                packageMetadata,
+                deployment.Variables,
                 fileSystem);
 
             var customPackageFileName = deployment.Variables.Get(SpecialVariables.Package.CustomPackageFileName);
@@ -65,12 +70,22 @@ namespace Calamari.Java.Deployment.Conventions
                 Log.Verbose($"Using custom package file-name: '{customPackageFileName}'");
             }
 
-            var targetFileName = !string.IsNullOrWhiteSpace(customPackageFileName) 
+            var targetFileName = !string.IsNullOrWhiteSpace(customPackageFileName)
                 ? customPackageFileName
-                : $"{packageMetadata.Id}.{packageMetadata.Version}{packageMetadata.FileExtension}";
+                : new StringBuilder()
+                    .Append(packageMetadata.PackageId)
+                    /*
+                     * If this package was sourced from a maven feed, we use the # char as a delimiter between
+                     * the package id and the version. If it is not from a maven feed, we use the default of
+                     * a period.
+                     */
+                    .Append(packageMetadata.FeedType == FeedType.Maven ? JavaConstants.MavenFilenameDelimiter : '.')
+                    .Append(packageMetadata.Version)
+                    .Append(packageMetadata.FileExtension)
+                    .ToString();
 
             var targetFilePath = Path.Combine(applicationDirectory, targetFileName);
-                        
+
             var stagingDirectory = deployment.CurrentDirectory;
 
             jarTool.CreateJar(stagingDirectory, targetFilePath);

@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Util;
+using Octopus.Core.Resources;
 
 namespace Calamari.Deployment.Conventions
 {

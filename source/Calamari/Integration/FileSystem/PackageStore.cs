@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Util;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
+using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
+using Octopus.Core.Resources.Versioning;
+using Octopus.Core.Resources.Versioning.Factories;
 
 namespace Calamari.Integration.FileSystem
 {
@@ -17,6 +17,7 @@ namespace Calamari.Integration.FileSystem
         private readonly IPackageExtractor packageExtractorFactory;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
+        static readonly IVersionFactory VersionFactory = new VersionFactory();
 
         private static string TentacleHome
         {
@@ -54,18 +55,19 @@ namespace Calamari.Integration.FileSystem
             return new StoredPackage(package, packageFullPath);
         }
 
-        public StoredPackage GetPackage(ExtendedPackageMetadata metadata)
+        public StoredPackage GetPackage(PhysicalPackageMetadata metadata)
         {
-            var name = GetNameOfPackage(metadata);
             fileSystem.EnsureDirectoryExists(rootDirectory);
 
-            foreach (var file in PackageFiles(name))
+            foreach (var file in PackageFiles(metadata.PackageAndVersionSearchPattern))
             {
                 var storedPackage = GetPackage(file);
                 if (storedPackage == null)
                     continue;
-
-                if (!string.Equals(storedPackage.Metadata.Id, metadata.Id, StringComparison.OrdinalIgnoreCase) || NuGetVersion.Parse(storedPackage.Metadata.Version) != NuGetVersion.Parse(metadata.Version))
+                
+                if (!string.Equals(storedPackage.Metadata.PackageId, metadata.PackageId, StringComparison.OrdinalIgnoreCase) || 
+                    !VersionFactory.CanCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.FeedType) ||
+                    !packageVersion.Equals(VersionFactory.CreateVersion(metadata.Version, metadata.FeedType)))
                     continue;
 
                 if (string.IsNullOrWhiteSpace(metadata.Hash))
@@ -84,13 +86,18 @@ namespace Calamari.Integration.FileSystem
             return fileSystem.EnumerateFilesRecursively(rootDirectory, patterns);
         }
 
-        public IEnumerable<StoredPackage> GetNearestPackages(string packageId, NuGetVersion version, int take = 5)
+        public IEnumerable<StoredPackage> GetNearestPackages(PackageMetadata metadata, int take = 5)
         {
+            if (!VersionFactory.CanCreateVersion(metadata.Version, out var version, metadata.FeedType))
+            {
+                throw new CommandException(string.Format($"Package version '{metadata.Version}' is not a valid version string"));
+            }
+            
             fileSystem.EnsureDirectoryExists(rootDirectory);
             var zipPackages =
-                from filePath in PackageFiles(packageId +"*")
+                from filePath in PackageFiles(metadata.PackageSearchPattern)
                 let zip = PackageMetadata(filePath)
-                where zip != null && zip.Id == packageId && new NuGetVersion(zip.Version) <= version
+                where zip != null && zip.PackageId == metadata.PackageId && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) <= 0
                 orderby zip.Version descending
                 select new {zip, filePath};
 
@@ -109,34 +116,24 @@ namespace Calamari.Integration.FileSystem
             }
             catch (Exception)
             {
+                Log.Verbose($"Could not extract metadata for {file}. This file may not have a recognised filename.");
                 return null;
             }
         }
 
-        static ExtendedPackageMetadata ExtendedPackageMetadata(string file, PackageMetadata metadata)
+        static PhysicalPackageMetadata ExtendedPackageMetadata(string file, PackageMetadata metadata)
         {
             try
             {
                 using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
                 {
-                    return new ExtendedPackageMetadata
-                    {
-                        Id = metadata.Id,
-                        Version = metadata.Version,
-                        FileExtension = metadata.FileExtension,
-                        Hash = HashCalculator.Hash(stream),
-                    };
+                    return new PhysicalPackageMetadata(metadata, 0, HashCalculator.Hash(stream));
                 }
             }
             catch (IOException)
             {
                 return null;
             }
-        }
-
-        static string GetNameOfPackage(PackageMetadata metadata)
-        {
-            return metadata.Id + "." + metadata.Version + "*";
         }
     }
 }

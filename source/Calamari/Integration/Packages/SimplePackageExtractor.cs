@@ -1,41 +1,16 @@
-using System.IO;
-#if USE_NUGET_V2_LIBS
-using Calamari.NuGet.Versioning;
-#else
-using NuGet.Versioning;
-#endif
+using Octopus.Core.Resources;
+using Octopus.Core.Resources.Metadata;
 
 namespace Calamari.Integration.Packages
 {
     public abstract class SimplePackageExtractor : IPackageExtractor
     {
-        public PackageMetadata GetMetadata(string packageFile)
+        public virtual PackageMetadata GetMetadata(string packageFile)
         {
-
-            var metadataAndExtension = PackageIdentifier.ExtractPackageExtensionAndMetadata(packageFile, Extensions);
-
-            var idAndVersion = metadataAndExtension.Item1;
-            var pkg = new PackageMetadata {FileExtension = metadataAndExtension.Item2};
-
-            if (string.IsNullOrEmpty(pkg.FileExtension))
-            {
-                throw new FileFormatException($"Unable to determine filetype of file \"{packageFile}\"");
-            }
-
-            if (!PackageIdentifier.TryParsePackageIdAndVersion(idAndVersion, out string packageId, out NuGetVersion version))
-            {
-                throw new FileFormatException($"Unable to extract the package ID and version from file \"{packageFile}\"");
-            }
-
-            pkg.Id = packageId;
-            pkg.Version = version.ToString();
-            return pkg;
+            return new NuGetPackageIDParser().GetMetadataFromPackageName(packageFile, Extensions);
         }
 
-
         public abstract int Extract(string packageFile, string directory, bool suppressNestedScriptWarning);
-        public abstract string[] Extensions { get; }
-
-        
+        public abstract string[] Extensions { get; }       
     }
 }

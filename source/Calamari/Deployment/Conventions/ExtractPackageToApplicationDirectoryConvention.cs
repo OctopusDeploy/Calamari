@@ -1,5 +1,6 @@
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Octopus.Core.Resources;
 
 namespace Calamari.Deployment.Conventions
 {
