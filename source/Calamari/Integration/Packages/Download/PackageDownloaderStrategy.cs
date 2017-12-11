@@ -29,11 +29,11 @@ namespace Calamari.Integration.Packages.Download
             out long size)
         {
             IPackageDownloader downloader = null;
-            if (MavenPackageIdParser.CanGetMetadataFromPackageID(packageId, out var mavenMetadata))
+            if (MavenPackageIdParser.TryGetMetadataFromPackageID(packageId, out var mavenMetadata))
             {
                 downloader = new MavenPackageDownloader();
             }
-            else if (NugetPackageIdParser.CanGetMetadataFromPackageID(packageId, out var nugetMetadata))
+            else if (NugetPackageIdParser.TryGetMetadataFromPackageID(packageId, out var nugetMetadata))
             {
                 downloader = new NuGetPackageDownloader();                
             }

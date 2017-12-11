@@ -66,7 +66,7 @@ namespace Calamari.Integration.FileSystem
                     continue;
                 
                 if (!string.Equals(storedPackage.Metadata.PackageId, metadata.PackageId, StringComparison.OrdinalIgnoreCase) || 
-                    !VersionFactory.CanCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.FeedType) ||
+                    !VersionFactory.TryCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.FeedType) ||
                     !packageVersion.Equals(VersionFactory.CreateVersion(metadata.Version, metadata.FeedType)))
                     continue;
 
@@ -88,7 +88,7 @@ namespace Calamari.Integration.FileSystem
 
         public IEnumerable<StoredPackage> GetNearestPackages(PackageMetadata metadata, int take = 5)
         {
-            if (!VersionFactory.CanCreateVersion(metadata.Version, out var version, metadata.FeedType))
+            if (!VersionFactory.TryCreateVersion(metadata.Version, out var version, metadata.FeedType))
             {
                 throw new CommandException(string.Format($"Package version '{metadata.Version}' is not a valid version string"));
             }
