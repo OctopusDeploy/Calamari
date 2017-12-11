@@ -78,7 +78,7 @@ namespace Calamari.Integration.Packages.NuGet
             // When matching by pattern, we will always have a version token. Packages without versions would be matched early on by the version-less path resolver
             // when doing an exact match.
             return name.Length > packageId.Length &&
-                   VersionFactory.CanCreateVersion(
+                   VersionFactory.TryCreateVersion(
                        name.Substring(packageId.Length + 1), 
                        out IVersion parsedVersion, 
                        PackageMetadataFactory.GetMetadataFromPackageID(packageId).FeedType) &&
