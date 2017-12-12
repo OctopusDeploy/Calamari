@@ -1,10 +1,12 @@
-﻿using Calamari.Deployment;
+﻿using System;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
+using Calamari.Tests.Helpers;
 using NSubstitute;
-using NSubstitute.Core.Arguments;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Conventions
@@ -106,6 +108,32 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string relativeInstallDirectory = "relative/path/to/folder";
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, relativeInstallDirectory);
 
+            CreateConvention().Install(deployment);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [ExpectedException(ExpectedMessage = "Access to the path /var/tmp/myCustomInstallDir was denied. Ensure that the application that uses this directory is not running.")]
+        public void ShouldNotIncludeIISRelatedInfoInErrorMessageWhenAccessDeniedException()
+        {
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            fileSystem.CopyDirectory(Arg.Any<string>(), Arg.Any<string>())
+                .ThrowsForAnyArgs(
+                    new UnauthorizedAccessException($"Access to the path {customInstallationDirectory} was denied."));
+            CreateConvention().Install(deployment);
+        }
+
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [ExpectedException(ExpectedMessage = "Access to the path C:\\myCustomInstallDir was denied. Ensure that the application that uses this directory is not running. If this is an IIS website, stop the application pool or use an app_offline.htm file (see https://g.octopushq.com/TakingWebsiteOffline).")]
+        public void ShouldIncludeIISRelatedInfoInErrorMessageWhenAccessDeniedException()
+        {
+            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            fileSystem.CopyDirectory(Arg.Any<string>(), Arg.Any<string>())
+                .ThrowsForAnyArgs(
+                    new UnauthorizedAccessException($"Access to the path {customInstallationDirectory} was denied."));
             CreateConvention().Install(deployment);
         }
 
