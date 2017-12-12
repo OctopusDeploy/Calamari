@@ -8,6 +8,7 @@ using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Octopus.Core.Constants;
 using Octopus.Core.Resources;
+using Octopus.Core.Resources.Versioning;
 
 namespace Calamari.Java.Deployment.Conventions
 {
@@ -75,11 +76,11 @@ namespace Calamari.Java.Deployment.Conventions
                 : new StringBuilder()
                     .Append(packageMetadata.PackageId)
                     /*
-                     * If this package was sourced from a maven feed, we use the # char as a delimiter between
-                     * the package id and the version. If it is not from a maven feed, we use the default of
+                     * If this package uses the maven version format, we use the # char as a delimiter between
+                     * the package id and the version. If it is not a maven version, we use the default of
                      * a period.
                      */
-                    .Append(packageMetadata.FeedType == FeedType.Maven ? JavaConstants.MavenFilenameDelimiter : '.')
+                    .Append(packageMetadata.VersionFormat == VersionFormat.Maven ? JavaConstants.MavenFilenameDelimiter : '.')
                     .Append(packageMetadata.Version)
                     .Append(packageMetadata.FileExtension)
                     .ToString();

@@ -24,7 +24,7 @@ namespace Calamari.Integration.Packages.NuGet
             var package = (from path in GetPackageLookupPaths(packageId, version, feedUri)
                     let p = new LocalNuGetPackage(path) 
                     where p.Metadata.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase) && 
-                          VersionFactory.CreateVersion(p.Metadata.Version.ToString(), PackageMetadataFactory.GetMetadataFromPackageID(packageId).FeedType).Equals(version)
+                          VersionFactory.CreateVersion(p.Metadata.Version.ToString(), PackageMetadataFactory.GetMetadataFromPackageID(packageId).VersionFormat).Equals(version)
                     select p).FirstOrDefault();
 
             if (package == null)
@@ -81,7 +81,7 @@ namespace Calamari.Integration.Packages.NuGet
                    VersionFactory.TryCreateVersion(
                        name.Substring(packageId.Length + 1), 
                        out IVersion parsedVersion, 
-                       PackageMetadataFactory.GetMetadataFromPackageID(packageId).FeedType) &&
+                       PackageMetadataFactory.GetMetadataFromPackageID(packageId).VersionFormat) &&
                    parsedVersion.Equals(version);
         }
 

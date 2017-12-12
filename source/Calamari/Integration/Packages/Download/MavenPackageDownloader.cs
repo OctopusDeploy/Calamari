@@ -104,7 +104,7 @@ namespace Calamari.Integration.Packages.Download
                 .Where(meta => meta != Maybe<PackageMetadata>.None)
                 .Where(meta => meta.Value.PackageId == packageId)
                 .Any(meta => VersionFactory.TryCreateVersion(meta.Value.Version.ToString(),
-                                 out IVersion packageVersion, meta.Value.FeedType) &&
+                                 out IVersion packageVersion, meta.Value.VersionFormat) &&
                              version.Equals(packageVersion));
         }
 

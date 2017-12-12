@@ -84,7 +84,7 @@ namespace Calamari.Integration.Packages
                            }
                        })
                        .Where(details => details != null)
-                       .OrderByDescending(details => details.Item2.FeedType.Precedence())
+                       .OrderByDescending(details => details.Item2.VersionFormat.Precedence())
                        .Select(details => details.Item1)
                        .FirstOrDefault() ?? 
                    /*

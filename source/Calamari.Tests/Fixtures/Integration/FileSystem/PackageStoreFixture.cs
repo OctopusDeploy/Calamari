@@ -7,6 +7,7 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Core.Resources;
+using Octopus.Core.Resources.Versioning;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
@@ -46,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 {
                     PackageId = "Acme.Web",
                     Version = "1.1.1.1",
-                    FeedType = FeedType.NuGet,
+                    VersionFormat = VersionFormat.Semver,
                     PackageSearchPattern = "Acme.Web*"
                 });
 
@@ -68,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 {
                     PackageId = "Acme.Web",
                     Version = "1.1.1.1",
-                    FeedType = FeedType.NuGet,
+                    VersionFormat = VersionFormat.Semver,
                     PackageSearchPattern = "Acme.Web*"
                 });
 
