@@ -209,6 +209,13 @@
                 public static readonly string AadClientCredentialSecret = "Octopus.Action.ServiceFabric.AadClientCredentialSecret";
             }
 
+            public static class Aws
+            {
+                public static readonly string CloudFormationStackName = "Octopus.Action.Aws.CloudFormationStackName";
+                public static readonly string CloudFormationTemplate =  "Octopus.Action.Aws.CloudFormationTemplate";
+                public static readonly string CloudFormationProperties = "Octopus.Action.Aws.CloudFormationProperties";
+            }
+
             public static class Azure
             {
                 public static readonly string UseBundledAzurePowerShellModules = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
