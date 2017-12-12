@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Support;
 using Octopus.Core.Resources;
+using Octopus.Core.Resources.Versioning;
 
 namespace Calamari.Integration.Packages
 {
