@@ -79,10 +79,14 @@ namespace Calamari.Deployment.Conventions
             }
             catch (UnauthorizedAccessException uae) when (uae.Message.StartsWith("Access to the path"))
             {
+                var message = $"{uae.Message} Ensure that the application that uses this directory is not running. ";
+                if (CalamariEnvironment.IsRunningOnWindows)
+                {
+                    message += "If this is an IIS website, stop the application pool or use an app_offline.htm file " +
+                               "(see https://g.octopushq.com/TakingWebsiteOffline).";
+                }
                 throw new CommandException(
-                    $"{uae.Message} Ensure that the application that uses this directory is not running. " +
-                    "If this is an IIS website, stop the application pool or use an app_offline.htm file " +
-                    "(see https://g.octopushq.com/TakingWebsiteOffline)."
+                    message
                 );
             }
         }
