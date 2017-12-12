@@ -66,8 +66,8 @@ namespace Calamari.Integration.FileSystem
                     continue;
                 
                 if (!string.Equals(storedPackage.Metadata.PackageId, metadata.PackageId, StringComparison.OrdinalIgnoreCase) || 
-                    !VersionFactory.CanCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.FeedType) ||
-                    !packageVersion.Equals(VersionFactory.CreateVersion(metadata.Version, metadata.FeedType)))
+                    !VersionFactory.TryCreateVersion(storedPackage.Metadata.Version, out IVersion packageVersion, metadata.VersionFormat) ||
+                    !packageVersion.Equals(VersionFactory.CreateVersion(metadata.Version, metadata.VersionFormat)))
                     continue;
 
                 if (string.IsNullOrWhiteSpace(metadata.Hash))
@@ -88,7 +88,7 @@ namespace Calamari.Integration.FileSystem
 
         public IEnumerable<StoredPackage> GetNearestPackages(PackageMetadata metadata, int take = 5)
         {
-            if (!VersionFactory.CanCreateVersion(metadata.Version, out var version, metadata.FeedType))
+            if (!VersionFactory.TryCreateVersion(metadata.Version, out var version, metadata.VersionFormat))
             {
                 throw new CommandException(string.Format($"Package version '{metadata.Version}' is not a valid version string"));
             }
@@ -97,7 +97,7 @@ namespace Calamari.Integration.FileSystem
             var zipPackages =
                 from filePath in PackageFiles(metadata.PackageSearchPattern)
                 let zip = PackageMetadata(filePath)
-                where zip != null && zip.PackageId == metadata.PackageId && VersionFactory.CreateVersion(zip.Version, metadata.FeedType).CompareTo(version) <= 0
+                where zip != null && zip.PackageId == metadata.PackageId && VersionFactory.CreateVersion(zip.Version, metadata.VersionFormat).CompareTo(version) <= 0
                 orderby zip.Version descending
                 select new {zip, filePath};
 

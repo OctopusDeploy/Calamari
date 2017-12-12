@@ -89,8 +89,8 @@ namespace Calamari.Integration.Packages.Download
                     StringComparison.OrdinalIgnoreCase);
 
                 var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId);
-                var nugetVerMatches = VersionFactory.CanCreateVersion(package.Metadata.Version.ToString(),
-                                          out IVersion packageVersion, packageMetadata.FeedType) &&
+                var nugetVerMatches = VersionFactory.TryCreateVersion(package.Metadata.Version.ToString(),
+                                          out IVersion packageVersion, packageMetadata.VersionFormat) &&
                                       version.Equals(packageVersion);
 
                 if (idMatches && (nugetVerMatches || versionExactMatch))

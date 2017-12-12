@@ -100,11 +100,11 @@ namespace Calamari.Integration.Packages.Download
         /// <returns>true if the file matches the pacakge id and version, and false otherwise</returns>
         bool FileMatchesDetails(string file, string packageId, IVersion version)
         {
-            return PackageIdParser.CanGetMetadataFromServerPackageName(file).ToEnumerable()
+            return PackageIdParser.TryGetMetadataFromServerPackageName(file).ToEnumerable()
                 .Where(meta => meta != Maybe<PackageMetadata>.None)
                 .Where(meta => meta.Value.PackageId == packageId)
-                .Any(meta => VersionFactory.CanCreateVersion(meta.Value.Version.ToString(),
-                                 out IVersion packageVersion, meta.Value.FeedType) &&
+                .Any(meta => VersionFactory.TryCreateVersion(meta.Value.Version.ToString(),
+                                 out IVersion packageVersion, meta.Value.VersionFormat) &&
                              version.Equals(packageVersion));
         }
 
