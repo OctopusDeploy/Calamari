@@ -33,7 +33,7 @@ namespace Calamari.Aws.Commands
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
-            Options.Add("waitForComplete=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete = v);
+            Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete = v);
         }
 
         public override int Execute(string[] commandLineArguments)
