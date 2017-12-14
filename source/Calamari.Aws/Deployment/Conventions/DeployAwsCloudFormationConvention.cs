@@ -88,7 +88,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Map(client => client.DescribeStacks(new DescribeStacksRequest()
                     .Tee(request => { request.StackName = stackName; })))
                 .Map(response => response.Stacks.FirstOrDefault())
-                .Map(stack => stack?.Outputs);
+                .Map(stack => stack?.Outputs);       
 
         /// <summary>
         /// Wait for the stack to be in a completed state
@@ -109,7 +109,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Thread.Sleep(5000);
         }
 
-        private StackEvent StackEvent(string stackName) =>
+        private StackEvent StackEvent(string stackName, string status = null) =>
             new AmazonCloudFormationClient()
                 .Map(client =>
                 {
@@ -126,7 +126,8 @@ namespace Calamari.Aws.Deployment.Conventions
                 })
                 .Map(response => response?.StackEvents
                     .OrderByDescending(stackEvent => stackEvent.Timestamp)
-                    .FirstOrDefault());
+                    .FirstOrDefault(stackEvent => status == null || 
+                                                  stackEvent.ResourceStatus.Value.Equals(status, StringComparison.InvariantCultureIgnoreCase)));
 
         /// <summary>
         /// Queries the state of the stack, and checks to see if it is in a completed state
@@ -142,11 +143,11 @@ namespace Calamari.Aws.Deployment.Conventions
                     if (expectSuccess && (status?.ResourceStatus.Value.Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? true))
                     {
                         Log.Warn("Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
-                                 "Review the stack in the AWS console to find any errors that may have occured during deployment. " +
-                                 "The status reason returned by AWS is shown below.");
-                        if (status != null)
-                        {
-                            Log.Warn(status.ResourceStatusReason);
+                                 "Review the stack in the AWS console to find any errors that may have occured during deployment.");
+                        var progressStatus = StackEvent(stackName, "ROLLBACK_IN_PROGRESS");
+                        if (progressStatus != null)
+                        {                            
+                            Log.Warn(progressStatus.ResourceStatusReason);
                         }
                     }
                 })
