@@ -4,7 +4,8 @@ using System.Linq;
 using System.Threading;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
-using Amazon.CloudFormation.Model.Internal.MarshallTransformations;
+using Amazon.IdentityManagement;
+using Amazon.IdentityManagement.Model;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -57,6 +58,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     .Map(JsonConvert.DeserializeObject<List<Parameter>>)
                 : null;
 
+            WriteUserInfo();
+
             WaitForStackToComplete(stackName, false);
             
             (StackExists(stackName)
@@ -77,6 +80,15 @@ namespace Calamari.Aws.Deployment.Conventions
                     Log.Info($"Saving variable \"AwsOutputs[{output.OutputKey}]\"");
                 });
         }
+
+        /// <summary>
+        /// Dump the details of the current user.
+        /// </summary>
+        private void WriteUserInfo() =>        
+            new AmazonIdentityManagementServiceClient()
+                .Map(client => client.GetUser(new GetUserRequest()))
+                .Tee(response => Log.Info($"Running the step as the AWS {response.User.UserName}"));
+        
 
         /// <summary>
         /// Query the stack for the outputs
@@ -137,7 +149,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
         private Boolean StackEventCompleted(string stackName, bool expectSuccess = true) =>
             StackEvent(stackName)
-                .Tee(status => Log.Info($"Current stack state: {status?.ResourceStatus.Value ?? "Nonexistent"}"))
+                .Tee(status => Log.Info($"Current stack state: {status?.ResourceStatus.Value ?? "Does not exist"}"))
                 .Tee(status => LogRollbackError(status, stackName, expectSuccess))
                 .Map(status => status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true);
 
