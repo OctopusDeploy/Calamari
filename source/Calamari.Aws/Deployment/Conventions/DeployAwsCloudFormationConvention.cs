@@ -235,9 +235,10 @@ namespace Calamari.Aws.Deployment.Conventions
                     .Tee(stackId => Log.Info($"Updated stack with id {stackId}"));
             }
             catch (AmazonCloudFormationException ex)
-            {                
+            {
                 if (!(StackEvent(stackName)?.ResourceStatus.Value
-                          .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? false)) throw ex;
+                          .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ??
+                      false)) DealWithUpdateException(ex);
                 
                 // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
                 // created in the first place, we can end up here. In this case we try to create
@@ -246,6 +247,23 @@ namespace Calamari.Aws.Deployment.Conventions
                 WaitForStackToComplete(stackName, false);
                 return CreateCloudFormation(stackName, template, parameters);               
             }
+        }
+
+        /// <summary>
+        /// Not all exceptions are bad. Some just mean there is nothing to do, which is fine.
+        /// This method will ignore expected exceptions, and rethrow any that are really issues.
+        /// </summary>
+        /// <param name="ex">The exception we need to deal with</param>
+        /// <exception cref="AmazonCloudFormationException">The supplied exception if it really is an error</exception>
+        private void DealWithUpdateException(AmazonCloudFormationException ex)
+        {
+            if (ex.Message.Contains("No updates are to be performed"))
+            {
+                Log.Info("No updates are to be performed");
+                return;
+            }
+
+            throw ex;
         }
     }
 }
