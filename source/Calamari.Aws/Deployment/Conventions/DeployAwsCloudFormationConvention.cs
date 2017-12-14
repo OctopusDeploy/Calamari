@@ -93,8 +93,10 @@ namespace Calamari.Aws.Deployment.Conventions
 
             do
             {
-                Thread.Sleep(5);
+                Thread.Sleep(5000);
             } while (!StackEventCompleted(stackName));
+            
+            Thread.Sleep(5000);
         }
 
         /// <summary>
