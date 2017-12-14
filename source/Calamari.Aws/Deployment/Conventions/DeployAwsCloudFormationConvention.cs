@@ -59,9 +59,13 @@ namespace Calamari.Aws.Deployment.Conventions
                     ? UpdateCloudFormation(stackName, template, parameters)
                     : CreateCloudFormation(stackName, template, parameters))
                 .Tee(stackId => Log.SetOutputVariable($"AwsOutputs[StackId]", stackId, variables));
-            
+
             QueryStackOutputs(stackName)
-                ?.ForEach(output => Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables));
+                ?.ForEach(output =>
+                {
+                    Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables);
+                    Log.Info($"Saving variable \"AwsOutputs[{output.OutputKey}]\"");
+                });
         }
 
         /// <summary>
