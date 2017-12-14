@@ -57,7 +57,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     .Map(JsonConvert.DeserializeObject<List<Parameter>>)
                 : null;
 
-            WaitForStackToComplete(stackName);
+            WaitForStackToComplete(stackName, false);
             
             (StackExists(stackName)
                     ? UpdateCloudFormation(stackName, template, parameters)
@@ -94,7 +94,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Wait for the stack to be in a completed state
         /// </summary>
         /// <param name="stackName">The name of the stack</param>
-        private void WaitForStackToComplete(string stackName)
+        private void WaitForStackToComplete(string stackName, bool expectSuccess = true)
         {
             if (!StackExists(stackName))
             {
@@ -104,7 +104,7 @@ namespace Calamari.Aws.Deployment.Conventions
             do
             {
                 Thread.Sleep(5000);
-            } while (!StackEventCompleted(stackName));
+            } while (!StackEventCompleted(stackName, expectSuccess));
             
             Thread.Sleep(5000);
         }
@@ -133,10 +133,19 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Queries the state of the stack, and checks to see if it is in a completed state
         /// </summary>
         /// <param name="stackName">The name of the stack</param>
+        /// <param name="expectSuccess">True if we were expecting this event to indicate success</param>
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
-        private Boolean StackEventCompleted(string stackName) =>
+        private Boolean StackEventCompleted(string stackName, bool expectSuccess = true) =>
             StackEvent(stackName)
                 .Tee(status => Log.Info($"Current stack state: {status?.Value ?? "Nonexistent"}"))
+                .Tee(status =>
+                {
+                    if (expectSuccess && (status?.Value.Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? true))
+                    {
+                        Log.Warn("Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
+                                 "Review the stack in the AWS console to find any errors that may have occured during deployment.");
+                    }
+                })
                 .Map(status => status?.Value.EndsWith("_COMPLETE") ?? true);
 
         /// <summary>
@@ -209,7 +218,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 // created in the first place, we can end up here. In this case we try to create
                 // the stack from scratch.
                 DeleteCloudFormation(stackName);
-                WaitForStackToComplete(stackName);
+                WaitForStackToComplete(stackName, false);
                 return CreateCloudFormation(stackName, template, parameters);               
             }
         }
