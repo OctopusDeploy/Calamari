@@ -6,6 +6,7 @@ using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
+using Amazon.Runtime;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -45,9 +46,9 @@ namespace Calamari.Aws.Deployment.Conventions
             var stackName = variables[SpecialVariables.Action.Aws.CloudFormationStackName];
 
             var template = TemplateReplacement.ResolveAndSubstituteFile(
-                fileSystem, 
-                templateFile, 
-                filesInPackage, 
+                fileSystem,
+                templateFile,
+                filesInPackage,
                 variables);
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
                 ? TemplateReplacement.ResolveAndSubstituteFile(
@@ -61,7 +62,7 @@ namespace Calamari.Aws.Deployment.Conventions
             WriteUserInfo();
 
             WaitForStackToComplete(stackName, false);
-            
+
             (StackExists(stackName)
                     ? UpdateCloudFormation(stackName, template, parameters)
                     : CreateCloudFormation(stackName, template, parameters))
@@ -82,13 +83,19 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
+        /// Build the credentials all AWS clients will use
+        /// </summary>
+        /// <returns>The credentials used by the AWS clients</returns>
+        private AWSCredentials GetCredentials() => new EnvironmentVariablesAWSCredentials();
+        
+        /// <summary>
         /// Dump the details of the current user.
         /// </summary>
-        private void WriteUserInfo() =>        
-            new AmazonIdentityManagementServiceClient()
+        private void WriteUserInfo() =>
+            new AmazonIdentityManagementServiceClient(GetCredentials())
                 .Map(client => client.GetUser(new GetUserRequest()))
                 .Tee(response => Log.Info($"Running the step as the AWS {response.User.UserName}"));
-        
+
 
         /// <summary>
         /// Query the stack for the outputs
@@ -96,11 +103,11 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="stackName">The name of the stack</param>
         /// <returns>The output variables</returns>
         private List<Output> QueryStackOutputs(string stackName) =>
-            new AmazonCloudFormationClient()
+            new AmazonCloudFormationClient(GetCredentials())
                 .Map(client => client.DescribeStacks(new DescribeStacksRequest()
                     .Tee(request => { request.StackName = stackName; })))
                 .Map(response => response.Stacks.FirstOrDefault())
-                .Map(stack => stack?.Outputs);       
+                .Map(stack => stack?.Outputs);
 
         /// <summary>
         /// Wait for the stack to be in a completed state
@@ -117,12 +124,12 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 Thread.Sleep(5000);
             } while (!StackEventCompleted(stackName, expectSuccess));
-            
+
             Thread.Sleep(5000);
         }
 
         private StackEvent StackEvent(string stackName, string status = null) =>
-            new AmazonCloudFormationClient()
+            new AmazonCloudFormationClient(GetCredentials())
                 .Map(client =>
                 {
                     try
@@ -138,8 +145,9 @@ namespace Calamari.Aws.Deployment.Conventions
                 })
                 .Map(response => response?.StackEvents
                     .OrderByDescending(stackEvent => stackEvent.Timestamp)
-                    .FirstOrDefault(stackEvent => status == null || 
-                                                  stackEvent.ResourceStatus.Value.Equals(status, StringComparison.InvariantCultureIgnoreCase)));
+                    .FirstOrDefault(stackEvent => status == null ||
+                                                  stackEvent.ResourceStatus.Value.Equals(status,
+                                                      StringComparison.InvariantCultureIgnoreCase)));
 
         /// <summary>
         /// Queries the state of the stack, and checks to see if it is in a completed state
@@ -161,13 +169,16 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="expectSuccess"></param>
         private void LogRollbackError(StackEvent status, string stackName, bool expectSuccess)
         {
-            if (expectSuccess && (status?.ResourceStatus.Value.Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? true))
+            if (expectSuccess &&
+                (status?.ResourceStatus.Value.Equals("ROLLBACK_COMPLETE",
+                     StringComparison.InvariantCultureIgnoreCase) ?? true))
             {
-                Log.Warn("Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
-                         "Review the stack in the AWS console to find any errors that may have occured during deployment.");
+                Log.Warn(
+                    "Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
+                    "Review the stack in the AWS console to find any errors that may have occured during deployment.");
                 var progressStatus = StackEvent(stackName, "ROLLBACK_IN_PROGRESS");
                 if (progressStatus != null)
-                {                            
+                {
                     Log.Warn(progressStatus.ResourceStatusReason);
                 }
             }
@@ -190,7 +201,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="parameters">The parameters JSON file</param>
         /// <returns></returns>
         private string CreateCloudFormation(string stackName, string template, List<Parameter> parameters) =>
-            new AmazonCloudFormationClient()
+            new AmazonCloudFormationClient(GetCredentials())
                 .Map(client => client.CreateStack(
                     new CreateStackRequest().Tee(request =>
                     {
@@ -207,7 +218,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="stackName">The name of the stack to delete</param>
         /// <returns></returns>
         private void DeleteCloudFormation(string stackName) =>
-            new AmazonCloudFormationClient()
+            new AmazonCloudFormationClient(GetCredentials())
                 .Map(client => client.DeleteStack(
                     new DeleteStackRequest().Tee(request => request.StackName = stackName)))
                 .Tee(response => Log.Info($"Deleted stack called {stackName}"));
@@ -223,7 +234,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new AmazonCloudFormationClient()
+                return new AmazonCloudFormationClient(GetCredentials())
                     .Map(client => client.UpdateStack(
                         new UpdateStackRequest().Tee(request =>
                         {
@@ -239,13 +250,13 @@ namespace Calamari.Aws.Deployment.Conventions
                 if (!(StackEvent(stackName)?.ResourceStatus.Value
                           .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ??
                       false)) DealWithUpdateException(ex);
-                
+
                 // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
                 // created in the first place, we can end up here. In this case we try to create
                 // the stack from scratch.
                 DeleteCloudFormation(stackName);
                 WaitForStackToComplete(stackName, false);
-                return CreateCloudFormation(stackName, template, parameters);               
+                return CreateCloudFormation(stackName, template, parameters);
             }
         }
 
