@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -128,7 +129,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Thread.Sleep(5000);
         }
 
-        private StackEvent StackEvent(string stackName, string status = null) =>
+        private StackEvent StackEvent(string stackName, Regex status = null) =>
             new AmazonCloudFormationClient(GetCredentials())
                 .Map(client =>
                 {
@@ -146,8 +147,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Map(response => response?.StackEvents
                     .OrderByDescending(stackEvent => stackEvent.Timestamp)
                     .FirstOrDefault(stackEvent => status == null ||
-                                                  stackEvent.ResourceStatus.Value.Equals(status,
-                                                      StringComparison.InvariantCultureIgnoreCase)));
+                                                  status.IsMatch(stackEvent.ResourceStatus.Value)));
 
         /// <summary>
         /// Queries the state of the stack, and checks to see if it is in a completed state
@@ -169,14 +169,12 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="expectSuccess"></param>
         private void LogRollbackError(StackEvent status, string stackName, bool expectSuccess)
         {
-            if (expectSuccess &&
-                (status?.ResourceStatus.Value.Equals("ROLLBACK_COMPLETE",
-                     StringComparison.InvariantCultureIgnoreCase) ?? true))
+            if (expectSuccess && (status?.ResourceStatus.Value.Contains("ROLLBACK_COMPLETE") ?? true))
             {
                 Log.Warn(
                     "Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
                     "Review the stack in the AWS console to find any errors that may have occured during deployment.");
-                var progressStatus = StackEvent(stackName, "ROLLBACK_IN_PROGRESS");
+                var progressStatus = StackEvent(stackName, new Regex(".*?ROLLBACK_IN_PROGRESS"));
                 if (progressStatus != null)
                 {
                     Log.Warn(progressStatus.ResourceStatusReason);
@@ -248,7 +246,7 @@ namespace Calamari.Aws.Deployment.Conventions
             catch (AmazonCloudFormationException ex)
             {
                 if (!(StackEvent(stackName)?.ResourceStatus.Value
-                          .Contains("ROLLBACK_COMPLETE") ??
+                          .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ??
                       false)) DealWithUpdateException(ex);
 
                 // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
