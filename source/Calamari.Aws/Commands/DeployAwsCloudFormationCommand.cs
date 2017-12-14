@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Aws.Deployment.Conventions;
 using Calamari.Commands.Support;
@@ -19,6 +20,7 @@ namespace Calamari.Aws.Commands
         string sensitiveVariablesPassword;
         string templateFile;
         string templateParameterFile;
+        string waitForComplete;
 
         public DeployCloudFormationCommand()
         {
@@ -31,6 +33,7 @@ namespace Calamari.Aws.Commands
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
+            Options.Add("waitForComplete=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -52,7 +55,12 @@ namespace Calamari.Aws.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
-                new DeployAwsCloudFormationConvention(templateFile, templateParameterFile, filesInPackage, fileSystem)
+                new DeployAwsCloudFormationConvention(
+                    templateFile, 
+                    templateParameterFile, 
+                    filesInPackage,
+                    !Boolean.FalseString.Equals(waitForComplete, StringComparison.InvariantCultureIgnoreCase),
+                    fileSystem)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

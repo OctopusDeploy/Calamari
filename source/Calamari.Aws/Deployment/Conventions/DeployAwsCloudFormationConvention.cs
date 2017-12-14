@@ -21,17 +21,20 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly string templateParametersFile;
         private readonly bool filesInPackage;
         readonly ICalamariFileSystem fileSystem;
+        private readonly bool waitForComplete;
 
         public DeployAwsCloudFormationConvention(
             string templateFile,
             string templateParametersFile,
             bool filesInPackage,
+            bool waitForComplete,
             ICalamariFileSystem fileSystem)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
             this.filesInPackage = filesInPackage;
             this.fileSystem = fileSystem;
+            this.waitForComplete = waitForComplete;
         }
 
         public void Install(RunningDeployment deployment)
@@ -59,6 +62,11 @@ namespace Calamari.Aws.Deployment.Conventions
                     ? UpdateCloudFormation(stackName, template, parameters)
                     : CreateCloudFormation(stackName, template, parameters))
                 .Tee(stackId => Log.SetOutputVariable($"AwsOutputs[StackId]", stackId, variables));
+
+            if (waitForComplete)
+            {
+                WaitForStackToComplete(stackName);
+            }
 
             QueryStackOutputs(stackName)
                 ?.ForEach(output =>
