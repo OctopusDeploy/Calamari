@@ -138,20 +138,28 @@ namespace Calamari.Aws.Deployment.Conventions
         private Boolean StackEventCompleted(string stackName, bool expectSuccess = true) =>
             StackEvent(stackName)
                 .Tee(status => Log.Info($"Current stack state: {status?.ResourceStatus.Value ?? "Nonexistent"}"))
-                .Tee(status =>
-                {
-                    if (expectSuccess && (status?.ResourceStatus.Value.Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? true))
-                    {
-                        Log.Warn("Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
-                                 "Review the stack in the AWS console to find any errors that may have occured during deployment.");
-                        var progressStatus = StackEvent(stackName, "ROLLBACK_IN_PROGRESS");
-                        if (progressStatus != null)
-                        {                            
-                            Log.Warn(progressStatus.ResourceStatusReason);
-                        }
-                    }
-                })
+                .Tee(status => LogRollbackError(status, stackName, expectSuccess))
                 .Map(status => status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true);
+
+        /// <summary>
+        /// Log an error if we expected success and got a rollback
+        /// </summary>
+        /// <param name="status"></param>
+        /// <param name="stackName"></param>
+        /// <param name="expectSuccess"></param>
+        private void LogRollbackError(StackEvent status, string stackName, bool expectSuccess)
+        {
+            if (expectSuccess && (status?.ResourceStatus.Value.Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? true))
+            {
+                Log.Warn("Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
+                         "Review the stack in the AWS console to find any errors that may have occured during deployment.");
+                var progressStatus = StackEvent(stackName, "ROLLBACK_IN_PROGRESS");
+                if (progressStatus != null)
+                {                            
+                    Log.Warn(progressStatus.ResourceStatusReason);
+                }
+            }
+        }
 
         /// <summary>
         /// Check to see if the stack name exists
@@ -189,7 +197,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private void DeleteCloudFormation(string stackName) =>
             new AmazonCloudFormationClient()
                 .Map(client => client.DeleteStack(
-                    new DeleteStackRequest().Tee(request => { request.StackName = stackName; })))
+                    new DeleteStackRequest().Tee(request => request.StackName = stackName)))
                 .Tee(response => Log.Info($"Deleted stack called {stackName}"));
 
         /// <summary>
