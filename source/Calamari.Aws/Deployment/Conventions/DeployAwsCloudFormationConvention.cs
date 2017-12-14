@@ -111,11 +111,23 @@ namespace Calamari.Aws.Deployment.Conventions
 
         private ResourceStatus StackEvent(string stackName) =>
             new AmazonCloudFormationClient()
-                .Map(client => client.DescribeStackEvents(new DescribeStackEventsRequest()
-                    .Tee(request => { request.StackName = stackName; })))
-                .Map(response => response.StackEvents.OrderByDescending(stackEvent => stackEvent.Timestamp)
+                .Map(client =>
+                {
+                    try
+                    {
+                        return client.DescribeStackEvents(new DescribeStackEventsRequest()
+                            .Tee(request => { request.StackName = stackName; }));
+                    }
+                    catch (AmazonCloudFormationException ex)
+                    {
+                        // Assume this is a "Stack [StackName] does not exist" error
+                        return null;
+                    }
+                })
+                .Map(response => response?.StackEvents
+                    .OrderByDescending(stackEvent => stackEvent.Timestamp)
                     .FirstOrDefault())
-                .Map(stackEvent => stackEvent.ResourceStatus ?? null);
+                .Map(stackEvent => stackEvent?.ResourceStatus);
 
         /// <summary>
         /// Queries the state of the stack, and checks to see if it is in a completed state
@@ -124,8 +136,8 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
         private Boolean StackEventCompleted(string stackName) =>
             StackEvent(stackName)
-                .Tee(status => Log.Info($"Current stack state: {status.Value}"))
-                .Map(status => status == null || status.Value.EndsWith("_COMPLETE"));
+                .Tee(status => Log.Info($"Current stack state: {status?.Value ?? "Nonexistent"}"))
+                .Map(status => status?.Value.EndsWith("_COMPLETE") ?? true);
 
         /// <summary>
         /// Check to see if the stack name exists
@@ -163,7 +175,8 @@ namespace Calamari.Aws.Deployment.Conventions
         private void DeleteCloudFormation(string stackName) =>
             new AmazonCloudFormationClient()
                 .Map(client => client.DeleteStack(
-                    new DeleteStackRequest().Tee(request => { request.StackName = stackName; })));
+                    new DeleteStackRequest().Tee(request => { request.StackName = stackName; })))
+                .Tee(response => Log.Info($"Deleted stack called {stackName}"));
 
         /// <summary>
         /// Updates the stack and returns the stack ID
