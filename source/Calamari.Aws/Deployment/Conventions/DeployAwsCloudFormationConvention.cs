@@ -39,8 +39,11 @@ namespace Calamari.Aws.Deployment.Conventions
             var variables = deployment.Variables;
             var stackName = variables[SpecialVariables.Action.Aws.CloudFormationStackName];
 
-            var template =
-                TemplateReplacement.ResolveAndSubstituteFile(fileSystem, templateFile, filesInPackage, variables);
+            var template = TemplateReplacement.ResolveAndSubstituteFile(
+                fileSystem, 
+                templateFile, 
+                filesInPackage, 
+                variables);
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
                 ? TemplateReplacement.ResolveAndSubstituteFile(
                         fileSystem,
@@ -128,7 +131,8 @@ namespace Calamari.Aws.Deployment.Conventions
                         request.TemplateBody = template;
                         request.Parameters = parameters;
                     })))
-                .Map(response => response.StackId);
+                .Map(response => response.StackId)
+                .Tee(stackId => Log.Info($"Created stack with id {stackId}"));
 
         /// <summary>
         /// Updates the stack and returns the stack ID
@@ -146,6 +150,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         request.TemplateBody = template;
                         request.Parameters = parameters;
                     })))
-                .Map(response => response.StackId);
+                .Map(response => response.StackId)
+                .Tee(stackId => Log.Info($"Updated stack with id {stackId}"));
     }
 }
