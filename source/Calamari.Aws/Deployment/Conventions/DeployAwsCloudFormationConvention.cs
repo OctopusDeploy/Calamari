@@ -62,7 +62,7 @@ namespace Calamari.Aws.Deployment.Conventions
             (StackExists(stackName)
                     ? UpdateCloudFormation(stackName, template, parameters)
                     : CreateCloudFormation(stackName, template, parameters))
-                .Tee(stackId => Log.SetOutputVariable($"Saving variable \"AwsOutputs[StackId]\"", stackId, variables))
+                .Tee(stackId => Log.Info($"Saving variable \"AwsOutputs[StackId]\""))
                 .Tee(stackId => Log.SetOutputVariable($"AwsOutputs[StackId]", stackId, variables));
 
             if (waitForComplete)
@@ -109,7 +109,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Thread.Sleep(5000);
         }
 
-        private ResourceStatus StackEvent(string stackName) =>
+        private StackEvent StackEvent(string stackName) =>
             new AmazonCloudFormationClient()
                 .Map(client =>
                 {
@@ -126,8 +126,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 })
                 .Map(response => response?.StackEvents
                     .OrderByDescending(stackEvent => stackEvent.Timestamp)
-                    .FirstOrDefault())
-                .Map(stackEvent => stackEvent?.ResourceStatus);
+                    .FirstOrDefault());
 
         /// <summary>
         /// Queries the state of the stack, and checks to see if it is in a completed state
@@ -137,16 +136,21 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
         private Boolean StackEventCompleted(string stackName, bool expectSuccess = true) =>
             StackEvent(stackName)
-                .Tee(status => Log.Info($"Current stack state: {status?.Value ?? "Nonexistent"}"))
+                .Tee(status => Log.Info($"Current stack state: {status?.ResourceStatus.Value ?? "Nonexistent"}"))
                 .Tee(status =>
                 {
-                    if (expectSuccess && (status?.Value.Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? true))
+                    if (expectSuccess && (status?.ResourceStatus.Value.Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? true))
                     {
                         Log.Warn("Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
-                                 "Review the stack in the AWS console to find any errors that may have occured during deployment.");
+                                 "Review the stack in the AWS console to find any errors that may have occured during deployment. " +
+                                 "The status reason returned by AWS is shown below.");
+                        if (status != null)
+                        {
+                            Log.Warn(status.ResourceStatusReason);
+                        }
                     }
                 })
-                .Map(status => status?.Value.EndsWith("_COMPLETE") ?? true);
+                .Map(status => status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true);
 
         /// <summary>
         /// Check to see if the stack name exists
@@ -211,7 +215,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
             catch (AmazonCloudFormationException ex)
             {                
-                if (!(StackEvent(stackName)?.Value
+                if (!(StackEvent(stackName)?.ResourceStatus.Value
                           .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? false)) throw ex;
                 
                 // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
