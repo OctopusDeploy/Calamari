@@ -94,7 +94,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private void WriteUserInfo() =>
             new AmazonIdentityManagementServiceClient(GetCredentials())
                 .Map(client => client.GetUser(new GetUserRequest()))
-                .Tee(response => Log.Info($"Running the step as the AWS {response.User.UserName}"));
+                .Tee(response => Log.Info($"Running the step as the AWS user {response.User.UserName}"));
 
 
         /// <summary>
