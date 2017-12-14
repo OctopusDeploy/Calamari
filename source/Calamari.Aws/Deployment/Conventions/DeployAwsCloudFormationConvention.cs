@@ -248,7 +248,7 @@ namespace Calamari.Aws.Deployment.Conventions
             catch (AmazonCloudFormationException ex)
             {
                 if (!(StackEvent(stackName)?.ResourceStatus.Value
-                          .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ??
+                          .Contains("ROLLBACK_COMPLETE") ??
                       false)) DealWithUpdateException(ex);
 
                 // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
