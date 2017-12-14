@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
+using Amazon.CloudFormation.Model.Internal.MarshallTransformations;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -108,18 +109,23 @@ namespace Calamari.Aws.Deployment.Conventions
             Thread.Sleep(5000);
         }
 
+        private ResourceStatus StackEvent(string stackName) =>
+            new AmazonCloudFormationClient()
+                .Map(client => client.DescribeStackEvents(new DescribeStackEventsRequest()
+                    .Tee(request => { request.StackName = stackName; })))
+                .Map(response => response.StackEvents.OrderByDescending(stackEvent => stackEvent.Timestamp)
+                    .FirstOrDefault())
+                .Map(stackEvent => stackEvent.ResourceStatus ?? null);
+
         /// <summary>
         /// Queries the state of the stack, and checks to see if it is in a completed state
         /// </summary>
         /// <param name="stackName">The name of the stack</param>
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
         private Boolean StackEventCompleted(string stackName) =>
-            new AmazonCloudFormationClient()
-                .Map(client => client.DescribeStackEvents(new DescribeStackEventsRequest()
-                    .Tee(request => { request.StackName = stackName; })))
-                .Map(response => response.StackEvents.FirstOrDefault())
-                .Tee(response => response?.Tee(r => Log.Info($"Current stack state: {r.ResourceStatus.Value}")))
-                .Map(stackEvent => stackEvent == null || stackEvent.ResourceStatus.Value.EndsWith("_COMPLETE"));
+            StackEvent(stackName)
+                .Tee(status => Log.Info($"Current stack state: {status.Value}"))
+                .Map(status => status == null || status.Value.EndsWith("_COMPLETE"));
 
         /// <summary>
         /// Check to see if the stack name exists
@@ -150,22 +156,49 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Tee(stackId => Log.Info($"Created stack with id {stackId}"));
 
         /// <summary>
+        /// Deletes the stack and returns the stack ID
+        /// </summary>
+        /// <param name="stackName">The name of the stack to delete</param>
+        /// <returns></returns>
+        private void DeleteCloudFormation(string stackName) =>
+            new AmazonCloudFormationClient()
+                .Map(client => client.DeleteStack(
+                    new DeleteStackRequest().Tee(request => { request.StackName = stackName; })));
+
+        /// <summary>
         /// Updates the stack and returns the stack ID
         /// </summary>
         /// <param name="stackName">The name of the stack to create</param>
         /// <param name="template">The CloudFormation template</param>
         /// <param name="parameters">The parameters JSON file</param>
         /// <returns></returns>
-        private string UpdateCloudFormation(string stackName, string template, List<Parameter> parameters) =>
-            new AmazonCloudFormationClient()
-                .Map(client => client.UpdateStack(
-                    new UpdateStackRequest().Tee(request =>
-                    {
-                        request.StackName = stackName;
-                        request.TemplateBody = template;
-                        request.Parameters = parameters;
-                    })))
-                .Map(response => response.StackId)
-                .Tee(stackId => Log.Info($"Updated stack with id {stackId}"));
+        private string UpdateCloudFormation(string stackName, string template, List<Parameter> parameters)
+        {
+            try
+            {
+                return new AmazonCloudFormationClient()
+                    .Map(client => client.UpdateStack(
+                        new UpdateStackRequest().Tee(request =>
+                        {
+                            request.StackName = stackName;
+                            request.TemplateBody = template;
+                            request.Parameters = parameters;
+                        })))
+                    .Map(response => response.StackId)
+                    .Tee(stackId => Log.Info($"Updated stack with id {stackId}"));
+            }
+            catch (AmazonCloudFormationException ex)
+            {                
+                if (!(StackEvent(stackName)?.Value
+                          .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ?? false)) throw ex;
+                
+                // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
+                // created in the first place, we can end up here. In this case we try to create
+                // the stack from scratch.
+                DeleteCloudFormation(stackName);
+                WaitForStackToComplete(stackName);
+                return CreateCloudFormation(stackName, template, parameters);               
+            }
+        }
     }
 }
