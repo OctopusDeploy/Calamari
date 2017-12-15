@@ -75,8 +75,8 @@ namespace Calamari.Aws.Deployment.Conventions
                 WaitForStackToComplete(stackName);
             }
 
-            QueryStackOutputs(stackName)
-                ?.ForEach(output =>
+            QueryStack(stackName)
+                ?.Outputs.ForEach(output =>
                 {
                     Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables);
                     Log.Info($"Saving variable \"AwsOutputs[{output.OutputKey}]\"");
@@ -103,12 +103,11 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="stackName">The name of the stack</param>
         /// <returns>The output variables</returns>
-        private List<Output> QueryStackOutputs(string stackName) =>
+        private Stack QueryStack(string stackName) =>
             new AmazonCloudFormationClient(GetCredentials())
                 .Map(client => client.DescribeStacks(new DescribeStacksRequest()
                     .Tee(request => { request.StackName = stackName; })))
-                .Map(response => response.Stacks.FirstOrDefault())
-                .Map(stack => stack?.Outputs);
+                .Map(response => response.Stacks.FirstOrDefault());
 
         /// <summary>
         /// Wait for the stack to be in a completed state
@@ -247,7 +246,14 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 if (!(StackEvent(stackName)?.ResourceStatus.Value
                           .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ??
-                      false)) DealWithUpdateException(ex);
+                      false))
+                {
+                    if (DealWithUpdateException(ex))
+                    {
+                        // There was nothing to update, but we return the id for consistency anyway
+                        return QueryStack(stackName).StackId;
+                    }
+                }
 
                 // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
                 // created in the first place, we can end up here. In this case we try to create
@@ -264,12 +270,12 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="ex">The exception we need to deal with</param>
         /// <exception cref="AmazonCloudFormationException">The supplied exception if it really is an error</exception>
-        private void DealWithUpdateException(AmazonCloudFormationException ex)
+        private bool DealWithUpdateException(AmazonCloudFormationException ex)
         {
             if (ex.Message.Contains("No updates are to be performed"))
             {
                 Log.Info("No updates are to be performed");
-                return;
+                return true;
             }
 
             throw ex;
