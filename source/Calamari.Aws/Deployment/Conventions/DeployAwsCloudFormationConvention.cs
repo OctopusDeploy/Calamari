@@ -19,7 +19,9 @@ namespace Calamari.Aws.Deployment.Conventions
 {
     public class DeployAwsCloudFormationConvention : IInstallConvention
     {
+        private const int StatusWaitPeriod = 5000;
         private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
+        
 
         readonly string templateFile;
         readonly string templateParametersFile;
@@ -67,7 +69,7 @@ namespace Calamari.Aws.Deployment.Conventions
             (StackExists(stackName)
                     ? UpdateCloudFormation(stackName, template, parameters)
                     : CreateCloudFormation(stackName, template, parameters))
-                .Tee(stackId => Log.Info($"Saving variable \"AwsOutputs[StackId]\""))
+                .Tee(stackId => Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""))
                 .Tee(stackId => Log.SetOutputVariable($"AwsOutputs[StackId]", stackId, variables));
 
             if (waitForComplete)
@@ -79,7 +81,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 ?.Outputs.ForEach(output =>
                 {
                     Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables);
-                    Log.Info($"Saving variable \"AwsOutputs[{output.OutputKey}]\"");
+                    Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
                 });
         }
 
@@ -122,10 +124,10 @@ namespace Calamari.Aws.Deployment.Conventions
 
             do
             {
-                Thread.Sleep(5000);
+                Thread.Sleep(StatusWaitPeriod);
             } while (!StackEventCompleted(stackName, expectSuccess));
 
-            Thread.Sleep(5000);
+            Thread.Sleep(StatusWaitPeriod);
         }
 
         private StackEvent StackEvent(string stackName, Regex status = null) =>
@@ -168,10 +170,13 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="expectSuccess"></param>
         private void LogRollbackError(StackEvent status, string stackName, bool expectSuccess)
         {
-            if (expectSuccess && (status?.ResourceStatus.Value.Contains("ROLLBACK_COMPLETE") ?? true))
+            var isRollback = status?.ResourceStatus.Value.Contains("ROLLBACK_COMPLETE") ?? true;
+            var isInProgress = status?.ResourceStatus.Value.Contains("IN_PROGRESS") ?? false;
+            
+            if (expectSuccess && isRollback && !isInProgress)
             {
                 Log.Warn(
-                    "Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
+                    "Stack was either missing or in a rollback state. This may (but does not necessarily) mean that the stack was not processed correctly. " +
                     "Review the stack in the AWS console to find any errors that may have occured during deployment.");
                 var progressStatus = StackEvent(stackName, new Regex(".*?ROLLBACK_IN_PROGRESS"));
                 if (progressStatus != null)
@@ -272,6 +277,8 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <exception cref="AmazonCloudFormationException">The supplied exception if it really is an error</exception>
         private bool DealWithUpdateException(AmazonCloudFormationException ex)
         {
+            // Unfortunately there are no better fields in the exception to use to determine the
+            // kind of error than the message. We are forced to match message strings.
             if (ex.Message.Contains("No updates are to be performed"))
             {
                 Log.Info("No updates are to be performed");
