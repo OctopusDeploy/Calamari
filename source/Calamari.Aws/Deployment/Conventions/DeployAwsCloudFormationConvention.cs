@@ -23,7 +23,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private const int RetryCount = 5;
         private static readonly Regex OutputsRE = new Regex("\"?Outputs\"?\\s*:");
         private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
-        
+
         readonly string templateFile;
         readonly string templateParametersFile;
         private readonly bool filesInPackage;
@@ -76,28 +76,42 @@ namespace Calamari.Aws.Deployment.Conventions
                     // This means variuable save log messages will be grouped together
                     if (waitForComplete) WaitForStackToComplete(stackName);
                 })
-                .Tee(stackId => Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""))
+                .Tee(stackId =>
+                    Log.Info(
+                        $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""))
                 .Tee(stackId => Log.SetOutputVariable($"AwsOutputs[StackId]", stackId, variables));
 
+            GetOutputVars(stackName, deployment);
+        }
+
+        /// <summary>
+        /// Attempt to get the output variables, taking into account whether any were defined in the template,
+        /// and if we are to wait for the deployment to finish.
+        /// </summary>
+        /// <param name="stackName">The name of the stack</param>
+        /// <param name="deployment">The current deployment</param>
+        private void GetOutputVars(string stackName, RunningDeployment deployment)
+        {
             // Try a few times to get the outputs (if there were any in the template file)
             for (var retry = 0; retry < RetryCount; ++retry)
             {
                 var successflyReadOutputs = TemplateFileContainsOutputs(templateFile, deployment)
                     .Map(outputsDefined => QueryStack(stackName)
-                        ?.Outputs.Aggregate(false, (success, output) =>
-                        {
-                            Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables);
-                            Log.Info(
-                                $"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
-                            return true;
-                        }) ?? !outputsDefined
+                                               ?.Outputs.Aggregate(false, (success, output) =>
+                                               {
+                                                   Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]",
+                                                       output.OutputValue, deployment.Variables);
+                                                   Log.Info(
+                                                       $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
+                                                   return true;
+                                               }) ?? !outputsDefined
                     );
 
                 if (successflyReadOutputs || !waitForComplete)
                 {
                     break;
                 }
-                
+
                 Thread.Sleep(StatusWaitPeriod);
             }
         }
@@ -122,7 +136,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <returns>The credentials used by the AWS clients</returns>
         private AWSCredentials GetCredentials() => new EnvironmentVariablesAWSCredentials();
-        
+
         /// <summary>
         /// Dump the details of the current user.
         /// </summary>
@@ -204,7 +218,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             var isRollback = status?.ResourceStatus.Value.Contains("ROLLBACK_COMPLETE") ?? true;
             var isInProgress = status?.ResourceStatus.Value.Contains("IN_PROGRESS") ?? false;
-            
+
             if (expectSuccess && isRollback && !isInProgress)
             {
                 Log.Warn(
