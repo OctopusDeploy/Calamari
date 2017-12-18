@@ -96,15 +96,16 @@ namespace Calamari.Aws.Deployment.Conventions
             for (var retry = 0; retry < RetryCount; ++retry)
             {
                 var successflyReadOutputs = TemplateFileContainsOutputs(templateFile, deployment)
-                    .Map(outputsDefined => QueryStack(stackName)
-                                               ?.Outputs.Aggregate(false, (success, output) =>
-                                               {
-                                                   Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]",
-                                                       output.OutputValue, deployment.Variables);
-                                                   Log.Info(
-                                                       $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
-                                                   return true;
-                                               }) ?? !outputsDefined
+                    .Map(outputsDefined =>
+                        QueryStack(stackName)
+                            ?.Outputs.Aggregate(false, (success, output) =>
+                            {
+                                Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]",
+                                    output.OutputValue, deployment.Variables);
+                                Log.Info(
+                                    $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
+                                return true;
+                            }) ?? !outputsDefined
                     );
 
                 if (successflyReadOutputs || !waitForComplete)
@@ -204,9 +205,12 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
         private Boolean StackEventCompleted(string stackName, bool expectSuccess = true) =>
             StackEvent(stackName)
-                .Tee(status => Log.Info($"Current stack state: {status?.ResourceStatus.Value ?? "Does not exist"}"))
+                .Tee(status =>
+                    Log.Info($"Current stack state: {status?.ResourceType} " +
+                             $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
                 .Tee(status => LogRollbackError(status, stackName, expectSuccess))
-                .Map(status => status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true);
+                .Map(status => (status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) &&
+                               (status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true));
 
         /// <summary>
         /// Log an error if we expected success and got a rollback
