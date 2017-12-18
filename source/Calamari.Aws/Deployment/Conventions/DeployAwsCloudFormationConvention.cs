@@ -84,16 +84,16 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 var successflyReadOutputs = TemplateFileContainsOutputs(templateFile, deployment)
                     .Map(outputsDefined => QueryStack(stackName)
-                        ?.Outputs.Aggregate(!outputsDefined, (success, output) =>
+                        ?.Outputs.Aggregate(false, (success, output) =>
                         {
                             Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables);
                             Log.Info(
                                 $"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
                             return true;
-                        }) ?? true
+                        }) ?? !outputsDefined
                     );
 
-                if (successflyReadOutputs)
+                if (successflyReadOutputs || !waitForComplete)
                 {
                     break;
                 }
