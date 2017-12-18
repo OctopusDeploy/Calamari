@@ -221,9 +221,10 @@ namespace Calamari.Aws.Deployment.Conventions
         private void LogRollbackError(StackEvent status, string stackName, bool expectSuccess)
         {
             var isRollback = status?.ResourceStatus.Value.Contains("ROLLBACK_COMPLETE") ?? true;
+            var isStackType = status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true;
             var isInProgress = status?.ResourceStatus.Value.Contains("IN_PROGRESS") ?? false;
 
-            if (expectSuccess && isRollback && !isInProgress)
+            if (expectSuccess && isRollback && isStackType && !isInProgress)
             {
                 Log.Warn(
                     "Stack was either missing or in a rollback state. This may (but does not necessarily) mean that the stack was not processed correctly. " +
