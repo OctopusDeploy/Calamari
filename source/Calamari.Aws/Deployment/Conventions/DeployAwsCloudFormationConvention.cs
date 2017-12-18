@@ -20,9 +20,10 @@ namespace Calamari.Aws.Deployment.Conventions
     public class DeployAwsCloudFormationConvention : IInstallConvention
     {
         private const int StatusWaitPeriod = 5000;
+        private const int RetryCount = 5;
+        private static readonly Regex OutputsRE = new Regex("\"?Outputs\"?\\s*:");
         private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
         
-
         readonly string templateFile;
         readonly string templateParametersFile;
         private readonly bool filesInPackage;
@@ -69,21 +70,52 @@ namespace Calamari.Aws.Deployment.Conventions
             (StackExists(stackName)
                     ? UpdateCloudFormation(stackName, template, parameters)
                     : CreateCloudFormation(stackName, template, parameters))
+                .Tee(stackId =>
+                {
+                    // If we should do so, wait for the stack to complete before saving the stack id.
+                    // This means variuable save log messages will be grouped together
+                    if (waitForComplete) WaitForStackToComplete(stackName);
+                })
                 .Tee(stackId => Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""))
                 .Tee(stackId => Log.SetOutputVariable($"AwsOutputs[StackId]", stackId, variables));
 
-            if (waitForComplete)
+            // Try a few times to get the outputs (if there were any in the template file)
+            for (var retry = 0; retry < RetryCount; ++retry)
             {
-                WaitForStackToComplete(stackName);
-            }
+                var successflyReadOutputs = TemplateFileContainsOutputs(templateFile, deployment)
+                    .Map(outputsDefined => QueryStack(stackName)
+                        ?.Outputs.Aggregate(!outputsDefined, (success, output) =>
+                        {
+                            Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables);
+                            Log.Info(
+                                $"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
+                            return true;
+                        }) ?? true
+                    );
 
-            QueryStack(stackName)
-                ?.Outputs.ForEach(output =>
+                if (successflyReadOutputs)
                 {
-                    Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]", output.OutputValue, variables);
-                    Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
-                });
+                    break;
+                }
+                
+                Thread.Sleep(StatusWaitPeriod);
+            }
         }
+
+        /// <summary>
+        /// Look at the template file and see if there were any outputs.
+        /// </summary>
+        /// <param name="template">The template file</param>
+        /// <param name="deployment">The current deployment</param>
+        /// <returns>true if the Outputs marker was found, and false otherwise</returns>
+        private bool TemplateFileContainsOutputs(string template, RunningDeployment deployment) =>
+            TemplateReplacement.GetAbsolutePath(
+                    fileSystem,
+                    templateParametersFile,
+                    filesInPackage,
+                    deployment.Variables)
+                .Map(path => fileSystem.ReadFile(path))
+                .Map(contents => OutputsRE.IsMatch(contents));
 
         /// <summary>
         /// Build the credentials all AWS clients will use
