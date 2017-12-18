@@ -19,8 +19,8 @@ namespace Calamari.Aws.Deployment.Conventions
 {
     public class DeployAwsCloudFormationConvention : IInstallConvention
     {
-        private const int StatusWaitPeriod = 5000;
-        private const int RetryCount = 5;
+        private const int StatusWaitPeriod = 15000;
+        private const int RetryCount = 3;
         private static readonly Regex OutputsRE = new Regex("\"?Outputs\"?\\s*:");
         private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
 
