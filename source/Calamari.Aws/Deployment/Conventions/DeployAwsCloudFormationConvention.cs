@@ -391,7 +391,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="defaultValue">The default value if status is null</param>
         /// <returns>true if the status indcates a failed create or update, and false otherwise</returns>
         private bool StatusIsCreateOrUpdateRollback(StackEvent status, bool defaultValue) =>
-            new[] {"CREATE_ROLLBACK_COMPLETE", "CREATE_ROLLBACK_FAILED", "UPDATE_ROLLBACK_COMPLETE", "UPDATE_ROLLBACK_FAILED"}.Any(x =>
+            new[] {"CREATE_ROLLBACK_COMPLETE", "CREATE_ROLLBACK_FAILED", "UPDATE_ROLLBACK_COMPLETE", "UPDATE_ROLLBACK_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED"}.Any(x =>
                 status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
     }
 }
