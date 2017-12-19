@@ -428,11 +428,6 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (parameters == null)
-            {
-                Log.Warn("parameters is null");
-            }
-
             try
             {
                 return new AmazonCloudFormationClient(GetCredentials())
