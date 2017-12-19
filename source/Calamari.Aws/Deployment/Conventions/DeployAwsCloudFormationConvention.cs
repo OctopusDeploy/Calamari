@@ -239,7 +239,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
                              $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
                 .Tee(status => LogRollbackError(deployment, status, stackName, expectSuccess))
-                .Map(status => (status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) &&
+                .Map(status => ((status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) ||
+                               (status?.ResourceStatus.Value.EndsWith("_FAILED") ?? true)) &&
                                (status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true));
 
         /// <summary>
