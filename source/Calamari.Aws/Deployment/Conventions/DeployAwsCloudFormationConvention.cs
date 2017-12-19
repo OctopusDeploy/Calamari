@@ -251,11 +251,10 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="expectSuccess"></param>
         private void LogRollbackError(RunningDeployment deployment, StackEvent status, string stackName, bool expectSuccess)
         {
-            var isRollback = status?.ResourceStatus.Value.Contains("ROLLBACK_COMPLETE") ?? true;
+            var isRollback = StatusIsCreateOrUpdateRollback(status, true);
             var isStackType = status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true;
-            var isInProgress = status?.ResourceStatus.Value.Contains("IN_PROGRESS") ?? false;
 
-            if (expectSuccess && isRollback && isStackType && !isInProgress)
+            if (expectSuccess && isRollback && isStackType)
             {
                 Log.Warn(
                     "Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
@@ -335,11 +334,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     .Tee(stackId => Log.Info($"Updated stack with id {stackId}"));
             }
             catch (AmazonCloudFormationException ex)
-            {
-                var rollback = new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED"}.Any(x =>
-                    StackEvent(stackName)?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? false);
-                
-                if (!rollback)
+            { 
+                if (!StatusIsRollback(StackEvent(stackName), false))
                 {
                     if (DealWithUpdateException(ex))
                     {
@@ -375,5 +371,27 @@ namespace Calamari.Aws.Deployment.Conventions
 
             throw ex;
         }
+
+        /// <summary>
+        /// Some statuses indicate that the only way forward is to delete the stack and try again.
+        /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
+        /// </summary>
+        /// <param name="status">The status to check</param>
+        /// <param name="defaultValue">the default value if the status is null</param>
+        /// <returns>true if this status indicates that the stack has to be deleted, and false otherwise</returns>
+        private bool StatusIsRollback(StackEvent status, bool defaultValue) =>
+            new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED"}.Any(x =>
+                status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
+        
+        /// <summary>
+        /// These status indicate that an update or create was not successful.
+        /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
+        /// </summary>
+        /// <param name="status">The status to check</param>
+        /// <param name="defaultValue">The default value if status is null</param>
+        /// <returns>true if the status indcates a failed create or update, and false otherwise</returns>
+        private bool StatusIsCreateOrUpdateRollback(StackEvent status, bool defaultValue) =>
+            new[] {"CREATE_ROLLBACK_COMPLETE", "CREATE_ROLLBACK_FAILED", "UPDATE_ROLLBACK_COMPLETE", "UPDATE_ROLLBACK_FAILED"}.Any(x =>
+                status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
     }
 }
