@@ -215,6 +215,7 @@
                 public static readonly string CloudFormationTemplate =  "Octopus.Action.Aws.CloudFormationTemplate";
                 public static readonly string CloudFormationProperties = "Octopus.Action.Aws.CloudFormationProperties";
                 public static readonly string AssumeRoleARN = "Octopus.Action.Aws.AssumedRoleArn";
+                public static readonly string FailOnRollback = "Octopus.Action.Aws.FailOnRollback";
             }
 
             public static class Azure
