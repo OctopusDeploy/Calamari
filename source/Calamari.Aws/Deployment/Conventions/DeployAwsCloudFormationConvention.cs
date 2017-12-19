@@ -22,7 +22,10 @@ namespace Calamari.Aws.Deployment.Conventions
         private const int StatusWaitPeriod = 15000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRE = new Regex("\"?Outputs\"?\\s*:");
-        private static readonly Regex ARNNameRE = new Regex("^.*?/(\\.+)$");
+        /// <summary>
+        /// Matches ARNs like arn:aws:iam::123456789:role/AWSTestRole and extracts the name as group 1 
+        /// </summary>
+        private static readonly Regex ARNNameRE = new Regex("^.*?/(.+)$");
         private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
 
         readonly string templateFile;
@@ -91,7 +94,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="deployment">The current deployment</param>
         private void WriteCredentialInfo(RunningDeployment deployment)
         {
-            if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRole))
+            if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRoleARN))
             {
                 WriteRoleInfo(deployment);
             }
@@ -159,7 +162,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Dump the details of the current user.
         /// </summary>
         private void WriteRoleInfo(RunningDeployment deployment) =>
-            Environment.GetEnvironmentVariable(deployment.Variables[SpecialVariables.Action.Aws.AssumeRole])
+            deployment.Variables[SpecialVariables.Action.Aws.AssumeRoleARN]
                 .Map(arn => ARNNameRE.Match(arn))
                 .Map(match => match.Success ? match.Groups[1].Value : "Unknown")
                 .Tee(role => Log.Info($"Running the step as the AWS role {role}"));
