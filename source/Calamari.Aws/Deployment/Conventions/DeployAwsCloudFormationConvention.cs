@@ -336,9 +336,10 @@ namespace Calamari.Aws.Deployment.Conventions
             }
             catch (AmazonCloudFormationException ex)
             {
-                if (!(StackEvent(stackName)?.ResourceStatus.Value
-                          .Equals("ROLLBACK_COMPLETE", StringComparison.InvariantCultureIgnoreCase) ??
-                      false))
+                var rollback = new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED"}.Any(x =>
+                    StackEvent(stackName)?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? false);
+                
+                if (!rollback)
                 {
                     if (DealWithUpdateException(ex))
                     {
