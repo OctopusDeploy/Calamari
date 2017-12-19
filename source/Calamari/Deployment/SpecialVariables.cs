@@ -214,6 +214,7 @@
                 public static readonly string CloudFormationStackName = "Octopus.Action.Aws.CloudFormationStackName";
                 public static readonly string CloudFormationTemplate =  "Octopus.Action.Aws.CloudFormationTemplate";
                 public static readonly string CloudFormationProperties = "Octopus.Action.Aws.CloudFormationProperties";
+                public static readonly string AssumeRole = "Octopus.Action.Aws.AssumedRoleArn";
             }
 
             public static class Azure

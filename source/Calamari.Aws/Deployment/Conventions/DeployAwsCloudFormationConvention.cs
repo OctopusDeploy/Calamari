@@ -22,6 +22,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private const int StatusWaitPeriod = 15000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRE = new Regex("\"?Outputs\"?\\s*:");
+        private static readonly Regex ARNNameRE = new Regex("^.*?/(\\.+)$");
         private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
 
         readonly string templateFile;
@@ -63,7 +64,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     .Map(JsonConvert.DeserializeObject<List<Parameter>>)
                 : null;
 
-            WriteUserInfo();
+            WriteCredentialInfo(deployment);
 
             WaitForStackToComplete(stackName, false);
 
@@ -82,6 +83,22 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Tee(stackId => Log.SetOutputVariable($"AwsOutputs[StackId]", stackId, variables));
 
             GetOutputVars(stackName, deployment);
+        }
+
+        /// <summary>
+        /// Prints some info about the user or role that is running the deployment
+        /// </summary>
+        /// <param name="deployment">The current deployment</param>
+        private void WriteCredentialInfo(RunningDeployment deployment)
+        {
+            if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRole))
+            {
+                WriteRoleInfo(deployment);
+            }
+            else
+            {
+                WriteUserInfo();
+            }
         }
 
         /// <summary>
@@ -137,6 +154,15 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <returns>The credentials used by the AWS clients</returns>
         private AWSCredentials GetCredentials() => new EnvironmentVariablesAWSCredentials();
+
+        /// <summary>
+        /// Dump the details of the current user.
+        /// </summary>
+        private void WriteRoleInfo(RunningDeployment deployment) =>
+            Environment.GetEnvironmentVariable(deployment.Variables[SpecialVariables.Action.Aws.AssumeRole])
+                .Map(arn => ARNNameRE.Match(arn))
+                .Map(match => match.Success ? match.Groups[1].Value : "Unknown")
+                .Tee(role => Log.Info($"Running the step as the AWS role {role}"));
 
         /// <summary>
         /// Dump the details of the current user.
@@ -206,7 +232,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private Boolean StackEventCompleted(string stackName, bool expectSuccess = true) =>
             StackEvent(stackName)
                 .Tee(status =>
-                    Log.Info($"Current stack state: {status?.ResourceType} " +
+                    Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
                              $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
                 .Tee(status => LogRollbackError(status, stackName, expectSuccess))
                 .Map(status => (status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) &&
