@@ -313,6 +313,7 @@ Log-VersionTable
 # Variables
 # -----------------------------------------------------------------
 {{BeforeVariablesDebugLocation}}
+$MaximumVariableCount=32768
 {{VariableDeclarations}}
 
 # -----------------------------------------------------------------
