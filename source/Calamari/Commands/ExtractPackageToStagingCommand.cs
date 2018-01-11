@@ -56,7 +56,8 @@ namespace Calamari.Commands
                 new ExtractPackageToStagingDirectoryConvention(
                     new GenericPackageExtractorFactory()
                         .createStandardGenericPackageExtractor(),
-                    fileSystem)
+                    fileSystem,
+                    null)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
