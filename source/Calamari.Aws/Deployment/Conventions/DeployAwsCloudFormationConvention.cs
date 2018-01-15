@@ -348,12 +348,9 @@ namespace Calamari.Aws.Deployment.Conventions
                     Log.Warn(progressStatus.ResourceStatusReason);
                 }
 
-                if ("True".Equals(deployment.Variables[SpecialVariables.Action.Aws.FailOnRollback],
-                    StringComparison.InvariantCultureIgnoreCase))
-                {
-                    throw new RollbackException(
-                        "CloudFormation stack finished in a rollback state, and the \"Fail on rollback\" option was enabled.");
-                }
+                throw new RollbackException(
+                    "CloudFormation stack finished in a rollback state.");
+                
             }
         }
 
