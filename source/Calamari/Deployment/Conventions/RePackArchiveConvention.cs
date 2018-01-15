@@ -6,9 +6,9 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
-using Octopus.Core.Constants;
-using Octopus.Core.Resources;
-using Octopus.Core.Resources.Versioning;
+using Octopus.Versioning;
+using Octopus.Versioning.Constants;
+using Octopus.Versioning.Metadata;
 
 namespace Calamari.Java.Deployment.Conventions
 {

@@ -11,8 +11,8 @@ using System.Net.Http;
 using Calamari.Commands.Support;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octopus.Core.Resources.Versioning;
-using Octopus.Core.Resources.Versioning.Factories;
+using Octopus.Versioning;
+using Octopus.Versioning.Factories;
 
 namespace Calamari.Integration.Packages.NuGet
 {

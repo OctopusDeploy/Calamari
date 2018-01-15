@@ -10,14 +10,13 @@ using Calamari.Exceptions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
 using Calamari.Util;
-using Octopus.Core.Constants;
 using Octopus.Core.Extensions;
-using Octopus.Core.Resources;
-using Octopus.Core.Resources.Metadata;
-using Octopus.Core.Resources.Parsing.Maven;
-using Octopus.Core.Resources.Versioning;
-using Octopus.Core.Resources.Versioning.Factories;
 using Octopus.Core.Util;
+using Octopus.Versioning;
+using Octopus.Versioning.Constants;
+using Octopus.Versioning.Factories;
+using Octopus.Versioning.Metadata;
+using Octopus.Versioning.Parsing.Maven;
 
 namespace Calamari.Integration.Packages.Download
 {
