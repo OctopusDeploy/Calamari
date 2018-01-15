@@ -340,7 +340,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if (expectSuccess && isRollback && isStackType)
             {
                 Log.Warn(
-                    "Stack was either missing or in a rollback state. This may mean that the stack was not processed correctly. " +
+                    "Stack was either missing or in a rollback state. This means that the stack was not processed correctly. " +
                     "Review the stack in the AWS console to find any errors that may have occured during deployment.");
                 var progressStatus = StackEvent(stackName, stack => stack.ResourceStatusReason != null);
                 if (progressStatus != null)
@@ -348,8 +348,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     Log.Warn(progressStatus.ResourceStatusReason);
                 }
 
-                throw new RollbackException(
-                    "CloudFormation stack finished in a rollback state.");
+                throw new RollbackException("AWS-CLOUDFORMATION-ERROR-0001: CloudFormation stack finished in a rollback state. " +
+                                            "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0001");
                 
             }
         }
