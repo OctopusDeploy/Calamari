@@ -119,5 +119,4 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
-  <Import Project="../Sign.targets" Condition="'$(Configuration)' == 'Release'" />
 </Project>
