@@ -58,7 +58,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
 
             if (deployment.Variables[SpecialVariables.Action.Aws.CloudFormationAction]
-                .Map(variable => "Remove".Equals(variable, StringComparison.InvariantCultureIgnoreCase)))
+                .Map(variable => "Delete".Equals(variable, StringComparison.InvariantCultureIgnoreCase)))
             {                
                 RemoveCloudFormation(deployment);
             }
@@ -97,7 +97,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Tee(stackName =>
                 {
                     if (waitForComplete)
-                        WaitForStackToComplete(deployment, stackName, false);
+                        WaitForStackToComplete(deployment, stackName);
                 });            
         }
 
