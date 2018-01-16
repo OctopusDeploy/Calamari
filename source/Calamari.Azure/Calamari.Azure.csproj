@@ -37,7 +37,7 @@
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Azure.Common" Version="2.1.0" />
     <PackageReference Include="Microsoft.Azure.Common.Dependencies" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Resources" Version="2.18.11-preview" />
+    <PackageReference Include="Microsoft.Azure.Management.Resources" Version="2.20.1-preview" />
     <PackageReference Include="Microsoft.Azure.Management.Websites" Version="1.0.0-preview" />
     <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
@@ -47,8 +47,8 @@
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.6.4" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.19.208020213" />
     <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="1.5.0" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.6" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.5" />
     <PackageReference Include="Microsoft.Web.Deployment" Version="3.6.0" />
     <PackageReference Include="Microsoft.WindowsAzure.Common" Version="1.4.1" />
     <PackageReference Include="Microsoft.WindowsAzure.Common.Dependencies" Version="1.1.1" />
