@@ -164,9 +164,30 @@ private void DoPackage(string project, string framework, string version, string 
 
     DotNetCorePublish(projectDir, publishSettings);
 
+    SignBinaries(publishSettings.OutputDirectory.FullPath);
+
     var nuspec = $"{publishedTo}/{packageId}.nuspec";
     CopyFile($"{projectDir}/{project}.nuspec", nuspec);
     NuGetPack(nuspec, nugetPackSettings);
+}
+
+private void SignBinaries(string outputDirectory)
+{
+    Information($"Signing binaries in {outputDirectory}");
+
+	var files = GetFiles(outputDirectory + "/Calamari.exe");
+    files.Add(GetFiles(outputDirectory + "/Calamari.Azure.exe"));
+    files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
+
+	var signtoolPath = MakeAbsolute(File("./source/Tools/signtool/signtool.exe"));
+
+	Sign(files, new SignToolSignSettings {
+			ToolPath = signtoolPath,
+            TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
+            CertPath = signingCertificatePath,
+            Password = signingCertificatePassword
+    });
+
 }
 
 // Returns the runtime identifiers from the project file
