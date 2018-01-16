@@ -178,6 +178,7 @@ private void SignBinaries(string outputDirectory)
 
 	var files = GetFiles(outputDirectory + "/Calamari.exe");
     files.Add(GetFiles(outputDirectory + "/Calamari.Azure.exe"));
+	files.Add(GetFiles(outputDirectory + "/Calamari.Aws.exe"));
     files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
 
 
