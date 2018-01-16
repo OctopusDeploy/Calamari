@@ -180,7 +180,7 @@ private void SignBinaries(string outputDirectory)
     files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
 
 
-    var signTool = MakeAbsolute(File("./tools/signtool.exe"));
+    var signTool = MakeAbsolute(File("./certificates/signtool.exe"));
     Information($"Using signtool in {signTool}");
 
 	Sign(files, new SignToolSignSettings {
