@@ -58,13 +58,13 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
 
             if (deployment.Variables[SpecialVariables.Action.Aws.CloudFormationAction]
-                .Map(variable => "Deploy".Equals(variable, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                DeployCloudFormation(deployment);
+                .Map(variable => "Remove".Equals(variable, StringComparison.InvariantCultureIgnoreCase)))
+            {                
+                RemoveCloudFormation(deployment);
             }
             else
             {
-                RemoveCloudFormation(deployment);
+                DeployCloudFormation(deployment);
             }
         }
 
