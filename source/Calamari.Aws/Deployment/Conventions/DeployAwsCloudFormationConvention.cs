@@ -57,6 +57,21 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
+            if (deployment.Variables[SpecialVariables.Action.Aws.CloudFormationAction]
+                .Map(variable => "Deploy".Equals(variable, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                DeployCloudFormation(deployment);
+            }
+            else
+            {
+                RemoveCloudFormation(deployment);
+            }
+        }
+
+        private void DeployCloudFormation(RunningDeployment deployment)
+        {
+            Guard.NotNull(deployment, "deployment can not be null");
+
             var stackName = deployment.Variables[SpecialVariables.Action.Aws.CloudFormationStackName];
 
             WriteCredentialInfo(deployment);
@@ -71,6 +86,19 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Tee(template => DeployStack(stackName, deployment, template));
 
             GetOutputVars(stackName, deployment);
+        }
+
+        private void RemoveCloudFormation(RunningDeployment deployment)
+        {
+            Guard.NotNull(deployment, "deployment can not be null");
+            
+            deployment.Variables[SpecialVariables.Action.Aws.CloudFormationStackName]
+                .Tee(DeleteCloudFormation)
+                .Tee(stackName =>
+                {
+                    if (waitForComplete)
+                        WaitForStackToComplete(deployment, stackName, false);
+                });            
         }
 
         /// <summary>
