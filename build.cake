@@ -180,8 +180,11 @@ private void SignBinaries(string outputDirectory)
     files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
 
 
+    var signTool = MakeAbsolute(File("./tools/signtool.exe"));
+    Information($"Using signtool in {signTool}");
+
 	Sign(files, new SignToolSignSettings {
-			ToolPath = MakeAbsolute(File("./tools/signtool.exe")),
+			ToolPath = signTool,
             TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
             CertPath = signingCertificatePath,
             Password = signingCertificatePassword
