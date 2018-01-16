@@ -29,9 +29,8 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 foreach (var resourceGroup in resourceGroups)
                 {
-                    var sites = webSiteClient.Sites.GetSites(resourceGroup, null, null, true).Value;
-                    var matchingSite = sites.FirstOrDefault(x => x.SiteName.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-
+                    var siteResponse = webSiteClient.WebApps.GetWithHttpMessagesAsync(resourceGroup, siteName).Result;
+                    var matchingSite = siteResponse.Body;
                     if (matchingSite == null)
                         continue;
 
