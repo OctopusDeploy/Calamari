@@ -179,10 +179,9 @@ private void SignBinaries(string outputDirectory)
     files.Add(GetFiles(outputDirectory + "/Calamari.Azure.exe"));
     files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
 
-	var signtoolPath = MakeAbsolute(File("./source/Tools/signtool/signtool.exe"));
 
 	Sign(files, new SignToolSignSettings {
-			ToolPath = signtoolPath,
+			ToolPath = MakeAbsolute(File("./tools/signtool/signtool.exe")),
             TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
             CertPath = signingCertificatePath,
             Password = signingCertificatePassword
