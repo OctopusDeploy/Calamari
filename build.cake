@@ -181,7 +181,7 @@ private void SignBinaries(string outputDirectory)
 
 
 	Sign(files, new SignToolSignSettings {
-			ToolPath = MakeAbsolute(File("./tools/signtool/signtool.exe")),
+			ToolPath = MakeAbsolute(File("./tools/signtool.exe")),
             TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
             CertPath = signingCertificatePath,
             Password = signingCertificatePassword
