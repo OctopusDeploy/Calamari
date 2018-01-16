@@ -11,9 +11,9 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Microsoft.Azure;
-using Microsoft.Azure.Management.Resources;
-using Microsoft.Azure.Management.Resources.Models;
+using Microsoft.Azure.Management.ResourceManager;
+using Microsoft.Azure.Management.ResourceManager.Models;
+using Microsoft.Rest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
@@ -72,7 +72,16 @@ namespace Calamari.Azure.Deployment.Conventions
                 $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
-            Func<IResourceManagementClient> createArmClient = () => new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password, resourceManagementEndpoint, activeDirectoryEndPoint)), new Uri(resourceManagementEndpoint));
+            Func<IResourceManagementClient> createArmClient = () =>
+            {
+                var client = new ResourceManagementClient(
+                        new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password,
+                            resourceManagementEndpoint, activeDirectoryEndPoint)))
+                {
+                    SubscriptionId = subscriptionId
+                };
+                return client;
+            };
 
             CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
             PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
@@ -104,7 +113,7 @@ namespace Calamari.Azure.Deployment.Conventions
             using (var armClient = createArmClient())
             {
                 var createDeploymentResult = armClient.Deployments.CreateOrUpdate(resourceGroupName, deploymentName,
-                    new Microsoft.Azure.Management.Resources.Models.Deployment
+                    new Microsoft.Azure.Management.ResourceManager.Models.Deployment
                     {
                         Properties = new DeploymentProperties
                         {
@@ -114,7 +123,7 @@ namespace Calamari.Azure.Deployment.Conventions
                         }
                     });
 
-                Log.Info($"Deployment created: {createDeploymentResult.Deployment.Id}");
+                Log.Info($"Deployment created: {createDeploymentResult.Id}");
             }
         }
 
@@ -135,7 +144,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 Log.Verbose("Polling for status of deployment...");
                 using (var armClient = createArmClient())
                 {
-                    var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName).Deployment;
+                    var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName);
 
                     Log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
 
@@ -144,7 +153,7 @@ namespace Calamari.Azure.Deployment.Conventions
                         case "Succeeded":
                             Log.Info($"Deployment {deploymentName} complete.");
                             Log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
-                            CaptureOutputs(deployment.Properties.Outputs, variables);
+                            CaptureOutputs(deployment.Properties.Outputs.ToString(), variables);
                             continueToPoll = false;
                             break;
 
@@ -172,14 +181,13 @@ namespace Calamari.Azure.Deployment.Conventions
         static string GetOperationResults(IResourceManagementClient armClient, string resourceGroupName, string deploymentName)
         {
             var log = new StringBuilder("Operations details:\n");
-            var operations =
-                armClient.DeploymentOperations.List(resourceGroupName, deploymentName, new DeploymentOperationsListParameters()).Operations;
+            var operations = armClient.DeploymentOperations.List(resourceGroupName, deploymentName);
 
             foreach (var operation in operations)
             {
                 log.AppendLine($"Resource: {operation.Properties.TargetResource.ResourceName}");
                 log.AppendLine($"Type: {operation.Properties.TargetResource.ResourceType}");
-                log.AppendLine($"Timestamp: {operation.Properties.Timestamp.ToLocalTime().ToString("s")}");
+                log.AppendLine($"Timestamp: {operation.Properties.Timestamp?.ToLocalTime().ToString("s")}");
                 log.AppendLine($"Deployment operation: {operation.Id}");
                 log.AppendLine($"Status: {operation.Properties.StatusCode}");
                 log.AppendLine($"Provisioning State: {operation.Properties.ProvisioningState}");

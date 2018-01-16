@@ -5,9 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure.Integration.Security;
 using Calamari.Commands.Support;
-using Microsoft.Azure;
-using Microsoft.Azure.Management.Resources;
-using Microsoft.Azure.Management.Resources.Models;
+using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
@@ -20,12 +18,18 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
 
-            using (var resourcesClient = new ResourceManagementClient(new TokenCloudCredentials(subscriptionId, token), new Uri(resourceManagementEndpoint)))
+            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token)))
             using (var webSiteClient = new WebSiteManagementClient(new Uri(resourceManagementEndpoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
+                resourcesClient.SubscriptionId = subscriptionId;
+
                 // We may need to search all ResourceGroups, if one isn't specified.  New Step template will always provide the Resource Group, it is currently treated as optional here
                 // for backward compatibility.
-                var resourceGroups = resourcesClient.ResourceGroups.List(new ResourceGroupListParameters()).ResourceGroups.Where(rg => string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(rg.Name, resourceGroupName, StringComparison.InvariantCultureIgnoreCase)).Select(rg => rg.Name).ToList();
+                var resourceGroups = resourcesClient.ResourceGroups
+                    .List()
+                    .Where(x => string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(x.Name, resourceGroupName, StringComparison.InvariantCultureIgnoreCase))
+                    .Select(x => x.Name)
+                    .ToList();
 
                 foreach (var resourceGroup in resourceGroups)
                 {
@@ -40,13 +44,13 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     Log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
 
                     SitePublishProfile publishProperties = null;
-                    var request = new HttpRequestMessage {Method = HttpMethod.Post, RequestUri = publishSettingsUri};
+                    var request = new HttpRequestMessage { Method = HttpMethod.Post, RequestUri = publishSettingsUri };
                     // Add the authentication headers
                     var requestTask = resourcesClient.Credentials.ProcessHttpRequestAsync(request, new CancellationToken())
                         .ContinueWith(authResult => resourcesClient.HttpClient.SendAsync(request), TaskContinuationOptions.NotOnFaulted)
                         .ContinueWith(publishSettingsResponse =>
                         {
-                            var result = publishSettingsResponse.Result.Result; 
+                            var result = publishSettingsResponse.Result.Result;
 
                             if (!result.IsSuccessStatusCode)
                             {
