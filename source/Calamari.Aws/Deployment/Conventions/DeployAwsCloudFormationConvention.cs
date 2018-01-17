@@ -97,7 +97,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Tee(stackName =>
                 {
                     if (waitForComplete)
-                        WaitForStackToComplete(deployment, stackName);
+                        WaitForStackToComplete(deployment, stackName, false);
                 });            
         }
 
@@ -278,7 +278,12 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="stackName">The name of the stack</param>
         /// <param name="deployment">The current deployment</param>
         /// <param name="expectSuccess">True if we expect to see a successful status result, false otherwise</param>
-        private void WaitForStackToComplete(RunningDeployment deployment, string stackName, bool expectSuccess = true)
+        /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
+        private void WaitForStackToComplete(
+            RunningDeployment deployment, 
+            string stackName, 
+            bool expectSuccess = true, 
+            bool missingIsFailure = true)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
@@ -291,7 +296,7 @@ namespace Calamari.Aws.Deployment.Conventions
             do
             {
                 Thread.Sleep(StatusWaitPeriod);
-            } while (!StackEventCompleted(deployment, stackName, expectSuccess));
+            } while (!StackEventCompleted(deployment, stackName, expectSuccess, missingIsFailure));
 
             Thread.Sleep(StatusWaitPeriod);
         }
@@ -332,9 +337,10 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="stackName">The name of the stack</param>
         /// <param name="expectSuccess">True if we were expecting this event to indicate success</param>
         /// <param name="deployment">The current deployment</param>
+        /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
         private bool StackEventCompleted(RunningDeployment deployment, string stackName,
-            bool expectSuccess = true)
+            bool expectSuccess = true, bool missingIsFailure = true)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
@@ -343,7 +349,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Tee(status =>
                     Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
                              $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
-                .Tee(status => LogRollbackError(deployment, status, stackName, expectSuccess))
+                .Tee(status => LogRollbackError(deployment, status, stackName, expectSuccess, missingIsFailure))
                 .Map(status => ((status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) ||
                                 (status.ResourceStatus.Value.EndsWith("_FAILED"))) &&
                                (status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true));
@@ -355,14 +361,15 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="status">The status of the stack, or null if the stack does not exist</param>
         /// <param name="stackName">The name of the stack</param>
         /// <param name="expectSuccess">True if the status should indicate success</param>
+        /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         /// <param name="deployment">The current deployment</param>
         private void LogRollbackError(RunningDeployment deployment, StackEvent status, string stackName,
-            bool expectSuccess)
+            bool expectSuccess, bool missingIsFailure)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            var isRollback = StatusIsCreateOrUpdateRollback(status, true);
+            var isRollback = StatusIsCreateOrUpdateRollback(status, missingIsFailure);
             var isStackType = status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true;
 
             if (expectSuccess && isRollback && isStackType)
