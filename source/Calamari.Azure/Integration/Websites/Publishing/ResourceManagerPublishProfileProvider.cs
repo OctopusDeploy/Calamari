@@ -20,7 +20,11 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
 
-            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(subscriptionId, token)) { BaseUri = new Uri(resourceManagementEndpoint) })
+            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(subscriptionId, token))
+            {
+                SubscriptionId = subscriptionId,
+                BaseUri = new Uri(resourceManagementEndpoint)
+            })
             using (var webSiteClient = new WebSiteManagementClient(new Uri(resourceManagementEndpoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
                 // We may need to search all ResourceGroups, if one isn't specified.

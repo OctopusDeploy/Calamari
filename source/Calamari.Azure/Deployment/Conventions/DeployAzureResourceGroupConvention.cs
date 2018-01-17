@@ -72,6 +72,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     password,
                     resourceManagementEndpoint, activeDirectoryEndPoint)))
             {
+                SubscriptionId = subscriptionId,
                 BaseUri = new Uri(resourceManagementEndpoint)
             };
 
