@@ -38,12 +38,16 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly bool filesInPackage;
         private readonly ICalamariFileSystem fileSystem;
         private readonly bool waitForComplete;
+        private readonly string action;
+        private readonly string stackName;
 
         public DeployAwsCloudFormationConvention(
             string templateFile,
             string templateParametersFile,
             bool filesInPackage,
+            string action,
             bool waitForComplete,
+            string stackName,
             ICalamariFileSystem fileSystem)
         {
             this.templateFile = templateFile;
@@ -51,15 +55,16 @@ namespace Calamari.Aws.Deployment.Conventions
             this.filesInPackage = filesInPackage;
             this.fileSystem = fileSystem;
             this.waitForComplete = waitForComplete;
+            this.action = action;
+            this.stackName = stackName;
         }
 
         public void Install(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (deployment.Variables[SpecialVariables.Action.Aws.CloudFormationAction]
-                .Map(variable => "Delete".Equals(variable, StringComparison.InvariantCultureIgnoreCase)))
-            {                
+            if ("Delete".Equals(action, StringComparison.InvariantCultureIgnoreCase))
+            {
                 RemoveCloudFormation(deployment);
             }
             else
@@ -71,8 +76,6 @@ namespace Calamari.Aws.Deployment.Conventions
         private void DeployCloudFormation(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-
-            var stackName = deployment.Variables[SpecialVariables.Action.Aws.CloudFormationStackName];
 
             WriteCredentialInfo(deployment);
 
@@ -91,15 +94,18 @@ namespace Calamari.Aws.Deployment.Conventions
         private void RemoveCloudFormation(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-            
-            
-            deployment.Variables[SpecialVariables.Action.Aws.CloudFormationStackName]
-                .Tee(DeleteCloudFormation)
-                .Tee(stackName =>
-                {
-                    if (waitForComplete)
-                        WaitForStackToComplete(deployment, stackName, false);
-                });            
+
+            if (StackExists(stackName))
+            {
+                DeleteCloudFormation(stackName);
+            }
+            else
+            {
+                Log.Info($"No stack called {stackName} exists");
+            }
+
+            if (waitForComplete)
+                WaitForStackToComplete(deployment, stackName, false);
         }
 
         /// <summary>
@@ -281,9 +287,9 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="expectSuccess">True if we expect to see a successful status result, false otherwise</param>
         /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         private void WaitForStackToComplete(
-            RunningDeployment deployment, 
-            string stackName, 
-            bool expectSuccess = true, 
+            RunningDeployment deployment,
+            string stackName,
+            bool expectSuccess = true,
             bool missingIsFailure = true)
         {
             Guard.NotNull(deployment, "deployment can not be null");
@@ -307,7 +313,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="stackName">The name of the stack to query</param>
         /// <param name="predicate">The optional predicate used to filter events</param>
-        /// <returns></returns>
+        /// <returns>The stack event</returns>
         private StackEvent StackEvent(string stackName, Func<StackEvent, bool> predicate = null)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
@@ -384,9 +390,9 @@ namespace Calamari.Aws.Deployment.Conventions
                     Log.Warn(progressStatus.ResourceStatusReason);
                 }
 
-                throw new RollbackException("AWS-CLOUDFORMATION-ERROR-0001: CloudFormation stack finished in a rollback state. " +
-                                            "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0001");
-                
+                throw new RollbackException(
+                    "AWS-CLOUDFORMATION-ERROR-0001: CloudFormation stack finished in a rollback state. " +
+                    "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0001");
             }
         }
 
@@ -410,7 +416,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="stackName">The name of the stack to create</param>
         /// <param name="template">The CloudFormation template</param>
         /// <param name="parameters">The parameters JSON file</param>
-        /// <returns></returns>
+        /// <returns>The stack id</returns>
         private string CreateCloudFormation(string stackName, string template, List<Parameter> parameters)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
@@ -429,36 +435,17 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
-        /// Deletes the stack and returns the stack ID
+        /// Deletes the stack
         /// </summary>
         /// <param name="stackName">The name of the stack to delete</param>
-        /// <returns></returns>
         private void DeleteCloudFormation(string stackName)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            if (StackExists(stackName))
-            {
-                new AmazonCloudFormationClient(GetCredentials())
-                    .Map(client => client.DeleteStack(
-                        new DeleteStackRequest().Tee(request => request.StackName = stackName)))
-                    .Map(response => response.ResponseMetadata.Metadata["Status"])
-                    .Tee(status =>
-                    {
-                        if ("SUCCESS".Equals(status, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            Log.Info($"Deleted stack called {stackName}");
-                        }
-                        else
-                        {
-                            Log.Warn($"Failed to delete stack called {stackName}");
-                        }
-                    });
-            }
-            else
-            {
-                Log.Info($"No stack called {stackName} exists");
-            }
+            new AmazonCloudFormationClient(GetCredentials())
+                .Map(client => client.DeleteStack(
+                    new DeleteStackRequest().Tee(request => request.StackName = stackName)))
+                .Tee(status => Log.Info($"Deleted stack called {stackName}"));
         }
 
         /// <summary>
@@ -468,7 +455,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="template">The CloudFormation template</param>
         /// <param name="parameters">The parameters JSON file</param>
         /// <param name="deployment">The current deployment</param>
-        /// <returns></returns>
+        /// <returns>stackId</returns>
         private string UpdateCloudFormation(
             RunningDeployment deployment,
             string stackName,

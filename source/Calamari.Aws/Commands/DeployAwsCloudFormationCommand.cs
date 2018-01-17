@@ -21,6 +21,8 @@ namespace Calamari.Aws.Commands
         string templateFile;
         string templateParameterFile;
         string waitForComplete;
+        string action;
+        string stackName;
 
         public DeployCloudFormationCommand()
         {
@@ -34,6 +36,8 @@ namespace Calamari.Aws.Commands
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete = v);
+            Options.Add("action=", "Deploy if the deployment is to deploy or update a stack, and Delete if it is to remove the stack.", v => action = v);
+            Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -59,7 +63,9 @@ namespace Calamari.Aws.Commands
                     templateFile, 
                     templateParameterFile, 
                     filesInPackage,
+                    action,
                     !Boolean.FalseString.Equals(waitForComplete, StringComparison.InvariantCultureIgnoreCase),
+                    stackName,
                     fileSystem)
             };
 
