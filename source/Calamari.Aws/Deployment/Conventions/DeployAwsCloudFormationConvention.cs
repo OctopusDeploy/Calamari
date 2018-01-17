@@ -105,7 +105,9 @@ namespace Calamari.Aws.Deployment.Conventions
             }
 
             if (waitForComplete)
-                WaitForStackToComplete(deployment, stackName, false);
+            {
+                WaitForStackToComplete(deployment, stackName, true, false);
+            }
         }
 
         /// <summary>
@@ -326,8 +328,19 @@ namespace Calamari.Aws.Deployment.Conventions
                         return client.DescribeStackEvents(new DescribeStackEventsRequest()
                             .Tee(request => { request.StackName = stackName; }));
                     }
-                    catch (AmazonCloudFormationException)
+                    catch (AmazonCloudFormationException ex)
                     {
+                        if (ex.ErrorCode == "AccessDenied")
+                        {
+                            throw new PermissionException(
+                                "AWS-CLOUDFORMATION-ERROR-0002: The AWS account used to perform the operation does not have " +
+                                "the required permissions to query the current state of the CloudFormation stack." +
+                                "This step will complete without waiting for the stack to complete, and will not fail if the " +
+                                "stack finishes in an error state.\n" + 
+                                ex.Message + "\n" + 
+                                "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0002");
+                        }
+                        
                         // Assume this is a "Stack [StackName] does not exist" error
                         return null;
                     }
@@ -352,14 +365,22 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            return StackEvent(stackName)
-                .Tee(status =>
-                    Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
-                             $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
-                .Tee(status => LogRollbackError(deployment, status, stackName, expectSuccess, missingIsFailure))
-                .Map(status => ((status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) ||
-                                (status.ResourceStatus.Value.EndsWith("_FAILED"))) &&
-                               (status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true));
+            try
+            {
+                return StackEvent(stackName)
+                    .Tee(status =>
+                        Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
+                                 $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
+                    .Tee(status => LogRollbackError(deployment, status, stackName, expectSuccess, missingIsFailure))
+                    .Map(status => ((status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) ||
+                                    (status.ResourceStatus.Value.EndsWith("_FAILED"))) &&
+                                   (status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true));
+            }
+            catch (PermissionException ex)
+            {
+                Log.Warn(ex.Message);
+                return true;
+            }
         }
 
         /// <summary>
@@ -376,22 +397,29 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            var isRollback = StatusIsCreateOrUpdateRollback(status, missingIsFailure);
+            var isUnsuccessful = StatusIsUnsuccessfulResult(status, missingIsFailure);
             var isStackType = status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true;
 
-            if (expectSuccess && isRollback && isStackType)
+            if (expectSuccess && isUnsuccessful && isStackType)
             {
                 Log.Warn(
-                    "Stack was either missing or in a rollback state. This means that the stack was not processed correctly. " +
+                    "Stack was either missing, in a rollback state, or in a failed state. This means that the stack was not processed correctly. " +
                     "Review the stack in the AWS console to find any errors that may have occured during deployment.");
-                var progressStatus = StackEvent(stackName, stack => stack.ResourceStatusReason != null);
-                if (progressStatus != null)
+                try
                 {
-                    Log.Warn(progressStatus.ResourceStatusReason);
+                    var progressStatus = StackEvent(stackName, stack => stack.ResourceStatusReason != null);
+                    if (progressStatus != null)
+                    {
+                        Log.Warn(progressStatus.ResourceStatusReason);
+                    }
+                }
+                catch (PermissionException)
+                {
+                    // ignore, it just means we won't display any of the status reasons
                 }
 
                 throw new RollbackException(
-                    "AWS-CLOUDFORMATION-ERROR-0001: CloudFormation stack finished in a rollback state. " +
+                    "AWS-CLOUDFORMATION-ERROR-0001: CloudFormation stack finished in a rollback or failed state. " +
                     "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0001");
             }
         }
@@ -481,7 +509,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
             catch (AmazonCloudFormationException ex)
             {
-                if (!StatusIsRollback(StackEvent(stackName), false))
+                if (!StatusIsRollback(stackName, false))
                 {
                     if (DealWithUpdateException(ex))
                     {
@@ -527,10 +555,19 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="status">The status to check</param>
         /// <param name="defaultValue">the default value if the status is null</param>
         /// <returns>true if this status indicates that the stack has to be deleted, and false otherwise</returns>
-        private bool StatusIsRollback(StackEvent status, bool defaultValue)
+        private bool StatusIsRollback(String stackName, bool defaultValue)
         {
-            return new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED"}.Any(x =>
-                status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
+            try
+            {
+                return new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED"}.Any(x =>
+                    StackEvent(stackName)?.ResourceStatus.Value
+                        .Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
+            }
+            catch (PermissionException)
+            {
+                // If we can't get the stack status, assume it is not in a state that we can recover from
+                return false;
+            }
         }
 
         /// <summary>
@@ -540,12 +577,13 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="status">The status to check</param>
         /// <param name="defaultValue">The default value if status is null</param>
         /// <returns>true if the status indcates a failed create or update, and false otherwise</returns>
-        private bool StatusIsCreateOrUpdateRollback(StackEvent status, bool defaultValue)
+        private bool StatusIsUnsuccessfulResult(StackEvent status, bool defaultValue)
         {
             return new[]
             {
                 "CREATE_ROLLBACK_COMPLETE", "CREATE_ROLLBACK_FAILED", "UPDATE_ROLLBACK_COMPLETE",
-                "UPDATE_ROLLBACK_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED"
+                "UPDATE_ROLLBACK_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED",
+                "CREATE_FAILED"
             }.Any(x =>
                 status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
         }
