@@ -79,7 +79,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             WriteCredentialInfo(deployment);
 
-            WaitForStackToComplete(deployment, stackName, false);
+            WaitForStackToComplete(deployment, false);
 
             TemplateReplacement.ResolveAndSubstituteFile(
                     fileSystem,
@@ -95,9 +95,9 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (StackExists(stackName, true))
+            if (StackExists(true))
             {
-                DeleteCloudFormation(stackName);
+                DeleteCloudFormation();
             }
             else
             {
@@ -106,7 +106,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (waitForComplete)
             {
-                WaitForStackToComplete(deployment, stackName, true, false);
+                WaitForStackToComplete(deployment, true, false);
             }
         }
 
@@ -147,20 +147,22 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
 
             GetParameters(deployment)
+                // Use the parameters to either create or update the stack
                 .Tee(parameters =>
-                    (StackExists(stackName, false)
-                        ? UpdateCloudFormation(deployment, stackName, template, parameters)
-                        : CreateCloudFormation(stackName, template, parameters))
+                    (StackExists(false)
+                        ? UpdateCloudFormation(deployment, template, parameters)
+                        : CreateCloudFormation(template, parameters))
                     .Tee(stackId =>
                     {
                         // If we should do so, wait for the stack to complete before saving the stack id.
                         // This means variuable save log messages will be grouped together
-                        if (waitForComplete) WaitForStackToComplete(deployment, stackName);
+                        if (waitForComplete) WaitForStackToComplete(deployment);
                     })
-                    .Tee(stackId =>
-                        Log.Info(
-                            $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""))
-                    .Tee(stackId => Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables)));
+                    // Take the stack ID returned by the create or update events, and save it as an output variable
+                    .Tee(stackId => Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables)))
+                .Tee(stackId =>
+                    Log.Info(
+                        $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""));
         }
 
         /// <summary>
@@ -196,23 +198,31 @@ namespace Calamari.Aws.Deployment.Conventions
             for (var retry = 0; retry < RetryCount; ++retry)
             {
                 var successflyReadOutputs = TemplateFileContainsOutputs(templateFile, deployment)
+                    // take the result of our scan of the template, and use it to determine
+                    // if we need to wait for outputs to be created
                     .Map(outputsDefined =>
-                        QueryStack(stackName)
-                            ?.Outputs.Aggregate(false, (success, output) =>
+                        QueryStack(stackName)?.Outputs
+                            // For each output, save it as an output variable, and change the agregated value to true
+                            // to indicate that we have successfully extracted an output variable
+                            .Aggregate(false, (success, output) =>
                             {
                                 Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]",
                                     output.OutputValue, deployment.Variables);
                                 Log.Info(
                                     $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
                                 return true;
-                            }) ?? !outputsDefined
+                            }) ??
+                        // Or if there were no outputs to wait for, then we have successfully read the (lack of) outputs
+                        !outputsDefined
                     );
 
+                // If we have read the outputs, or we are not waiting, exit
                 if (successflyReadOutputs || !waitForComplete)
                 {
                     break;
                 }
 
+                // Wait for a bit for and try again
                 Thread.Sleep(StatusWaitPeriod);
             }
         }
@@ -233,7 +243,9 @@ namespace Calamari.Aws.Deployment.Conventions
                     templateParametersFile,
                     filesInPackage,
                     deployment.Variables)
+                // The path is transformed to the string contents
                 .Map(path => fileSystem.ReadFile(path))
+                // The contents becomes true or false based on the regex match
                 .Map(contents => OutputsRe.IsMatch(contents));
         }
 
@@ -251,10 +263,15 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 new AmazonSecurityTokenServiceClient(GetCredentials())
+                    // Client becomes the response of the API call
                     .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
+                    // The response is narrowed to the Aen
                     .Map(response => response.Arn)
+                    // Try and match the response to get just the role
                     .Map(arn => ArnNameRe.Match(arn))
+                    // Extract the role name, or a default
                     .Map(match => match.Success ? match.Groups[1].Value : "Unknown")
+                    // Log the output
                     .Tee(role => Log.Info($"Running the step as the AWS role {role}"));
             }
             catch (AmazonServiceException)
@@ -271,7 +288,9 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 new AmazonIdentityManagementServiceClient(GetCredentials())
+                    // The client becomes the API response
                     .Map(client => client.GetUser(new GetUserRequest()))
+                    // Log the details of the response
                     .Tee(response => Log.Info($"Running the step as the AWS user {response.User.UserName}"));
             }
             catch (AmazonServiceException)
@@ -293,8 +312,9 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new AmazonCloudFormationClient(GetCredentials())
-                    .Map(client => client.DescribeStacks(new DescribeStacksRequest()
-                        .Tee(request => { request.StackName = stackName; })))
+                    // The client becomes the result of the API call
+                    .Map(client => client.DescribeStacks(new DescribeStacksRequest() {StackName = stackName}))
+                    // Get the first stack
                     .Map(response => response.Stacks.FirstOrDefault());
             }
             catch (AmazonServiceException ex)
@@ -309,8 +329,9 @@ namespace Calamari.Aws.Deployment.Conventions
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004", ex);
                 }
 
-                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
-                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005", ex);
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
+                    "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005", ex);
             }
         }
 
@@ -318,20 +339,18 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <summary>
         /// Wait for the stack to be in a completed state
         /// </summary>
-        /// <param name="stackName">The name of the stack</param>
         /// <param name="deployment">The current deployment</param>
         /// <param name="expectSuccess">True if we expect to see a successful status result, false otherwise</param>
         /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         private void WaitForStackToComplete(
             RunningDeployment deployment,
-            string stackName,
             bool expectSuccess = true,
             bool missingIsFailure = true)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            if (!StackExists(stackName, false))
+            if (!StackExists(false))
             {
                 return;
             }
@@ -339,7 +358,7 @@ namespace Calamari.Aws.Deployment.Conventions
             do
             {
                 Thread.Sleep(StatusWaitPeriod);
-            } while (!StackEventCompleted(deployment, stackName, expectSuccess, missingIsFailure));
+            } while (!StackEventCompleted(deployment, expectSuccess, missingIsFailure));
 
             Thread.Sleep(StatusWaitPeriod);
         }
@@ -347,10 +366,9 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <summary>
         /// Gets the last stack event by timestamp, optionally filtered by a predicate
         /// </summary>
-        /// <param name="stackName">The name of the stack to query</param>
         /// <param name="predicate">The optional predicate used to filter events</param>
         /// <returns>The stack event</returns>
-        private StackEvent StackEvent(string stackName, Func<StackEvent, bool> predicate = null)
+        private StackEvent StackEvent(Func<StackEvent, bool> predicate = null)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
@@ -359,8 +377,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     try
                     {
-                        return client.DescribeStackEvents(new DescribeStackEventsRequest()
-                            .Tee(request => { request.StackName = stackName; }));
+                        return client.DescribeStackEvents(new DescribeStackEventsRequest() {StackName = stackName});
                     }
                     catch (AmazonCloudFormationException ex)
                     {
@@ -388,24 +405,28 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <summary>
         /// Queries the state of the stack, and checks to see if it is in a completed state
         /// </summary>
-        /// <param name="stackName">The name of the stack</param>
         /// <param name="expectSuccess">True if we were expecting this event to indicate success</param>
         /// <param name="deployment">The current deployment</param>
         /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         /// <returns>True if the stack is completed or no longer available, and false otherwise</returns>
-        private bool StackEventCompleted(RunningDeployment deployment, string stackName,
-            bool expectSuccess = true, bool missingIsFailure = true)
+        private bool StackEventCompleted(
+            RunningDeployment deployment,
+            bool expectSuccess = true,
+            bool missingIsFailure = true)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
             try
             {
-                return StackEvent(stackName)
+                return StackEvent()
+                    // Log the details of the status event
                     .Tee(status =>
                         Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
                                  $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
-                    .Tee(status => LogRollbackError(deployment, status, stackName, expectSuccess, missingIsFailure))
+                    // Check to see if we have any errors in the status
+                    .Tee(status => LogRollbackError(deployment, status, expectSuccess, missingIsFailure))
+                    // convert the status to true/false based on the presense of these suffixes
                     .Map(status => ((status?.ResourceStatus.Value.EndsWith("_COMPLETE") ?? true) ||
                                     (status.ResourceStatus.Value.EndsWith("_FAILED"))) &&
                                    (status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true));
@@ -421,12 +442,14 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Log an error if we expected success and got a rollback
         /// </summary>
         /// <param name="status">The status of the stack, or null if the stack does not exist</param>
-        /// <param name="stackName">The name of the stack</param>
         /// <param name="expectSuccess">True if the status should indicate success</param>
         /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         /// <param name="deployment">The current deployment</param>
-        private void LogRollbackError(RunningDeployment deployment, StackEvent status, string stackName,
-            bool expectSuccess, bool missingIsFailure)
+        private void LogRollbackError(
+            RunningDeployment deployment,
+            StackEvent status,
+            bool expectSuccess,
+            bool missingIsFailure)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
@@ -441,7 +464,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     "Review the stack in the AWS console to find any errors that may have occured during deployment.");
                 try
                 {
-                    var progressStatus = StackEvent(stackName, stack => stack.ResourceStatusReason != null);
+                    var progressStatus = StackEvent(stack => stack.ResourceStatusReason != null);
                     if (progressStatus != null)
                     {
                         Log.Warn(progressStatus.ResourceStatusReason);
@@ -461,16 +484,17 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <summary>
         /// Check to see if the stack name exists.
         /// </summary>
-        /// <param name="stackName">The name of the stack</param>
         /// <param name="defaultValue">The return value when the user does not have the permissions to query the stacks</param>
         /// <returns>True if the stack exists, and false otherwise</returns>
-        private Boolean StackExists(string stackName, Boolean defaultValue)
+        private Boolean StackExists(Boolean defaultValue)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             try
             {
                 return new AmazonCloudFormationClient()
+                    // The client becomes the result of the API call
                     .Map(client => client.DescribeStacks(new DescribeStacksRequest()))
+                    // The result becomes true/false based on the presence of a matching stack name
                     .Map(result => result.Stacks.Any(stack => stack.StackName == stackName));
             }
             catch (AmazonCloudFormationException ex)
@@ -486,19 +510,19 @@ namespace Calamari.Aws.Deployment.Conventions
                     return defaultValue;
                 }
 
-                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0006: An unrecognised exception was thrown while checking to see if the CloudFormation stack exists.\n" +
-                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0006", ex);
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0006: An unrecognised exception was thrown while checking to see if the CloudFormation stack exists.\n" +
+                    "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0006", ex);
             }
         }
 
         /// <summary>
         /// Creates the stack and returns the stack ID
         /// </summary>
-        /// <param name="stackName">The name of the stack to create</param>
         /// <param name="template">The CloudFormation template</param>
         /// <param name="parameters">The parameters JSON file</param>
         /// <returns>The stack id</returns>
-        private string CreateCloudFormation(string stackName, string template, List<Parameter> parameters)
+        private string CreateCloudFormation(string template, List<Parameter> parameters)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
@@ -506,14 +530,17 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new AmazonCloudFormationClient(GetCredentials())
+                    // Client becomes the API response
                     .Map(client => client.CreateStack(
-                        new CreateStackRequest().Tee(request =>
+                        new CreateStackRequest()
                         {
-                            request.StackName = stackName;
-                            request.TemplateBody = template;
-                            request.Parameters = parameters;
-                        })))
+                            StackName = stackName,
+                            TemplateBody = template,
+                            Parameters = parameters
+                        }))
+                    // Narrow the response to the stack ID
                     .Map(response => response.StackId)
+                    // Log the stack id
                     .Tee(stackId => Log.Info($"Created stack with id {stackId}"));
             }
             catch (AmazonCloudFormationException ex)
@@ -527,24 +554,25 @@ namespace Calamari.Aws.Deployment.Conventions
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0007");
                 }
 
-                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0008: An unrecognised exception was thrown while creating a CloudFormation stack.\n" +
-                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0008", ex);
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0008: An unrecognised exception was thrown while creating a CloudFormation stack.\n" +
+                    "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0008", ex);
             }
         }
 
         /// <summary>
         /// Deletes the stack
         /// </summary>
-        /// <param name="stackName">The name of the stack to delete</param>
-        private void DeleteCloudFormation(string stackName)
+        private void DeleteCloudFormation()
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
             try
             {
                 new AmazonCloudFormationClient(GetCredentials())
-                    .Map(client => client.DeleteStack(
-                        new DeleteStackRequest().Tee(request => request.StackName = stackName)))
+                    // Client becomes the API response
+                    .Map(client => client.DeleteStack(new DeleteStackRequest() {StackName = stackName}))
+                    // Log the response details
                     .Tee(status => Log.Info($"Deleted stack called {stackName}"));
             }
             catch (AmazonCloudFormationException ex)
@@ -558,22 +586,21 @@ namespace Calamari.Aws.Deployment.Conventions
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0009");
                 }
 
-                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0010: An unrecognised exception was thrown while deleting a CloudFormation stack.\n" +
-                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010", ex);
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0010: An unrecognised exception was thrown while deleting a CloudFormation stack.\n" +
+                    "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010", ex);
             }
         }
 
         /// <summary>
         /// Updates the stack and returns the stack ID
         /// </summary>
-        /// <param name="stackName">The name of the stack to create</param>
         /// <param name="template">The CloudFormation template</param>
         /// <param name="parameters">The parameters JSON file</param>
         /// <param name="deployment">The current deployment</param>
         /// <returns>stackId</returns>
         private string UpdateCloudFormation(
             RunningDeployment deployment,
-            string stackName,
             string template,
             List<Parameter> parameters)
         {
@@ -584,19 +611,22 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new AmazonCloudFormationClient(GetCredentials())
+                    // Client becomes the API response
                     .Map(client => client.UpdateStack(
-                        new UpdateStackRequest().Tee(request =>
+                        new UpdateStackRequest()
                         {
-                            request.StackName = stackName;
-                            request.TemplateBody = template;
-                            request.Parameters = parameters;
-                        })))
+                            StackName = stackName,
+                            TemplateBody = template,
+                            Parameters = parameters
+                        }))
+                    // Narrow to the stack id
                     .Map(response => response.StackId)
+                    // Log the stack id
                     .Tee(stackId => Log.Info($"Updated stack with id {stackId}"));
             }
             catch (AmazonCloudFormationException ex)
             {
-                if (!StatusIsRollback(stackName, false))
+                if (!StatusIsRollback(false))
                 {
                     if (DealWithUpdateException(ex))
                     {
@@ -608,9 +638,9 @@ namespace Calamari.Aws.Deployment.Conventions
                 // If the stack exists, is in a ROLLBACK_COMPLETE state, and was never successfully
                 // created in the first place, we can end up here. In this case we try to create
                 // the stack from scratch.
-                DeleteCloudFormation(stackName);
-                WaitForStackToComplete(deployment, stackName, false);
-                return CreateCloudFormation(stackName, template, parameters);
+                DeleteCloudFormation();
+                WaitForStackToComplete(deployment, false);
+                return CreateCloudFormation(template, parameters);
             }
         }
 
@@ -642,24 +672,23 @@ namespace Calamari.Aws.Deployment.Conventions
                     "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011");
             }
 
-            throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0011: An unrecognised exception was thrown while updating a CloudFormation stack.\n" +
-                                       "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011", ex);
-        
+            throw new UnknownException(
+                "AWS-CLOUDFORMATION-ERROR-0011: An unrecognised exception was thrown while updating a CloudFormation stack.\n" +
+                "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011", ex);
         }
 
         /// <summary>
         /// Some statuses indicate that the only way forward is to delete the stack and try again.
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
         /// </summary>
-        /// <param name="status">The status to check</param>
         /// <param name="defaultValue">the default value if the status is null</param>
         /// <returns>true if this status indicates that the stack has to be deleted, and false otherwise</returns>
-        private bool StatusIsRollback(String stackName, bool defaultValue)
+        private bool StatusIsRollback(bool defaultValue)
         {
             try
             {
                 return new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED"}.Any(x =>
-                    StackEvent(stackName)?.ResourceStatus.Value
+                    StackEvent()?.ResourceStatus.Value
                         .Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
             }
             catch (PermissionException)
