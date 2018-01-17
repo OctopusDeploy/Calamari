@@ -303,7 +303,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     throw new PermissionException(
                         "AWS-CLOUDFORMATION-ERROR-0004: The AWS account used to perform the operation does not have " +
-                        "the required permissions to describe the CloudFormation stack." +
+                        "the required permissions to describe the CloudFormation stack. " +
                         "This means that the step is not able to generate any output variables.\n" +
                         ex.Message + "\n" +
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004", ex);
@@ -367,7 +367,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         {
                             throw new PermissionException(
                                 "AWS-CLOUDFORMATION-ERROR-0002: The AWS account used to perform the operation does not have " +
-                                "the required permissions to query the current state of the CloudFormation stack." +
+                                "the required permissions to query the current state of the CloudFormation stack. " +
                                 "This step will complete without waiting for the stack to complete, and will not fail if the " +
                                 "stack finishes in an error state.\n" +
                                 ex.Message + "\n" +
