@@ -439,7 +439,14 @@ namespace Calamari.Aws.Deployment.Conventions
             new AmazonCloudFormationClient(GetCredentials())
                 .Map(client => client.DeleteStack(
                     new DeleteStackRequest().Tee(request => request.StackName = stackName)))
-                .Tee(response => Log.Info($"Deleted stack called {stackName}"));
+                .Map(response => response.ResponseMetadata.Metadata["Status"])
+                .Tee(status =>
+                {
+                    if ("SUCCESS".Equals(status, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        Log.Info($"Deleted stack called {stackName}");
+                    }
+                });
         }
 
         /// <summary>
