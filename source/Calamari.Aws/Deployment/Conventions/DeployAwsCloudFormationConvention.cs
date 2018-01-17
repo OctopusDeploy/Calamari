@@ -95,7 +95,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (StackExists(stackName))
+            if (StackExists(stackName, true))
             {
                 DeleteCloudFormation(stackName);
             }
@@ -148,7 +148,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             GetParameters(deployment)
                 .Tee(parameters =>
-                    (StackExists(stackName)
+                    (StackExists(stackName, false)
                         ? UpdateCloudFormation(deployment, stackName, template, parameters)
                         : CreateCloudFormation(stackName, template, parameters))
                     .Tee(stackId =>
@@ -248,21 +248,37 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         private void WriteRoleInfo()
         {
-            new AmazonSecurityTokenServiceClient(GetCredentials())
-                .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
-                .Map(response => response.Arn)
-                .Map(arn => ArnNameRe.Match(arn))
-                .Map(match => match.Success ? match.Groups[1].Value : "Unknown")
-                .Tee(role => Log.Info($"Running the step as the AWS role {role}"));
+            try
+            {
+                new AmazonSecurityTokenServiceClient(GetCredentials())
+                    .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
+                    .Map(response => response.Arn)
+                    .Map(arn => ArnNameRe.Match(arn))
+                    .Map(match => match.Success ? match.Groups[1].Value : "Unknown")
+                    .Tee(role => Log.Info($"Running the step as the AWS role {role}"));
+            }
+            catch (AmazonServiceException)
+            {
+                // Ignore, we just won't add this to the logs
+            }
         }
 
         /// <summary>
         /// Dump the details of the current user.
         /// </summary>
-        private void WriteUserInfo() =>
-            new AmazonIdentityManagementServiceClient(GetCredentials())
-                .Map(client => client.GetUser(new GetUserRequest()))
-                .Tee(response => Log.Info($"Running the step as the AWS user {response.User.UserName}"));
+        private void WriteUserInfo()
+        {
+            try
+            {
+                new AmazonIdentityManagementServiceClient(GetCredentials())
+                    .Map(client => client.GetUser(new GetUserRequest()))
+                    .Tee(response => Log.Info($"Running the step as the AWS user {response.User.UserName}"));
+            }
+            catch (AmazonServiceException)
+            {
+                // Ignore, we just won't add this to the logs
+            }
+        }
 
 
         /// <summary>
@@ -274,10 +290,27 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            return new AmazonCloudFormationClient(GetCredentials())
-                .Map(client => client.DescribeStacks(new DescribeStacksRequest()
-                    .Tee(request => { request.StackName = stackName; })))
-                .Map(response => response.Stacks.FirstOrDefault());
+            try
+            {
+                return new AmazonCloudFormationClient(GetCredentials())
+                    .Map(client => client.DescribeStacks(new DescribeStacksRequest()
+                        .Tee(request => { request.StackName = stackName; })))
+                    .Map(response => response.Stacks.FirstOrDefault());
+            }
+            catch (AmazonServiceException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0004: The AWS account used to perform the operation does not have " +
+                        "the required permissions to describe the CloudFormation stack." +
+                        "This means that the step is not able to generate any output variables.\n" +
+                        ex.Message + "\n" +
+                        "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004", ex);
+                }
+
+                throw ex;
+            }
         }
 
 
@@ -297,7 +330,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            if (!StackExists(stackName))
+            if (!StackExists(stackName, false))
             {
                 return;
             }
@@ -336,11 +369,11 @@ namespace Calamari.Aws.Deployment.Conventions
                                 "AWS-CLOUDFORMATION-ERROR-0002: The AWS account used to perform the operation does not have " +
                                 "the required permissions to query the current state of the CloudFormation stack." +
                                 "This step will complete without waiting for the stack to complete, and will not fail if the " +
-                                "stack finishes in an error state.\n" + 
-                                ex.Message + "\n" + 
+                                "stack finishes in an error state.\n" +
+                                ex.Message + "\n" +
                                 "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0002");
                         }
-                        
+
                         // Assume this is a "Stack [StackName] does not exist" error
                         return null;
                     }
@@ -425,17 +458,35 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
-        /// Check to see if the stack name exists
+        /// Check to see if the stack name exists.
         /// </summary>
         /// <param name="stackName">The name of the stack</param>
+        /// <param name="defaultValue">The return value when the user does not have the permissions to query the stacks</param>
         /// <returns>True if the stack exists, and false otherwise</returns>
-        private Boolean StackExists(string stackName)
+        private Boolean StackExists(string stackName, Boolean defaultValue)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
+            try
+            {
+                return new AmazonCloudFormationClient()
+                    .Map(client => client.DescribeStacks(new DescribeStacksRequest()))
+                    .Map(result => result.Stacks.Any(stack => stack.StackName == stackName));
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    Log.Warn(
+                        "AWS-CLOUDFORMATION-ERROR-0003: The AWS account used to perform the operation does not have " +
+                        "the required permissions to describe the stack." +
+                        ex.Message + "\n" +
+                        "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0003");
 
-            return new AmazonCloudFormationClient()
-                .Map(client => client.DescribeStacks(new DescribeStacksRequest()))
-                .Map(result => result.Stacks.Any(stack => stack.StackName == stackName));
+                    return defaultValue;
+                }
+
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -585,7 +636,8 @@ namespace Calamari.Aws.Deployment.Conventions
                 "UPDATE_ROLLBACK_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED",
                 "CREATE_FAILED"
             }.Any(x =>
-                status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
+                status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ??
+                defaultValue);
         }
     }
 }
