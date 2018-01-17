@@ -86,7 +86,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     templateFile,
                     filesInPackage,
                     deployment.Variables)
-                .Tee(template => DeployStack(stackName, deployment, template));
+                .Tee(template => DeployStack(deployment, template));
 
             GetOutputVars(stackName, deployment);
         }
@@ -137,32 +137,26 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <summary>
         /// Update or create the stack
         /// </summary>
-        /// <param name="stackName">The name of the stack</param>
         /// <param name="deployment">The current deployment</param>
         /// <param name="template">The cloudformation template</param>
-        private void DeployStack(string stackName, RunningDeployment deployment, string template)
+        private void DeployStack(RunningDeployment deployment, string template)
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
 
-            GetParameters(deployment)
+            var stackId = GetParameters(deployment)
                 // Use the parameters to either create or update the stack
-                .Tee(parameters =>
-                    (StackExists(false)
-                        ? UpdateCloudFormation(deployment, template, parameters)
-                        : CreateCloudFormation(template, parameters))
-                    .Tee(stackId =>
-                    {
-                        // If we should do so, wait for the stack to complete before saving the stack id.
-                        // This means variuable save log messages will be grouped together
-                        if (waitForComplete) WaitForStackToComplete(deployment);
-                    })
-                    // Take the stack ID returned by the create or update events, and save it as an output variable
-                    .Tee(stackId => Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables)))
-                .Tee(stackId =>
-                    Log.Info(
-                        $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""));
+                .Map(parameters => StackExists(false)
+                    ? UpdateCloudFormation(deployment, template, parameters)
+                    : CreateCloudFormation(template, parameters));
+
+            if (waitForComplete) WaitForStackToComplete(deployment);
+
+            // Take the stack ID returned by the create or update events, and save it as an output variable
+            Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables))
+            Log.Info(
+                $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""));
         }
 
         /// <summary>
@@ -421,9 +415,8 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 return StackEvent()
                     // Log the details of the status event
-                    .Tee(status =>
-                        Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
-                                 $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
+                    .Tee(status => Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
+                                            $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
                     // Check to see if we have any errors in the status
                     .Tee(status => LogRollbackError(deployment, status, expectSuccess, missingIsFailure))
                     // convert the status to true/false based on the presense of these suffixes
@@ -707,9 +700,9 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED", "UPDATE_ROLLBACK_FAILED"}.Any(x =>
-                    StackEvent()?.ResourceStatus.Value
-                        .Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? defaultValue);
+                return new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED", "UPDATE_ROLLBACK_FAILED"}.Any(
+                    x => StackEvent()?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? 
+                         defaultValue);
             }
             catch (PermissionException)
             {
