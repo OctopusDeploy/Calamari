@@ -479,7 +479,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     Log.Warn(
                         "AWS-CLOUDFORMATION-ERROR-0003: The AWS account used to perform the operation does not have " +
-                        "the required permissions to describe the stack." +
+                        "the required permissions to describe the stack.\n" +
                         ex.Message + "\n" +
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0003");
 
@@ -522,7 +522,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     throw new PermissionException(
                         "AWS-CLOUDFORMATION-ERROR-0007: The AWS account used to perform the operation does not have " +
-                        "the required permissions to create the stack." +
+                        "the required permissions to create the stack.\n" +
                         ex.Message + "\n" +
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0007");
                 }
@@ -553,7 +553,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     throw new PermissionException(
                         "AWS-CLOUDFORMATION-ERROR-0009: The AWS account used to perform the operation does not have " +
-                        "the required permissions to delete the stack." +
+                        "the required permissions to delete the stack.\n" +
                         ex.Message + "\n" +
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0009");
                 }
@@ -637,7 +637,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 throw new PermissionException(
                     "AWS-CLOUDFORMATION-ERROR-0011: The AWS account used to perform the operation does not have " +
-                    "the required permissions to update the stack." +
+                    "the required permissions to update the stack.\n" +
                     ex.Message + "\n" +
                     "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011");
             }
