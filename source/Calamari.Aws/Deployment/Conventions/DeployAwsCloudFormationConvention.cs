@@ -309,7 +309,8 @@ namespace Calamari.Aws.Deployment.Conventions
                         "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004", ex);
                 }
 
-                throw ex;
+                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
+                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005", ex);
             }
         }
 
@@ -485,7 +486,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     return defaultValue;
                 }
 
-                throw ex;
+                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0006: An unrecognised exception was thrown while checking to see if the CloudFormation stack exists.\n" +
+                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0006", ex);
             }
         }
 
@@ -501,16 +503,33 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
 
-            return new AmazonCloudFormationClient(GetCredentials())
-                .Map(client => client.CreateStack(
-                    new CreateStackRequest().Tee(request =>
-                    {
-                        request.StackName = stackName;
-                        request.TemplateBody = template;
-                        request.Parameters = parameters;
-                    })))
-                .Map(response => response.StackId)
-                .Tee(stackId => Log.Info($"Created stack with id {stackId}"));
+            try
+            {
+                return new AmazonCloudFormationClient(GetCredentials())
+                    .Map(client => client.CreateStack(
+                        new CreateStackRequest().Tee(request =>
+                        {
+                            request.StackName = stackName;
+                            request.TemplateBody = template;
+                            request.Parameters = parameters;
+                        })))
+                    .Map(response => response.StackId)
+                    .Tee(stackId => Log.Info($"Created stack with id {stackId}"));
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0007: The AWS account used to perform the operation does not have " +
+                        "the required permissions to create the stack." +
+                        ex.Message + "\n" +
+                        "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0007");
+                }
+
+                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0008: An unrecognised exception was thrown while creating a CloudFormation stack.\n" +
+                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0008", ex);
+            }
         }
 
         /// <summary>
@@ -521,10 +540,27 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            new AmazonCloudFormationClient(GetCredentials())
-                .Map(client => client.DeleteStack(
-                    new DeleteStackRequest().Tee(request => request.StackName = stackName)))
-                .Tee(status => Log.Info($"Deleted stack called {stackName}"));
+            try
+            {
+                new AmazonCloudFormationClient(GetCredentials())
+                    .Map(client => client.DeleteStack(
+                        new DeleteStackRequest().Tee(request => request.StackName = stackName)))
+                    .Tee(status => Log.Info($"Deleted stack called {stackName}"));
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0009: The AWS account used to perform the operation does not have " +
+                        "the required permissions to delete the stack." +
+                        ex.Message + "\n" +
+                        "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0009");
+                }
+
+                throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0010: An unrecognised exception was thrown while deleting a CloudFormation stack.\n" +
+                                           "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010", ex);
+            }
         }
 
         /// <summary>
@@ -596,7 +632,19 @@ namespace Calamari.Aws.Deployment.Conventions
                 return true;
             }
 
-            throw ex;
+
+            if (ex.ErrorCode == "AccessDenied")
+            {
+                throw new PermissionException(
+                    "AWS-CLOUDFORMATION-ERROR-0011: The AWS account used to perform the operation does not have " +
+                    "the required permissions to update the stack." +
+                    ex.Message + "\n" +
+                    "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011");
+            }
+
+            throw new UnknownException("AWS-CLOUDFORMATION-ERROR-0011: An unrecognised exception was thrown while updating a CloudFormation stack.\n" +
+                                       "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011", ex);
+        
         }
 
         /// <summary>
