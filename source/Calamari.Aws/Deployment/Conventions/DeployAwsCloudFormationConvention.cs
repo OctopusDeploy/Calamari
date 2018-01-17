@@ -88,7 +88,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     deployment.Variables)
                 .Tee(template => DeployStack(deployment, template));
 
-            GetOutputVars(stackName, deployment);
+            GetOutputVars(deployment);
         }
 
         private void RemoveCloudFormation(RunningDeployment deployment)
@@ -141,7 +141,6 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="template">The cloudformation template</param>
         private void DeployStack(RunningDeployment deployment, string template)
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
 
@@ -154,9 +153,8 @@ namespace Calamari.Aws.Deployment.Conventions
             if (waitForComplete) WaitForStackToComplete(deployment);
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
-            Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables))
-            Log.Info(
-                $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\""));
+            Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables);
+            Log.Info($"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
         }
 
         /// <summary>
@@ -181,11 +179,9 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Attempt to get the output variables, taking into account whether any were defined in the template,
         /// and if we are to wait for the deployment to finish.
         /// </summary>
-        /// <param name="stackName">The name of the stack</param>
         /// <param name="deployment">The current deployment</param>
-        private void GetOutputVars(string stackName, RunningDeployment deployment)
+        private void GetOutputVars(RunningDeployment deployment)
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
 
             // Try a few times to get the outputs (if there were any in the template file)
@@ -195,7 +191,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     // take the result of our scan of the template, and use it to determine
                     // if we need to wait for outputs to be created
                     .Map(outputsDefined =>
-                        QueryStack(stackName)?.Outputs
+                        QueryStack()?.Outputs
                             // For each output, save it as an output variable, and change the agregated value to true
                             // to indicate that we have successfully extracted an output variable
                             .Aggregate(false, (success, output) =>
@@ -297,12 +293,9 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <summary>
         /// Query the stack for the outputs
         /// </summary>
-        /// <param name="stackName">The name of the stack</param>
         /// <returns>The output variables</returns>
-        private Stack QueryStack(string stackName)
+        private Stack QueryStack()
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
-
             try
             {
                 return new AmazonCloudFormationClient(GetCredentials())
@@ -342,7 +335,6 @@ namespace Calamari.Aws.Deployment.Conventions
             bool missingIsFailure = true)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
             if (!StackExists(false))
             {
@@ -364,8 +356,6 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>The stack event</returns>
         private StackEvent StackEvent(Func<StackEvent, bool> predicate = null)
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
-
             return new AmazonCloudFormationClient(GetCredentials())
                 .Map(client =>
                 {
@@ -409,7 +399,6 @@ namespace Calamari.Aws.Deployment.Conventions
             bool missingIsFailure = true)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
             try
             {
@@ -445,7 +434,6 @@ namespace Calamari.Aws.Deployment.Conventions
             bool missingIsFailure)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
             var isUnsuccessful = StatusIsUnsuccessfulResult(status, missingIsFailure);
             var isStackType = status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true;
@@ -481,7 +469,6 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>True if the stack exists, and false otherwise</returns>
         private Boolean StackExists(Boolean defaultValue)
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             try
             {
                 return new AmazonCloudFormationClient()
@@ -517,7 +504,6 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>The stack id</returns>
         private string CreateCloudFormation(string template, List<Parameter> parameters)
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
 
             try
@@ -558,8 +544,6 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         private void DeleteCloudFormation()
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
-
             try
             {
                 new AmazonCloudFormationClient(GetCredentials())
@@ -597,7 +581,6 @@ namespace Calamari.Aws.Deployment.Conventions
             string template,
             List<Parameter> parameters)
         {
-            Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
 
@@ -627,7 +610,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     if (DealWithUpdateException(ex))
                     {
                         // There was nothing to update, but we return the id for consistency anyway
-                        return QueryStack(stackName).StackId;
+                        return QueryStack().StackId;
                     }
                 }
 
