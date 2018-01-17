@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Calamari.Azure.Integration.Security;
 using Calamari.Commands.Support;
 using Microsoft.Azure.Management.ResourceManager;
+using Microsoft.Azure.Management.ResourceManager.Models;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
+using Microsoft.Rest.Azure.OData;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Integration.Websites.Publishing
@@ -18,17 +20,15 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
 
-            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token)))
+            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(subscriptionId, token)) { BaseUri = new Uri(resourceManagementEndpoint) })
             using (var webSiteClient = new WebSiteManagementClient(new Uri(resourceManagementEndpoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
-                resourcesClient.SubscriptionId = subscriptionId;
-
-                // We may need to search all ResourceGroups, if one isn't specified.  New Step template will always provide the Resource Group, it is currently treated as optional here
-                // for backward compatibility.
+                // We may need to search all ResourceGroups, if one isn't specified.
+                // New Step template will always provide the Resource Group, it is currently treated as optional here for backward compatibility.
                 var resourceGroups = resourcesClient.ResourceGroups
-                    .List()
-                    .Where(x => string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(x.Name, resourceGroupName, StringComparison.InvariantCultureIgnoreCase))
-                    .Select(x => x.Name)
+                    .List(new ODataQuery<ResourceGroupFilter>())
+                    .Where(rg => string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(rg.Name, resourceGroupName, StringComparison.InvariantCultureIgnoreCase))
+                    .Select(rg => rg.Name)
                     .ToList();
 
                 foreach (var resourceGroup in resourceGroups)

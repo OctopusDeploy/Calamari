@@ -47,15 +47,11 @@ namespace Calamari.Azure.Deployment.Conventions
             var password = variables[SpecialVariables.Action.Azure.Password];
             var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
-            {
                 Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
-            }
 
             var activeDirectoryEndPoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
             if (activeDirectoryEndPoint != DefaultVariables.ActiveDirectoryEndpoint)
-            {
                 Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
-            }
 
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
@@ -68,19 +64,15 @@ namespace Calamari.Azure.Deployment.Conventions
                 ? parameterNormalizer.Normalize(ResolveAndSubstituteFile(templateParametersFile, filesInPackage, variables))
                 : null;
 
-            Log.Info(
-                $"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
+            Log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
-            Func<IResourceManagementClient> createArmClient = () =>
+            Func<IResourceManagementClient> createArmClient = () => new ResourceManagementClient(
+                new TokenCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId,
+                    password,
+                    resourceManagementEndpoint, activeDirectoryEndPoint)))
             {
-                var client = new ResourceManagementClient(
-                        new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password,
-                            resourceManagementEndpoint, activeDirectoryEndPoint)))
-                {
-                    SubscriptionId = subscriptionId
-                };
-                return client;
+                BaseUri = new Uri(resourceManagementEndpoint)
             };
 
             CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
