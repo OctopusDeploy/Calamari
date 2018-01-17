@@ -92,6 +92,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
             
+            
             deployment.Variables[SpecialVariables.Action.Aws.CloudFormationStackName]
                 .Tee(DeleteCloudFormation)
                 .Tee(stackName =>
@@ -436,17 +437,28 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNullOrWhiteSpace(stackName, "stackName can not be null or empty");
 
-            new AmazonCloudFormationClient(GetCredentials())
-                .Map(client => client.DeleteStack(
-                    new DeleteStackRequest().Tee(request => request.StackName = stackName)))
-                .Map(response => response.ResponseMetadata.Metadata["Status"])
-                .Tee(status =>
-                {
-                    if ("SUCCESS".Equals(status, StringComparison.InvariantCultureIgnoreCase))
+            if (StackExists(stackName))
+            {
+                new AmazonCloudFormationClient(GetCredentials())
+                    .Map(client => client.DeleteStack(
+                        new DeleteStackRequest().Tee(request => request.StackName = stackName)))
+                    .Map(response => response.ResponseMetadata.Metadata["Status"])
+                    .Tee(status =>
                     {
-                        Log.Info($"Deleted stack called {stackName}");
-                    }
-                });
+                        if ("SUCCESS".Equals(status, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            Log.Info($"Deleted stack called {stackName}");
+                        }
+                        else
+                        {
+                            Log.Warn($"Failed to delete stack called {stackName}");
+                        }
+                    });
+            }
+            else
+            {
+                Log.Info($"No stack called {stackName} exists");
+            }
         }
 
         /// <summary>
