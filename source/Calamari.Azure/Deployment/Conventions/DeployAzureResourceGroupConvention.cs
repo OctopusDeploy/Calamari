@@ -183,9 +183,9 @@ namespace Calamari.Azure.Deployment.Conventions
 
             foreach (var operation in operations)
             {
-                log.AppendLine($"Resource: {operation.Properties.TargetResource.ResourceName}");
-                log.AppendLine($"Type: {operation.Properties.TargetResource.ResourceType}");
-                log.AppendLine($"Timestamp: {operation.Properties.Timestamp?.ToLocalTime().ToString("s")}");
+                log.AppendLine($"Resource: {operation.Properties.TargetResource?.ResourceName}");
+                log.AppendLine($"Type: {operation.Properties.TargetResource?.ResourceType}");
+                log.AppendLine($"Timestamp: {operation.Properties.Timestamp?.ToLocalTime():s}");
                 log.AppendLine($"Deployment operation: {operation.Id}");
                 log.AppendLine($"Status: {operation.Properties.StatusCode}");
                 log.AppendLine($"Provisioning State: {operation.Properties.ProvisioningState}");
