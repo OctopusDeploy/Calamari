@@ -45,14 +45,14 @@
     <PackageReference Include="Microsoft.Data.Edm" Version="5.6.4" />
     <PackageReference Include="Microsoft.Data.OData" Version="5.6.4" />
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.6.4" />
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.19.208020213" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.17.3" />
     <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.10" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.10" />
     <PackageReference Include="Microsoft.Web.Deployment" Version="3.6.0" />
     <PackageReference Include="Microsoft.WindowsAzure.Common" Version="1.4.1" />
     <PackageReference Include="Microsoft.WindowsAzure.Common.Dependencies" Version="1.1.1" />
-    <PackageReference Include="Microsoft.WindowsAzure.ConfigurationManager" Version="1.8.0.0" />
+    <PackageReference Include="Microsoft.WindowsAzure.ConfigurationManager" Version="1.8.0" />
     <PackageReference Include="Microsoft.WindowsAzure.Management.Compute" Version="6.1.2" />
     <PackageReference Include="Microsoft.WindowsAzure.Management.Storage" Version="3.2.2" />
     <PackageReference Include="Microsoft.WindowsAzure.Management.WebSites" Version="4.0.0" />

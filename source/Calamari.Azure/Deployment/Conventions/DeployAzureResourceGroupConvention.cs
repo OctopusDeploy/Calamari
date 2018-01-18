@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -67,13 +68,17 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
-            Func<IResourceManagementClient> createArmClient = () => new ResourceManagementClient(
-                new TokenCredentials(subscriptionId, ServicePrincipal.GetAuthorizationToken(tenantId, clientId,
-                    password,
-                    resourceManagementEndpoint, activeDirectoryEndPoint)))
+            Func<IResourceManagementClient> createArmClient = () =>
             {
-                SubscriptionId = subscriptionId,
-                BaseUri = new Uri(resourceManagementEndpoint)
+                var token = new TokenCredentials(ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password, resourceManagementEndpoint, activeDirectoryEndPoint));
+                var resourcesClient = new ResourceManagementClient(token)
+                {
+                    SubscriptionId = subscriptionId,
+                    BaseUri = new Uri(resourceManagementEndpoint),
+                };
+                resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                resourcesClient.HttpClient.BaseAddress = new Uri(resourceManagementEndpoint);
+                return resourcesClient;
             };
 
             CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
