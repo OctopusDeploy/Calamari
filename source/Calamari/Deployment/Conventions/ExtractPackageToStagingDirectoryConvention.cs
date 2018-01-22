@@ -13,7 +13,7 @@ namespace Calamari.Deployment.Conventions
         {
         }
 
-        protected override string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)
+        protected override string GetTargetPath(RunningDeployment deployment)
         {
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging"); 
             fileSystem.EnsureDirectoryExists(targetPath);

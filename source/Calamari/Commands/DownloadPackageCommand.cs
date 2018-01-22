@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Globalization;
+using System.Linq;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
 using Octopus.Versioning.Factories;
@@ -12,8 +14,6 @@ namespace Calamari.Commands
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
     public class DownloadPackageCommand : Command
     {
-        static readonly IPackageDownloader PackageDownloader = new PackageDownloaderStrategy();
-        static readonly IVersionFactory VersionFactory = new VersionFactory();
         string packageId;
         string packageVersion;
         bool forcePackageDownload;
@@ -23,19 +23,41 @@ namespace Calamari.Commands
         string feedPassword;
         string maxDownloadAttempts = "5";
         string attemptBackoffSeconds = "10";
-        
+        private FeedType feedType = FeedType.NuGet;
+        private VersionFormat versionFormat = VersionFormat.Semver;
+
         public DownloadPackageCommand()
         {
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
+            Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
+                v =>
+                {
+                    if (!Enum.TryParse(v, out VersionFormat format))
+                    {
+                        throw new CommandException($"The provided version format `{format}` is not recognised.");
+                    }
+                    versionFormat = format;
+                });
             Options.Add("feedId=", "Id of the NuGet feed", v => feedId = v);
             Options.Add("feedUri=", "URL to NuGet feed", v => feedUri = v);
             Options.Add("feedUsername=", "[Optional] Username to use for an authenticated NuGet feed", v => feedUsername = v);
             Options.Add("feedPassword=", "[Optional] Password to use for an authenticated NuGet feed", v => feedPassword = v);
+            Options.Add("feedType=", $"[Optional] Type of feed. Options {string.Join(", ", Enum.GetNames(typeof(FeedType)))}. Defaults to `{FeedType.NuGet}`.",
+                v =>
+                {
+                    if (!Enum.TryParse(v, out FeedType type))
+                    {
+                        throw new CommandException($"The provided feed type `{type}` is not recognised.");
+                    }
+
+                    feedType = type;
+                });
             Options.Add("attempts=", $"[Optional] The number of times to attempt downloading the package. Default: {maxDownloadAttempts}", v => maxDownloadAttempts = v);
             Options.Add("attemptBackoffSeconds=", $"[Optional] The number of seconds to apply as a linear backoff between each download attempt. Default: {attemptBackoffSeconds}", v => attemptBackoffSeconds = v);
             Options.Add("forcePackageDownload", "[Optional, Flag] if specified, the package will be downloaded even if it is already in the package cache", v => forcePackageDownload = true);
         }
+
 
         public override int Execute(string[] commandLineArguments)
         {
@@ -57,25 +79,21 @@ namespace Calamari.Commands
                     out var parsedMaxDownloadAttempts, 
                     out var parsedAttemptBackoff);
 
-                PackageDownloader.DownloadPackage(
+                var pkg = PackageDownloaderStrategy.DownloadPackage(
                     packageId,
                     version,
                     feedId,
                     uri,
+                    feedType,
                     GetFeedCredentials(feedUsername, feedPassword),
                     forcePackageDownload,
                     parsedMaxDownloadAttempts,
-                    parsedAttemptBackoff,
-                    out string downloadedTo,
-                    out string hash,
-                    out long size);
+                    parsedAttemptBackoff);
 
-                Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version,
-                    feedUri);
-
-                Log.SetOutputVariable("StagedPackage.Hash", hash);
-                Log.SetOutputVariable("StagedPackage.Size", size.ToString(CultureInfo.InvariantCulture));
-                Log.SetOutputVariable("StagedPackage.FullPathOnRemoteMachine", downloadedTo);
+                Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
+                Log.SetOutputVariable("StagedPackage.Hash", pkg.Hash);
+                Log.SetOutputVariable("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
+                Log.SetOutputVariable("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
             }
             catch (Exception ex)
             {
@@ -97,7 +115,7 @@ namespace Calamari.Commands
         }
 
         // ReSharper disable UnusedParameter.Local
-        static void CheckArguments(
+        void CheckArguments(
             string packageId, 
             string packageVersion, 
             string feedId, 
@@ -116,8 +134,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
-            var packageMetadata = new MetadataFactory().GetMetadataFromPackageID(packageId);
-            if (!VersionFactory.TryCreateVersion(packageVersion, out version, packageMetadata.VersionFormat))
+            if (!VersionFactory.TryCreateVersion(packageVersion, out version, versionFormat))
             {
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string"); 
             }
@@ -143,6 +160,5 @@ namespace Calamari.Commands
 
             parsedAttemptBackoff = TimeSpan.FromSeconds(parsedAttemptBackoffSeconds);
         }
-        // ReSharper restore UnusedParameter.Local
     }
 }

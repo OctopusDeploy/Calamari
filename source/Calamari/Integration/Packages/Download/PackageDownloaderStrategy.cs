@@ -9,39 +9,34 @@ namespace Calamari.Integration.Packages.Download
     /// This class knows how to interpret a package id and request a download
     /// from a specific downloader implementation. 
     /// </summary>
-    public class PackageDownloaderStrategy : IPackageDownloader
+    public class PackageDownloaderStrategy
     {
-        static readonly IPackageIDParser MavenPackageIdParser = new MavenPackageIDParser();
-        static readonly IPackageIDParser NugetPackageIdParser = new NuGetPackageIDParser();
-
-        public void DownloadPackage(
+        public static PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
             IVersion version,
             string feedId,
             Uri feedUri,
+            FeedType feedType,
             ICredentials feedCredentials,
             bool forcePackageDownload,
             int maxDownloadAttempts,
-            TimeSpan downloadAttemptBackoff,
-            out string downloadedTo,
-            out string hash, 
-            out long size)
+            TimeSpan downloadAttemptBackoff)
         {
             IPackageDownloader downloader = null;
-            if (MavenPackageIdParser.TryGetMetadataFromPackageID(packageId, out var mavenMetadata))
+            switch (feedType)
             {
-                downloader = new MavenPackageDownloader();
+                case FeedType.Maven:
+                    downloader = new MavenPackageDownloader();
+                    break;
+                case FeedType.NuGet:
+                    downloader = new NuGetPackageDownloader();
+                    break;
+                default:
+                    throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }
-            else if (NugetPackageIdParser.TryGetMetadataFromPackageID(packageId, out var nugetMetadata))
-            {
-                downloader = new NuGetPackageDownloader();                
-            }
-            else
-            {
-                throw new NotImplementedException($"Package ID {packageId} is not recognised.");
-            }
-            
-            downloader.DownloadPackage(
+            Log.Verbose($"Feed type provided `{feedType}` using {downloader.GetType().Name}");
+
+            return downloader.DownloadPackage(
                 packageId,
                 version, 
                 feedId, 
@@ -49,10 +44,7 @@ namespace Calamari.Integration.Packages.Download
                 feedCredentials, 
                 forcePackageDownload, 
                 maxDownloadAttempts, 
-                downloadAttemptBackoff, 
-                out downloadedTo, 
-                out hash, 
-                out size);
+                downloadAttemptBackoff);
         }
     }
 }

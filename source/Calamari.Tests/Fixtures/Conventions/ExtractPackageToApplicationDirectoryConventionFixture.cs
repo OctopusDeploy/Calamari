@@ -19,13 +19,13 @@ namespace Calamari.Tests.Fixtures.Conventions
         CalamariVariableDictionary variables;
         ExtractPackageToApplicationDirectoryConvention convention;
         ICalamariFileSystem fileSystem;
-        static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Package.nupkg");
+        static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Acme.Web.1.0.0.zip");
 
         [SetUp]
         public void SetUp()
         {
             extractor = Substitute.For<IPackageExtractor>();
-            extractor.GetMetadata(PackageLocation).Returns(new PackageMetadata { PackageId = "Acme.Web", Version = "1.0.0" });
+            //extractor.GetMetadata(PackageLocation).Returns(new PackageMetadata { PackageId = "Acme.Web", Version = "1.0.0" });
 
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));

@@ -6,7 +6,7 @@
         {
             public const string Name = "setVariable";
             public const string NameAttribute = "name";
-            public const string ValueAttribute = "value";            
+            public const string ValueAttribute = "value";
         }
 
         public static class CalamariFoundPackage
@@ -21,6 +21,7 @@
             public const string VersionAttribute = "version";
             public const string HashAttribute = "hash";
             public const string RemotePathAttribute = "remotePath";
+            public const string FileExtensionAttribute = "fileExtension";
         }
 
         public static class PackageDeltaVerification

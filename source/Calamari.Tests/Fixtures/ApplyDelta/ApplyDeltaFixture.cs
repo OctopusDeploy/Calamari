@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.ApplyDelta
@@ -95,10 +97,21 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
 
                     var patchResult = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, NewFileName);
                     patchResult.AssertSuccess();
-                    patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
-                        basisFile.Hash, Path.Combine(DownloadPath, NewFileName));
+
                     patchResult.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name);
+                    patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
+                        basisFile.Hash, patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine);
+                    Assert.AreEqual(newFile.Hash, patchResult.CapturedOutput.DeltaVerification.Hash);
+                    Assert.AreEqual(newFile.Hash, GetNewFileHash(patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine));
                 }
+            }
+        }
+
+        string GetNewFileHash(string filePath)
+        {
+            using (var fileStream = File.OpenRead(filePath))
+            {
+                return HashCalculator.Hash(fileStream);
             }
         }
 
@@ -177,7 +190,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName, messageOnError: true);
 
                 result.AssertSuccess();
-                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"Basis file hash {basisFile.Hash} does not match the file hash specified {otherBasisFileHash}");
+                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"Basis file hash `{basisFile.Hash}` does not match the file hash specified {otherBasisFileHash}");
             }
         }
 
@@ -197,10 +210,8 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, NewFileName);
 
                 result.AssertSuccess();
-                result.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}",
-                    basisFile.FilePath,
-                    basisFile.Hash,
-                    Path.Combine(DownloadPath, NewFileName));
+                result.AssertOutputMatches(
+                    $".*\nApplying delta to {Regex.Escape(basisFile.FilePath)} with hash {basisFile.Hash} and storing as {Regex.Escape(DownloadPath)}.*");
                 result.AssertOutput("The delta file appears to be corrupt.");
                 result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "The following command: OctoDiff\nFailed with exit code: 2\n");
             }

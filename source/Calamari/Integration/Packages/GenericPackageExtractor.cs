@@ -39,11 +39,6 @@ namespace Calamari.Integration.Packages
             get { return Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
         }
 
-        public PackageMetadata GetMetadata(string packageFile)
-        {
-            return GetExtractor(packageFile).GetMetadata(packageFile);
-        }
-
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
             return GetExtractor(packageFile).Extract(packageFile, directory, suppressNestedScriptWarning);
@@ -51,66 +46,25 @@ namespace Calamari.Integration.Packages
 
         public IPackageExtractor GetExtractor(string packageFile)
         {
-            if (string.IsNullOrEmpty(Path.GetExtension(packageFile)))
+            var extension = Path.GetExtension(packageFile);
+            if (string.IsNullOrEmpty(extension))
             {
-                throw new FileFormatException(
-                    "Package is missing file extension. This is needed to select the correct extraction algorithm.");
+                throw new FileFormatException("Package is missing file extension. This is needed to select the correct extraction algorithm.");
             }
 
-            var combinedList = ExtensionSuffix(packageFile)
-                .Union(ExtensionWithHashSuffix(packageFile))
-                .ToList();
+            var file = PackageName.FromFile(packageFile);
+            if (!Extensions.Contains(file.Extension))
+            {
+                throw new FileFormatException($"Unsupported file extension `{extension}`");
+            }
 
-            /*
-             * Start by finding an extractor that can successfully parse the metadata of the given file.
-             * This will work in practice, although fails for some tests where a mock package is
-             * supplied that may not actually be able to be extracted because the mock files don't contain
-             * metadata.
-             */
-            return combinedList
-                       .Select(extractor =>
-                       {
-                           try
-                           {
-                               /*
-                                * Different extractors can share extensions. Attempt to get the metadata from the package
-                                * file, and if no exception is thrown, then we have a valid extractor. 
-                                */
-                               return new Tuple<IPackageExtractor, PackageMetadata>(extractor,
-                                   extractor.GetMetadata(packageFile));
-                           }
-                           catch
-                           {
-                               return null;
-                           }
-                       })
-                       .Where(details => details != null)
-                       .OrderByDescending(details => details.Item2.VersionFormat.Precedence())
-                       .Select(details => details.Item1)
-                       .FirstOrDefault() ?? 
-                   /*
-                    * If none of the extractors successfully parsed the metadata, fallback to the
-                    * first one that matches the extension.
-                    */
-                   combinedList.FirstOrDefault() ??       
-                   /*
-                    * If all else fails then throw an exception.
-                    */
-                   ReportInvalidExtension(packageFile);
-        }
-
-        IPackageExtractor ReportInvalidExtension(string packageFile)
-        {
-            var extensionMatch = Regex.Match(Path.GetExtension(packageFile), ExtensionRegex);
-
+            var extractor = FindByExtension(file);
+            if (extractor != null)
+                return extractor;
+            
             throw new FileFormatException(supportLinkGenerator.GenerateSupportMessage(
-                string.Format(
-                    "This step supports packages with the following extenions: {0}.\n" +
-                    "The supplied package has the extension \"{1}\" which is not supported.",
-                    Extractors.SelectMany(e => e.Extensions)
-                        .Distinct()
-                        .Aggregate((result, e) => result + ", " + e),
-                    extensionMatch.Success ? extensionMatch.Groups[1].Value : Path.GetExtension(packageFile)),
+                $"This step supports packages with the following extenions: {Extractors.SelectMany(e => e.Extensions).Distinct().Aggregate((result, e) => result + ", " + e)}.\n" +
+                $"The supplied package has the extension \"{file.Extension}\" which is not supported.",
                 "JAVA-DEPLOY-ERROR-0001"));
         }
 
@@ -144,17 +98,9 @@ namespace Calamari.Integration.Packages
             new TarPackageExtractor()
         }.Concat(additionalExtractors).ToList();
 
-        private IEnumerable<IPackageExtractor> ExtensionWithHashSuffix(string packageFile)
+        private IPackageExtractor FindByExtension(PackageFileNameMetadata packageFile)
         {
-            return Extractors.Where(p =>
-                p.Extensions.Any(ext => new Regex(Regex.Escape(ext) + UUIDSuffix).IsMatch(packageFile)));
-        }
-
-        private IEnumerable<IPackageExtractor> ExtensionSuffix(string packageFile)
-        {
-            return Extractors.Where(
-                p => p.Extensions.Any(ext =>
-                    packageFile.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => packageFile.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase)));
         }
     }
 }

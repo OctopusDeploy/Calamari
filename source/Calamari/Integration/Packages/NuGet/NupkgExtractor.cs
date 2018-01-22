@@ -17,17 +17,6 @@ namespace Calamari.Integration.Packages.NuGet
     {
         public string[] Extensions => new[] {".nupkg"};
 
-        public PackageMetadata GetMetadata(string packageFile)
-        {
-            var package = new LocalNuGetPackage(packageFile);
-            var packageMetadata = package.Metadata;
-
-            return new NuGetPackageIDParser().GetMetadataFromPackageID(
-                packageMetadata.Id,
-                packageMetadata.Version.ToString(),
-                Extensions.First());            
-        }
-
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
             var filesExtracted = 0;

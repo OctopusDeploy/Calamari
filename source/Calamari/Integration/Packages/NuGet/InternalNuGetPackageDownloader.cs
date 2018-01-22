@@ -8,33 +8,18 @@ using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {
-    internal class NuGetPackageDownloader
+    internal class InternalNuGetPackageDownloader
     {
         private readonly ICalamariFileSystem fileSystem;
 
-        public NuGetPackageDownloader(ICalamariFileSystem fileSystem)
+        public InternalNuGetPackageDownloader(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
         }
 
-        public void DownloadPackage(
-            string packageId, 
-            IVersion version, 
-            Uri feedUri, 
-            ICredentials feedCredentials, 
-            string targetFilePath, 
-            int maxDownloadAttempts, 
-            TimeSpan downloadAttemptBackoff)
+        public void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
         {
-            DownloadPackage(
-                packageId, 
-                version, 
-                feedUri, 
-                feedCredentials, 
-                targetFilePath,
-                maxDownloadAttempts, 
-                downloadAttemptBackoff,
-                DownloadPackageAction);
+            DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts, downloadAttemptBackoff, DownloadPackageAction);
         }
 
         internal void DownloadPackage(
