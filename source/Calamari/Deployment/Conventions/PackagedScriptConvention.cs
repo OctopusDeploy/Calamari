@@ -16,6 +16,13 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            var runScripts = deployment.Variables.GetFlag(SpecialVariables.Package.RunPackageScripts, true);
+            if (!runScripts)
+            {
+                Log.Verbose($"Skipping the running of packaged scripts as {SpecialVariables.Package.RunPackageScripts} is set to false");
+                return;
+            }
+
             RunScripts(deployment);
             if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
             {
