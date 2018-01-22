@@ -128,7 +128,7 @@ namespace Calamari.Azure.Deployment.Conventions
         static void PollForCompletion(Func<IResourceManagementClient> createArmClient, string resourceGroupName,
             string deploymentName, VariableDictionary variables)
         {
-            // While the deployment is running, we poll to check it's state.
+            // While the deployment is running, we poll to check its state.
             // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds. 
             var currentPollWait = 1;
             var previousPollWait = 0;
@@ -143,15 +143,19 @@ namespace Calamari.Azure.Deployment.Conventions
                 using (var armClient = createArmClient())
                 {
                     var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName);
+                    if (deployment.Properties == null)
+                    {
+                        Log.Verbose($"Failed to find deployment.Properties");
+                        return;
+                    }
 
                     Log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
-
                     switch (deployment.Properties.ProvisioningState)
                     {
                         case "Succeeded":
                             Log.Info($"Deployment {deploymentName} complete.");
                             Log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
-                            CaptureOutputs(deployment.Properties.Outputs.ToString(), variables);
+                            CaptureOutputs(deployment.Properties.Outputs?.ToString(), variables);
                             continueToPoll = false;
                             break;
 
@@ -178,11 +182,16 @@ namespace Calamari.Azure.Deployment.Conventions
 
         static string GetOperationResults(IResourceManagementClient armClient, string resourceGroupName, string deploymentName)
         {
-            var log = new StringBuilder("Operations details:\n");
-            var operations = armClient.DeploymentOperations.List(resourceGroupName, deploymentName);
+            var operations = armClient?.DeploymentOperations.List(resourceGroupName, deploymentName);
+            if (operations == null)
+                return null;
 
+            var log = new StringBuilder("Operations details:\n");
             foreach (var operation in operations)
             {
+                if (operation?.Properties == null)
+                    continue;
+
                 log.AppendLine($"Resource: {operation.Properties.TargetResource?.ResourceName}");
                 log.AppendLine($"Type: {operation.Properties.TargetResource?.ResourceType}");
                 log.AppendLine($"Timestamp: {operation.Properties.Timestamp?.ToLocalTime():s}");
@@ -190,9 +199,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 log.AppendLine($"Status: {operation.Properties.StatusCode}");
                 log.AppendLine($"Provisioning State: {operation.Properties.ProvisioningState}");
                 if (operation.Properties.StatusMessage != null)
-                {
                     log.AppendLine($"Status Message: {JsonConvert.SerializeObject(operation.Properties.StatusMessage)}");
-                }
             }
 
             return log.ToString();
