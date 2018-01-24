@@ -2,7 +2,7 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
-using Octopus.Core.Resources;
+using Octopus.Versioning.Metadata;
 using Octostache;
 
 namespace Calamari.Deployment

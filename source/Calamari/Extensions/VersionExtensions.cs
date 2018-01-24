@@ -1,6 +1,6 @@
 ﻿#if USE_NUGET_V3_LIBS
 using NuGet.Versioning;
-using Octopus.Core.Resources.Versioning;
+using Octopus.Versioning;
 
 namespace Calamari.Extensions
 {
