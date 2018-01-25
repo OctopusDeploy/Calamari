@@ -93,7 +93,7 @@ namespace Calamari.Commands
                 Log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
                 Log.ServiceMessages.PackageFound(
                     nearestPackage.PackageId,
-                    nearestPackage.Version.ToString(),
+                    nearestPackage.Version,
                     nearestPackage.Hash,
                     nearestPackage.Extension,
                     nearestPackage.FullFilePath);

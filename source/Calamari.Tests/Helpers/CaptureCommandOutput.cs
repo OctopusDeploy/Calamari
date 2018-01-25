@@ -65,10 +65,11 @@ namespace Calamari.Tests.Helpers
                 case ServiceMessageNames.FoundPackage.Name:
                     var foundPackageId = message.GetValue(ServiceMessageNames.FoundPackage.IdAttribute);
                     var foundPackageVersion = message.GetValue(ServiceMessageNames.FoundPackage.VersionAttribute);
+                    var foundPackageVersionFormat = message.GetValue(ServiceMessageNames.FoundPackage.VersionFormat );
                     var foundPackageHash = message.GetValue(ServiceMessageNames.FoundPackage.HashAttribute);
                     var foundPackageRemotePath = message.GetValue(ServiceMessageNames.FoundPackage.RemotePathAttribute);
                     var fileExtension = message.GetValue(ServiceMessageNames.FoundPackage.FileExtensionAttribute);
-                    FoundPackage = new FoundPackage(foundPackageId, foundPackageVersion, foundPackageRemotePath,
+                    FoundPackage = new FoundPackage(foundPackageId, foundPackageVersion, foundPackageVersionFormat, foundPackageRemotePath,
                         foundPackageHash, fileExtension);
                     break;
                 case ServiceMessageNames.PackageDeltaVerification.Name:

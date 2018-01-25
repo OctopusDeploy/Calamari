@@ -122,7 +122,7 @@ namespace Calamari.Commands
             var hash = HashCalculator.Hash(basisFileName);
             if (hash != fileHash)
             {
-                throw new CommandException($"Basis file hash `{hash}` does not match the file hash specified `{fileHash}");
+                throw new CommandException($"Basis file hash `{hash}` does not match the file hash specified `{fileHash}`");
             }
         }
     }

@@ -190,7 +190,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName, messageOnError: true);
 
                 result.AssertSuccess();
-                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"Basis file hash `{basisFile.Hash}` does not match the file hash specified {otherBasisFileHash}");
+                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"Basis file hash `{basisFile.Hash}` does not match the file hash specified `{otherBasisFileHash}`");
             }
         }
 
