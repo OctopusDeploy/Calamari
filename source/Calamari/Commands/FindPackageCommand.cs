@@ -69,7 +69,7 @@ namespace Calamari.Commands
             Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             Log.ServiceMessages.PackageFound(
                 package.PackageId, 
-                package.Version.ToString(),
+                package.Version,
                 package.Hash, 
                 package.Extension,
                 package.FullFilePath, 

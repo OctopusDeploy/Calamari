@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Util;
-using NuGet;
 using Octopus.Versioning;
 using Octopus.Versioning.Factories;
 using Octopus.Versioning.Maven;
