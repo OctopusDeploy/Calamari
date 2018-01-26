@@ -2,19 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Support;
-using Octopus.Versioning;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Integration.Packages
 {
     public class GenericPackageExtractor : IGenericPackageExtractor
     {
-        private const string UUIDSuffix = "-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$";
-        private const string ExtensionRegex = "(.*?)" + UUIDSuffix;
-
         private readonly List<IPackageExtractor> additionalExtractors =
             new List<IPackageExtractor>();
 

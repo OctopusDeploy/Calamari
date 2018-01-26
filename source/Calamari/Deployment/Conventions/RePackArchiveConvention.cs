@@ -8,25 +8,20 @@ using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Octopus.Versioning;
 using Octopus.Versioning.Constants;
-using Octopus.Versioning.Maven;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Java.Deployment.Conventions
 {
     public class RePackArchiveConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly IPackageExtractor packageExtractor;
         readonly JarTool jarTool;
 
         public RePackArchiveConvention(
             ICalamariFileSystem fileSystem,
             ICommandOutput commandOutput,
-            IPackageExtractor packageExtractor,
             ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
-            this.packageExtractor = packageExtractor;
             this.jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
         }
 

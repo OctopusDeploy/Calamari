@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using Octopus.Versioning;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Integration.Packages.Download
 {

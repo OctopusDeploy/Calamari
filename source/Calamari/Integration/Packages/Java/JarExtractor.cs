@@ -1,6 +1,5 @@
 ﻿using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Integration.Packages.Java
 {

@@ -8,7 +8,6 @@ using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {

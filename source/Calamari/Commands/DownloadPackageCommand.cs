@@ -7,7 +7,6 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
 using Octopus.Versioning.Factories;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Commands
 {

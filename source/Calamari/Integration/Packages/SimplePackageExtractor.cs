@@ -1,5 +1,3 @@
-using Octopus.Versioning.Metadata;
-
 namespace Calamari.Integration.Packages
 {
     public abstract class SimplePackageExtractor : IPackageExtractor

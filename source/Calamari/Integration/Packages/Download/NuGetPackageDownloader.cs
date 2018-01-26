@@ -4,10 +4,7 @@ using System.Linq;
 using System.Net;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
-using Calamari.Util;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
-using Octopus.Versioning.Metadata;
 #if USE_NUGET_V2_LIBS
 using NuGet;
 #else
