@@ -5,7 +5,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using Octopus.Versioning.Metadata;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;

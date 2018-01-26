@@ -89,14 +89,14 @@ namespace Calamari.Commands
                     parsedMaxDownloadAttempts,
                     parsedAttemptBackoff);
 
-                Log.VerboseFormat("Package {0} {1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
+                Log.VerboseFormat("Package {0} v{1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
                 Log.SetOutputVariable("StagedPackage.Hash", pkg.Hash);
                 Log.SetOutputVariable("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
                 Log.SetOutputVariable("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
             }
             catch (Exception ex)
             {
-                Log.ErrorFormat("Failed to download package {0} {1} from feed: '{2}'", packageId, packageVersion, feedUri);
+                Log.ErrorFormat("Failed to download package {0} v{1} from feed: '{2}'", packageId, packageVersion, feedUri);
                 return ConsoleFormatter.PrintError(ex);
             }
 

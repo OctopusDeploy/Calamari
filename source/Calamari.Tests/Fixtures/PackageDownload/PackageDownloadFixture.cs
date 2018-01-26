@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -10,7 +8,6 @@ using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning;
 using Octopus.Versioning.Factories;
-using Octopus.Versioning.Maven;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.PackageDownload
@@ -75,15 +72,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", PublicFeed.DownloadFolder);
 #if USE_NUGET_V2_LIBS
-            result.AssertOutput("Found package {0} version {1}", PublicFeed.PackageId, PublicFeed.Version);
+            result.AssertOutput("Found package {0} v{1}", PublicFeed.PackageId, PublicFeed.Version);
 #endif
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, PublicFeed);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
         }
 
         [Test]
@@ -99,17 +96,17 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'",
+            result.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'",
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'",
                 MavenPublicFeed.DownloadFolder);
-            result.AssertOutput("Found package {0} version {1}",
+            result.AssertOutput("Found package {0} v{1}",
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version);
 
             AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(result, MavenPublicFeed);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'",
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'",
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
 
@@ -126,17 +123,17 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", 
+            result.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", 
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", 
                 MavenPublicFeed.DownloadFolder);
-            result.AssertOutput("Found package {0} version {1}", 
+            result.AssertOutput("Found package {0} v{1}", 
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version);
 
             AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(result, MavenPublicFeed);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", 
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", 
                 MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
 
@@ -148,11 +145,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertSuccess();
 
             result.AssertOutput(
-                $"Downloading NuGet package {NuGetFeed.PackageId} {NuGetFeed.Version} from feed: '{NuGetFeedUri}'");
+                $"Downloading NuGet package {NuGetFeed.PackageId} v{NuGetFeed.Version} from feed: '{NuGetFeedUri}'");
             result.AssertOutput($"Downloaded package will be stored in: '{NuGetFeed.DownloadFolder}");
 
             AssertStagePackageOutputVariableSet(result, NuGetFeed);
-            result.AssertOutput($"Package {NuGetFeed.PackageId} {NuGetFeed.Version} successfully downloaded from feed: '{NuGetFeedUri}'");
+            result.AssertOutput($"Package {NuGetFeed.PackageId} v{NuGetFeed.Version} successfully downloaded from feed: '{NuGetFeedUri}'");
         }
 
         [Test]
@@ -171,7 +168,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Checking package cache for package {0} {1}", PublicFeed.PackageId, PublicFeed.Version);
+            result.AssertOutput("Checking package cache for package {0} v{1}", PublicFeed.PackageId, PublicFeed.Version);
             result.AssertOutputMatches(string.Format("Package was found in cache\\. No need to download. Using file: '{0}'", PackageName.ToRegexPattern(PublicFeed.PackageId, PublicFeed.Version, PublicFeed.DownloadFolder)));
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
@@ -198,7 +195,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Checking package cache for package {0} {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            result.AssertOutput("Checking package cache for package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
             result.AssertOutputMatches(string.Format("Package was found in cache\\. No need to download. Using file: '{0}'", PackageName.ToRegexPattern(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.DownloadFolder)));
             AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
@@ -224,7 +221,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Checking package cache for package {0} {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            result.AssertOutput("Checking package cache for package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
             result.AssertOutputMatches(string.Format("Package was found in cache\\. No need to download. Using file: '{0}'", PackageName.ToRegexPattern(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.DownloadFolder)));
             AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
@@ -245,15 +242,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", PublicFeed.DownloadFolder);
 #if USE_NUGET_V2_LIBS
-            result.AssertOutput("Found package {0} version {1}", PublicFeed.PackageId, PublicFeed.Version);
+            result.AssertOutput("Found package {0} v{1}", PublicFeed.PackageId, PublicFeed.Version);
 #endif
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, PublicFeed);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", PublicFeed.PackageId, PublicFeed.Version, PublicFeedUri);
         }
         
         [Test]        
@@ -281,13 +278,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             
             secondDownload.AssertSuccess();
             
-            secondDownload.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
             secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
-            secondDownload.AssertOutput("Found package {0} version {1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            secondDownload.AssertOutput("Found package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
             AssertPackageHashMatchesExpected(secondDownload, ExpectedMavenPackageHash);
             AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(secondDownload, MavenPublicFeed);
-            secondDownload.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
         
         [Test]        
@@ -315,13 +312,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             
             secondDownload.AssertSuccess();
             
-            secondDownload.AssertOutput("Downloading Maven package {0} {1} from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
+            secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
             secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenSnapshotPublicFeed.DownloadFolder);
-            secondDownload.AssertOutput("Found package {0} version {1}", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version);
+            secondDownload.AssertOutput("Found package {0} v{1}", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version);
             AssertPackageHashMatchesExpected(secondDownload, ExpectedMavenSnapshotPackageHash);
             AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenSnapshotPackageSize);
             AssertStagePackageOutputVariableSet(secondDownload, MavenSnapshotPublicFeed);
-            secondDownload.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
+            secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
         }
 
         [Test]
@@ -332,13 +329,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", AuthFeed.DownloadFolder);
-            result.AssertOutput("Found package {0} version {1}", AuthFeed.PackageId, AuthFeed.Version);
+            result.AssertOutput("Found package {0} v{1}", AuthFeed.PackageId, AuthFeed.Version);
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, AuthFeed);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
         }
 
         [Test]
@@ -352,7 +349,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Checking package cache for package {0} {1}", AuthFeed.PackageId, AuthFeed.Version);
+            result.AssertOutput("Checking package cache for package {0} v{1}", AuthFeed.PackageId, AuthFeed.Version);
             result.AssertOutput("Package was found in cache. No need to download. Using file: '{0}", AuthFeed.File);
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
@@ -369,13 +366,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", AuthFeed.DownloadFolder);
-            result.AssertOutput("Found package {0} version {1}", AuthFeed.PackageId, AuthFeed.Version);
+            result.AssertOutput("Found package {0} v{1}", AuthFeed.PackageId, AuthFeed.Version);
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, AuthFeed);
-            result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
         }
 
         [Test]
@@ -386,7 +383,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertFailure();
 
-            result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", AuthFeed.PackageId, AuthFeed.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", AuthFeed.DownloadFolder);
             result.AssertErrorOutput("Unable to download package: The remote server returned an error: (401) Unauthorized.");
         }
@@ -400,13 +397,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
                 result.AssertSuccess();
 
-                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
+                result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
                 result.AssertOutput("Downloaded package will be stored in: '{0}'", FileShare.DownloadFolder);
-                result.AssertOutput("Found package {0} version {1}", FileShare.PackageId, FileShare.Version);
+                result.AssertOutput("Found package {0} v{1}", FileShare.PackageId, FileShare.Version);
                 AssertPackageHashMatchesExpected(result, acmeWeb.Hash);
                 AssertPackageSizeMatchesExpected(result, acmeWeb.Size);
                 AssertStagePackageOutputVariableSet(result, FileShare);
-                result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileShare.PackageId, FileShare.Version, acmeWeb.DirectoryPath);
+                result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FileShare.PackageId, FileShare.Version, acmeWeb.DirectoryPath);
             }
         }
   
@@ -420,7 +417,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 var result = DownloadPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, acmeWeb.DirectoryPath);
                 result.AssertSuccess();
 
-                result.AssertOutput("Checking package cache for package {0} {1}", FileShare.PackageId, FileShare.Version);
+                result.AssertOutput("Checking package cache for package {0} v{1}", FileShare.PackageId, FileShare.Version);
                 result.AssertOutputMatches(string.Format("Package was found in cache\\. No need to download. Using file: '{0}'", PackageName.ToRegexPattern(FileShare.PackageId, FileShare.Version, FileShare.DownloadFolder)));
                 AssertPackageHashMatchesExpected(result, acmeWeb.Hash);
                 AssertPackageSizeMatchesExpected(result, acmeWeb.Size);
@@ -441,13 +438,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
                 result.AssertSuccess();
 
-                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
+                result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
                 result.AssertOutput("Downloaded package will be stored in: '{0}'", FileShare.DownloadFolder);
-                result.AssertOutput("Found package {0} version {1}", FileShare.PackageId, FileShare.Version);
+                result.AssertOutput("Found package {0} v{1}", FileShare.PackageId, FileShare.Version);
                 AssertPackageHashMatchesExpected(result, acmeWeb.Hash);
                 AssertPackageSizeMatchesExpected(result, acmeWeb.Size);
                 AssertStagePackageOutputVariableSet(result, FileShare);
-                result.AssertOutput("Package {0} {1} successfully downloaded from feed: '{2}'", FileShare.PackageId, FileShare.Version, acmeWeb.DirectoryPath);
+                result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FileShare.PackageId, FileShare.Version, acmeWeb.DirectoryPath);
             }
         }
 
@@ -461,9 +458,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 var result = DownloadPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, invalidFileShareUri.ToString());
                 result.AssertFailure();
 
-                result.AssertOutput("Downloading NuGet package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
-                result.AssertErrorOutput("Failed to download package Acme.Web 1.0.0 from feed: '{0}'", invalidFileShareUri);
-                result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
+                result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
+                result.AssertErrorOutput("Failed to download package Acme.Web v1.0.0 from feed: '{0}'", invalidFileShareUri);
+                result.AssertErrorOutput("Failed to download package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
             }
         }
 
@@ -489,7 +486,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = DownloadPackage(invalidPackageId, PublicFeed.Version.ToString(), PublicFeed.Id, PublicFeedUri);
             result.AssertFailure();
 
-            result.AssertErrorOutput("Failed to download package {0} {1} from feed: '{2}'", invalidPackageId, PublicFeed.Version, PublicFeedUri);
+            result.AssertErrorOutput("Failed to download package {0} v{1} from feed: '{2}'", invalidPackageId, PublicFeed.Version, PublicFeedUri);
         }
 
         [Test]

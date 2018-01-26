@@ -8,13 +8,9 @@ using System.Xml;
 using Calamari.Exceptions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
-using Calamari.Util;
 using Octopus.Core.Extensions;
-using Octopus.Core.Util;
 using Octopus.Versioning;
 using Octopus.Versioning.Constants;
-using Octopus.Versioning.Factories;
-using Octopus.Versioning.Metadata;
 using Octopus.Versioning.Parsing.Maven;
 
 namespace Calamari.Integration.Packages.Download
@@ -25,8 +21,7 @@ namespace Calamari.Integration.Packages.Download
     public class MavenPackageDownloader : IPackageDownloader
     {
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
-        static readonly IPackageIDParser PackageIdParser = new MavenPackageIDParser();
-        static readonly IMetadataParser MetadataParser = new MetadataParser();
+        static readonly IMetadataParser MavenMetadataParser = new MetadataParser();
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public PackagePhysicalFileMetadata DownloadPackage(
@@ -57,23 +52,6 @@ namespace Calamari.Integration.Packages.Download
         }
 
         /// <summary>
-        /// Matches a file to a package id and version
-        /// </summary>
-        /// <param name="file">The path of the file we are checking</param>
-        /// <param name="packageId">The desired package id</param>
-        /// <param name="version">The desired version</param>
-        /// <returns>true if the file matches the pacakge id and version, and false otherwise</returns>
-        bool FileMatchesDetails(string file, string packageId, IVersion version)
-        {
-            return PackageIdParser.TryGetMetadataFromServerPackageName(file).ToEnumerable()
-                .Where(meta => meta != Maybe<PackageMetadata>.None)
-                .Where(meta => meta.Value.PackageId == packageId)
-                .Any(meta => VersionFactory.TryCreateVersion(meta.Value.Version.ToString(),
-                                 out IVersion packageVersion, meta.Value.VersionFormat) &&
-                             version.Equals(packageVersion));
-        }
-
-        /// <summary>
         /// Attempt to find a package id and version in the local cache
         /// </summary>
         /// <param name="packageId">The desired package id</param>
@@ -82,7 +60,7 @@ namespace Calamari.Integration.Packages.Download
         /// <returns>The path to a cached version of the file, or null if none are found</returns>
         PackagePhysicalFileMetadata SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
-            Log.VerboseFormat("Checking package cache for package {0} {1}", packageId, version.ToString());
+            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, JarExtractor.EXTENSIONS));
 
@@ -132,7 +110,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
 
-            Log.Info("Downloading Maven package {0} {1} from feed: '{2}'", packageId, version, feedUri);
+            Log.Info("Downloading Maven package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
@@ -141,7 +119,7 @@ namespace Calamari.Integration.Packages.Download
             var snapshotMetadata = GetSnapshotMetadata(mavenPackageId,  feedUri,  feedCredentials,  maxDownloadAttempts, downloadAttemptBackoff);
 
             var found = FirstToRespond(mavenPackageId, feedUri, feedCredentials, snapshotMetadata);
-            Log.VerboseFormat("Found package {0} version {1}", packageId, version);
+            Log.VerboseFormat("Found package {0} v{1}", packageId, version);
 
             return DownloadArtifact(
                 found,
@@ -179,7 +157,7 @@ namespace Calamari.Integration.Packages.Download
             var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToNewFileName(packageId, version, "." + mavenGavFirst.Packaging));
             var downloadUrl = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
                                   ? mavenGavFirst.DefaultArtifactPath
-                                  : mavenGavFirst.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(
+                                  : mavenGavFirst.SnapshotArtifactPath(MavenMetadataParser.GetLatestSnapshotRelease(
                                       snapshotMetadata,
                                       mavenGavFirst.Packaging,
                                       mavenGavFirst.Version)));
@@ -238,7 +216,7 @@ namespace Calamari.Integration.Packages.Download
             return feedUri.ToString().TrimEnd('/')
                 .Map(uri => uri + (snapshotMetadata == null ?
                                 mavenGavParser.DefaultArtifactPath : 
-                                mavenGavParser.SnapshotArtifactPath(MetadataParser.GetLatestSnapshotRelease(
+                                mavenGavParser.SnapshotArtifactPath(MavenMetadataParser.GetLatestSnapshotRelease(
                                     snapshotMetadata, 
                                     mavenGavParser.Packaging,
                                     mavenGavParser.Version))))
