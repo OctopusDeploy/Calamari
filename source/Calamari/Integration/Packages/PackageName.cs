@@ -64,13 +64,13 @@ namespace Calamari.Integration.Packages
     {
         internal const char SectionDelimiter = '@';
 
-        public static string ToNewFileName(string packageId, IVersion version, string extension)
+        public static string ToCachedFileName(string packageId, IVersion version, string extension)
         {
             var cacheBuster = BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty);
-            return NewPattern(packageId, version, extension, cacheBuster);
+            return SearchPattern(packageId, version, extension, cacheBuster);
         }
 
-        static string NewPattern(string packageId, IVersion version = null, string extension = null, string cacheBuster = null)
+        static string SearchPattern(string packageId, IVersion version = null, string extension = null, string cacheBuster = null)
         {
             var ver = version == null ? "*": EncodeVersion(version);
             return $"{Encode(packageId)}{SectionDelimiter}{ver}{SectionDelimiter}{cacheBuster ?? "*"}{extension ?? "*"}";
@@ -78,7 +78,7 @@ namespace Calamari.Integration.Packages
 
         internal static string ToRegexPattern(string packageId, IVersion version, string rootDir = "")
         {
-            var pattern = $"{Encode(packageId)}{SectionDelimiter}{EncodeVersion(version)}{SectionDelimiter}";
+            var pattern = SearchPattern(packageId, version, string.Empty, string.Empty);
             if (!string.IsNullOrWhiteSpace(rootDir))
             {
                 pattern = Path.Combine(rootDir, pattern);
@@ -91,7 +91,7 @@ namespace Calamari.Integration.Packages
             extensions = extensions ?? new[] {"*"};
 
             // Lets not bother tring to also match old pattern
-            return extensions.Select(ext => $"{NewPattern(packageId, version, ext)}")
+            return extensions.Select(ext => $"{SearchPattern(packageId, version, ext)}")
                 //.Union(extensions.Select(ext =>$"{Encode(packageId)}.{(version == null ? "*" : Encode(version.ToString()))}{ext}-*"))
                 .Distinct().ToArray();
         }

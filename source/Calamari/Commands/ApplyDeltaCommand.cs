@@ -118,7 +118,7 @@ namespace Calamari.Commands
 
             // Probably dont need to do this since the server appends a guid in the name... maybe it was originall put here in the name of safety?
             var newPackageDetails = PackageName.FromFile(newFileName);
-            newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), PackageName.ToNewFileName(newPackageDetails.PackageId, newPackageDetails.Version, newPackageDetails.Extension));
+            newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), PackageName.ToCachedFileName(newPackageDetails.PackageId, newPackageDetails.Version, newPackageDetails.Extension));
             var hash = HashCalculator.Hash(basisFileName);
             if (hash != fileHash)
             {

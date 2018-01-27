@@ -87,7 +87,7 @@ namespace Calamari.Integration.Packages.Download
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToNewFileName(packageId, version, ".nupkg"));
+            var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".nupkg"));
 
             var downloader = new InternalNuGetPackageDownloader(fileSystem);
             downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo, maxDownloadAttempts, downloadAttemptBackoff);

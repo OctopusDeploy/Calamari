@@ -84,7 +84,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
         private string CreateEmptyFile(string version)
         {
-            var destinationPath = Path.Combine(PackagePath, PackageName.ToNewFileName("Acme.Web", new SemanticVersion(version), ".nupkg"));
+            var destinationPath = Path.Combine(PackagePath, PackageName.ToCachedFileName("Acme.Web", new SemanticVersion(version), ".nupkg"));
             File.WriteAllText(destinationPath, "FAKESTUFF");
             return destinationPath;
         }
@@ -95,7 +95,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             
             var destinationPath = Path.Combine(PackagePath, oldCacheFormat
                 ? $"Acme.Web.{version}.nupkg-fd55edc5-9b36-414b-a2d0-4a2deeb6b2ec"
-                : PackageName.ToNewFileName("Acme.Web", new SemanticVersion(version), ".nupkg"));
+                : PackageName.ToCachedFileName("Acme.Web", new SemanticVersion(version), ".nupkg"));
             
             if (File.Exists(destinationPath))
                 File.Delete(destinationPath);

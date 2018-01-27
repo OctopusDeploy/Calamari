@@ -102,16 +102,8 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
                         basisFile.Hash, patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine);
                     Assert.AreEqual(newFile.Hash, patchResult.CapturedOutput.DeltaVerification.Hash);
-                    Assert.AreEqual(newFile.Hash, GetNewFileHash(patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine));
+                    Assert.AreEqual(newFile.Hash, HashCalculator.Hash(patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine));
                 }
-            }
-        }
-
-        string GetNewFileHash(string filePath)
-        {
-            using (var fileStream = File.OpenRead(filePath))
-            {
-                return HashCalculator.Hash(fileStream);
             }
         }
 

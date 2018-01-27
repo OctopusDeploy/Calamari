@@ -112,7 +112,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
             {
-                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(packageId, VersionFactory.CreateSemanticVersion(packageVersion), ".nupkg"));
+                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(packageId, VersionFactory.CreateSemanticVersion(packageVersion), ".nupkg"));
                 File.Copy(acmeWeb.FilePath, destinationFilePath);
 
                 using (var newAcmeWeb =
@@ -145,7 +145,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
             {
-                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(packageId, VersionFactory.CreateSemanticVersion(packageVersion), ".nupkg"));
+                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(packageId, VersionFactory.CreateSemanticVersion(packageVersion), ".nupkg"));
                 File.Copy(acmeWeb.FilePath, destinationFilePath);
 
                 using (var newAcmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, newpackageVersion)))
@@ -163,7 +163,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [Test]
         public void ShouldFindOneEarlierMavenPackageVersion()
         {
-            var destinationFilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(mavenPackageId, VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
+            var destinationFilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(mavenPackageId, VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
             File.Copy(mavenPackage, destinationFilePath);
 
             var result = FindPackages(mavenPackageId, newpackageVersion, mavenPackageHash, VersionFormat.Maven);
@@ -191,10 +191,10 @@ namespace Calamari.Tests.Fixtures.FindPackage
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
             using (var acmeWebTest = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId + ".Tests", packageVersion)))
             {
-                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(packageId, VersionFactory.CreateVersion(packageVersion, VersionFormat.Semver), ".nupkg"));
+                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(packageId, VersionFactory.CreateVersion(packageVersion, VersionFormat.Semver), ".nupkg"));
                 File.Copy(acmeWeb.FilePath, destinationFilePath);
 
-                var destinationFilePathTest = Path.Combine(downloadPath, PackageName.ToNewFileName(packageId + ".Tests", VersionFactory.CreateVersion(packageVersion, VersionFormat.Semver), ".nupkg"));
+                var destinationFilePathTest = Path.Combine(downloadPath, PackageName.ToCachedFileName(packageId + ".Tests", VersionFactory.CreateVersion(packageVersion, VersionFormat.Semver), ".nupkg"));
                 File.Copy(acmeWebTest.FilePath, destinationFilePathTest);
 
                 using (var newAcmeWeb =
@@ -224,10 +224,10 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [Test]
         public void ShouldFindTheCorrectMavenPackageWhenSimilarPackageExist()
         {
-            var destinationFilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(mavenPackageId, VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
+            var destinationFilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(mavenPackageId, VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
             File.Copy(mavenPackage, destinationFilePath);
 
-            var destination2FilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(mavenPackageId + ".Test", VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
+            var destination2FilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(mavenPackageId + ".Test", VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
             File.Copy(mavenPackage, destination2FilePath);
 
             var result = FindPackages(mavenPackageId, newpackageVersion, mavenPackageHash, VersionFormat.Maven);
@@ -255,7 +255,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             using (var acmeWeb = new TemporaryFile(PackageBuilder.BuildSamplePackage(packageId, packageVersion)))
             {
-                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(packageId, VersionFactory.CreateSemanticVersion(packageVersion), ".nupkg"));
+                var destinationFilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(packageId, VersionFactory.CreateSemanticVersion(packageVersion), ".nupkg"));
                 File.Copy(acmeWeb.FilePath, destinationFilePath);
 
                 var result = FindPackages(packageId, packageVersion, acmeWeb.Hash);
@@ -283,7 +283,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         [Test]
         public void ShouldFindMavenPackageAlreadyUploaded()
         {
-            var destinationFilePath = Path.Combine(downloadPath, PackageName.ToNewFileName(mavenPackageId, VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
+            var destinationFilePath = Path.Combine(downloadPath, PackageName.ToCachedFileName(mavenPackageId, VersionFactory.CreateMavenVersion(packageVersion), ".jar"));
             File.Copy(mavenPackage, destinationFilePath);
 
             var result = FindPackages(mavenPackageId, packageVersion, mavenPackageHash, VersionFormat.Maven);

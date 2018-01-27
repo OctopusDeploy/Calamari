@@ -154,7 +154,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
 
-            var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToNewFileName(packageId, version, "." + mavenGavFirst.Packaging));
+            var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, "." + mavenGavFirst.Packaging));
             var downloadUrl = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
                                   ? mavenGavFirst.DefaultArtifactPath
                                   : mavenGavFirst.SnapshotArtifactPath(MavenMetadataParser.GetLatestSnapshotRelease(
@@ -167,10 +167,12 @@ namespace Calamari.Integration.Packages.Download
                 try
                 {
                     Log.Verbose($"Downloading Attempt {downloadUrl} TO {localDownloadName}");
-                    var client = new WebClient()
-                        {Credentials = feedCredentials};
-                    client.DownloadFile(downloadUrl, localDownloadName);
-                    return PackagePhysicalFileMetadata.Build(localDownloadName);
+                    using (var client = new WebClient()
+                        {Credentials = feedCredentials})
+                    {
+                        client.DownloadFile(downloadUrl, localDownloadName);
+                        return PackagePhysicalFileMetadata.Build(localDownloadName);
+                    }
                 }
                 catch
                 {
@@ -211,49 +213,31 @@ namespace Calamari.Integration.Packages.Download
         /// given extension.
         /// </summary>
         /// <returns>true if the package exists, and false otherwise</returns>
-        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials, XmlDocument snapshotMetadata)
+        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials,
+            XmlDocument snapshotMetadata)
         {
-            return feedUri.ToString().TrimEnd('/')
-                .Map(uri => uri + (snapshotMetadata == null ?
-                                mavenGavParser.DefaultArtifactPath : 
-                                mavenGavParser.SnapshotArtifactPath(MavenMetadataParser.GetLatestSnapshotRelease(
-                                    snapshotMetadata, 
-                                    mavenGavParser.Packaging,
-                                    mavenGavParser.Version))))
-                .Map(uri =>
+            var uri = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
+                          ? mavenGavParser.DefaultArtifactPath
+                          : mavenGavParser.SnapshotArtifactPath(
+                              MavenMetadataParser.GetLatestSnapshotRelease(
+                                  snapshotMetadata,
+                                  mavenGavParser.Packaging,
+                                  mavenGavParser.Version)));
+
+            try
+            {
+                var req = WebRequest.Create(uri);
+                req.Method = "HEAD";
+                req.Credentials = feedCredentials;
+                using (var response = (HttpWebResponse) req.GetResponse())
                 {
-                    try
-                    {
-                        return WebRequest.Create(uri)
-                            .Tee(c => c.Method = "HEAD")
-                            .Tee(c => c.Credentials = feedCredentials)
-                            .GetResponse()
-                            .Map(response => response as HttpWebResponse)
-                            .Map(response => (int) response.StatusCode >= 200 && (int) response.StatusCode <= 299);
-                    }
-                    catch
-                    {
-                        return false;
-                    }
-                });
-        }
-
-        /// <summary>
-        /// Creates the full file name of a downloaded file
-        /// </summary>
-        /// <returns>The full path where the downloaded file will be saved</returns>
-        string GetFilePathToDownloadPackageTo(string cacheDirectory, string packageId, string version, string extension)
-        {
-            Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
-            Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
-            Guard.NotNullOrWhiteSpace(version, "version can not be null");
-            Guard.NotNullOrWhiteSpace(extension, "extension can not be null");
-
-            return (packageId + JavaConstants.MavenFilenameDelimiter + version +
-                    ServerConstants.SERVER_CACHE_DELIMITER +
-                    BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", string.Empty) +
-                    "." + extension)
-                .Map(package => Path.Combine(cacheDirectory, package));
+                    return ((int) response.StatusCode >= 200 && (int) response.StatusCode <= 299);
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -268,24 +252,25 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
+            var url = feedUri.ToString().TrimEnd('/') + mavenPackageID.GroupVersionMetadataPath;
             for (var retry = 0; retry < maxDownloadAttempts; ++retry)
             {
                 try
                 {
-                    var metadataResponse = (feedUri.ToString().TrimEnd('/') + mavenPackageID.GroupVersionMetadataPath)
-                        .ToEnumerable()
-                        .Select(uri => WebRequest.Create(uri).Tee(request => request.Credentials = feedCredentials))
-                        .Select(request => request.GetResponse())
-                        .Select(response => response as HttpWebResponse)
-                        .First(response => response.IsSuccessStatusCode() || (int) response.StatusCode == 404);
-
-                    if (metadataResponse.IsSuccessStatusCode())
+                    var request = WebRequest.Create(url);
+                    request.Credentials = feedCredentials;
+                    using (var response = (HttpWebResponse) request.GetResponse())
                     {
-                        return FunctionalExtensions.Using(
-                            () => metadataResponse.GetResponseStream(),
-                            stream => new XmlDocument().Tee(doc => doc.Load(stream)));
+                        if (response.IsSuccessStatusCode() || (int) response.StatusCode == 404)
+                        {
+                            using (var respStream = response.GetResponseStream())
+                            {
+                                var xmlDoc = new XmlDocument();
+                                xmlDoc.Load(respStream);
+                                return xmlDoc;
+                            }
+                        }
                     }
-
                     return null;
                 }
                 catch (WebException ex)
