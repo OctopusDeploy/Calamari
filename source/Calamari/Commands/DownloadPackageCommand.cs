@@ -3,9 +3,9 @@ using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.Packages.Download;
-using Octopus.Core.Resources.Metadata;
-using Octopus.Core.Resources.Versioning;
-using Octopus.Core.Resources.Versioning.Factories;
+using Octopus.Versioning;
+using Octopus.Versioning.Factories;
+using Octopus.Versioning.Metadata;
 
 namespace Calamari.Commands
 {

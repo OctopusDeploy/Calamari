@@ -39,7 +39,7 @@
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Server.Core.Utilities" Version="1.0.0" />
-    <PackageReference Include="Octopus.Server.Core.Versioning" Version="3.0.1-ci0001" />
+    <PackageReference Include="Octopus.Versioning" Version="3.0.2-moveversionrange0004" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
     <PackageReference Include="Octostache" Version="2.1.8" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />

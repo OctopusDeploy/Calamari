@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Net;
-using Octopus.Core.Resources;
-using Octopus.Core.Resources.Metadata;
-using Octopus.Core.Resources.Versioning;
+using Octopus.Versioning;
+using Octopus.Versioning.Metadata;
 
 namespace Calamari.Integration.Packages.Download
 {

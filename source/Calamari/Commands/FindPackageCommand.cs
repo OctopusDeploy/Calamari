@@ -2,9 +2,7 @@
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.ServiceMessages;
-using Octopus.Core.Resources.Metadata;
+using Octopus.Versioning.Metadata;
 
 namespace Calamari.Commands
 {

@@ -4,7 +4,7 @@ using System.Threading;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Retry;
-using Octopus.Core.Resources.Versioning;
+using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {

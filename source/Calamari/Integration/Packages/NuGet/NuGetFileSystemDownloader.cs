@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Octopus.Core.Resources.Metadata;
-using Octopus.Core.Resources.Versioning;
-using Octopus.Core.Resources.Versioning.Factories;
+using Octopus.Versioning;
+using Octopus.Versioning.Factories;
+using Octopus.Versioning.Metadata;
 
 namespace Calamari.Integration.Packages.NuGet
 {

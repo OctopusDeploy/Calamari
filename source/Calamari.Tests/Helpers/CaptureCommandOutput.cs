@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
-using Octopus.Core.Resources.Metadata;
+using Octopus.Versioning.Metadata;
 using Octostache;
 
 namespace Calamari.Tests.Helpers
