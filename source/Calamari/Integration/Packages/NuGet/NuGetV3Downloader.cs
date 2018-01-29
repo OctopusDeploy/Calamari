@@ -12,7 +12,6 @@ using Calamari.Commands.Support;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 
 namespace Calamari.Integration.Packages.NuGet
 {

@@ -4,7 +4,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
 using NSubstitute;
 using NUnit.Framework;
-using Octopus.Versioning.Factories;
+using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {

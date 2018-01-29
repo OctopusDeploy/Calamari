@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 
 namespace Calamari.Integration.Packages.NuGet
 {

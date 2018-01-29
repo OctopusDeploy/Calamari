@@ -10,8 +10,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
 using Octopus.Core.Extensions;
 using Octopus.Versioning;
-using Octopus.Versioning.Constants;
-using Octopus.Versioning.Parsing.Maven;
+using Octopus.Versioning.Maven;
 
 namespace Calamari.Integration.Packages.Download
 {
@@ -21,7 +20,6 @@ namespace Calamari.Integration.Packages.Download
     public class MavenPackageDownloader : IPackageDownloader
     {
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
-        static readonly IMetadataParser MavenMetadataParser = new MetadataParser();
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public PackagePhysicalFileMetadata DownloadPackage(
@@ -157,7 +155,7 @@ namespace Calamari.Integration.Packages.Download
             var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, "." + mavenGavFirst.Packaging));
             var downloadUrl = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
                                   ? mavenGavFirst.DefaultArtifactPath
-                                  : mavenGavFirst.SnapshotArtifactPath(MavenMetadataParser.GetLatestSnapshotRelease(
+                                  : mavenGavFirst.SnapshotArtifactPath(GetLatestSnapshotRelease(
                                       snapshotMetadata,
                                       mavenGavFirst.Packaging,
                                       mavenGavFirst.Version)));
@@ -219,7 +217,7 @@ namespace Calamari.Integration.Packages.Download
             var uri = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
                           ? mavenGavParser.DefaultArtifactPath
                           : mavenGavParser.SnapshotArtifactPath(
-                              MavenMetadataParser.GetLatestSnapshotRelease(
+                              GetLatestSnapshotRelease(
                                   snapshotMetadata,
                                   mavenGavParser.Packaging,
                                   mavenGavParser.Version)));
@@ -292,6 +290,20 @@ namespace Calamari.Integration.Packages.Download
             }
 
             throw new MavenDownloadException("Failed to download the Maven artifact");
+        }
+
+        //Shared code with Server. Should live in Common Location
+        public string GetLatestSnapshotRelease(XmlDocument snapshotMetadata, string extension, string defaultVersion = "")
+        {
+            return snapshotMetadata.ToEnumerable()
+                       .Select(doc => doc.DocumentElement?.SelectSingleNode("./*[local-name()='versioning']"))
+                       .Select(node => node?.SelectNodes("./*[local-name()='snapshotVersions']/*[local-name()='snapshotVersion']"))
+                       .Where(nodes => nodes != null)
+                       .SelectMany(nodes => nodes.Cast<XmlNode>())
+                       .Where(node => (node.SelectSingleNode("./*[local-name()='extension']")?.InnerText.Trim() ?? "").Equals(extension.Trim(), StringComparison.OrdinalIgnoreCase))
+                       .OrderByDescending(node => node.SelectSingleNode("./*[local-name()='updated']")?.InnerText)
+                       .Select(node => node.SelectSingleNode("./*[local-name()='value']")?.InnerText)
+                       .FirstOrDefault() ?? defaultVersion;
         }
     }
 }

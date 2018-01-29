@@ -4,7 +4,6 @@ using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 
 namespace Calamari.Commands
 {

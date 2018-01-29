@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Globalization;
-using System.Linq;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 
 namespace Calamari.Commands
 {

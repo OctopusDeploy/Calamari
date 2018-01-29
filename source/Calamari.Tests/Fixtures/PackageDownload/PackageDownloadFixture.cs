@@ -7,7 +7,6 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.PackageDownload

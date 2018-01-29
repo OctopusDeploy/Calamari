@@ -7,7 +7,6 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Octopus.Versioning;
-using Octopus.Versioning.Constants;
 
 namespace Calamari.Java.Deployment.Conventions
 {
@@ -64,22 +63,7 @@ namespace Calamari.Java.Deployment.Conventions
                 Log.Verbose($"Using custom package file-name: '{customPackageFileName}'");
             }
 
-            var delimited = packageMetadata.Version.Format == VersionFormat.Maven ? JavaConstants.MavenFilenameDelimiter : '.';
-            var targetFileName = !string.IsNullOrWhiteSpace(customPackageFileName)
-                ? customPackageFileName
-                : new StringBuilder()
-                    .Append(packageMetadata.PackageId)
-                    /*
-                     * If this package uses the maven version format, we use the # char as a delimiter between
-                     * the package id and the version. If it is not a maven version, we use the default of
-                     * a period.
-                     */
-                    .Append(delimited)
-                    .Append(packageMetadata.Version)
-                    .Append(packageMetadata.Extension)
-                    .ToString();
-
-            var targetFilePath = Path.Combine(applicationDirectory, targetFileName);
+            var targetFilePath = Path.Combine(applicationDirectory, customPackageFileName ?? Path.GetFileName(deployment.PackageFilePath));
 
             var stagingDirectory = deployment.CurrentDirectory;
 

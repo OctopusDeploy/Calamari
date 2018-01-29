@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using Calamari.Integration.FileSystem;
@@ -9,8 +8,6 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
-using Octopus.Versioning.Maven;
 
 namespace Calamari.Tests.Fixtures.FindPackage
 {

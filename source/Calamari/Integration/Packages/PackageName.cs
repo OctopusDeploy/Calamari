@@ -5,8 +5,8 @@ using System.Text.RegularExpressions;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Util;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 using Octopus.Versioning.Maven;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Integration.Packages
 {

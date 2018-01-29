@@ -1,6 +1,5 @@
 using System;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 
 namespace Calamari.Tests.Helpers
 {
