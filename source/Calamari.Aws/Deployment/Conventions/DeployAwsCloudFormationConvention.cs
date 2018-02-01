@@ -404,7 +404,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 return StackEvent()
                     // Log the details of the status event
-                    .Tee(status => Log.Info($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
+                    .Tee(status => Log.Verbose($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
                                             $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
                     // Check to see if we have any errors in the status
                     .Tee(status => LogRollbackError(deployment, status, expectSuccess, missingIsFailure))
