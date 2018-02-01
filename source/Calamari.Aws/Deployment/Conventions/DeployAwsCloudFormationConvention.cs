@@ -227,10 +227,10 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
-
+            
             return TemplateReplacement.GetAbsolutePath(
                     fileSystem,
-                    templateParametersFile,
+                    template,
                     filesInPackage,
                     deployment.Variables)
                 // The path is transformed to the string contents
