@@ -41,6 +41,13 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly string action;
         private readonly string stackName;
 
+        /// <summary>
+        /// If the user does not have permissions to do something, some warnings are displayed. These
+        /// can be displayed multiple times, which is redundant, so this list keeps track of what has
+        /// already been shown to the user.
+        /// </summary>
+        private readonly IList<String> displayedWarnings = new List<String>();
+
         public DeployAwsCloudFormationConvention(
             string templateFile,
             string templateParametersFile,
@@ -154,7 +161,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
             Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables);
-            Log.Info($"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
+            Log.Info(
+                $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
         }
 
         /// <summary>
@@ -227,7 +235,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
-            
+
             return TemplateReplacement.GetAbsolutePath(
                     fileSystem,
                     template,
@@ -405,7 +413,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 return StackEvent()
                     // Log the details of the status event
                     .Tee(status => Log.Verbose($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
-                                            $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
+                                               $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
                     // Check to see if we have any errors in the status
                     .Tee(status => LogRollbackError(deployment, status, expectSuccess, missingIsFailure))
                     // convert the status to true/false based on the presense of these suffixes
@@ -481,11 +489,11 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 if (ex.ErrorCode == "AccessDenied")
                 {
-                    Log.Warn(
-                        "AWS-CLOUDFORMATION-ERROR-0003: The AWS account used to perform the operation does not have " +
+                    DisplayWarning(
+                        "AWS-CLOUDFORMATION-ERROR-0003",
+                        "The AWS account used to perform the operation does not have " +
                         "the required permissions to describe the stack.\n" +
-                        ex.Message + "\n" +
-                        "https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0003");
+                        ex.Message);
 
                     return defaultValue;
                 }
@@ -684,7 +692,7 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED", "UPDATE_ROLLBACK_FAILED"}.Any(
-                    x => StackEvent()?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ?? 
+                    x => StackEvent()?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ??
                          defaultValue);
             }
             catch (PermissionException)
@@ -711,6 +719,26 @@ namespace Calamari.Aws.Deployment.Conventions
             }.Any(x =>
                 status?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ??
                 defaultValue);
+        }
+
+        /// <summary>
+        /// Display an warning message to the user (without duplicates)
+        /// </summary>
+        /// <param name="errorCode">The error message code</param>
+        /// <param name="message">The error message body</param>
+        /// <returns>true if it was displayed, and false otherwise</returns>
+        private bool DisplayWarning(string errorCode, string message)
+        {
+            if (!displayedWarnings.Contains(errorCode))
+            {
+                displayedWarnings.Add(errorCode);
+                Log.Warn(
+                    errorCode + ": " + message + "\n" +
+                    "https://g.octopushq.com/AwsCloudFormationDeploy#" + errorCode.ToLower());
+                return true;
+            }
+
+            return false;
         }
     }
 }
