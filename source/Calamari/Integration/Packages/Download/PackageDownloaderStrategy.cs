@@ -30,6 +30,9 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.NuGet:
                     downloader = new NuGetPackageDownloader();
                     break;
+                case FeedType.GitHub:
+                    downloader = new GitHubPackageDownloader();
+                    break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }

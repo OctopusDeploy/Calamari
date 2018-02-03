@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -14,7 +13,6 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
