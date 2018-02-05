@@ -714,7 +714,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
         /// <summary>
         /// Some statuses indicate that the only way forward is to delete the stack and try again.
-        /// Here are some of the explainations of the stack states from the docs
+        /// Here are some of the explainations of the stack states from the docs.
+        /// 
+        /// CREATE_FAILED: Unsuccessful creation of one or more stacks. View the stack events to see any associated error
+        /// messages. Possible reasons for a failed creation include insufficient permissions to work with all resources
+        /// in the stack, parameter values rejected by an AWS service, or a timeout during resource creation. 
         ///  	
         /// DELETE_FAILED: Unsuccessful deletion of one or more stacks. Because the delete failed, you might have some
         /// resources that are still running; however, you cannot work with or update the stack. Delete the stack again
@@ -739,7 +743,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new[] {"ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED", "UPDATE_ROLLBACK_FAILED"}.Any(
+                return new[] {"CREATE_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED", "UPDATE_ROLLBACK_FAILED"}.Any(
                     x => StackEvent()?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ??
                          defaultValue);
             }
