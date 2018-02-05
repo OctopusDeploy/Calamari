@@ -47,6 +47,10 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly string stackName;
         private readonly List<string> capabilities = new List<string>();
         private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
+        /// <summary>
+        /// Track the last status message so we don't fill the logs with redundant information
+        /// </summary>
+        private string lastMessage;
 
         /// <summary>
         /// If the user does not have permissions to do something, some warnings are displayed. These
@@ -426,8 +430,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 return StackEvent()
                     // Log the details of the status event
-                    .Tee(status => Log.Verbose($"Current stack state: {status?.ResourceType.Map(type => type + " ")}" +
-                                               $"{status?.ResourceStatus.Value ?? "Does not exist"}"))
+                    .Tee(LogCurrentStates)
                     // Check to see if we have any errors in the status
                     .Tee(status => LogRollbackError(deployment, status, expectSuccess, missingIsFailure))
                     // convert the status to true/false based on the presense of these suffixes
@@ -440,6 +443,22 @@ namespace Calamari.Aws.Deployment.Conventions
                 Log.Warn(ex.Message);
                 return true;
             }
+        }
+
+        /// <summary>
+        /// Write the state of the stack, but only if it changed since last time
+        /// </summary>
+        /// <param name="status">The current status of the stack</param>
+        private void LogCurrentStates( StackEvent status)
+        {
+            var statusMessage =
+                $"{status?.ResourceType.Map(type => type + " ")}{status?.ResourceStatus.Value ?? "Does not exist"}";
+            if (statusMessage != lastMessage)
+            {
+                Log.Info($"Current stack state: {statusMessage}");
+            }
+
+            lastMessage = statusMessage;
         }
 
         /// <summary>
