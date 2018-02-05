@@ -23,7 +23,7 @@ namespace Calamari.Integration.Processes
             StringDictionary environmentVars = null, 
             string userName = null, 
             SecureString password = null)
-            : this(executable, arguments)
+            : this(executable, arguments, environmentVars)
         {
             this.workingDirectory = workingDirectory;
             UserName = userName;
