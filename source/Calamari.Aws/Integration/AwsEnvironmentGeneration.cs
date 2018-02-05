@@ -132,7 +132,6 @@ namespace Calamari.Aws.Integration
             {
                 try
                 {
-                    
                     var instanceRole = WebRequest
                         .Create(RoleUri)
                         .Map(request => request.GetResponse())
@@ -148,7 +147,6 @@ namespace Calamari.Aws.Integration
                             stream => stream.ReadToEnd()))
                         .Map(JsonConvert.DeserializeObject);
 
-
                     EnvironmentVars["AWS_ACCESS_KEY_ID"] = instanceRoleKeys.AccessKeyId;
                     EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = instanceRoleKeys.SecretAccessKey;
                     EnvironmentVars["AWS_SESSION_TOKEN"] = instanceRoleKeys.Token;
@@ -158,10 +156,11 @@ namespace Calamari.Aws.Integration
                     // This was either a generic error accessing the metadata URI, or accessing the
                     // dynamic properties resulted in an error (which means the response was not
                     // in the expected format).
-                    throw new LoginException($"AWS-LOGIN-ERROR-0003: Failed to access the role information under {RoleUri}, " + 
-                                             "or failed to parse the response. This may be because the instance does not have " +
-                                             "a role assigned to it. " +
-                                             "https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003", ex);
+                    throw new LoginException(
+                        $"AWS-LOGIN-ERROR-0003: Failed to access the role information under {RoleUri}, " +
+                        "or failed to parse the response. This may be because the instance does not have " +
+                        "a role assigned to it. " +
+                        "https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003", ex);
                 }
             }
         }
@@ -175,9 +174,11 @@ namespace Calamari.Aws.Integration
             {
                 var credentials = new AmazonSecurityTokenServiceClient(AwsCredentials)
                     // Client becomes the response of the API call
-                    .Map(client => client.AssumeRole(new AssumeRoleRequest()
-                        .Tee(request => request.RoleArn = assumeRoleArn)
-                        .Tee(request => request.RoleSessionName = assumeRoleSession)))
+                    .Map(client => client.AssumeRole(new AssumeRoleRequest
+                    {
+                        RoleArn = assumeRoleArn,
+                        RoleSessionName = assumeRoleSession
+                    }))
                     // Get the credentials details from the response
                     .Map(response => response.Credentials);
 

@@ -23,6 +23,10 @@ namespace Calamari.Aws.Deployment.Conventions
 {
     public class DeployAwsCloudFormationConvention : IInstallConvention
     {
+        /// <summary>
+        /// These are the capabilities that we recognise. All others are ignored.
+        /// </summary>
+        private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
         private const int StatusWaitPeriod = 15000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
@@ -41,6 +45,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly bool waitForComplete;
         private readonly string action;
         private readonly string stackName;
+        private readonly List<string> capabilities = new List<string>();
         private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
 
         /// <summary>
@@ -57,6 +62,7 @@ namespace Calamari.Aws.Deployment.Conventions
             string action,
             bool waitForComplete,
             string stackName,
+            string iamCapabilities,
             ICalamariFileSystem fileSystem,
             IAwsEnvironmentGeneration awsEnvironmentGeneration)
         {
@@ -68,6 +74,12 @@ namespace Calamari.Aws.Deployment.Conventions
             this.action = action;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
+
+            // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
+            if (RecognisedCapabilities.Contains(iamCapabilities))
+            {
+                capabilities.Add(iamCapabilities);
+            }            
         }
 
         public void Install(RunningDeployment deployment)
@@ -258,7 +270,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                new AmazonSecurityTokenServiceClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+                new AmazonSecurityTokenServiceClient(awsEnvironmentGeneration.AwsCredentials,
+                        awsEnvironmentGeneration.AwsRegion)
                     // Client becomes the response of the API call
                     .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
                     // The response is narrowed to the Aen
@@ -283,7 +296,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                new AmazonIdentityManagementServiceClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+                new AmazonIdentityManagementServiceClient(awsEnvironmentGeneration.AwsCredentials,
+                        awsEnvironmentGeneration.AwsRegion)
                     // The client becomes the API response
                     .Map(client => client.GetUser(new GetUserRequest()))
                     // Log the details of the response
@@ -304,7 +318,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
+                        awsEnvironmentGeneration.AwsRegion)
                     // The client becomes the result of the API call
                     .Map(client => client.DescribeStacks(new DescribeStacksRequest() {StackName = stackName}))
                     // Get the first stack
@@ -362,7 +377,8 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>The stack event</returns>
         private StackEvent StackEvent(Func<StackEvent, bool> predicate = null)
         {
-            return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+            return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
+                    awsEnvironmentGeneration.AwsRegion)
                 .Map(client =>
                 {
                     try
@@ -477,7 +493,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
+                        awsEnvironmentGeneration.AwsRegion)
                     // The client becomes the result of the API call
                     .Map(client => client.DescribeStacks(new DescribeStacksRequest()))
                     // The result becomes true/false based on the presence of a matching stack name
@@ -514,14 +531,16 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
+                        awsEnvironmentGeneration.AwsRegion)
                     // Client becomes the API response
                     .Map(client => client.CreateStack(
                         new CreateStackRequest()
                         {
                             StackName = stackName,
                             TemplateBody = template,
-                            Parameters = parameters
+                            Parameters = parameters,
+                            Capabilities = capabilities
                         }))
                     // Narrow the response to the stack ID
                     .Map(response => response.StackId)
@@ -552,7 +571,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+                new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
+                        awsEnvironmentGeneration.AwsRegion)
                     // Client becomes the API response
                     .Map(client => client.DeleteStack(new DeleteStackRequest() {StackName = stackName}))
                     // Log the response details
@@ -592,14 +612,16 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials, awsEnvironmentGeneration.AwsRegion)
+                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
+                        awsEnvironmentGeneration.AwsRegion)
                     // Client becomes the API response
                     .Map(client => client.UpdateStack(
                         new UpdateStackRequest()
                         {
                             StackName = stackName,
                             TemplateBody = template,
-                            Parameters = parameters
+                            Parameters = parameters,
+                            Capabilities = capabilities
                         }))
                     // Narrow to the stack id
                     .Map(response => response.StackId)

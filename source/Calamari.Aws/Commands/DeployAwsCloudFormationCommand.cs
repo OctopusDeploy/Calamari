@@ -15,15 +15,16 @@ namespace Calamari.Aws.Commands
     [Command("deploy-aws-cloudformation", Description = "Creates a new AWS CloudFormation deployment")]
     public class DeployCloudFormationCommand : Command
     {
-        string packageFile;
-        string variablesFile;
-        string sensitiveVariablesFile;
-        string sensitiveVariablesPassword;
-        string templateFile;
-        string templateParameterFile;
-        string waitForComplete;
-        string action;
-        string stackName;
+        private string packageFile;
+        private string variablesFile;
+        private string sensitiveVariablesFile;
+        private string sensitiveVariablesPassword;
+        private string templateFile;
+        private string templateParameterFile;
+        private string waitForComplete;
+        private string action;
+        private string stackName;
+        private string iamCapabilities;
 
         public DeployCloudFormationCommand()
         {
@@ -39,6 +40,7 @@ namespace Calamari.Aws.Commands
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete = v);
             Options.Add("action=", "Deploy if the deployment is to deploy or update a stack, and Delete if it is to remove the stack.", v => action = v);
             Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
+            Options.Add("iamCapabilities=", "CAPABILITY_IAM if the stack requires IAM capabilities, or CAPABILITY_NAMED_IAM if the stack requires named IAM caoabilities.", v => iamCapabilities = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -67,6 +69,7 @@ namespace Calamari.Aws.Commands
                     action,
                     !Boolean.FalseString.Equals(waitForComplete, StringComparison.InvariantCultureIgnoreCase),
                     stackName,
+                    iamCapabilities,
                     fileSystem,
                     new AwsEnvironmentGeneration(variables))
             };
