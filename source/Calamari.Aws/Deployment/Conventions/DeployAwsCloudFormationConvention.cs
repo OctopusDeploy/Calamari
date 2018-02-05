@@ -45,6 +45,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly bool waitForComplete;
         private readonly string action;
         private readonly string stackName;
+        private readonly bool disableRollback;
         private readonly List<string> capabilities = new List<string>();
         private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
         /// <summary>
@@ -67,6 +68,7 @@ namespace Calamari.Aws.Deployment.Conventions
             bool waitForComplete,
             string stackName,
             string iamCapabilities,
+            bool disableRollback,
             ICalamariFileSystem fileSystem,
             IAwsEnvironmentGeneration awsEnvironmentGeneration)
         {
@@ -78,6 +80,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.action = action;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
+            this.disableRollback = disableRollback;
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
             if (RecognisedCapabilities.Contains(iamCapabilities))
@@ -564,7 +567,8 @@ namespace Calamari.Aws.Deployment.Conventions
                             StackName = stackName,
                             TemplateBody = template,
                             Parameters = parameters,
-                            Capabilities = capabilities
+                            Capabilities = capabilities,
+                            DisableRollback = disableRollback
                         }))
                     // Narrow the response to the stack ID
                     .Map(response => response.StackId)

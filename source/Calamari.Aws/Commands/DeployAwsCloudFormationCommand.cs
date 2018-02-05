@@ -25,6 +25,7 @@ namespace Calamari.Aws.Commands
         private string action;
         private string stackName;
         private string iamCapabilities;
+        private string disableRollback;
 
         public DeployCloudFormationCommand()
         {
@@ -41,6 +42,7 @@ namespace Calamari.Aws.Commands
             Options.Add("action=", "Deploy if the deployment is to deploy or update a stack, and Delete if it is to remove the stack.", v => action = v);
             Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
             Options.Add("iamCapabilities=", "CAPABILITY_IAM if the stack requires IAM capabilities, or CAPABILITY_NAMED_IAM if the stack requires named IAM caoabilities.", v => iamCapabilities = v);
+            Options.Add("disableRollback=", "True to disable the CloudFormation stack rollback on failure, and False otherwise.", v => disableRollback = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -67,9 +69,10 @@ namespace Calamari.Aws.Commands
                     templateParameterFile, 
                     filesInPackage,
                     action,
-                    !Boolean.FalseString.Equals(waitForComplete, StringComparison.InvariantCultureIgnoreCase),
+                    !Boolean.FalseString.Equals(waitForComplete, StringComparison.InvariantCultureIgnoreCase), // true by default
                     stackName,
                     iamCapabilities,
+                    Boolean.TrueString.Equals(disableRollback, StringComparison.InvariantCultureIgnoreCase), // false by default
                     fileSystem,
                     new AwsEnvironmentGeneration(variables))
             };
