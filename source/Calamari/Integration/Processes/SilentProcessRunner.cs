@@ -85,7 +85,7 @@ namespace Calamari.Integration.Processes
 
                     if (environmentVars != null)
                     {
-                        foreach (string environmentVar in environmentVars)
+                        foreach (string environmentVar in environmentVars.Keys)
                         {
                             process.StartInfo.EnvironmentVariables[environmentVar] = environmentVars[environmentVar];
                         }                       
