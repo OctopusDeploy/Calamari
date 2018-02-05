@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -36,12 +37,36 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        public static SilentProcessRunnerResult ExecuteCommand(string executable, string arguments, string workingDirectory, Action<string> output, Action<string> error)
+        public static SilentProcessRunnerResult ExecuteCommand(
+            string executable, 
+            string arguments, 
+            string workingDirectory, 
+            Action<string> output, 
+            Action<string> error)
         {
-            return ExecuteCommand(executable, arguments, workingDirectory, null, null, output, error);
+            return ExecuteCommand(executable, arguments, workingDirectory, null, null, null, output, error);
+        }
+        
+        public static SilentProcessRunnerResult ExecuteCommand(
+            string executable, 
+            string arguments, 
+            string workingDirectory, 
+            StringDictionary environmentVars, 
+            Action<string> output, 
+            Action<string> error)
+        {
+            return ExecuteCommand(executable, arguments, workingDirectory, environmentVars, null, null, output, error);
         }
 
-        public static SilentProcessRunnerResult ExecuteCommand(string executable, string arguments, string workingDirectory, string userName, SecureString password, Action<string> output, Action<string> error)
+        public static SilentProcessRunnerResult ExecuteCommand(
+            string executable, 
+            string arguments, 
+            string workingDirectory,
+            StringDictionary environmentVars,
+            string userName,             
+            SecureString password, 
+            Action<string> output, 
+            Action<string> error)
         {
             try
             {
@@ -56,6 +81,15 @@ namespace Calamari.Integration.Processes
                     process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.StandardOutputEncoding = oemEncoding;
                     process.StartInfo.StandardErrorEncoding = oemEncoding;
+
+
+                    if (environmentVars != null)
+                    {
+                        foreach (string environmentVar in environmentVars)
+                        {
+                            process.StartInfo.EnvironmentVariables[environmentVar] = environmentVars[environmentVar];
+                        }                       
+                    }
 
                     RunProcessWithCredentials(process.StartInfo, userName, password);
 
