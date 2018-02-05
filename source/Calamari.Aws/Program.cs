@@ -1,5 +1,7 @@
 ﻿using System;
+using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
+using Calamari.Integration.Scripting;
 using Calamari.Util.Environments;
 
 namespace Calamari.Aws
@@ -8,7 +10,9 @@ namespace Calamari.Aws
     {
         public Program() : base("Calamari.Aws", typeof(Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation())
         {
-                       
+            // AwsPowerShellScriptEngine is used to populate the AWS authentication and region environment
+            // variables of the process that runs powershell scripts.
+            ScriptEngineRegistry.Instance.ScriptEngines[ScriptType.Powershell] = new AwsPowerShellScriptEngine();  
         }
 
         static int Main(string[] args)

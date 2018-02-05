@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Specialized;
+using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
@@ -11,7 +12,11 @@ namespace Calamari.Integration.Scripting.Bash
             return new[] {ScriptType.Bash};
         }
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
@@ -22,7 +27,7 @@ namespace Calamari.Integration.Scripting.Bash
             {
                 return commandLineRunner.Execute(new CommandLineInvocation(
                     BashScriptBootstrapper.FindBashExecutable(),
-                    BashScriptBootstrapper.FormatCommandArguments(boostrapFile), workingDirectory));
+                    BashScriptBootstrapper.FormatCommandArguments(boostrapFile), workingDirectory, environmentVars));
             }
         }
     }

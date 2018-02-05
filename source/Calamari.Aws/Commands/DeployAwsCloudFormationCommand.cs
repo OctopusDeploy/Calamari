@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Aws.Deployment.Conventions;
+using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -66,7 +67,8 @@ namespace Calamari.Aws.Commands
                     action,
                     !Boolean.FalseString.Equals(waitForComplete, StringComparison.InvariantCultureIgnoreCase),
                     stackName,
-                    fileSystem)
+                    fileSystem,
+                    new AwsEnvironmentGeneration(variables))
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
