@@ -446,7 +446,8 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
-        /// Write the state of the stack, but only if it changed since last time
+        /// Write the state of the stack, but only if it changed since last time. If we are
+        /// writing the same message more than once, do it as verbose logging.
         /// </summary>
         /// <param name="status">The current status of the stack</param>
         private void LogCurrentStates( StackEvent status)
@@ -456,6 +457,10 @@ namespace Calamari.Aws.Deployment.Conventions
             if (statusMessage != lastMessage)
             {
                 Log.Info($"Current stack state: {statusMessage}");
+            }
+            else
+            {
+                Log.Verbose($"Current stack state: {statusMessage}");
             }
 
             lastMessage = statusMessage;
