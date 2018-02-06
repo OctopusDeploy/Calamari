@@ -575,7 +575,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     // Narrow the response to the stack ID
                     .Map(response => response.StackId)
                     // Log the stack id
-                    .Tee(stackId => Log.Info($"Created stack with id {stackId}"));
+                    .Tee(stackId => Log.Info($"Created stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
             }
             catch (AmazonCloudFormationException ex)
             {
