@@ -131,7 +131,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
             else
             {
-                Log.Info($"No stack called {stackName} exists");
+                Log.Info($"No stack called {stackName} exists in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
             }
 
             if (waitForComplete)
@@ -656,7 +656,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     // Narrow to the stack id
                     .Map(response => response.StackId)
                     // Log the stack id
-                    .Tee(stackId => Log.Info($"Updated stack with id {stackId}"));
+                    .Tee(stackId => Log.Info($"Updated stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
             }
             catch (AmazonCloudFormationException ex)
             {
