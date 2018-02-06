@@ -196,7 +196,9 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRoleARN))
+            if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRoleARN) ||
+                !deployment.Variables.IsSet(SpecialVariables.Action.Aws.AccountId) || 
+                 !deployment.Variables.IsSet(deployment.Variables.Get(SpecialVariables.Action.Aws.AccountId) + ".AccessKey"))
             {
                 WriteRoleInfo();
             }
