@@ -606,7 +606,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     // Client becomes the API response
                     .Map(client => client.DeleteStack(new DeleteStackRequest() {StackName = stackName}))
                     // Log the response details
-                    .Tee(status => Log.Info($"Deleted stack called {stackName}"));
+                    .Tee(status => Log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
             }
             catch (AmazonCloudFormationException ex)
             {
