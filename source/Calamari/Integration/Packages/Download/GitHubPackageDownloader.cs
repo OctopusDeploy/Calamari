@@ -110,12 +110,12 @@ namespace Calamari.Integration.Packages.Download
                 throw new InvalidOperationException(
                     "Invalid PackageId for GitHub feed. Expecting format `<owner>/<repo>`");
             }
-
+            
             var page = 0;
             JArray req = null;
             while (req == null || (req.Count != 0 &&  req.Count < 1000))
             {
-                var uri = $"https://api.github.com/repos/{Uri.EscapeUriString(owner)}/{Uri.EscapeUriString(repository)}/tags?page={++page}&per_page=1000";
+                var uri = feedUri.AbsoluteUri + $"repos/{Uri.EscapeUriString(owner)}/{Uri.EscapeUriString(repository)}/tags?page={++page}&per_page=1000";
                 req = PerformRequest(feedCredentials, uri) as JArray;
                 if (req == null)
                 {

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Calamari.Tests.Fixtures.PackageDownload;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -48,6 +49,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void DownloadsPackageFromGitHub()
         {
@@ -62,6 +64,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void WillReUseFileIfItExists()
         {
@@ -84,6 +87,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void DownloadsPackageFromGitHubWithDifferentVersionFormat()
         {
