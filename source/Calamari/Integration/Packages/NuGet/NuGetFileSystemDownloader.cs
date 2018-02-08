@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetFileSystemDownloader
     {
-        static readonly IVersionFactory VersionFactory = new VersionFactory();
-        static readonly IMetadataFactory PackageMetadataFactory = new MetadataFactory();
+        private static string NuGetFileExtension = ".nupkg";
         
         public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, string targetFilePath)
         {
@@ -22,23 +19,24 @@ namespace Calamari.Integration.Packages.NuGet
             // before opening the package. To avoid creating file name strings, we attempt to specifically match everything after the last path separator
             // which would be the file name and extension.
             var package = (from path in GetPackageLookupPaths(packageId, version, feedUri)
-                    let p = new LocalNuGetPackage(path) 
-                    where p.Metadata.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase) && 
-                          VersionFactory.CreateVersion(p.Metadata.Version.ToString(), PackageMetadataFactory.GetMetadataFromPackageID(packageId).VersionFormat).Equals(version)
-                    select p).FirstOrDefault();
+                let pkg = new LocalNuGetPackage(path)
+                where pkg.Metadata.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase) &&
+                      VersionFactory.CreateSemanticVersion(pkg.Metadata.Version.ToString()).Equals(version)
+                select path
+               ).FirstOrDefault();
 
             if (package == null)
-                throw new Exception($"Could not find package {packageId} {version} in feed: '{feedUri}'");
+                throw new Exception($"Could not find package {packageId} v{version} in feed: '{feedUri}'");
 
-            Log.VerboseFormat("Found package {0} version {1}", package.Metadata.Id, package.Metadata.Version);
+            Log.VerboseFormat("Found package {0} v{1}", packageId, version);
             Log.Verbose("Downloading to: " + targetFilePath);
 
             using (var targetFile = File.Open(targetFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
             {
-               package.GetStream(stream =>
-               {
-                  stream.CopyTo(targetFile); 
-               }); 
+                using (var fileStream = File.OpenRead(package))
+                {
+                    fileStream.CopyTo(targetFile);
+                }
             }
         }
 
@@ -61,7 +59,7 @@ namespace Calamari.Integration.Packages.NuGet
                 string partialName = version.Patch < 1 ?
                                         String.Join(".", packageId, version.Major, version.Minor) :
                                         String.Join(".", packageId, version.Major, version.Minor, version.Patch);
-                partialName += "*" + ".nupkg";
+                partialName += "*" + NuGetFileExtension;
 
                 // Partial names would result is gathering package with matching major and minor but different build and revision.
                 // Attempt to match the version in the path to the version we're interested in.
@@ -78,18 +76,15 @@ namespace Calamari.Integration.Packages.NuGet
             // When matching by pattern, we will always have a version token. Packages without versions would be matched early on by the version-less path resolver
             // when doing an exact match.
             return name.Length > packageId.Length &&
-                   VersionFactory.TryCreateVersion(
+                   VersionFactory.TryCreateSemanticVersion(
                        name.Substring(packageId.Length + 1), 
-                       out IVersion parsedVersion, 
-                       PackageMetadataFactory.GetMetadataFromPackageID(packageId).VersionFormat) &&
+                       out IVersion parsedVersion) &&
                    parsedVersion.Equals(version);
         }
 
-        static IEnumerable<string> GetPackageFiles(Uri feedUri, string filter = null)
+        static IEnumerable<string> GetPackageFiles(Uri feedUri, string filter)
         {
             var feedPath = feedUri.LocalPath;
-
-            filter = filter ?? "*" + ".nupkg";
 
             // Check for package files one level deep. We use this at package install time
             // to determine the set of installed packages. Installed packages are copied to
@@ -125,7 +120,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static string GetPackageFileName(string packageId, IVersion version)
         {
-            return packageId + "." + version + ".nupkg";
+            return packageId + "." + version + NuGetFileExtension;
         }
     }
 }

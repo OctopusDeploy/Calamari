@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment;
+﻿using System.Collections.Specialized;
+using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
@@ -12,7 +13,11 @@ namespace Calamari.Azure.Integration
             return new[] { ScriptType.Powershell };
         }
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars)
         {
             var powerShellEngine = new PowerShellScriptEngine();
             if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)))
@@ -24,7 +29,7 @@ namespace Calamari.Azure.Integration
                 return new AzurePowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
             }
 
-            return powerShellEngine.Execute(script, variables, commandLineRunner);
+            return powerShellEngine.Execute(script, variables, commandLineRunner, environmentVars);
         }
     }
 }

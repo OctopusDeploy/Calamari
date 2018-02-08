@@ -26,7 +26,7 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var package = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath); 
             Log.Info("Uploading package to Azure blob storage: '{0}'", package);
-            var packageHash = Hash(package);
+            var packageHash = HashCalculator.Hash(package);
             var nugetPackageVersion = deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion);
             var uploadedFileName = Path.ChangeExtension(Path.GetFileName(package), "." + nugetPackageVersion + "_" + packageHash + ".cspkg");
 
@@ -45,14 +45,6 @@ namespace Calamari.Azure.Deployment.Conventions
 
             Log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), deployment.Variables);
             Log.Info("Package uploaded to " + uploadedUri.ToString());
-        }
-
-        string Hash(string packageFilePath)
-        {
-            using (var stream = fileSystem.OpenFile(packageFilePath, FileMode.Open))
-            {
-                return HashCalculator.Hash(stream);
-            }
         }
     }
 }

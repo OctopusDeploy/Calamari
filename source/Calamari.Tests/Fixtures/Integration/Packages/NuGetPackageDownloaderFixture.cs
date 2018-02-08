@@ -4,15 +4,13 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
 using NSubstitute;
 using NUnit.Framework;
-using Octopus.Versioning.Factories;
+using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
     public class NuGetPackageDownloaderFixture
     {
-        static readonly IVersionFactory VersionFactory = new VersionFactory();
-        
         [Test]
         public void AttemptsOnlyOnceIfSuccessful()
         {
@@ -24,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var filesystem = Substitute.For<ICalamariFileSystem>();
 
             var calledCount = 0;
-            var downloader = new NuGetPackageDownloader(filesystem);
+            var downloader = new InternalNuGetPackageDownloader(filesystem);
             downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: 5, downloadAttemptBackoff: TimeSpan.Zero, action: (arg1, arg2, arg3, arg4, arg5) =>
             {
                 calledCount++;
@@ -49,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var calledCount = 0;
             Assert.Throws<Exception>(() =>
             {
-                var downloader = new NuGetPackageDownloader(filesystem);
+                var downloader = new InternalNuGetPackageDownloader(filesystem);
                 downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: maxDownloadAttempts, downloadAttemptBackoff: TimeSpan.Zero,
                     action: (arg1, arg2, arg3, arg4, arg5) =>
                     {

@@ -50,7 +50,7 @@ namespace Calamari.Integration.Packages.NuGet
         static void DownloadPackage(IPackage package, string fullPathToDownloadTo,
             global::NuGet.PackageDownloader directDownloader)
         {
-            Log.VerboseFormat("Found package {0} version {1}", package.Id, package.Version);
+            Log.VerboseFormat("Found package {0} v{1}", package.Id, package.Version);
             Log.Verbose("Downloading to: " + fullPathToDownloadTo);
 
             var dsp = package as DataServicePackage;

@@ -7,25 +7,20 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Octopus.Versioning;
-using Octopus.Versioning.Constants;
-using Octopus.Versioning.Metadata;
 
 namespace Calamari.Java.Deployment.Conventions
 {
     public class RePackArchiveConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly IPackageExtractor packageExtractor;
         readonly JarTool jarTool;
 
         public RePackArchiveConvention(
             ICalamariFileSystem fileSystem,
             ICommandOutput commandOutput,
-            IPackageExtractor packageExtractor,
             ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
-            this.packageExtractor = packageExtractor;
             this.jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
         }
 
@@ -44,21 +39,18 @@ namespace Calamari.Java.Deployment.Conventions
                 return;
             }
 
-            var packageMetadata = packageExtractor.GetMetadata(deployment.PackageFilePath);
-
-            var repackedArchivePath = CreateArchive(deployment, packageMetadata);
+            var repackedArchivePath = CreateArchive(deployment);
 
             var repackedArchiveDirectory = Path.GetDirectoryName(repackedArchivePath);
 
             deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, repackedArchiveDirectory);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, repackedArchiveDirectory,
-                deployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationPackagePath, repackedArchivePath,
-                deployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, repackedArchiveDirectory, deployment.Variables);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationPackagePath, repackedArchivePath, deployment.Variables);
         }
 
-        protected string CreateArchive(RunningDeployment deployment, PackageMetadata packageMetadata)
+        protected string CreateArchive(RunningDeployment deployment)
         {
+            var packageMetadata = PackageName.FromFile(deployment.PackageFilePath);
             var applicationDirectory = ApplicationDirectory.GetApplicationDirectory(
                 packageMetadata,
                 deployment.Variables,
@@ -71,21 +63,7 @@ namespace Calamari.Java.Deployment.Conventions
                 Log.Verbose($"Using custom package file-name: '{customPackageFileName}'");
             }
 
-            var targetFileName = !string.IsNullOrWhiteSpace(customPackageFileName)
-                ? customPackageFileName
-                : new StringBuilder()
-                    .Append(packageMetadata.PackageId)
-                    /*
-                     * If this package uses the maven version format, we use the # char as a delimiter between
-                     * the package id and the version. If it is not a maven version, we use the default of
-                     * a period.
-                     */
-                    .Append(packageMetadata.VersionFormat == VersionFormat.Maven ? JavaConstants.MavenFilenameDelimiter : '.')
-                    .Append(packageMetadata.Version)
-                    .Append(packageMetadata.FileExtension)
-                    .ToString();
-
-            var targetFilePath = Path.Combine(applicationDirectory, targetFileName);
+            var targetFilePath = Path.Combine(applicationDirectory, customPackageFileName ?? Path.GetFileName(deployment.PackageFilePath));
 
             var stagingDirectory = deployment.CurrentDirectory;
 

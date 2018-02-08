@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes.Semaphores;
-using Octopus.Versioning.Metadata;
 using Octostache;
 
 namespace Calamari.Deployment
@@ -15,11 +15,13 @@ namespace Calamari.Deployment
         /// Returns the directory where the package will be installed. 
         /// Also ensures the directory exists, and that there is free-space on the disk.
         /// </summary>
-        public static string GetApplicationDirectory(PackageMetadata package, VariableDictionary variables, ICalamariFileSystem fileSystem)
+        public static string GetApplicationDirectory(PackageFileNameMetadata packageFileNameMetadata, VariableDictionary variables, ICalamariFileSystem fileSystem)
         {
             return EnsureTargetPathExistsAndIsEmpty(
-                Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables), 
-                package.PackageId, package.Version), fileSystem);
+                Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables),
+                    Uri.EscapeDataString(packageFileNameMetadata.PackageId),
+                    Uri.EscapeDataString(packageFileNameMetadata.Version.ToString())),
+                fileSystem);
         }
 
         /// This will be specific to Tenant and/or Environment if these variables are available.

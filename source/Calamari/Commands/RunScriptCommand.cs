@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -50,9 +52,10 @@ namespace Calamari.Commands
             var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var semaphore = SemaphoreFactory.Get();
             journal = new DeploymentJournal(filesystem, semaphore, variables);
+            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
             ExtractPackage(variables);
-            SubstituteVariablesInScript(variables);
+            SubstituteVariablesInScript(variables);           
             return InvokeScript(variables);
         }
 
@@ -65,8 +68,7 @@ namespace Calamari.Commands
 
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
-
-            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
+            
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);
 
@@ -82,6 +84,10 @@ namespace Calamari.Commands
             var validatedScriptFilePath = AssertScriptFileExists();
             var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             substituter.PerformSubstitution(validatedScriptFilePath, variables);
+            
+            // Replace variables on any other files that may have been extracted with the package
+            new SubstituteInFilesConvention(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), substituter)
+                .Install(deployment);
         }
 
         private int InvokeScript(CalamariVariableDictionary variables)

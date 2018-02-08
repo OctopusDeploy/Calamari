@@ -13,25 +13,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         private const string PackageId = "Acme.Core";
         private const string PackageVersion = "1.0.0.0-bugfix";
 
-
-        [Test]
-        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz")]
-        [TestCase(typeof(TarPackageExtractor), "tar")]
-        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2")]
-        [TestCase(typeof(ZipPackageExtractor), "zip")]
-        [TestCase(typeof(NupkgExtractor), "nupkg")]
-        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
-        public void GetMetadataReturnsPackageDetails(Type extractorType, string extension)
-        {
-            var fileName = GetFileName(extension);
-            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType);
-            
-            var metadata = extractor.GetMetadata(fileName);
-
-            Assert.AreEqual(PackageId, metadata.PackageId);
-            Assert.AreEqual(PackageVersion, metadata.Version);
-        }
-
         [Test]
         [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", true)]
         [TestCase(typeof(TarPackageExtractor), "tar", true)]

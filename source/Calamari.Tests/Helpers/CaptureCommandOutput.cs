@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
-using Octopus.Versioning.Metadata;
 using Octostache;
 
 namespace Calamari.Tests.Helpers
 {
+    //Ideally sourced directly from Octopus.Worker repo
     public class CaptureCommandOutput : ICommandOutput
     {
         readonly List<string> all = new List<string>();
@@ -33,31 +32,19 @@ namespace Calamari.Tests.Helpers
             errors.Add(line);
         }
 
-        public VariableDictionary OutputVariables
-        {
-            get { return outputVariables; }
-        }
+        public VariableDictionary OutputVariables => outputVariables;
 
-        public IList<string> Infos
-        {
-            get { return infos; }
-        }
+        public IList<string> Infos => infos;
 
-        public IList<string> Errors
-        {
-            get { return errors; }
-        }
+        public IList<string> Errors => errors;
 
-        public IList<string> AllMessages
-        {
-            get { return all; }
-        }
+        public IList<string> AllMessages => all;
 
         public bool CalamariFoundPackage { get; protected set; }
 
-        public StoredPackage FoundPackage { get; protected set; }
+        public FoundPackage FoundPackage { get; protected set; }
 
-        public StoredPackage DeltaVerification { get; protected set; }
+        public DeltaPackage DeltaVerification { get; protected set; }
 
         public string DeltaError { get; protected set; }
 
@@ -78,28 +65,24 @@ namespace Calamari.Tests.Helpers
                 case ServiceMessageNames.FoundPackage.Name:
                     var foundPackageId = message.GetValue(ServiceMessageNames.FoundPackage.IdAttribute);
                     var foundPackageVersion = message.GetValue(ServiceMessageNames.FoundPackage.VersionAttribute);
+                    var foundPackageVersionFormat = message.GetValue(ServiceMessageNames.FoundPackage.VersionFormat );
                     var foundPackageHash = message.GetValue(ServiceMessageNames.FoundPackage.HashAttribute);
                     var foundPackageRemotePath = message.GetValue(ServiceMessageNames.FoundPackage.RemotePathAttribute);
-                    FoundPackage =
-                        new StoredPackage(
-                            new PhysicalPackageMetadata
-                            {
-                                PackageId = foundPackageId,
-                                Version = foundPackageVersion,
-                                Hash = foundPackageHash
-                            }, foundPackageRemotePath);
+                    var fileExtension = message.GetValue(ServiceMessageNames.FoundPackage.FileExtensionAttribute);
+                    FoundPackage = new FoundPackage(foundPackageId, foundPackageVersion, foundPackageVersionFormat, foundPackageRemotePath,
+                        foundPackageHash, fileExtension);
                     break;
                 case ServiceMessageNames.PackageDeltaVerification.Name:
                     var pdvHash = message.GetValue(ServiceMessageNames.PackageDeltaVerification.HashAttribute);
                     var pdvSize = message.GetValue(ServiceMessageNames.PackageDeltaVerification.SizeAttribute);
-                    var pdvRemotePath = message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
+                    var pdvRemotePath =
+                        message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
                     DeltaError = message.GetValue(ServiceMessageNames.PackageDeltaVerification.Error);
                     if (pdvHash != null)
                     {
-                        DeltaVerification =
-                            new StoredPackage(new PhysicalPackageMetadata {Hash = pdvHash},
-                                pdvRemotePath);
+                        DeltaVerification = new DeltaPackage(pdvRemotePath, pdvHash, long.Parse(pdvSize));
                     }
+
                     break;
             }
         }

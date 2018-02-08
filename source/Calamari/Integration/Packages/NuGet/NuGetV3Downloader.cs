@@ -12,14 +12,11 @@ using Calamari.Commands.Support;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
-using Octopus.Versioning.Factories;
 
 namespace Calamari.Integration.Packages.NuGet
 {
     internal class NuGetV3Downloader
     {
-        static readonly IVersionFactory VersionFactory = new VersionFactory();    
-    
         public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
         {
             var normalizedId = packageId.ToLowerInvariant();

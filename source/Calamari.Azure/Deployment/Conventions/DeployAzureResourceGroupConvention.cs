@@ -15,6 +15,7 @@ using Calamari.Integration.FileSystem;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Models;
 using Microsoft.Rest;
+using Calamari.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
@@ -23,6 +24,8 @@ namespace Calamari.Azure.Deployment.Conventions
 {
     public class DeployAzureResourceGroupConvention : IInstallConvention
     {
+        private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
+        
         readonly string templateFile;
         readonly string templateParametersFile;
         private readonly bool filesInPackage;
@@ -60,9 +63,9 @@ namespace Calamari.Azure.Deployment.Conventions
                     : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = ResolveAndSubstituteFile(templateFile, filesInPackage, variables); 
+            var template = TemplateReplacement.ResolveAndSubstituteFile(fileSystem, templateFile, filesInPackage, variables); 
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
-                ? parameterNormalizer.Normalize(ResolveAndSubstituteFile(templateParametersFile, filesInPackage, variables))
+                ? parameterNormalizer.Normalize(TemplateReplacement.ResolveAndSubstituteFile(fileSystem, templateParametersFile, filesInPackage, variables))
                 : null;
 
             Log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
@@ -219,19 +222,6 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 Log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
             }
-        }
-
-        // The template and parameter files are relative paths, and may be located either inside or outside of the package.
-        string ResolveAndSubstituteFile(string relativeFilePath, bool inPackage, VariableDictionary variables)
-        {
-            var absolutePath = inPackage
-                ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(relativeFilePath))
-                : Path.Combine(Environment.CurrentDirectory, relativeFilePath);
-
-            if (!File.Exists(absolutePath))
-                throw new CommandException($"Could not resolve '{relativeFilePath}' to physical file");
-
-            return variables.Evaluate(fileSystem.ReadFile(absolutePath));
         }
     }
 }

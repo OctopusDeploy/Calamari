@@ -7,6 +7,7 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Util;
 
 namespace Calamari.Commands
 {
@@ -78,8 +79,7 @@ namespace Calamari.Commands
                 File.Move(tempNewFilePath, newFilePath);
 
                 if (!File.Exists(newFilePath))
-                    throw new CommandException("Failed to apply delta file " + deltaFilePath + " to " +
-                                               basisFilePath);
+                    throw new CommandException($"Failed to apply delta file {deltaFilePath} to {basisFilePath}");
             }
             catch (Exception e) when (e is CommandLineException || e is CommandException)
             {
@@ -87,15 +87,11 @@ namespace Calamari.Commands
                 return 0;
             }
 
-            var package = packageStore.GetPackage(newFilePath);
-            if (package == null) return 0;
+            var package = PackagePhysicalFileMetadata.Build(newFilePath);
+            if (package == null)
+                return 0;
 
-            using (var file = new FileStream(package.FullPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                var size = file.Length;
-                Log.ServiceMessages.DeltaVerification(package.FullPath, package.Metadata.Hash, size);
-            }
-
+            Log.ServiceMessages.DeltaVerification(newFilePath, package.Hash, package.Size);
             return 0;
         }
 
@@ -105,7 +101,6 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(fileHash, "No file hash was specified. Please pass --fileHash MyFileHash");
             Guard.NotNullOrWhiteSpace(deltaFileName, "No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
             Guard.NotNullOrWhiteSpace(newFileName, "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
-
 
             basisFilePath = basisFileName;
             if (!File.Exists(basisFileName))
@@ -121,14 +116,13 @@ namespace Calamari.Commands
                 if (!File.Exists(deltaFilePath)) throw new CommandException("Could not find delta file: " + deltaFileName);
             }
 
-
-            newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), newFileName + "-" + Guid.NewGuid());
-
-            var previousPackage = packageStore.GetPackage(basisFilePath);
-            if (previousPackage?.Metadata.Hash != fileHash)
+            // Probably dont need to do this since the server appends a guid in the name... maybe it was originall put here in the name of safety?
+            var newPackageDetails = PackageName.FromFile(newFileName);
+            newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), PackageName.ToCachedFileName(newPackageDetails.PackageId, newPackageDetails.Version, newPackageDetails.Extension));
+            var hash = HashCalculator.Hash(basisFileName);
+            if (hash != fileHash)
             {
-                throw new CommandException("Basis file hash " + previousPackage?.Metadata.Hash +
-                                           " does not match the file hash specified " + fileHash);
+                throw new CommandException($"Basis file hash `{hash}` does not match the file hash specified `{fileHash}`");
             }
         }
     }

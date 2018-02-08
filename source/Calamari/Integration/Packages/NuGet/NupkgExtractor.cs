@@ -5,7 +5,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using Octopus.Versioning.Metadata;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
@@ -16,17 +15,6 @@ namespace Calamari.Integration.Packages.NuGet
     public class NupkgExtractor : IPackageExtractor
     {
         public string[] Extensions => new[] {".nupkg"};
-
-        public PackageMetadata GetMetadata(string packageFile)
-        {
-            var package = new LocalNuGetPackage(packageFile);
-            var packageMetadata = package.Metadata;
-
-            return new NuGetPackageIDParser().GetMetadataFromPackageID(
-                packageMetadata.Id,
-                packageMetadata.Version.ToString(),
-                Extensions.First());            
-        }
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
