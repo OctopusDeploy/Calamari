@@ -310,7 +310,7 @@ function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int]
 function Import-CalamariModules() {
 	if ($OctopusParameters.ContainsKey("Octopus.Script.PowershellModulePaths")) {
 		$calamariModulePaths = $OctopusParameters["Octopus.Script.PowershellModulePaths"].Split(";",[StringSplitOptions]'RemoveEmptyEntries')
-		foreach($calamariModulePath in $calamariModulePaths) {
+		foreach ($calamariModulePath in $calamariModulePaths) {
 			Import-Module –Name $calamariModulePath
 		}
 	}
