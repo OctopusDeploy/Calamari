@@ -308,8 +308,8 @@ function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int]
 }
 
 function Import-CalamariModules() {
-	if ($OctopusParameters.ContainsKey("Octopus.Action.Script.PowershellModulePaths")) {
-		$calamariModulePaths = $OctopusParameters["Octopus.Action.Script.PowershellModulePaths"].Split(";",[StringSplitOptions]'RemoveEmptyEntries')
+	if ($OctopusParameters.ContainsKey("Octopus.Script.PowershellModulePaths")) {
+		$calamariModulePaths = $OctopusParameters["Octopus.Script.PowershellModulePaths"].Split(";",[StringSplitOptions]'RemoveEmptyEntries')
 		foreach($calamariModulePath in $calamariModulePaths) {
 			Import-Module –Name $calamariModulePath
 		}
@@ -340,7 +340,7 @@ Initialize-ProxySettings
 Log-EnvironmentInformation
 
 # -----------------------------------------------------------------
-# Load additional modules
+# Invoke target script
 # -----------------------------------------------------------------
 Import-CalamariModules
 
