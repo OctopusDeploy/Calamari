@@ -19,8 +19,8 @@ namespace Calamari.Deployment
         {
             return EnsureTargetPathExistsAndIsEmpty(
                 Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables),
-                    Uri.EscapeDataString(packageFileNameMetadata.PackageId),
-                    Uri.EscapeDataString(packageFileNameMetadata.Version.ToString())),
+                    FileNameEscaper.Escape(packageFileNameMetadata.PackageId),
+                    FileNameEscaper.Escape(packageFileNameMetadata.Version.ToString())),
                 fileSystem);
         }
 

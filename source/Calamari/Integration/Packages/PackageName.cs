@@ -186,12 +186,12 @@ namespace Calamari.Integration.Packages
 
         static string Encode(string input)
         {
-            return Uri.EscapeDataString(input);
+            return FileNameEscaper.Escape(input);
         }
 
         static string Decode(string input)
         {
-            return Uri.UnescapeDataString(input);
+            return FileNameEscaper.Unescape(input);
         }
 
         static string EncodeVersion(IVersion version)
