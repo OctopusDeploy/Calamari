@@ -212,9 +212,9 @@ namespace Calamari.Integration.Packages
             switch (input[0])
             {
                 case 'S':
-                    return VersionFactory.CreateSemanticVersion(input.Substring(1), true);
+                    return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)), true);
                 case 'M':
-                    return VersionFactory.CreateMavenVersion(input.Substring(1));
+                    return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
             }
             throw new Exception($"Unrecognised Version format `{input}`");
         }
