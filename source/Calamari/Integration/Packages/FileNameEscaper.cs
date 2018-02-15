@@ -5,6 +5,12 @@ using System.Text;
 
 namespace Calamari.Integration.Packages
 {
+
+    /// <summary>
+    /// Encode illegal filename characters.
+    /// Originally a blanket Uti.EscapeDataString was used but IIS seemed to have problems when the version contained metadata and the "+" turned into a "%2B" in the installed directory location.
+    /// To get around this we will only encode characters that we know are invalid and would have failed anyway.
+    /// </summary>
     public static class FileNameEscaper
     {
         private static readonly HashSet<char> InvalidCharacterSet = new HashSet<char> {
