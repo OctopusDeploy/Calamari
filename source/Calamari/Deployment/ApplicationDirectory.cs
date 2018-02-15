@@ -27,7 +27,7 @@ namespace Calamari.Deployment
         /// This will be specific to Tenant and/or Environment if these variables are available.
         static string GetEnvironmentApplicationDirectory(ICalamariFileSystem fileSystem, VariableDictionary variables)
         {
-            var root = GetApplicationDirectoryRoot(fileSystem, variables);
+            var root = GetApplicationDirectoryRoot(variables);
             root = AppendTenantNameIfProvided(fileSystem, variables, root);
             root = AppendEnvironmentNameIfProvided(fileSystem, variables, root);
 
@@ -37,7 +37,7 @@ namespace Calamari.Deployment
             return root;
         }
 
-        static string GetApplicationDirectoryRoot(ICalamariFileSystem fileSystem, VariableDictionary variables)
+        static string GetApplicationDirectoryRoot(VariableDictionary variables)
         {
             const string windowsRoot = "env:SystemDrive";
             const string linuxRoot = "env:HOME";
