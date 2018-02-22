@@ -29,7 +29,11 @@ namespace Calamari.Deployment.Conventions
 
                 if (!matchingFiles.Any())
                 {
-                    Log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
+                    if (deployment.Variables.GetFlag(SpecialVariables.Package.EnableNoMatchWarning, true))
+                    {
+                        Log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
+                    }
+
                     continue;
                 }
 
