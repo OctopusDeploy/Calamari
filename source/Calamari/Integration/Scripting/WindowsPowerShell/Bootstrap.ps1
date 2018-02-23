@@ -144,9 +144,46 @@ function Set-OctopusVariable([string]$name, [string]$value)
 {
 	$name = Convert-ServiceMessageValue($name)
 	$value = Convert-ServiceMessageValue($value)
+    $[name] = $value
 
 	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
 }
+
+function Convert-ToServiceMessageParameter([string]$name, [string]$value)
+{
+    $value = Convert-ServiceMessageValue($value)
+    $param = "$($name)='$($value)'"
+	return $param
+}
+
+function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+ 	$azureSubscription = Convert-ToServiceMessageParameter -name "subscription" -value $azureSubscription
+ 	$azureApplicationId = Convert-ToServiceMessageParameter -name "applicationId" -value $azureApplicationId
+ 	$azureTenantId = Convert-ToServiceMessageParameter -name "tenantId" -value $azureTenantId
+ 	$azurePassword = Convert-ToServiceMessageParameter -name "password" -value $azurePassword
+ 	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
+
+	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword -join ' '
+
+	if (![string]::IsNullOrEmpty($azureEnvironment))
+	{
+		$azureEnvironment = Convert-ToServiceMessageParameter -name "environment" -value $azureEnvironment
+		$azureBaseUri = Convert-ToServiceMessageParameter -name "baseUri" -value $azureBaseUri
+		$azureResourceManagementBaseUri = Convert-ToServiceMessageParameter -name "resourceManagementBaseUri" -value $azureResourceManagementBaseUri
+		$parameters = $parameters, $azureEnvironment, $azureBaseUri, $azureResourceManagementBaseUri -join ' '
+	}
+ 	
+    Write-Host "##octopus[create-azureaccount $($parameters)]"
+}
+#fucntion Create-OctopusWebAppTarget()
+
+
+#Create-OctopusWebAppTarget(name1)
+#Create-OctopusWebAppTarget(name2)
+
+
 
 function Fail-Step([string] $message)
 {
