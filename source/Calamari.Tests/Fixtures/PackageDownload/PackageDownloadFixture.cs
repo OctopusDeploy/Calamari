@@ -14,7 +14,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
     [TestFixture]
     public class PackageDownloadFixture : CalamariFixture
     {
-        const string FeedUriEnvironmentVariable = "CALAMARI_MyGetPackage";
+        const string FeedUriEnvironmentVariable = "CALAMARI_AUTHURI";
         const string FeedUsernameEnvironmentVariable = "CALAMARI_AUTHUSERNAME";
         const string FeedPasswordEnvironmentVariable = "CALAMARI_AUTHPASSWORD";
 
