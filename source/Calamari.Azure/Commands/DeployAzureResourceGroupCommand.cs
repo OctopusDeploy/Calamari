@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Calamari.Azure.Deployment.Conventions;
@@ -9,6 +11,8 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
+using Calamari.Integration.ServiceMessages;
 
 namespace Calamari.Azure.Commands
 {
@@ -40,7 +44,9 @@ namespace Calamari.Azure.Commands
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
+            var scriptEngine = new CombinedScriptEngine();
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var fileSystem = new WindowsPhysicalFileSystem();
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
             var conventions = new List<IConvention>
@@ -48,7 +54,10 @@ namespace Calamari.Azure.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
-                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, fileSystem, new ResourceGroupTemplateNormalizer())
+                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, fileSystem, new ResourceGroupTemplateNormalizer()),
+                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
