@@ -1,6 +1,5 @@
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using Octopus.Core.Resources;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -12,8 +11,9 @@ namespace Calamari.Deployment.Conventions
         {
         }
 
-        protected override string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata)
+        protected override string GetTargetPath(RunningDeployment deployment)
         {
+            var metadata = PackageName.FromFile(deployment.PackageFilePath);
             return ApplicationDirectory.GetApplicationDirectory(metadata, deployment.Variables, fileSystem);
         }
 

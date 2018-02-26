@@ -4,37 +4,22 @@ using System.Threading;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Retry;
-using Octopus.Core.Resources.Versioning;
+using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {
-    internal class NuGetPackageDownloader
+    internal class InternalNuGetPackageDownloader
     {
         private readonly ICalamariFileSystem fileSystem;
 
-        public NuGetPackageDownloader(ICalamariFileSystem fileSystem)
+        public InternalNuGetPackageDownloader(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
         }
 
-        public void DownloadPackage(
-            string packageId, 
-            IVersion version, 
-            Uri feedUri, 
-            ICredentials feedCredentials, 
-            string targetFilePath, 
-            int maxDownloadAttempts, 
-            TimeSpan downloadAttemptBackoff)
+        public void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
         {
-            DownloadPackage(
-                packageId, 
-                version, 
-                feedUri, 
-                feedCredentials, 
-                targetFilePath,
-                maxDownloadAttempts, 
-                downloadAttemptBackoff,
-                DownloadPackageAction);
+            DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts, downloadAttemptBackoff, DownloadPackageAction);
         }
 
         internal void DownloadPackage(
@@ -67,6 +52,12 @@ namespace Calamari.Integration.Packages.NuGet
                 }
                 catch (Exception ex)
                 {
+                    if (ex is WebException webException &&
+                        webException.Response is HttpWebResponse response &&
+                        response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        throw new Exception($"Unable to download package: {webException.Message}", ex);
+                    }
                     Log.Verbose($"Attempt {retry.CurrentTry} of {maxDownloadAttempts}: {ex.Message}");
 
                     fileSystem.DeleteFile(tempTargetFilePath, FailureOptions.IgnoreFailure);

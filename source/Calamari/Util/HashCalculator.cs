@@ -12,6 +12,14 @@ namespace Calamari.Util
             return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
         }
 
+        public static string Hash(string filename)
+        {
+            using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+            {
+                return Hash(stream);
+            }
+        }
+
         static HashAlgorithm GetAlgorithm()
         {
             return SHA1.Create();

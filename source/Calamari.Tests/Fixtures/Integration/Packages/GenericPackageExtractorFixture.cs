@@ -40,10 +40,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Unsupported file extension \".7z\"")]
+        [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Unsupported file extension `.7z`")]
         public void FileWithUnsupportedExtensionThrowsError()
         {
-            extractor.GetExtractor("blah.7z");
+            extractor.GetExtractor("blah.1.0.0.7z");
         }
     }
 }

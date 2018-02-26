@@ -2,7 +2,6 @@
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Util;
-using Octopus.Core.Resources;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -27,9 +26,7 @@ namespace Calamari.Deployment.Conventions
 
             try
             {
-                var metadata = extractor.GetMetadata(deployment.PackageFilePath);
-
-                var targetPath = GetTargetPath(deployment, metadata);
+                var targetPath = GetTargetPath(deployment);
 
                 Log.Verbose("Extracting package to: " + targetPath);
 
@@ -63,7 +60,7 @@ namespace Calamari.Deployment.Conventions
             Log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
         }
 
-        protected abstract string GetTargetPath(RunningDeployment deployment, PackageMetadata metadata);
+        protected abstract string GetTargetPath(RunningDeployment deployment);
 
     }
 }

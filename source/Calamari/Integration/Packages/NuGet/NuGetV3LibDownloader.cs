@@ -7,14 +7,11 @@ using NuGet.Configuration;
 using NuGet.DependencyResolver;
 using NuGet.LibraryModel;
 using NuGet.Common;
-using NuGet.Packaging;
-using NuGet.Packaging.Core;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
-using NuGet.Versioning;
 using System.IO;
 using Calamari.Extensions;
-using Octopus.Core.Resources.Versioning;
+using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {

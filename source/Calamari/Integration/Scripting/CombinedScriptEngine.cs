@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
@@ -15,10 +16,18 @@ namespace Calamari.Integration.Scripting
                 : new[] { ScriptType.ScriptCS, ScriptType.Powershell, ScriptType.FSharp };
         }
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null)
         {
             var scriptType = ValidateScriptType(script);
-            return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(script, variables, commandLineRunner);
+            return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(
+                script, 
+                variables, 
+                commandLineRunner, 
+                environmentVars);
         }
 
         private ScriptType ValidateScriptType(Script script)

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Security;
 using Calamari.Deployment;
@@ -14,7 +15,11 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return new[] {ScriptType.Powershell};
         }
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 
@@ -30,7 +35,13 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             {
                 using (new TemporaryFile(debuggingBootstrapFile))
                 {
-                    var invocation = new CommandLineInvocation(executable, arguments, workingDirectory, userName, password);
+                    var invocation = new CommandLineInvocation(
+                        executable, 
+                        arguments, 
+                        workingDirectory, 
+                        environmentVars, 
+                        userName, 
+                        password);
                     return commandLineRunner.Execute(invocation);
                 }
             }

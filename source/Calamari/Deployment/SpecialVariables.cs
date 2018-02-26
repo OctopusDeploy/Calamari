@@ -115,10 +115,12 @@
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string SubstituteInFilesEnabled = "Octopus.Action.SubstituteInFiles.Enabled";
             public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
+            public static readonly string EnableNoMatchWarning = "Octopus.Action.SubstituteInFiles.EnableNoMatchWarning";
             public static readonly string SubstituteInFilesOutputEncoding = "Octopus.Action.SubstituteInFiles.OutputEncoding";
             public static readonly string SkipIfAlreadyInstalled = "Octopus.Action.Package.SkipIfAlreadyInstalled";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
-            public static readonly string SuppressNestedScriptWarning = "OctopusSuppressNestedScriptWarning"; 
+            public static readonly string SuppressNestedScriptWarning = "OctopusSuppressNestedScriptWarning";
+            public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
 
             public class Output
             {
@@ -207,6 +209,16 @@
                 public static readonly string AadUserCredentialUsername = "Octopus.Action.ServiceFabric.AadUserCredentialUsername";
                 public static readonly string AadUserCredentialPassword = "Octopus.Action.ServiceFabric.AadUserCredentialPassword";
                 public static readonly string AadClientCredentialSecret = "Octopus.Action.ServiceFabric.AadClientCredentialSecret";
+            }
+
+            public static class Aws
+            {
+                public static readonly string CloudFormationStackName = "Octopus.Action.Aws.CloudFormationStackName";
+                public static readonly string CloudFormationTemplate =  "Octopus.Action.Aws.CloudFormationTemplate";
+                public static readonly string CloudFormationProperties = "Octopus.Action.Aws.CloudFormationProperties";
+                public static readonly string AssumeRoleARN = "Octopus.Action.Aws.AssumedRoleArn";
+                public static readonly string AccountId = "Octopus.Action.AwsAccount.Variable";
+                public static readonly string CloudFormationAction = "Octopus.Action.Aws.CloudFormationAction";
             }
 
             public static class Azure

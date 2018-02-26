@@ -19,7 +19,8 @@ namespace Calamari.Integration.Processes
                 var exitCode = SilentProcessRunner.ExecuteCommand(
                     invocation.Executable, 
                     invocation.Arguments,
-                    invocation.WorkingDirectory,
+                    invocation.WorkingDirectory,      
+                    invocation.EnvironmentVars,
                     invocation.UserName,
                     invocation.Password,
                     commandOutput.WriteInfo,

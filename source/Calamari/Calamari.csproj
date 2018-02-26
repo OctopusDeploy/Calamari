@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net40;netcoreapp2.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>Calamari</AssemblyName>
     <OutputType>Exe</OutputType>
@@ -17,8 +16,9 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</Description>
     <Product>Calamari</Product>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
+    <TargetFrameworks>netcoreapp2.0;net40</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
@@ -39,9 +39,9 @@
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Server.Core.Utilities" Version="1.0.0" />
-    <PackageReference Include="Octopus.Server.Core.Versioning" Version="3.0.1-ci0001" />
+    <PackageReference Include="Octopus.Versioning" Version="4.0.3-namespace0005" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
-    <PackageReference Include="Octostache" Version="2.1.8" />
+    <PackageReference Include="Octostache" Version="2.1.9" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
   </ItemGroup>
@@ -119,5 +119,4 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
-  <Import Project="../Sign.targets" Condition="'$(Configuration)' == 'Release'" />
 </Project>

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Specialized;
+using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
@@ -11,7 +12,11 @@ namespace Calamari.Integration.Scripting.FSharp
             return new[] {ScriptType.FSharp};
         }
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult Execute(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 
@@ -23,7 +28,7 @@ namespace Calamari.Integration.Scripting.FSharp
             using (new TemporaryFile(configurationFile))
             using (new TemporaryFile(boostrapFile))
             {
-                return commandLineRunner.Execute(new CommandLineInvocation(executable, arguments, workingDirectory));
+                return commandLineRunner.Execute(new CommandLineInvocation(executable, arguments, workingDirectory, environmentVars));
             }
         }
     }

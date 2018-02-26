@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -7,6 +7,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Azure", "Calamari.Azure\Calamari.Azure.csproj", "{684AE3EE-AE9D-45D3-AAC1-3C6C06E9AD3C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{E5718705-45DC-4A06-8A7A-ACC29663672A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Aws", "Calamari.Aws\Calamari.Aws.csproj", "{E07611EB-E111-4369-892D-885A34F5B4F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +28,10 @@ Global
 		{E5718705-45DC-4A06-8A7A-ACC29663672A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E5718705-45DC-4A06-8A7A-ACC29663672A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5718705-45DC-4A06-8A7A-ACC29663672A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E07611EB-E111-4369-892D-885A34F5B4F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E07611EB-E111-4369-892D-885A34F5B4F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E07611EB-E111-4369-892D-885A34F5B4F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E07611EB-E111-4369-892D-885A34F5B4F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

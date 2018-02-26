@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Octopus.Versioning;
 using Octostache;
 
 namespace Calamari
@@ -172,18 +173,26 @@ namespace Calamari
                 return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
             }
 
-            public static void PackageFound(string packageId, string packageVersion, string packageHash,
+            public static void PackageFound(string packageId, IVersion packageVersion, string packageHash,
                 string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
             {
                 if (exactMatchExists)
                     Verbose("##octopus[calamari-found-package]");
 
-                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" hash=\"{2}\" remotePath=\"{3}\" fileExtension=\"{4}\"]",
+                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" versionFormat=\"{2}\" hash=\"{3}\" remotePath=\"{4}\" fileExtension=\"{5}\"]",
                     ConvertServiceMessageValue(packageId),
-                    ConvertServiceMessageValue(packageVersion),
+                    ConvertServiceMessageValue(packageVersion.ToString()),
+                    ConvertServiceMessageValue(packageVersion.Format.ToString()),
                     ConvertServiceMessageValue(packageHash),
                     ConvertServiceMessageValue(packageFullPath),
                     ConvertServiceMessageValue(packageFileExtension));
+            }
+
+            public static void Progress(int percentage, string message)
+            {
+                VerboseFormat("##octopus[progress percentage=\"{0}\" message=\"{1}\"]",
+                    ConvertServiceMessageValue(percentage.ToString(CultureInfo.InvariantCulture)),
+                    ConvertServiceMessageValue(message));
             }
 
             public static void DeltaVerification(string remotePath, string hash, long size)

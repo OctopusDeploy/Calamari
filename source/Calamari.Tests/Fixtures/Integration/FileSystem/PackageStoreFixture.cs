@@ -6,14 +6,13 @@ using Calamari.Integration.Packages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using Octopus.Core.Resources;
-using Octopus.Core.Resources.Versioning;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
     [TestFixture]
     public class PackageStoreFixture
-    {        
+    {
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "FileSystem");
         static readonly string PackagePath = Path.Combine(TentacleHome, "Files");
 
@@ -22,8 +21,12 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             Environment.SetEnvironmentVariable("TentacleHome", TentacleHome);
 
-            if (!Directory.Exists(PackagePath))
-                Directory.CreateDirectory(PackagePath);
+            if (Directory.Exists(PackagePath))
+            {
+                Directory.Delete(PackagePath, true);
+            }
+
+            Directory.CreateDirectory(PackagePath);
         }
 
         [TearDown]
@@ -43,16 +46,24 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 var store = new PackageStore(
                     new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
 
-                var packages = store.GetNearestPackages(new PackageMetadata()
-                {
-                    PackageId = "Acme.Web",
-                    Version = "1.1.1.1",
-                    VersionFormat = VersionFormat.Semver,
-                    PackageSearchPattern = "Acme.Web*"
-                });
+                var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion(1, 1, 1, 1));
 
-                CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()),
-                    new[] {"1.0.0.1", "1.0.0.2"});
+                CollectionAssert.AreEquivalent(new[] { "1.0.0.1", "1.0.0.2" }, packages.Select(c => c.Version.ToString()));
+            }
+        }
+
+        [Test]
+        public void OldFormatsAreIgnored()
+        {
+            using (new TemporaryFile(CreatePackage("0.5.0.1")))
+            using (new TemporaryFile(CreatePackage("1.0.0.1", true)))
+            {
+                var store = new PackageStore(
+                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
+
+                var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion(1, 1, 1, 1));
+
+                CollectionAssert.AreEquivalent(new[] { "0.5.0.1" }, packages.Select(c => c.Version.ToString()));
             }
         }
 
@@ -65,32 +76,27 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 var store = new PackageStore(
                     new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
 
-                var packages = store.GetNearestPackages(new PackageMetadata()
-                {
-                    PackageId = "Acme.Web",
-                    Version = "1.1.1.1",
-                    VersionFormat = VersionFormat.Semver,
-                    PackageSearchPattern = "Acme.Web*"
-                });
+                var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion("1.1.1.1"));
 
-                CollectionAssert.AreEquivalent(packages.Select(c => c.Metadata.Version.ToString()), new[] {"1.0.0.1"});
+                CollectionAssert.AreEquivalent(new[] {"1.0.0.1"}, packages.Select(c => c.Version.ToString()));
             }
         }
 
         private string CreateEmptyFile(string version)
         {
-            var destinationPath = Path.Combine(PackagePath, "Acme.Web.nupkg-12345678-1234-1234-1234-1234567890ab");
+            var destinationPath = Path.Combine(PackagePath, PackageName.ToCachedFileName("Acme.Web", new SemanticVersion(version), ".nupkg"));
             File.WriteAllText(destinationPath, "FAKESTUFF");
             return destinationPath;
         }
 
-        private string CreatePackage(string version)
+        private string CreatePackage(string version, bool oldCacheFormat = false)
         {
             var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version, true);
-            var destinationPath = Path.Combine(
-                PackagePath,
-                Path.GetFileName(sourcePackage) + "-12345678-1234-1234-1234-1234567890ab");
-
+            
+            var destinationPath = Path.Combine(PackagePath, oldCacheFormat
+                ? $"Acme.Web.{version}.nupkg-fd55edc5-9b36-414b-a2d0-4a2deeb6b2ec"
+                : PackageName.ToCachedFileName("Acme.Web", new SemanticVersion(version), ".nupkg"));
+            
             if (File.Exists(destinationPath))
                 File.Delete(destinationPath);
 

@@ -108,6 +108,7 @@ Task("Pack")
 {
     DoPackage("Calamari", "net40", nugetVersion);
     DoPackage("Calamari.Azure", "net451", nugetVersion);
+    DoPackage("Calamari.Aws", "net451", nugetVersion);
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
@@ -164,9 +165,33 @@ private void DoPackage(string project, string framework, string version, string 
 
     DotNetCorePublish(projectDir, publishSettings);
 
+    SignBinaries(publishSettings.OutputDirectory.FullPath);
+
     var nuspec = $"{publishedTo}/{packageId}.nuspec";
     CopyFile($"{projectDir}/{project}.nuspec", nuspec);
     NuGetPack(nuspec, nugetPackSettings);
+}
+
+private void SignBinaries(string outputDirectory)
+{
+    Information($"Signing binaries in {outputDirectory}");
+
+	var files = GetFiles(outputDirectory + "/Calamari.exe");
+    files.Add(GetFiles(outputDirectory + "/Calamari.Azure.exe"));
+	files.Add(GetFiles(outputDirectory + "/Calamari.Aws.exe"));
+    files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
+
+
+    var signTool = MakeAbsolute(File("./certificates/signtool.exe"));
+    Information($"Using signtool in {signTool}");
+
+	Sign(files, new SignToolSignSettings {
+			ToolPath = signTool,
+            TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
+            CertPath = signingCertificatePath,
+            Password = signingCertificatePassword
+    });
+
 }
 
 // Returns the runtime identifiers from the project file

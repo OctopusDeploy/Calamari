@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes.Semaphores;
-using Octopus.Core.Resources;
 using Octostache;
 
 namespace Calamari.Deployment
@@ -15,17 +15,19 @@ namespace Calamari.Deployment
         /// Returns the directory where the package will be installed. 
         /// Also ensures the directory exists, and that there is free-space on the disk.
         /// </summary>
-        public static string GetApplicationDirectory(PackageMetadata package, VariableDictionary variables, ICalamariFileSystem fileSystem)
+        public static string GetApplicationDirectory(PackageFileNameMetadata packageFileNameMetadata, VariableDictionary variables, ICalamariFileSystem fileSystem)
         {
             return EnsureTargetPathExistsAndIsEmpty(
-                Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables), 
-                package.PackageId, package.Version), fileSystem);
+                Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables),
+                    FileNameEscaper.Escape(packageFileNameMetadata.PackageId),
+                    FileNameEscaper.Escape(packageFileNameMetadata.Version.ToString())),
+                fileSystem);
         }
 
         /// This will be specific to Tenant and/or Environment if these variables are available.
         static string GetEnvironmentApplicationDirectory(ICalamariFileSystem fileSystem, VariableDictionary variables)
         {
-            var root = GetApplicationDirectoryRoot(fileSystem, variables);
+            var root = GetApplicationDirectoryRoot(variables);
             root = AppendTenantNameIfProvided(fileSystem, variables, root);
             root = AppendEnvironmentNameIfProvided(fileSystem, variables, root);
 
@@ -35,7 +37,7 @@ namespace Calamari.Deployment
             return root;
         }
 
-        static string GetApplicationDirectoryRoot(ICalamariFileSystem fileSystem, VariableDictionary variables)
+        static string GetApplicationDirectoryRoot(VariableDictionary variables)
         {
             const string windowsRoot = "env:SystemDrive";
             const string linuxRoot = "env:HOME";
