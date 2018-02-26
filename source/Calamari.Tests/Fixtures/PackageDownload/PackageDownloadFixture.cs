@@ -246,7 +246,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MyGetPackage.PackageId, MyGetPackage.Version, PublicFeedUri);
         }
         
-        [Test]        
+        [Test]
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
 
@@ -280,7 +280,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
         
-        [Test]        
+        [Test]
         public void ShouldByPassCacheAndDownloadMavenSnapshotPackage()
         {
 
@@ -323,7 +323,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertSuccess();
             result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", MyGetPackage.PackageId, MyGetPackage.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", MyGetPackage.DownloadFolder);
+#if USE_NUGET_V2_LIBS
             result.AssertOutput("Found package {0} v{1}", MyGetPackage.PackageId, MyGetPackage.Version);
+#endif
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, MyGetPackage);
@@ -360,7 +362,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", MyGetPackage.PackageId, MyGetPackage.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", MyGetPackage.DownloadFolder);
+#if USE_NUGET_V2_LIBS
             result.AssertOutput("Found package {0} v{1}", MyGetPackage.PackageId, MyGetPackage.Version);
+#endif
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, MyGetPackage);
