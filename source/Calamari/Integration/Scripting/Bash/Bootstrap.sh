@@ -127,6 +127,38 @@ function new_octopusartifact
 }
 
 # -----------------------------------------------------------------------------
+# Functions write a messages as different levels
+# -----------------------------------------------------------------------------
+function write_verbose
+{
+	echo "##octopus[stdout-verbose]"
+	echo $1
+	echo "##octopus[stdout-default]"
+}
+
+function write_highlight
+{
+	echo "##octopus[stdout-highlight]"
+	echo $1
+	echo "##octopus[stdout-default]"
+}
+
+function write_wait
+{
+	echo "##octopus[stdout-wait]"
+	echo $1
+	echo "##octopus[stdout-default]"
+}
+
+function write_warning
+{
+	echo "##octopus[stdout-warning]"
+	echo $1
+	echo "##octopus[stdout-default]"
+}
+
+
+# -----------------------------------------------------------------------------
 # Functions to write the environment information
 # -----------------------------------------------------------------------------
 function log_environment_information

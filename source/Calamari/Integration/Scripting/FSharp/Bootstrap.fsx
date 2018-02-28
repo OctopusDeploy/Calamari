@@ -100,6 +100,26 @@ let createArtifact path fileName =
     printfn "Artifact %s will be collected from %s after this step completes" plainFileName path
     printfn "##octopus[stdout-default]"
     writeServiceMessage "createArtifact" content
+    
+let writeVerbose message = 
+    printfn "##octopus[stdout-verbose]"
+    printfn message
+    printfn "##octopus[stdout-default]"
+
+let writeHighlight message = 
+    printfn "##octopus[stdout-highlight]"
+    printfn message
+    printfn "##octopus[stdout-default]"
+
+let writeWait message = 
+    printfn "##octopus[stdout-wait]"
+    printfn message
+    printfn "##octopus[stdout-default]"
+
+let writeWarning message = 
+    printfn "##octopus[stdout-warning]"
+    printfn message
+    printfn "##octopus[stdout-default]"
 
 let private safelyLogEnvironmentVars () =
     try
