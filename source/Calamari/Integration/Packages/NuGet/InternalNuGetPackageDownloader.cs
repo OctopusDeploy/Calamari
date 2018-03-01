@@ -52,6 +52,12 @@ namespace Calamari.Integration.Packages.NuGet
                 }
                 catch (Exception ex)
                 {
+                    if (ex is WebException webException &&
+                        webException.Response is HttpWebResponse response &&
+                        response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        throw new Exception($"Unable to download package: {webException.Message}", ex);
+                    }
                     Log.Verbose($"Attempt {retry.CurrentTry} of {maxDownloadAttempts}: {ex.Message}");
 
                     fileSystem.DeleteFile(tempTargetFilePath, FailureOptions.IgnoreFailure);

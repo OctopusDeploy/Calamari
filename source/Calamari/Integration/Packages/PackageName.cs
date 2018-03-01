@@ -3,49 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Integration.Packages.NuGet;
-using Calamari.Util;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;
 using Octopus.Versioning.Semver;
 
+/// These classes are shared with Octopus.Server. Ideally should be moved to a common location.
 namespace Calamari.Integration.Packages
 {
-    public class PackagePhysicalFileMetadata : PackageFileNameMetadata
-    {
-        public string FullFilePath { get; }
-        public string Hash { get; }
-        public long Size { get; }
-
-        public PackagePhysicalFileMetadata(PackageFileNameMetadata identity, string fullFilePath, string hash, long size) : base(identity.PackageId, identity.Version, identity.Extension)
-        {
-            FullFilePath = fullFilePath;
-            Hash = hash;
-            Size = size;
-        }
-
-        public static PackagePhysicalFileMetadata Build(string fullFilePath)
-        {
-            return Build(fullFilePath, PackageName.FromFile(fullFilePath));
-        }
-
-        public static PackagePhysicalFileMetadata Build(string fullFilePath, PackageFileNameMetadata identity)
-        {
-            if (identity == null)
-                return null;
-            try
-            {
-                using (var stream = new FileStream(fullFilePath, FileMode.Open, FileAccess.Read))
-                {
-                    return new PackagePhysicalFileMetadata(identity, fullFilePath, HashCalculator.Hash(stream), stream.Length);
-                }
-            }
-            catch (IOException)
-            {
-                return null;
-            }
-        }
-    }
-
     public class PackageFileNameMetadata
     {
         public string PackageId { get; }
@@ -186,12 +150,12 @@ namespace Calamari.Integration.Packages
 
         static string Encode(string input)
         {
-            return Uri.EscapeDataString(input);
+            return FileNameEscaper.Escape(input);
         }
 
         static string Decode(string input)
         {
-            return Uri.UnescapeDataString(input);
+            return FileNameEscaper.Unescape(input);
         }
 
         static string EncodeVersion(IVersion version)
@@ -212,9 +176,9 @@ namespace Calamari.Integration.Packages
             switch (input[0])
             {
                 case 'S':
-                    return VersionFactory.CreateSemanticVersion(input.Substring(1), true);
+                    return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)), true);
                 case 'M':
-                    return VersionFactory.CreateMavenVersion(input.Substring(1));
+                    return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
             }
             throw new Exception($"Unrecognised Version format `{input}`");
         }

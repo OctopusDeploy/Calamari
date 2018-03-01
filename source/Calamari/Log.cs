@@ -188,6 +188,13 @@ namespace Calamari
                     ConvertServiceMessageValue(packageFileExtension));
             }
 
+            public static void Progress(int percentage, string message)
+            {
+                VerboseFormat("##octopus[progress percentage=\"{0}\" message=\"{1}\"]",
+                    ConvertServiceMessageValue(percentage.ToString(CultureInfo.InvariantCulture)),
+                    ConvertServiceMessageValue(message));
+            }
+
             public static void DeltaVerification(string remotePath, string hash, long size)
             {
                 VerboseFormat("##octopus[deltaVerification remotePath=\"{0}\" hash=\"{1}\" size=\"{2}\"]",

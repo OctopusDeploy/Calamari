@@ -294,6 +294,8 @@ namespace Calamari.Integration.Certificates
                 using (var store = CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
                     storeLocation, storeName))
                 {
+                    var subjectName = CertificatePal.GetSubjectName(certificate);
+                    
                     var storeContext = IntPtr.Zero;
                     if (!CertAddCertificateContextToStore(store, certificate,
                         AddCertificateDisposition.CERT_STORE_ADD_NEW, ref storeContext))
@@ -302,15 +304,12 @@ namespace Calamari.Integration.Certificates
 
                         if (error == (int) CapiErrorCode.CRYPT_E_EXISTS)
                         {
-                            Log.Info("Certificate already exists in store.");
+                            Log.Info($"Certificate '{subjectName}' already exists in store '{storeName}'.");
                             return;
                         }
 
                         throw new CryptographicException(error);
-
-
                     }
-                    var subjectName = CertificatePal.GetSubjectName(certificate);
 
                     Log.Info($"Imported certificate '{subjectName}' into store '{storeName}'");
                 }

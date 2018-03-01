@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.Net;
 using Amazon;
 using Amazon.Runtime;
 
@@ -19,7 +20,13 @@ namespace Calamari.Aws.Integration
         /// This is useful when interacting with AWS directly via the SDK.
         /// </summary>
         AWSCredentials AwsCredentials { get; }
-
+        /// <summary>
+        /// The region to use
+        /// </summary>
         RegionEndpoint AwsRegion { get; }
+        
+        int ProxyPort { get; }
+        ICredentials ProxyCredentials { get; }
+        string ProxyHost { get; }       
     }
 }

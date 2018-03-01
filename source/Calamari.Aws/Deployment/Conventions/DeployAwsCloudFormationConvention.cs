@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Amazon.CloudFormation;
@@ -27,6 +29,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// These are the capabilities that we recognise. All others are ignored.
         /// </summary>
         private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
+
         private const int StatusWaitPeriod = 15000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
@@ -48,6 +51,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly bool disableRollback;
         private readonly List<string> capabilities = new List<string>();
         private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
+
         /// <summary>
         /// Track the last status message so we don't fill the logs with redundant information
         /// </summary>
@@ -86,7 +90,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if (RecognisedCapabilities.Contains(iamCapabilities))
             {
                 capabilities.Add(iamCapabilities);
-            }            
+            }
         }
 
         public void Install(RunningDeployment deployment)
@@ -131,7 +135,8 @@ namespace Calamari.Aws.Deployment.Conventions
             }
             else
             {
-                Log.Info($"No stack called {stackName} exists in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
+                Log.Info(
+                    $"No stack called {stackName} exists in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
             }
 
             if (waitForComplete)
@@ -197,8 +202,9 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
 
             if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRoleARN) ||
-                !deployment.Variables.IsSet(SpecialVariables.Action.Aws.AccountId) || 
-                 !deployment.Variables.IsSet(deployment.Variables.Get(SpecialVariables.Action.Aws.AccountId) + ".AccessKey"))
+                !deployment.Variables.IsSet(SpecialVariables.Action.Aws.AccountId) ||
+                !deployment.Variables.IsSet(deployment.Variables.Get(SpecialVariables.Action.Aws.AccountId) +
+                                            ".AccessKey"))
             {
                 WriteRoleInfo();
             }
@@ -280,7 +286,13 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 new AmazonSecurityTokenServiceClient(awsEnvironmentGeneration.AwsCredentials,
-                        awsEnvironmentGeneration.AwsRegion)
+                        new AmazonSecurityTokenServiceConfig
+                        {
+                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                            ProxyHost = awsEnvironmentGeneration.ProxyHost
+                        })
                     // Client becomes the response of the API call
                     .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
                     // The response is narrowed to the Aen
@@ -306,7 +318,13 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 new AmazonIdentityManagementServiceClient(awsEnvironmentGeneration.AwsCredentials,
-                        awsEnvironmentGeneration.AwsRegion)
+                        new AmazonIdentityManagementServiceConfig
+                        {
+                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                            ProxyHost = awsEnvironmentGeneration.ProxyHost
+                        })
                     // The client becomes the API response
                     .Map(client => client.GetUser(new GetUserRequest()))
                     // Log the details of the response
@@ -328,7 +346,13 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        awsEnvironmentGeneration.AwsRegion)
+                        new AmazonCloudFormationConfig
+                        {
+                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                            ProxyHost = awsEnvironmentGeneration.ProxyHost
+                        })
                     // The client becomes the result of the API call
                     .Map(client => client.DescribeStacks(new DescribeStacksRequest() {StackName = stackName}))
                     // Get the first stack
@@ -343,12 +367,14 @@ namespace Calamari.Aws.Deployment.Conventions
                         "the required permissions to describe the CloudFormation stack. " +
                         "This means that the step is not able to generate any output variables.\n" +
                         ex.Message + "\n" +
-                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004", ex);
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004",
+                        ex);
                 }
 
                 throw new UnknownException(
                     "AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005", ex);
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005",
+                    ex);
             }
         }
 
@@ -387,7 +413,13 @@ namespace Calamari.Aws.Deployment.Conventions
         private StackEvent StackEvent(Func<StackEvent, bool> predicate = null)
         {
             return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                    awsEnvironmentGeneration.AwsRegion)
+                    new AmazonCloudFormationConfig
+                    {
+                        RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                        ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                        ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                        ProxyHost = awsEnvironmentGeneration.ProxyHost
+                    })
                 .Map(client =>
                 {
                     try
@@ -409,6 +441,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
                         // Assume this is a "Stack [StackName] does not exist" error
                         return null;
+                    }
+                    catch (AmazonServiceException ex)
+                    {
+                        HandleAmazonServiceException(ex);
+                        throw ex;
                     }
                 })
                 .Map(response => response?.StackEvents
@@ -455,7 +492,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// writing the same message more than once, do it as verbose logging.
         /// </summary>
         /// <param name="status">The current status of the stack</param>
-        private void LogCurrentStates( StackEvent status)
+        private void LogCurrentStates(StackEvent status)
         {
             var statusMessage =
                 $"{status?.ResourceType.Map(type => type + " ")}{status?.ResourceStatus.Value ?? "Does not exist"}";
@@ -523,7 +560,13 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        awsEnvironmentGeneration.AwsRegion)
+                        new AmazonCloudFormationConfig
+                        {
+                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                            ProxyHost = awsEnvironmentGeneration.ProxyHost
+                        })
                     // The client becomes the result of the API call
                     .Map(client => client.DescribeStacks(new DescribeStacksRequest()))
                     // The result becomes true/false based on the presence of a matching stack name
@@ -544,7 +587,13 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 throw new UnknownException(
                     "AWS-CLOUDFORMATION-ERROR-0006: An unrecognised exception was thrown while checking to see if the CloudFormation stack exists.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0006", ex);
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0006",
+                    ex);
+            }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
             }
         }
 
@@ -561,7 +610,13 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        awsEnvironmentGeneration.AwsRegion)
+                        new AmazonCloudFormationConfig
+                        {
+                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                            ProxyHost = awsEnvironmentGeneration.ProxyHost
+                        })
                     // Client becomes the API response
                     .Map(client => client.CreateStack(
                         new CreateStackRequest()
@@ -575,7 +630,9 @@ namespace Calamari.Aws.Deployment.Conventions
                     // Narrow the response to the stack ID
                     .Map(response => response.StackId)
                     // Log the stack id
-                    .Tee(stackId => Log.Info($"Created stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
+                    .Tee(stackId =>
+                        Log.Info(
+                            $"Created stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
             }
             catch (AmazonCloudFormationException ex)
             {
@@ -590,7 +647,13 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 throw new UnknownException(
                     "AWS-CLOUDFORMATION-ERROR-0008: An unrecognised exception was thrown while creating a CloudFormation stack.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0008", ex);
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0008",
+                    ex);
+            }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
             }
         }
 
@@ -602,11 +665,19 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        awsEnvironmentGeneration.AwsRegion)
+                        new AmazonCloudFormationConfig
+                        {
+                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                            ProxyHost = awsEnvironmentGeneration.ProxyHost
+                        })
                     // Client becomes the API response
                     .Map(client => client.DeleteStack(new DeleteStackRequest() {StackName = stackName}))
                     // Log the response details
-                    .Tee(status => Log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
+                    .Tee(status =>
+                        Log.Info(
+                            $"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
             }
             catch (AmazonCloudFormationException ex)
             {
@@ -621,7 +692,13 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 throw new UnknownException(
                     "AWS-CLOUDFORMATION-ERROR-0010: An unrecognised exception was thrown while deleting a CloudFormation stack.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010", ex);
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010",
+                    ex);
+            }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
             }
         }
 
@@ -643,7 +720,13 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        awsEnvironmentGeneration.AwsRegion)
+                        new AmazonCloudFormationConfig
+                        {
+                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                            ProxyHost = awsEnvironmentGeneration.ProxyHost
+                        })
                     // Client becomes the API response
                     .Map(client => client.UpdateStack(
                         new UpdateStackRequest()
@@ -656,7 +739,9 @@ namespace Calamari.Aws.Deployment.Conventions
                     // Narrow to the stack id
                     .Map(response => response.StackId)
                     // Log the stack id
-                    .Tee(stackId => Log.Info($"Updated stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
+                    .Tee(stackId =>
+                        Log.Info(
+                            $"Updated stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
             }
             catch (AmazonCloudFormationException ex)
             {
@@ -678,6 +763,11 @@ namespace Calamari.Aws.Deployment.Conventions
                 DeleteCloudFormation();
                 WaitForStackToComplete(deployment, false);
                 return CreateCloudFormation(template, parameters);
+            }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
             }
         }
 
@@ -711,7 +801,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
             throw new UnknownException(
                 "AWS-CLOUDFORMATION-ERROR-0011: An unrecognised exception was thrown while updating a CloudFormation stack.\n" +
-                "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011", ex);
+                "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011",
+                ex);
         }
 
         /// <summary>
@@ -745,9 +836,15 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new[] {"CREATE_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED", "UPDATE_ROLLBACK_FAILED"}.Any(
-                    x => StackEvent()?.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase) ??
-                         defaultValue);
+                return new[]
+                    {
+                        "CREATE_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED",
+                        "UPDATE_ROLLBACK_FAILED"
+                    }
+                    .Any(
+                        x => StackEvent()?.ResourceStatus.Value
+                                 .Equals(x, StringComparison.InvariantCultureIgnoreCase) ??
+                             defaultValue);
             }
             catch (PermissionException)
             {
@@ -788,11 +885,28 @@ namespace Calamari.Aws.Deployment.Conventions
                 displayedWarnings.Add(errorCode);
                 Log.Warn(
                     errorCode + ": " + message + "\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#" + errorCode.ToLower());
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#" +
+                    errorCode.ToLower());
                 return true;
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// The AmazonServiceException can hold additional information that is useful to include in
+        /// the log.
+        /// </summary>
+        /// <param name="exception">The exception</param>
+        private void HandleAmazonServiceException(AmazonServiceException exception)
+        {
+            if (exception.InnerException is WebException)
+            {
+                ((WebException) exception.InnerException).Response.GetResponseStream()
+                    .Map(stream => new StreamReader(stream).ReadToEnd())
+                    .Tee(message => DisplayWarning("AWS-CLOUDFORMATION-ERROR-0014",
+                        "An exception was thrown while contacting the AWS API.\n" + message));
+            }            
         }
     }
 }

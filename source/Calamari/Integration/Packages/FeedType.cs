@@ -5,6 +5,7 @@
         None = 0,
         NuGet,
         Docker,
-        Maven
+        Maven,
+        GitHub
     }
 }
