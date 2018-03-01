@@ -195,6 +195,20 @@ function Write-Verbose([string]$message)
 	Write-Host "##octopus[stdout-default]"
 }
 
+function Write-Highlight([string]$message)
+{
+	Write-Host "##octopus[stdout-highlight]"
+	Write-Host $message
+	Write-Host "##octopus[stdout-default]"
+}
+
+function Write-Wait([string]$message)
+{
+	Write-Host "##octopus[stdout-wait]"
+	Write-Host $message
+	Write-Host "##octopus[stdout-default]"
+}
+
 function Write-Warning()
 {
 	[CmdletBinding()]
