@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Amazon.CloudFormation;
@@ -440,6 +442,11 @@ namespace Calamari.Aws.Deployment.Conventions
                         // Assume this is a "Stack [StackName] does not exist" error
                         return null;
                     }
+                    catch (AmazonServiceException ex)
+                    {
+                        HandleAmazonServiceException(ex);
+                        throw ex;
+                    }
                 })
                 .Map(response => response?.StackEvents
                     .OrderByDescending(stackEvent => stackEvent.Timestamp)
@@ -583,6 +590,11 @@ namespace Calamari.Aws.Deployment.Conventions
                     "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0006",
                     ex);
             }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -638,6 +650,11 @@ namespace Calamari.Aws.Deployment.Conventions
                     "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0008",
                     ex);
             }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -677,6 +694,11 @@ namespace Calamari.Aws.Deployment.Conventions
                     "AWS-CLOUDFORMATION-ERROR-0010: An unrecognised exception was thrown while deleting a CloudFormation stack.\n" +
                     "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010",
                     ex);
+            }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
             }
         }
 
@@ -741,6 +763,11 @@ namespace Calamari.Aws.Deployment.Conventions
                 DeleteCloudFormation();
                 WaitForStackToComplete(deployment, false);
                 return CreateCloudFormation(template, parameters);
+            }
+            catch (AmazonServiceException ex)
+            {
+                HandleAmazonServiceException(ex);
+                throw ex;
             }
         }
 
@@ -864,6 +891,22 @@ namespace Calamari.Aws.Deployment.Conventions
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// The AmazonServiceException can hold additional information that is useful to include in
+        /// the log.
+        /// </summary>
+        /// <param name="exception">The exception</param>
+        private void HandleAmazonServiceException(AmazonServiceException exception)
+        {
+            if (exception.InnerException is WebException)
+            {
+                ((WebException) exception.InnerException).Response.GetResponseStream()
+                    .Map(stream => new StreamReader(stream).ReadToEnd())
+                    .Tee(message => DisplayWarning("AWS-CLOUDFORMATION-ERROR-0014",
+                        "An exception was thrown while contacting the AWS API.\n" + message));
+            }            
         }
     }
 }
