@@ -177,13 +177,16 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
  	
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
-#fucntion Create-OctopusWebAppTarget()
 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+ 	$azureWebApp = Convert-ToServiceMessageParameter -name "webappname" -value $azureWebApp
+ 	
+	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword -join ' '
 
-#Create-OctopusWebAppTarget(name1)
-#Create-OctopusWebAppTarget(name2)
-
-
+    Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
+}
 
 function Fail-Step([string] $message)
 {
