@@ -178,12 +178,14 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp) 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountId) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureWebApp = Convert-ToServiceMessageParameter -name "webappname" -value $azureWebApp
+    $resourceGroupName = Convert-ToServiceMessageParameter -name "resourcegroupname" -value $azureResourceGroupName
+    $octopusAccountId = Convert-ToServiceMessageParameter -name "accountid" -value $octopusAccountId
  	
-	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword -join ' '
+	$parameters = $type, $name, $azureWebApp, $resourceGroupName, $octopusAccountId -join ' '
 
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
 }
