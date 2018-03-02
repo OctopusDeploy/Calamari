@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0011"
+#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0012"
 
 using Path = System.IO.Path;
 using System.Xml;
@@ -34,6 +34,7 @@ Setup(context =>
 	gitVersionInfo = GitVersion(new GitVersionSettings {
         OutputType = GitVersionOutput.Json
     });
+    
 
     nugetVersion = gitVersionInfo.NuGetVersion;
 
