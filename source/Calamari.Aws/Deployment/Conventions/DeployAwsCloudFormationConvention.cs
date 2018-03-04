@@ -411,7 +411,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 Thread.Sleep(StatusWaitPeriod);
                 StackEventCompleted(deployment, expectSuccess, missingIsFailure);
-            } while (StackExists(StackStatus.Completed) != StackStatus.Completed);
+            } while (StackExists(StackStatus.Completed) == StackStatus.InProgress);
 
             Thread.Sleep(StatusWaitPeriod);
         }
