@@ -579,9 +579,9 @@ namespace Calamari.Aws.Deployment.Conventions
                                    ProxyHost = awsEnvironmentGeneration.ProxyHost
                                })
                            // The client becomes the result of the API call
-                           .Map(client => client.DescribeStacks(new DescribeStacksRequest()))
+                           .Map(client => client.DescribeStacks(new DescribeStacksRequest{StackName = stackName}))
                            // The result becomes true/false based on the presence of a matching stack name
-                           .Map(result => result.Stacks.FirstOrDefault(stack => stack.StackName == stackName))
+                           .Map(result => result.Stacks.FirstOrDefault())
                            // Does the status indicate that processing has finished?
                            ?.Map(stack => (stack.StackStatus?.Value.EndsWith("_COMPLETE") ?? true) ||
                                           (stack.StackStatus.Value.EndsWith("_FAILED")))
