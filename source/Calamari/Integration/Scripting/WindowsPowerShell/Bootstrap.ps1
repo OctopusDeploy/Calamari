@@ -156,37 +156,40 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
-function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri) 
+function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [string]$octopusEnvironmentIdOrName, [string]$octopusTenantIdOrName) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureSubscription = Convert-ToServiceMessageParameter -name "subscription" -value $azureSubscription
- 	$azureApplicationId = Convert-ToServiceMessageParameter -name "applicationId" -value $azureApplicationId
- 	$azureTenantId = Convert-ToServiceMessageParameter -name "tenantId" -value $azureTenantId
- 	$azurePassword = Convert-ToServiceMessageParameter -name "password" -value $azurePassword
- 	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
+ 	$azureApplicationId = Convert-ToServiceMessageParameter -name "azApplicationId" -value $azureApplicationId
+ 	$azureTenantId = Convert-ToServiceMessageParameter -name "azTenantId" -value $azureTenantId
+ 	$azurePassword = Convert-ToServiceMessageParameter -name "azPassword" -value $azurePassword
+	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
+	$octopusEnvironmentIdOrName = Convert-ToServiceMessageParameter -name "environment" -value $octopusEnvironmentIdOrName
+	$octopusTenantIdOrName = Convert-ToServiceMessageParameter -name "tenant" -value $octopusTenantIdOrName
 
-	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword -join ' '
+	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword, $octopusEnvironmentIdOrName, $octopusTenantIdOrName -join ' '
 
 	if (![string]::IsNullOrEmpty($azureEnvironment))
 	{
-		$azureEnvironment = Convert-ToServiceMessageParameter -name "environment" -value $azureEnvironment
-		$azureBaseUri = Convert-ToServiceMessageParameter -name "baseUri" -value $azureBaseUri
-		$azureResourceManagementBaseUri = Convert-ToServiceMessageParameter -name "resourceManagementBaseUri" -value $azureResourceManagementBaseUri
+		$azureEnvironment = Convert-ToServiceMessageParameter -name "azEnvironment" -value $azureEnvironment
+		$azureBaseUri = Convert-ToServiceMessageParameter -name "azBaseUri" -value $azureBaseUri
+		$azureResourceManagementBaseUri = Convert-ToServiceMessageParameter -name "azResourceManagementBaseUri" -value $azureResourceManagementBaseUri
 		$parameters = $parameters, $azureEnvironment, $azureBaseUri, $azureResourceManagementBaseUri -join ' '
 	}
  	
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountId, [string]$octopusAccountName) 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusEnvironmentIdOrName, [string]$octopusTenantIdOrName) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
- 	$azureWebApp = Convert-ToServiceMessageParameter -name "webappname" -value $azureWebApp
-    $resourceGroupName = Convert-ToServiceMessageParameter -name "resourcegroupname" -value $azureResourceGroupName
-    $octopusAccountId = Convert-ToServiceMessageParameter -name "accountid" -value $octopusAccountId
-    $octopusAccountName = Convert-ToServiceMessageParameter -name "accountname" -value $octopusAccountName
- 	
-	$parameters = $type, $name, $azureWebApp, $resourceGroupName, $octopusAccountId, $octopusAccountName -join ' '
+ 	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
+    $azureResourceGroupName = Convert-ToServiceMessageParameter -name "resourceGroupName" -value $azureResourceGroupName
+    $octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
+	$octopusEnvironmentIdOrName = Convert-ToServiceMessageParameter -name "environment" -value $octopusEnvironmentIdOrName
+	$octopusTenantIdOrName = Convert-ToServiceMessageParameter -name "tenant" -value $octopusTenantIdOrName
+
+	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusEnvironmentIdOrName, $octopusTenantIdOrName -join ' '
 
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
 }
