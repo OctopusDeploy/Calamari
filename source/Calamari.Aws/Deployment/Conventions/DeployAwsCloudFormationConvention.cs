@@ -603,7 +603,10 @@ namespace Calamari.Aws.Deployment.Conventions
                     return defaultValue;
                 }
                 
-                // This is OK, we just return the fact that the stack does not exist
+                // This is OK, we just return the fact that the stack does not exist.
+                // While calling describe stacks and catching exceptions seems dirty,
+                // this is how the stack-exists command on the CLI works:
+                // https://docs.aws.amazon.com/cli/latest/reference/cloudformation/wait/stack-exists.html
                 if (ex.Message.Contains("Stack with id a does not exist"))
                 {
                     return StackStatus.DoesNotExist;
