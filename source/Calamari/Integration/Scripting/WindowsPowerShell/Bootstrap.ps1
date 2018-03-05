@@ -144,7 +144,6 @@ function Set-OctopusVariable([string]$name, [string]$value)
 {
 	$name = Convert-ServiceMessageValue($name)
 	$value = Convert-ServiceMessageValue($value)
-    $[name] = $value
 
 	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
 }
