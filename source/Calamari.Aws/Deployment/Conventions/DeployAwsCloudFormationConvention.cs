@@ -602,6 +602,12 @@ namespace Calamari.Aws.Deployment.Conventions
 
                     return defaultValue;
                 }
+                
+                // This is OK, we just return the fact that the stack does not exist
+                if (ex.Message.Contains("Stack with id a does not exist"))
+                {
+                    return StackStatus.DoesNotExist;
+                }
 
                 throw new UnknownException(
                     "AWS-CLOUDFORMATION-ERROR-0006: An unrecognised exception was thrown while checking to see if the CloudFormation stack exists.\n" +
