@@ -43,6 +43,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private const int StatusWaitPeriod = 5000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
+        private static readonly Regex StackNotExistMessage = new Regex("Stack with id .*? does not exist");
 
         /// <summary>
         /// Matches ARNs like arn:aws:iam::123456789:role/AWSTestRole and extracts the name as group 1 
@@ -606,7 +607,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 // While calling describe stacks and catching exceptions seems dirty,
                 // this is how the stack-exists command on the CLI works:
                 // https://docs.aws.amazon.com/cli/latest/reference/cloudformation/wait/stack-exists.html
-                if (ex.Message.Contains("Stack with id a does not exist"))
+                if (StackNotExistMessage.Match(ex.Message).Success)
                 {
                     return StackStatus.DoesNotExist;
                 }
