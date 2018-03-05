@@ -40,7 +40,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
 
-        private const int StatusWaitPeriod = 15000;
+        private const int StatusWaitPeriod = 5000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
 
@@ -402,7 +402,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (StackExists(StackStatus.DoesNotExist) == StackStatus.DoesNotExist)
+            if (StackExists(StackStatus.DoesNotExist) == StackStatus.DoesNotExist ||
+                StackExists(StackStatus.DoesNotExist) == StackStatus.Completed)
             {
                 return;
             }
@@ -412,8 +413,6 @@ namespace Calamari.Aws.Deployment.Conventions
                 Thread.Sleep(StatusWaitPeriod);
                 StackEventCompleted(deployment, expectSuccess, missingIsFailure);
             } while (StackExists(StackStatus.Completed) == StackStatus.InProgress);
-
-            Thread.Sleep(StatusWaitPeriod);
         }
 
         /// <summary>
