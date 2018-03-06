@@ -23,6 +23,16 @@ using Octopus.Core.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
+    /// <summary>
+    /// Describes the state of the stack
+    /// </summary>
+    public enum StackStatus
+    {
+        DoesNotExist,
+        Completed,
+        InProgress
+    }
+
     public class DeployAwsCloudFormationConvention : IInstallConvention
     {
         /// <summary>
@@ -30,7 +40,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
 
-        private const int StatusWaitPeriod = 15000;
+        private const int StatusWaitPeriod = 5000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
 
@@ -129,7 +139,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (StackExists(true))
+            if (StackExists(StackStatus.Completed) != StackStatus.DoesNotExist)
             {
                 DeleteCloudFormation();
             }
@@ -181,7 +191,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             var stackId = GetParameters(deployment)
                 // Use the parameters to either create or update the stack
-                .Map(parameters => StackExists(false)
+                .Map(parameters => StackExists(StackStatus.DoesNotExist) != StackStatus.DoesNotExist
                     ? UpdateCloudFormation(deployment, template, parameters)
                     : CreateCloudFormation(template, parameters));
 
@@ -392,7 +402,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
-            if (!StackExists(false))
+            if (StackExists(StackStatus.DoesNotExist) == StackStatus.DoesNotExist ||
+                StackExists(StackStatus.DoesNotExist) == StackStatus.Completed)
             {
                 return;
             }
@@ -400,9 +411,8 @@ namespace Calamari.Aws.Deployment.Conventions
             do
             {
                 Thread.Sleep(StatusWaitPeriod);
-            } while (!StackEventCompleted(deployment, expectSuccess, missingIsFailure));
-
-            Thread.Sleep(StatusWaitPeriod);
+                StackEventCompleted(deployment, expectSuccess, missingIsFailure);
+            } while (StackExists(StackStatus.Completed) == StackStatus.InProgress);
         }
 
         /// <summary>
@@ -554,23 +564,30 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Check to see if the stack name exists.
         /// </summary>
         /// <param name="defaultValue">The return value when the user does not have the permissions to query the stacks</param>
-        /// <returns>True if the stack exists, and false otherwise</returns>
-        private Boolean StackExists(Boolean defaultValue)
+        /// <returns>The current status of the stack</returns>
+        private StackStatus StackExists(StackStatus defaultValue)
         {
             try
             {
                 return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonCloudFormationConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
-                    // The client becomes the result of the API call
-                    .Map(client => client.DescribeStacks(new DescribeStacksRequest()))
-                    // The result becomes true/false based on the presence of a matching stack name
-                    .Map(result => result.Stacks.Any(stack => stack.StackName == stackName));
+                               new AmazonCloudFormationConfig
+                               {
+                                   RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
+                                   ProxyPort = awsEnvironmentGeneration.ProxyPort,
+                                   ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
+                                   ProxyHost = awsEnvironmentGeneration.ProxyHost
+                               })
+                           // The client becomes the result of the API call
+                           .Map(client => client.DescribeStacks(new DescribeStacksRequest{StackName = stackName}))
+                           // The result becomes true/false based on the presence of a matching stack name
+                           .Map(result => result.Stacks.FirstOrDefault())
+                           // Does the status indicate that processing has finished?
+                           ?.Map(stack => (stack.StackStatus?.Value.EndsWith("_COMPLETE") ?? true) ||
+                                          (stack.StackStatus.Value.EndsWith("_FAILED")))
+                           // Convert the result to a StackStatus
+                           .Map(completed => completed ? StackStatus.Completed : StackStatus.InProgress)
+                       // Of, if there was no stack that matched the name, the stack does not exist
+                       ?? StackStatus.DoesNotExist;
             }
             catch (AmazonCloudFormationException ex)
             {
@@ -583,6 +600,15 @@ namespace Calamari.Aws.Deployment.Conventions
                         ex.Message);
 
                     return defaultValue;
+                }
+                
+                // This is OK, we just return the fact that the stack does not exist.
+                // While calling describe stacks and catching exceptions seems dirty,
+                // this is how the stack-exists command on the CLI works:
+                // https://docs.aws.amazon.com/cli/latest/reference/cloudformation/wait/stack-exists.html
+                if (ex.ErrorCode == "ValidationError")
+                {
+                    return StackStatus.DoesNotExist;
                 }
 
                 throw new UnknownException(
@@ -906,7 +932,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     .Map(stream => new StreamReader(stream).ReadToEnd())
                     .Tee(message => DisplayWarning("AWS-CLOUDFORMATION-ERROR-0014",
                         "An exception was thrown while contacting the AWS API.\n" + message));
-            }            
+            }
         }
     }
 }
