@@ -180,7 +180,7 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusEnvironmentIdOrName, [string]$octopusTenantIdOrName, [string]$octopusTenantTags) 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusEnvironmentIdOrName, [string]$octopusRoles, [string]$octopusTenantIdOrName, [string]$octopusTenantTags) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
@@ -189,8 +189,9 @@ function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [stri
 	$octopusEnvironmentIdOrName = Convert-ToServiceMessageParameter -name "environment" -value $octopusEnvironmentIdOrName
 	$octopusTenantIdOrName = Convert-ToServiceMessageParameter -name "tenant" -value $octopusTenantIdOrName
 	$octopusTenantTags = Convert-ToServiceMessageParameter -name "tenantTags" -value $octopusTenantTags
+	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
 
-	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusEnvironmentIdOrName, $octopusTenantIdOrName, $octopusTenantTags -join ' '
+	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusEnvironmentIdOrName, $octopusTenantIdOrName, $octopusTenantTags, $octopusRoles -join ' '
 
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
 }
