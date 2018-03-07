@@ -47,5 +47,6 @@ namespace Calamari.Integration.FileSystem
         string GetRelativePath(string fromFile, string toFile);
         Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess);
         DateTime GetCreationTime(string filePath);
+        string GetFileName(string filePath);
     }
 }
