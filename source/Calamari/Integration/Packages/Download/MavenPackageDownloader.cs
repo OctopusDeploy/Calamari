@@ -19,6 +19,11 @@ namespace Calamari.Integration.Packages.Download
     /// </summary>
     public class MavenPackageDownloader : IPackageDownloader
     {
+        /// <summary>
+        /// These are extensions that can be handled by extractors other than the Java one. We accept these
+        /// because not all artifacts from Maven will be used by Java.
+        /// </summary>
+        public static readonly string[] AdditionalExtensions = {".nupkg", ".tar.bz2", ".tar.bz", ".tbz", ".tgz", ".tar.gz", ".tar.Z", ".tar"};
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -196,6 +201,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(feedUri, "feedUri can not be null");
 
             return JarExtractor.EXTENSIONS
+                       .Union(AdditionalExtensions)
                        .AsParallel()
                        .Select(extension => new MavenPackageID(
                            mavenPackageId.Group,

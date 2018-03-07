@@ -32,7 +32,8 @@ string nugetVersion;
 Setup(context =>
 {
 	gitVersionInfo = GitVersion(new GitVersionSettings {
-        OutputType = GitVersionOutput.Json
+        OutputType = GitVersionOutput.Json,
+		LogFilePath = "gitversion.log"
     });
     
 
