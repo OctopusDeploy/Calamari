@@ -926,12 +926,13 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="exception">The exception</param>
         private void HandleAmazonServiceException(AmazonServiceException exception)
         {
-            (exception.InnerException as WebException)?
-                .Response?
-                .GetResponseStream()?
-                .Map(stream => new StreamReader(stream).ReadToEnd())
-                .Tee(message => DisplayWarning("AWS-CLOUDFORMATION-ERROR-0014",
-                    "An exception was thrown while contacting the AWS API.\n" + message));
+            ((exception.InnerException as WebException)?
+             .Response?
+             .GetResponseStream()?
+             .Map(stream => new StreamReader(stream).ReadToEnd())
+             .Map(message => "An exception was thrown while contacting the AWS API.\n" + message)
+             ?? "An exception was thrown while contacting the AWS API.")
+             .Tee(message => DisplayWarning("AWS-CLOUDFORMATION-ERROR-0014", message));
         }
     }
 }
