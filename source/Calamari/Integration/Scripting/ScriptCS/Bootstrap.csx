@@ -166,6 +166,34 @@ public static class Octopus
         Console.WriteLine("##octopus[stdout-default]");
         Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", servicepath, serviceFileName, length);
     }
+    
+    public static void WriteVerbose(string message)
+    {
+        Console.WriteLine("##octopus[stdout-verbose]");
+        Console.WriteLine(message);
+        Console.WriteLine("##octopus[stdout-default]");
+    }
+    
+    public static void WriteHighlight(string message)
+    {
+        Console.WriteLine("##octopus[stdout-highlight]");
+        Console.WriteLine(message);
+        Console.WriteLine("##octopus[stdout-default]");
+    }
+    
+    public static void WriteWait(string message)
+    {
+        Console.WriteLine("##octopus[stdout-wait]");
+        Console.WriteLine(message);
+        Console.WriteLine("##octopus[stdout-default]");
+    }
+    
+    public static void WriteWarning(string message)
+    {
+        Console.WriteLine("##octopus[stdout-warning]");
+        Console.WriteLine(message);
+        Console.WriteLine("##octopus[stdout-default]");
+    }
 
     public static void InitializeDefaultProxy()
     {

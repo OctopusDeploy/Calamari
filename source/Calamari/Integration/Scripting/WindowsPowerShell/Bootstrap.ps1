@@ -144,7 +144,6 @@ function Set-OctopusVariable([string]$name, [string]$value)
 {
 	$name = Convert-ServiceMessageValue($name)
 	$value = Convert-ServiceMessageValue($value)
-    $[name] = $value
 
 	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
 }
@@ -156,34 +155,46 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
-function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri) 
+function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [string]$octopusEnvironmentIdOrName, [string]$octopusTenantIdOrName, [string]$octopusTenantTags) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
- 	$azureSubscription = Convert-ToServiceMessageParameter -name "subscription" -value $azureSubscription
- 	$azureApplicationId = Convert-ToServiceMessageParameter -name "applicationId" -value $azureApplicationId
- 	$azureTenantId = Convert-ToServiceMessageParameter -name "tenantId" -value $azureTenantId
- 	$azurePassword = Convert-ToServiceMessageParameter -name "password" -value $azurePassword
- 	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
+ 	$azureSubscription = Convert-ToServiceMessageParameter -name "azSubscription" -value $azureSubscription
+ 	$azureApplicationId = Convert-ToServiceMessageParameter -name "azApplicationId" -value $azureApplicationId
+ 	$azureTenantId = Convert-ToServiceMessageParameter -name "azTenantId" -value $azureTenantId
+ 	$azurePassword = Convert-ToServiceMessageParameter -name "azPassword" -value $azurePassword
+	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
+	$octopusEnvironmentIdOrName = Convert-ToServiceMessageParameter -name "environment" -value $octopusEnvironmentIdOrName
+	$octopusTenantIdOrName = Convert-ToServiceMessageParameter -name "tenant" -value $octopusTenantIdOrName
+	$octopusTenantTags = Convert-ToServiceMessageParameter -name "tenantTags" -value $octopusTenantTags
 
-	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword -join ' '
+	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword, $octopusEnvironmentIdOrName, $octopusTenantIdOrName, $octopusTenantTags -join ' '
 
 	if (![string]::IsNullOrEmpty($azureEnvironment))
 	{
-		$azureEnvironment = Convert-ToServiceMessageParameter -name "environment" -value $azureEnvironment
-		$azureBaseUri = Convert-ToServiceMessageParameter -name "baseUri" -value $azureBaseUri
-		$azureResourceManagementBaseUri = Convert-ToServiceMessageParameter -name "resourceManagementBaseUri" -value $azureResourceManagementBaseUri
+		$azureEnvironment = Convert-ToServiceMessageParameter -name "azEnvironment" -value $azureEnvironment
+		$azureBaseUri = Convert-ToServiceMessageParameter -name "azBaseUri" -value $azureBaseUri
+		$azureResourceManagementBaseUri = Convert-ToServiceMessageParameter -name "azResourceManagementBaseUri" -value $azureResourceManagementBaseUri
 		$parameters = $parameters, $azureEnvironment, $azureBaseUri, $azureResourceManagementBaseUri -join ' '
 	}
  	
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
-#fucntion Create-OctopusWebAppTarget()
 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusEnvironmentIdOrName, [string]$octopusRoles, [string]$octopusTenantIdOrName, [string]$octopusTenantTags) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+ 	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
+    $azureResourceGroupName = Convert-ToServiceMessageParameter -name "resourceGroupName" -value $azureResourceGroupName
+    $octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
+	$octopusEnvironmentIdOrName = Convert-ToServiceMessageParameter -name "environment" -value $octopusEnvironmentIdOrName
+	$octopusTenantIdOrName = Convert-ToServiceMessageParameter -name "tenant" -value $octopusTenantIdOrName
+	$octopusTenantTags = Convert-ToServiceMessageParameter -name "tenantTags" -value $octopusTenantTags
+	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
 
-#Create-OctopusWebAppTarget(name1)
-#Create-OctopusWebAppTarget(name2)
+	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusEnvironmentIdOrName, $octopusTenantIdOrName, $octopusTenantTags, $octopusRoles -join ' '
 
-
+    Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
+}
 
 function Fail-Step([string] $message)
 {
@@ -228,6 +239,20 @@ function Write-Debug([string]$message)
 function Write-Verbose([string]$message)
 {
 	Write-Host "##octopus[stdout-verbose]"
+	Write-Host $message
+	Write-Host "##octopus[stdout-default]"
+}
+
+function Write-Highlight([string]$message)
+{
+	Write-Host "##octopus[stdout-highlight]"
+	Write-Host $message
+	Write-Host "##octopus[stdout-default]"
+}
+
+function Write-Wait([string]$message)
+{
+	Write-Host "##octopus[stdout-wait]"
 	Write-Host $message
 	Write-Host "##octopus[stdout-default]"
 }
@@ -344,6 +369,15 @@ function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int]
 	}
 }
 
+function Import-CalamariModules() {
+	if ($OctopusParameters.ContainsKey("Octopus.Script.PowershellModulePaths")) {
+		$calamariModulePaths = $OctopusParameters["Octopus.Script.PowershellModulePaths"].Split(";", [StringSplitOptions]'RemoveEmptyEntries')
+		foreach ($calamariModulePath in $calamariModulePaths) {
+			Import-Module –Name $calamariModulePath.Replace("{{TentacleHome}}", $env:TentacleHome)
+		}
+	}
+}
+
 Log-VersionTable
 
 # -----------------------------------------------------------------
@@ -366,6 +400,11 @@ $MaximumVariableCount=32768
 Initialize-ProxySettings
 
 Log-EnvironmentInformation
+
+# -----------------------------------------------------------------
+# Invoke target script
+# -----------------------------------------------------------------
+Import-CalamariModules
 
 # -----------------------------------------------------------------
 # Invoke target script

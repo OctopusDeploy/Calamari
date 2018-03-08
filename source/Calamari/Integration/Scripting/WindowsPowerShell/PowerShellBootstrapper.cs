@@ -71,8 +71,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
 
             var filetoExecute = IsDebuggingEnabled(variables)
-                ? debuggingBootstrapFile.Replace("'", "''")
-                : bootstrapFile.Replace("'", "''");
+                ? debuggingBootstrapFile.EscapeSingleQuotedString()
+                : bootstrapFile.EscapeSingleQuotedString();
 
             commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", filetoExecute, encryptionKey);
             return commandArguments.ToString();
@@ -96,7 +96,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{TargetScriptFile}}", script.File.Replace("'", "''"))
+            builder.Replace("{{TargetScriptFile}}", script.File.EscapeSingleQuotedString())
                     .Replace("{{ScriptParameters}}", script.Parameters)
                     .Replace("{{VariableDeclarations}}", DeclareVariables(variables))
                     .Replace("{{ScriptModules}}", DeclareScriptModules(variables, parent));
@@ -151,7 +151,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var name = Path.GetFileName(script.File);
             var debugBootstrapFile = Path.Combine(parent, "DebugBootstrap." + name);
             var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
-            var escapedBootstrapFile = bootstrapFile.Replace("'", "''");
+            var escapedBootstrapFile = bootstrapFile.EscapeSingleQuotedString();
 
             var builder = new StringBuilder(DebugBootstrapScriptTemplate);
             builder.Replace("{{BootstrapFile}}", escapedBootstrapFile);
@@ -190,7 +190,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 var moduleFileName = $"{name}.psm1";
                 var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
                 CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
-                output.AppendLine($"Import-ScriptModule '{SpecialVariables.GetLibraryScriptModuleName(variableName)}' '{moduleFilePath}'");
+                output.AppendLine($"Import-ScriptModule '{SpecialVariables.GetLibraryScriptModuleName(variableName).EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
                 output.AppendLine();
             }
         }

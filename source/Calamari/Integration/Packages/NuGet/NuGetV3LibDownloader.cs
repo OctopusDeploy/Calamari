@@ -27,7 +27,7 @@ namespace Calamari.Integration.Packages.NuGet
                 sourceRepository.PackageSource.Credentials = new PackageSourceCredential("octopus", cred.UserName, cred.Password, true);
             }
 
-            var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, new SourceCacheContext());
+            var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, new SourceCacheContext(){NoCache = true});
             var libraryIdentity = new LibraryIdentity(packageId, version.ToNuGetVersion(), LibraryType.Package);
 
             var targetPath = Directory.GetParent(targetFilePath).FullName;

@@ -8,5 +8,8 @@ namespace Calamari.Util
         {
             return originalString.IndexOf(value, StringComparison.CurrentCultureIgnoreCase) != -1;
         }
+
+        public static string EscapeSingleQuotedString(this string str) =>
+            str.Replace("'", "''");
     }
 }
