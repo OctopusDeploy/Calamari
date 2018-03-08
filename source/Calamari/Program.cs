@@ -30,7 +30,6 @@ namespace Calamari
 
         public int Execute(string[] args)
         {
-            Debugger.Launch();
             Log.Verbose($"Octopus Deploy: {displayName} version {informationalVersion}");
             Log.Verbose($"Environment Information:{Environment.NewLine}" +
                 $"  {string.Join($"{Environment.NewLine}  ", environmentInformation)}");

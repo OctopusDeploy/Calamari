@@ -122,7 +122,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 return;
             }
 
-            Log.Info($"Glob pattern '{selection.Pattern}' matched ${files.Count} files.");
+            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files.");
             var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
             
             new SubstituteInFilesConvention(fileSystem, fileSubstituter,
@@ -134,8 +134,9 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 foreach (var matchedFile in files)
                 {
-                    var request = CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection);
-                    HandleUploadRequest(client, request);
+                    CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
+                        .Tee(x => LogPutObjectRequest(matchedFile, x))
+                        .Tee(x => HandleUploadRequest(client, x));
                 }   
             }
         }
@@ -166,7 +167,7 @@ namespace Calamari.Aws.Deployment.Conventions
     
                 CreateRequest(filePath, selection.BucketKey, selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
-                    .Tee(x => clientFactory().PutObject(x));
+                    .Tee(x => HandleUploadRequest(clientFactory(), x));
         }
 
         /// <summary>
@@ -181,12 +182,10 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
-            using (var client = clientFactory())
-            {
-                var request = CreateRequest(deployment.PackageFilePath, options.BucketKey, options);
-                LogPutObjectRequest("entire package", request);
-                HandleUploadRequest(client, request);
-            }
+            CreateRequest(deployment.PackageFilePath, options.BucketKey, options)
+                .Tee(x => LogPutObjectRequest("entire package", x))
+                .Tee(x => HandleUploadRequest(clientFactory(), x));
+            
         }
 
         /// <summary>
