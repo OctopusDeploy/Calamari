@@ -11,8 +11,6 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Substitutions;
-using Newtonsoft.Json;
-using Octopus.Core.Extensions;
 
 namespace Calamari.Aws.Commands
 {
@@ -53,18 +51,21 @@ namespace Calamari.Aws.Commands
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
             var environment = new AwsEnvironmentGeneration(variables);
             var substituter = new FileSubstituter(fileSystem);
+            var targetType = GetTargetMode(targetMode);
+            var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
 
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => targetType == S3TargetMode.FileSelections),
                 new LogAwsUserInfoConvention(environment),
+                new CreateS3BucketConvention(environment, _ => bucket),
                 new UploadAwsS3Convention(
                     fileSystem,
                     environment,
                     bucket,
-                    GetTargetMode(targetMode),
+                    targetType,
                     new VariableS3TargetOptionsProvider(variables),
                     substituter
                 )
