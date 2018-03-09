@@ -94,7 +94,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         $"the required permissions to upload to bucket {bucket}");
                 }
 
-                throw new UnknownException($"An unrecognised exception was thrown while uploading to bucket {bucket}");
+                throw new UnknownException($"An unrecognised {exception.ErrorCode} error was thrown while uploading to bucket {bucket}");
             }
             catch (AmazonServiceException exception)
             {
@@ -130,16 +130,13 @@ namespace Calamari.Aws.Deployment.Conventions
                     _ => substitutionPatterns)
                 .Install(deployment);
 
-            using (var client = clientFactory())
+            foreach (var matchedFile in files)
             {
-                foreach (var matchedFile in files)
-                {
-                    CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
-                        .Tee(x => LogPutObjectRequest(matchedFile, x))
-                        .Tee(x => HandleUploadRequest(client, x));
-                }   
-            }
-        }
+                CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
+                    .Tee(x => LogPutObjectRequest(matchedFile, x))
+                    .Tee(x => HandleUploadRequest(clientFactory(), x));
+            }  
+    }
 
         /// <summary>
         /// Uploads a single file with the given properties
@@ -203,12 +200,12 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return new PutObjectRequest
                 {
-                    BucketName = bucket,
-                    FilePath = path,
-                    Key = bucketKey,
-                    StorageClass = properties.StorageClass,
-                    CannedACL = properties.CannedAcl
-                }
+                    BucketName = bucket?.Trim(),
+                    FilePath = path?.Trim(),
+                    Key = bucketKey?.Trim(),
+                    StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
+                    CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
+            }
                 .WithMetadata(properties)
                 .WithTags(properties);
         }
