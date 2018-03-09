@@ -31,18 +31,19 @@ namespace Calamari.Aws.Deployment.Conventions
         public void EnsureBucketExists(Func<AmazonS3Client> clientFactory, string bucketName)
         {
             Guard.NotNull(clientFactory, "Client factory should not be null");
+            Guard.NotNullOrWhiteSpace(bucketName, "Bucket name should not be null or empty");
 
             using (var client = clientFactory())
             {
                 if (Amazon.S3.Util.AmazonS3Util.DoesS3BucketExist(client, bucketName))
                 {
-                    Log.Info($"Bucket {bucketName} exists. Skipping creation.");
+                    Log.Info($"Bucket {bucketName} exists in region {awsEnvironmentGeneration.AwsRegion}. Skipping creation.");
                     return;
                 }
 
                 var request = new PutBucketRequest
                 {
-                    BucketName = bucketName,
+                    BucketName = bucketName.Trim(),
                     UseClientRegion = true
                 };
 

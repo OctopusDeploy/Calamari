@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -27,6 +28,8 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly IProvideS3TargetOptions optionsProvider;
         private readonly IFileSubstituter fileSubstituter;
 
+        private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
+        
         public UploadAwsS3Convention(ICalamariFileSystem fileSystem,
             IAwsEnvironmentGeneration awsEnvironmentGeneration,
             string bucket,
@@ -45,7 +48,15 @@ namespace Calamari.Aws.Deployment.Conventions
 
         private static string ExceptionMessageWithFilePath(PutObjectRequest request, Exception exception)
         {
-            return $"Failed to uploaded ${request.FilePath} with message {exception.Message}";
+            return $"Failed to upload file {request.FilePath}. {exception.Message}";
+        }
+
+        private static string InvalidArgumentExceptionMessage(PutObjectRequest request, Exception exception)
+        {
+            //There isn't an associated error we can check for the Canned ACL so just check it against what we can determine
+            //from the values in the SDK.
+            string error = $"Failed to upload {request.FilePath}. An invalid argument was provided.";
+            return !CannedAcls.Contains(request.CannedACL) ? $"{error} This is possibly due to the value specified for the canned ACL." : error;
         }
 
         //Errors we care about for each upload.
@@ -55,7 +66,10 @@ namespace Calamari.Aws.Deployment.Conventions
             { "UnexpectedContent", ExceptionMessageWithFilePath },
             { "MetadataTooLarge", ExceptionMessageWithFilePath },
             { "MaxMessageLengthExceeded", ExceptionMessageWithFilePath },
-            { "KeyTooLongError", ExceptionMessageWithFilePath }
+            { "KeyTooLongError", ExceptionMessageWithFilePath },
+            { "SignatureDoesNotMatch", ExceptionMessageWithFilePath },
+            { "InvalidStorageClass", ExceptionMessageWithFilePath },
+            { "InvalidArgument",  InvalidArgumentExceptionMessage }
         };
 
         public void Install(RunningDeployment deployment)
@@ -182,7 +196,6 @@ namespace Calamari.Aws.Deployment.Conventions
             CreateRequest(deployment.PackageFilePath, options.BucketKey, options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Tee(x => HandleUploadRequest(clientFactory(), x));
-            
         }
 
         /// <summary>
@@ -201,7 +214,7 @@ namespace Calamari.Aws.Deployment.Conventions
             return new PutObjectRequest
                 {
                     BucketName = bucket?.Trim(),
-                    FilePath = path?.Trim(),
+                    FilePath = path,
                     Key = bucketKey?.Trim(),
                     StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
                     CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
