@@ -41,7 +41,10 @@ namespace Calamari.Azure.Integration
             if (securityMode == AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
             {
                 var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.ServiceFabric.ClientCertVariable);
+                Log.Info($"markse: certificateVariable={certificateVariable}");
                 clientCertThumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+                Log.Info($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+                Log.Info($"markse: clientCertThumbprint={clientCertThumbprint}");
             }
 
             // Set output variables for our script to access.
