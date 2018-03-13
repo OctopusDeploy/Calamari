@@ -18,6 +18,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
     <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
+    <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

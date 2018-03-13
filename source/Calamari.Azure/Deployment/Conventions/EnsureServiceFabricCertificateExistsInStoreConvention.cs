@@ -16,15 +16,15 @@ namespace Calamari.Azure.Deployment.Conventions
             var clientCertVariable = variables.Get(SpecialVariables.Action.ServiceFabric.ClientCertVariable);
             if (!string.IsNullOrEmpty(clientCertVariable))
             {
-//#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
                 // Any certificate-variables used by IIS bindings must be placed in the
                 // LocalMachine certificate store
-                EnsureCertificateInStore(variables, SpecialVariables.Action.ServiceFabric.ClientCertVariable);
-//#endif
+                EnsureCertificateInStore(variables, clientCertVariable);
+#endif
             }
         }
 
-//#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         static void EnsureCertificateInStore(VariableDictionary variables, string certificateVariable)
         {
             var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
@@ -56,12 +56,13 @@ namespace Calamari.Azure.Deployment.Conventions
         /// <returns></returns>
         static string FindCertificateInStore(string thumbprint, StoreLocation storeLocation, string storeNameOverride)
         {
-            foreach (var storeName in WindowsX509CertificateStore.GetStoreNames(StoreLocation.LocalMachine))
+            foreach (var storeName in WindowsX509CertificateStore.GetStoreNames(storeLocation))
             {
                 if (!string.IsNullOrEmpty(storeNameOverride) && storeName.Equals(storeNameOverride, StringComparison.InvariantCultureIgnoreCase))
                     continue;
 
-                var store = new X509Store(storeName, StoreLocation.LocalMachine);
+                //Log.Verbose($"Trying to find certificate with thumbprint '{thumbprint}' in Cert:\\{storeLocation}\\{storeName}");
+                var store = new X509Store(storeName, storeLocation);
                 store.Open(OpenFlags.ReadOnly);
 
                 var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
@@ -81,10 +82,9 @@ namespace Calamari.Azure.Deployment.Conventions
             var subject = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}");
 
             Log.Info($"Adding certificate '{subject}' into Cert:\\{storeLocation}\\{storeName}");
-
             try
             {
-                WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, StoreLocation.LocalMachine, storeName, true);
+                WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName, true);
                 return storeName;
             }
             catch (Exception)
@@ -93,6 +93,6 @@ namespace Calamari.Azure.Deployment.Conventions
                 throw;
             }
         }
-//#endif
+#endif
     }
 }
