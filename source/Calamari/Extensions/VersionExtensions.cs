@@ -17,6 +17,7 @@ namespace Calamari.Extensions
                 version.Major,
                 version.Minor,
                 version.Patch,
+                version.Revision,
                 version.ReleaseLabels,
                 version.Metadata);
         }
