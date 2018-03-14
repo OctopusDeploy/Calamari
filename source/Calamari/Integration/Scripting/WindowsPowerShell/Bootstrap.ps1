@@ -217,7 +217,6 @@ function New-OctopusServiceFabricTarget([string]$name, [string]$azureConnectionE
 
 function New-OctopusCloudServiceTarget([string]$name, [string]$octopusAccountIdOrName, [string]$azureCloudServiceName, [string]$azureStorageAccountName, [string]$azureSlot, [string]$azureSwapSlot, [string]$azureInstanceCount, [string]$octopusEnvironmentIdOrName, [string]$octopusRoles, [string]$octopusTenantIdOrName, [string]$octopusTenantTags) 
 {
-
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "cloudServiceName" -value $azureCloudServiceName
@@ -234,6 +233,8 @@ function New-OctopusCloudServiceTarget([string]$name, [string]$octopusAccountIdO
 
 	Write-Host "##octopus[create-azurecloudservicetarget $($parameters)]"
 }
+
+
 
 function Fail-Step([string] $message)
 {
