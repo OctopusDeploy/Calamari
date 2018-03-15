@@ -206,24 +206,6 @@ function New-OctopusServiceFabricTarget([string]$name, [string]$azureConnectionE
 	Write-Host "##octopus[create-azureservicefabrictarget $($parameters)]"
 }
 
-function New-OctopusCloudServiceTarget([string]$name, [string]$octopusAccountIdOrName, [string]$azureCloudServiceName, [string]$azureStorageAccountName, [string]$azureSlot, [string]$azureSwapSlot, [string]$azureInstanceCount, [string]$octopusRoles) 
-{
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
-	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
-	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "cloudServiceName" -value $azureCloudServiceName
-	$azureStorageAccountName = Convert-ToServiceMessageParameter -name "storageAccountName" -value $azureStorageAccountName
-	$azureSlot = Convert-ToServiceMessageParameter -name "slot" -value $azureSlot
-	$azureSwapSlot = Convert-ToServiceMessageParameter -name "swapSlot" -value $azureSwapSlot
-	$azureInstanceCount = Convert-ToServiceMessageParameter -name "instanceCount" -value $azureInstanceCount
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
-
-	$parameters = $name, $azureCloudServiceName, $azureStorageAccountName, $azureSlot, $azureSwapSlot, $azureInstanceCount, $octopusAccountIdOrName, $octopusRoles -join ' '
-
-	Write-Host "##octopus[create-azurecloudservicetarget $($parameters)]"
-}
-
-
-
 function Fail-Step([string] $message)
 {
 	if($message)
