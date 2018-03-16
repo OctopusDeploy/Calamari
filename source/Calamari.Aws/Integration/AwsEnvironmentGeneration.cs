@@ -9,7 +9,7 @@ using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Exceptions;
 using Newtonsoft.Json;
-using Octopus.Core.Extensions;
+using Octopus.CoreUtilities.Extensions;
 using Octostache;
 
 namespace Calamari.Aws.Integration
