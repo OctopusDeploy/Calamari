@@ -206,6 +206,13 @@ function New-OctopusServiceFabricTarget([string]$name, [string]$azureConnectionE
 	Write-Host "##octopus[create-azureservicefabrictarget $($parameters)]"
 }
 
+function Remove-OctopusTarget([string] $targetIdOrName)
+{
+	$targetIdOrName = Convert-ToServiceMessageParameter -name "machine" -value $targetIdOrName
+
+	Write-Host "##octopus[delete-target $($targetIdOrName)]"
+}
+
 function Fail-Step([string] $message)
 {
 	if($message)
