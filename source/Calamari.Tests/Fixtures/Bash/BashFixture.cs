@@ -99,6 +99,54 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertOutput("Hello NameToEncrypt");
             }
         }
+        
+         
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldCallHelloWithNullVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", null);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "hello.sh"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello ");
+            }
+        }
+        
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldCallHelloWithNullSensitiveVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", null);
+            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "hello.sh"))
+                    .Argument("sensitiveVariables", variablesFile)
+                    .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello ");
+            }
+        }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
