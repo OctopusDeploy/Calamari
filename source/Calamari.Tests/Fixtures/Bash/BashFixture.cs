@@ -120,7 +120,7 @@ namespace Calamari.Tests.Fixtures.Bash
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello ");
+                output.AssertOutput("Hello");
             }
         }
         
@@ -144,7 +144,7 @@ namespace Calamari.Tests.Fixtures.Bash
                     .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello ");
+                output.AssertOutput("Hello");
             }
         }
 
