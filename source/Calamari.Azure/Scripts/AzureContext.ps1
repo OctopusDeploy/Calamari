@@ -62,6 +62,7 @@ if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
     $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ServiceManagement"
     $ResourceManagerModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ResourceManager" | Join-Path -ChildPath "AzureResourceManager"
     Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
+    
     $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
 }
 

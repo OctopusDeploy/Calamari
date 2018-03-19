@@ -155,7 +155,7 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
-function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [string]$octopusEnvironmentIdOrName, [string]$octopusTenantIdOrName, [string]$octopusTenantTags) 
+function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureSubscription = Convert-ToServiceMessageParameter -name "azSubscription" -value $azureSubscription
@@ -163,11 +163,8 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
  	$azureTenantId = Convert-ToServiceMessageParameter -name "azTenantId" -value $azureTenantId
  	$azurePassword = Convert-ToServiceMessageParameter -name "azPassword" -value $azurePassword
 	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
-	$octopusEnvironmentIdOrName = Convert-ToServiceMessageParameter -name "environment" -value $octopusEnvironmentIdOrName
-	$octopusTenantIdOrName = Convert-ToServiceMessageParameter -name "tenant" -value $octopusTenantIdOrName
-	$octopusTenantTags = Convert-ToServiceMessageParameter -name "tenantTags" -value $octopusTenantTags
 
-	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword, $octopusEnvironmentIdOrName, $octopusTenantIdOrName, $octopusTenantTags -join ' '
+	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword -join ' '
 
 	if (![string]::IsNullOrEmpty($azureEnvironment))
 	{
@@ -180,20 +177,40 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusEnvironmentIdOrName, [string]$octopusRoles, [string]$octopusTenantIdOrName, [string]$octopusTenantTags) 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
     $azureResourceGroupName = Convert-ToServiceMessageParameter -name "resourceGroupName" -value $azureResourceGroupName
     $octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
-	$octopusEnvironmentIdOrName = Convert-ToServiceMessageParameter -name "environment" -value $octopusEnvironmentIdOrName
-	$octopusTenantIdOrName = Convert-ToServiceMessageParameter -name "tenant" -value $octopusTenantIdOrName
-	$octopusTenantTags = Convert-ToServiceMessageParameter -name "tenantTags" -value $octopusTenantTags
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
 
-	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusEnvironmentIdOrName, $octopusTenantIdOrName, $octopusTenantTags, $octopusRoles -join ' '
+	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusRoles -join ' '
 
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
+}
+
+function New-OctopusServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$octopusCertificateIdOrName, [string]$octopusRoles) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$azureConnectionEndpoint = Convert-ToServiceMessageParameter -name "connectionEndpoint" -value $azureConnectionEndpoint
+	$azureSecurityMode = Convert-ToServiceMessageParameter -name "securityMode" -value $azureSecurityMode
+	$azureCertificateThumbprint = Convert-ToServiceMessageParameter -name "certificateThumbprint" -value $azureCertificateThumbprint
+	$azureActiveDirectoryUsername = Convert-ToServiceMessageParameter -name "activeDirectoryUsername" -value $azureActiveDirectoryUsername
+	$azureActiveDirectoryPassword = Convert-ToServiceMessageParameter -name "activeDirectoryPassword" -value $azureActiveDirectoryPassword
+	$octopusCertificateIdOrName = Convert-ToServiceMessageParameter -name "certificate" -value $octopusCertificateIdOrName
+	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+
+	$parameters = $name, $azureConnectionEndpoint, $azureSecurityMode, $azureCertificateThumbprint, $azureActiveDirectoryUsername, $azureActiveDirectoryPassword, $octopusCertificateIdOrName, $octopusRoles -join ' '
+
+	Write-Host "##octopus[create-azureservicefabrictarget $($parameters)]"
+}
+
+function Remove-OctopusTarget([string] $targetIdOrName)
+{
+	$targetIdOrName = Convert-ToServiceMessageParameter -name "machine" -value $targetIdOrName
+	$parameters = $targetIdOrName -join ' '
+	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
 function Fail-Step([string] $message)

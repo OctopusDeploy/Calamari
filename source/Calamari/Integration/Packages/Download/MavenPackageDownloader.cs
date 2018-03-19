@@ -8,7 +8,7 @@ using System.Xml;
 using Calamari.Exceptions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
-using Octopus.Core.Extensions;
+using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;
 
