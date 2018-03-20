@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.FSharp
         {
             var output = Invoke(Calamari()
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.fsx")));
+                .Argument("script", GetFixtureResouce("Scripts", "OutputVariable.fsx")));
 
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
@@ -133,6 +133,49 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertSuccess();
             output.AssertOutput("Hello default value");
         }
+        
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        public void ShouldCallHelloWithNullVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", null);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.fsx"))
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello ");
+            }
+        }
+        
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        public void ShouldCallHelloWithNullSensitiveVariable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set("Name", null);
+            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.fsx"))
+                    .Argument("sensitiveVariables", variablesFile)
+                    .Argument("sensitiveVariablesPassword", "5XETGOgqYR2bRhlfhDruEg=="));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello ");
+            }
+        }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldConsumeParametersWithQuotes()
@@ -145,5 +188,6 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0-Parameter1");
         }
+        
     }
 }
