@@ -18,7 +18,7 @@ namespace Calamari.Azure.Util
         {
             ex?.Task?.Exception?.InnerExceptions?
                 .Select(inner => inner.ToString())
-                .Aggregate((message, exMessage) => message + "\n" + exMessage)
+                .Aggregate("", (message, exMessage) => message + "\n" + exMessage)
                 .Tee(Log.Error);
         }
     }
