@@ -16,7 +16,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string deploymentSlot, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
             var baseUri = new Uri(resourceManagementEndpoint);
@@ -27,6 +27,8 @@ namespace Calamari.Azure.Integration.Websites.Publishing
             })
             using (var webSiteClient = new WebSiteManagementClient(new Uri(resourceManagementEndpoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
+                //TODO: mark.siedle - Useful for debugging your provisioning profile url, not sure if we want to show this in the logs?
+                //Log.Verbose($"Using Authorization Bearer={token}");
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                 resourcesClient.HttpClient.BaseAddress = baseUri;
 
@@ -45,9 +47,14 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     if (matchingSite == null)
                         continue;
 
+                    // ARM resource ID of the source app. App resource ID is of the form:
+                    //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName} for production slots and
+                    //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName}/slots/{slotName} for other slots.
+                    var deploymentSlotPath = !string.IsNullOrWhiteSpace(deploymentSlot) ? $"/slots/{deploymentSlot}" : null;
+
                     // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
                     var publishSettingsUri = new Uri(resourcesClient.BaseUri,
-                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{matchingSite.Name.Replace("/", "/slots/")}/config/publishingCredentials/list?api-version=2015-08-01");
+                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{matchingSite.Name}{deploymentSlotPath}/config/publishingCredentials/list?api-version=2015-08-01");
                     Log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
 
                     SitePublishProfile publishProperties = null;
@@ -58,7 +65,6 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                         .ContinueWith(publishSettingsResponse =>
                         {
                             var result = publishSettingsResponse.Result.Result;
-
                             if (!result.IsSuccessStatusCode)
                             {
                                 Log.Error($"Retrieving publishing credentials failed. Publish-settings URI: {publishSettingsUri}");

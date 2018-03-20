@@ -24,11 +24,15 @@ namespace Calamari.Azure.Deployment.Conventions
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var deploymentSlot = variables.Get(SpecialVariables.Action.Azure.DeploymentSlot);
 
-            Log.Info("Deploying to Azure WebApp '{0}'{1}, using subscription-id '{2}'",
-                siteName,
-                string.IsNullOrEmpty(resourceGroupName) ? string.Empty : $" in Resource Group {resourceGroupName}",
-                subscriptionId);
+            var deploymentSlotText = string.IsNullOrEmpty(deploymentSlot)
+                ? string.Empty
+                : $" in Deployment Slot {deploymentSlot}";
+            var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
+                ? string.Empty
+                : $" in Resource Group {resourceGroupName}";
+            Log.Info($"Deploying to Azure WebApp '{siteName}'{deploymentSlotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
 
@@ -39,7 +43,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
 
-                DeployToAzure(deployment, siteName, variables, publishProfile);
+                DeployToAzure(deployment, siteName, deploymentSlot, variables, publishProfile);
             }
             finally
             {
@@ -47,7 +51,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static void DeployToAzure(RunningDeployment deployment, string siteName, CalamariVariableDictionary variables,
+        private static void DeployToAzure(RunningDeployment deployment, string siteName, string deploymentSlot, CalamariVariableDictionary variables,
             SitePublishProfile publishProfile)
         {
             var retry = GetRetryTracker();
@@ -56,12 +60,13 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 try
                 {
+                    var siteAndSlot = !string.IsNullOrEmpty(deploymentSlot) ? $"{siteName}-{deploymentSlot}" : siteName;
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
                             "contentPath",
-                            BuildPath(siteName, variables),
-                            DeploymentOptions(siteName, publishProfile),
+                            BuildPath(siteAndSlot,  variables),
+                            DeploymentOptions(siteAndSlot, publishProfile),
                             DeploymentSyncOptions(variables)
                         );
 
@@ -109,7 +114,7 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-
+            var deploymentSlot = variables.Get(SpecialVariables.Action.Azure.DeploymentSlot);
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
 
             switch (accountType)
@@ -130,6 +135,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
                         variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
                         siteName,
+                        deploymentSlot,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
                         variables.Get(SpecialVariables.Action.Azure.Password),
@@ -145,6 +151,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                         siteName,
+                        deploymentSlot,
                         serviceManagementEndpoint);
                 default:
                     throw new CommandException(
@@ -156,7 +163,6 @@ namespace Calamari.Azure.Deployment.Conventions
         private static string BuildPath(string site, VariableDictionary variables)
         {
             var relativePath = (variables.Get(SpecialVariables.Action.Azure.PhysicalPath) ?? "").TrimStart('\\');
-
             return relativePath != ""
                 ? site + "\\" + relativePath
                 : site;
@@ -199,6 +205,7 @@ namespace Calamari.Azure.Deployment.Conventions
             VariableDictionary variables)
         {
             // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
+            // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
             {
                 syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataFiles", "Delete", "filePath",
@@ -213,6 +220,7 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+            // ReSharper disable once InvertIf
             if (preservePaths != null)
             {
                 for (var i = 0; i < preservePaths.Count; i++)
@@ -228,18 +236,14 @@ namespace Calamari.Azure.Deployment.Conventions
         private static void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
             VariableDictionary variables)
         {
+            // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
             {
                 var rules = Microsoft.Web.Deployment.DeploymentSyncOptions.GetAvailableRules();
-                DeploymentRule rule;
-                if (rules.TryGetValue("AppOffline", out rule))
-                {
+                if (rules.TryGetValue("AppOffline", out var rule))
                     syncOptions.Rules.Add(rule);
-                }
                 else
-                {
                     Log.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
-                }
             }
         }
 
