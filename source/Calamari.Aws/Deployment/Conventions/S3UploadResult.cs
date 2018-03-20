@@ -31,7 +31,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 if (Response.Some())
                 {
-                    return string.IsNullOrEmpty(Response.Value.VersionId) ? "Not versioned" : Version;
+                    return string.IsNullOrEmpty(Response.Value.VersionId) ? "Not versioned" : Response.Value.VersionId;
                 }
 
                 return null;
