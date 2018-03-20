@@ -6,7 +6,6 @@ using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.WebSites.Models;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Azure.Integration.Websites.Publishing
 {

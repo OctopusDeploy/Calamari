@@ -12,7 +12,6 @@ using Microsoft.Azure.Management.Resources.Models;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Azure.Integration.Websites.Publishing
 {
