@@ -61,7 +61,7 @@ namespace Calamari.Integration.Scripting.Bash
 
         static string DecryptValueCommand(string value)
         {
-            var encrypted = VariableEncryptor.Encrypt(value);
+            var encrypted = VariableEncryptor.Encrypt(value ?? "");
             byte[] iv;
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
             
@@ -75,7 +75,7 @@ namespace Calamari.Integration.Scripting.Bash
 
         static string EncodeValue(string value)
         {
-            return value == null ? "null" : Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(value ?? ""));
         }
 
         public static string FindBashExecutable()

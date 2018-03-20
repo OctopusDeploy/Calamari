@@ -84,7 +84,11 @@ namespace Calamari.Integration.Scripting.FSharp
             foreach (var variableName in variables.GetNames())
             {
                 var variableValue = variables.Get(variableName);
-                if (variables.IsSensitive(variableName))
+                if (variableValue == null)
+                {
+                    builder.AppendFormat("        | \"{0}\" -> Some null", EncodeValue(variableName));
+                }
+                else if (variables.IsSensitive(variableName))
                 {
                     builder.AppendFormat("        | \"{0}\" -> {1} |> Some", EncodeValue(variableName),
                                                                                         EncryptVariable(variableValue));                    
@@ -104,17 +108,12 @@ namespace Calamari.Integration.Scripting.FSharp
 
         static string EncodeValue(string value)
         {
-            if (value == null) return "null;";
-
             var bytes = Encoding.UTF8.GetBytes(value);
             return Convert.ToBase64String(bytes);
         }
 
         static string EncryptVariable(string value)
         {
-            if (value == null)
-                return "null;";
-
             var encrypted = VariableEncryptor.Encrypt(value);
             byte[] iv;
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
