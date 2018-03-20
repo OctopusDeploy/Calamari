@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -16,6 +15,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 using Octopus.Core.Extensions;
+using Octopus.Core.Util;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
@@ -82,23 +82,17 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                foreach (var option in options)
+                UploadAll(options, Factory, deployment).Tee(responses =>
                 {
-                    switch (option)
+                    foreach (var response in responses)
                     {
-                        case S3PackageOptions package:
-                            UploadUsingPackage(Factory, deployment, package);
-                            break;
-                        case S3SingleFileSlectionProperties selection:
-                            UploadSingleFileSelection(Factory, deployment, selection);
-                            break;
-                        case S3MultiFileSelectionProperties selection:
-                            UploadMultiFileSelection(Factory, deployment, selection);
-                            break;
-                        default:
-                            return;
+                        if (response.IsSuccess())
+                        {
+                            Log.Info($"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{response.BucketKey}]\"");
+                            Log.SetOutputVariable($"Files[{response.BucketKey}]", response.Version);
+                        }
                     }
-                }
+                });
             }
             catch (AmazonS3Exception exception)
             {
@@ -117,13 +111,35 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
+        private IEnumerable<S3UploadResult> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
+        {
+            foreach (var option in options)
+            {
+                switch (option)
+                {
+                    case S3PackageOptions package:
+                        yield return UploadUsingPackage(clientFactory, deployment, package);
+                        break;
+                    case S3SingleFileSlectionProperties selection:
+                        yield return UploadSingleFileSelection(clientFactory, deployment, selection);
+                        break;
+                    case S3MultiFileSelectionProperties selection:
+                        foreach (var response in UploadMultiFileSelection(clientFactory, deployment, selection))
+                        {
+                            yield return response;
+                        }
+                        break;
+                }
+            }
+        }
+
         /// <summary>
         /// Uploads multiple files given the globbing patterns provided by the selection properties.
         /// </summary>
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        private void UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
+        private IEnumerable<S3UploadResult> UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Mutli file selection properties may not be null");
@@ -133,7 +149,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if (!files.Any())
             {
                 Log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
-                return;
+                yield break;
             }
 
             Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files.");
@@ -146,11 +162,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
             foreach (var matchedFile in files)
             {
-                CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
+                yield return CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
                     .Tee(x => LogPutObjectRequest(matchedFile, x))
-                    .Tee(x => HandleUploadRequest(clientFactory(), x));
-            }  
-    }
+                    .Map(x => HandleUploadRequest(clientFactory(), x));
+            }
+        }
 
         /// <summary>
         /// Uploads a single file with the given properties
@@ -158,7 +174,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        public void UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSlectionProperties selection)
+        public S3UploadResult UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSlectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Single file selection properties may not be null");
@@ -176,9 +192,9 @@ namespace Calamari.Aws.Deployment.Conventions
                 _ => new List<string>{ filePath })
                 .Install(deployment);
     
-                CreateRequest(filePath, selection.BucketKey, selection)
+            return CreateRequest(filePath, selection.BucketKey, selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
-                    .Tee(x => HandleUploadRequest(clientFactory(), x));
+                    .Map(x => HandleUploadRequest(clientFactory(), x));
         }
 
         /// <summary>
@@ -187,15 +203,15 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="options"></param>
-        public void UploadUsingPackage(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3PackageOptions options)
+        public S3UploadResult UploadUsingPackage(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3PackageOptions options)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
-            CreateRequest(deployment.PackageFilePath, options.BucketKey, options)
+            return CreateRequest(deployment.PackageFilePath, options.BucketKey, options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
-                .Tee(x => HandleUploadRequest(clientFactory(), x));
+                .Map(x => HandleUploadRequest(clientFactory(), x));
         }
 
         /// <summary>
@@ -253,11 +269,11 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="client"></param>
         /// <param name="request"></param>
-        private void HandleUploadRequest(AmazonS3Client client, PutObjectRequest request)
+        private S3UploadResult HandleUploadRequest(AmazonS3Client client, PutObjectRequest request)
         {
             try
             {
-                client.PutObject(request);
+                return new S3UploadResult(request, Maybe<PutObjectResponse>.Some(client.PutObject(request)));
             }
             catch (AmazonS3Exception ex)
             {
@@ -271,6 +287,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
                 perFileUploadErrors[ex.ErrorCode](request, ex).Tee(Log.Warn);
             }
+            return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
         }
 
         /// <summary>
