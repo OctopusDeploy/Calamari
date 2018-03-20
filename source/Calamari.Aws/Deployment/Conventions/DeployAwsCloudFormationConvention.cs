@@ -19,7 +19,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Newtonsoft.Json;
-using Octopus.Core.Extensions;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
