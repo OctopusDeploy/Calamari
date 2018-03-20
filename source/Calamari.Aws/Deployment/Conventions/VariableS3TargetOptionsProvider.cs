@@ -6,7 +6,7 @@ using Calamari.Integration.Processes;
 using Calamari.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Octopus.Core.Extensions;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {

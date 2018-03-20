@@ -1,7 +1,6 @@
-﻿using Amazon.Runtime;
-using Amazon.S3;
+﻿using Amazon.S3;
 using Calamari.Aws.Integration;
-using Octopus.Core.Extensions;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Util
 {

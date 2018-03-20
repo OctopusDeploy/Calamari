@@ -1,5 +1,5 @@
 ﻿using Amazon.S3.Model;
-using Octopus.Core.Util;
+using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Deployment.Conventions
 {

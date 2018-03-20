@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Amazon.IdentityManagement;
+﻿using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Integration;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Octopus.Core.Extensions;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {

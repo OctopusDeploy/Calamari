@@ -14,8 +14,8 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
-using Octopus.Core.Extensions;
-using Octopus.Core.Util;
+using Octopus.CoreUtilities;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
