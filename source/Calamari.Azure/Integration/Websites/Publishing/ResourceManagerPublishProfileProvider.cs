@@ -40,11 +40,11 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     .Where(rg => string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(rg.Name, resourceGroupName, StringComparison.InvariantCultureIgnoreCase))
                     .Select(rg => rg.Name)
                     .ToList();
-
+                
+                siteName = AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(siteName);
                 foreach (var resourceGroup in resourceGroups)
                 {
-                    AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(ref siteName);
-                    Log.Verbose($"Looking up siteName {siteName}");
+                    Log.Verbose($"Looking up siteName {siteName} in resourceGroup {resourceGroup}");
 
                     var matchingSite = webSiteClient.WebApps
                         .ListByResourceGroup(resourceGroup, true)
@@ -68,7 +68,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     }
                     else if (!string.IsNullOrWhiteSpace(deploymentSlot))
                     {
-                        Log.Verbose($"Using the deployment slot found as defined on the step ({deploymentSlot}).");
+                        Log.Verbose($"Using the deployment slot as defined on the step ({deploymentSlot}).");
                         siteAndSlotPath = $"{matchingSite.Name}/slots/{deploymentSlot}";
                     }
 

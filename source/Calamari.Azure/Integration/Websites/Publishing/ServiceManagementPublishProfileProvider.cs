@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.WebSites.Models;
@@ -12,17 +13,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         public static SitePublishProfile GetPublishProperties(string subscriptionId, byte[] certificateBytes, string siteName, string deploymentSlot, string serviceManagementEndpoint)
         {
             Log.Verbose($"Service Management endpoint is {serviceManagementEndpoint}");
-            var siteAndSlot = siteName;
-            if (siteName.Contains("/") || siteName.EndsWith(")")) // Oh God, old-Azure used to wrap the siteName in brackets, new-Azure uses a slash #plsKillMe
-            {
-                Log.Verbose($"Using the deployment slot found on the site name {siteName}.");
-            }
-            else if (!string.IsNullOrWhiteSpace(deploymentSlot))
-            {
-                Log.Verbose($"Using the deployment slot found as defined on the step ({deploymentSlot}).");
-                siteAndSlot = $"{siteName}({deploymentSlot})"; // Legacy style naming, since we're using older management cert libraries.
-            }
-
+            var siteAndSlot = AzureWebAppHelper.GetLegacySiteAndSlotName(siteName, deploymentSlot);
             Log.Verbose($"Retrieving publishing profile for {siteAndSlot}");
             using (var cloudClient = CloudContext.Clients.CreateWebSiteManagementClient(
                 new CertificateCloudCredentials(subscriptionId, new X509Certificate2(certificateBytes)),new Uri(serviceManagementEndpoint)))

@@ -58,19 +58,9 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 try
                 {
-                    AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(ref siteName);
-                    Log.Verbose($"Using siteName {siteName}");
-
-                    var siteAndSlot = siteName;
-                    if (siteName.Contains("/"))
-                    {
-                        Log.Verbose($"Using the deployment slot found on the site name {siteName}.");
-                    }
-                    else if (!string.IsNullOrWhiteSpace(deploymentSlot))
-                    {
-                        Log.Verbose($"Using the deployment slot found as defined on the step ({deploymentSlot}).");
-                        siteAndSlot = $"{siteName}-{deploymentSlot}";
-                    }
+                    siteName = AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(siteName);
+                    var siteAndSlot = AzureWebAppHelper.GetSiteAndSlotName(siteName, deploymentSlot);
+                    Log.Verbose($"Using siteAndSlot {siteAndSlot}");
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
