@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Websites.Publishing;
+using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -26,13 +27,10 @@ namespace Calamari.Azure.Deployment.Conventions
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var deploymentSlot = variables.Get(SpecialVariables.Action.Azure.DeploymentSlot);
 
-            var deploymentSlotText = string.IsNullOrEmpty(deploymentSlot)
-                ? string.Empty
-                : $" in Deployment Slot {deploymentSlot}";
             var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
                 ? string.Empty
                 : $" in Resource Group {resourceGroupName}";
-            Log.Info($"Deploying to Azure WebApp '{siteName}'{deploymentSlotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
+            Log.Info($"Deploying to Azure WebApp '{siteName}'{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
 
@@ -60,7 +58,19 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 try
                 {
-                    var siteAndSlot = !string.IsNullOrEmpty(deploymentSlot) ? $"{siteName}-{deploymentSlot}" : siteName;
+                    AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(ref siteName);
+                    Log.Verbose($"Using siteName {siteName}");
+
+                    var siteAndSlot = siteName;
+                    if (siteName.Contains("/"))
+                    {
+                        Log.Verbose($"Using the deployment slot found on the site name {siteName}.");
+                    }
+                    else if (!string.IsNullOrWhiteSpace(deploymentSlot))
+                    {
+                        Log.Verbose($"Using the deployment slot found as defined on the step ({deploymentSlot}).");
+                        siteAndSlot = $"{siteName}-{deploymentSlot}";
+                    }
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(

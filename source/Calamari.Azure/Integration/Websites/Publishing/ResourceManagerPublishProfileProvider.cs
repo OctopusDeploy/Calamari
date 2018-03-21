@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure.Integration.Security;
+using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Models;
@@ -42,19 +43,38 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 foreach (var resourceGroup in resourceGroups)
                 {
-                    var siteResponse = webSiteClient.WebApps.GetWithHttpMessagesAsync(resourceGroup, siteName).Result;
-                    var matchingSite = siteResponse.Body;
+                    AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(ref siteName);
+                    Log.Verbose($"Looking up siteName {siteName}");
+
+                    var matchingSite = webSiteClient.WebApps
+                        .ListByResourceGroup(resourceGroup, true)
+                        .ToList()
+                        .FirstOrDefault(x => string.Equals(x.Name, siteName, StringComparison.CurrentCultureIgnoreCase));
+
                     if (matchingSite == null)
                         continue;
 
                     // ARM resource ID of the source app. App resource ID is of the form:
                     //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName} for production slots and
                     //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName}/slots/{slotName} for other slots.
-                    var deploymentSlotPath = !string.IsNullOrWhiteSpace(deploymentSlot) ? $"/slots/{deploymentSlot}" : null;
+
+                    // We allow the slot to be defined on both the target directly (which will come through on the matchingSite.Name) or on the 
+                    // step for backwards compatibility with older Azure steps.
+                    var siteAndSlotPath = matchingSite.Name;
+                    if (matchingSite.Name.Contains("/"))
+                    {
+                        Log.Verbose($"Using the deployment slot found on the site name {matchingSite.Name}.");
+                        siteAndSlotPath = matchingSite.Name.Replace("/", "/slots/");
+                    }
+                    else if (!string.IsNullOrWhiteSpace(deploymentSlot))
+                    {
+                        Log.Verbose($"Using the deployment slot found as defined on the step ({deploymentSlot}).");
+                        siteAndSlotPath = $"{matchingSite.Name}/slots/{deploymentSlot}";
+                    }
 
                     // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
                     var publishSettingsUri = new Uri(resourcesClient.BaseUri,
-                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{matchingSite.Name}{deploymentSlotPath}/config/publishingCredentials/list?api-version=2015-08-01");
+                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{siteAndSlotPath}/config/publishingCredentials/list?api-version=2015-08-01");
                     Log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
 
                     SitePublishProfile publishProperties = null;
@@ -83,8 +103,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     return publishProperties;
                 }
 
-                throw new CommandException(
-                    $"Could not find Azure WebSite '{siteName}' in subscription '{subscriptionId}'");
+                throw new CommandException($"Could not find Azure WebSite '{siteName}' in subscription '{subscriptionId}'");
             }
         }
     }
