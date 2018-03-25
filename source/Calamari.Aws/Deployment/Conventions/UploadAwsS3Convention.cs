@@ -164,7 +164,8 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 yield return CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
                     .Tee(x => LogPutObjectRequest(matchedFile, x))
-                    .Map(x => HandleUploadRequest(clientFactory(), x));
+                    //We only warn on multi file uploads 
+                    .Map(x => HandleUploadRequest(clientFactory(), x, Log.Warn));
             }
         }
 
@@ -194,7 +195,7 @@ namespace Calamari.Aws.Deployment.Conventions
     
             return CreateRequest(filePath, selection.BucketKey, selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
-                    .Map(x => HandleUploadRequest(clientFactory(), x));
+                    .Map(x => HandleUploadRequest(clientFactory(), x, Log.Error));
         }
 
         /// <summary>
@@ -211,7 +212,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return CreateRequest(deployment.PackageFilePath, options.BucketKey, options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
-                .Map(x => HandleUploadRequest(clientFactory(), x));
+                .Map(x => HandleUploadRequest(clientFactory(), x, Log.Error));
         }
 
         /// <summary>
@@ -267,9 +268,10 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Handle the file upload request throwing exceptions only on errors from AWS which is critical enough to fail
         /// the entire deployment i.e. access denied while per file errors will result in warnings.
         /// </summary>
-        /// <param name="client"></param>
-        /// <param name="request"></param>
-        private S3UploadResult HandleUploadRequest(AmazonS3Client client, PutObjectRequest request)
+        /// <param name="client">The client to use</param>
+        /// <param name="request">The request to send</param>
+        /// <param name="log">Where to log per file upload errors</param>
+        private S3UploadResult HandleUploadRequest(AmazonS3Client client, PutObjectRequest request, Action<string> log)
         {
             try
             {
@@ -285,7 +287,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         "For more information visit https://g.octopushq.com/AwsS3Upload#aws-s3-error-0002");
 
                 if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
-                perFileUploadErrors[ex.ErrorCode](request, ex).Tee(Log.Warn);
+                perFileUploadErrors[ex.ErrorCode](request, ex).Tee(log);
             }
             return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
         }
