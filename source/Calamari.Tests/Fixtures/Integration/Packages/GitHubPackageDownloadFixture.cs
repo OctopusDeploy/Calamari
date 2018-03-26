@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
 
         [Test]
-#if NETCORE
+#if NETFX
         [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
 #endif
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
@@ -70,7 +70,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
-#if NETCORE
+#if NETFX
         [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
 #endif
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
@@ -96,7 +96,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
-#if NETCORE
+#if NETFX
         [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
 #endif
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
