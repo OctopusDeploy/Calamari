@@ -70,8 +70,15 @@ namespace Calamari.Azure.Integration
             }
         }
 
+        // TODO: Remove this when the old pipeline Azure steps are removed
         static void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
+            if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Bootstrapper.ModulePaths)))
+            {
+                SetOutputVariable("OctopusUseBundledAzureModules", "false", variables);
+                return;
+            }
+            
             // By default use the Azure PowerShell modules bundled with Calamari
             // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
             SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
