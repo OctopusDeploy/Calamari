@@ -48,7 +48,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 Directory.Delete(rootDir, true);
         }
 
+
+
         [Test]
+#if NETCORE
+        [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
+#endif
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void DownloadsPackageFromGitHub()
@@ -65,6 +70,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
+#if NETCORE
+        [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
+#endif
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void WillReUseFileIfItExists()
         {
@@ -88,6 +96,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
+#if NETCORE
+        [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
+#endif
         [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void DownloadsPackageFromGitHubWithDifferentVersionFormat()
         {
