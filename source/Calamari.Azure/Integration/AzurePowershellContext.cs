@@ -70,7 +70,7 @@ namespace Calamari.Azure.Integration
             }
         }
 
-        // TODO: Remove this when the old pipeline Azure steps are removed
+        // TODO: Remove this and the code that uses SpecialVariables.Action.Azure.Output.ModulePath when the old pipeline Azure steps are removed
         static void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
             if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Bootstrapper.ModulePaths)))
