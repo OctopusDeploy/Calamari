@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -69,7 +70,8 @@ namespace Calamari.Aws.Deployment.Conventions
             { "KeyTooLongError", ExceptionMessageWithFilePath },
             { "SignatureDoesNotMatch", ExceptionMessageWithFilePath },
             { "InvalidStorageClass", ExceptionMessageWithFilePath },
-            { "InvalidArgument",  InvalidArgumentExceptionMessage }
+            { "InvalidArgument",  InvalidArgumentExceptionMessage },
+            { "InvalidTag", ExceptionMessageWithFilePath }
         };
 
         public void Install(RunningDeployment deployment)
@@ -88,7 +90,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     {
                         if (response.IsSuccess())
                         {
-                            Log.Info($"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{response.BucketKey}]\"");
+                            Log.Info(
+                                $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{response.BucketKey}]\"");
                             Log.SetOutputVariable($"Files[{response.BucketKey}]", response.Version);
                         }
                     }
@@ -99,16 +102,27 @@ namespace Calamari.Aws.Deployment.Conventions
                 if (exception.ErrorCode == "AccessDenied")
                 {
                     throw new PermissionException("The AWS account used to perform the operation does not have the " +
-                        $"the required permissions to upload to bucket {bucket}");
+                                                  $"the required permissions to upload to bucket {bucket}");
                 }
 
-                throw new UnknownException($"An unrecognised {exception.ErrorCode} error was thrown while uploading to bucket {bucket}");
+                throw new UnknownException(
+                    $"An unrecognised {exception.ErrorCode} error was thrown while uploading to bucket {bucket}");
             }
             catch (AmazonServiceException exception)
             {
                 HandleAmazonServiceException(exception);
                 throw;
             }
+        }
+
+        private static void ThrowInvalidFileUpload(Exception exception, string message)
+        {
+            throw new AmazonFileUploadException(message, exception);
+        }
+
+        private static void WarnAndIgnoreException(Exception exception, string message)
+        {
+            Log.Warn(message);
         }
 
         private IEnumerable<S3UploadResult> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
@@ -165,7 +179,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 yield return CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
                     .Tee(x => LogPutObjectRequest(matchedFile, x))
                     //We only warn on multi file uploads 
-                    .Map(x => HandleUploadRequest(clientFactory(), x, Log.Warn));
+                    .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));
             }
         }
 
@@ -195,7 +209,7 @@ namespace Calamari.Aws.Deployment.Conventions
     
             return CreateRequest(filePath, selection.BucketKey, selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
-                    .Map(x => HandleUploadRequest(clientFactory(), x, Log.Error));
+                    .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
 
         /// <summary>
@@ -212,7 +226,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return CreateRequest(deployment.PackageFilePath, options.BucketKey, options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
-                .Map(x => HandleUploadRequest(clientFactory(), x, Log.Error));
+                .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
 
         /// <summary>
@@ -270,8 +284,8 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="client">The client to use</param>
         /// <param name="request">The request to send</param>
-        /// <param name="log">Where to log per file upload errors</param>
-        private S3UploadResult HandleUploadRequest(AmazonS3Client client, PutObjectRequest request, Action<string> log)
+        /// <param name="errorAction">Action to take on per file error</param>
+        private S3UploadResult HandleUploadRequest(AmazonS3Client client, PutObjectRequest request, Action<AmazonS3Exception, string> errorAction)
         {
             try
             {
@@ -287,8 +301,14 @@ namespace Calamari.Aws.Deployment.Conventions
                         "For more information visit https://g.octopushq.com/AwsS3Upload#aws-s3-error-0002");
 
                 if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
-                perFileUploadErrors[ex.ErrorCode](request, ex).Tee(log);
+                perFileUploadErrors[ex.ErrorCode](request, ex).Tee((message) => errorAction(ex, message));
             }
+            catch (ArgumentException exception)
+            {
+                throw new AmazonFileUploadException($"AWS-S3-ERROR-0003: An error occurred uploading file with bucket key {request.Key} possibly due to metadata.\n" +
+                    "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n"), exception);
+            }
+
             return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
         }
 
