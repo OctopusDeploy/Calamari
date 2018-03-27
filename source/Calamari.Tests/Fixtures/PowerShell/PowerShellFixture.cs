@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Assent;
 using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
 
@@ -136,6 +139,28 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello NameToEncrypt");
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldCallHelloWithAdditionalBase64Variable()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new Dictionary<string, string> {["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve"};
+            var serialized = JsonConvert.SerializeObject(variables);
+            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(serialized));
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "OuputVariableFromPrevious.ps1"))
+                    .Argument("base64Variables", encoded));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello Steve");
             }
         }
 

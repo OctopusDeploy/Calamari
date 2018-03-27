@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
@@ -17,7 +18,7 @@ namespace Calamari.Integration.Processes
 
         public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
 
-        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword)
+        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string base64Variables = null)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -36,7 +37,6 @@ namespace Calamari.Integration.Processes
                     ? fileSystem.ReadFile(sensitiveFilePath)
                     : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
 
-
                 try
                 {
                     var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
@@ -48,6 +48,23 @@ namespace Calamari.Integration.Processes
                 catch (JsonReaderException)
                 {
                     throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(base64Variables))
+            {
+                try
+                {
+                    var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Variables));
+                    var variables = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    foreach (var variable in variables)
+                    {
+                        Set(variable.Key, variable.Value);
+                    }
+                }
+                catch (JsonReaderException)
+                {
+                    throw new CommandException("Unable to parse jsonVariables as valid JSON.");
                 }
             }
         }

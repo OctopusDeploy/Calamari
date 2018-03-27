@@ -21,6 +21,7 @@ namespace Calamari.Commands
     public class RunScriptCommand : Command
     {
         private string variablesFile;
+        private string base64Variables;
         private string scriptFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
@@ -33,6 +34,7 @@ namespace Calamari.Commands
         public RunScriptCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            Options.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", "Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFile = Path.GetFullPath(v));
             Options.Add("scriptParameters=", "Parameters to pass to the script.", v => scriptParameters = v);
@@ -45,7 +47,7 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, base64Variables);
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
