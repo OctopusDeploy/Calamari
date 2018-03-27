@@ -9,7 +9,7 @@ namespace Calamari.Aws.Integration.S3
     {
         public static List<Tag> ToTagSet(this IEnumerable<KeyValuePair<string, string>> source)
         {
-            return source?.Select(x => new Tag {Key = x.Key, Value = x.Value}).ToList() ?? new List<Tag>();
+            return source?.Select(x => new Tag {Key = x.Key, Value = x.Value?.Trim()}).ToList() ?? new List<Tag>();
         }
 
         public static PutObjectRequest WithMetadata(this PutObjectRequest request, IEnumerable<KeyValuePair<string, string>> source)
@@ -18,7 +18,7 @@ namespace Calamari.Aws.Integration.S3
             {
                 foreach (var item in source)
                 {
-                    x.Metadata.Add(item.Key, item.Value);
+                    x.Metadata.Add(item.Key, item.Value?.Trim());
                 }
             });
         }
