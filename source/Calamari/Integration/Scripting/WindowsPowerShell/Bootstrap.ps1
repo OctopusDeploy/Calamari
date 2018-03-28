@@ -325,7 +325,11 @@ function Import-CalamariModules() {
 	if ($OctopusParameters.ContainsKey("Octopus.Calamari.Bootstrapper.ModulePaths")) {
 		$calamariModulePaths = $OctopusParameters["Octopus.Calamari.Bootstrapper.ModulePaths"].Split(";", [StringSplitOptions]'RemoveEmptyEntries')
 		foreach ($calamariModulePath in $calamariModulePaths) {
-			Import-Module –Name $calamariModulePath.Replace("{{TentacleHome}}", $env:TentacleHome)
+		    if($calamariModulePath.EndsWith(".psd1")) {
+		        Import-Module –Name $calamariModulePath.Replace("{{TentacleHome}}", $env:TentacleHome)
+		    } else {
+        		$env:PSModulePath = $calamariModulePath + ";" + $env:PSModulePath
+		    }
 		}
 	}
 }
