@@ -219,7 +219,7 @@ function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudSe
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
 
-	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $octopusAccountIdOrName, $octopusRoles -join ' '
+	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $swap, $instanceCount, $octopusAccountIdOrName, $octopusRoles -join ' '
 
 	Write-Host "##octopus[create-azurecloudservicetarget $($parameters)]"
 }
