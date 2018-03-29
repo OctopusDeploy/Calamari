@@ -190,7 +190,7 @@ function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [stri
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
 }
 
-function New-OctopusServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles) 
+function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
 	$azureConnectionEndpoint = Convert-ToServiceMessageParameter -name "connectionEndpoint" -value $azureConnectionEndpoint
@@ -206,6 +206,22 @@ function New-OctopusServiceFabricTarget([string]$name, [string]$azureConnectionE
 	$parameters = $name, $azureConnectionEndpoint, $azureSecurityMode, $azureCertificateThumbprint, $azureActiveDirectoryUsername, $azureActiveDirectoryPassword, $certificateStoreLocation, $certificateStoreName, $octopusCertificateIdOrName, $octopusRoles -join ' '
 
 	Write-Host "##octopus[create-azureservicefabrictarget $($parameters)]"
+}
+
+function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudServiceName, [string]$azureStorageAccount, [string]$azureDeploymentSlot, [string]$swap, [string]$instanceCount, [string]$octopusAccountIdOrName, [string]$octopusRoles) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "azureCloudServiceName" -value $azureCloudServiceName
+	$azureStorageAccount = Convert-ToServiceMessageParameter -name "azureStorageAccount" -value $azureStorageAccount
+	$azureDeploymentSlot = Convert-ToServiceMessageParameter -name "azureDeploymentSlot" -value $azureDeploymentSlot
+	$swap = Convert-ToServiceMessageParameter -name "swap" -value $swap
+	$instanceCount = Convert-ToServiceMessageParameter -name "instanceCount" -value $instanceCount
+	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
+	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+
+	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $octopusAccountIdOrName, $octopusRoles -join ' '
+
+	Write-Host "##octopus[create-azurecloudservicetarget $($parameters)]"
 }
 
 function Remove-OctopusTarget([string] $targetIdOrName)
