@@ -4,9 +4,12 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Util;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.S3;
@@ -15,6 +18,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
+using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -244,8 +248,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return new PutObjectRequest
                 {
-                    BucketName = bucket?.Trim(),
                     FilePath = path,
+                    BucketName = bucket?.Trim(),
                     Key = bucketKey?.Trim(),
                     StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
                     CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
@@ -289,6 +293,13 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
+                if (SkipUpload(client, request))
+                {
+                    Log.Verbose(
+                        $"Object key {request.Key} exists for bucket {request.BucketName} with same content hash. Skipping upload.");
+                    return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
+                }
+
                 return new S3UploadResult(request, Maybe<PutObjectResponse>.Some(client.PutObject(request)));
             }
             catch (AmazonS3Exception ex)
@@ -302,15 +313,86 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
                 perFileUploadErrors[ex.ErrorCode](request, ex).Tee((message) => errorAction(ex, message));
+                return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
             }
             catch (ArgumentException exception)
             {
                 throw new AmazonFileUploadException($"AWS-S3-ERROR-0003: An error occurred uploading file with bucket key {request.Key} possibly due to metadata.\n" +
                     "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n"), exception);
             }
-
-            return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
         }
+        
+        /// <summary>
+        /// Check whether the object key exists and hash is equivalent. If these are the same we will skip the upload.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private bool SkipUpload(AmazonS3Client client, PutObjectRequest request)
+        {
+            //This isn't ideal, however the AWS SDK doesn't really provide any means to check the existence of an object.
+            try
+            {
+                // Encoding encoding;
+                //request.Headers.ContentMD5 = Convert.ToBase64String(Encoding.UTF8.GetBytes("7ea4a05b5093c4b2fd37a55036583e4d"));
+                request.Headers.ContentMD5 = AmazonS3Util.GenerateChecksumForContent(fileSystem.ReadFile(request.FilePath), true);
+                request.MD5Digest = AmazonS3Util.GenerateChecksumForContent(fileSystem.ReadFile(request.FilePath), true);
+                Log.Info(AmazonS3Util.GenerateChecksumForContent(fileSystem.ReadFile(request.FilePath), true));
+                
+                var info = new FileInfo(request.FilePath);
+                using (var stream = info.OpenRead())
+                using (var reader = new StreamReader(stream))
+                {
+                    var content = reader.ReadToEnd();
+                    Log.Info(Encoding.UTF8.GetByteCount(content).ToString());
+                    Log.Info(AmazonS3Util.GenerateChecksumForContent(reader.ReadToEnd(), false));
+                    reader.Dispose();
+                    stream.Dispose();
+            
+                }
+                    //  request.Headers.ContentMD5 = AmazonS3Util.GenerateChecksumForContent(fileSystem.ReadFile(request.FilePath, out encoding), false);
+                    // Log.Info(JsonConvert.SerializeObject(encoding.EncodingName));
+                    var metadata = client.GetObjectMetadata(request.BucketName, request.Key);
+                Log.Info("REQUEST:\r\n______________________________\r\n");
+                Log.Info(JsonConvert.SerializeObject(request, Formatting.Indented));
+                Log.Info(request.MD5Digest);
+                Log.Info(request.Headers.ContentMD5);
+
+                Log.Info("METADATA:\r\n_____________________________\r\n");
+                Log.Info(JsonConvert.SerializeObject(metadata, Formatting.Indented));
+                Log.Info("ETAG: " + metadata.ETag);
+                return metadata.ETag == request.Headers.ContentMD5;
+            }
+            catch (AmazonServiceException exception)
+            {
+                if (exception.StatusCode == HttpStatusCode.NotFound)
+                {
+                    Log.Info("Object not found");
+                    return false;
+                }
+
+                throw;
+            }
+        }
+
+        private static string CalculateMd5Hash(string input)
+        {
+            MD5 md5 = MD5.Create();
+
+            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
+            byte[] hash = md5.ComputeHash(inputBytes);
+
+
+            var sb = new StringBuilder();
+
+            foreach (var t in hash)
+            {
+                sb.Append(t.ToString("x2"));
+            }
+
+            return sb.ToString();
+        }
+
 
         /// <summary>
         /// The AmazonServiceException can hold additional information that is useful to include in

@@ -3,5 +3,7 @@
     public class S3PackageOptions: S3TargetPropertiesBase
     {
         public string BucketKey { get; set; }
+        public string BucketKeyPrefix { get; set; }
+        public BucketKeyBehaviourType BucketKeyBehaviour { get; set; }
     }
 }

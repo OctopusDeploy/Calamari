@@ -1,8 +1,10 @@
-﻿using Amazon.S3.Model;
+﻿using System.Collections.Generic;
+using Amazon.S3.Model;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
+  
     public class S3UploadResult
     {
         private PutObjectRequest Request { get; }
