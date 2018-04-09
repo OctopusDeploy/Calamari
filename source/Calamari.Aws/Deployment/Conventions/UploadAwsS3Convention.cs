@@ -174,7 +174,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             foreach (var matchedFile in files)
             {
-                yield return CreateRequest(matchedFile, GetBucketKey(fileSystem, matchedFile, new S3MultiFileSelecitonBucketKeyAdapter(selection)), selection)
+                yield return CreateRequest(matchedFile, GetBucketKey(fileSystem, matchedFile, new S3MultiFileSelectionBucketKeyAdapter(selection)), selection)
                     .Tee(x => LogPutObjectRequest(matchedFile, x))
                     //We only warn on multi file uploads 
                     .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));

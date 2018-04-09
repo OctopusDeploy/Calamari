@@ -7,11 +7,11 @@
         string BucketKeyPrefix { get; }
     }
 
-    public class S3MultiFileSelecitonBucketKeyAdapter: IHaveBucketKeyBehaviour
+    public class S3MultiFileSelectionBucketKeyAdapter: IHaveBucketKeyBehaviour
     {
         private readonly S3MultiFileSelectionProperties properties;
 
-        public S3MultiFileSelecitonBucketKeyAdapter(S3MultiFileSelectionProperties properties)
+        public S3MultiFileSelectionBucketKeyAdapter(S3MultiFileSelectionProperties properties)
         {
             this.properties = properties;
         }
