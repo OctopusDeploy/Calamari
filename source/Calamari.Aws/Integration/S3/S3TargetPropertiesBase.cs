@@ -19,6 +19,5 @@ namespace Calamari.Aws.Integration.S3
         public List<KeyValuePair<string, string>> Metadata { get; set;  } = new List<KeyValuePair<string, string>>();
         public string CannedAcl { get; set; }
         public string StorageClass { get; set; }
-        public bool Overwrite { get; set; }
     }
 }

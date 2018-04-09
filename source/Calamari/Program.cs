@@ -24,7 +24,6 @@ namespace Calamari
 
         static int Main(string[] args)
         {
-            Debugger.Launch();
             var program = new Program("Calamari", typeof(Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation());
             return program.Execute(args);
         }
