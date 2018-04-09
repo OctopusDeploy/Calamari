@@ -342,13 +342,13 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 var metadata = client.GetObjectMetadata(request.BucketName, request.Key);
-                return !metadata.GetEtag().IsSameAsRequestDigest(request);
+                return !metadata.GetEtag().IsSameAsRequestMd5Digest(request);
             }
             catch (AmazonServiceException exception)
             {
                 if (exception.StatusCode == HttpStatusCode.NotFound)
                 {
-                    return false;
+                    return true;
                 }
 
                 throw;

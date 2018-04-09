@@ -3,7 +3,8 @@
 using System.Linq;
 using Amazon.S3.Model;
 ﻿using System;
- using Calamari.Integration.FileSystem;
+using System.Security.Cryptography;
+using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
@@ -40,16 +41,9 @@ namespace Calamari.Aws.Integration.S3
 
         private static Maybe<byte[]> GetMd5Checksum(ICalamariFileSystem fileSystem, string path)
         {
-            return !fileSystem.FileExists(path) ? Maybe<byte[]>.None : Maybe<byte[]>.Some(MD5HashHelper.GetFileMd5Checksum(fileSystem, path));
+            return !fileSystem.FileExists(path) ? Maybe<byte[]>.None : Maybe<byte[]>.Some(HashCalculator.Hash(path, MD5.Create));
         }
-
-        private static string ToHexString(byte[] data)
-        {
-            return BitConverter.ToString(data)
-                .Replace("-", string.Empty)
-                .ToLower();
-        }
-
+        
         public static PutObjectRequest WithMd5Digest(this PutObjectRequest request, ICalamariFileSystem fileSystem, bool overwrite = false)
         {
             if (!string.IsNullOrEmpty(request.MD5Digest) && !overwrite)
@@ -64,7 +58,7 @@ namespace Calamari.Aws.Integration.S3
 
         public static string Md5DigestToHexString(this PutObjectRequest request)
         {
-            return Convert.FromBase64String(request.MD5Digest).Map(ToHexString);
+            return Convert.FromBase64String(request.MD5Digest).Map(BinaryExtensions.ToHexString);
         }
 
         public static ETag GetEtag(this GetObjectMetadataResponse metadata)
@@ -72,7 +66,7 @@ namespace Calamari.Aws.Integration.S3
             return new ETag(metadata.ETag);
         }
 
-        public static bool IsSameAsRequestDigest(this ETag etag, PutObjectRequest request)
+        public static bool IsSameAsRequestMd5Digest(this ETag etag, PutObjectRequest request)
         {
             return string.Compare(etag.Hash, request.Md5DigestToHexString(), StringComparison.InvariantCultureIgnoreCase) == 0;
         }

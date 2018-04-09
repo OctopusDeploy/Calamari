@@ -28,6 +28,5 @@
     <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.5.3" />
     <PackageReference Include="AWSSDK.S3" Version="3.3.17" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.3.3" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
   </ItemGroup>
 </Project>
