@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -90,14 +89,13 @@ namespace Calamari.Aws.Deployment.Conventions
                     {
                         if (response.IsSuccess())
                         {
-                            Log.Info(
-                                $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{response.BucketKey}]\"");
+                            Log.Info($"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{response.BucketKey}]\"");
                             Log.SetOutputVariable($"Files[{response.BucketKey}]", response.Version);
                         }
                     }
                 });
             }
-            catch (AmazonS3Exception exception)
+             catch (AmazonS3Exception exception)
             {
                 if (exception.ErrorCode == "AccessDenied")
                 {
@@ -176,7 +174,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             foreach (var matchedFile in files)
             {
-                yield return CreateRequest(matchedFile, $"{selection.BucketKeyPrefix}{fileSystem.GetFileName(matchedFile)}", selection)
+                yield return CreateRequest(matchedFile, GetBucketKey(fileSystem, matchedFile, new S3MultiFileSelectionBucketKeyAdapter(selection)), selection)
                     .Tee(x => LogPutObjectRequest(matchedFile, x))
                     //We only warn on multi file uploads 
                     .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));
@@ -207,7 +205,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 _ => new List<string>{ filePath })
                 .Install(deployment);
     
-            return CreateRequest(filePath, selection.BucketKey, selection)
+            return CreateRequest(filePath, GetBucketKey(fileSystem, filePath, selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
                     .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -224,7 +222,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
-            return CreateRequest(deployment.PackageFilePath, options.BucketKey, options)
+            return CreateRequest(deployment.PackageFilePath, GetBucketKey(fileSystem, deployment.PackageFilePath, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -236,22 +234,36 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="bucketKey"></param>
         /// <param name="properties"></param>
         /// <returns>PutObjectRequest with all information including metadata and tags from provided properties</returns>
-        private PutObjectRequest CreateRequest(string path, string bucketKey, S3TargetPropertiesBase properties)
+        private PutObjectRequest CreateRequest(string path, Func<string> bucketKey, S3TargetPropertiesBase properties)
         {
             Guard.NotNullOrWhiteSpace(path, "The given path may not be null");
             Guard.NotNullOrWhiteSpace(bucket, "The provided bucket key may not be null");
             Guard.NotNull(properties, "Target properties may not be null");
 
             return new PutObjectRequest
-                {
-                    BucketName = bucket?.Trim(),
-                    FilePath = path,
-                    Key = bucketKey?.Trim(),
-                    StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
-                    CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
+            {
+                FilePath = path,
+                BucketName = bucket?.Trim(),
+                Key = bucketKey()?.Trim(),
+                StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
+                CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
             }
-                .WithMetadata(properties)
-                .WithTags(properties);
+            .WithMetadata(properties)
+            .WithTags(properties)
+            .WithMd5Digest(fileSystem);
+        }
+
+        private static Func<string> GetBucketKey(ICalamariFileSystem fileSystem, string filePath, IHaveBucketKeyBehaviour behaviour)
+        {
+            switch (behaviour.BucketKeyBehaviour)
+            {
+                case BucketKeyBehaviourType.Custom:
+                    return () => behaviour.BucketKey;
+                case BucketKeyBehaviourType.Filename:
+                    return () => $"{behaviour.BucketKeyPrefix}{fileSystem.GetFileName(filePath)}";
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         /// <summary>
@@ -261,7 +273,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="request"></param>
         private static void LogPutObjectRequest(string fileOrPackageDescription, PutObjectRequest request)
         {
-            Log.Info($"Uploading {fileOrPackageDescription} to bucket {request.BucketName} with key {request.Key}.");
+            Log.Info($"Attempting to upload {fileOrPackageDescription} to bucket {request.BucketName} with key {request.Key}.");
         }
 
         /// <summary>
@@ -289,6 +301,13 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
+                if (!ShouldUpload(client, request))
+                {
+                    Log.Verbose(
+                        $"Object key {request.Key} exists for bucket {request.BucketName} with same content hash. Skipping upload.");
+                    return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
+                }
+
                 return new S3UploadResult(request, Maybe<PutObjectResponse>.Some(client.PutObject(request)));
             }
             catch (AmazonS3Exception ex)
@@ -302,15 +321,40 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
                 perFileUploadErrors[ex.ErrorCode](request, ex).Tee((message) => errorAction(ex, message));
+                return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
             }
             catch (ArgumentException exception)
             {
                 throw new AmazonFileUploadException($"AWS-S3-ERROR-0003: An error occurred uploading file with bucket key {request.Key} possibly due to metadata.\n" +
-                    "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n"), exception);
+                                                    "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n"), exception);
             }
-
-            return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
         }
+
+        /// <summary>
+        /// Check whether the object key exists and hash is equivalent. If these are the same we will skip the upload.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private bool ShouldUpload(AmazonS3Client client, PutObjectRequest request)
+        {
+            //This isn't ideal, however the AWS SDK doesn't really provide any means to check the existence of an object.
+            try
+            {
+                var metadata = client.GetObjectMetadata(request.BucketName, request.Key);
+                return !metadata.GetEtag().IsSameAsRequestMd5Digest(request);
+            }
+            catch (AmazonServiceException exception)
+            {
+                if (exception.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return true;
+                }
+
+                throw;
+            }
+        }
+
 
         /// <summary>
         /// The AmazonServiceException can hold additional information that is useful to include in

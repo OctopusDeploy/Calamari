@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
 using Calamari.Integration.Scripting;
