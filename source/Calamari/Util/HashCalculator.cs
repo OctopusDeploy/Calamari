@@ -6,10 +6,14 @@ namespace Calamari.Util
 {
     public class HashCalculator
     {
+        public static byte[] Hash(Stream stream, Func<HashAlgorithm> factory)
+        {
+            return factory().ComputeHash(stream);
+        }
+
         public static string Hash(Stream stream)
         {
-            var hash = GetAlgorithm().ComputeHash(stream);
-            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            return DefaultAgorithm().ComputeHash(stream).ToHexString();
         }
 
         public static string Hash(string filename)
@@ -20,7 +24,15 @@ namespace Calamari.Util
             }
         }
 
-        static HashAlgorithm GetAlgorithm()
+        public static byte[] Hash(string filename, Func<HashAlgorithm> factory)
+        {
+            using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+            {
+                return Hash(stream, factory);
+            }
+        }
+
+        static HashAlgorithm DefaultAgorithm()
         {
             return SHA1.Create();
         }
