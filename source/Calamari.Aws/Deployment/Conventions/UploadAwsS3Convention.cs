@@ -84,7 +84,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (!md5HashSupported)
             {
-                Log.Info("Md5 hashes are not supported in executing environment. Files will always be uploaded.");
+                Log.Info("MD5 hashes are not supported in executing environment. Files will always be uploaded.");
             }
 
             var options = optionsProvider.GetOptions(targetMode);
