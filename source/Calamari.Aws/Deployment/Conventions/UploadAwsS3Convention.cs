@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -14,6 +15,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
+using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -27,6 +29,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly S3TargetMode targetMode;
         private readonly IProvideS3TargetOptions optionsProvider;
         private readonly IFileSubstituter fileSubstituter;
+        private readonly bool md5HashSupported;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
         
@@ -44,6 +47,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.targetMode = targetMode;
             this.optionsProvider = optionsProvider;
             this.fileSubstituter = fileSubstituter;
+            this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
         }
 
         private static string ExceptionMessageWithFilePath(PutObjectRequest request, Exception exception)
@@ -77,6 +81,11 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             //The bucket should exist at this point
             Guard.NotNull(deployment, "deployment can not be null");
+
+            if (!md5HashSupported)
+            {
+                Log.Info("MD5 hashes are not supported in executing environment. Files will always be uploaded.");
+            }
 
             var options = optionsProvider.GetOptions(targetMode);
             AmazonS3Client Factory() => ClientHelpers.CreateS3Client(awsEnvironmentGeneration);
@@ -240,17 +249,18 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNullOrWhiteSpace(bucket, "The provided bucket key may not be null");
             Guard.NotNull(properties, "Target properties may not be null");
 
-            return new PutObjectRequest
-            {
-                FilePath = path,
-                BucketName = bucket?.Trim(),
-                Key = bucketKey()?.Trim(),
-                StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
-                CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
-            }
-            .WithMetadata(properties)
-            .WithTags(properties)
-            .WithMd5Digest(fileSystem);
+            var request = new PutObjectRequest
+                {
+                    FilePath = path,
+                    BucketName = bucket?.Trim(),
+                    Key = bucketKey()?.Trim(),
+                    StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
+                    CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
+                }
+                .WithMetadata(properties)
+                .WithTags(properties);
+
+            return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
         private static Func<string> GetBucketKey(ICalamariFileSystem fileSystem, string filePath, IHaveBucketKeyBehaviour behaviour)
@@ -341,6 +351,9 @@ namespace Calamari.Aws.Deployment.Conventions
             //This isn't ideal, however the AWS SDK doesn't really provide any means to check the existence of an object.
             try
             {
+                if (!md5HashSupported)
+                    return true;
+
                 var metadata = client.GetObjectMetadata(request.BucketName, request.Key);
                 return !metadata.GetEtag().IsSameAsRequestMd5Digest(request);
             }
@@ -350,7 +363,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     return true;
                 }
-
+                
                 throw;
             }
         }
@@ -372,4 +385,4 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Tee(message => DisplayWarning("AWS-S3-ERROR-0001", message));
         }
     }
-}
+ }
