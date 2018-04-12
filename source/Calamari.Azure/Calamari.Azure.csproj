@@ -55,7 +55,7 @@
     <PackageReference Include="Microsoft.WindowsAzure.Management.WebSites" Version="4.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="Octopus.Dependencies.AzureBinaries" Version="2.9.0" />
-    <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="5.4.0" />
+    <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="5.7.0" />
     <PackageReference Include="Octostache" Version="2.1.10" />
     <PackageReference Include="Sprache" Version="2.1.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
