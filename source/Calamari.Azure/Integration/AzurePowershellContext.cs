@@ -120,7 +120,7 @@ namespace Calamari.Azure.Integration
         static string GenerateCertificatePassword()
         {
             var random = RandomNumberGenerator.Create();
-            var bytes = new byte[PasswordSizeBytes]; 
+            var bytes = new byte[PasswordSizeBytes];
             random.GetBytes(bytes);
             return Convert.ToBase64String(bytes);
         }

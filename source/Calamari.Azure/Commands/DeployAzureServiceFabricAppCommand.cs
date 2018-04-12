@@ -87,6 +87,7 @@ namespace Calamari.Azure.Commands
                 new SubstituteVariablesInAzureServiceFabricPackageConvention(fileSystem, substituter),
 
                 // Main Service Fabric deployment script execution
+                new EnsureServiceFabricCertificateExistsInStoreConvention(),
                 new DeployAzureServiceFabricAppConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
 
                 // PostDeploy stage
