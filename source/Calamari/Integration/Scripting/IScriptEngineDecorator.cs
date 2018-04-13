@@ -13,12 +13,7 @@
         /// <summary>
         /// The parent script engine wrapped by this decorator
         /// </summary>
-        IScriptEngine Parent { get; set;  }  
-        
-        /// <summary>
-        /// The kind of script engine that this decorator wraps
-        /// </summary>
-        ScriptType Type { get; }
+        IScriptEngine Parent { get; set;  }         
         
         /// <summary>
         /// The name of the decorator

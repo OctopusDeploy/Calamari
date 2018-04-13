@@ -6,8 +6,12 @@ using Calamari.Integration.Scripting.WindowsPowerShell;
 
 namespace Calamari.Azure.Integration
 {
-    public class AzurePowerShellScriptEngine : IScriptEngine
+    public class AzurePowerShellScriptEngine : IScriptEngineDecorator
     {
+        public IScriptEngine Parent { get; set; }
+
+        public string Name => "Azure";
+
         public ScriptType[] GetSupportedTypes()
         {
             return new[] { ScriptType.Powershell };
@@ -22,11 +26,13 @@ namespace Calamari.Azure.Integration
             var powerShellEngine = new PowerShellScriptEngine();
             if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)))
             {
-                return new AzureServiceFabricPowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
+                return new AzureServiceFabricPowerShellContext() { Parent = this.Parent }
+                    .ExecuteScript(script, variables, commandLineRunner);
             }
             else if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
             {
-                return new AzurePowerShellContext().ExecuteScript(powerShellEngine, script, variables, commandLineRunner);
+                return new AzurePowerShellContext() { Parent = this.Parent }
+                .ExecuteScript(script, variables, commandLineRunner);
             }
 
             return powerShellEngine.Execute(script, variables, commandLineRunner, environmentVars);

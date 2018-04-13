@@ -9,13 +9,23 @@ using Octostache;
 using Calamari.Deployment;
 using Calamari.Azure.Util;
 using Calamari.Commands.Support;
+using System.Collections.Specialized;
 
 namespace Calamari.Azure.Integration
 {
-    public class AzureServiceFabricPowerShellContext
+    public class AzureServiceFabricPowerShellContext : IScriptEngineDecorator
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
+
+        public IScriptEngine Parent { get; set; }
+
+        public string Name => "AzureServiceFabric";
+
+        public ScriptType[] GetSupportedTypes()
+        {
+            return new[] { ScriptType.Powershell };
+        }
 
         public AzureServiceFabricPowerShellContext()
         {
@@ -23,7 +33,11 @@ namespace Calamari.Azure.Integration
             this.embeddedResources = new AssemblyEmbeddedResources();
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult ExecuteScript(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null)
         {
             if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
@@ -61,7 +75,7 @@ namespace Calamari.Azure.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                return Parent.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
             }
         }
 
@@ -96,6 +110,11 @@ namespace Calamari.Azure.Integration
                 throw new CommandException($"Variable {variableName} was not supplied");
 
             return value;
+        }
+
+        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, StringDictionary environmentVars = null)
+        {
+            throw new NotImplementedException();
         }
     }
 }

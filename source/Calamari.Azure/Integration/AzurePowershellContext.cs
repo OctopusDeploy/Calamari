@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -13,7 +14,7 @@ using Octostache;
 
 namespace Calamari.Azure.Integration
 {
-    public class AzurePowerShellContext
+    public class AzurePowerShellContext : IScriptEngineDecorator
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
@@ -25,6 +26,15 @@ namespace Calamari.Azure.Integration
         public const string DefaultAzureEnvironment = "AzureCloud";
         public static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
 
+        public IScriptEngine Parent { get; set; }
+
+        public string Name => "AzurePowerShell";
+
+        public ScriptType[] GetSupportedTypes()
+        {
+            return new[] { ScriptType.Powershell };
+        }
+
         public AzurePowerShellContext()
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
@@ -32,7 +42,11 @@ namespace Calamari.Azure.Integration
             this.embeddedResources = new AssemblyEmbeddedResources();
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public CommandResult ExecuteScript(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
@@ -58,14 +72,14 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                    return Parent.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
                 {
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                    return Parent.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
                 }
             }
         }
@@ -123,6 +137,11 @@ namespace Calamari.Azure.Integration
             var bytes = new byte[PasswordSizeBytes]; 
             random.GetBytes(bytes);
             return Convert.ToBase64String(bytes);
+        }
+
+        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner, StringDictionary environmentVars = null)
+        {
+            throw new NotImplementedException();
         }
     }
 }

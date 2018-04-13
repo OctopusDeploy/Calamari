@@ -38,7 +38,7 @@ namespace Calamari.Integration.Scripting
         {
             return GetDecorators()
                 // The decorator needs to match the script type we are working with
-                .Where(decorator => decorator.Type == scriptType)
+                .Where(decorator => decorator.GetSupportedTypes().Contains(scriptType))
                 // The decorator needs to be in the supplied list of names
                 .Where(decorator => scriptEngineDecorators?.Any(name => name == decorator.Name) ?? false)
                 .ToList()

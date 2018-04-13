@@ -38,7 +38,6 @@ namespace Calamari.Aws.Integration
         }
 
         public IScriptEngine Parent { get; set; }
-        public ScriptType Type => ScriptType.Powershell;
         public string Name => DecoratorName;
     }
 }

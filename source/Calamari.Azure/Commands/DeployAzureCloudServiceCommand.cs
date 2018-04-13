@@ -53,7 +53,7 @@ namespace Calamari.Azure.Commands
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
-            var scriptEngine = new CombinedScriptEngine();
+            var scriptEngine = new CombinedScriptEngine(new string[] { "Azure" });
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var azurePackageUploader = new AzurePackageUploader();
             var certificateStore = new CalamariCertificateStore();
