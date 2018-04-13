@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using Calamari.Commands.Support;
+﻿using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -12,8 +9,11 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
-using Calamari.Util;
 using Octostache;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Commands
 {
@@ -27,7 +27,8 @@ namespace Calamari.Commands
         private string sensitiveVariablesPassword;
         private string packageFile;
         private bool substituteVariables;
-        private string scriptParameters;
+        private string scriptParameters;        
+        private string scriptEngineDecorators;        
         private DeploymentJournal journal;
         private RunningDeployment deployment;
 
@@ -41,6 +42,7 @@ namespace Calamari.Commands
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             Options.Add("substituteVariables", "Perform variable substitution on the script body before executing it.", v => substituteVariables = true);
+            Options.Add("scriptEngineDecorators=", "A comma seperated list of scrip engine decorators.", v => scriptEngineDecorators = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -94,13 +96,22 @@ namespace Calamari.Commands
 
         private int InvokeScript(CalamariVariableDictionary variables)
         {
-            var validatedScriptFilePath = AssertScriptFileExists();
+            var script = AssertScriptFileExists()
+                .Tee(validatedScriptFilePath => Log.VerboseFormat("Executing '{0}'", validatedScriptFilePath))
+                .Map(validatedScriptFilePath => new Script(validatedScriptFilePath, scriptParameters));
 
-            var scriptEngine = new CombinedScriptEngine();
+            var scriptEngine = (scriptEngineDecorators?.Split(',') ?? new string[] { })
+                .Tee(decorators => Log.Verbose("Running script with the following script engine decorators: " +
+                    (decorators.Length == 0 ? "NONE" : string.Join(",", decorators))))
+                .Map(decorators => new CombinedScriptEngine(decorators));
+          
             var runner = new CommandLineRunner(
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            Log.VerboseFormat("Executing '{0}'", validatedScriptFilePath);
-            var result = scriptEngine.Execute(new Script(validatedScriptFilePath, scriptParameters), variables, runner);
+           
+            var result = scriptEngine.Execute(
+                script, 
+                variables, 
+                runner);
             var shouldWriteJournal = CanWriteJournal(variables) && deployment != null && !deployment.SkipJournal;
 
             if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))

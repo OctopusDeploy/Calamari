@@ -4,7 +4,7 @@
     <TargetFramework>net451</TargetFramework>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Azure</AssemblyName>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <PackageId>Calamari.Azure</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <Authors>Octopus Deploy</Authors>
@@ -17,6 +17,8 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
     <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
+    <ApplicationIcon />
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts\AzureContext.ps1" />
@@ -37,7 +39,7 @@
     <PackageReference Include="Microsoft.Azure.Management.Websites" Version="1.0.0-preview" />
     <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
-    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
+    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.14" />
     <PackageReference Include="Microsoft.Data.Edm" Version="5.6.4" />
     <PackageReference Include="Microsoft.Data.OData" Version="5.6.4" />
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.6.4" />

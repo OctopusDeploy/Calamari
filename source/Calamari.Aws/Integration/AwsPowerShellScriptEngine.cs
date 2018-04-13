@@ -1,8 +1,7 @@
-﻿using System.Collections.Specialized;
-using Calamari.Integration.Processes;
+﻿using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.WindowsPowerShell;
 using Octopus.CoreUtilities.Extensions;
+using System.Collections.Specialized;
 
 namespace Calamari.Aws.Integration
 {
@@ -10,8 +9,10 @@ namespace Calamari.Aws.Integration
     /// A custom script engine that first builds the AWS authentication and region environment
     /// variables before running the script with the standard powershell script engine.
     /// </summary>
-    public class AwsPowerShellScriptEngine : IScriptEngine
+    public class AwsPowerShellScriptEngine : IScriptEngineDecorator
     {
+        public const string DecoratorName = "AWS";
+
         public ScriptType[] GetSupportedTypes()
         {
             return new[] { ScriptType.Powershell };
@@ -28,12 +29,16 @@ namespace Calamari.Aws.Integration
              * by any custom AWS script, and then pass these through to the standard PowerShell
              * script engine.
              */
-            return new AwsEnvironmentGeneration(variables)
-                .Map(envDetails => new PowerShellScriptEngine().Execute(
+            return new AwsEnvironmentGeneration(variables, environmentVars)
+                .Map(envDetails => Parent?.Execute(
                     script, 
                     variables, 
                     commandLineRunner, 
                     envDetails.EnvironmentVars));
         }
+
+        public IScriptEngine Parent { get; set; }
+        public ScriptType Type => ScriptType.Powershell;
+        public string Name => DecoratorName;
     }
 }
