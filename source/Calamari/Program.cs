@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
 using Calamari.Util.Environments;
 using System.Reflection;
+using Calamari.Integration.Scripting;
+using Calamari.Plugins;
 using Calamari.Util;
 
 namespace Calamari
@@ -34,26 +37,26 @@ namespace Calamari
             Log.Verbose($"Environment Information:{Environment.NewLine}" +
                 $"  {string.Join($"{Environment.NewLine}  ", environmentInformation)}");
 
-            ProxyInitializer.InitializeDefaultProxy();
-            RegisterCommandAssemblies();
+            var (plugins, remainingOptions) = PluginLoader.Load(args);
 
+            ProxyInitializer.InitializeDefaultProxy();
+            
+            CommandLocator.Instance.RegisterAssemblies(typeof(Program).Assembly);
+            CommandLocator.Instance.RegisterAssemblies(plugins.Select(a => a.GetType().Assembly).Distinct().ToArray());
+            ScriptEngineRegistry.Instance.SetPowershellScriptEngine(plugins);
+            
             try
             {
-                var action = GetFirstArgument(args);
+                var action = GetFirstArgument(remainingOptions);
                 var command = LocateCommand(action);
                 if (command == null)
                     return PrintHelp(action);
-                return command.Execute(args.Skip(1).ToArray());
+                return command.Execute(remainingOptions.Skip(1).ToArray());
             }
             catch (Exception ex)
             {
                 return ConsoleFormatter.PrintError(ex);
             }
-        }
-
-        protected virtual void RegisterCommandAssemblies()
-        {
-            CommandLocator.Instance.RegisterAssemblies(typeof(Program).Assembly);
         }
 
         private static string GetFirstArgument(string[] args)

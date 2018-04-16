@@ -4,7 +4,6 @@
     <TargetFramework>net451</TargetFramework>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Azure</AssemblyName>
-    <OutputType>Exe</OutputType>
     <PackageId>Calamari.Azure</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <Authors>Octopus Deploy</Authors>
