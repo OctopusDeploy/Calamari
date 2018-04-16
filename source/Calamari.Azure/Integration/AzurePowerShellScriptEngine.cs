@@ -23,7 +23,11 @@ namespace Calamari.Azure.Integration
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars)
         {
-            var powerShellEngine = new PowerShellScriptEngine();
+            Guard.NotNull(script, "script can not be null");
+            Guard.NotNull(variables, "variables can not be null");
+            Guard.NotNull(commandLineRunner, "commandLineRunner can not be null");
+            Guard.NotNull(environmentVars, "environmentVars can not be null");
+
             if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)))
             {
                 return new AzureServiceFabricPowerShellContext() { Parent = this.Parent }
@@ -32,10 +36,10 @@ namespace Calamari.Azure.Integration
             else if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
             {
                 return new AzurePowerShellContext() { Parent = this.Parent }
-                .ExecuteScript(script, variables, commandLineRunner);
+                    .ExecuteScript(script, variables, commandLineRunner);
             }
 
-            return powerShellEngine.Execute(script, variables, commandLineRunner, environmentVars);
+            return Parent.Execute(script, variables, commandLineRunner, environmentVars);
         }
     }
 }

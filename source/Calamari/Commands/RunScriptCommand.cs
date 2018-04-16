@@ -102,7 +102,7 @@ namespace Calamari.Commands
 
             var scriptEngine = (scriptEngineDecorators?.Split(',') ?? new string[] { })
                 .Tee(decorators => Log.Verbose("Running script with the following script engine decorators: " +
-                    (decorators.Length == 0 ? "NONE" : string.Join(",", decorators))))
+                    (decorators.Length == 0 ? "NONE" : string.Join(", ", decorators))))
                 .Map(decorators => new CombinedScriptEngine(decorators));
           
             var runner = new CommandLineRunner(
