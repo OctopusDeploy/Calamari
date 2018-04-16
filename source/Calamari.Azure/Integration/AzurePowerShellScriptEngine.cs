@@ -33,7 +33,8 @@ namespace Calamari.Azure.Integration
                 return new AzureServiceFabricPowerShellContext() { Parent = this.Parent }
                     .ExecuteScript(script, variables, commandLineRunner);
             }
-            else if (variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
+            // TODO: The Azzure account needs to contribute these variables.
+            else if (true || variables.Get(SpecialVariables.Account.AccountType).StartsWith("Azure"))
             {
                 return new AzurePowerShellContext() { Parent = this.Parent }
                     .ExecuteScript(script, variables, commandLineRunner);
