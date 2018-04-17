@@ -22,5 +22,6 @@ namespace Calamari.Azure.Util
         Unsecure,
         SecureClientCertificate,
         SecureAzureAD,
+        SecureAD
     }
 }

@@ -83,6 +83,7 @@ function ValidationMessageForAzureADParameters() {
     return $null
 }
 
+
 function GetAzureADAccessToken() {
     # Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
     Try
@@ -193,6 +194,13 @@ Execute-WithRetry {
         $ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
         $ClusterConnectionParameters["AzureActiveDirectory"] = $true
         $ClusterConnectionParameters["SecurityToken"] = $AccessToken
+
+    } ElseIf ($OctopusFabricSecurityMode -eq "SecureAD") {
+
+        # Secure AD
+        Write-Verbose "Connecting to Service Fabric using AD security."
+
+        $ClusterConnectionParameters["WindowsCredential"] = $true
 
     } Else {
         # Unsecure
