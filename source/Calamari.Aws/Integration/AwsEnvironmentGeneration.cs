@@ -35,7 +35,7 @@ namespace Calamari.Aws.Integration
 
         public StringDictionary EnvironmentVars { get; private set; }
 
-        public AwsEnvironmentGeneration(VariableDictionary variables)
+        public AwsEnvironmentGeneration(VariableDictionary variables, StringDictionary existing = null)
         {
             account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
@@ -44,7 +44,7 @@ namespace Calamari.Aws.Integration
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleSession = variables.Get("Octopus.Action.Aws.AssumedRoleSession")?.Trim();
-            EnvironmentVars = new StringDictionary();
+            EnvironmentVars = existing ?? new StringDictionary();
 
             PopulateCommonSettings();
             PopulateSuppliedKeys();
@@ -106,7 +106,7 @@ namespace Calamari.Aws.Integration
                     // Any response is considered valid
                     .Map(response => true);
             }
-            catch (AmazonServiceException ex)
+            catch (AmazonServiceException)
             {
                 // Any exception is considered to be a failed login
                 return false;

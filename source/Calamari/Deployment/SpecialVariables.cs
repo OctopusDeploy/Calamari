@@ -48,7 +48,7 @@
 
         public static class Bootstrapper
         {
-            public static string ModulePaths = "Octopus.Calamari.Bootstrapper.ModulePaths";
+            public static readonly string ModulePaths = "Octopus.Calamari.Bootstrapper.ModulePaths";
         }
 
         public static class Tentacle

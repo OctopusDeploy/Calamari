@@ -51,7 +51,7 @@ namespace Calamari.Azure.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var scriptEngine = new CombinedScriptEngine();
+            var scriptEngine = new CombinedScriptEngine(new string[] { "Azure" });
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);

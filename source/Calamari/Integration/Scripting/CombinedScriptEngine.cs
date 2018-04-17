@@ -1,14 +1,30 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Deployment;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Integration.Scripting
 {
     public class CombinedScriptEngine : IScriptEngine
     {
+        private readonly string[] scriptEngineDecorators;
+
+        public CombinedScriptEngine()
+        {
+            this.scriptEngineDecorators = null;
+        }
+
+        public CombinedScriptEngine(string[] scriptEngineDecorators)
+        {
+            this.scriptEngineDecorators = scriptEngineDecorators;
+        }
+
         public ScriptType[] GetSupportedTypes()
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
@@ -23,7 +39,8 @@ namespace Calamari.Integration.Scripting
             StringDictionary environmentVars = null)
         {
             var scriptType = ValidateScriptType(script);
-            return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(
+
+            return ScriptEngineRegistry.Instance.GetScriptEngine(scriptEngineDecorators, scriptType).Execute(
                 script, 
                 variables, 
                 commandLineRunner, 
