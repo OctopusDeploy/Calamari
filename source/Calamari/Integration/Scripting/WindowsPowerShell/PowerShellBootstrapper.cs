@@ -94,12 +94,15 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
             var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
+            var variableString = GetEncryptedVariablesString(variables);
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("{{TargetScriptFile}}", script.File.EscapeSingleQuotedString())
-                    .Replace("{{ScriptParameters}}", script.Parameters)
-                    .Replace("{{VariableDeclarations}}", DeclareVariables(variables))
-                    .Replace("{{ScriptModules}}", DeclareScriptModules(variables, parent));
+                .Replace("{{ScriptParameters}}", script.Parameters)
+                .Replace("{{EncryptedVariablesString}}", variableString.encrypted)
+                .Replace("{{VariablesIV}}", variableString.iv)
+                .Replace("{{LocalVariableDeclarations}}", DeclareLocalVariables(variables))
+                .Replace("{{ScriptModules}}", DeclareScriptModules(variables, parent));
 
             builder = SetupDebugBreakpoints(builder, variables);
 
@@ -162,16 +165,6 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return debugBootstrapFile;
         }
 
-        static string DeclareVariables(CalamariVariableDictionary variables)
-        {
-            var output = new StringBuilder();
-
-            WriteVariableDictionary(variables, output);
-            output.AppendLine();
-            WriteLocalVariables(variables, output);
-
-            return output.ToString();
-        }
 
         static string DeclareScriptModules(CalamariVariableDictionary variables, string parentDirectory)
         {
@@ -195,21 +188,27 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             }
         }
 
-        static void WriteVariableDictionary(CalamariVariableDictionary variables, StringBuilder output)
+        static (string encrypted, string iv) GetEncryptedVariablesString(CalamariVariableDictionary variables)
         {
-            output.AppendLine("$OctopusParameters = New-Object 'System.Collections.Generic.Dictionary[String,String]' (,[System.StringComparer]::OrdinalIgnoreCase)");
+            var sb = new StringBuilder();
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
             {
-                var variableValue = variables.IsSensitive(variableName)
-                    ? EncryptVariable(variables.Get(variableName))
-                    : EncodeValue(variables.Get(variableName));
-
-                output.Append("$OctopusParameters[").Append(EncodeValue(variableName)).Append("] = ").AppendLine(variableValue);
+                var value = variables.Get(variableName);
+                var encryptedValue = value == null ? "nul" : EncodeAsBase64(value); // "nul" is not a valid Base64 string
+                sb.Append(EncodeAsBase64(variableName)).Append("$").AppendLine(encryptedValue);
             }
+
+            var encrypted = VariableEncryptor.Encrypt(sb.ToString());
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
+            return (
+                Convert.ToBase64String(rawEncrypted, Base64FormattingOptions.InsertLineBreaks),
+                Convert.ToBase64String(iv)
+            );
         }
 
-        static void WriteLocalVariables(CalamariVariableDictionary variables, StringBuilder output)
+        static string DeclareLocalVariables(CalamariVariableDictionary variables)
         {
+            var output = new StringBuilder();
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
             {
                 if (SpecialVariables.IsExcludedFromLocalVariables(variableName))
@@ -230,6 +229,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
                 WriteVariableAssignment(output, smartKey, variableName);
             }
+
+            return output.ToString();
         }
 
         static void WriteVariableAssignment(StringBuilder writer, string key, string variableName)
@@ -241,19 +242,6 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             writer.AppendLine("}");
         }
 
-        static string EncryptVariable(string value)
-        {
-            if (value == null)
-                return "$null";
-
-            var encrypted = VariableEncryptor.Encrypt(value);
-            byte[] iv;
-            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
-            // The seemingly superfluous '-as' below was for PowerShell 2.0.  Without it, a cast exception was thrown when trying to add the object
-            // to a generic collection. 
-            return string.Format("(Decrypt-String \"{0}\" \"{1}\") -as [string]", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
-        }
-
         static string EncodeValue(string value)
         {
             if (value == null)
@@ -261,6 +249,12 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             var bytes = Encoding.UTF8.GetBytes(value);
             return string.Format("[System.Text.Encoding]::UTF8.GetString(" + "[Convert]::FromBase64String(\"{0}\")" + ")", Convert.ToBase64String(bytes));
+        }
+        
+        static string EncodeAsBase64(string value)
+        {
+            var bytes = Encoding.UTF8.GetBytes(value);
+            return Convert.ToBase64String(bytes);
         }
 
         static bool IsValidPowerShellIdentifierChar(char c)
