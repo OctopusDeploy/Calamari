@@ -1,5 +1,4 @@
 ﻿param([string]$OctopusKey="")
-write-host $OctopusKey
 {{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
 
