@@ -225,6 +225,7 @@ function Decrypt-Variables($iv, $Encrypted)
 {
     function ConvertFromBase64String($str)
     {
+        // "nul" is a special string used by Calamari to represent null. "null" is not used as it is a valid Base64 string. 
         if($str -eq "nul")
         {
             return $null;
