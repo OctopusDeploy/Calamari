@@ -108,6 +108,10 @@ namespace Calamari
 
         public static void SetOutputVariable(string name, string value, VariableDictionary variables)
         {
+            Guard.NotNull(name, "name can not be null");
+            Guard.NotNull(value, "value can not be null");
+            Guard.NotNull(variables, "variables can not be null");
+
             Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
 
             variables?.SetOutputVariable(name, value);

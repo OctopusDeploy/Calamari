@@ -198,7 +198,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if (waitForComplete) WaitForStackToComplete(deployment);
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
-            Log.SetOutputVariable("AwsOutputs[StackId]", stackId, deployment.Variables);
+            Log.SetOutputVariable("AwsOutputs[StackId]", stackId ?? "", deployment.Variables);
             Log.Info(
                 $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
         }
@@ -246,7 +246,7 @@ namespace Calamari.Aws.Deployment.Conventions
                             .Aggregate(false, (success, output) =>
                             {
                                 Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]",
-                                    output.OutputValue, deployment.Variables);
+                                    output.OutputValue ?? "", deployment.Variables);
                                 Log.Info(
                                     $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
                                 return true;
