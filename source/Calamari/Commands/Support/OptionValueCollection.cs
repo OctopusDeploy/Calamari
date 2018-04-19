@@ -296,7 +296,7 @@ namespace Calamari.Commands.Support
             if (c.Option.OptionValueType == OptionValueType.Required &&
                 index >= values.Count)
                 throw new OptionException(string.Format(
-                    c.OptionSet.MessageLocalizer("Missing required value for option '{0}'."), c.OptionName),
+                    "Missing required value for option '{0}'.", c.OptionName),
                     c.OptionName);
         }
 
