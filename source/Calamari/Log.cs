@@ -110,7 +110,6 @@ namespace Calamari
         {
             Guard.NotNull(name, "name can not be null");
             Guard.NotNull(value, "value can not be null");
-            Guard.NotNull(variables, "variables can not be null");
 
             Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
 
