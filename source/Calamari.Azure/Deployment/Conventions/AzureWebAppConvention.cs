@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Websites.Publishing;
+using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -23,12 +24,12 @@ namespace Calamari.Azure.Deployment.Conventions
             var variables = deployment.Variables;
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
-            var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
             var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
                 ? string.Empty
                 : $" in Resource Group {resourceGroupName}";
-            Log.Info($"Deploying to Azure WebApp '{siteName}'{resourceGroupText}, using subscription-id '{subscriptionId}'");
+            Log.Info($"Deploying to Azure WebApp '{siteAndSlotName}'{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
@@ -36,8 +37,7 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
-
-                DeployToAzure(deployment, siteName, variables, publishProfile);
+                DeployToAzure(deployment, siteAndSlotName, variables, publishProfile);
             }
             finally
             {
@@ -45,7 +45,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static void DeployToAzure(RunningDeployment deployment, string siteName, CalamariVariableDictionary variables,
+        private static void DeployToAzure(RunningDeployment deployment, string siteAndSlotName, CalamariVariableDictionary variables,
             SitePublishProfile publishProfile)
         {
             var retry = GetRetryTracker();
@@ -53,7 +53,9 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 try
                 {
-                    Log.Verbose($"Using siteAndSlot {siteName}");
+                    var siteName = AzureWebAppHelper.GetSiteNameFromSiteAndSlotName(siteAndSlotName);
+                    Log.Verbose($"Using siteAndSlot {siteAndSlotName}");
+                    Log.Verbose($"Using siteName {siteName}");
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
@@ -104,7 +106,7 @@ namespace Calamari.Azure.Deployment.Conventions
         private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
-            var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
 
             switch (accountType)
@@ -112,19 +114,15 @@ namespace Calamari.Azure.Deployment.Conventions
                 case AzureAccountTypes.ServicePrincipalAccountType:
                     var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
                     if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
-                    {
                         Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
-                    }
 
                     var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
                     if (activeDirectoryEndpoint != DefaultVariables.ActiveDirectoryEndpoint)
-                    {
                         Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndpoint);
-                    }
 
                     return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
                         variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
-                        siteName,
+                        siteAndSlotName,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
                         variables.Get(SpecialVariables.Action.Azure.Password),
@@ -134,12 +132,11 @@ namespace Calamari.Azure.Deployment.Conventions
                 case AzureAccountTypes.ManagementCertificateAccountType:
                     var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
                     if (serviceManagementEndpoint != DefaultVariables.ServiceManagementEndpoint)
-                    {
                         Log.Info("Using override for service management endpoint - {0}", serviceManagementEndpoint);
-                    }
+
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
-                        siteName,
+                        siteAndSlotName,
                         serviceManagementEndpoint);
                 default:
                     throw new CommandException(

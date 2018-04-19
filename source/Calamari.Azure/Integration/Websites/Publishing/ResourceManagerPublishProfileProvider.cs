@@ -17,9 +17,11 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteAndSlotName, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
+            //Log.Verbose("markse1 Endpoint: " + resourceManagementEndpoint);
+            //Log.Verbose("markse1 Bearer: " + token);
             var baseUri = new Uri(resourceManagementEndpoint);
             using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token))
             {
@@ -28,8 +30,6 @@ namespace Calamari.Azure.Integration.Websites.Publishing
             })
             using (var webSiteClient = new WebSiteManagementClient(new Uri(resourceManagementEndpoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
             {
-                //TODO: mark.siedle - Useful for debugging your provisioning profile url, not sure if we want to show this in the logs?
-                //Log.Verbose($"Using Authorization Bearer={token}");
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                 resourcesClient.HttpClient.BaseAddress = baseUri;
 
@@ -41,15 +41,15 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     .Select(rg => rg.Name)
                     .ToList();
                 
-                siteName = AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(siteName);
+                siteAndSlotName = AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(siteAndSlotName);
                 foreach (var resourceGroup in resourceGroups)
                 {
-                    Log.Verbose($"Looking up siteName {siteName} in resourceGroup {resourceGroup}");
+                    Log.Verbose($"Looking up siteAndSlotName {siteAndSlotName} in resourceGroup {resourceGroup}");
 
                     var matchingSite = webSiteClient.WebApps
                         .ListByResourceGroup(resourceGroup, true)
                         .ToList()
-                        .FirstOrDefault(x => string.Equals(x.Name, siteName, StringComparison.CurrentCultureIgnoreCase));
+                        .FirstOrDefault(x => string.Equals(x.Name, siteAndSlotName, StringComparison.CurrentCultureIgnoreCase));
 
                     if (matchingSite == null)
                         continue;
@@ -98,7 +98,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     return publishProperties;
                 }
 
-                throw new CommandException($"Could not find Azure WebSite '{siteName}' in subscription '{subscriptionId}'");
+                throw new CommandException($"Could not find Azure WebSite '{siteAndSlotName}' in subscription '{subscriptionId}'");
             }
         }
     }
