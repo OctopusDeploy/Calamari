@@ -232,7 +232,7 @@ namespace Calamari.Commands.Support
             {
                 throw new OptionException(
                     string.Format(
-                        c.OptionSet.MessageLocalizer("Could not convert string `{0}' to type {1} for option `{2}'."),
+                        "Could not convert string `{0}' to type {1} for option `{2}'.",
                         value, typeof (T).Name, c.OptionName),
                     c.OptionName, e);
             }

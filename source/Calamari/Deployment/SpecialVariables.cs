@@ -46,6 +46,11 @@
 
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
 
+        public static class Bootstrapper
+        {
+            public static string ModulePaths = "Octopus.Calamari.Bootstrapper.ModulePaths";
+        }
+
         public static class Tentacle
         {
             public static class CurrentDeployment

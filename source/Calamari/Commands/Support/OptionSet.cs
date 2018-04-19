@@ -141,20 +141,7 @@ namespace Calamari.Commands.Support
         Action<string[]> leftovers;
 
         public OptionSet()
-            : this(delegate(string f) { return f; })
         {
-        }
-
-        public OptionSet(Converter<string, string> localizer)
-        {
-            this.localizer = localizer;
-        }
-
-        readonly Converter<string, string> localizer;
-
-        public Converter<string, string> MessageLocalizer
-        {
-            get { return localizer; }
         }
 
         protected override string GetKeyForItem(Option item)
@@ -489,9 +476,9 @@ namespace Calamari.Commands.Support
                 c.Option.Invoke(c);
             else if (c.OptionValues.Count > c.Option.MaxValueCount)
             {
-                throw new OptionException(localizer(string.Format(
+                throw new OptionException(string.Format(
                     "Error: Found {0} option values when expecting {1}.",
-                    c.OptionValues.Count, c.Option.MaxValueCount)),
+                    c.OptionValues.Count, c.Option.MaxValueCount),
                     c.OptionName);
             }
         }
@@ -527,8 +514,7 @@ namespace Calamari.Commands.Support
                 {
                     if (i == 0)
                         return false;
-                    throw new OptionException(string.Format(localizer(
-                        "Cannot bundle unregistered option '{0}'."), opt), opt);
+                    throw new OptionException(string.Format("Cannot bundle unregistered option '{0}'.", opt), opt);
                 }
                 p = this[rn];
                 switch (p.OptionValueType)
@@ -578,7 +564,7 @@ namespace Calamari.Commands.Support
                     o.Write(new string(' ', OptionWidth));
                 }
 
-                var lines = GetLines(localizer(GetDescription(p.Description)));
+                var lines = GetLines(GetDescription(p.Description));
                 o.WriteLine(lines[0]);
                 var prefix = new string(' ', OptionWidth);
                 for (var i = 1; i < lines.Count; ++i)
@@ -622,19 +608,19 @@ namespace Calamari.Commands.Support
             {
                 if (p.OptionValueType == OptionValueType.Optional)
                 {
-                    Write(o, ref written, localizer("["));
+                    Write(o, ref written, "[");
                 }
-                Write(o, ref written, localizer("=" + GetArgumentName(0, p.MaxValueCount, p.Description)));
+                Write(o, ref written, "=" + GetArgumentName(0, p.MaxValueCount, p.Description));
                 var sep = p.ValueSeparators != null && p.ValueSeparators.Length > 0
                     ? p.ValueSeparators[0]
                     : " ";
                 for (var c = 1; c < p.MaxValueCount; ++c)
                 {
-                    Write(o, ref written, localizer(sep + GetArgumentName(c, p.MaxValueCount, p.Description)));
+                    Write(o, ref written, sep + GetArgumentName(c, p.MaxValueCount, p.Description));
                 }
                 if (p.OptionValueType == OptionValueType.Optional)
                 {
-                    Write(o, ref written, localizer("]"));
+                    Write(o, ref written, "]");
                 }
             }
             return true;

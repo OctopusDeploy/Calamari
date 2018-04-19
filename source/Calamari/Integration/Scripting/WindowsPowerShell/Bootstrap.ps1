@@ -1,5 +1,4 @@
 ﻿param([string]$OctopusKey="")
-
 {{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
 
@@ -305,8 +304,23 @@ function Write-Warning()
 	Write-Host "##octopus[stdout-default]"
 }
 
-function Decrypt-String($Encrypted, $iv) 
+function Decrypt-Variables($iv, $Encrypted) 
 {
+    function ConvertFromBase64String($str)
+    {
+        # "nul" is a special string used by Calamari to represent null. "null" is not used as it is a valid Base64 string. 
+        if($str -eq "nul")
+        {
+            return $null;
+        }
+        else
+        {
+            [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($str))
+        }
+    }
+
+    $parameters = New-Object 'System.Collections.Generic.Dictionary[String,String]' (,[System.StringComparer]::OrdinalIgnoreCase)
+
 	# Try AesCryptoServiceProvider first (requires .NET 3.5+), otherwise fall back to RijndaelManaged (.NET 2.0)
 	# Note using RijndaelManaged will fail in FIPS compliant environments: https://support.microsoft.com/en-us/kb/811833
 	$algorithm = $null
@@ -329,7 +343,12 @@ function Decrypt-String($Encrypted, $iv)
 	$memoryStream = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
 	$cryptoStream = new-Object Security.Cryptography.CryptoStream $memoryStream,$decryptor,"Read" 
 	$streamReader = new-Object IO.StreamReader $cryptoStream 
-	Write-Output $streamReader.ReadToEnd()
+	while($streamReader.EndOfStream -eq $false)
+    {
+        $parts = $streamReader.ReadLine().Split("$")
+        # The seemingly superfluous '-as' below was for PowerShell 2.0.  Without it, a cast exception was thrown when trying to add the object to a generic collection. 
+        $parameters[(ConvertFromBase64String $parts[0])] = ConvertFromBase64String $parts[1] -as [string]
+    }
 	$streamReader.Dispose() | Out-Null
 	$cryptoStream.Dispose() | Out-Null
 	$memoryStream.Dispose() | Out-Null
@@ -337,6 +356,8 @@ function Decrypt-String($Encrypted, $iv)
 	# RijndaelManaged/RijndaelManagedTransform implemented IDiposable explicitly
 	[System.IDisposable].GetMethod("Dispose").Invoke($decryptor, @()) | Out-Null
 	[System.IDisposable].GetMethod("Dispose").Invoke($algorithm, @()) | Out-Null
+	
+	return $parameters
 }
 
 function Initialize-ProxySettings() 
@@ -405,10 +426,14 @@ function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int]
 }
 
 function Import-CalamariModules() {
-	if ($OctopusParameters.ContainsKey("Octopus.Script.PowershellModulePaths")) {
-		$calamariModulePaths = $OctopusParameters["Octopus.Script.PowershellModulePaths"].Split(";", [StringSplitOptions]'RemoveEmptyEntries')
+	if ($OctopusParameters.ContainsKey("Octopus.Calamari.Bootstrapper.ModulePaths")) {
+		$calamariModulePaths = $OctopusParameters["Octopus.Calamari.Bootstrapper.ModulePaths"].Split(";", [StringSplitOptions]'RemoveEmptyEntries')
 		foreach ($calamariModulePath in $calamariModulePaths) {
-			Import-Module –Name $calamariModulePath.Replace("{{TentacleHome}}", $env:TentacleHome)
+		    if($calamariModulePath.EndsWith(".psd1")) {
+		        Import-Module –Name $calamariModulePath.Replace("{{TentacleHome}}", $env:TentacleHome)
+		    } else {
+        		$env:PSModulePath = $calamariModulePath + ";" + $env:PSModulePath
+		    }
 		}
 	}
 }
@@ -420,7 +445,11 @@ Log-VersionTable
 # -----------------------------------------------------------------
 {{BeforeVariablesDebugLocation}}
 $MaximumVariableCount=32768
-{{VariableDeclarations}}
+$OctopusParameters = Decrypt-Variables '{{VariablesIV}}' @'
+{{EncryptedVariablesString}}
+'@
+
+{{LocalVariableDeclarations}}
 
 # -----------------------------------------------------------------
 # Script Modules - after variables

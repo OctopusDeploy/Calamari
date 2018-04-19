@@ -656,6 +656,11 @@ namespace Calamari.Integration.FileSystem
             return File.GetCreationTime(filePath);
         }
 
+        public string GetFileName(string filePath)
+        {
+            return new FileInfo(filePath).Name;
+        }
+
         public Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess)
         {
             return File.Open(filePath, fileMode, fileAccess, FileShare.None);

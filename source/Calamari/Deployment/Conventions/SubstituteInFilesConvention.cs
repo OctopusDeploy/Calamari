@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,6 +10,8 @@ namespace Calamari.Deployment.Conventions
 {
     public class SubstituteInFilesConvention : IInstallConvention
     {
+        private readonly Func<RunningDeployment, bool> predicate;
+        private readonly Func<RunningDeployment, IEnumerable<string>> fileTargets;
         private readonly ICalamariFileSystem fileSystem;
         readonly IFileSubstituter substituter;
 
@@ -16,14 +19,24 @@ namespace Calamari.Deployment.Conventions
         {
             this.fileSystem = fileSystem;
             this.substituter = substituter;
+            predicate = (deployment) => deployment.Variables.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled);
+            fileTargets = (deployment) => deployment.Variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets);
         }
 
+        public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter,
+            Func<RunningDeployment, bool> predicate,
+            Func<RunningDeployment, IEnumerable<string>> fileTargetFactory):this(fileSystem, substituter)
+        {
+            this.predicate = predicate;
+            this.fileTargets = fileTargetFactory;
+        }
+        
         public void Install(RunningDeployment deployment)
         {
-            if (!deployment.Variables.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled))
+            if (!predicate(deployment))
                 return;
 
-            foreach (var target in deployment.Variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets))
+            foreach (var target in fileTargets(deployment))
             {
                 var matchingFiles = MatchingFiles(deployment, target);
 
