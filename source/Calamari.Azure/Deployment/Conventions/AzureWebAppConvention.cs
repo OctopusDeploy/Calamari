@@ -6,7 +6,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Websites.Publishing;
-using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -25,7 +24,6 @@ namespace Calamari.Azure.Deployment.Conventions
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-            var deploymentSlot = variables.Get(SpecialVariables.Action.Azure.DeploymentSlot);
 
             var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
                 ? string.Empty
@@ -33,15 +31,13 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.Info($"Deploying to Azure WebApp '{siteName}'{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
-
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
-
             try
             {
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
 
-                DeployToAzure(deployment, siteName, deploymentSlot, variables, publishProfile);
+                DeployToAzure(deployment, siteName, variables, publishProfile);
             }
             finally
             {
@@ -49,24 +45,21 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static void DeployToAzure(RunningDeployment deployment, string siteName, string deploymentSlot, CalamariVariableDictionary variables,
+        private static void DeployToAzure(RunningDeployment deployment, string siteName, CalamariVariableDictionary variables,
             SitePublishProfile publishProfile)
         {
             var retry = GetRetryTracker();
-
             while (retry.Try())
             {
                 try
                 {
-                    siteName = AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(siteName);
-                    var siteAndSlot = AzureWebAppHelper.GetSiteAndSlotName(siteName, deploymentSlot);
-                    Log.Verbose($"Using siteAndSlot {siteAndSlot}");
+                    Log.Verbose($"Using siteAndSlot {siteName}");
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
                             "contentPath",
-                            BuildPath(siteAndSlot,  variables),
-                            DeploymentOptions(siteAndSlot, publishProfile),
+                            BuildPath(siteName, variables),
+                            DeploymentOptions(siteName, publishProfile),
                             DeploymentSyncOptions(variables)
                         );
 
@@ -95,18 +88,16 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
+        private static bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
         {
-            if (sslpolicyerrors == SslPolicyErrors.None)
+            switch (sslpolicyerrors)
             {
-                return true;
+                case SslPolicyErrors.None:
+                    return true;
+                case SslPolicyErrors.RemoteCertificateNameMismatch:
+                    Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
+                    break;
             }
-
-            if (sslpolicyerrors == SslPolicyErrors.RemoteCertificateNameMismatch)
-            {
-                Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
-            }
-
             return false;
         }
 
@@ -114,7 +105,6 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-            var deploymentSlot = variables.Get(SpecialVariables.Action.Azure.DeploymentSlot);
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
 
             switch (accountType)
@@ -135,7 +125,6 @@ namespace Calamari.Azure.Deployment.Conventions
                     return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
                         variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
                         siteName,
-                        deploymentSlot,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
                         variables.Get(SpecialVariables.Action.Azure.Password),
@@ -151,12 +140,10 @@ namespace Calamari.Azure.Deployment.Conventions
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                         siteName,
-                        deploymentSlot,
                         serviceManagementEndpoint);
                 default:
                     throw new CommandException(
                         "Account type must be either Azure Management Certificate or Azure Service Principal");
-
             }
         }
 
@@ -267,13 +254,12 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-
         /// <summary>
         /// For azure operations, try again after 1s then 2s, 4s etc...
         /// </summary>
-        static readonly LimitedExponentialRetryInterval RetryIntervalForAzureOperations = new LimitedExponentialRetryInterval(1000, 30000, 2);
+        private static readonly LimitedExponentialRetryInterval RetryIntervalForAzureOperations = new LimitedExponentialRetryInterval(1000, 30000, 2);
 
-        static RetryTracker GetRetryTracker()
+        private static RetryTracker GetRetryTracker()
         {
             return new RetryTracker(maxRetries: 3,
                 timeLimit: TimeSpan.MaxValue,

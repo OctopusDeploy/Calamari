@@ -17,7 +17,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string deploymentSlot, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteName, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
             var baseUri = new Uri(resourceManagementEndpoint);
@@ -65,11 +65,6 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     {
                         Log.Verbose($"Using the deployment slot found on the site name {matchingSite.Name}.");
                         siteAndSlotPath = matchingSite.Name.Replace("/", "/slots/");
-                    }
-                    else if (!string.IsNullOrWhiteSpace(deploymentSlot))
-                    {
-                        Log.Verbose($"Using the deployment slot as defined on the step ({deploymentSlot}).");
-                        siteAndSlotPath = $"{matchingSite.Name}/slots/{deploymentSlot}";
                     }
 
                     // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
