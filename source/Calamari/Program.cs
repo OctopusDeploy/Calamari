@@ -1,11 +1,10 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
+﻿using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
-using Calamari.Util.Environments;
-using System.Reflection;
-using Calamari.Util;
+using Calamari.Modules;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Calamari
 {
@@ -14,28 +13,44 @@ namespace Calamari
         readonly string displayName;
         readonly string informationalVersion;
         readonly string[] environmentInformation;
+        private readonly IEnumerable<ICommand> commands;
 
-        public Program(string displayName, string informationalVersion, string[] environmentInformation)
+        public Program(
+            string displayName, 
+            string informationalVersion, 
+            string[] environmentInformation,
+            IEnumerable<ICommand> commands)
         {
             this.displayName = displayName;
             this.informationalVersion = informationalVersion;
             this.environmentInformation = environmentInformation;
+            this.commands = commands;
         }
 
         static int Main(string[] args)
         {
-            var program = new Program("Calamari", typeof(Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation());
-            return program.Execute(args);
+            using (var container = BuildContainer())
+            {
+                return container.Resolve<Program>().Execute(args);
+            }
+        }
+
+        public static IContainer BuildContainer()
+        {
+            var builder = new ContainerBuilder();            
+            builder.RegisterModule(new CalamariProgramModule());
+            builder.RegisterModule(new CalamariCommandsModule());
+            builder.RegisterModule(new CalamariPluginsModule());
+            return builder.Build();
         }
 
         public int Execute(string[] args)
         {
             Log.Verbose($"Octopus Deploy: {displayName} version {informationalVersion}");
             Log.Verbose($"Environment Information:{Environment.NewLine}" +
-                $"  {string.Join($"{Environment.NewLine}  ", environmentInformation)}");
+                        $"  {string.Join($"{Environment.NewLine}  ", environmentInformation)}");
 
             ProxyInitializer.InitializeDefaultProxy();
-            RegisterCommandAssemblies();
 
             try
             {
@@ -48,12 +63,7 @@ namespace Calamari
             catch (Exception ex)
             {
                 return ConsoleFormatter.PrintError(ex);
-            }
-        }
-
-        protected virtual void RegisterCommandAssemblies()
-        {
-            CommandLocator.Instance.RegisterAssemblies(typeof(Program).Assembly);
+            }            
         }
 
         private static string GetFirstArgument(string[] args)
@@ -61,13 +71,25 @@ namespace Calamari
             return (args.FirstOrDefault() ?? string.Empty).Trim('-', '/');
         }
 
-        private static ICommand LocateCommand(string action)
-        {
+        private ICommand LocateCommand(string action)
+        {                                
             if (string.IsNullOrWhiteSpace(action))
                 return null;
 
-            var locator = CommandLocator.Instance;
-            return locator.Find(action);
+            return commands.FirstOrDefault(command => CommandHasName(command, action));
+        }
+
+        /// <summary>
+        /// Check to see if a given command has the attribute matching the action
+        /// </summary>
+        /// <param name="command">The command to check</param>
+        /// <param name="action">The name of the action</param>
+        /// <returns>true if the command matches the action name, and false otherwise</returns>
+        private bool CommandHasName(ICommand command, string action)
+        {
+            return command.GetType().GetCustomAttributes(typeof(CommandAttribute), true)
+                .Select(attr => (ICommandMetadata) attr)
+                .Any(attr => attr.Name == action || attr.Aliases.Any(a => a == action));
         }
 
         private static int PrintHelp(string action)

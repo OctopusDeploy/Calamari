@@ -29,6 +29,7 @@
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="Hyak.Common" Version="1.0.3" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Azure.Common" Version="2.1.0" />

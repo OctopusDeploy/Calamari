@@ -1,27 +1,27 @@
-﻿using Calamari.Azure.Integration;
+﻿using Autofac;
+using Calamari.Azure.Integration;
 using Calamari.Commands.Support;
 using Calamari.Integration.Scripting;
-using Calamari.Util.Environments;
-using System.Reflection;
+using System.Collections.Generic;
 
 namespace Calamari.Azure
 {
     class Program : Calamari.Program
     {
-        public Program() : base("Calamari.Azure", typeof(Azure.Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation())
+        public Program(string displayName,
+            string informationalVersion,
+            string[] environmentInformation,
+            IEnumerable<ICommand> commands) : base(displayName, informationalVersion, environmentInformation, commands)
         {
             ScriptEngineRegistry.Instance.ScriptEngines[ScriptType.Powershell] = new AzurePowerShellScriptEngine();            
         }
 
         static int Main(string[] args)
         {
-            var program = new Azure.Program();
-            return program.Execute(args);
-        }
-
-        protected override void RegisterCommandAssemblies()
-        {
-            CommandLocator.Instance.RegisterAssemblies(typeof(Calamari.Program).Assembly, typeof(Program).Assembly);
+            using (var container = BuildContainer())
+            {
+                return container.Resolve<Program>().Execute(args);
+            }
         }
     }
 }

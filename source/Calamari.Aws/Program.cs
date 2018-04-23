@@ -1,15 +1,17 @@
-﻿using System;
-using System.Diagnostics;
-using Calamari.Aws.Integration;
+﻿using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
 using Calamari.Integration.Scripting;
-using Calamari.Util.Environments;
+using System.Collections.Generic;
+using Autofac;
 
 namespace Calamari.Aws
 {
     class Program : Calamari.Program
     {
-        public Program() : base("Calamari.Aws", typeof(Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation())
+        public Program(string displayName,
+            string informationalVersion,
+            string[] environmentInformation,
+            IEnumerable<ICommand> commands) : base(displayName, informationalVersion, environmentInformation, commands)
         {
             // AwsPowerShellScriptEngine is used to populate the AWS authentication and region environment
             // variables of the process that runs powershell scripts.
@@ -18,13 +20,10 @@ namespace Calamari.Aws
 
         static int Main(string[] args)
         {
-            var program = new Program();
-            return program.Execute(args);
-        }
-
-        protected override void RegisterCommandAssemblies()
-        {
-            CommandLocator.Instance.RegisterAssemblies(typeof(Calamari.Program).Assembly, typeof(Program).Assembly);
+            using (var container = BuildContainer())
+            {
+                return container.Resolve<Program>().Execute(args);
+            }
         }
     }
 }
