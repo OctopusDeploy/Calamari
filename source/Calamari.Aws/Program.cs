@@ -3,6 +3,7 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Scripting;
 using System.Collections.Generic;
 using Autofac;
+using Calamari.Aws.Modules;
 
 namespace Calamari.Aws
 {
@@ -22,7 +23,15 @@ namespace Calamari.Aws
         {
             using (var container = BuildContainer())
             {
-                return container.Resolve<Program>().Execute(args);
+                using (var scope = container.BeginLifetimeScope(
+                    builder =>
+                    {
+                        builder.RegisterModule(new CalamariProgramModule());
+                        builder.RegisterModule(new CalamariCommandsModule());
+                    }))
+                {
+                    return scope.Resolve<Program>().Execute(args);
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 ﻿using Autofac;
 using Calamari.Commands.Support;
 
-namespace Calamari.Modules
+namespace Calamari.Azure.Modules
 {
     /// <summary>
     /// Autofac module to register the calamari commands
@@ -10,7 +10,7 @@ namespace Calamari.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterAssemblyTypes(ThisAssembly).AssignableTo<ICommand>().As<ICommand>().SingleInstance();
+            builder.RegisterType<ICommand>().SingleInstance();
         }
     }
 }
