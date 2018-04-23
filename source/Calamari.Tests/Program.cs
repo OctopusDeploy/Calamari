@@ -8,7 +8,7 @@ namespace Calamari.Tests
         //Calamari project we only get the dll, not the exe
         public static int Main(string[] args)
         {
-            using (var container = Calamari.Program.BuildContainer())
+            using (var container = Calamari.Program.BuildContainer(args))
             {
                 return container.Resolve<Calamari.Program>().Execute(args);
             }

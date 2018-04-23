@@ -12,14 +12,14 @@ namespace Calamari.Azure
         public Program(string displayName,
             string informationalVersion,
             string[] environmentInformation,
-            IEnumerable<ICommand> commands) : base(displayName, informationalVersion, environmentInformation, commands)
+            ICommand command) : base(displayName, informationalVersion, environmentInformation, command)
         {
             ScriptEngineRegistry.Instance.ScriptEngines[ScriptType.Powershell] = new AzurePowerShellScriptEngine();            
         }
 
         static int Main(string[] args)
         {
-            using (var container = BuildContainer())
+            using (var container = BuildContainer(args))
             {
                 using (var scope = container.BeginLifetimeScope(
                     builder =>

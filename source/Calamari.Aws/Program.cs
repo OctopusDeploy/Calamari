@@ -12,7 +12,7 @@ namespace Calamari.Aws
         public Program(string displayName,
             string informationalVersion,
             string[] environmentInformation,
-            IEnumerable<ICommand> commands) : base(displayName, informationalVersion, environmentInformation, commands)
+            ICommand command) : base(displayName, informationalVersion, environmentInformation, command)
         {
             // AwsPowerShellScriptEngine is used to populate the AWS authentication and region environment
             // variables of the process that runs powershell scripts.
@@ -21,7 +21,7 @@ namespace Calamari.Aws
 
         static int Main(string[] args)
         {
-            using (var container = BuildContainer())
+            using (var container = BuildContainer(args))
             {
                 using (var scope = container.BeginLifetimeScope(
                     builder =>
