@@ -58,9 +58,11 @@ namespace Calamari.Aws.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
 
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
+            var environment = new AwsEnvironmentGeneration(variables);
 
             var conventions = new List<IConvention>
             {
+                new LogAwsUserInfoConvention(environment),
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
@@ -74,7 +76,7 @@ namespace Calamari.Aws.Commands
                     iamCapabilities,
                     Boolean.TrueString.Equals(disableRollback, StringComparison.InvariantCultureIgnoreCase), // false by default
                     fileSystem,
-                    new AwsEnvironmentGeneration(variables))
+                    environment)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

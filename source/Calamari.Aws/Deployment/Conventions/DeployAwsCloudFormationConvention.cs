@@ -7,11 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
-using Amazon.IdentityManagement;
-using Amazon.IdentityManagement.Model;
 using Amazon.Runtime;
-using Amazon.SecurityToken;
-using Amazon.SecurityToken.Model;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Util;
@@ -44,11 +40,6 @@ namespace Calamari.Aws.Deployment.Conventions
         private const int StatusWaitPeriod = 5000;
         private const int RetryCount = 3;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
-
-        /// <summary>
-        /// Matches ARNs like arn:aws:iam::123456789:role/AWSTestRole and extracts the name as group 1 
-        /// </summary>
-        private static readonly Regex ArnNameRe = new Regex("^.*?/(.+)$");
 
         private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
 
@@ -121,8 +112,6 @@ namespace Calamari.Aws.Deployment.Conventions
         private void DeployCloudFormation(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-
-            WriteCredentialInfo(deployment);
 
             WaitForStackToComplete(deployment, false);
 
@@ -205,27 +194,6 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
-        /// Prints some info about the user or role that is running the deployment
-        /// </summary>
-        /// <param name="deployment">The current deployment</param>
-        private void WriteCredentialInfo(RunningDeployment deployment)
-        {
-            Guard.NotNull(deployment, "deployment can not be null");
-
-            if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRoleARN) ||
-                !deployment.Variables.IsSet(SpecialVariables.Action.Aws.AccountId) ||
-                !deployment.Variables.IsSet(deployment.Variables.Get(SpecialVariables.Action.Aws.AccountId) +
-                                            ".AccessKey"))
-            {
-                WriteRoleInfo();
-            }
-            else
-            {
-                WriteUserInfo();
-            }
-        }
-
-        /// <summary>
         /// Attempt to get the output variables, taking into account whether any were defined in the template,
         /// and if we are to wait for the deployment to finish.
         /// </summary>
@@ -288,66 +256,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 // The contents becomes true or false based on the regex match
                 .Map(contents => OutputsRe.IsMatch(contents));
         }
-
-        /// <summary>
-        /// Dump the details of the current user's assumed role.
-        /// </summary>
-        private void WriteRoleInfo()
-        {
-            try
-            {
-                new AmazonSecurityTokenServiceClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonSecurityTokenServiceConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
-                    // Client becomes the response of the API call
-                    .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
-                    // The response is narrowed to the Aen
-                    .Map(response => response.Arn)
-                    // Try and match the response to get just the role
-                    .Map(arn => ArnNameRe.Match(arn))
-                    // Extract the role name, or a default
-                    .Map(match => match.Success ? match.Groups[1].Value : "Unknown")
-                    // Log the output
-                    .Tee(role => Log.Info($"Running the step as the AWS role {role}"));
-            }
-            catch (AmazonServiceException)
-            {
-                // Ignore, we just won't add this to the logs
-            }
-        }
-
-        /// <summary>
-        /// Dump the details of the current user.
-        /// </summary>
-        private void WriteUserInfo()
-        {
-            try
-            {
-                new AmazonIdentityManagementServiceClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonIdentityManagementServiceConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
-                    // The client becomes the API response
-                    .Map(client => client.GetUser(new GetUserRequest()))
-                    // Log the details of the response
-                    .Tee(response => Log.Info($"Running the step as the AWS user {response.User.UserName}"));
-            }
-            catch (AmazonServiceException)
-            {
-                // Ignore, we just won't add this to the logs
-            }
-        }
-
-
+        
         /// <summary>
         /// Query the stack for the outputs
         /// </summary>
