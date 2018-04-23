@@ -14,6 +14,7 @@ using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
+using Calamari.Aws.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -355,14 +356,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonCloudFormationConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
+                return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                     // The client becomes the result of the API call
                     .Map(client => client.DescribeStacks(new DescribeStacksRequest() {StackName = stackName}))
                     // Get the first stack
@@ -422,14 +416,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>The stack event</returns>
         private StackEvent StackEvent(Func<StackEvent, bool> predicate = null)
         {
-            return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                    new AmazonCloudFormationConfig
-                    {
-                        RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                        ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                        ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                        ProxyHost = awsEnvironmentGeneration.ProxyHost
-                    })
+            return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                 .Map(client =>
                 {
                     try
@@ -569,14 +556,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                               new AmazonCloudFormationConfig
-                               {
-                                   RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                                   ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                                   ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                                   ProxyHost = awsEnvironmentGeneration.ProxyHost
-                               })
+                return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                            // The client becomes the result of the API call
                            .Map(client => client.DescribeStacks(new DescribeStacksRequest{StackName = stackName}))
                            // The result becomes true/false based on the presence of a matching stack name
@@ -635,14 +615,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonCloudFormationConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
+                return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                     // Client becomes the API response
                     .Map(client => client.CreateStack(
                         new CreateStackRequest()
@@ -690,14 +663,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
-                new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonCloudFormationConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
+                ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                     // Client becomes the API response
                     .Map(client => client.DeleteStack(new DeleteStackRequest() {StackName = stackName}))
                     // Log the response details
@@ -727,7 +693,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 throw ex;
             }
         }
-
+        
         /// <summary>
         /// Updates the stack and returns the stack ID
         /// </summary>
@@ -745,14 +711,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                return new AmazonCloudFormationClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonCloudFormationConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
+                return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                     // Client becomes the API response
                     .Map(client => client.UpdateStack(
                         new UpdateStackRequest()
