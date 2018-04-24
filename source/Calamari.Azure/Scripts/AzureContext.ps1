@@ -62,8 +62,9 @@ if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
     $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Azure" | Join-Path -ChildPath "5.1.2"
     $ResourceManagerModulePath = $OctopusAzureModulePath
     Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
-    
+        
     $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
+    Write-Verbose $env:PSModulePath
 }
 
 Execute-WithRetry{
