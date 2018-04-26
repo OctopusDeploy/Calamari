@@ -154,7 +154,7 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
-function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri) 
+function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureSubscription = Convert-ToServiceMessageParameter -name "azSubscription" -value $azureSubscription
@@ -162,8 +162,9 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
  	$azureTenantId = Convert-ToServiceMessageParameter -name "azTenantId" -value $azureTenantId
  	$azurePassword = Convert-ToServiceMessageParameter -name "azPassword" -value $azurePassword
 	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
+	$updateExisting = Convert-ToServiceMessageParameter -name "updateExisting" -value $updateExisting
 
-	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword -join ' '
+	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword, $updateExisting -join ' '
 
 	if (![string]::IsNullOrEmpty($azureEnvironment))
 	{
@@ -176,20 +177,21 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles) 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
     $azureResourceGroupName = Convert-ToServiceMessageParameter -name "resourceGroupName" -value $azureResourceGroupName
     $octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$updateExisting = Convert-ToServiceMessageParameter -name "updateExisting" -value $updateExisting
 
-	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusRoles -join ' '
+	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusRoles, $updateExisting -join ' '
 
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
 }
 
-function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles) 
+function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles, [switch]$updateExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
 	$azureConnectionEndpoint = Convert-ToServiceMessageParameter -name "connectionEndpoint" -value $azureConnectionEndpoint
@@ -201,13 +203,14 @@ function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnec
 	$certificateStoreName = Convert-ToServiceMessageParameter -name "certificateStoreName" -value $certificateStoreName
 	$octopusCertificateIdOrName = Convert-ToServiceMessageParameter -name "certificate" -value $octopusCertificateIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$updateExisting = Convert-ToServiceMessageParameter -name "updateExisting" -value $updateExisting
 
-	$parameters = $name, $azureConnectionEndpoint, $azureSecurityMode, $azureCertificateThumbprint, $azureActiveDirectoryUsername, $azureActiveDirectoryPassword, $certificateStoreLocation, $certificateStoreName, $octopusCertificateIdOrName, $octopusRoles -join ' '
+	$parameters = $name, $azureConnectionEndpoint, $azureSecurityMode, $azureCertificateThumbprint, $azureActiveDirectoryUsername, $azureActiveDirectoryPassword, $certificateStoreLocation, $certificateStoreName, $octopusCertificateIdOrName, $octopusRoles, $updateExisting -join ' '
 
 	Write-Host "##octopus[create-azureservicefabrictarget $($parameters)]"
 }
 
-function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudServiceName, [string]$azureStorageAccount, [string]$azureDeploymentSlot, [string]$swap, [string]$instanceCount, [string]$octopusAccountIdOrName, [string]$octopusRoles) 
+function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudServiceName, [string]$azureStorageAccount, [string]$azureDeploymentSlot, [string]$swap, [string]$instanceCount, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
 	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "azureCloudServiceName" -value $azureCloudServiceName
@@ -217,8 +220,9 @@ function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudSe
 	$instanceCount = Convert-ToServiceMessageParameter -name "instanceCount" -value $instanceCount
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$updateExisting = Convert-ToServiceMessageParameter -name "updateExisting" -value $updateExisting
 
-	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $swap, $instanceCount, $octopusAccountIdOrName, $octopusRoles -join ' '
+	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $swap, $instanceCount, $octopusAccountIdOrName, $octopusRoles, $updateExisting -join ' '
 
 	Write-Host "##octopus[create-azurecloudservicetarget $($parameters)]"
 }
