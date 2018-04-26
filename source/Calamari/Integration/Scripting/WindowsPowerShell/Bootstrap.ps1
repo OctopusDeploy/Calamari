@@ -154,10 +154,10 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
-function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscription, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateExisting) 
+function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscriptionId, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
- 	$azureSubscription = Convert-ToServiceMessageParameter -name "azSubscription" -value $azureSubscription
+ 	$azureSubscription = Convert-ToServiceMessageParameter -name "azSubscriptionId" -value $azureSubscriptionId
  	$azureApplicationId = Convert-ToServiceMessageParameter -name "azApplicationId" -value $azureApplicationId
  	$azureTenantId = Convert-ToServiceMessageParameter -name "azTenantId" -value $azureTenantId
  	$azurePassword = Convert-ToServiceMessageParameter -name "azPassword" -value $azurePassword
