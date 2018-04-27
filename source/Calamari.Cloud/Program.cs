@@ -5,8 +5,9 @@ using Calamari.Modules;
 using Calamari.Util;
 using System;
 using System.Linq;
+using Calamari.Cloud.Modules;
 
-namespace Calamari
+namespace Calamari.Cloud
 {
     public class Program
     {
@@ -39,8 +40,10 @@ namespace Calamari
         public static IContainer BuildContainer(string[] args)
         {
             var builder = new ContainerBuilder();            
-            builder.RegisterModule(new CalamariProgramModule());
-            builder.RegisterModule(new CalamariCommandsModule(PluginUtils.GetFirstArgument(args), typeof(Program).Assembly));
+            builder.RegisterModule(new CalamariCloudProgramModule());
+            builder.RegisterModule(new CalamariCommandsModule(PluginUtils.GetFirstArgument(args), typeof(Calamari.Program).Assembly));
+            builder.RegisterModule(new CalamariCommandsModule(PluginUtils.GetFirstArgument(args), typeof(Aws.Modules.CalamariPluginsModule).Assembly));
+            builder.RegisterModule(new Aws.Modules.CalamariPluginsModule());
             builder.RegisterModule(new CommonModule(args));           
             return builder.Build();
         }

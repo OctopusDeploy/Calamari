@@ -6,11 +6,11 @@ using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
-    internal class LockIo : ILockIo
+    public class LockIo : ILockIo
     {
         private readonly ICalamariFileSystem fileSystem;
 
-        internal LockIo(ICalamariFileSystem fileSystem)
+        public LockIo(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
         }

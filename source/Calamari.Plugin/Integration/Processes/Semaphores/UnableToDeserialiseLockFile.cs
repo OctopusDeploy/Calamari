@@ -2,7 +2,7 @@ using System;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
-    internal class UnableToDeserialiseLockFile : FileLock
+    public class UnableToDeserialiseLockFile : FileLock
     {
         public DateTime CreationTime { get; set; }
 

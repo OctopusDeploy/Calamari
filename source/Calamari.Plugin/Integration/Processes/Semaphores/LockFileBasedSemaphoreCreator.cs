@@ -2,7 +2,7 @@
 
 namespace Calamari.Integration.Processes.Semaphores
 {
-    internal class LockFileBasedSemaphoreCreator : ICreateSemaphores
+    public class LockFileBasedSemaphoreCreator : ICreateSemaphores
     {
         public ISemaphore Create(string name, TimeSpan lockTimeout)
         {

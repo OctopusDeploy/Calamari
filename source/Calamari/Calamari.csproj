@@ -21,11 +21,6 @@
     <TargetFrameworks>netcoreapp2.0;net40</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
-    <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
-    <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
-    <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
-    <EmbeddedResource Include="Integration\Scripting\FSharp\Bootstrap.fsx" />
     <EmbeddedResource Include="Scripts\**" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">

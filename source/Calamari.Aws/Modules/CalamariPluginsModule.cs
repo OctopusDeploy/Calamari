@@ -4,7 +4,7 @@ using Calamari.Plugin;
 
 namespace Calamari.Aws.Modules
 {
-    class CalamariPluginsModule : Module
+    public class CalamariPluginsModule : Module
     {
         protected override void Load(ContainerBuilder builder)
         {

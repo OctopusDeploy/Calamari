@@ -15,7 +15,7 @@ using NuGet.Packaging;
 
 namespace Calamari.Integration.Packages.Download
 {
-    class NuGetPackageDownloader : IPackageDownloader
+    public class NuGetPackageDownloader : IPackageDownloader
     {
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";

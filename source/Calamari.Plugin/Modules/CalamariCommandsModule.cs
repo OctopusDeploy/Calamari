@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using Autofac;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Octopus.CoreUtilities.Extensions;
 using Module = Autofac.Module;
@@ -30,7 +31,7 @@ namespace Calamari.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            Find()?.Tee(command => builder.RegisterType(command).As<ICommand>().SingleInstance());
+            builder.RegisterType(Find()).As<ICommand>().SingleInstance();
         }
 
         /// <summary>
@@ -47,7 +48,7 @@ namespace Calamari.Modules
             where attribute.Name == fixedName || attribute.Aliases.Any(a => a == fixedName)
             select t).FirstOrDefault();
 
-            return found;
+            return found ?? typeof(NoOpCommand);
         }
     }
 }

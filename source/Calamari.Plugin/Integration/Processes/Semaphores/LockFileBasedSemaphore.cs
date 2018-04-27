@@ -5,22 +5,22 @@ using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
-    internal class LockFileBasedSemaphore : ISemaphore
+    public class LockFileBasedSemaphore : ISemaphore
     {
         private readonly ILockIo lockIo;
         private readonly IProcessFinder processFinder;
         private readonly ILog log;
 
-        internal LockFileBasedSemaphore(string name, TimeSpan lockTimeout) 
+        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout) 
             : this(name, lockTimeout, new LockIo(CalamariPhysicalFileSystem.GetPhysicalFileSystem()), new ProcessFinder())
         {
         }
 
-        internal LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder)
+        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder)
             : this(name, lockTimeout, lockIo, processFinder, new LogWrapper())
         {
         }
-        internal LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder, ILog log)
+        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder, ILog log)
         {
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name), "name cannot be null or emtpy.");
@@ -39,7 +39,7 @@ namespace Calamari.Integration.Processes.Semaphores
 
         private string LockFilePath { get; }
 
-        internal AquireLockAction ShouldAquireLock(FileLock fileLock)
+        public AquireLockAction ShouldAquireLock(FileLock fileLock)
         {
             if (lockIo.LockExists(LockFilePath))
             {
@@ -95,7 +95,7 @@ namespace Calamari.Integration.Processes.Semaphores
             return AquireLockAction.AquireLock;
         }
 
-        internal bool TryAcquireLock()
+        public bool TryAcquireLock()
         {
             var lockContent = lockIo.ReadLock(LockFilePath);
             var response = ShouldAquireLock(lockContent);
@@ -151,7 +151,7 @@ namespace Calamari.Integration.Processes.Semaphores
             }
         }
 
-        internal enum AquireLockAction
+        public enum AquireLockAction
         {
             DontAquireLock,
             AquireLock,

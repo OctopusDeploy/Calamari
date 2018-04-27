@@ -6,7 +6,7 @@ using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {
-    internal class NuGetFileSystemDownloader
+    public class NuGetFileSystemDownloader
     {
         private static string NuGetFileExtension = ".nupkg";
         

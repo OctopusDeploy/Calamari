@@ -4,9 +4,9 @@
     <TargetFramework>net451</TargetFramework>
     <OutputType>Exe</OutputType>
     <PlatformTarget>anycpu</PlatformTarget>
-    <AssemblyName>Calamari.Aws</AssemblyName>
-    <OutputType>Library</OutputType>
-    <PackageId>Calamari.Aws</PackageId>
+    <AssemblyName>Calamari.Cloud</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>Calamari.Cloud</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <Authors>Octopus Deploy</Authors>
     <Copyright>Octopus Deploy Pty Ltd</Copyright>
@@ -16,20 +16,17 @@
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Description>Contains the command-line Calamari tool, plus additional commands for Aws integration.</Description>
-    <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
+    <Description>Contains the command-line Calamari tool, plus additional commands for Aws and Azure integration.</Description>
     <ApplicationIcon />
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <ProjectReference Include="..\Calamari.Plugin\Calamari.Plugin.csproj" />
+    <ProjectReference Include="..\Calamari\Calamari.csproj" />
   </ItemGroup>
-  <ItemGroup>
+    <ItemGroup>
     <PackageReference Include="Autofac" Version="4.8.0" />
-    <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.9" />
-    <PackageReference Include="AWSSDK.Core" Version="3.3.21.9" />
-    <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.5.3" />
-    <PackageReference Include="AWSSDK.S3" Version="3.3.17" />
-    <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.3.3" />
   </ItemGroup>
 </Project>

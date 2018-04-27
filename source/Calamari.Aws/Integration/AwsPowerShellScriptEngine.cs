@@ -1,8 +1,8 @@
-﻿using System.Collections.Specialized;
-using Calamari.Integration.Processes;
+﻿using Calamari.Integration.Processes;
+using Octopus.CoreUtilities.Extensions;
+using System.Collections.Specialized;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Integration
 {

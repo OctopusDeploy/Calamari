@@ -30,8 +30,9 @@ namespace Calamari.Commands
         private string scriptParameters;
         private DeploymentJournal journal;
         private RunningDeployment deployment;
+        private readonly CalamariVariableDictionary variables;
 
-        public RunScriptCommand()
+        public RunScriptCommand(CalamariVariableDictionary variables)
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
@@ -41,13 +42,14 @@ namespace Calamari.Commands
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             Options.Add("substituteVariables", "Perform variable substitution on the script body before executing it.", v => substituteVariables = true);
+
+            this.variables = variables;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, base64Variables);
+            
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 

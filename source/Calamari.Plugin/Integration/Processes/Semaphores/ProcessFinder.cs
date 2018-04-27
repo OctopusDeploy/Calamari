@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
-    class ProcessFinder : IProcessFinder
+    public class ProcessFinder : IProcessFinder
     {
         public bool ProcessIsRunning(int processId, string processName)
         {

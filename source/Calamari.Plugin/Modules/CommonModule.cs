@@ -7,9 +7,9 @@ using Module = Autofac.Module;
 namespace Calamari.Modules
 {
     /// <summary>
-    /// Autofac module to register some utility classes
+    /// Autofac module to register common objects
     /// </summary>
-    public class PluginModule : Module
+    public class CommonModule : Module
     {
         private readonly OptionSet optionSet = new OptionSet();
         private string variablesFile;
@@ -17,7 +17,7 @@ namespace Calamari.Modules
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
 
-        public PluginModule(string[] args)
+        public CommonModule(string[] args)
         {
             optionSet.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             optionSet.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
@@ -29,7 +29,7 @@ namespace Calamari.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterInstance(new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile,
-                sensitiveVariablesPassword, base64Variables));
+                sensitiveVariablesPassword, base64Variables)).AsSelf();
         }
     }
 }

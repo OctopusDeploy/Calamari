@@ -40,7 +40,7 @@ namespace Calamari.Integration.Packages
             return $"{Encode(packageId)}{SectionDelimiter}{ver}{SectionDelimiter}{cacheBuster ?? "*"}{extension ?? "*"}";
         }
 
-        internal static string ToRegexPattern(string packageId, IVersion version, string rootDir = "")
+        public static string ToRegexPattern(string packageId, IVersion version, string rootDir = "")
         {
             var pattern = SearchPattern(packageId, version, string.Empty, string.Empty);
             if (!string.IsNullOrWhiteSpace(rootDir))
