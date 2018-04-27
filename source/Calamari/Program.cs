@@ -5,15 +5,17 @@ using Calamari.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Util;
 
 namespace Calamari
 {
     public class Program
     {
+        private static readonly IPluginUtils PluginUtils = new PluginUtils();
         readonly string displayName;
         readonly string informationalVersion;
         readonly string[] environmentInformation;
-        private readonly ICommand command;
+        private readonly ICommand command;        
 
         public Program(
             string displayName, 
@@ -39,8 +41,8 @@ namespace Calamari
         {
             var builder = new ContainerBuilder();            
             builder.RegisterModule(new CalamariProgramModule());
-            builder.RegisterModule(new CalamariCommandsModule(GetFirstArgument(args)));
-            builder.RegisterModule(new CalamariPluginsModule());
+            builder.RegisterModule(new CalamariCommandsModule(PluginUtils.GetFirstArgument(args), typeof(Program).Assembly));
+            builder.RegisterModule(new CalamariPluginsModule());           
             return builder.Build();
         }
 
@@ -56,7 +58,7 @@ namespace Calamari
             {
                 if (command == null)
                 {
-                    return PrintHelp(GetFirstArgument(args));
+                    return PrintHelp(PluginUtils.GetFirstArgument(args));
                 }
 
                 return command.Execute(args.Skip(1).ToArray());
@@ -65,11 +67,6 @@ namespace Calamari
             {
                 return ConsoleFormatter.PrintError(ex);
             }            
-        }
-
-        private static string GetFirstArgument(string[] args)
-        {
-            return (args.FirstOrDefault() ?? string.Empty).Trim('-', '/');
         }
 
         private static int PrintHelp(string action)

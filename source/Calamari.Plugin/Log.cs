@@ -70,8 +70,8 @@ namespace Calamari
 
         static readonly object Sync = new object();
 
-        internal static IndentedTextWriter StdOut;
-        internal static IndentedTextWriter StdErr;
+        public static IndentedTextWriter StdOut;
+        public static IndentedTextWriter StdErr;
 
         static Log()
         {

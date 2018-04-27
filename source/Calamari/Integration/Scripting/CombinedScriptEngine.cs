@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
+using Calamari.Plugin;
 
 namespace Calamari.Integration.Scripting
 {
@@ -23,6 +26,7 @@ namespace Calamari.Integration.Scripting
             StringDictionary environmentVars = null)
         {
             var scriptType = ValidateScriptType(script);
+
             return ScriptEngineRegistry.Instance.ScriptEngines[scriptType].Execute(
                 script, 
                 variables, 

@@ -20,6 +20,7 @@
     <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.Plugin\Calamari.Plugin.csproj" />
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
   </ItemGroup>
   <ItemGroup>

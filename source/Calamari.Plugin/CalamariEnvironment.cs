@@ -17,7 +17,7 @@ namespace Calamari
         /// Based on some internal methods used my mono itself
         /// https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Environment.cs
         /// </summary>
-        internal static bool IsRunningOnNix => (Environment.OSVersion.Platform == PlatformID.Unix) && !IsRunningOnMac;
+        public static bool IsRunningOnNix => (Environment.OSVersion.Platform == PlatformID.Unix) && !IsRunningOnMac;
 
         public static bool IsRunningOnWindows => Environment.OSVersion.Platform == PlatformID.Win32NT ||
                                                  Environment.OSVersion.Platform == PlatformID.Win32S ||

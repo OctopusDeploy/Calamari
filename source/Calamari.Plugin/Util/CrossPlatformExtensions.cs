@@ -1,11 +1,5 @@
 ﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using NuGet;
-using Calamari.Util.Environments;
 
 namespace Calamari.Util
 {

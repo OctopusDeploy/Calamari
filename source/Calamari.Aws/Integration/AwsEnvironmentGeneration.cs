@@ -33,6 +33,9 @@ namespace Calamari.Aws.Integration
         private readonly string assumeRoleArn;
         private readonly string assumeRoleSession;
 
+        public string Name => "AwsEnvironment";
+        public string Group => "AWS";
+
         public StringDictionary EnvironmentVars { get; private set; }
 
         public AwsEnvironmentGeneration(VariableDictionary variables)

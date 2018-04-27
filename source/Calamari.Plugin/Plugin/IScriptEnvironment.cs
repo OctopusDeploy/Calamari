@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Text;
+﻿using System.Collections.Specialized;
 
-namespace Calamari.Plugin.Plugin
+namespace Calamari.Plugin
 {
     /// <summary>
     /// Plugins that implement this interface can contribute environment variables to the running script.
     /// </summary>
-    interface ScriptEnvironment
+    public interface IScriptEnvironment : ICalamariPlugin
     {
         /// <summary>
         /// A key value collection of environment variables

@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Calamari.Integration.Scripting;
 using Calamari.Util.Environments;
 
 namespace Calamari.Modules
@@ -12,6 +13,7 @@ namespace Calamari.Modules
                 .WithParameter("informationalVersion", typeof(Program).Assembly.GetInformationalVersion())
                 .WithParameter("environmentInformation", EnvironmentHelper.SafelyGetEnvironmentInformation())
                 .SingleInstance();
+            builder.RegisterType<CombinedScriptEngine>().AsSelf();
         }
     }
 }

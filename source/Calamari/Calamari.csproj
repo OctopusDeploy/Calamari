@@ -99,6 +99,9 @@
       <Version>3.5.2</Version>
     </PackageReference>
   </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Calamari.Plugin\Calamari.Plugin.csproj" />
+    </ItemGroup>
   <ItemGroup>
     <None Update="Calamari.exe.manifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
