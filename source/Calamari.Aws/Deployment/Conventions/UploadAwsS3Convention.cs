@@ -94,14 +94,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 UploadAll(options, Factory, deployment).Tee(responses =>
                 {
-                    foreach (var response in responses)
-                    {
-                        if (response.IsSuccess())
-                        {
-                            Log.Info($"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{response.BucketKey}]\"");
-                            Log.SetOutputVariable($"Files[{response.BucketKey}]", response.Version);
-                        }
-                    }
+                    SetOutputVariables(deployment, responses);
                 });
             }
              catch (AmazonS3Exception exception)
@@ -119,6 +112,18 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 HandleAmazonServiceException(exception);
                 throw;
+            }
+        }
+
+        private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results) 
+        {
+            Log.SetOutputVariable(SpecialVariables.Package.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
+            Log.SetOutputVariable(SpecialVariables.Package.Output.FilePath, deployment.PackageFilePath);
+            foreach (var result in results)
+            {
+                if (!result.IsSuccess()) continue;
+                Log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{result.BucketKey}]\"");
+                Log.SetOutputVariable($"Files[{result.BucketKey}]", result.Version);
             }
         }
 
@@ -231,7 +236,8 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
-            return CreateRequest(deployment.PackageFilePath, GetBucketKey(fileSystem, deployment.PackageFilePath, options), options)
+            return CreateRequest(deployment.PackageFilePath,
+                    GetBucketKey(fileSystem, deployment.PackageFilePath, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }

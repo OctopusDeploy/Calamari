@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text;
 using Calamari.Deployment;
 using Octostache;
@@ -67,7 +68,7 @@ namespace Calamari.Integration.Processes
         {
             var text = new StringBuilder();
 
-            foreach (var name in variables.GetNames())
+            foreach (var name in variables.GetNames().OrderBy(name => name))
             {
                 if (!nameFilter(name))
                     continue;
