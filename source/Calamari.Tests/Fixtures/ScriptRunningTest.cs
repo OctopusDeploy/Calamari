@@ -45,6 +45,7 @@ namespace Calamari.Tests.Fixtures
         [SetUp]
         public void SetUp()
         {
+            EnvironmentVariables.EnsureVariablesExist();
             container = Calamari.Program.BuildContainer(Args);
         }
 
