@@ -5,6 +5,7 @@ using Calamari.Modules;
 using Calamari.Util;
 using System;
 using System.Linq;
+using Calamari.Extensions;
 
 namespace Calamari
 {
@@ -41,7 +42,13 @@ namespace Calamari
             var builder = new ContainerBuilder();            
             builder.RegisterModule(new CalamariProgramModule());
             builder.RegisterModule(new CalamariCommandsModule(PluginUtils.GetFirstArgument(args), typeof(Program).Assembly));
-            builder.RegisterModule(new CommonModule(args));           
+            builder.RegisterModule(new CommonModule(args));
+
+            foreach (var module in new ModuleLoader(args).AllModules)
+            {
+                builder.RegisterModule(module);
+            }
+
             return builder.Build();
         }
 

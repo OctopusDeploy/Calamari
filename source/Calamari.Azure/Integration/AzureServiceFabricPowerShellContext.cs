@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using Calamari.Integration.EmbeddedResources;
@@ -9,22 +10,42 @@ using Octostache;
 using Calamari.Deployment;
 using Calamari.Azure.Util;
 using Calamari.Commands.Support;
+using Calamari.Hooks;
+using Calamari.Integration.Scripting.WindowsPowerShell;
 
 namespace Calamari.Azure.Integration
 {
-    public class AzureServiceFabricPowerShellContext
+    public class AzureServiceFabricPowerShellContext : IScriptWrapper
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
+        private readonly CalamariVariableDictionary variables;
+        private readonly IScriptEngine scriptEngine;
 
-        public AzureServiceFabricPowerShellContext()
+        public AzureServiceFabricPowerShellContext(CalamariVariableDictionary variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.embeddedResources = new AssemblyEmbeddedResources();
+            this.variables = variables;
+            this.scriptEngine = new PowerShellScriptEngine();
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public bool Enabled =>
+            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
+
+        public CommandResult ExecuteScript(
+            Script script,
+            CalamariVariableDictionary variables,
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null)
         {
+            // We only execute this hook if the connection endpoint has been set
+            if (!Enabled)
+            {
+                throw new InvalidOperationException(
+                    "This script wrapper hook is not enabled, and should not have been run");
+            }
+
             if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
@@ -61,7 +82,7 @@ namespace Calamari.Azure.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
             }
         }
 
@@ -77,7 +98,7 @@ namespace Calamari.Azure.Integration
         {
             // We don't bundle the standard Azure PS module for Service Fabric work. We do however need
             // a certain Active Directory library that is bundled with Calamari.
-            SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(Program).Assembly.Location), variables);
+            SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(AzureServiceFabricPowerShellContext).Assembly.Location), variables);
         }
 
         static void SetOutputVariable(string name, string value, VariableDictionary variables)

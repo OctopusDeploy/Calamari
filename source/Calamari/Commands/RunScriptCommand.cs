@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using Calamari.Commands.Support;
+﻿using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -12,38 +9,35 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
-using Calamari.Util;
 using Octostache;
+using System;
+using System.IO;
 
 namespace Calamari.Commands
 {
     [Command("run-script", Description = "Invokes a PowerShell or ScriptCS script")]
     public class RunScriptCommand : Command
     {
-        private string variablesFile;
-        private string base64Variables;
         private string scriptFile;
-        private string sensitiveVariablesFile;
-        private string sensitiveVariablesPassword;
         private string packageFile;
         private bool substituteVariables;
         private string scriptParameters;
         private DeploymentJournal journal;
         private RunningDeployment deployment;
         private readonly CalamariVariableDictionary variables;
+        private readonly CombinedScriptEngine scriptEngine;
 
-        public RunScriptCommand(CalamariVariableDictionary variables)
+        public RunScriptCommand(
+            CalamariVariableDictionary variables,
+            CombinedScriptEngine scriptEngine)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", "Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFile = Path.GetFullPath(v));
             Options.Add("scriptParameters=", "Parameters to pass to the script.", v => scriptParameters = v);
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             Options.Add("substituteVariables", "Perform variable substitution on the script body before executing it.", v => substituteVariables = true);
 
             this.variables = variables;
+            this.scriptEngine = scriptEngine;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -98,7 +92,6 @@ namespace Calamari.Commands
         {
             var validatedScriptFilePath = AssertScriptFileExists();
 
-            var scriptEngine = new CombinedScriptEngine();
             var runner = new CommandLineRunner(
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", validatedScriptFilePath);

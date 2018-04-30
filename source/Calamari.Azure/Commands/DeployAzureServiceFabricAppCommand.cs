@@ -25,13 +25,16 @@ namespace Calamari.Azure.Commands
         private string packageFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
+        private readonly CombinedScriptEngine scriptEngine;
 
-        public DeployAzureServiceFabricAppCommand()
+        public DeployAzureServiceFabricAppCommand(CombinedScriptEngine scriptEngine)
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+
+            this.scriptEngine = scriptEngine;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -57,7 +60,6 @@ namespace Calamari.Azure.Commands
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);

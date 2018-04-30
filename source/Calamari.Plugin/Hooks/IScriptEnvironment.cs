@@ -1,11 +1,11 @@
 ﻿using System.Collections.Specialized;
 
-namespace Calamari.Plugin
+namespace Calamari.Hooks
 {
     /// <summary>
-    /// Plugins that implement this interface can contribute environment variables to the running script.
+    /// Hooks that implement this interface can contribute environment variables to the running script.
     /// </summary>
-    public interface IScriptEnvironment : ICalamariPlugin
+    public interface IScriptEnvironment : ICalamariHook
     {
         /// <summary>
         /// A key value collection of environment variables

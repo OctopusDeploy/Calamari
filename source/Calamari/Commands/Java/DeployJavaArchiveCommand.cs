@@ -27,13 +27,16 @@ namespace Calamari.Commands.Java
         string archiveFile;
         string sensitiveVariablesFile;
         string sensitiveVariablesPassword;
+        private readonly CombinedScriptEngine scriptEngine;
 
-        public DeployJavaArchiveCommand()
+        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine)
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+
+            this.scriptEngine = scriptEngine;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -53,7 +56,6 @@ namespace Calamari.Commands.Java
 
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-            var scriptEngine = new CombinedScriptEngine();
             var substituter = new FileSubstituter(fileSystem);
             var commandOutput =
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));

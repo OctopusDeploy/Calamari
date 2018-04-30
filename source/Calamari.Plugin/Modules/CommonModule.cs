@@ -28,8 +28,22 @@ namespace Calamari.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterInstance(new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile,
-                sensitiveVariablesPassword, base64Variables)).AsSelf();
+            // If the variables file was not defined, return empty variables.
+            // This is great for testing, because you don't need to worry
+            // about a valid variables file
+            if (string.IsNullOrWhiteSpace(variablesFile))
+            {
+                builder.RegisterInstance(new CalamariVariableDictionary()).AsSelf();
+            }
+            // Otherwise return the populated variables
+            else
+            {
+                builder.RegisterInstance(new CalamariVariableDictionary(
+                    variablesFile,
+                    sensitiveVariablesFile,
+                    sensitiveVariablesPassword,
+                    base64Variables)).AsSelf();
+            }
         }
     }
 }
