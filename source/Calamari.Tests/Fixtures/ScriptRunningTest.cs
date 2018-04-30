@@ -28,8 +28,8 @@ namespace Calamari.Tests.Fixtures
         {
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
-            variables.Set("AwsAccount.AccessKey", "AKIAIHVPNPPZOLA4TYVQ");
-            variables.Set("AwsAccount.SecretKey", "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");
+            variables.Set("AwsAccount.AccessKey", Environment.GetEnvironmentVariable("AWS.E2E.AccessKeyId"));
+            variables.Set("AwsAccount.SecretKey", Environment.GetEnvironmentVariable("AWS.E2E.SecretKeyId"));
             variables.Set("Octopus.Action.Aws.AssumeRole", "False");
             variables.Set("Octopus.Action.Aws.AssumedRoleArn", "");
             variables.Set("Octopus.Action.Aws.AssumedRoleSession", "");
