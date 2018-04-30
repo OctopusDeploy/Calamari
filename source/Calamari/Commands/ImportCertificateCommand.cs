@@ -1,4 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +9,7 @@ using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
 using Octostache;
+
 
 namespace Calamari.Commands
 {
@@ -106,7 +107,7 @@ namespace Calamari.Commands
             var raw = variables.GetRaw(SpecialVariables.Action.Certificate.PrivateKeyAccessRules);
 
             if (string.IsNullOrWhiteSpace(raw))
-                return new List<PrivateKeyAccessRule>(); 
+                return new List<PrivateKeyAccessRule>();
 
             // Unescape it (we only care about backslashes)
             var unescaped = raw.Replace(@"\\", @"\");
@@ -130,7 +131,7 @@ namespace Calamari.Commands
         static void ValidateStore(StoreLocation? storeLocation, string storeName)
         {
             // Windows wants to launch an interactive confirmation dialog when importing into the Root store for a user.
-            // https://github.com/OctopusDeploy/Issues/issues/3347 
+            // https://github.com/OctopusDeploy/Issues/issues/3347
             if ((!storeLocation.HasValue || storeLocation.Value != StoreLocation.LocalMachine)
                 && storeName == WindowsX509CertificateStore.RootAuthorityStoreName)
             {

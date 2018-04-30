@@ -55,7 +55,7 @@ namespace Calamari.Azure.Commands
 
             Log.Info("Deploying package:    " + packageFile);
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-            
+
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
@@ -89,6 +89,7 @@ namespace Calamari.Azure.Commands
                 new SubstituteVariablesInAzureServiceFabricPackageConvention(fileSystem, substituter),
 
                 // Main Service Fabric deployment script execution
+                new EnsureServiceFabricCertificateExistsInStoreConvention(),
                 new DeployAzureServiceFabricAppConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
 
                 // PostDeploy stage

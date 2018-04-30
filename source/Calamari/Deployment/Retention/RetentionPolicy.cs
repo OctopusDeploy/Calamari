@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;

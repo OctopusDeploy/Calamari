@@ -1,25 +1,30 @@
 ﻿## Octopus Azure Context script, version 1.0
 ## --------------------------------------------------------------------------------------
-## 
+##
 ## This script is used to load the Azure Powershell module and select the Azure subscription
 ##
-## The script is passed the following parameters. 
+## The script is passed the following parameters.
 ##
 ##   $OctopusUseBundledAzureModules = "true"
-##   $OctopusAzureModulePath = "....\Calamari\PowerShell\"
+##   $OctopusAzureModulePath = "...\Calamari\PowerShell\"
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
 ##   $OctopusUseServicePrincipal = "false"
 ##   $OctopusAzureSubscriptionId = "..."
 ##   $OctopusAzureStorageAccountName = "..."
-##   $OctopusAzureCertificateFileName = "...."
-##   $OctopusAzureCertificatePassword = "...."
-##   $OctopusAzureADTenantId = "...."
-##   $OctopusAzureADClientId = "...."
-##   $OctopusAzureADPassword = "...."
-##   $OctopusAzureEnvironment = "...."
+##   $OctopusAzureCertificateFileName = "..."
+##   $OctopusAzureCertificatePassword = "..."
+##   $OctopusAzureADTenantId = "..."
+##   $OctopusAzureADClientId = "..."
+##   $OctopusAzureADPassword = "..."
+##   $OctopusAzureEnvironment = "..."
 
 $ErrorActionPreference = "Stop"
+
+if ($PSVersionTable.PSVersion.Major -lt 5)
+{
+    throw "These Azure commands are only supported in PowerShell versions 5 and above. This server is currently running PowerShell version $($PSVersionTable.PSVersion.ToString())."
+}
 
 function Execute-WithRetry([ScriptBlock] $command) {
     $attemptCount = 0
@@ -52,11 +57,14 @@ function Execute-WithRetry([ScriptBlock] $command) {
 
 if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
     # Add bundled Azure PowerShell modules to PSModulePath
-    $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Storage"
-    $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ServiceManagement"
-    $ResourceManagerModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "ResourceManager" | Join-Path -ChildPath "AzureResourceManager"
+
+    $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Azure.Storage" | Join-Path -ChildPath "4.2.1"
+    $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Azure" | Join-Path -ChildPath "5.1.2"
+    $ResourceManagerModulePath = $OctopusAzureModulePath
     Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
+        
     $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
+    Write-Verbose $env:PSModulePath
 }
 
 Execute-WithRetry{
@@ -77,7 +85,7 @@ Execute-WithRetry{
         Write-Host "##octopus[stdout-verbose]"
         Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
         Write-Host "##octopus[stdout-default]"
-        
+
     } Else {
         # Authenticate via Management Certificate
         Write-Verbose "Loading the management certificate"
@@ -94,7 +102,7 @@ Execute-WithRetry{
         $azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Certificate $certificate -Environment $AzureEnvironment
         $azureProfile.Save(".\AzureProfile.json")
         Select-AzureProfile -Profile $azureProfile | Out-Null
-    } 
+    }
 }
 
 Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters"
@@ -106,6 +114,6 @@ try {
     if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
         Write-Warning "The Azure Service Management SDK is not FIPS 140 compliant. http://g.octopushq.com/FIPS"
     }
-    
+
     throw
 }
