@@ -24,7 +24,7 @@ namespace Calamari.Deployment
         /// </summary>
         public string StagingDirectory
         {
-            get { return Variables.Get(SpecialVariables.OriginalPackageDirectoryPath); }
+            get { return Variables.Get(SpecialVariables.OriginalPackageDirectoryPath) ?? Environment.CurrentDirectory; }
             set { Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, value); }
         }
 
