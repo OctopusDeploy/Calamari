@@ -56,6 +56,8 @@ namespace Calamari.Commands
             journal = new DeploymentJournal(filesystem, semaphore, variables);
             deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
+            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
+
             ExtractPackage(variables);
             SubstituteVariablesInScript(variables);           
             return InvokeScript(variables);
@@ -72,9 +74,7 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find package file: " + packageFile);
             
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
-            extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);
-
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
+            extractor.GetExtractor(packageFile).Extract(packageFile, Environment.CurrentDirectory, true);            
         }
 
         private void SubstituteVariablesInScript(CalamariVariableDictionary variables)
