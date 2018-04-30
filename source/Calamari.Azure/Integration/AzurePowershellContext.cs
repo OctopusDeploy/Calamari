@@ -79,7 +79,7 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate

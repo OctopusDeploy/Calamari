@@ -26,6 +26,7 @@ namespace Calamari.Aws.Integration
         private const string TentacleProxyPort = "TentacleProxyPort";
         private const string TentacleProxyUsername = "TentacleProxyUsername";
         private const string TentacleProxyPassword = "TentacleProxyPassword";
+        private StringDictionary envVars;
         private readonly string account;
         private readonly string region;
         private readonly string accessKey;
@@ -37,7 +38,21 @@ namespace Calamari.Aws.Integration
         public string Name => "AwsEnvironment";
         public string Group => "AWS";
 
-        public StringDictionary EnvironmentVars { get; private set; }
+        public StringDictionary EnvironmentVars
+        {
+            get
+            {
+                if (envVars == null)
+                {
+                    envVars = new StringDictionary();
+                    PopulateCommonSettings(envVars);
+                    PopulateSuppliedKeys(envVars);
+                    PopulateKeysFromInstanceRole(envVars);
+                    AssumeRole(envVars);
+                }                
+                return envVars;
+            }
+        }
 
         public AwsEnvironmentGeneration(CalamariVariableDictionary variables)
         {
@@ -48,12 +63,6 @@ namespace Calamari.Aws.Integration
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleSession = variables.Get("Octopus.Action.Aws.AssumedRoleSession")?.Trim();
-            EnvironmentVars = new StringDictionary();
-
-            PopulateCommonSettings();
-            PopulateSuppliedKeys();
-            PopulateKeysFromInstanceRole();
-            AssumeRole();
         }
 
         /// <summary>
@@ -120,22 +129,22 @@ namespace Calamari.Aws.Integration
         /// <summary>
         /// We always set these variables, regardless of the kind of login
         /// </summary>
-        void PopulateCommonSettings()
+        void PopulateCommonSettings(StringDictionary envVars)
         {
-            EnvironmentVars["AWS_DEFAULT_REGION"] = region;
-            EnvironmentVars["AWS_REGION"] = region;
+            envVars["AWS_DEFAULT_REGION"] = region;
+            envVars["AWS_REGION"] = region;
         }
 
         /// <summary>
         /// If the keys were explicitly supplied, use them directly
         /// </summary>
         /// <exception cref="LoginException">The supplied keys were not valid</exception>
-        void PopulateSuppliedKeys()
+        void PopulateSuppliedKeys(StringDictionary envVars)
         {
             if (!String.IsNullOrEmpty(accessKey))
             {
-                EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
-                EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
+                envVars["AWS_ACCESS_KEY_ID"] = accessKey;
+                envVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
                 if (!VerifyLogin())
                 {
                     throw new LoginException("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
@@ -149,7 +158,7 @@ namespace Calamari.Aws.Integration
         /// If no keys were supplied, we must be using the instance role
         /// </summary>
         /// <exception cref="LoginException">The instance role information could not be extracted</exception>
-        void PopulateKeysFromInstanceRole()
+        void PopulateKeysFromInstanceRole(StringDictionary envVars)
         {
             if (String.IsNullOrEmpty(accessKey))
             {
@@ -170,9 +179,9 @@ namespace Calamari.Aws.Integration
                             stream => stream.ReadToEnd()))
                         .Map(JsonConvert.DeserializeObject);
 
-                    EnvironmentVars["AWS_ACCESS_KEY_ID"] = instanceRoleKeys.AccessKeyId;
-                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = instanceRoleKeys.SecretAccessKey;
-                    EnvironmentVars["AWS_SESSION_TOKEN"] = instanceRoleKeys.Token;
+                    envVars["AWS_ACCESS_KEY_ID"] = instanceRoleKeys.AccessKeyId;
+                    envVars["AWS_SECRET_ACCESS_KEY"] = instanceRoleKeys.SecretAccessKey;
+                    envVars["AWS_SESSION_TOKEN"] = instanceRoleKeys.Token;
                 }
                 catch (Exception ex)
                 {
@@ -191,7 +200,7 @@ namespace Calamari.Aws.Integration
         /// <summary>
         /// If we assume a secondary role, do it here
         /// </summary>
-        void AssumeRole()
+        void AssumeRole(StringDictionary envVars)
         {
             if ("True".Equals(assumeRole, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -205,9 +214,9 @@ namespace Calamari.Aws.Integration
                     // Get the credentials details from the response
                     .Map(response => response.Credentials);
 
-                EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
-                EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;
-                EnvironmentVars["AWS_SESSION_TOKEN"] = credentials.SessionToken;
+                envVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
+                envVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;
+                envVars["AWS_SESSION_TOKEN"] = credentials.SessionToken;
             }
         }
     }

@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures
                 .Map(dllPath => Path.GetDirectoryName(dllPath))
                 .Map(dllDir => Path.Combine(dllDir, "Scripts"))
                 .Map(scriptPath => new[]
-                    {"run-test-script", "--script=" + scriptPath + "\\awsscript.ps1", "--extensions=Aws,Tests"});
+                    {"run-test-script", "--script=" + scriptPath + "\\awsscript.ps1", "--extensions=Aws,Azure,Tests"});
 
         private static string FullLocalPath(Assembly assembly) =>
             Uri.UnescapeDataString(new UriBuilder(assembly.CodeBase).Path).Replace("/", "\\");
@@ -33,6 +33,12 @@ namespace Calamari.Tests.Fixtures
             variables.Set("Octopus.Action.Aws.AssumeRole", "False");
             variables.Set("Octopus.Action.Aws.AssumedRoleArn", "");
             variables.Set("Octopus.Action.Aws.AssumedRoleSession", "");
+            variables.Set("Octopus.Account.AccountType", "AzureServicePrincipal");
+            variables.Set("Octopus.Action.Azure.TenantId", Environment.GetEnvironmentVariable("Azure.E2E.TenantId"));
+            variables.Set("Octopus.Action.Azure.ClientId", Environment.GetEnvironmentVariable("Azure.E2E.ClientId"));
+            variables.Set("Octopus.Action.Azure.Password", Environment.GetEnvironmentVariable("Azure.E2E.Password"));
+            variables.Set("Octopus.Action.Azure.SubscriptionId", Environment.GetEnvironmentVariable("Azure.E2E.SubscriptionId"));
+
             return variables;
         }
 
