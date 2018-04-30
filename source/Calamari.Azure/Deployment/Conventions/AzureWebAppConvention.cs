@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Websites.Publishing;
+using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -23,23 +24,20 @@ namespace Calamari.Azure.Deployment.Conventions
             var variables = deployment.Variables;
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
-            var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
-            Log.Info("Deploying to Azure WebApp '{0}'{1}, using subscription-id '{2}'",
-                siteName,
-                string.IsNullOrEmpty(resourceGroupName) ? string.Empty : $" in Resource Group {resourceGroupName}",
-                subscriptionId);
+            var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
+                ? string.Empty
+                : $" in Resource Group {resourceGroupName}";
+            Log.Info($"Deploying to Azure WebApp '{siteAndSlotName}'{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
-
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
-
             try
             {
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
-
-                DeployToAzure(deployment, siteName, variables, publishProfile);
+                DeployToAzure(deployment, siteAndSlotName, variables, publishProfile);
             }
             finally
             {
@@ -47,20 +45,22 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static void DeployToAzure(RunningDeployment deployment, string siteName, CalamariVariableDictionary variables,
+        private static void DeployToAzure(RunningDeployment deployment, string siteAndSlotName, CalamariVariableDictionary variables,
             SitePublishProfile publishProfile)
         {
             var retry = GetRetryTracker();
-
             while (retry.Try())
             {
                 try
                 {
+                    var siteName = AzureWebAppHelper.GetSiteNameFromSiteAndSlotName(siteAndSlotName);
+                    Log.Verbose($"Using siteAndSlot {siteAndSlotName}");
+                    Log.Verbose($"Using siteName {siteName}");
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
                             "contentPath",
-                            BuildPath(siteName, variables),
+                            BuildPath(siteName,  variables),
                             DeploymentOptions(siteName, publishProfile),
                             DeploymentSyncOptions(variables)
                         );
@@ -90,26 +90,23 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
+        private static bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
         {
-            if (sslpolicyerrors == SslPolicyErrors.None)
+            switch (sslpolicyerrors)
             {
-                return true;
+                case SslPolicyErrors.None:
+                    return true;
+                case SslPolicyErrors.RemoteCertificateNameMismatch:
+                    Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
+                    break;
             }
-
-            if (sslpolicyerrors == SslPolicyErrors.RemoteCertificateNameMismatch)
-            {
-                Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
-            }
-
             return false;
         }
 
         private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
-            var siteName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-
+            var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
 
             switch (accountType)
@@ -117,19 +114,15 @@ namespace Calamari.Azure.Deployment.Conventions
                 case AzureAccountTypes.ServicePrincipalAccountType:
                     var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
                     if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
-                    {
                         Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
-                    }
 
                     var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
                     if (activeDirectoryEndpoint != DefaultVariables.ActiveDirectoryEndpoint)
-                    {
                         Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndpoint);
-                    }
 
                     return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
                         variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
-                        siteName,
+                        siteAndSlotName,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
                         variables.Get(SpecialVariables.Action.Azure.Password),
@@ -139,24 +132,21 @@ namespace Calamari.Azure.Deployment.Conventions
                 case AzureAccountTypes.ManagementCertificateAccountType:
                     var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
                     if (serviceManagementEndpoint != DefaultVariables.ServiceManagementEndpoint)
-                    {
                         Log.Info("Using override for service management endpoint - {0}", serviceManagementEndpoint);
-                    }
+
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
-                        siteName,
+                        siteAndSlotName,
                         serviceManagementEndpoint);
                 default:
                     throw new CommandException(
                         "Account type must be either Azure Management Certificate or Azure Service Principal");
-
             }
         }
 
         private static string BuildPath(string site, VariableDictionary variables)
         {
             var relativePath = (variables.Get(SpecialVariables.Action.Azure.PhysicalPath) ?? "").TrimStart('\\');
-
             return relativePath != ""
                 ? site + "\\" + relativePath
                 : site;
@@ -199,6 +189,7 @@ namespace Calamari.Azure.Deployment.Conventions
             VariableDictionary variables)
         {
             // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
+            // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
             {
                 syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataFiles", "Delete", "filePath",
@@ -213,6 +204,7 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+            // ReSharper disable once InvertIf
             if (preservePaths != null)
             {
                 for (var i = 0; i < preservePaths.Count; i++)
@@ -228,18 +220,14 @@ namespace Calamari.Azure.Deployment.Conventions
         private static void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
             VariableDictionary variables)
         {
+            // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
             {
                 var rules = Microsoft.Web.Deployment.DeploymentSyncOptions.GetAvailableRules();
-                DeploymentRule rule;
-                if (rules.TryGetValue("AppOffline", out rule))
-                {
+                if (rules.TryGetValue("AppOffline", out var rule))
                     syncOptions.Rules.Add(rule);
-                }
                 else
-                {
                     Log.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
-                }
             }
         }
 
@@ -263,13 +251,12 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-
         /// <summary>
         /// For azure operations, try again after 1s then 2s, 4s etc...
         /// </summary>
-        static readonly LimitedExponentialRetryInterval RetryIntervalForAzureOperations = new LimitedExponentialRetryInterval(1000, 30000, 2);
+        private static readonly LimitedExponentialRetryInterval RetryIntervalForAzureOperations = new LimitedExponentialRetryInterval(1000, 30000, 2);
 
-        static RetryTracker GetRetryTracker()
+        private static RetryTracker GetRetryTracker()
         {
             return new RetryTracker(maxRetries: 3,
                 timeLimit: TimeSpan.MaxValue,

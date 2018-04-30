@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0011"
+#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0012"
 
 using Path = System.IO.Path;
 using System.Xml;
@@ -35,6 +35,7 @@ Setup(context =>
         OutputType = GitVersionOutput.Json,
 		LogFilePath = "gitversion.log"
     });
+    
 
     nugetVersion = gitVersionInfo.NuGetVersion;
 
@@ -108,8 +109,8 @@ Task("Pack")
     .Does(() =>
 {
     DoPackage("Calamari", "net40", nugetVersion);
-    DoPackage("Calamari.Azure", "net451", nugetVersion);
-    DoPackage("Calamari.Aws", "net451", nugetVersion);
+    DoPackage("Calamari.Azure", "net452", nugetVersion);
+    DoPackage("Calamari.Aws", "net452", nugetVersion);
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
