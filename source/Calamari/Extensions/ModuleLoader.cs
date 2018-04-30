@@ -56,9 +56,13 @@ namespace Calamari.Extensions
                 .Where(ext => !string.IsNullOrWhiteSpace(ext))
                 .ToList();
 
-        private Assembly GetAssemblyByName(string name) =>
-            AppDomain
+        private Assembly GetAssemblyByName(string name)
+        {
+            Assembly.Load(name);
+
+            return AppDomain
                 .CurrentDomain.GetAssemblies()
-                .SingleOrDefault(assembly => assembly.GetName().Name == name);       
+                .SingleOrDefault(assembly => assembly.GetName().Name == name);
+        }
     }
 }

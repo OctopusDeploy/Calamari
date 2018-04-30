@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using Autofac;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Tests.Fixtures
 {
@@ -12,7 +13,6 @@ namespace Calamari.Tests.Fixtures
     public class ScriptRunningTest
     {
         private IContainer container;
-        private ILifetimeScope unitOfWorkScope;
 
         private string[] Args =>
             ScriptRunningTest.FullLocalPath(typeof(ScriptRunningTest).Assembly)
@@ -24,9 +24,8 @@ namespace Calamari.Tests.Fixtures
         private static string FullLocalPath(Assembly assembly) =>
             Uri.UnescapeDataString(new UriBuilder(assembly.CodeBase).Path).Replace("/", "\\");
 
-        private CalamariVariableDictionary BuildVariables()
+        private CalamariVariableDictionary BuildVariables(CalamariVariableDictionary variables)
         {
-            var variables = new CalamariVariableDictionary();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
             variables.Set("AwsAccount.AccessKey", "AKIAIHVPNPPZOLA4TYVQ");
@@ -41,22 +40,18 @@ namespace Calamari.Tests.Fixtures
         public void SetUp()
         {
             container = Calamari.Program.BuildContainer(Args);
-            unitOfWorkScope = container.BeginLifetimeScope(builder =>
-            {
-                builder.RegisterInstance(BuildVariables()).AsSelf();
-            });
         }
 
         [TearDown]
         public void TearDown()
         {
-            unitOfWorkScope?.Dispose();
             container?.Dispose();
         }
 
         [Test]
         public void RunScript()
         {
+            BuildVariables(container.Resolve<CalamariVariableDictionary>());
             var retCode = container.Resolve<Calamari.Program>().Execute(Args);
             Assert.AreEqual(0, retCode);
         }

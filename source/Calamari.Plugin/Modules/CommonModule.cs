@@ -2,6 +2,7 @@
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using System.IO;
+using Octostache;
 using Module = Autofac.Module;
 
 namespace Calamari.Modules
@@ -42,7 +43,7 @@ namespace Calamari.Modules
                     variablesFile,
                     sensitiveVariablesFile,
                     sensitiveVariablesPassword,
-                    base64Variables)).AsSelf();
+                    base64Variables)).AsSelf().As<VariableDictionary>();
             }
         }
     }

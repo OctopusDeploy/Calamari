@@ -8,6 +8,7 @@ using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Exceptions;
+using Calamari.Integration.Processes;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
@@ -38,7 +39,7 @@ namespace Calamari.Aws.Integration
 
         public StringDictionary EnvironmentVars { get; private set; }
 
-        public AwsEnvironmentGeneration(VariableDictionary variables)
+        public AwsEnvironmentGeneration(CalamariVariableDictionary variables)
         {
             account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
