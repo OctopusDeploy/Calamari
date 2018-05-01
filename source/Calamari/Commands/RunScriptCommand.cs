@@ -12,12 +12,14 @@ using Calamari.Integration.Substitutions;
 using Octostache;
 using System;
 using System.IO;
+using Calamari.Modules;
 
 namespace Calamari.Commands
 {
     [Command("run-script", Description = "Invokes a PowerShell or ScriptCS script")]
     public class RunScriptCommand : Command
     {
+        private static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
         private string scriptFile;
         private string packageFile;
         private bool substituteVariables;
@@ -35,7 +37,7 @@ namespace Calamari.Commands
             Options.Add("script=", "Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFile = Path.GetFullPath(v));
             Options.Add("scriptParameters=", "Parameters to pass to the script.", v => scriptParameters = v);
             Options.Add("substituteVariables", "Perform variable substitution on the script body before executing it.", v => substituteVariables = true);
-
+            VariableDictionaryUtils.PopulateOptions(Options);
             this.variables = variables;
             this.scriptEngine = scriptEngine;
         }

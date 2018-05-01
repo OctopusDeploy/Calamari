@@ -12,6 +12,7 @@ namespace Calamari.Modules
     /// </summary>
     public class CommonModule : Module
     {
+        private static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
         private readonly OptionSet optionSet = new OptionSet();
         private string variablesFile;
         private string base64Variables;
@@ -20,10 +21,12 @@ namespace Calamari.Modules
 
         public CommonModule(string[] args)
         {
-            optionSet.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            optionSet.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
-            optionSet.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-            optionSet.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            VariableDictionaryUtils.PopulateOptions(
+                optionSet,
+                v => variablesFile = Path.GetFullPath(v),
+                v => base64Variables = v,
+                v => sensitiveVariablesFile = v,
+                v => sensitiveVariablesPassword = v);
             optionSet.Parse(args);
         }
 
