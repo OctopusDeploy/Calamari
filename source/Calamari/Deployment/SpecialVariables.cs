@@ -140,6 +140,21 @@
             }
         }
 
+        public static class Packages
+        {
+            public static readonly string PackageCollection = "Octopus.Action.Package";
+
+            public static string OriginalPath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].OriginalPath";
+            }
+            
+            public static string Extract(string key)
+            {
+                return $"Octopus.Action.Package[{key}].Extract";
+            }
+    }
+
         public static class Vhd
         {
             public static readonly string ApplicationPath = "Octopus.Action.Vhd.ApplicationPath";

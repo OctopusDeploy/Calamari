@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
@@ -35,7 +36,7 @@ namespace Calamari.Commands
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
-            Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", "Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFile = Path.GetFullPath(v));
             Options.Add("scriptParameters=", "Parameters to pass to the script.", v => scriptParameters = v);
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
@@ -57,6 +58,7 @@ namespace Calamari.Commands
             deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
             ExtractPackage(variables);
+            GrabAdditionalPackages(variables, filesystem);
             SubstituteVariablesInScript(variables);           
             return InvokeScript(variables);
         }
@@ -115,6 +117,33 @@ namespace Calamari.Commands
                 journal.AddJournalEntry(new JournalEntry(deployment, true));
 
             return result.ExitCode;
+        }
+        
+        void GrabAdditionalPackages(VariableDictionary variables, CalamariPhysicalFileSystem fileSystem)
+        {
+            var additionalPackageKeys = variables.GetIndexes(SpecialVariables.Packages.PackageCollection);
+
+            foreach (var key in additionalPackageKeys)
+            {
+                var packageOriginalPath = variables.Get(Path.GetFullPath(SpecialVariables.Packages.OriginalPath(key))); 
+                var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(key));
+
+                if (shouldExtract)
+                {
+                    var sanitizedSubDirectory = fileSystem.RemoveInvalidFileNameChars(key);
+                    var extractionPath = Path.Combine(Environment.CurrentDirectory, sanitizedSubDirectory);
+                    Log.Verbose($"Extracting package '{packageOriginalPath}' to '{extractionPath}'");
+                    var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+                    extractor.GetExtractor(packageOriginalPath).Extract(packageOriginalPath, extractionPath, true);
+                    // ToDo: set extracted location variable
+                }
+                else
+                {
+                    Log.Verbose($"Copying package: '{packageOriginalPath}' -> '{Environment.CurrentDirectory}'");
+                    fileSystem.CopyFile(packageOriginalPath, Environment.CurrentDirectory);
+                    // ToDo: set copied location variable
+                }
+            }
         }
 
         private string AssertScriptFileExists()
