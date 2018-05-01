@@ -7,7 +7,7 @@
     <SkipValidatePackageReferences>true</SkipValidatePackageReferences>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFrameworks>net451;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>Calamari.Tests</AssemblyName>
     <PackageId>Calamari.Tests</PackageId>
@@ -21,7 +21,7 @@
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);NETCORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net451' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
@@ -176,7 +176,7 @@
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
       <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
-    <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net451' And '%(Name)' == 'NuGet.CommandLine'">
+    <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net452' And '%(Name)' == 'NuGet.CommandLine'">
       <Output TaskParameter="Include" ItemName="NuGetCommandLineRef" />
     </CreateItem>
     <PropertyGroup>
@@ -191,11 +191,11 @@
       <FSharpFilesExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'" Include="$(FSharpCompilerToolsExe)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
       <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'" Include="$(ScriptCSExe)" />
-      <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net451'" />
+      <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net452'" />
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
-    <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" Condition="'$(TargetFramework)' == 'net451'" />
+    <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" Condition="'$(TargetFramework)' == 'net452'" />
     <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.0'" />
     <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.0'" />
   </Target>
