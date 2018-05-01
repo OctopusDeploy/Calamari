@@ -53,7 +53,6 @@ namespace Calamari
             foreach (var knownAssembly in KnownAssemblies)
             {
                 builder.RegisterModule(new CalamariCommandsModule(firstArg, secondArg, knownAssembly));
-                builder.RegisterModule(new CalamariHelpCommandsModule(firstArg, secondArg, typeof(Program).Assembly));
             }
             // For the external libraries, let them load any additional
             // services via their module classes.

@@ -1,11 +1,8 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
-using Autofac;
-using Autofac.Builder;
-using Calamari.Commands;
+﻿using Autofac;
 using Calamari.Commands.Support;
 using Octopus.CoreUtilities.Extensions;
+using System;
+using System.Reflection;
 using Module = Autofac.Module;
 
 namespace Calamari.Modules
@@ -34,6 +31,13 @@ namespace Calamari.Modules
         protected override void Load(ContainerBuilder builder)
         {
             RegisterNormalCommand(builder);
+            // Only in the event that the primary command was the help command do
+            // we go ahead and register the Command object that the help command
+            // will display the details of.
+            if (CommandLocator.Find(commandName, ThisAssembly) == typeof(HelpCommand))
+            {
+                RegisterHelpCommand(builder);
+            }
             RegisterCommandAttributes(builder);
         }
 
@@ -45,6 +49,13 @@ namespace Calamari.Modules
             CommandLocator.Find(commandName, assembly)?
                 .Tee(command => builder.RegisterType(command).Named<ICommand>(NormalCommand).SingleInstance());
 
+        /// <summary>
+        /// Register the command that the HelpCommand displays help for. This is registered
+        /// as an unnamed ICommand that is then consumed by the HelpCommand constructor.
+        /// </summary>
+        private Type RegisterHelpCommand(ContainerBuilder builder) =>
+            CommandLocator.Find(helpCommandName, assembly)?
+                .Tee(helpCommand => builder.RegisterType(helpCommand).As<ICommand>().SingleInstance());
 
         private void RegisterCommandAttributes(ContainerBuilder builder)
         {
