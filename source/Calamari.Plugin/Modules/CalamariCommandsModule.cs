@@ -39,7 +39,6 @@ namespace Calamari.Modules
 
         private void RegisterCommand(ContainerBuilder builder)
         {
-            if (CommandLocator.Find(commandName, assembly) == typeof(HelpCommand))
             RegisterNormalCommand(builder);
             RegisterHelpCommand(builder);
         }
