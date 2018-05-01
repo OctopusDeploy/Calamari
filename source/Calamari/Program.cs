@@ -5,6 +5,7 @@ using Calamari.Modules;
 using Calamari.Util;
 using System;
 using System.Linq;
+using System.Reflection;
 using Calamari.Commands;
 using Calamari.Extensions;
 
@@ -13,25 +14,19 @@ namespace Calamari
     public class Program
     {
         private static readonly IPluginUtils PluginUtils = new PluginUtils();
+        /// <summary>
+        /// Common assemblies that will always be present
+        /// </summary>
+        private static readonly Assembly[] KnownAssemblies = new[]
+        {
+            typeof(Program).Assembly,
+            typeof(CalamariCommandsModule).Assembly
+        };
         readonly string displayName;
         readonly string informationalVersion;
         readonly string[] environmentInformation;
         private readonly ICommand command;
         private readonly HelpCommand helpCommand;
-
-        public Program(
-            string displayName, 
-            string informationalVersion, 
-            string[] environmentInformation,
-            ICommand command,
-            HelpCommand helpCommand)
-        {
-            this.displayName = displayName;
-            this.informationalVersion = informationalVersion;
-            this.environmentInformation = environmentInformation;
-            this.command = command;
-            this.helpCommand = helpCommand;
-        }
 
         static int Main(string[] args)
         {
@@ -46,18 +41,22 @@ namespace Calamari
             var firstArg = PluginUtils.GetFirstArgument(args);
             var secondArg = PluginUtils.GetSecondArgument(args);
 
-            var builder = new ContainerBuilder();            
-            builder.RegisterModule(new CalamariProgramModule());
-            builder.RegisterModule(new CalamariCommandsModule(
-                firstArg,
-                secondArg,
-                typeof(CalamariCommandsModule).Assembly));
-            builder.RegisterModule(new CalamariCommandsModule(
-                firstArg,
-                secondArg,
-                typeof(Program).Assembly));
-            builder.RegisterModule(new CommonModule(args));
+            var builder = new ContainerBuilder();
 
+            // Register the program entry point
+            builder.RegisterModule(new CalamariProgramModule());
+            // This will register common utilities and services
+            builder.RegisterModule(new CommonModule(args));
+            // For all the common locations (i.e. this assembly and the shared one)
+            // load any commands, and any commands to support the help command (if
+            // required).
+            foreach (var knownAssembly in KnownAssemblies)
+            {
+                builder.RegisterModule(new CalamariCommandsModule(firstArg, secondArg, knownAssembly));
+                builder.RegisterModule(new CalamariHelpCommandsModule(firstArg, secondArg, typeof(Program).Assembly));
+            }
+            // For the external libraries, let them load any additional
+            // services via their module classes.
             foreach (var module in new ModuleLoader(args).AllModules)
             {
                 builder.RegisterModule(module);
@@ -65,6 +64,20 @@ namespace Calamari
 
             return builder.Build();
         }
+
+        public Program(
+            string displayName, 
+            string informationalVersion, 
+            string[] environmentInformation,
+            ICommand command,
+            HelpCommand helpCommand)
+        {
+            this.displayName = displayName;
+            this.informationalVersion = informationalVersion;
+            this.environmentInformation = environmentInformation;
+            this.command = command;
+            this.helpCommand = helpCommand;
+        }        
 
         public int Execute(string[] args)
         {
