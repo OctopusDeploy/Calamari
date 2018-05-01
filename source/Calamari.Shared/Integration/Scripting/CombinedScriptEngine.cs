@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
-using Calamari.Commands.Support;
+﻿using Calamari.Commands.Support;
+using Calamari.Hooks;
 using Calamari.Integration.Processes;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
-using Calamari.Hooks;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Integration.Scripting
 {
@@ -63,9 +62,9 @@ namespace Calamari.Integration.Scripting
                 new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptType]),
                 (IScriptWrapper current, IScriptWrapper next) =>
                 {
-                    // the current wrapper is pointed to the next one
+                    // the next wrapper is pointed to the current one
                     next.NextWrapper = current;
-                    // the current one is carried across to the next aggregate call
+                    // the next wrapper is carried across to the next aggregate call
                     return next;
                 });
                  

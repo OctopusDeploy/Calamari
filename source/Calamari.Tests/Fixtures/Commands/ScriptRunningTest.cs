@@ -1,12 +1,13 @@
-﻿using Autofac;
-using Calamari.Integration.Processes;
-using NUnit.Framework;
-using Octopus.CoreUtilities.Extensions;
+﻿#if NETFX
 using System;
 using System.IO;
 using System.Reflection;
+using Autofac;
+using Calamari.Integration.Processes;
+using NUnit.Framework;
+using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Tests.Fixtures
+namespace Calamari.Tests.Fixtures.Commands
 {
     [TestFixture]
     public class ScriptRunningTest
@@ -63,3 +64,4 @@ namespace Calamari.Tests.Fixtures
         }
     }
 }
+#endif
