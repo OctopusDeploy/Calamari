@@ -1,16 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Calamari.Commands.Support;
+﻿using Calamari.Commands.Support;
+using System;
 
 namespace Calamari.Modules
 {
+    /// <summary>
+    /// The calamari variables dictionary is returned as an autofac service that is generated
+    /// using the same arguments that would be passed to a command. This means we have two places
+    /// that build option sets: the command that would use the variables object, and the module that
+    /// creates the object.
+    ///
+    /// To remove copy/paste between these classes, this interface allows the options to be set
+    /// from one location.
+    /// </summary>
     public interface IVariableDictionaryUtils
     {
         /// <summary>
-        /// Populate an option set with the arguments required to build a calamari variable dictionary
+        /// Populate an option set with the arguments required to build a calamari variable dictionary.
         /// </summary>
         /// <param name="optionSet"></param>
         /// <param name="variablesFile">Callback to set the variables file</param>

@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Specialized;
-using System.IO;
-using System.Reflection;
+﻿using Calamari.Azure.Util;
+using Calamari.Commands.Support;
+using Calamari.Deployment;
+using Calamari.Hooks;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octostache;
-using Calamari.Deployment;
-using Calamari.Azure.Util;
-using Calamari.Commands.Support;
-using Calamari.Hooks;
-using Calamari.Integration.Scripting.WindowsPowerShell;
+using System;
+using System.Collections.Specialized;
+using System.IO;
+using System.Reflection;
 
 namespace Calamari.Azure.Integration
 {
@@ -20,18 +19,18 @@ namespace Calamari.Azure.Integration
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         private readonly CalamariVariableDictionary variables;
-        private readonly IScriptEngine scriptEngine;
 
         public AzureServiceFabricPowerShellContext(CalamariVariableDictionary variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.embeddedResources = new AssemblyEmbeddedResources();
             this.variables = variables;
-            this.scriptEngine = new PowerShellScriptEngine();
         }
 
         public bool Enabled =>
             !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
+
+        public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(
             Script script,
@@ -82,7 +81,7 @@ namespace Calamari.Azure.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
             }
         }
 

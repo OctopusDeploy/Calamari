@@ -11,11 +11,13 @@ namespace Calamari.Hooks
     {
         bool Enabled { get; }
 
-        CommandResult ExecuteScript( 
-            Script script, 
+        IScriptWrapper NextWrapper { get; set; }
+
+        CommandResult ExecuteScript(
+            Script script,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null);
+            StringDictionary environmentVars);
 
     }
 }

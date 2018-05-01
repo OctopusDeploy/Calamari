@@ -22,7 +22,6 @@ namespace Calamari.Azure.Integration
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
         private readonly CalamariVariableDictionary variables;
-        private readonly IScriptEngine scriptEngine;
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
@@ -36,17 +35,18 @@ namespace Calamari.Azure.Integration
             this.certificateStore = new CalamariCertificateStore();
             this.embeddedResources = new AssemblyEmbeddedResources();
             this.variables = variables;
-            this.scriptEngine = new PowerShellScriptEngine();
         }
 
         public bool Enabled => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
                                string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
 
+        public IScriptWrapper NextWrapper { get; set; }
+
         public CommandResult ExecuteScript(
             Script script,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null)
+            StringDictionary environmentVars)
         {
             // Only run this hook if we have an azure account
             if (!Enabled)
@@ -79,14 +79,14 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
                 {
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
                 }
             }
         }
