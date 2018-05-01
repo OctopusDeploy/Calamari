@@ -19,7 +19,7 @@ namespace Calamari.Modules
                 .WithParameter(
                     new ResolvedParameter(
                         (pi, ctx) => pi.ParameterType == typeof(ICommand),
-                        (pi, ctx) => GetOptionalNamedCommand(ctx, CalamariCommandsModule.NormalCommand)))
+                        (pi, ctx) => GetOptionalNamedCommand(ctx, CalamariCommandsModule.RunCommand)))
                 .SingleInstance();
             builder.RegisterType<CombinedScriptEngine>().AsSelf();
             builder.RegisterType<HelpCommand>().AsSelf();

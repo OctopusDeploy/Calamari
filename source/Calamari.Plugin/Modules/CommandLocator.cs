@@ -3,6 +3,7 @@ using Calamari.Commands.Support;
 using System;
 using System.Linq;
 using System.Reflection;
+using Autofac;
 
 namespace Calamari.Modules
 {
@@ -37,6 +38,18 @@ namespace Calamari.Modules
                     let attribute = (ICommandMetadata)t.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
                     where attribute != null
                     select attribute).ToArray();
+        }
+
+        public ICommand GetOptionalNamedCommand(IComponentContext ctx, string named)
+        {
+            try
+            {
+                return ctx.ResolveNamed<ICommand>(named);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

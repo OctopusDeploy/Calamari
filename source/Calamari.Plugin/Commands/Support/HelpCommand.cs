@@ -12,6 +12,14 @@ namespace Calamari.Commands.Support
         private readonly ICommand commandToHelpWith;
         public bool HelpWasAskedFor { get; set; } = true;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="commandMetadata"></param>
+        /// <param name="commandToHelpWith">
+        /// The command whose help text is to be displayed.
+        /// This field has to be called commandToHelpWith, because this is expected by autofac.
+        /// </param>
         public HelpCommand(IEnumerable<ICommandMetadata> commandMetadata, ICommand commandToHelpWith)
         {
             this.commandMetadata = commandMetadata;

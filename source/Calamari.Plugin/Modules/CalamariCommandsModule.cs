@@ -3,6 +3,7 @@ using Calamari.Commands.Support;
 using Octopus.CoreUtilities.Extensions;
 using System;
 using System.Reflection;
+using Autofac.Core;
 using Module = Autofac.Module;
 
 namespace Calamari.Modules
@@ -15,7 +16,8 @@ namespace Calamari.Modules
     /// </summary>
     public class CalamariCommandsModule : Module
     {
-        public static string NormalCommand = "normalCommand";
+        public static string RunCommand = "RunCommand";
+        public static string HelpCommand = "HelpCommand";
         private static readonly CommandLocator CommandLocator = new CommandLocator();
         private readonly string commandName;
         private readonly string helpCommandName;
@@ -47,7 +49,7 @@ namespace Calamari.Modules
         /// </summary>
         private Type RegisterNormalCommand(ContainerBuilder builder) =>
             CommandLocator.Find(commandName, assembly)?
-                .Tee(command => builder.RegisterType(command).Named<ICommand>(NormalCommand).SingleInstance());
+                .Tee(command => builder.RegisterType(command).Named<ICommand>(RunCommand).SingleInstance());
 
         /// <summary>
         /// Register the command that the HelpCommand displays help for. This is registered
@@ -55,7 +57,14 @@ namespace Calamari.Modules
         /// </summary>
         private Type RegisterHelpCommand(ContainerBuilder builder) =>
             CommandLocator.Find(helpCommandName, assembly)?
-                .Tee(helpCommand => builder.RegisterType(helpCommand).As<ICommand>().SingleInstance());
+                .Tee(helpCommand => builder
+                    .RegisterType(helpCommand)
+                    .Named<ICommand>(HelpCommand)
+                    .WithParameter(
+                        new ResolvedParameter(
+                            (pi, ctx) => pi.ParameterType == typeof(ICommand) && pi.Name == "commandToHelpWith",
+                            (pi, ctx) => CommandLocator.GetOptionalNamedCommand(ctx, CalamariCommandsModule.HelpCommand)))
+                    .SingleInstance());
 
         private void RegisterCommandAttributes(ContainerBuilder builder)
         {
