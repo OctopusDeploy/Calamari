@@ -5,6 +5,7 @@ using Calamari.Modules;
 using Calamari.Util;
 using System;
 using System.Linq;
+using Calamari.Commands;
 using Calamari.Extensions;
 
 namespace Calamari
@@ -15,18 +16,21 @@ namespace Calamari
         readonly string displayName;
         readonly string informationalVersion;
         readonly string[] environmentInformation;
-        private readonly ICommand command;        
+        private readonly ICommand command;
+        private readonly HelpCommand helpCommand;
 
         public Program(
             string displayName, 
             string informationalVersion, 
             string[] environmentInformation,
-            ICommand command)
+            ICommand command,
+            HelpCommand helpCommand)
         {
             this.displayName = displayName;
             this.informationalVersion = informationalVersion;
             this.environmentInformation = environmentInformation;
             this.command = command;
+            this.helpCommand = helpCommand;
         }
 
         static int Main(string[] args)
@@ -39,9 +43,19 @@ namespace Calamari
 
         public static IContainer BuildContainer(string[] args)
         {
+            var firstArg = PluginUtils.GetFirstArgument(args);
+            var secondArg = PluginUtils.GetSecondArgument(args);
+
             var builder = new ContainerBuilder();            
             builder.RegisterModule(new CalamariProgramModule());
-            builder.RegisterModule(new CalamariCommandsModule(PluginUtils.GetFirstArgument(args), typeof(Program).Assembly));
+            builder.RegisterModule(new CalamariCommandsModule(
+                firstArg,
+                secondArg,
+                typeof(CalamariCommandsModule).Assembly));
+            builder.RegisterModule(new CalamariCommandsModule(
+                firstArg,
+                secondArg,
+                typeof(Program).Assembly));
             builder.RegisterModule(new CommonModule(args));
 
             foreach (var module in new ModuleLoader(args).AllModules)
@@ -75,9 +89,10 @@ namespace Calamari
             }            
         }
 
-        private static int PrintHelp(string action)
+        private int PrintHelp(string action)
         {
-            return new HelpCommand(false).Execute(new[] { action });
+            helpCommand.HelpWasAskedFor = false;
+            return helpCommand.Execute(new[] { action });
         }
     }
 }

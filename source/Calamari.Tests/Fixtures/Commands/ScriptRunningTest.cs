@@ -1,11 +1,10 @@
-﻿using NUnit.Framework;
+﻿using Autofac;
+using Calamari.Integration.Processes;
+using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 using System;
 using System.IO;
 using System.Reflection;
-using Autofac;
-using Calamari.Integration.Processes;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures
 {

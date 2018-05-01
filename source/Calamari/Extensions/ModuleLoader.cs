@@ -19,6 +19,7 @@ namespace Calamari.Extensions
         private static readonly IPluginUtils PluginUtils = new PluginUtils();
         private readonly OptionSet optionSet = new OptionSet();
         private readonly string firstCommand;
+        private readonly string secondCommand;
         private IList<string> extensions;
 
         public IEnumerable<Module> AllModules => Modules.Union(CommandModules);
@@ -39,7 +40,7 @@ namespace Calamari.Extensions
             extensions?
                     .Select(extension => GetAssemblyByName("Calamari." + extension))
                     .Where(assembly => assembly != null)
-                    .Select(assembly => new CalamariCommandsModule(firstCommand, assembly))
+                    .Select(assembly => new CalamariCommandsModule(firstCommand, secondCommand, assembly))
             ?? Enumerable.Empty<Module>();        
 
         public ModuleLoader(string[] args)
@@ -47,6 +48,7 @@ namespace Calamari.Extensions
             optionSet.Add("extensions=", "List of Calamari extensions to load.", v => extensions = ProcessExtensions(v));
             optionSet.Parse(args);
             firstCommand = PluginUtils.GetFirstArgument(args);
+            secondCommand = PluginUtils.GetSecondArgument(args);
         }
 
         private IList<string> ProcessExtensions(string rawExtensions) =>

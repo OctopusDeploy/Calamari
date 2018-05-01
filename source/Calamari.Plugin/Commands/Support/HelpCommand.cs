@@ -1,29 +1,27 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Util;
-using System.Reflection;
 
 namespace Calamari.Commands.Support
 {
     [Command("help", "?", "h", Description = "Prints this help text")]
     public class HelpCommand : ICommand
     {
-        private readonly bool helpWasAskedFor;
-        readonly ICommandLocator commands;
+        private readonly IEnumerable<ICommandMetadata> commandMetadata;
+        private readonly ICommand commandToHelpWith;
+        public bool HelpWasAskedFor { get; set; } = true;
 
-        public HelpCommand() : this(true)
+        public HelpCommand(IEnumerable<ICommandMetadata> commandMetadata, ICommand commandToHelpWith)
         {
+            this.commandMetadata = commandMetadata;
+            this.commandToHelpWith = commandToHelpWith;
         }
 
-        public HelpCommand(bool helpWasAskedFor) : this(CommandLocator.Instance)
+        public HelpCommand(IEnumerable<ICommandMetadata> commandMetadata)
         {
-            this.helpWasAskedFor = helpWasAskedFor;
-        }
-
-        public HelpCommand(ICommandLocator commands)
-        {
-            this.commands = commands;
+            this.commandMetadata = commandMetadata;
+            this.commandToHelpWith = null;
         }
 
         public void GetHelp(TextWriter writer)
@@ -42,9 +40,7 @@ namespace Calamari.Commands.Support
             }
             else
             {
-                var command = commands.Find(commandName);
-
-                if (command == null)
+                if (commandToHelpWith == null)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Command '{0}' is not supported", commandName);
@@ -53,11 +49,11 @@ namespace Calamari.Commands.Support
                 }
                 else
                 {
-                    PrintCommandHelp(executable, command, commandName);
+                    PrintCommandHelp(executable, commandToHelpWith, commandName);
                 }
             }
 
-            return helpWasAskedFor ? 0 : 1;
+            return HelpWasAskedFor ? 0 : 1;
         }
 
         void PrintCommandHelp(string executable, ICommand command, string commandName)
@@ -87,7 +83,7 @@ namespace Calamari.Commands.Support
             Console.WriteLine("Where <command> is one of: ");
             Console.WriteLine();
 
-            foreach (var possible in commands.List().OrderBy(x => x.Name))
+            foreach (var possible in commandMetadata.OrderBy(x => x.Name))
             {
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("  " + possible.Name.PadRight(15, ' '));
