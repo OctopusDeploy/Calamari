@@ -18,7 +18,7 @@ namespace Calamari.Modules
     {
         public static string RunCommand = "RunCommand";
         public static string HelpCommand = "HelpCommand";
-        private static readonly CommandLocator CommandLocator = new CommandLocator();
+        private static readonly ICommandLocator CommandLocator = new CommandLocator();
         private readonly string commandName;
         private readonly string helpCommandName;
         private readonly Assembly assembly;

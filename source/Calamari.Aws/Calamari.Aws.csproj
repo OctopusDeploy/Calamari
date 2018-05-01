@@ -30,6 +30,6 @@
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.3.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari.Plugin\Calamari.Shared.csproj" />
+    <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
   </ItemGroup>
 </Project>

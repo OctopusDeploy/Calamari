@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Tests", "Calamari.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Aws", "Calamari.Aws\Calamari.Aws.csproj", "{E07611EB-E111-4369-892D-885A34F5B4F1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Shared", "Calamari.Plugin\Calamari.Shared.csproj", "{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Shared", "Calamari.Shared\Calamari.Shared.csproj", "{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

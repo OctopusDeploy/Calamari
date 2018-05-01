@@ -99,7 +99,7 @@
     </PackageReference>
   </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Calamari.Plugin\Calamari.Shared.csproj" />
+      <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     </ItemGroup>
   <ItemGroup>
     <None Update="Calamari.exe.manifest">

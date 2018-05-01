@@ -7,12 +7,8 @@ using Autofac;
 
 namespace Calamari.Modules
 {
-    class CommandLocator
+    class CommandLocator : ICommandLocator
     {
-        /// <summary>
-        /// Here we find the one Command class that we want to run
-        /// </summary>
-        /// <returns>The named command class, or null if none exist</returns>
         public Type Find(string name, Assembly assembly)
         {
             var fixedName = name.Trim().ToLowerInvariant();
@@ -26,10 +22,7 @@ namespace Calamari.Modules
             return found;
         }
 
-        /// <summary>
-        /// Get all the command attributes
-        /// </summary>
-        /// <returns>All the Command Attributes in the given assembly</returns>
+
         public ICommandMetadata[] List(Assembly assembly)
         {
             return
