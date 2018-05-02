@@ -16,7 +16,7 @@ namespace Calamari.Tests.AzureFixtures
         public void ShouldUseActiveDirectoryListSpecificVersion()
         {
             var version = typeof(AuthenticationContext).Assembly.GetName().Version;
-            Assert.Equals("2.28.3.860", version.ToString());
+            Assert.AreEqual("2.28.3.860", version.ToString());
         }
     }
 }
