@@ -15,15 +15,15 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
-        //private string Extensions = "--extensions=Aws,Azure,Tests"; // Enabling Azure breaks tests on Linux machines, but can be used for local testing
+        //private string Extensions = "--extensions=Aws,Azure,Tests"; // Enabling Aws and Azure breaks tests on Linux machines, but can be used for local testing
         private string Extensions = "--extensions=Tests";
-    
-        private string[] Args =>
-            ScriptRunningTest.FullLocalPath(typeof(ScriptRunningTest).Assembly)
-                .Map(Path.GetDirectoryName)
-                .Map(dllDir => Path.Combine(dllDir, "Scripts"))
-                .Map(scriptPath => new[]
-                    {"run-test-script", "--script=" + scriptPath + Path.DirectorySeparatorChar + "awsscript.ps1", Extensions});
+
+        private string Script = ScriptRunningTest.FullLocalPath(typeof(ScriptRunningTest).Assembly)
+            .Map(Path.GetDirectoryName)
+            .Map(dllDir => Path.Combine(dllDir, "Scripts"))
+            .Map(scriptPath => scriptPath + Path.DirectorySeparatorChar + "awsscript.ps1");
+
+        private string[] Args => new[] {"run-test-script", "--script=" + Script, Extensions};
 
         private static string FullLocalPath(Assembly assembly) =>
             Uri.UnescapeDataString(new UriBuilder(assembly.CodeBase).Path).Replace("/", "\\");
@@ -62,6 +62,8 @@ namespace Calamari.Tests.Fixtures.Commands
         [Test]
         public void RunScript()
         {
+            Assert.IsTrue(File.Exists(Script));
+
             BuildVariables(container.Resolve<CalamariVariableDictionary>());
             var retCode = container.Resolve<Calamari.Program>().Execute(Args);
             Assert.AreEqual(0, retCode);
