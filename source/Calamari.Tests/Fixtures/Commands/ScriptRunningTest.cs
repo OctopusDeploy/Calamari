@@ -1,5 +1,4 @@
-﻿#if NETFX
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using Autofac;
@@ -76,4 +75,3 @@ namespace Calamari.Tests.Fixtures.Commands
         }
     }
 }
-#endif
