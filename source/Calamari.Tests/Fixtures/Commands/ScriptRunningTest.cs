@@ -15,8 +15,7 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
-        //private string Extensions = "--extensions=Aws,Azure,Tests"; // Enabling Aws and Azure breaks tests on Linux machines, but can be used for local testing
-        private string Extensions = "--extensions=Tests";
+        private string Extensions = "--extensions=Aws,Azure,Tests";
 
         private string Script = GetFixtureResouce("Scripts", "awsscript.ps1");
 
