@@ -5,7 +5,7 @@ namespace Calamari.Hooks
     /// <summary>
     /// Hooks that implement this interface can contribute environment variables to the running script.
     /// </summary>
-    public interface IScriptEnvironment : ICalamariHook
+    public interface IScriptEnvironment
     {
         /// <summary>
         /// A key value collection of environment variables

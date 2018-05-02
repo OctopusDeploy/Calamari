@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using Autofac;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Hooks;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 
@@ -61,6 +62,12 @@ namespace Calamari.Tests.Fixtures.Commands
             BuildVariables(container.Resolve<CalamariVariableDictionary>());
             var retCode = container.Resolve<Calamari.Program>().Execute(Args);
             Assert.AreEqual(0, retCode);
+            // TestModule should have been loadded because we are treating the 
+            // Calamari.Test dll as an extension. This means ScriptHookMock and
+            // EnvironmentVariableHook have been placed in the container, and because
+            // it is enabled they must have been called.
+            Assert.IsTrue(container.Resolve<ScriptHookMock>().WasCalled);
+            Assert.IsTrue(container.Resolve<EnvironmentVariableHook>().WasCalled);
         }
     }
 }
