@@ -1,18 +1,29 @@
 ﻿using Calamari.Commands.Support;
+using Calamari.Modules;
+using Calamari.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using Calamari.Modules;
-using Calamari.Util;
-using Octodiff;
 using Module = Autofac.Module;
 
 namespace Calamari.Extensions
 {
     /// <summary>
-    /// This class provides a way to find all the modules in a given assembly
+    /// This class provides a way to find all the modules in a given assembly.
+    /// Using this module will take care of registering a ICommand to be run, as
+    /// well as a ICommand to be supplied to the help command (if the help command
+    /// was requested).
+    ///
+    /// And Autofac modules in the supplied assembly will also be loaded.
+    ///
+    /// What this means is that any ICommand classes in an extension module will be loaded
+    /// automatically, *without* those classes being added to a custom module class.
+    /// Extension modules that only contribute ICommand classes don't need to provide
+    /// any additional Auotfac modules.
+    ///
+    /// Any other kind of services (hooks like IScriptWrapper especially) do need to be
+    /// added to a module class.
     /// </summary>
     public class ModuleLoader
     {

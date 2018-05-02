@@ -14,7 +14,13 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
-        private string Extensions = "--extensions=Aws,Azure,Tests"; 
+        // The Azure extensions are not used in testing because the machines do not have the required
+        // PowerShell modules. i.e. you get the error:
+        // The term 'Get-AzureRmEnvironment' is not recognized as the name of a cmdlet
+        // You can uncomment the line below for local testing though.
+        //private string Extensions = "--extensions=Aws,Azure,Tests"; 
+
+        private string Extensions = "--extensions=Aws,Tests";
 
         private string Script = GetFixtureResouce("Scripts", "awsscript.ps1");
 
