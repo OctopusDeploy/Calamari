@@ -62,6 +62,19 @@ namespace Calamari.Tests.Fixtures.Performance
             Assert.LessOrEqual(autofacTime, regularTime + Threshold);
         }
 
+        /// <summary>
+        /// This test is designed to measure the one off cost of using autofac. Since running calamari
+        /// is a one off operation, this is more applicable than the AutofacRegistrationPerformance() test,
+        /// which shares the cost of initial initiation over multiple loops.
+        ///
+        /// However this test is fundamentally flawed in that if any autofac code was loaded by any other test
+        /// the performance difference between the two code paths is trivial. We don't control the
+        /// order of test execution, so don't rely on this test passing in the CI builds as indication
+        /// of anything.
+        ///
+        /// Running this test locally and individually is a good test though, and can be used with other
+        /// tracing tools to get a better understanding of the bottlenecks.
+        /// </summary>
         [Test]
         public void InidividualAutofacRegistrationPerformance()
         {
