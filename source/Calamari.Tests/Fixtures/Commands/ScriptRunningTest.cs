@@ -15,12 +15,9 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
-#if AZURE
-        private string Extensions = "--extensions=Aws,Azure,Tests";
-#else
+        //private string Extensions = "--extensions=Aws,Azure,Tests"; // Enabling Azure breaks tests on Linux machines, but can be used for local testing
         private string Extensions = "--extensions=Aws,Tests";
-#endif
-
+    
         private string[] Args =>
             ScriptRunningTest.FullLocalPath(typeof(ScriptRunningTest).Assembly)
                 .Map(Path.GetDirectoryName)
