@@ -9,7 +9,6 @@ namespace Calamari.Tests.Module
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<ScriptHookMock>().As<IScriptWrapper>().AsSelf().SingleInstance();
-            builder.RegisterType<EnvironmentVariableHook>().As<IScriptEnvironment>().AsSelf().SingleInstance();
         }
     }
 }

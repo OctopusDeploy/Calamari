@@ -8,7 +8,9 @@ using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Exceptions;
+using Calamari.Hooks;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
@@ -19,7 +21,7 @@ namespace Calamari.Aws.Integration
     /// This service is used to generate the appropiate environment variables required to authentication
     /// custom scripts and the C# AWS SDK code exposed as Calamari commands that interat with AWS.
     /// </summary>
-    public class AwsEnvironmentGeneration : IAwsEnvironmentGeneration
+    public class AwsEnvironmentGeneration : IAwsEnvironmentGeneration, IScriptWrapper
     {
         private const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
         private const string TentacleProxyHost = "TentacleProxyHost";
@@ -39,6 +41,9 @@ namespace Calamari.Aws.Integration
         {
             get
             {
+                // Generate the vars when this getter is accessed rather than in the constructor.
+                // Exceptions thrown in the constructor produce a mess of Autofac stack traces
+                // that are impossible to decipher for end users.
                 if (envVars == null)
                 {
                     envVars = new StringDictionary();
@@ -215,6 +220,22 @@ namespace Calamari.Aws.Integration
                 envVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;
                 envVars["AWS_SESSION_TOKEN"] = credentials.SessionToken;
             }
+        }
+
+        public bool Enabled { get; } = true;
+        public IScriptWrapper NextWrapper { get; set; }
+
+        public CommandResult ExecuteScript(
+            Script script, 
+            CalamariVariableDictionary variables, 
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars)
+        {
+            return NextWrapper.ExecuteScript(
+                script, 
+                variables, 
+                commandLineRunner,
+                environmentVars.MergeDictionaries(EnvironmentVars));
         }
     }
 }

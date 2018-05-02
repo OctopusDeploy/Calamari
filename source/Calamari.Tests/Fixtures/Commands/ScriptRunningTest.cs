@@ -84,7 +84,6 @@ namespace Calamari.Tests.Fixtures.Commands
             // EnvironmentVariableHook have been placed in the container, and because
             // it is enabled they must have been called.
             Assert.IsTrue(container.Resolve<ScriptHookMock>().WasCalled);
-            Assert.IsTrue(container.Resolve<EnvironmentVariableHook>().WasCalled);
         }
     }
 }

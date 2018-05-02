@@ -8,7 +8,7 @@ namespace Calamari.Aws.Integration
     /// <summary>
     /// Defines a service that generates AWS environment variables and credentials objects.
     /// </summary>
-    public interface IAwsEnvironmentGeneration : IScriptEnvironment
+    public interface IAwsEnvironmentGeneration
     {
         /// <summary>
         /// A AWS credentials object that includes the information required to run AWS SDK requests.

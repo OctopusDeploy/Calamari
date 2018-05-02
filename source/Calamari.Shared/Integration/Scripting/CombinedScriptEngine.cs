@@ -10,7 +10,6 @@ namespace Calamari.Integration.Scripting
 {
     public class CombinedScriptEngine : IScriptEngine
     {
-        private readonly IEnumerable<IScriptEnvironment> environmentHooks;
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
     
         /// <summary>
@@ -18,7 +17,6 @@ namespace Calamari.Integration.Scripting
         /// </summary>
         public CombinedScriptEngine()
         {
-            this.environmentHooks = Enumerable.Empty<IScriptEnvironment>();
             this.scriptWrapperHooks = Enumerable.Empty<IScriptWrapper>();
         }
 
@@ -27,13 +25,9 @@ namespace Calamari.Integration.Scripting
         /// because it is the constructor with the most parameters that can be
         /// fulfilled by injection.
         /// </summary>
-        /// <param name="environmentHooks">The collecton of IScriptEnvironment objects available in autofac</param>
         /// <param name="scriptWrapperHooks">The collecton of IScriptWrapper objects available in autofac</param>
-        public CombinedScriptEngine(
-            IEnumerable<IScriptEnvironment> environmentHooks, 
-            IEnumerable<IScriptWrapper> scriptWrapperHooks)
+        public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
-            this.environmentHooks = environmentHooks;
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
 
@@ -53,7 +47,7 @@ namespace Calamari.Integration.Scripting
                     script,
                     variables,
                     commandLineRunner,
-                    environmentHooks.MergeDictionaries(environmentVars));
+                    environmentVars);
 
 
         /// <summary>

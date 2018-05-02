@@ -1,16 +1,16 @@
 ﻿using Autofac;
 using Calamari.Hooks;
 
-namespace Calamari.Aws
+namespace Calamari.Aws.Module
 {
-    public class CalamariModule : Module
+    public class CalamariModule : Autofac.Module
     {
         protected override void Load(ContainerBuilder builder)
         {
             builder
                 .RegisterAssemblyTypes(ThisAssembly)
-                .AssignableTo<IScriptEnvironment>()
-                .As<IScriptEnvironment>()
+                .AssignableTo<IScriptWrapper>()
+                .As<IScriptWrapper>()
                 .SingleInstance();
         }
     }
