@@ -30,23 +30,34 @@ namespace Calamari.Modules
             optionSet.Parse(args);
         }
 
+        private bool AnyValuesSet()
+        {
+            return !string.IsNullOrWhiteSpace(variablesFile) ||
+                !string.IsNullOrWhiteSpace(base64Variables) ||
+                !string.IsNullOrWhiteSpace(sensitiveVariablesFile) ||
+                !string.IsNullOrWhiteSpace(sensitiveVariablesPassword);
+        }
+
         protected override void Load(ContainerBuilder builder)
         {
-            // If the variables file was not defined, return empty variables.
-            // This is great for testing, because you don't need to worry
-            // about a valid variables file
-            if (string.IsNullOrWhiteSpace(variablesFile))
-            {
-                builder.RegisterInstance(new CalamariVariableDictionary()).AsSelf();
-            }
-            // Otherwise return the populated variables
-            else
+            // If any values have been supplied, attempt to build the CalamariVariableDictionary
+            if (AnyValuesSet())
             {
                 builder.RegisterInstance(new CalamariVariableDictionary(
                     variablesFile,
                     sensitiveVariablesFile,
                     sensitiveVariablesPassword,
-                    base64Variables)).AsSelf().As<VariableDictionary>();
+                    base64Variables))
+                    .AsSelf()
+                    .As<VariableDictionary>();
+                
+            }
+            // Otherwise return an empty CalamariVariableDictionary
+            else
+            {
+                builder.RegisterInstance(new CalamariVariableDictionary())
+                    .AsSelf()
+                    .As<VariableDictionary>();
             }
         }
     }

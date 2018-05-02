@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Commands
 
         private string[] Args =>
             ScriptRunningTest.FullLocalPath(typeof(ScriptRunningTest).Assembly)
-                .Map(dllPath => Path.GetDirectoryName(dllPath))
+                .Map(Path.GetDirectoryName)
                 .Map(dllDir => Path.Combine(dllDir, "Scripts"))
                 .Map(scriptPath => new[]
                     {"run-test-script", "--script=" + scriptPath + "\\awsscript.ps1", "--extensions=Aws,Azure,Tests"});
