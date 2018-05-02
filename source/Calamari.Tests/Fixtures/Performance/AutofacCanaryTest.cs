@@ -21,13 +21,18 @@ namespace Calamari.Tests.Fixtures.Performance
     class AutofacCanaryTest
     {
         private const int Iterations = 1000;
+        private const int GroupThreshold = 10;
         /// <summary>
         /// Acceptable difference between the two measurements in milliseconds. This is somewhat abitary,
         /// but if this test starts to fail it *could* be an indication of performance issues.
-        /// We allow for a 10 milliscond difference between the autofac code and the regular code.
         /// </summary>
-        private const int Threshold = Iterations * 10;
+        private const int Threshold = Iterations * GroupThreshold;
 
+        /// <summary>
+        /// When running a single instance of the test there is a greater performance difference.
+        /// </summary>
+        private const int IndividualThreshold = 500;        
+        
         [Test]
         public void AutofacRegistrationPerformance()
         {
@@ -55,6 +60,35 @@ namespace Calamari.Tests.Fixtures.Performance
                 }, Iterations);
 
             Assert.LessOrEqual(autofacTime, regularTime + Threshold);
+        }
+
+        [Test]
+        public void InidividualAutofacRegistrationPerformance()
+        {
+            // Run through the process of creating an autofac container, registering an external
+            // module (the test module in this case), and creating the objects that make up
+            // a typical calamari execution path.
+            var autofacTime = new TimerClass().DoTimedAction(() =>
+            {
+                using (var container =
+                    Calamari.Program.BuildContainer(new[] { "help", "run-script", "--extensions=Tests" }))
+                {
+                    container.Resolve<Calamari.Program>();
+                }
+            }, 1);
+
+            // Do the same as above, but without auofac.
+            var regularTime = new TimerClass().DoTimedAction(() =>
+            {
+                new Calamari.Program(
+                    "name",
+                    "version",
+                    new string[] { },
+                    new RunScriptCommand(new CalamariVariableDictionary(), new CombinedScriptEngine()),
+                    new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
+            }, 1);
+
+            Assert.LessOrEqual(autofacTime, regularTime + IndividualThreshold);
         }
     }
 
