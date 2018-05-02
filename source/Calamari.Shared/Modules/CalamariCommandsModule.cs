@@ -49,7 +49,7 @@ namespace Calamari.Modules
         /// </summary>
         private Type RegisterNormalCommand(ContainerBuilder builder) =>
             CommandLocator.Find(commandName, assembly)?
-                .Tee(command => builder.RegisterType(command).Named<ICommand>(RunCommand).SingleInstance());
+                .Tee(command => AddICommandToContext(builder, command, RunCommand));
 
         /// <summary>
         /// Register the command that the HelpCommand displays help for. This is registered
@@ -57,14 +57,23 @@ namespace Calamari.Modules
         /// </summary>
         private Type RegisterHelpCommand(ContainerBuilder builder) =>
             CommandLocator.Find(helpCommandName, assembly)?
-                .Tee(helpCommand => builder
-                    .RegisterType(helpCommand)
-                    .Named<ICommand>(HelpCommand)
-                    .WithParameter(
-                        new ResolvedParameter(
-                            (pi, ctx) => pi.ParameterType == typeof(ICommand) && pi.Name == "commandToHelpWith",
-                            (pi, ctx) => CommandLocator.GetOptionalNamedCommand(ctx, CalamariCommandsModule.HelpCommand)))
-                    .SingleInstance());
+                .Tee(helpCommand => AddICommandToContext(builder, helpCommand, HelpCommand));
+
+        /// <summary>
+        /// Register an ICommand with the builder with a name
+        /// </summary>
+        /// <param name="builder">The builder</param>
+        /// <param name="command">The command type</param>
+        /// <param name="name">The name to register the command as</param>
+        private void AddICommandToContext(ContainerBuilder builder, Type command, string name) =>
+            builder
+                .RegisterType(command)
+                .Named<ICommand>(name)
+                .WithParameter(
+                    new ResolvedParameter(
+                        (pi, ctx) => pi.ParameterType == typeof(ICommand) && pi.Name == "commandToHelpWith",
+                        (pi, ctx) => CommandLocator.GetOptionalNamedCommand(ctx, HelpCommand)))
+                .SingleInstance();
 
         private void RegisterCommandAttributes(ContainerBuilder builder)
         {
