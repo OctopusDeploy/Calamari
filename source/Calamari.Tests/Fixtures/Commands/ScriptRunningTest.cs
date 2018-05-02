@@ -14,9 +14,7 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
-        // Loading the Azure hooks breaks tests, but uncomment this line to see them running locally
-        // private string Extensions = "--extensions=Aws,Azure,Tests"; 
-        private string Extensions = "--extensions=Aws,Tests";
+        private string Extensions = "--extensions=Aws,Azure,Tests"; 
 
         private string Script = GetFixtureResouce("Scripts", "awsscript.ps1");
 
@@ -67,6 +65,7 @@ namespace Calamari.Tests.Fixtures.Commands
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void RunScript()
         {
             Assert.IsTrue(File.Exists(Script), Script + " must exist as a file");
