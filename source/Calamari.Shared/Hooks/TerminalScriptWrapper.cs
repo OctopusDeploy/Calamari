@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Processes;
+﻿using System;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using System.Collections.Specialized;
 
@@ -12,7 +13,12 @@ namespace Calamari.Hooks
         private readonly IScriptEngine scriptEngine;
 
         public bool Enabled { get; } = true;
-        public IScriptWrapper NextWrapper { get; set; }
+
+        public IScriptWrapper NextWrapper
+        {
+            get => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
+            set => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
+        }
 
         public TerminalScriptWrapper(IScriptEngine scriptEngine)
         {

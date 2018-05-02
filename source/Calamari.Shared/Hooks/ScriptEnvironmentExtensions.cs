@@ -5,6 +5,10 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Hooks
 {
+    /// <summary>
+    /// A bunch of extension methods used to merge StringDictionary objects,
+    /// or the StringDictionary objects held by collections of IScriptEnvironment.
+    /// </summary>
     public static class ScriptEnvironmentExtensions
     {
         /// <summary>
