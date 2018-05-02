@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures.Commands
                 .Map(Path.GetDirectoryName)
                 .Map(dllDir => Path.Combine(dllDir, "Scripts"))
                 .Map(scriptPath => new[]
-                    {"run-test-script", "--script=" + scriptPath + "\\awsscript.ps1", "--extensions=Aws,Azure,Tests"});
+                    {"run-test-script", "--script=" + scriptPath + Path.DirectorySeparatorChar + "awsscript.ps1", "--extensions=Aws,Azure,Tests"});
 
         private static string FullLocalPath(Assembly assembly) =>
             Uri.UnescapeDataString(new UriBuilder(assembly.CodeBase).Path).Replace("/", "\\");
