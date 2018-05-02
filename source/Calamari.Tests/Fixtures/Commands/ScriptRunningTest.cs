@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
-#if Azure
+#if AZURE
         private string Extensions = "--extensions=Aws,Azure,Tests";
 #else
         private string Extensions = "--extensions=Aws,Tests";
