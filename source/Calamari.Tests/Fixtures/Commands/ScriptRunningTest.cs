@@ -15,12 +15,18 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
+#if Azure
+        private string Extensions = "--extensions=Aws,Azure,Tests";
+#else
+        private string Extensions = "--extensions=Aws,Tests";
+#endif
+
         private string[] Args =>
             ScriptRunningTest.FullLocalPath(typeof(ScriptRunningTest).Assembly)
                 .Map(Path.GetDirectoryName)
                 .Map(dllDir => Path.Combine(dllDir, "Scripts"))
                 .Map(scriptPath => new[]
-                    {"run-test-script", "--script=" + scriptPath + Path.DirectorySeparatorChar + "awsscript.ps1", "--extensions=Aws,Azure,Tests"});
+                    {"run-test-script", "--script=" + scriptPath + Path.DirectorySeparatorChar + "awsscript.ps1", Extensions});
 
         private static string FullLocalPath(Assembly assembly) =>
             Uri.UnescapeDataString(new UriBuilder(assembly.CodeBase).Path).Replace("/", "\\");

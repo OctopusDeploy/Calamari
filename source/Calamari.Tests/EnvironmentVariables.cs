@@ -21,6 +21,7 @@ namespace Calamari.Tests
                 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(environmentVar)))
                 {
                     Log.Error("Could not find the environment variable " + environmentVar);
+                    Log.Error("Check LastPass for credentials under 'Azure E2E Test User' and 'AWS E2E Test User Keys'");
                 }
 
             }
