@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using Autofac;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Helpers;
 using Calamari.Tests.Hooks;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
@@ -17,15 +18,22 @@ namespace Calamari.Tests.Fixtures.Commands
         //private string Extensions = "--extensions=Aws,Azure,Tests"; // Enabling Aws and Azure breaks tests on Linux machines, but can be used for local testing
         private string Extensions = "--extensions=Tests";
 
-        private string Script = ScriptRunningTest.FullLocalPath(typeof(ScriptRunningTest).Assembly)
-            .Map(Path.GetDirectoryName)
-            .Map(dllDir => Path.Combine(dllDir, "Scripts"))
-            .Map(scriptPath => scriptPath + Path.DirectorySeparatorChar + "awsscript.ps1");
+        private string Script = GetFixtureResouce("Scripts", "awsscript.ps1");
 
         private string[] Args => new[] {"run-test-script", "--script=" + Script, Extensions};
 
-        private static string FullLocalPath(Assembly assembly) =>
-            Uri.UnescapeDataString(new UriBuilder(assembly.CodeBase).Path).Replace("/", "\\");
+        private static string GetFixtureResouce(params string[] paths)
+        {
+            var type = typeof(ScriptRunningTest);
+            return GetFixtureResouce(type, paths);
+        }
+
+        private static string GetFixtureResouce(Type type, params string[] paths)
+        {
+            var path = type.Namespace.Replace("Calamari.Tests.", String.Empty);
+            path = path.Replace('.', Path.DirectorySeparatorChar);
+            return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
+        }
 
         private CalamariVariableDictionary BuildVariables(CalamariVariableDictionary variables)
         {
@@ -61,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Commands
         [Test]
         public void RunScript()
         {
-            Assert.IsTrue(File.Exists(Script));
+            Assert.IsTrue(File.Exists(Script), Script + " must exist as a file");
 
             BuildVariables(container.Resolve<CalamariVariableDictionary>());
             var retCode = container.Resolve<Calamari.Program>().Execute(Args);
