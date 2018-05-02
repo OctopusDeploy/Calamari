@@ -9,7 +9,7 @@ using Calamari.Commands.Support;
 
 namespace Calamari.Modules
 {
-    interface ICommandLocator
+    public interface ICommandLocator
     {
         /// <summary>
         /// Here we find the one Command class that we want to run

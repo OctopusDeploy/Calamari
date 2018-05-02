@@ -7,7 +7,7 @@ using Autofac;
 
 namespace Calamari.Modules
 {
-    class CommandLocator : ICommandLocator
+    public class CommandLocator : ICommandLocator
     {
         public Type Find(string name, Assembly assembly)
         {

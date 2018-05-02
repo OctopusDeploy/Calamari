@@ -6,6 +6,7 @@ using Calamari.Integration.Scripting;
 using NUnit.Framework;
 using System;
 using System.Linq;
+using Calamari.Modules;
 
 
 namespace Calamari.Tests.Fixtures.Performance
@@ -20,6 +21,8 @@ namespace Calamari.Tests.Fixtures.Performance
     [TestFixture]
     class AutofacCanaryTest
     {
+        private readonly ICommandLocator CommandLocator = new CommandLocator();
+
         private const int Iterations = 1000;
         private const int GroupThreshold = 10;
         /// <summary>
@@ -36,28 +39,24 @@ namespace Calamari.Tests.Fixtures.Performance
         [Test]
         public void AutofacRegistrationPerformance()
         {
+            // Run a process that replicates the old pipeline
+            new TimerClass().DoTimedAction(DoOldCalamariExecutionPipeline, 1);
+
+            // Run it again to get the performance after any optimisations gained by scanning
+            // assemblies the first time around.
+            var regularTime = new TimerClass().DoTimedAction(DoOldCalamariExecutionPipeline, Iterations);
+
             // Run through the process of creating an autofac container, registering an external
             // module (the test module in this case), and creating the objects that make up
             // a typical calamari execution path.
             var autofacTime = new TimerClass().DoTimedAction(() =>
             {
                 using (var container =
-                    Calamari.Program.BuildContainer(new[] {"help", "run-script", "--extensions=Tests"}))
+                    Calamari.Program.BuildContainer(new[] { "help", "run-script", "--extensions=Tests" }))
                 {
                     container.Resolve<Calamari.Program>();
                 }
             }, Iterations);
-
-            // Do the same as above, but without auofac.
-            var regularTime = new TimerClass().DoTimedAction(() =>
-                {
-                    new Calamari.Program(
-                        "name", 
-                        "version", 
-                        new string[] { }, 
-                        new RunScriptCommand(new CalamariVariableDictionary(), new CombinedScriptEngine()),
-                        new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
-                }, Iterations);
 
             Assert.LessOrEqual(autofacTime, regularTime + Threshold);
         }
@@ -78,6 +77,13 @@ namespace Calamari.Tests.Fixtures.Performance
         [Test]
         public void InidividualAutofacRegistrationPerformance()
         {
+            // Run a process that replicates the old pipeline
+            new TimerClass().DoTimedAction(DoOldCalamariExecutionPipeline, 1);
+
+            // Run it again to get the performance after any optimisations gained by scanning
+            // assemblies the first time around.
+            var regularTime = new TimerClass().DoTimedAction(DoOldCalamariExecutionPipeline, 1);
+
             // Run through the process of creating an autofac container, registering an external
             // module (the test module in this case), and creating the objects that make up
             // a typical calamari execution path.
@@ -88,22 +94,36 @@ namespace Calamari.Tests.Fixtures.Performance
                 {
                     container.Resolve<Calamari.Program>();
                 }
-            }, 1);
-
-            // Do the same as above, but without auofac.
-            var regularTime = new TimerClass().DoTimedAction(() =>
-            {
-                new Calamari.Program(
-                    "name",
-                    "version",
-                    new string[] { },
-                    new RunScriptCommand(new CalamariVariableDictionary(), new CombinedScriptEngine()),
-                    new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
-            }, 1);
+            }, 1);            
 
             Assert.LessOrEqual(autofacTime, regularTime + IndividualThreshold);
         }
+
+        /// <summary>
+        /// Replicate the code that used to be run when executing a command
+        /// </summary>
+        private void DoOldCalamariExecutionPipeline()
+        {
+            // We manually replicate the type lookups that used to hapen
+            var runCommand = (ICommand)Activator.CreateInstance(
+                CommandLocator.Find("run-script", typeof(RunScriptCommand).Assembly),
+                new CalamariVariableDictionary(),
+                new CombinedScriptEngine());
+            var helpCommand = (ICommand)Activator.CreateInstance(
+                CommandLocator.Find("help", typeof(HelpCommand).Assembly),
+                CommandLocator.List(typeof(RunScriptCommand).Assembly),
+                runCommand);
+
+            new Calamari.Program(
+                "name",
+                "version",
+                new string[] { },
+                helpCommand,
+                new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
+        }
     }
+
+    
 
     class TimerClass
     {
