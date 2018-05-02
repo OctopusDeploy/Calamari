@@ -1,12 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
+﻿#if NETFX
 using Autofac;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Hooks;
 using NUnit.Framework;
-using Octopus.CoreUtilities.Extensions;
+using System;
+using System.IO;
 
 namespace Calamari.Tests.Fixtures.Commands
 {
@@ -82,3 +81,4 @@ namespace Calamari.Tests.Fixtures.Commands
         }
     }
 }
+#endif

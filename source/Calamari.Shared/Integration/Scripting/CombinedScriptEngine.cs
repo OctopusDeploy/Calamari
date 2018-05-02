@@ -13,12 +13,22 @@ namespace Calamari.Integration.Scripting
         private readonly IEnumerable<IScriptEnvironment> environmentHooks;
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
     
+        /// <summary>
+        /// The original default constructor.
+        /// </summary>
         public CombinedScriptEngine()
         {
             this.environmentHooks = Enumerable.Empty<IScriptEnvironment>();
             this.scriptWrapperHooks = Enumerable.Empty<IScriptWrapper>();
         }
 
+        /// <summary>
+        /// The Autofac enriched constructor. Autofac will pick this constructor
+        /// because it is the constructor with the most parameters that can be
+        /// fulfilled by injection.
+        /// </summary>
+        /// <param name="environmentHooks">The collecton of IScriptEnvironment objects available in autofac</param>
+        /// <param name="scriptWrapperHooks">The collecton of IScriptWrapper objects available in autofac</param>
         public CombinedScriptEngine(
             IEnumerable<IScriptEnvironment> environmentHooks, 
             IEnumerable<IScriptWrapper> scriptWrapperHooks)
@@ -47,12 +57,19 @@ namespace Calamari.Integration.Scripting
 
 
         /// <summary>
-        /// Script wrappers form a chain, with one wrapper calling the next. The last
-        /// wrapper to be called is the TerminalScriptWrapper, which simply executes
-        /// a ScriptEngine without any additional processing.
+        /// Script wrappers form a chain, with one wrapper calling the next, much like
+        /// a linked list. The last wrapper to be called is the TerminalScriptWrapper,
+        /// which simply executes a ScriptEngine without any additional processing.
+        /// In this way TerminalScriptWrapper is what actually executes the script
+        /// that is to be run, aith all other wrappers contributing to the script
+        /// context.
         /// </summary>
         /// <param name="scriptType">The type of the script being run</param>
-        /// <returns>The start of the wrapper chain. Executing this wrapper will cause the chain to be executed.</returns>
+        /// <returns>
+        /// The start of the wrapper chain. Because each IScriptWrapper is expected to call its NextWrapper,
+        /// calling ExecuteScript() on the start of the chain will result in every part of the chain being
+        /// executed, down to the final TerminalScriptWrapper.
+        /// </returns>
         IScriptWrapper BuildWrapperChain(ScriptType scriptType) =>
             // get the type of script
             scriptWrapperHooks
