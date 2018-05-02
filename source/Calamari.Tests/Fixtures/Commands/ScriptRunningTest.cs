@@ -14,7 +14,9 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private IContainer container;
 
-        private string Extensions = "--extensions=Aws,Azure,Tests";
+        // Loading the Azure hooks breaks tests, but uncomment this line to see them running locally
+        // private string Extensions = "--extensions=Aws,Azure,Tests"; 
+        private string Extensions = "--extensions=Aws,Tests";
 
         private string Script = GetFixtureResouce("Scripts", "awsscript.ps1");
 
