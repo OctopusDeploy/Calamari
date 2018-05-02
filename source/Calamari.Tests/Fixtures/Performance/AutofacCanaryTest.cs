@@ -58,7 +58,8 @@ namespace Calamari.Tests.Fixtures.Performance
                 }
             }, Iterations);
 
-            Assert.LessOrEqual(autofacTime, regularTime + Threshold);
+            Warn.If(autofacTime > regularTime + Threshold, 
+                $"Expected {autofacTime} to be less than or equal to {regularTime + Threshold}");
         }
 
         /// <summary>
@@ -94,9 +95,10 @@ namespace Calamari.Tests.Fixtures.Performance
                 {
                     container.Resolve<Calamari.Program>();
                 }
-            }, 1);            
+            }, 1);
 
-            Assert.LessOrEqual(autofacTime, regularTime + IndividualThreshold);
+            Warn.If(autofacTime > regularTime + IndividualThreshold, 
+                $"Expected {autofacTime} to be less than or equal to {regularTime + IndividualThreshold}");
         }
 
         /// <summary>
