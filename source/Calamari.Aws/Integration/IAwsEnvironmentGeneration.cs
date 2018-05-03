@@ -1,4 +1,5 @@
-﻿using Amazon;
+﻿using System.Collections.Specialized;
+using Amazon;
 using Amazon.Runtime;
 using System.Net;
 using Calamari.Hooks;
@@ -19,7 +20,12 @@ namespace Calamari.Aws.Integration
         /// The region to use
         /// </summary>
         RegionEndpoint AwsRegion { get; }
-        
+        /// <summary>
+        /// A key value mapping that defines the environment variables required to run AWS scripts.
+        /// This is useful when running external scripts.
+        /// </summary>
+        StringDictionary EnvironmentVars { get; }
+
         int ProxyPort { get; }
         ICredentials ProxyCredentials { get; }
         string ProxyHost { get; }       

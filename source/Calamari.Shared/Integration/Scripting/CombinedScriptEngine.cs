@@ -55,7 +55,7 @@ namespace Calamari.Integration.Scripting
         /// a linked list. The last wrapper to be called is the TerminalScriptWrapper,
         /// which simply executes a ScriptEngine without any additional processing.
         /// In this way TerminalScriptWrapper is what actually executes the script
-        /// that is to be run, aith all other wrappers contributing to the script
+        /// that is to be run, with all other wrappers contributing to the script
         /// context.
         /// </summary>
         /// <param name="scriptType">The type of the script being run</param>
