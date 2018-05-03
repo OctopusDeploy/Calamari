@@ -5,9 +5,15 @@ using System.Collections.Specialized;
 
 namespace Calamari.Tests.Hooks
 {
+    /// <summary>
+    /// A mock script wrapper that we can use to track if it has been executed or not
+    /// </summary>
     public class ScriptHookMock : IScriptWrapper
     {
-        public bool WasCalled { get; private set; } = true;
+        /// <summary>
+        /// This is how we know if this wrapper was called or not
+        /// </summary>
+        public bool WasCalled { get; private set; } = false;
         public bool Enabled { get; } = true;
         public IScriptWrapper NextWrapper { get; set; }
 
