@@ -136,14 +136,15 @@ public static class Octopus
         Environment.Exit(-1);
     }
 
-    public static void SetVariable(string name, string value)
+    public static void SetVariable(string name, string value, bool sensitive = false)
     {
         name = EncodeServiceMessageValue(name);
         value = EncodeServiceMessageValue(value);
+        var encodedSensitive = EncodeServiceMessageValue(sensitive);
 
         Parameters[name] = value;
 
-        Console.WriteLine("##octopus[setVariable name='{0}' value='{1}']", name, value);
+        Console.WriteLine("##octopus[setVariable name='{0}' value='{1}' sensitive='{2}']", name, value, encodedSensitive);
     }
 
     public static void CreateArtifact(string path, string fileName = null)

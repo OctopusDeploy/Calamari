@@ -139,12 +139,13 @@ function Convert-ServiceMessageValue([string]$value)
 	return [Convert]::ToBase64String($valueBytes)
 }
 
-function Set-OctopusVariable([string]$name, [string]$value) 
+function Set-OctopusVariable([string]$name, [string]$value, [switch]$sensitive) 
 {
 	$name = Convert-ServiceMessageValue($name)
 	$value = Convert-ServiceMessageValue($value)
+	$isSensitive = Convert-ServiceMessageValue($sensitive)
 
-	Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
+	Write-Host "##octopus[setVariable name='$($name)' value='$($value)' sensitive='$($isSensitive)']"
 }
 
 function Convert-ToServiceMessageParameter([string]$name, [string]$value)

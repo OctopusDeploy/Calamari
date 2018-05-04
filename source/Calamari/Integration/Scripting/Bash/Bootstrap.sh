@@ -89,6 +89,11 @@ function set_octopusvariable
 	then
 		MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
 	fi
+	
+	if [ "$3" = "-sensitive" ]
+	then
+		MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
+	fi
 
 	MESSAGE="$MESSAGE]"
 

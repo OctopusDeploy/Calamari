@@ -251,6 +251,21 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldSetSensitiveVariables()
+        {
+            var variables = new VariableDictionary();
+
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "CanSetVariable.ps1")), variables);
+
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
+            Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldSetActionIndexedOutputVariables()
         {
             var variables = new VariableDictionary();
