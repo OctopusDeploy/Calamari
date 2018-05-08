@@ -78,11 +78,16 @@ let failStep message =
             Environment.Exit -1
     
 
-let setVariable name value ?sensitive : bool = 
+let setVariable name value = 
     let encodedName = encode name
     let encodedValue = encode value
-    let encodedSensitive = encode defaultArg sensitive false 
-    let content = sprintf "name='%s' value='%s' sensitive='%s'" encodedName encodedValue encodedSensitive
+    let content = sprintf "name='%s' value='%s'" encodedName encodedValue
+    writeServiceMessage "setVariable" content
+    
+let setSensitiveVariable name value =
+    let encodedName = encode name
+    let encodedValue = encode value
+    let content = sprintf "name='%s' value='%s' sensitive='%s'" encodedName encodedValue (encode "True")
     writeServiceMessage "setVariable" content
 
 let createArtifact path fileName =

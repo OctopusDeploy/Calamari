@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
                 .Argument("script", GetFixtureResouce("Scripts", "PrintSensitiveVariable.csx")));
             
             output.AssertSuccess();
-            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y2()()()()((())9ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
+            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
         }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
