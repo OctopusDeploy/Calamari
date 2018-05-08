@@ -140,7 +140,7 @@ public static class Octopus
     {
         name = EncodeServiceMessageValue(name);
         value = EncodeServiceMessageValue(value);
-        var encodedSensitive = EncodeServiceMessageValue(sensitive);
+        var encodedSensitive = EncodeServiceMessageValue(sensitive.ToString());
 
         Parameters[name] = value;
 

@@ -21,6 +21,17 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
+        
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        public void ShouldPrintSensitiveVariable()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "PrintSensitiveVariable.csx")));
+            
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y2()()()()((())9ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
+        }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCreateArtifact()
