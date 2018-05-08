@@ -140,11 +140,14 @@ public static class Octopus
     {
         name = EncodeServiceMessageValue(name);
         value = EncodeServiceMessageValue(value);
-        var encodedSensitive = EncodeServiceMessageValue(sensitive.ToString());
 
         Parameters[name] = value;
 
-        Console.WriteLine("##octopus[setVariable name='{0}' value='{1}' sensitive='{2}']", name, value, encodedSensitive);
+        if (sensitive) {
+            Console.WriteLine("##octopus[setVariable name='{0}' value='{1}' sensitive='{2}']", name, value, EncodeServiceMessageValue("True"));
+        } else {
+            Console.WriteLine("##octopus[setVariable name='{0}' value='{1}']", name, value);
+        }
     }
 
     public static void CreateArtifact(string path, string fileName = null)

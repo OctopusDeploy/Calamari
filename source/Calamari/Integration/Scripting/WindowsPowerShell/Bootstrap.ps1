@@ -143,9 +143,13 @@ function Set-OctopusVariable([string]$name, [string]$value, [switch]$sensitive)
 {
 	$name = Convert-ServiceMessageValue($name)
 	$value = Convert-ServiceMessageValue($value)
-	$isSensitive = Convert-ServiceMessageValue($sensitive)
+	$trueEncoded = Convert-ServiceMessageValue("True")
 
-	Write-Host "##octopus[setVariable name='$($name)' value='$($value)' sensitive='$($isSensitive)']"
+    If ($sensitive) {
+        Write-Host "##octopus[setVariable name='$($name)' value='$($value)' sensitive='$($trueEncoded)']"
+    } Else {
+        Write-Host "##octopus[setVariable name='$($name)' value='$($value)']"
+    }
 }
 
 function Convert-ToServiceMessageParameter([string]$name, [string]$value)
