@@ -21,6 +21,19 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
         }
+        
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldPrintSensitiveVariable()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "print-sensitive-variable.sh")));
+
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
+        }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
