@@ -434,7 +434,7 @@ function Import-CalamariModules() {
 		$calamariModulePaths = $OctopusParameters["Octopus.Calamari.Bootstrapper.ModulePaths"].Split(";", [StringSplitOptions]'RemoveEmptyEntries')
 		foreach ($calamariModulePath in $calamariModulePaths) {
 		    if($calamariModulePath.EndsWith(".psd1")) {
-		        Import-Module –Name $calamariModulePath.Replace("{{TentacleHome}}", $env:TentacleHome)
+		        Import-Module –Name $ExecutionContext.InvokeCommand.ExpandString($calamariModulePath)
 		    } else {
         		$env:PSModulePath = $calamariModulePath + ";" + $env:PSModulePath
 		    }
