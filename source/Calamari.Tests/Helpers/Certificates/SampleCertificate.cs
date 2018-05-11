@@ -110,13 +110,27 @@ namespace Calamari.Tests.Helpers.Certificates
         public X509Certificate2 GetCertificateFromStore(string storeName, StoreLocation storeLocation)
         {
             var store = new X509Store(storeName, storeLocation);
-            store.Open(OpenFlags.ReadWrite);
+            var maxAttempts = 5;
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                try
+                {
+                    store.Open(OpenFlags.ReadOnly);
+                    var foundCertificates = store.Certificates.Find(X509FindType.FindByThumbprint, Thumbprint, false);
+                    return foundCertificates.Count > 0
+                        ? foundCertificates[0]
+                        : null;
+                }
+                catch
+                {
+                    if (i > maxAttempts)
+                    {
+                        throw;
+                    }
+                }
+            }
 
-            var foundCertificates = store.Certificates.Find(X509FindType.FindByThumbprint, Thumbprint, false);
-
-            return foundCertificates.Count > 0
-                ? foundCertificates[0]
-                : null;
+            return null;
         }
 
         public static void AssertIdentityHasPrivateKeyAccess(X509Certificate2 certificate, IdentityReference identity, CryptoKeyRights rights)
