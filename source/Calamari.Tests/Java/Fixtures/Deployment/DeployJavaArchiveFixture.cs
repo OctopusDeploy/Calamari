@@ -1,10 +1,13 @@
 ﻿#if JAVA_SUPPORT 
 using System;
 using System.IO;
+using System.Linq;
 using Calamari.Commands.Java;
 using Calamari.Deployment;
+using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -76,7 +79,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             {
                 Variables.Save(variablesFile.FilePath);
 
-                var command = new DeployJavaArchiveCommand();
+                var command = new DeployJavaArchiveCommand(new CombinedScriptEngine());
                 ReturnCode = command.Execute(new[] {"--archive", $"{packageName}", "--variables", $"{variablesFile.FilePath}" }); 
             }
         }

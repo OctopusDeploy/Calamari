@@ -109,8 +109,7 @@ Task("Pack")
     .Does(() =>
 {
     DoPackage("Calamari", "net40", nugetVersion);
-    DoPackage("Calamari.Azure", "net452", nugetVersion);
-    DoPackage("Calamari.Aws", "net452", nugetVersion);
+	DoPackage("Calamari", "net452", nugetVersion, "Cloud");
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
@@ -179,8 +178,6 @@ private void SignBinaries(string outputDirectory)
     Information($"Signing binaries in {outputDirectory}");
 
 	var files = GetFiles(outputDirectory + "/Calamari.exe");
-    files.Add(GetFiles(outputDirectory + "/Calamari.Azure.exe"));
-	files.Add(GetFiles(outputDirectory + "/Calamari.Aws.exe"));
     files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
 
 

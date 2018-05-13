@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using Calamari.Aws.Deployment.Conventions;
+﻿using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Amazon.S3;
-using Amazon.S3.Model;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace Calamari.Aws.Commands
 {

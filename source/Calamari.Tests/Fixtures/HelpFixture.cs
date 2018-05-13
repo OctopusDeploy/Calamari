@@ -11,7 +11,7 @@ namespace Calamari.Tests.Fixtures
         {
             var output = Invoke(Calamari());
             output.AssertFailure();
-            output.AssertOutput("Usage: Calamari");
+            output.AssertOutputMatches("Usage: Calamari");
         }
 
         [Test]
@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures
             var output = Invoke(Calamari().Action("whatever"));
             output.AssertFailure();
             output.AssertOutput("Command 'whatever' is not supported");
-            output.AssertOutput("Usage: Calamari");
+            output.AssertOutputMatches("Usage: Calamari");
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures
         {
             var output = Invoke(Calamari().Action("help"));
             output.AssertSuccess();
-            output.AssertOutput("Usage: Calamari");
+            output.AssertOutputMatches("Usage: Calamari");
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures
         {
             var output = Invoke(Calamari().Action("help").Argument("run-script"));
             output.AssertSuccess();
-            output.AssertOutput("Usage: Calamari run-script");
+            output.AssertOutputMatches("Usage: Calamari.*? run-script");
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace Calamari.Tests.Fixtures
         {
             var output = Invoke(Calamari().Action("-?"));
             output.AssertSuccess();
-            output.AssertOutput("Usage: Calamari");
+            output.AssertOutputMatches("Usage: Calamari");
         }
     }
 }

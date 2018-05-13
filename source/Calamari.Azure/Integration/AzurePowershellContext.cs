@@ -1,39 +1,60 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
+using Calamari.Hooks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Scripting.WindowsPowerShell;
 using Octostache;
 
 namespace Calamari.Azure.Integration
 {
-    public class AzurePowerShellContext
+    public class AzurePowerShellContext : IScriptWrapper
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
+        private readonly CalamariVariableDictionary variables;
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
         public const string DefaultAzureEnvironment = "AzureCloud";
-        public static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
+        public static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(AzurePowerShellContext).Assembly.Location), "PowerShell");
 
-        public AzurePowerShellContext()
+        public AzurePowerShellContext(CalamariVariableDictionary variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
             this.embeddedResources = new AssemblyEmbeddedResources();
+            this.variables = variables;
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public bool Enabled => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
+                               string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
+
+        public IScriptWrapper NextWrapper { get; set; }
+
+        public CommandResult ExecuteScript(
+            Script script,
+            CalamariVariableDictionary variables,
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars)
         {
+            // Only run this hook if we have an azure account
+            if (!Enabled)
+            {
+                throw new InvalidOperationException(
+                    "This script wrapper hook is not enabled, and should not have been run");
+            }
+
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
@@ -58,14 +79,14 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
                 {
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
                 }
             }
         }
