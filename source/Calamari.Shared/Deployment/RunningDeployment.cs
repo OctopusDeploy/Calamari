@@ -45,7 +45,9 @@ namespace Calamari.Deployment
 
         public string CurrentDirectory
         {
-            get { return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ? StagingDirectory : CustomDirectory; }
+            get { return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ?
+                string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory
+                : CustomDirectory; }
         }
 
         public CalamariVariableDictionary Variables
