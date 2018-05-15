@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>1.0.0.0</Version>
+    <TargetFramework>net452</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <PlatformTarget>anycpu</PlatformTarget>
+    <AssemblyName>Calamari.Kubernetes</AssemblyName>
+    <OutputType>Library</OutputType>
+    <PackageId>Calamari.Kubernetes</PackageId>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <Authors>Octopus Deploy</Authors>
+    <Copyright>Octopus Deploy Pty Ltd</Copyright>
+    <PackageTags>tool</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/OctopusDeploy/Calamari/</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Description>Contains the command-line Calamari tool, plus additional commands for Kubernetes integration.</Description>
+    <ApplicationManifest>Calamari.Kubernetes.exe.manifest</ApplicationManifest>
+    <ApplicationIcon />
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Scripts\KubectlPowershellContext.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\KubectlPowershellContext.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.8.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
+  </ItemGroup>
+</Project>

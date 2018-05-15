@@ -8,7 +8,7 @@ namespace Calamari.Hooks
     /// <summary>
     /// The last wrapper in any chain. It calls the script engine directly.
     /// </summary>
-    class TerminalScriptWrapper : IScriptWrapper
+    public class TerminalScriptWrapper : IScriptWrapper
     {
         private readonly IScriptEngine scriptEngine;
 

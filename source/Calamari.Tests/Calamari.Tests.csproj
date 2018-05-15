@@ -22,7 +22,7 @@
     <DefineConstants>$(DefineConstants);NETCORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;AZURE;KUBERNETES;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1" />
@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+    <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup>
