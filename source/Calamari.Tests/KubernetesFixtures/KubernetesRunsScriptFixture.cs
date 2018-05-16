@@ -17,15 +17,15 @@ using Path = System.IO.Path;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Ignore("NotYet")]
+    [Ignore("Not Yet")]
     public class KubernetesContextScriptWrapperFixture
     {
         const string ClusterTokenEnvironmentVariable = "OCTOPUS_K8S_TOKEN";
         const string CluserServerEnvironmentVariable = "OCTOPUS_K8S_SERVER";
 
         //See "GitHub Test Account"
-        private static readonly string ClusterUri = Environment.GetEnvironmentVariable(CluserServerEnvironmentVariable);
-        static readonly string ClusterToken = Environment.GetEnvironmentVariable(ClusterTokenEnvironmentVariable);
+        private static readonly string ClusterUri = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
+        static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
         
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
@@ -33,7 +33,6 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var wrapper = new KubernetesContextScriptWrapper(new CalamariVariableDictionary());
             TestScript(wrapper, "Test-Script.ps1");
-            //TestScript(new KubernetesPowershellScriptEngine(), "Test-Script.ps1");
         }
         
         [Test]
@@ -52,8 +51,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(temp.FilePath, "kubectl get nodes");
                 var output = ExecuteScript(wrapper, temp.FilePath, new CalamariVariableDictionary()
                 {
-                    ["OctopusKubernetesServer"] = "https://ec2-18-232-75-57.compute-1.amazonaws.com",
-                    ["OctopusKubernetesToken"] = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC10b2tlbi00d3FtbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImFhZGU2NTk1LTUzNDktMTFlOC1hZDhkLTBlZTJhNzg3ZGFjZSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTprdWJlcm5ldGVzLWRhc2hib2FyZCJ9.CKeCGqg0sLsZyi4YaH7r02guclddKbDnjvuwzt_2rQQ3aZ_pQWrpjIjo83ebx1UsS6vt5Jq81W7Sxyrh81asq6xA74JU1UTMMcx2WIn3-dfaG9f3pBwGEi_mE7CkyUMMrZpC4R-_VU-YfAhfkvb68-koGrM4V0nFRGphEcbfwXDBcpE9qiiYr4dTdVdoOK2LnAMkyEqsGE9lqNBTq9HBakHMKT8nOWg4yzO76Kcvlqv_JzJCfxDnRv7AAteanq5Y2eYvlag5l0wECpi7cme9Tb4oykmt5I974SxGcu3AwxwagErSGHAOzTlJoOiJh07WFCXDerzga4Vmg9ElKlLX1A",
+                    ["OctopusKubernetesServer"] = ClusterUri,
+                    ["OctopusKubernetesToken"] = ClusterToken,
                     ["OctopusKubernetesInsecure"] = "true"
 
                 });
