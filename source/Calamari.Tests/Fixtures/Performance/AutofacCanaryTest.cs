@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.Performance
             var autofacTime = new TimerClass().DoTimedAction(() =>
             {
                 using (var container =
-                    Calamari.Program.BuildContainer(new[] { "help", "run-script", "--extensions=Tests" }))
+                    Calamari.Program.BuildContainer(new[] { "help", "run-script", "--extensions=Calamari.Tests" }))
                 {
                     container.Resolve<Calamari.Program>();
                 }
@@ -91,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Performance
             var autofacTime = new TimerClass().DoTimedAction(() =>
             {
                 using (var container =
-                    Calamari.Program.BuildContainer(new[] { "help", "run-script", "--extensions=Tests" }))
+                    Calamari.Program.BuildContainer(new[] { "help", "run-script", "--extensions=Calamari.Tests" }))
                 {
                     container.Resolve<Calamari.Program>();
                 }
