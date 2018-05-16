@@ -27,9 +27,10 @@ namespace Calamari.Kubernetes
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.embeddedResources = new AssemblyEmbeddedResources();
             this.variables = variables;
+            Log.Info("BLAH BLAH BLAH");
         }
 
-        public bool Enabled => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure");
+        public bool Enabled => !string.IsNullOrEmpty(variables.Get("Octopus.Action.Kubernetes.ClusterUrl", ""));
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,

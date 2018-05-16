@@ -28,6 +28,7 @@ namespace Calamari.Integration.Scripting
         /// <param name="scriptWrapperHooks">The collecton of IScriptWrapper objects available in autofac</param>
         public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
+            Log.Info("HookCount: "+ scriptWrapperHooks.Count());
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
 

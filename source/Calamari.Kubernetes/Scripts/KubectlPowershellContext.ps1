@@ -12,7 +12,7 @@
 ##   $OctopusKubernetesToken = "..."
 ##   $OctopusKubernetesUsername = "..."
 ##   $OctopusKubernetesPassword = "..."
-##  $OctopusKubernetesNamespace
+##   $OctopusKubernetesNamespace
 ##   $OctopusKubernetesKubeCtlConfig = ".."
 
 function SetupContext {
