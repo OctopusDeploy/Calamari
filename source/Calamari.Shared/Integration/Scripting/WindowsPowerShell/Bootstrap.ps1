@@ -234,6 +234,20 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
+function New-OctopusKubernetesTarget([string]$name, [string]$clusterUrl, [string]$namespace, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
+	$azureStorageAccount = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
+	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
+	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
+
+	$parameters = $name, $clusterUrl, $namespace, $octopusAccountIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
+
+	Write-Host "##octopus[create-kubernetestarget $($parameters)]"
+}
+
 function Fail-Step([string] $message)
 {
 	if($message)
