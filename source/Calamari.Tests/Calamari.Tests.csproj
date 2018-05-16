@@ -105,10 +105,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
+    <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-    <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup>

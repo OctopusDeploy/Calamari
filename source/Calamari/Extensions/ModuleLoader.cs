@@ -72,8 +72,6 @@ namespace Calamari.Extensions
         private Assembly GetAssemblyByName(string name)
         {
             Assembly.Load(name);
-            Console.WriteLine(string.Join(",\r\n", AppDomain
-                .CurrentDomain.GetAssemblies().Select(p => p.GetName().Name)));
             return AppDomain
                 .CurrentDomain.GetAssemblies()
                 .SingleOrDefault(assembly => assembly.GetName().Name == name);

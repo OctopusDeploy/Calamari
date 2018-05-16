@@ -34,7 +34,7 @@ function SetupContext {
 
 function ConfigureKubeCtlPath {
     $env:KUBECONFIG=$OctopusKubernetesKubeCtlConfig
-    Write-Verbose "Temporary kubectl config set to $OctopusKubernetesKubeCtlConfig"
+    Write-Host "Temporary kubectl config set to $OctopusKubernetesKubeCtlConfig"
 }
 
 Write-Host "##octopus[stdout-verbose]"

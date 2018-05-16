@@ -27,7 +27,6 @@ namespace Calamari.Kubernetes
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.embeddedResources = new AssemblyEmbeddedResources();
             this.variables = variables;
-            Log.Info("BLAH BLAH BLAH");
         }
 
         public bool Enabled => !string.IsNullOrEmpty(variables.Get("Octopus.Action.Kubernetes.ClusterUrl", ""));
