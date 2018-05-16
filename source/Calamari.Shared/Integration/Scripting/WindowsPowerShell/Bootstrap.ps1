@@ -237,8 +237,8 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 function New-OctopusKubernetesTarget([string]$name, [string]$clusterUrl, [string]$namespace, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
-	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
-	$azureStorageAccount = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
+	$clusterUrl = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
+	$namespace = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
