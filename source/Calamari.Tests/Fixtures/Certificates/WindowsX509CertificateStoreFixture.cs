@@ -226,7 +226,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             var intermediateAuthorityStore = new X509Store(StoreName.CertificateAuthority, StoreLocation.LocalMachine);
             intermediateAuthorityStore.Open(OpenFlags.ReadWrite);
 
-            RemoveChainCertificatesFromStore(rootAuthorityStore, intermediateAuthorityStore, rootAuthorityThumbprint, intermediateAuthorityThumbprint);
+            RemoveChainCertificatesFromStore(rootAuthorityStore, intermediateAuthorityStore, "CC7ED077F0F292595A8166B01709E20C0884A5999", intermediateAuthorityThumbprint);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
