@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Calamari.Deployment;
 using Calamari.Hooks;
-using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -29,7 +23,7 @@ namespace Calamari.Kubernetes
             this.variables = variables;
         }
 
-        public bool Enabled => !string.IsNullOrEmpty(variables.Get("Octopus.Action.Kubernetes.ClusterUrl", ""));
+        public bool Enabled => !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, ""));
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,

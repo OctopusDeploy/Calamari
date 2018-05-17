@@ -17,14 +17,11 @@ using Path = System.IO.Path;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Ignore("Not Yet")]
+    [Ignore("NotYet")]
     public class KubernetesContextScriptWrapperFixture
     {
-        const string ClusterTokenEnvironmentVariable = "OCTOPUS_K8S_TOKEN";
-        const string CluserServerEnvironmentVariable = "OCTOPUS_K8S_SERVER";
-
         //See "GitHub Test Account"
-        private static readonly string ClusterUri = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
+        private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
         static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
         
         [Test]
@@ -35,13 +32,13 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script.ps1");
         }
         
-        [Test]
-
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        public void BashKubeCtlScripts()
-        {
-            //TestScript(new KubernetesBashScriptEngine(), "Test-Script.sh");
-        }
+//        [Test]
+//
+//        [Category(TestEnvironment.CompatibleOS.Nix)]
+//        public void BashKubeCtlScripts()
+//        {
+//            //TestScript(new KubernetesBashScriptEngine(), "Test-Script.sh");
+//        }
 
         private void TestScript(IScriptWrapper wrapper, string scriptName)
         {
@@ -49,13 +46,15 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var temp = new TemporaryFile(Path.Combine(dir.DirectoryPath, scriptName)))
             {
                 File.WriteAllText(temp.FilePath, "kubectl get nodes");
-                var output = ExecuteScript(wrapper, temp.FilePath, new CalamariVariableDictionary()
-                {
-                    ["OctopusKubernetesServer"] = ClusterUri,
-                    ["OctopusKubernetesToken"] = ClusterToken,
-                    ["OctopusKubernetesInsecure"] = "true"
 
-                });
+                var deploymentVariables = new CalamariVariableDictionary();
+                deploymentVariables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
+                deploymentVariables.Set(Kubernetes.SpecialVariables.Namespace, "default");
+                deploymentVariables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "true");
+                deploymentVariables.Set(Calamari.Deployment.SpecialVariables.Account.Token, ClusterToken);
+                deploymentVariables.Set(Calamari.Deployment.SpecialVariables.Account.AccountType, "Token");
+
+                var output = ExecuteScript(wrapper, temp.FilePath, deploymentVariables);
                 output.AssertSuccess();
                 output.AssertOutput("ASKROB");
             }

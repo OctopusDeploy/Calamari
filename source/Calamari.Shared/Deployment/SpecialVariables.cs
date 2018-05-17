@@ -353,6 +353,9 @@
         {
             public const string Name = "Octopus.Account.Name";
             public const string AccountType = "Octopus.Account.AccountType";
+            public const string Username = "Octopus.Account.Username";
+            public const string Password = "Octopus.Account.Password";
+            public const string Token = "Octopus.Account.Token";
         }
 
         public static class Release

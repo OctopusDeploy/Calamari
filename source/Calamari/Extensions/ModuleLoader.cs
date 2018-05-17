@@ -35,7 +35,7 @@ namespace Calamari.Extensions
 
         public IEnumerable<Module> AllModules => Modules.Union(CommandModules);
 
-        public IEnumerable<Module> Modules =>
+        IEnumerable<Module> Modules =>
             extensions?
                 .Select(GetAssemblyByName)
                 .Where(assembly => assembly != null)
@@ -47,7 +47,7 @@ namespace Calamari.Extensions
                 .Select(module => (Module) module)
             ?? Enumerable.Empty<Module>();
 
-        public IEnumerable<Module> CommandModules =>
+        IEnumerable<Module> CommandModules =>
             extensions?
                     .Select(GetAssemblyByName)
                     .Where(assembly => assembly != null)
