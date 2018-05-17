@@ -163,7 +163,7 @@ namespace Calamari.Tests.Fixtures.Certificates
         public void CanImportCertificateForUser()
         {
             // This test cheats a little bit, using the current user 
-            var user = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+            var user = WindowsIdentity.GetCurrent().Name;
             var storeName = "My";
             var sampleCertificate = SampleCertificate.CapiWithPrivateKey;
 
@@ -226,12 +226,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             var intermediateAuthorityStore = new X509Store(StoreName.CertificateAuthority, StoreLocation.LocalMachine);
             intermediateAuthorityStore.Open(OpenFlags.ReadWrite);
 
-            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, StoreLocation.LocalMachine, rootAuthorityStore.Name);
-
-            if (!string.IsNullOrEmpty(intermediateAuthorityThumbprint))
-            {
-                WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, StoreLocation.LocalMachine, intermediateAuthorityStore.Name);
-            }
+            RemoveChainCertificatesFromStore(rootAuthorityStore, intermediateAuthorityStore, rootAuthorityThumbprint, intermediateAuthorityThumbprint);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
@@ -251,6 +246,11 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
+            RemoveChainCertificatesFromStore(rootAuthorityStore, intermediateAuthorityStore, rootAuthorityThumbprint, intermediateAuthorityThumbprint);
+        }
+
+        void RemoveChainCertificatesFromStore(X509Store rootAuthorityStore, X509Store intermediateAuthorityStore, string rootAuthorityThumbprint, string intermediateAuthorityThumbprint)
+        {
             WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, StoreLocation.LocalMachine, rootAuthorityStore.Name);
 
             if (!string.IsNullOrEmpty(intermediateAuthorityThumbprint))
