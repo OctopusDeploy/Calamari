@@ -117,9 +117,6 @@ namespace Calamari.Tests.Fixtures.Performance
                 runCommand);
 
             new Calamari.Program(
-                "name",
-                "version",
-                new string[] { },
                 helpCommand,
                 new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
         }
