@@ -18,7 +18,7 @@ namespace Calamari.Tests.Fixtures.Commands
         [SetUp]
         public void SetUp()
         {
-            EnvironmentVariables.EnsureVariablesExist();
+            ExternalVariables.LogMissingVariables();
             container = Calamari.Program.BuildContainer(Args);
         }
 

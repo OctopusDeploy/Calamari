@@ -37,7 +37,7 @@ namespace Calamari.Extensions
 
         public IEnumerable<Module> Modules =>
             extensions?
-                .Select(extension => GetAssemblyByName("Calamari." + extension))
+                .Select(GetAssemblyByName)
                 .Where(assembly => assembly != null)
                 .SelectMany(assembly => assembly.GetTypes())
                 .Where(type => typeof(Module).IsAssignableFrom(type))
@@ -49,10 +49,10 @@ namespace Calamari.Extensions
 
         public IEnumerable<Module> CommandModules =>
             extensions?
-                    .Select(extension => GetAssemblyByName("Calamari." + extension))
+                    .Select(GetAssemblyByName)
                     .Where(assembly => assembly != null)
                     .Select(assembly => new CalamariCommandsModule(firstCommand, secondCommand, assembly))
-            ?? Enumerable.Empty<Module>();        
+            ?? Enumerable.Empty<Module>();
 
         public ModuleLoader(string[] args)
         {
@@ -72,7 +72,6 @@ namespace Calamari.Extensions
         private Assembly GetAssemblyByName(string name)
         {
             Assembly.Load(name);
-
             return AppDomain
                 .CurrentDomain.GetAssemblies()
                 .SingleOrDefault(assembly => assembly.GetName().Name == name);

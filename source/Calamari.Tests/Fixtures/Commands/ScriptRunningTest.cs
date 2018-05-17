@@ -18,9 +18,9 @@ namespace Calamari.Tests.Fixtures.Commands
         // PowerShell modules. i.e. you get the error:
         // The term 'Get-AzureRmEnvironment' is not recognized as the name of a cmdlet
         // You can uncomment the line below for local testing though.
-        //private string Extensions = "--extensions=Aws,Azure,Tests"; 
+        //private string Extensions = "--extensions=Calamari.Aws,Calamari.Azure,Calamari.Tests"; 
 
-        private string Extensions = "--extensions=Aws,Tests";
+        private string Extensions = "--extensions=Calamari.Aws,Calamari.Tests";
 
         private string Script = GetFixtureResouce("Scripts", "awsscript.ps1");
 
@@ -43,16 +43,16 @@ namespace Calamari.Tests.Fixtures.Commands
         {
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
-            variables.Set("AwsAccount.AccessKey", Environment.GetEnvironmentVariable("AWS.E2E.AccessKeyId"));
-            variables.Set("AwsAccount.SecretKey", Environment.GetEnvironmentVariable("AWS.E2E.SecretKeyId"));
+            variables.Set("AwsAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
+            variables.Set("AwsAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             variables.Set("Octopus.Action.Aws.AssumeRole", "False");
             variables.Set("Octopus.Action.Aws.AssumedRoleArn", "");
             variables.Set("Octopus.Action.Aws.AssumedRoleSession", "");
             variables.Set("Octopus.Account.AccountType", "AzureServicePrincipal");
-            variables.Set("Octopus.Action.Azure.TenantId", Environment.GetEnvironmentVariable("Azure.E2E.TenantId"));
-            variables.Set("Octopus.Action.Azure.ClientId", Environment.GetEnvironmentVariable("Azure.E2E.ClientId"));
-            variables.Set("Octopus.Action.Azure.Password", Environment.GetEnvironmentVariable("Azure.E2E.Password"));
-            variables.Set("Octopus.Action.Azure.SubscriptionId", Environment.GetEnvironmentVariable("Azure.E2E.SubscriptionId"));
+            variables.Set("Octopus.Action.Azure.TenantId", "2a881dca-3230-4e01-abcb-a1fd235c0981");
+            variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
+            variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
+            variables.Set("Octopus.Action.Azure.SubscriptionId", "cf21dc34-73dc-4d7d-bd86-041884e0bc75");
 
             return variables;
         }
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Commands
         [SetUp]
         public void SetUp()
         {
-            EnvironmentVariables.EnsureVariablesExist();
+            ExternalVariables.LogMissingVariables();
             container = Calamari.Program.BuildContainer(Args);
         }
 
