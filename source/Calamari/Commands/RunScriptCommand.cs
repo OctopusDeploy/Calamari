@@ -22,7 +22,6 @@ namespace Calamari.Commands
         private static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
         private string scriptFile;
         private string packageFile;
-        private bool substituteVariables;
         private string scriptParameters;
         private DeploymentJournal journal;
         private RunningDeployment deployment;
@@ -36,7 +35,6 @@ namespace Calamari.Commands
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", "Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFile = Path.GetFullPath(v));
             Options.Add("scriptParameters=", "Parameters to pass to the script.", v => scriptParameters = v);
-            Options.Add("substituteVariables", "Perform variable substitution on the script body before executing it.", v => substituteVariables = true);
             VariableDictionaryUtils.PopulateOptions(Options);
             this.variables = variables;
             this.scriptEngine = scriptEngine;
@@ -55,7 +53,7 @@ namespace Calamari.Commands
             deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
             ExtractPackage(variables);
-            SubstituteVariablesInScript(variables);           
+            SubstituteVariablesInScript(variables);
             return InvokeScript(variables);
         }
 
@@ -77,8 +75,6 @@ namespace Calamari.Commands
 
         private void SubstituteVariablesInScript(CalamariVariableDictionary variables)
         {
-            if (!substituteVariables) return;
-
             Log.Info("Substituting variables in: " + scriptFile);
 
             var validatedScriptFilePath = AssertScriptFileExists();
