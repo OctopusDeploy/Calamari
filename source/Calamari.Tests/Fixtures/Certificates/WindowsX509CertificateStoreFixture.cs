@@ -259,6 +259,7 @@ namespace Calamari.Tests.Fixtures.Certificates
 
         private static void AssertCertificateInStore(X509Store store, string thumbprint)
         {
+            Thread.Sleep(TimeSpan.FromSeconds(5)); //Lets try this for the hell of it and see if the test gets less flakey
             var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
             Assert.AreEqual(1, found.Count);
         }
