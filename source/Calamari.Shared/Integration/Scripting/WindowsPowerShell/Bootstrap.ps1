@@ -234,7 +234,7 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
-function New-OctopusKubernetesTarget([string]$name, [string]$clusterUrl, [string]$namespace, [string]$octopusAccountIdOrName, [switch]$octopusProxyIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
+function New-OctopusKubernetesTarget([string]$name, [string]$clusterUrl, [string]$namespace, [string]$octopusAccountIdOrName, [string]$octopusProxyIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
 	$clusterUrl = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
