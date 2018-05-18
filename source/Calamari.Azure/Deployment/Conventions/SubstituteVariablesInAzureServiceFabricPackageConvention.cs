@@ -21,7 +21,6 @@ namespace Calamari.Azure.Deployment.Conventions
             var configurationFiles = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config", "*.xml");
             foreach (var configurationFile in configurationFiles)
             {
-                Log.Verbose($"Performing variable substitution on '{configurationFile}'");
                 substituter.PerformSubstitution(configurationFile, deployment.Variables);
             }
         }

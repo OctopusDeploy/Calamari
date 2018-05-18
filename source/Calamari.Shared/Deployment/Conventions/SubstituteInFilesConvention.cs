@@ -52,7 +52,6 @@ namespace Calamari.Deployment.Conventions
 
                 foreach (var file in matchingFiles)
                 {
-                    Log.Info("Performing variable substitution on '{0}'", file);
                     substituter.PerformSubstitution(file, deployment.Variables);
                 }
             }

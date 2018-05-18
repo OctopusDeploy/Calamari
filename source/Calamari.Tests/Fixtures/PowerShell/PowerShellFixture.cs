@@ -440,7 +440,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
-                output.AssertOutput("Substituting variables");
+                output.AssertOutput("Performing variable substitution");
                 output.AssertOutput("Hello Production!");
             }
         }
@@ -465,7 +465,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Extracting package");
-                output.AssertOutput("Substituting variables");
+                output.AssertOutput("Performing variable substitution");
                 output.AssertOutput("OctopusParameter: Production");
                 output.AssertOutput("InlineVariable: Production");
                 output.AssertOutput("VariableSubstitution: Production");

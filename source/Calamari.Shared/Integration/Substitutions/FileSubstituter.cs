@@ -22,12 +22,12 @@ namespace Calamari.Integration.Substitutions
 
         public void PerformSubstitution(string sourceFile, VariableDictionary variables, string targetFile)
         {
-            Encoding sourceFileEncoding;
-            var source = fileSystem.ReadFile(sourceFile, out sourceFileEncoding);
+            Log.Verbose($"Performing variable substitution on '{sourceFile}'");
+
+            var source = fileSystem.ReadFile(sourceFile, out var sourceFileEncoding);
             var encoding = GetEncoding(variables, sourceFileEncoding);
 
-            string error;
-            var result = variables.Evaluate(source, out error, haltOnError: false);
+            var result = variables.Evaluate(source, out var error, haltOnError: false);
 
             if (!string.IsNullOrEmpty(error))
                 Log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);

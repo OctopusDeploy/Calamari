@@ -75,8 +75,6 @@ namespace Calamari.Commands
 
         private void SubstituteVariablesInScript(CalamariVariableDictionary variables)
         {
-            Log.Info("Substituting variables in: " + scriptFile);
-
             var validatedScriptFilePath = AssertScriptFileExists();
             var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             substituter.PerformSubstitution(validatedScriptFilePath, variables);
