@@ -419,11 +419,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Description("Proves the changes to run-script are backwards compatible")]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldNotSubstituteVariablesByDefault()
+        public void ShouldSubstituteVariablesInNonPackagedScript()
         {
-            // Use a temp file for the script because the file would have been mutated by other tests
+            // Use a temp file for the script to avoid mutating the script file for other tests
             var scriptFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".ps1");
             File.WriteAllText(scriptFile, "Write-Host \"Hello #{Octopus.Environment.Name}!\"");
 
@@ -441,34 +440,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello #{Octopus.Environment.Name}!");
-            }
-        }
-
-        [Test]
-        [Description("Proves scripts can have variables substituted into them before running")]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldSubstituteVariablesIfRequested()
-        {
-            // Use a temp file for the script to avoid mutating the script file for other tests
-            var scriptFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".ps1");
-            File.WriteAllText(scriptFile, "Write-Host \"Hello #{Octopus.Environment.Name}!\"");
-
-            var variablesFile = Path.GetTempFileName();
-            var variables = new VariableDictionary();
-            variables.Set("Octopus.Environment.Name", "Production");
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(scriptFile))
-            using (new TemporaryFile(variablesFile))
-            {
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("script", scriptFile)
-                    .Argument("variables", variablesFile)
-                    .Flag("substituteVariables"));
-
-                output.AssertSuccess();
                 output.AssertOutput("Substituting variables");
                 output.AssertOutput("Hello Production!");
             }
@@ -477,7 +448,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         [Description("Proves packaged scripts can have variables substituted into them before running")]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldSubstituteVariablesInPackagedScriptsIfRequested()
+        public void ShouldSubstituteVariablesInPackagedScripts()
         {
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
@@ -490,8 +461,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Action("run-script")
                     .Argument("package", GetFixtureResouce("Packages", "PackagedScript.1.0.0.zip"))
                     .Argument("script", "Deploy.ps1")
-                    .Argument("variables", variablesFile)
-                    .Flag("substituteVariables"));
+                    .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
                 output.AssertOutput("Extracting package");

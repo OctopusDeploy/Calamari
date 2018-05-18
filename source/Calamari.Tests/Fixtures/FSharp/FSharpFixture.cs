@@ -105,8 +105,7 @@ namespace Calamari.Tests.Fixtures.FSharp
                 var output = Invoke(Calamari()
                     .Action("run-script")
                     .Argument("script", GetFixtureResouce("Scripts", "HelloVariableSubstitution.fsx"))
-                    .Argument("variables", variablesFile)
-                    .Flag("substituteVariables"));
+                    .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello SubstitutedValue");
