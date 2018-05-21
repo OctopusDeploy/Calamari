@@ -20,6 +20,17 @@ namespace Calamari.Tests.Fixtures.FSharp
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
+        
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        public void ShouldPrintSensitiveVariable()
+        {
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "SensitiveOutputVariable.fsx")));
+
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
+        }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCreateArtifact()

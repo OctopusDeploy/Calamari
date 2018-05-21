@@ -83,6 +83,12 @@ let setVariable name value =
     let encodedValue = encode value
     let content = sprintf "name='%s' value='%s'" encodedName encodedValue
     writeServiceMessage "setVariable" content
+    
+let setSensitiveVariable name value =
+    let encodedName = encode name
+    let encodedValue = encode value
+    let content = sprintf "name='%s' value='%s' sensitive='%s'" encodedName encodedValue (encode "True")
+    writeServiceMessage "setVariable" content
 
 let createArtifact path fileName =
     let plainFileName = match fileName with
