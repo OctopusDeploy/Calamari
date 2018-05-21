@@ -1,5 +1,4 @@
-﻿using Calamari.Util.Environments;
-using System.Reflection;
+﻿using Autofac;
 
 namespace Calamari.Tests
 {
@@ -9,8 +8,10 @@ namespace Calamari.Tests
         //Calamari project we only get the dll, not the exe
         public static int Main(string[] args)
         {
-            var program = new Calamari.Program("Calamari", typeof(Calamari.Program).Assembly.GetInformationalVersion(), EnvironmentHelper.SafelyGetEnvironmentInformation());
-            return program.Execute(args);
+            using (var container = Calamari.Program.BuildContainer(args))
+            {
+                return container.Resolve<Calamari.Program>().Execute(args);
+            }
         }
     }
 }

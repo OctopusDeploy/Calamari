@@ -28,13 +28,16 @@ namespace Calamari.Commands
         private string packageFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
+        private CombinedScriptEngine scriptCapability;
 
-        public DeployPackageCommand()
+        public DeployPackageCommand(CombinedScriptEngine scriptCapability)
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+
+            this.scriptCapability = scriptCapability;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -57,7 +60,6 @@ namespace Calamari.Commands
 
             var featureClasses = new List<IFeature>();
 
-            var scriptCapability = new CombinedScriptEngine();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var generator = new JsonConfigurationVariableReplacer();
             var substituter = new FileSubstituter(fileSystem);

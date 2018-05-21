@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration;
@@ -20,12 +21,14 @@ namespace Calamari.Aws.Commands
         private string variablesFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
+        private string packageFile;
         private string bucket;
         private string targetMode;
 
         public UploadAwsS3Command()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
@@ -38,7 +41,7 @@ namespace Calamari.Aws.Commands
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-            var packageFile = variables.GetEnvironmentExpandedPath(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
+
             if (string.IsNullOrEmpty(packageFile))
             {
                 throw new CommandException($"No package file was specified. Please provide `{SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath}` variable");
