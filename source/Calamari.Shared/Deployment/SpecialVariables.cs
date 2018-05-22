@@ -303,7 +303,11 @@
 
             public static class Script
             {
-                public const string SuppressEnvironmentLogging = "Octopus.Action.Script.SuppressEnvironmentLogging";
+                public static readonly string Syntax = "Octopus.Action.Script.Syntax";
+                public static readonly string ScriptBody = "Octopus.Action.Script.ScriptBody";
+                public static readonly string ScriptFileName = "Octopus.Action.Script.ScriptFileName";
+                public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
+                public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
             }
 
             public static class Java

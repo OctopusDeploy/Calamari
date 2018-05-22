@@ -1,3 +1,5 @@
+using System;
+
 namespace Calamari.Integration.Scripting
 {
     public class Script
@@ -12,7 +14,6 @@ namespace Calamari.Integration.Scripting
         public Script(string file, string parameters)
         {
             if (string.IsNullOrEmpty(file)) throw new InvalidScriptException("File can not be null or empty.");
-
             File = file;
             Parameters = parameters;
         }

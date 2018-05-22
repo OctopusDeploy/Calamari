@@ -13,10 +13,7 @@ namespace Calamari.Tests.Fixtures.FSharp
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldPrintEncodedVariable()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "OutputVariable.fsx")));
-
+            var (output, _) = RunScript("OutputVariable.fsx");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
@@ -24,6 +21,7 @@ namespace Calamari.Tests.Fixtures.FSharp
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldPrintSensitiveVariable()
         {
+
             var output = Invoke(Calamari()
                 .Action("run-script")
                 .Argument("script", GetFixtureResouce("Scripts", "SensitiveOutputVariable.fsx")));
