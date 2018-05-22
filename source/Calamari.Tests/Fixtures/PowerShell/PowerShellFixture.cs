@@ -203,7 +203,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldAllowDotSourcing()
         {
-            var (output, _) = RunScript("CanDotSource.ps1");
+            var output = Invoke(Calamari()
+                .Action("run-script")
+                .Argument("script", GetFixtureResouce("Scripts", "CanDotSource.ps1")));
+
             output.AssertSuccess();
             output.AssertOutput("Hello!");
         }
@@ -434,7 +437,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShoulFailOnStdErrWithTreatScriptWarningsAsErrors()
+        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
                 {["Octopus.Action.FailScriptOnErrorOutput"] = "True"});
@@ -445,7 +448,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShoulPassOnStdInfoWithTreatScriptWarningsAsErrors()
+        public void ShouldPassOnStdInfoWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
                 {["Octopus.Action.FailScriptOnErrorOutput"] = "True"});
