@@ -450,7 +450,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldPassOnStdInfoWithTreatScriptWarningsAsErrors()
         {
-            var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
+            var (output, _) = RunScript("Hello.ps1", new Dictionary<string, string>()
                 {["Octopus.Action.FailScriptOnErrorOutput"] = "True"});
 
             output.AssertSuccess();
