@@ -31,11 +31,11 @@ namespace Calamari.Integration.Scripting
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
 
-        public ScriptType[] GetSupportedTypes()
+        public ScriptSyntax[] GetSupportedTypes()
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                ? new[] { ScriptType.ScriptCS, ScriptType.Bash, ScriptType.FSharp }
-                : new[] { ScriptType.ScriptCS, ScriptType.Powershell, ScriptType.FSharp };
+                ? new[] { ScriptSyntax.CSharp, ScriptSyntax.Bash, ScriptSyntax.FSharp }
+                : new[] { ScriptSyntax.CSharp, ScriptSyntax.Powershell, ScriptSyntax.FSharp };
         }
 
         public CommandResult Execute(
@@ -58,19 +58,19 @@ namespace Calamari.Integration.Scripting
         /// that is to be run, with all other wrappers contributing to the script
         /// context.
         /// </summary>
-        /// <param name="scriptType">The type of the script being run</param>
+        /// <param name="scriptSyntax">The type of the script being run</param>
         /// <returns>
         /// The start of the wrapper chain. Because each IScriptWrapper is expected to call its NextWrapper,
         /// calling ExecuteScript() on the start of the chain will result in every part of the chain being
         /// executed, down to the final TerminalScriptWrapper.
         /// </returns>
-        IScriptWrapper BuildWrapperChain(ScriptType scriptType) =>
+        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax) =>
             // get the type of script
             scriptWrapperHooks
                 .Where(hook => hook.Enabled)
                 .Aggregate(
                 // The last wrapper is always the TerminalScriptWrapper
-                new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptType]),
+                new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptSyntax]),
                 (IScriptWrapper current, IScriptWrapper next) =>
                 {
                     // the next wrapper is pointed to the current one
@@ -80,7 +80,7 @@ namespace Calamari.Integration.Scripting
                 });
                  
         
-        private ScriptType ValidateScriptType(Script script)
+        private ScriptSyntax ValidateScriptType(Script script)
         {
             var scriptExtension = Path.GetExtension(script.File)?.TrimStart('.');
             var type = scriptExtension.ToScriptType();

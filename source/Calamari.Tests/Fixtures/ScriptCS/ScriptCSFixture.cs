@@ -14,10 +14,8 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldPrintEncodedVariable()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "PrintEncodedVariable.csx")));
-            
+            var (output, _) = RunScript("PrintEncodedVariable.csx");
+
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
@@ -25,10 +23,8 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldPrintSensitiveVariable()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "PrintSensitiveVariable.csx")));
-            
+            var (output, _) = RunScript("PrintSensitiveVariable.csx");
+
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
         }
@@ -36,9 +32,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCreateArtifact()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "CreateArtifact.csx")));
+            var (output, _) = RunScript("CreateArtifact.csx");
 
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact");

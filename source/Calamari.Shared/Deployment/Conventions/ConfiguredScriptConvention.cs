@@ -32,7 +32,7 @@ namespace Calamari.Deployment.Conventions
             if (!features.Contains(SpecialVariables.Features.CustomScripts))
                 return;
 
-            foreach (ScriptType scriptType in Enum.GetValues(typeof(ScriptType)))
+            foreach (ScriptSyntax scriptType in Enum.GetValues(typeof(ScriptSyntax)))
             {
                 var scriptName = GetScriptName(deploymentStage, scriptType);
                 
@@ -76,9 +76,9 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        public static string GetScriptName(string deploymentStage, ScriptType scriptType)
+        public static string GetScriptName(string deploymentStage, ScriptSyntax scriptSyntax)
         {
-            return "Octopus.Action.CustomScripts." + deploymentStage + "." + scriptType.FileExtension();
+            return "Octopus.Action.CustomScripts." + deploymentStage + "." + scriptSyntax.FileExtension();
         }
 
 

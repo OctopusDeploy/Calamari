@@ -1,16 +1,15 @@
 ﻿using System.Linq;
-using System.Reflection;
 using Calamari.Commands.Support;
 
 namespace Calamari.Integration.Scripting
 {
-    public enum ScriptType
+    public enum ScriptSyntax
     {
         [FileExtension("ps1")]
         Powershell,
 
         [FileExtension("csx")]
-        ScriptCS,
+        CSharp,
 
         [FileExtension("sh")]
         Bash,
@@ -21,23 +20,23 @@ namespace Calamari.Integration.Scripting
 
     public static class ScriptTypeExtensions
     {
-        public static string FileExtension(this ScriptType scriptType)
+        public static string FileExtension(this ScriptSyntax scriptSyntax)
         {
-            return typeof (ScriptType).GetField(scriptType.ToString())
+            return typeof (ScriptSyntax).GetField(scriptSyntax.ToString())
                     .GetCustomAttributes(typeof (FileExtensionAttribute), false)
                     .Select(attr => ((FileExtensionAttribute) attr).Extension)
                     .FirstOrDefault();
         }
 
-        public static ScriptType ToScriptType(this string extension)
+        public static ScriptSyntax ToScriptType(this string extension)
         {
-            var scriptTypeField = typeof (ScriptType).GetFields()
+            var scriptTypeField = typeof (ScriptSyntax).GetFields()
                 .SingleOrDefault(
                     field => field.GetCustomAttributes(typeof (FileExtensionAttribute), false)
                             .Any(attr => ((FileExtensionAttribute) attr).Extension == extension.ToLower()));
 
             if (scriptTypeField != null)
-                return (ScriptType)scriptTypeField.GetValue(null);
+                return (ScriptSyntax)scriptTypeField.GetValue(null);
 
             throw new CommandException("Unknown script-extension: " + extension);
         }

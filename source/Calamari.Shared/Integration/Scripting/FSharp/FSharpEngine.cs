@@ -7,9 +7,9 @@ namespace Calamari.Integration.Scripting.FSharp
 {
     public class FSharpEngine : IScriptEngine
     {
-        public ScriptType[] GetSupportedTypes()
+        public ScriptSyntax[] GetSupportedTypes()
         {
-            return new[] {ScriptType.FSharp};
+            return new[] {ScriptSyntax.FSharp};
         }
 
         public CommandResult Execute(

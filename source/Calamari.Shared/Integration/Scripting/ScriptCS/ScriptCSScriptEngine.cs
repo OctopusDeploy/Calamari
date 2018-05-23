@@ -7,9 +7,9 @@ namespace Calamari.Integration.Scripting.ScriptCS
 {
     public class ScriptCSScriptEngine : IScriptEngine
     {
-        public ScriptType[] GetSupportedTypes()
+        public ScriptSyntax[] GetSupportedTypes()
         {
-            return new[] {ScriptType.ScriptCS};
+            return new[] {ScriptSyntax.CSharp};
         }
 
         public CommandResult Execute(

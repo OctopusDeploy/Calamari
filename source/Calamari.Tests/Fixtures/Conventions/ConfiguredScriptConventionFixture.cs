@@ -31,7 +31,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine = Substitute.For<IScriptEngine>();
             commandLineRunner = Substitute.For<ICommandLineRunner>();
 
-            scriptEngine.GetSupportedTypes().Returns(new[] { ScriptType.Powershell });
+            scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.Powershell });
 
             variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
@@ -44,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string stage = DeploymentStages.PostDeploy;
             const string scriptBody = "lorem ipsum blah blah blah";
-            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptType.Powershell);
+            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptSyntax.Powershell);
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
             var script = new Script(scriptPath);
             variables.Set(scriptName, scriptBody);
@@ -61,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldRemoveScriptFileAfterRunning()
         {
             const string stage = DeploymentStages.PostDeploy;
-            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptType.Powershell);
+            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptSyntax.Powershell);
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
             var script = new Script(scriptPath);
             variables.Set(scriptName, "blah blah");
@@ -78,7 +78,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
             const string stage = DeploymentStages.PostDeploy;
-            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptType.Powershell);
+            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptSyntax.Powershell);
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
             variables.Set(scriptName, "blah blah");
 
@@ -93,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldThrowAnErrorIfAScriptExistsWithTheWrongType()
         {
             const string stage = DeploymentStages.PostDeploy;
-            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptType.ScriptCS);
+            var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptSyntax.CSharp);
             variables.Set(scriptName, "blah blah");
             var convention = CreateConvention(stage);
             Action exec = () => convention.Install(deployment);

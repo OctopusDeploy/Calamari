@@ -129,7 +129,7 @@ namespace Calamari.Commands
 
             if (!WasProvided(scriptFileName) && !WasProvided(scriptFileArg))
             {
-                scriptFileName = "Script."+ variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptType.Powershell).FileExtension();
+                scriptFileName = "Script."+ variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptSyntax.Powershell).FileExtension();
             }
 
             return Path.GetFullPath(WasProvided(scriptFileName) ? scriptFileName : scriptFileArg);

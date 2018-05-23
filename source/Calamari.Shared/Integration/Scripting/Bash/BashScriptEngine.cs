@@ -7,9 +7,9 @@ namespace Calamari.Integration.Scripting.Bash
 {
     public class BashScriptEngine : IScriptEngine
     {
-        public ScriptType[] GetSupportedTypes()
+        public ScriptSyntax[] GetSupportedTypes()
         {
-            return new[] {ScriptType.Bash};
+            return new[] {ScriptSyntax.Bash};
         }
 
         public CommandResult Execute(

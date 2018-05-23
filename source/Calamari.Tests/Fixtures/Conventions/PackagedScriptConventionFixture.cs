@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
             scriptEngine = Substitute.For<IScriptEngine>();
             scriptEngine.Execute(Arg.Any<Script>(), Arg.Any<CalamariVariableDictionary>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
-            scriptEngine.GetSupportedTypes().Returns(new[] {ScriptType.ScriptCS, ScriptType.Powershell});
+            scriptEngine.GetSupportedTypes().Returns(new[] {ScriptSyntax.CSharp, ScriptSyntax.Powershell});
             runner = Substitute.For<ICommandLineRunner>();
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariableDictionary());
         }

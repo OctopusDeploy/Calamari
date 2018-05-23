@@ -10,9 +10,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
     public class PowerShellScriptEngine : IScriptEngine
     {
-        public ScriptType[] GetSupportedTypes()
+        public ScriptSyntax[] GetSupportedTypes()
         {
-            return new[] {ScriptType.Powershell};
+            return new[] {ScriptSyntax.Powershell};
         }
 
         public CommandResult Execute(
