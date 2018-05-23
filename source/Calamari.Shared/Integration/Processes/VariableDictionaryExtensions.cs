@@ -47,8 +47,6 @@ namespace Calamari.Integration.Processes
             variables.Set(machineIndexedVariableName, value);
         }
 
-
-
         public static void LogVariables(this VariableDictionary variables)
         {
             if (variables.GetFlag(SpecialVariables.PrintVariables))
@@ -84,5 +82,8 @@ namespace Calamari.Integration.Processes
         {
             return !variableName.Contains("CustomScripts.");
         }
+
+        public static T GetEnum<T>(this VariableDictionary variables, string value, T @default)
+            => (T)Enum.Parse(typeof(T), variables.Get(value, @default.ToString()), true);
     }
 }

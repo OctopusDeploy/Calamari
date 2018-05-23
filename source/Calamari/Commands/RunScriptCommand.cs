@@ -22,7 +22,7 @@ namespace Calamari.Commands
         private static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
         private string scriptFileArg;
         private string packageFile;
-        private string scriptParameters;
+        private string scriptParametersArg;
         private DeploymentJournal journal;
         private RunningDeployment deployment;
         private readonly CalamariVariableDictionary variables;
@@ -33,8 +33,8 @@ namespace Calamari.Commands
             CombinedScriptEngine scriptEngine)
         {
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("script=", "Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = Path.GetFullPath(v));
-            Options.Add("scriptParameters=", "Parameters to pass to the script.", v => scriptParameters = v);
+            Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
+            Options.Add("scriptParameters=", $"Parameters to pass to the script.", v => scriptParametersArg = v);
             VariableDictionaryUtils.PopulateOptions(Options);
             this.variables = variables;
             this.scriptEngine = scriptEngine;
@@ -52,16 +52,13 @@ namespace Calamari.Commands
             journal = new DeploymentJournal(filesystem, semaphore, variables);
             deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
-            var scriptFileName = EnsureScriptReady(variables);
-            return InvokeScript(scriptFileName, variables);
+            return EnsureScriptReady();
         }
 
         bool WasProvided(string value)
         {
             return !string.IsNullOrEmpty(value);
         }
-
-
 
         void ExtractScriptFromPackage(VariableDictionary variables)
         {
@@ -76,17 +73,9 @@ namespace Calamari.Commands
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
         }
 
-
-        void ExtractScriptFromVariables(string scriptBody, string scriptFileName)
-        {
-            File.WriteAllText(scriptFileName, scriptBody);
-        }
-
-        string EnsureScriptReady(VariableDictionary variables)
+        int EnsureScriptReady()
         {
             var scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBody);
-            var scriptFileName = variables.Get(SpecialVariables.Action.Script.ScriptFileName);
-
 
             if (WasProvided(scriptFileArg))
             {
@@ -96,7 +85,7 @@ namespace Calamari.Commands
                              $"\r\nThe variable value takes precedence to allow for variable replacement of the script file.");
                 }
 
-                if (WasProvided(scriptFileName))
+                if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
                 {
                     Log.Warn($"The `--script` parameter and `{SpecialVariables.Action.Script.ScriptFileName}` variable are both set." +
                              $"\r\nThe variable value takes precedence to allow for variable replacement of the script file.");
@@ -106,26 +95,44 @@ namespace Calamari.Commands
                          $"Please set the `{SpecialVariables.Action.Script.ScriptBody}` and `{SpecialVariables.Action.Script.ScriptFileName}` variable to allow for variable replacement of the script file.");
             }
 
-            var scriptFilePath = WasProvided(scriptFileName) ? Path.GetFullPath(scriptFileName) : scriptFileArg;
+            var scriptFilePath = DetermineScriptFilePath(variables);
 
             if (WasProvided(packageFile))
             {
                 ExtractScriptFromPackage(variables);
-                SubstituteVariablesInScript(scriptFilePath, this.variables);
+                SubstituteVariablesInScript(scriptFilePath, variables);
+                return InvokeScript(scriptFilePath, variables);
             }
             else if (WasProvided(scriptBody))
             {
-                ExtractScriptFromVariables(scriptBody, scriptFilePath);
-                SubstituteVariablesInScript(scriptFilePath, this.variables);
+                using (new TemporaryFile(scriptFilePath))
+                {
+                    Log.Verbose($"Saving script contents to {scriptFilePath}");
+                    File.WriteAllText(scriptFilePath, scriptBody);
+                    SubstituteVariablesInScript(scriptFilePath, this.variables);
+                    return InvokeScript(scriptFilePath, variables);
+                }
             }
             else
             {
                 // Fallback for old argument usage. Use the file path provided by the calamari arguments
-                SubstituteVariablesInScript(scriptFileArg, this.variables);
-                return scriptFileArg;
+                // Variable substitution will not take place since we dont want to modify the file provided
+                scriptFilePath = Path.GetFullPath(scriptFileArg);
+                InvokeScript(scriptFilePath, variables);
+                return InvokeScript(scriptFilePath, variables);
+            }
+        }
+
+        private string DetermineScriptFilePath(VariableDictionary variables)
+        {
+            var scriptFileName = variables.Get(SpecialVariables.Action.Script.ScriptFileName);
+
+            if (!WasProvided(scriptFileName) && !WasProvided(scriptFileArg))
+            {
+                scriptFileName = "Script."+ variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptType.Powershell).FileExtension();
             }
 
-            return scriptFilePath;
+            return Path.GetFullPath(WasProvided(scriptFileName) ? scriptFileName : scriptFileArg);
         }
 
         private void SubstituteVariablesInScript(string scriptFileName, CalamariVariableDictionary variables)
@@ -145,9 +152,16 @@ namespace Calamari.Commands
 
         private int InvokeScript(string scriptFileName, CalamariVariableDictionary variables)
         {
+            var scriptParameters = variables.Get(SpecialVariables.Action.Script.ScriptParameters);
+            if (WasProvided(scriptParametersArg) && WasProvided(scriptParameters))
+            {
+                    Log.Warn($"The `--scriptParameters` parameter and `{SpecialVariables.Action.Script.ScriptParameters}` variable are both set.\r\n" +
+                             $"Please provide just the `{SpecialVariables.Action.Script.ScriptParameters}` variable instead.");
+            }
+            
             var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", scriptFileName);
-            var result = scriptEngine.Execute(new Script(scriptFileName, scriptParameters), variables, runner);
+            var result = scriptEngine.Execute(new Script(scriptFileName, scriptParametersArg ?? scriptParameters), variables, runner);
             var shouldWriteJournal = CanWriteJournal(variables) && deployment != null && !deployment.SkipJournal;
 
             if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))

@@ -154,11 +154,23 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldConsumeParametersWithQuotes()
+        public void ShouldConsumeParametersWithQuotesUsingDepricatedArgument()
         {
             var (output, _) = RunScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
             {
                 ["scriptParameters"] = "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
+            });
+            output.AssertSuccess();
+            output.AssertOutput("Parameters Para meter0Para meter1");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldConsumeParametersWithQuotes()
+        {
+            var (output, _) = RunScript("Parameters.ps1", new Dictionary<string, string>()
+            {
+                [SpecialVariables.Action.Script.ScriptParameters] = "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
             });
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1");
@@ -340,7 +352,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldSubstituteVariablesInNonPackagedScript()
+        public void ShouldNotSubstituteVariablesInNonPackagedScript()
         {
             // Use a temp file for the script to avoid mutating the script file for other tests
             var scriptFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".ps1");
@@ -360,8 +372,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
-                output.AssertOutput("Performing variable substitution");
-                output.AssertOutput("Hello Production!");
+                output.AssertOutput("Hello #{Octopus.Environment.Name}!");
             }
         }
 
