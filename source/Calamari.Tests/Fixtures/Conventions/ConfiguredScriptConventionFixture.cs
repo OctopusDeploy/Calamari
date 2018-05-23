@@ -97,7 +97,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(scriptName, "blah blah");
             var convention = CreateConvention(stage);
             Action exec = () => convention.Install(deployment);
-            exec.ShouldThrow<CommandException>().WithMessage("ScriptCS scripts are not supported on this platform (PostDeploy)");
+            exec.ShouldThrow<CommandException>().WithMessage("CSharp scripts are not supported on this platform (PostDeploy)");
         }
 
         private ConfiguredScriptConvention CreateConvention(string deployStage)

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -92,22 +93,11 @@ namespace Calamari.Tests.Fixtures.FSharp
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHelloWithVariableSubstitution()
         {
-            var variablesFile = Path.GetTempFileName();
+            var (output, _) = RunScript("HelloVariableSubstitution.fsx", new Dictionary<string, string>()
+                {["Name"] = "SubstitutedValue"});
 
-            var variables = new VariableDictionary();
-            variables.Set("Name", "SubstitutedValue");
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(variablesFile))
-            {
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "HelloVariableSubstitution.fsx"))
-                    .Argument("variables", variablesFile));
-
-                output.AssertSuccess();
-                output.AssertOutput("Hello SubstitutedValue");
-            }
+            output.AssertSuccess();
+            output.AssertOutput("Hello SubstitutedValue");
         }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
