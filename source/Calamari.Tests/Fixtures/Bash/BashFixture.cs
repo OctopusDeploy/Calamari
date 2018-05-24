@@ -61,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldCallHello()
         {
-            var (output, _) = RunScript("Hello.sh", new Dictionary<string, string>()
+            var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
             {
                 ["Name"] = "Paul",
                 ["Variable2"] = "DEF",
