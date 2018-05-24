@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldPrintEncodedVariable()
         {
-            var (output, _) = RunScript("print-encoded-variabl.sh");
+            var (output, _) = RunScript("print-encoded-variable.sh");
 
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
@@ -50,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Bash
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>()
-                { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1" });
+                { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1");
