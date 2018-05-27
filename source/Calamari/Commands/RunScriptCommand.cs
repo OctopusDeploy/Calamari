@@ -73,7 +73,9 @@ namespace Calamari.Commands
                 return ExecuteScriptFromParameters();
             }
 
-            throw new CommandException("No script details provided.");
+            throw new CommandException("No script details provided.\r\n" +
+                                       $"Pleave provide the script either via the `{SpecialVariables.Action.Script.ScriptBody}` variable, " +
+                                       "through a package provided via the `--package` argument or directly via the `--script` argument.");
         }
 
         void ExtractScriptFromPackage(VariableDictionary variables)
