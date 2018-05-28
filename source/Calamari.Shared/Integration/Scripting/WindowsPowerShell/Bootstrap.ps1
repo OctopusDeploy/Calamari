@@ -454,7 +454,7 @@ function Import-CalamariModules() {
 		$calamariModulePaths = $OctopusParameters["Octopus.Calamari.Bootstrapper.ModulePaths"].Split(";", [StringSplitOptions]'RemoveEmptyEntries')
 		foreach ($calamariModulePath in $calamariModulePaths) {
 		    if($calamariModulePath.EndsWith(".psd1")) {
-		        Import-Module –Name $ExecutionContext.InvokeCommand.ExpandString($calamariModulePath)
+		        Import-Module –Name $calamariModulePath
 		    } else {
         		$env:PSModulePath = $calamariModulePath + ";" + $env:PSModulePath
 		    }

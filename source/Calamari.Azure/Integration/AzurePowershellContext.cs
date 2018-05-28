@@ -27,7 +27,6 @@ namespace Calamari.Azure.Integration
         const int PasswordSizeBytes = 20;
 
         public const string DefaultAzureEnvironment = "AzureCloud";
-        public static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(AzurePowerShellContext).Assembly.Location), "PowerShell");
 
         public AzurePowerShellContext(CalamariVariableDictionary variables)
         {
@@ -59,8 +58,6 @@ namespace Calamari.Azure.Integration
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            SetAzureModulesLoadingMethod(variables);
-
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
             var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
@@ -90,22 +87,7 @@ namespace Calamari.Azure.Integration
                 }
             }
         }
-
-        // TODO: Remove this and the code that uses SpecialVariables.Action.Azure.Output.ModulePath when the old pipeline Azure steps are removed
-        static void SetAzureModulesLoadingMethod(VariableDictionary variables)
-        {
-            if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Bootstrapper.ModulePaths)))
-            {
-                SetOutputVariable("OctopusUseBundledAzureModules", "false", variables);
-                return;
-            }
-            
-            // By default use the Azure PowerShell modules bundled with Calamari
-            // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
-            SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, BuiltInAzurePowershellModulePath, variables);
-        }
-
+      
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");

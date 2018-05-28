@@ -5,8 +5,6 @@
 ##
 ## The script is passed the following parameters.
 ##
-##   $OctopusUseBundledAzureModules = "true"
-##   $OctopusAzureModulePath = "...\Calamari\PowerShell\"
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
 ##   $OctopusUseServicePrincipal = "false"
@@ -53,18 +51,6 @@ function Execute-WithRetry([ScriptBlock] $command) {
             }
         }
     }
-}
-
-if ([System.Convert]::ToBoolean($OctopusUseBundledAzureModules)) {
-    # Add bundled Azure PowerShell modules to PSModulePath
-
-    $StorageModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Azure.Storage" | Join-Path -ChildPath "4.2.1"
-    $ServiceManagementModulePath = Join-Path "$OctopusAzureModulePath" -ChildPath "Azure" | Join-Path -ChildPath "5.1.2"
-    $ResourceManagerModulePath = $OctopusAzureModulePath
-    Write-Verbose "Adding bundled Azure PowerShell modules to PSModulePath"
-        
-    $env:PSModulePath = $ResourceManagerModulePath + ";" + $ServiceManagementModulePath + ";" + $StorageModulePath + ";" + $env:PSModulePath
-    Write-Verbose $env:PSModulePath
 }
 
 Execute-WithRetry{
