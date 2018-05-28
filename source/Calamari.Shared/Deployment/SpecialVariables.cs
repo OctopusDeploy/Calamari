@@ -46,7 +46,7 @@
 
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
         
-        public static readonly string CopyWorkingDirectoryIncludingKeyTo = "Octopus.Calamari.CopyBootstrapperWithKeyTo";
+        public static readonly string CopyWorkingDirectoryIncludingKeyTo = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
 
         public static class Bootstrapper
         {
