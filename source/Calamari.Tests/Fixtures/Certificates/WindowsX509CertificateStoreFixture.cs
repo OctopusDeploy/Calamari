@@ -259,9 +259,26 @@ namespace Calamari.Tests.Fixtures.Certificates
 
         private static void AssertCertificateInStore(X509Store store, string thumbprint)
         {
-            Thread.Sleep(TimeSpan.FromSeconds(5)); //Lets try this for the hell of it and see if the test gets less flakey
-            var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-            Assert.AreEqual(1, found.Count);
+            // 2008 Servers tests are flakey if we immediately try and pull out a cert after adding it. 
+            // Letting the test sleep for a bit seems to do the trick.
+            var millisecondsToWait = 5000;
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            while (true)
+            { 
+                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                if (found.Count == 1)
+                {
+                    Assert.Pass("Certificate found in store");
+                    return;
+                }
+                if (stopwatch.ElapsedMilliseconds > millisecondsToWait)
+                {
+                    Assert.Fail($"Certifucate with thumbprint {thumbprint} was not found in the store after waiting for {millisecondsToWait}ms");
+                    return;
+                }
+                Thread.Sleep(100);
+            }
         }
 
         void AssertHasPrivateKeyRights(CryptoKeySecurity privateKeySecurity, string identifier, CryptoKeyRights right)
