@@ -19,6 +19,7 @@ namespace Calamari.Azure.Commands
     [Command("deploy-azure-resource-group", Description = "Creates a new Azure Resource Group deployment")]
     public class DeployAzureResourceGroupCommand : Command
     {
+        private readonly CombinedScriptEngine scriptEngine;
         private string variablesFile;
         private string packageFile;
         private string sensitiveVariablesFile;
@@ -26,8 +27,9 @@ namespace Calamari.Azure.Commands
         private string templateFile;
         private string templateParameterFile;
 
-        public DeployAzureResourceGroupCommand()
+        public DeployAzureResourceGroupCommand(CombinedScriptEngine scriptEngine)
         {
+            this.scriptEngine = scriptEngine;
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
@@ -45,7 +47,6 @@ namespace Calamari.Azure.Commands
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
-            var scriptEngine = new CombinedScriptEngine();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var fileSystem = new WindowsPhysicalFileSystem();
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
