@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
 using System.Reflection;
+using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
 
 namespace Calamari.Tests.Helpers
 {
@@ -61,6 +65,43 @@ namespace Calamari.Tests.Helpers
             var path = type.Namespace.Replace("Calamari.Tests.", String.Empty);
             path = path.Replace('.', Path.DirectorySeparatorChar);
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
+        }
+
+        protected (CalamariResult result, VariableDictionary variables) RunScript(string scriptName,
+            Dictionary<string, string> additionalVariables = null,
+            Dictionary<string, string> additionalParameters = null,
+            string sensitiveVariablesPassword = null)
+        {
+            var variablesFile = Path.GetTempFileName();
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptName);
+            variables.Set(SpecialVariables.Action.Script.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
+            additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var cmdBase = Calamari()
+                    .Action("run-script");
+
+                if (sensitiveVariablesPassword == null)
+                {
+                    variables.Save(variablesFile);
+                    cmdBase = cmdBase.Argument("variables", variablesFile);
+                }
+                else
+                {
+                    variables.SaveEncrypted(sensitiveVariablesPassword, variablesFile);
+                    cmdBase = cmdBase.Argument("sensitiveVariables", variablesFile)
+                        .Argument("sensitiveVariablesPassword", sensitiveVariablesPassword);
+                }
+
+                cmdBase = (additionalParameters ?? new Dictionary<string, string>()).Aggregate(cmdBase, (cmd, param) => cmd.Argument(param.Key, param.Value));
+
+                var output = Invoke(cmdBase, variables);
+
+                return (output, variables);
+
+            }
         }
     }
 }

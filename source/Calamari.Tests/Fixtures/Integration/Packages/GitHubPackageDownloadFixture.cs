@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
-using Calamari.Tests.Fixtures.PackageDownload;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
@@ -15,17 +9,15 @@ using Octopus.Versioning.Semver;
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
+#if NETFX
+    [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
+#endif
     public class GitHubPackageDownloadFixture
     {
-        const string FeedUriEnvironmentVariable = "CALAMARI_GITHUB_AUTHFEED";
-        const string FeedUsernameEnvironmentVariable = "CALAMARI_GITHUB_AUTHUSERNAME";
-        const string FeedPasswordEnvironmentVariable = "CALAMARI_GITHUB_AUTHPASSWORD";
-
         //See "GitHub Test Account"
-        static readonly string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable) ?? "https://api.github.com";
-        static readonly string FeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
-        static readonly string FeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
-
+        static readonly string AuthFeedUri =  "https://api.github.com";
+        static readonly string FeedUsername = ExternalVariables.Get(ExternalVariable.GitHubUsername);
+        static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.GitHubPassword);
 
         private static string home = Path.GetTempPath();
         [OneTimeSetUp]
@@ -48,14 +40,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 Directory.Delete(rootDir, true);
         }
 
-
-
         [Test]
-#if NETFX
-        [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
-#endif
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
-        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void DownloadsPackageFromGitHub()
         {
             var downloader = new GitHubPackageDownloader();
@@ -70,10 +56,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
-#if NETFX
-        [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
-#endif
-        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void WillReUseFileIfItExists()
         {
             var downloader = new GitHubPackageDownloader();
@@ -93,13 +75,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.AreEqual(file1.Size, file1.Size);
         }
 
-
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)] //Keeps rate limit low
-#if NETFX
-        [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
-#endif
-        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void DownloadsPackageFromGitHubWithDifferentVersionFormat()
         {
             var downloader = new GitHubPackageDownloader();
@@ -111,6 +88,5 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.Greater(file.Size, 0);
             Assert.IsFalse(String.IsNullOrWhiteSpace(file.Hash));
         }
-
     }
 }

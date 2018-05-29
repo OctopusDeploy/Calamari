@@ -194,6 +194,13 @@ Execute-WithRetry {
         $ClusterConnectionParameters["AzureActiveDirectory"] = $true
         $ClusterConnectionParameters["SecurityToken"] = $AccessToken
 
+    } ElseIf ($OctopusFabricSecurityMode -eq "SecureAD") {
+
+        # Secure AD
+        Write-Verbose "Connecting to Service Fabric using AD security."
+
+        $ClusterConnectionParameters["WindowsCredential"] = $true
+
     } Else {
         # Unsecure
         Write-Verbose "Connecting to Service Fabric unsecurely."

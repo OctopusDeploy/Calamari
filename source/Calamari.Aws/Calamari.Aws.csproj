@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFramework>net451</TargetFramework>
+    <TargetFramework>net452</TargetFramework>
     <OutputType>Exe</OutputType>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Aws</AssemblyName>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <PackageId>Calamari.Aws</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <Authors>Octopus Deploy</Authors>
@@ -18,15 +18,18 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Aws integration.</Description>
     <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
+    <ApplicationIcon />
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari\Calamari.csproj" />
-  </ItemGroup>
-  <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.9" />
     <PackageReference Include="AWSSDK.Core" Version="3.3.21.9" />
     <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.5.3" />
     <PackageReference Include="AWSSDK.S3" Version="3.3.17" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.3.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
   </ItemGroup>
 </Project>

@@ -12,7 +12,7 @@ namespace Calamari.Deployment.Features
 {
     public class IisWebSiteAfterPostDeployFeature : IisWebSiteFeature
     {
-        public override string DeploymentStage => DeploymentStages.AfterPostDeploy; 
+        public override string DeploymentStage => DeploymentStages.AfterPostDeploy;
 
         public override void Execute(RunningDeployment deployment)
         {
@@ -20,18 +20,15 @@ namespace Calamari.Deployment.Features
 
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
-
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
                 // For any bindings using certificate variables, the application pool account
-                // must have access to the private-key. 
+                // must have access to the private-key.
                 EnsureApplicationPoolHasCertificatePrivateKeyAccess(variables);
 #endif
-
             }
         }
 
-
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         static void EnsureApplicationPoolHasCertificatePrivateKeyAccess(VariableDictionary variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
@@ -46,7 +43,7 @@ namespace Calamari.Deployment.Features
 
                 // The store-name variable was set by IisWebSiteBeforePostDeploy
                 var storeName = variables.Get(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName);
-                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, StoreLocation.LocalMachine, storeName, 
+                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, StoreLocation.LocalMachine, storeName,
                     new List<PrivateKeyAccessRule> {privateKeyAccess});
             }
         }
@@ -62,7 +59,7 @@ namespace Calamari.Deployment.Features
             }
 
             return new PrivateKeyAccessRule(
-                GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables), 
+                GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables),
                 PrivateKeyAccess.FullControl);
         }
 
@@ -72,7 +69,7 @@ namespace Calamari.Deployment.Features
             switch (applicationPoolIdentityType)
             {
                 case ApplicationPoolIdentityType.ApplicationPoolIdentity:
-                    return new NTAccount("IIS AppPool\\" + variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolName)); 
+                    return new NTAccount("IIS AppPool\\" + variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolName));
 
                 case ApplicationPoolIdentityType.LocalService:
                     return new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null);

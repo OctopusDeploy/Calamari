@@ -163,7 +163,7 @@ namespace Calamari.Tests.Fixtures.Certificates
         public void CanImportCertificateForUser()
         {
             // This test cheats a little bit, using the current user 
-            var user = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+            var user = WindowsIdentity.GetCurrent().Name;
             var storeName = "My";
             var sampleCertificate = SampleCertificate.CapiWithPrivateKey;
 
@@ -226,12 +226,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             var intermediateAuthorityStore = new X509Store(StoreName.CertificateAuthority, StoreLocation.LocalMachine);
             intermediateAuthorityStore.Open(OpenFlags.ReadWrite);
 
-            WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, StoreLocation.LocalMachine, rootAuthorityStore.Name);
-
-            if (!string.IsNullOrEmpty(intermediateAuthorityThumbprint))
-            {
-                WindowsX509CertificateStore.RemoveCertificateFromStore(intermediateAuthorityThumbprint, StoreLocation.LocalMachine, intermediateAuthorityStore.Name);
-            }
+            RemoveChainCertificatesFromStore(rootAuthorityStore, intermediateAuthorityStore, "CC7ED077F0F292595A8166B01709E20C0884A5999", intermediateAuthorityThumbprint);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
@@ -251,6 +246,11 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
+            RemoveChainCertificatesFromStore(rootAuthorityStore, intermediateAuthorityStore, rootAuthorityThumbprint, intermediateAuthorityThumbprint);
+        }
+
+        void RemoveChainCertificatesFromStore(X509Store rootAuthorityStore, X509Store intermediateAuthorityStore, string rootAuthorityThumbprint, string intermediateAuthorityThumbprint)
+        {
             WindowsX509CertificateStore.RemoveCertificateFromStore(rootAuthorityThumbprint, StoreLocation.LocalMachine, rootAuthorityStore.Name);
 
             if (!string.IsNullOrEmpty(intermediateAuthorityThumbprint))
@@ -259,6 +259,7 @@ namespace Calamari.Tests.Fixtures.Certificates
 
         private static void AssertCertificateInStore(X509Store store, string thumbprint)
         {
+            Thread.Sleep(TimeSpan.FromSeconds(2)); //Lets try this for the hell of it and see if the test gets less flakey
             var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
             Assert.AreEqual(1, found.Count);
         }

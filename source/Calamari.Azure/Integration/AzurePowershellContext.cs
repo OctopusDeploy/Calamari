@@ -1,44 +1,62 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
+using Calamari.Hooks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Scripting.WindowsPowerShell;
 using Octostache;
 
 namespace Calamari.Azure.Integration
 {
-    public class AzurePowerShellContext
+    public class AzurePowerShellContext : IScriptWrapper
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
+        private readonly CalamariVariableDictionary variables;
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
         public const string DefaultAzureEnvironment = "AzureCloud";
-        public static readonly string BuiltInAzurePowershellModulePath = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "PowerShell");
 
-        public AzurePowerShellContext()
+        public AzurePowerShellContext(CalamariVariableDictionary variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
             this.embeddedResources = new AssemblyEmbeddedResources();
+            this.variables = variables;
         }
 
-        public CommandResult ExecuteScript(IScriptEngine scriptEngine, Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner)
+        public bool Enabled => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
+                               string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
+
+        public IScriptWrapper NextWrapper { get; set; }
+
+        public CommandResult ExecuteScript(
+            Script script,
+            CalamariVariableDictionary variables,
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars)
         {
+            // Only run this hook if we have an azure account
+            if (!Enabled)
+            {
+                throw new InvalidOperationException(
+                    "This script wrapper hook is not enabled, and should not have been run");
+            }
+
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
-
-            SetAzureModulesLoadingMethod(variables);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
@@ -58,33 +76,18 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
                 {
-                    return scriptEngine.Execute(new Script(contextScriptFile.FilePath), variables, commandLineRunner);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
                 }
             }
         }
-
-        // TODO: Remove this and the code that uses SpecialVariables.Action.Azure.Output.ModulePath when the old pipeline Azure steps are removed
-        static void SetAzureModulesLoadingMethod(VariableDictionary variables)
-        {
-            if (!string.IsNullOrEmpty(variables.Get(SpecialVariables.Bootstrapper.ModulePaths)))
-            {
-                SetOutputVariable("OctopusUseBundledAzureModules", "false", variables);
-                return;
-            }
-            
-            // By default use the Azure PowerShell modules bundled with Calamari
-            // If the flag below is set to 'false', then we will rely on PowerShell module auto-loading to find the Azure modules installed on the server
-            SetOutputVariable("OctopusUseBundledAzureModules", variables.GetFlag(SpecialVariables.Action.Azure.UseBundledAzurePowerShellModules, true).ToString(), variables);
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.ModulePath, BuiltInAzurePowershellModulePath, variables);
-        }
-
+      
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");
@@ -120,7 +123,7 @@ namespace Calamari.Azure.Integration
         static string GenerateCertificatePassword()
         {
             var random = RandomNumberGenerator.Create();
-            var bytes = new byte[PasswordSizeBytes]; 
+            var bytes = new byte[PasswordSizeBytes];
             random.GetBytes(bytes);
             return Convert.ToBase64String(bytes);
         }

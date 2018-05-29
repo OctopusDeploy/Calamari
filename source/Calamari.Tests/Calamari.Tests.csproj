@@ -12,16 +12,55 @@
     <AssemblyName>Calamari.Tests</AssemblyName>
     <PackageId>Calamari.Tests</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <GenerateProgramFile>false</GenerateProgramFile>
     <NoWarn>NU1603</NoWarn>
+    <ApplicationIcon />
+    <StartupObject />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);NETCORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;AZURE;KUBERNETES;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
+
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari\Calamari.csproj" />
+    <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
+    <PackageReference Include="NSubstitute" Version="2.0.3" />
+    <PackageReference Include="FluentAssertions" Version="4.19.2" />
+    <PackageReference Include="NUnit" Version="3.8.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
+    <PackageReference Include="Assent" Version="1.0.1" />
+    <PackageReference Include="Polly" Version="5.4.0" />
+    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
+  </ItemGroup>
+  
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' ">
+    <PackageReference Include="Markdown" Version="2.1.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
+  </ItemGroup>
+  
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System" />
+  </ItemGroup>
+  
   <ItemGroup>
     <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx" />
@@ -151,6 +190,7 @@
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System" />
   </ItemGroup>
+  
   <ItemGroup>
     <None Remove="TestResults\**" />
   </ItemGroup>
@@ -160,6 +200,9 @@
   <ItemGroup>
     <None Update="Java\Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Fixtures\Commands\Scripts\awsscript.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <Target Name="CopyTools" AfterTargets="Build">
