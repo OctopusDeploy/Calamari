@@ -125,7 +125,7 @@ namespace Calamari.Commands
 
             foreach (var key in additionalPackageKeys)
             {
-                var packageOriginalPath = variables.Get(Path.GetFullPath(SpecialVariables.Packages.OriginalPath(key))); 
+                var packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(key))); 
                 var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(key));
 
                 if (shouldExtract)
