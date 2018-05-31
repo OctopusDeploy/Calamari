@@ -13,6 +13,7 @@ using Octostache;
 using System;
 using System.IO;
 using Calamari.Modules;
+using Calamari.Util;
 
 namespace Calamari.Commands
 {
@@ -102,7 +103,7 @@ namespace Calamari.Commands
         {
             using (new TemporaryFile(scriptFilePath))
             {
-                File.WriteAllText(scriptFilePath, scriptBody);
+                File.WriteAllBytes(scriptFilePath, scriptBody.EncodeInUtf8Bom());
                 SubstituteVariablesInScript(scriptFilePath, this.variables);
                 return InvokeScript(scriptFilePath, variables);
             }

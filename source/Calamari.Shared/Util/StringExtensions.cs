@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Text;
 
 namespace Calamari.Util
 {
@@ -11,5 +13,15 @@ namespace Calamari.Util
 
         public static string EscapeSingleQuotedString(this string str) =>
             str.Replace("'", "''");
+
+        public static byte[] EncodeInUtf8Bom(this string source)
+        {
+            return Encoding.UTF8.GetPreamble().Concat(source.EncodeInUtf8NoBom()).ToArray();
+        }
+
+        public static byte[] EncodeInUtf8NoBom(this string source)
+        {
+            return Encoding.UTF8.GetBytes(source);
+        }
     }
 }
