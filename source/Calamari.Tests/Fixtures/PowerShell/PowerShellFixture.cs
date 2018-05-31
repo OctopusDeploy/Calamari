@@ -476,5 +476,15 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunScript("Hello.ps1");
             output.AssertErrorOutput("Powershell scripts are not supported on this platform");
         }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void CharacterWithBomMarkCorrectlyEncoded()
+        {
+            var (output, _) = RunScript("ScriptWithBOM.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutput("45\r\n226\r\n128\r\n147");
+        }
     }
 }
