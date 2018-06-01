@@ -26,6 +26,7 @@
 ##   SkipPackageValidation                            // Switch signaling whether the package should be validated or not before deployment.
 ##   SecurityToken                                    // A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
 ##   CopyPackageTimeoutSec                            // Timeout in seconds for copying application package to image store.
+##   RegisterApplicationTypeTimeoutSec                // Timeout in seconds for registering application type
 ##   
 ## --------------------------------------------------------------------------------------
 ##   Examples:
@@ -47,6 +48,7 @@ $UnregisterUnusedApplicationVersionsAfterUpgrade = [System.Convert]::ToBoolean($
 $UseExistingClusterConnection = [System.Convert]::ToBoolean($UseExistingClusterConnection)
 $SkipPackageValidation = [System.Convert]::ToBoolean($SkipPackageValidation)
 $CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
+$RegisterApplicationTypeTimeoutSec = [System.Convert]::ToInt32($RegisterApplicationTypeTimeoutSec)
 
 function Read-XmlElementAsHashtable
 {
@@ -153,18 +155,30 @@ if ($IsUpgrade -and $AppExists)
 }
 else
 {
+
     $Action = "RegisterAndCreate"
     if ($DeployOnly)
     {
         $Action = "Register"
     }
     
-    if ($CopyPackageTimeoutSec)
-    {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
+    $parameters = @{
+        ApplicationPackagePath =  $ApplicationPackagePath
+        ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
+        Action = $Action
+        ApplicationParameter = $ApplicationParameter
+        OverwriteBehavior = $OverwriteBehavior
+        SkipPackageValidation = $SkipPackageValidation
+        ErrorAction = Stop
     }
-    else
-    {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -ErrorAction Stop
+
+    if ($CopyPackageTimeoutSec) {
+        $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
+
+    if ($RegisterApplicationTypeTimeoutSec) {
+        $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
+    }
+   
+    Publish-NewServiceFabricApplication @parameters 
 }

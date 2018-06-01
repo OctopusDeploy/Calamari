@@ -42,6 +42,7 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
             Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.ServiceFabric.SkipPackageValidation, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.ServiceFabric.CopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
+            Log.SetOutputVariable("RegisterApplicationTypeTimeoutSec", variables.Get(SpecialVariables.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec));
 
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
