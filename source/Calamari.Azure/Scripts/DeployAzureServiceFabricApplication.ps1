@@ -169,7 +169,7 @@ else
         ApplicationParameter = $ApplicationParameter
         OverwriteBehavior = $OverwriteBehavior
         SkipPackageValidation = $SkipPackageValidation
-        ErrorAction = Stop
+        
     }
 
     if ($CopyPackageTimeoutSec) {
@@ -180,5 +180,5 @@ else
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
    
-    Publish-NewServiceFabricApplication @parameters 
+    Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
