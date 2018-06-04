@@ -140,7 +140,7 @@ if ($IsUpgrade -and $AppExists)
         ApplicationPackagePath =  $ApplicationPackagePath
         ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
         Action = $Action
-        UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade
+        UnregisterUnusedVersions = $UnregisterUnusedApplicationVersionsAfterUpgrade
         ApplicationParameter = $ApplicationParameter
         OverwriteBehavior = $OverwriteBehavior
         SkipPackageValidation = $SkipPackageValidation
