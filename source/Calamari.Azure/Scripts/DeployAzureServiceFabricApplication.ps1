@@ -136,6 +136,16 @@ if ($IsUpgrade -and $AppExists)
         $Action = "Register"
     }
 
+    $parameters = @{
+        ApplicationPackagePath =  $ApplicationPackagePath
+        ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
+        Action = $Action
+        UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade
+        ApplicationParameter = $ApplicationParameter
+        OverwriteBehavior = $OverwriteBehavior
+        SkipPackageValidation = $SkipPackageValidation
+    }
+
     $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
 
     if ($OverrideUpgradeBehavior -eq 'ForceUpgrade')
@@ -144,14 +154,17 @@ if ($IsUpgrade -and $AppExists)
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
 
-    if ($CopyPackageTimeoutSec)
-    {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
+    $parameters.$UpgradeParameters = $UpgradeParameters    
+        
+    if ($CopyPackageTimeoutSec) {
+        $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
-    else
-    {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
+
+    if ($RegisterApplicationTypeTimeoutSec) {
+        $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
+
+    Publish-UpgradedServiceFabricApplication @parameters -ErrorAction Stop
 }
 else
 {
