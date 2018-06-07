@@ -73,7 +73,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     
                     // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
                     var publishSettingsUri = new Uri(resourcesClient.BaseUri,
-                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{siteAndSlotPath}/config/publishingCredentials/list?api-version=2015-08-01");
+                        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{siteAndSlotPath}/config/publishingCredentials/list?api-version=2016-08-01");
                     Log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
 
                     SitePublishProfile publishProperties = null;
