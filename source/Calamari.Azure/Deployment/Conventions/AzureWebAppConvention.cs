@@ -25,7 +25,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-
+            
             var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
                 ? string.Empty
                 : $" in Resource Group {resourceGroupName}";
@@ -108,6 +108,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
+            var overrideSlot = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
 
             switch (accountType)
             {
@@ -120,9 +121,11 @@ namespace Calamari.Azure.Deployment.Conventions
                     if (activeDirectoryEndpoint != DefaultVariables.ActiveDirectoryEndpoint)
                         Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndpoint);
 
-                    return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId,
+                    return ResourceManagerPublishProfileProvider.GetPublishProperties(
+                        subscriptionId,
                         variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
                         siteAndSlotName,
+                        overrideSlot,
                         variables.Get(SpecialVariables.Action.Azure.TenantId),
                         variables.Get(SpecialVariables.Action.Azure.ClientId),
                         variables.Get(SpecialVariables.Action.Azure.Password),

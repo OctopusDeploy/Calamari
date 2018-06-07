@@ -239,6 +239,7 @@
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
+                public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";
                 public static readonly string AppOffline = "Octopus.Action.Azure.AppOffline";
                 public static readonly string PreserveAppData = "Octopus.Action.Azure.PreserveAppData";

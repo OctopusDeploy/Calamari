@@ -17,7 +17,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteAndSlotName, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteAndSlotName, string slot, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
             var baseUri = new Uri(resourceManagementEndpoint);
@@ -59,12 +59,18 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     // We allow the slot to be defined on both the target directly (which will come through on the matchingSite.Name) or on the 
                     // step for backwards compatibility with older Azure steps.
                     var siteAndSlotPath = matchingSite.Name;
+
                     if (matchingSite.Name.Contains("/"))
                     {
                         Log.Verbose($"Using the deployment slot found on the site name {matchingSite.Name}.");
                         siteAndSlotPath = matchingSite.Name.Replace("/", "/slots/");
                     }
-
+                    else if (!string.IsNullOrWhiteSpace(slot))
+                    {
+                        Log.Verbose($"Using the override slot from the step {slot}");
+                        siteAndSlotPath = $"{siteAndSlotPath}/slots/{slot}";
+                    }
+                    
                     // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
                     var publishSettingsUri = new Uri(resourcesClient.BaseUri,
                         $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/{siteAndSlotPath}/config/publishingCredentials/list?api-version=2015-08-01");
