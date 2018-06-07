@@ -42,6 +42,8 @@ namespace Calamari.Azure.Deployment.Conventions
             Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
             Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.ServiceFabric.SkipPackageValidation, defaultValue: false.ToString()), variables);
             Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.ServiceFabric.CopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
+            SetRegisterApplicationTypeTimeout(variables);
+
 
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
@@ -66,6 +68,15 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
                     result.ExitCode));
+            }
+        }
+
+        void SetRegisterApplicationTypeTimeout(CalamariVariableDictionary variables)
+        {
+            var registerAppTypeTimeout = variables.Get(SpecialVariables.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec);
+            if (registerAppTypeTimeout != null)
+            {
+                Log.SetOutputVariable("RegisterApplicationTypeTimeoutSec", registerAppTypeTimeout, variables);
             }
         }
 

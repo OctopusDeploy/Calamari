@@ -26,6 +26,7 @@
 ##   SkipPackageValidation                            // Switch signaling whether the package should be validated or not before deployment.
 ##   SecurityToken                                    // A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
 ##   CopyPackageTimeoutSec                            // Timeout in seconds for copying application package to image store.
+##   RegisterApplicationTypeTimeoutSec                // Timeout in seconds for registering application type
 ##   
 ## --------------------------------------------------------------------------------------
 ##   Examples:
@@ -47,6 +48,7 @@ $UnregisterUnusedApplicationVersionsAfterUpgrade = [System.Convert]::ToBoolean($
 $UseExistingClusterConnection = [System.Convert]::ToBoolean($UseExistingClusterConnection)
 $SkipPackageValidation = [System.Convert]::ToBoolean($SkipPackageValidation)
 $CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
+$RegisterApplicationTypeTimeoutSec = [System.Convert]::ToInt32($RegisterApplicationTypeTimeoutSec)
 
 function Read-XmlElementAsHashtable
 {
@@ -134,6 +136,16 @@ if ($IsUpgrade -and $AppExists)
         $Action = "Register"
     }
 
+    $parameters = @{
+        ApplicationPackagePath =  $ApplicationPackagePath
+        ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
+        Action = $Action
+        UnregisterUnusedVersions = $UnregisterUnusedApplicationVersionsAfterUpgrade
+        ApplicationParameter = $ApplicationParameter
+        OverwriteBehavior = $OverwriteBehavior
+        SkipPackageValidation = $SkipPackageValidation
+    }
+
     $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
 
     if ($OverrideUpgradeBehavior -eq 'ForceUpgrade')
@@ -142,29 +154,44 @@ if ($IsUpgrade -and $AppExists)
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
 
-    if ($CopyPackageTimeoutSec)
-    {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
+    $parameters.$UpgradeParameters = $UpgradeParameters    
+        
+    if ($CopyPackageTimeoutSec) {
+        $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
-    else
-    {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
+
+    if ($RegisterApplicationTypeTimeoutSec) {
+        $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
+
+    Publish-UpgradedServiceFabricApplication @parameters -ErrorAction Stop
 }
 else
 {
+
     $Action = "RegisterAndCreate"
     if ($DeployOnly)
     {
         $Action = "Register"
     }
     
-    if ($CopyPackageTimeoutSec)
-    {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
+    $parameters = @{
+        ApplicationPackagePath =  $ApplicationPackagePath
+        ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
+        Action = $Action
+        ApplicationParameter = $ApplicationParameter
+        OverwriteBehavior = $OverwriteBehavior
+        SkipPackageValidation = $SkipPackageValidation
+        
     }
-    else
-    {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -ErrorAction Stop
+
+    if ($CopyPackageTimeoutSec) {
+        $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
+
+    if ($RegisterApplicationTypeTimeoutSec) {
+        $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
+    }
+   
+    Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }

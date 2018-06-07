@@ -224,6 +224,7 @@
                 public static readonly string OverwriteBehavior = "Octopus.Action.ServiceFabric.OverwriteBehavior";
                 public static readonly string SkipPackageValidation = "Octopus.Action.ServiceFabric.SkipPackageValidation";
                 public static readonly string CopyPackageTimeoutSec = "Octopus.Action.ServiceFabric.CopyPackageTimeoutSec";
+                public static readonly string RegisterApplicationTypeTimeoutSec = "Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec";
                 public static readonly string LogExtractedApplicationPackage = "Octopus.Action.ServiceFabric.LogExtractedApplicationPackage";
                 public static readonly string AadCredentialType = "Octopus.Action.ServiceFabric.AadCredentialType";
                 public static readonly string AadUserCredentialUsername = "Octopus.Action.ServiceFabric.AadUserCredentialUsername";
