@@ -202,19 +202,19 @@ namespace Calamari.Commands
             return !string.IsNullOrEmpty(value);
         }
         
-        void GrabAdditionalPackages(VariableDictionary variables, CalamariPhysicalFileSystem fileSystem)
+        static void GrabAdditionalPackages(VariableDictionary variables, ICalamariFileSystem fileSystem)
         {
-            var additionalPackageKeys = variables.GetIndexes(SpecialVariables.Packages.PackageCollection);
+            var packageReferenceNames = variables.GetIndexes(SpecialVariables.Packages.PackageCollection);
 
-            foreach (var key in additionalPackageKeys)
+            foreach (var packageReferenceName in packageReferenceNames)
             {
-                var packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(key))); 
-                var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(key));
+                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
+                var packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName))); 
+                var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(packageReferenceName));
 
                 if (shouldExtract)
                 {
-                    var sanitizedSubDirectory = fileSystem.RemoveInvalidFileNameChars(key);
-                    var extractionPath = Path.Combine(Environment.CurrentDirectory, sanitizedSubDirectory);
+                    var extractionPath = Path.Combine(Environment.CurrentDirectory, sanitizedPackageReferenceName);
                     Log.Verbose($"Extracting package '{packageOriginalPath}' to '{extractionPath}'");
                     var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
                     extractor.GetExtractor(packageOriginalPath).Extract(packageOriginalPath, extractionPath, true);
@@ -222,8 +222,9 @@ namespace Calamari.Commands
                 }
                 else
                 {
-                    Log.Verbose($"Copying package: '{packageOriginalPath}' -> '{Environment.CurrentDirectory}'");
-                    fileSystem.CopyFile(packageOriginalPath, Environment.CurrentDirectory);
+                    var localPackageFileName = sanitizedPackageReferenceName + Path.GetExtension(packageOriginalPath); 
+                    Log.Verbose($"Copying package: '{packageOriginalPath}' -> '{Path.Combine(Environment.CurrentDirectory, localPackageFileName)}'");
+                    fileSystem.CopyFile(packageOriginalPath, Path.Combine(Environment.CurrentDirectory, localPackageFileName));
                     // ToDo: set copied location variable
                 }
             }
