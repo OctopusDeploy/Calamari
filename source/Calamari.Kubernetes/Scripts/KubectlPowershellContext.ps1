@@ -23,7 +23,7 @@ function SetupContext {
         $K8S_SkipTlsVerification = $false;
     }
 
-	if ([string]::IsNullOrEmpty($Kubectl_Exe) {
+	if ([string]::IsNullOrEmpty($Kubectl_Exe)) {
 		$Kubectl_Exe = "kubectl"
 	} else {
 		$Custom_Exe_Exists = Test-Path $Kubectl_Exe -PathType Leaf
