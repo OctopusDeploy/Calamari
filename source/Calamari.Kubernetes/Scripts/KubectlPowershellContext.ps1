@@ -27,6 +27,8 @@ function SetupContext {
 		$Kubectl_Exe = "kubectl"
 	}
 
+	New-Alias kubectl $Kubectl_Exe
+
     if($K8S_AccountType -eq "Token") {
         Write-Host "Creating kubectl context to $K8S_ClusterUrl using a Token"
 		$K8S_Token=$OctopusParameters["Octopus.Account.Token"]
