@@ -25,9 +25,14 @@ function SetupContext {
 
 	if ([string]::IsNullOrEmpty($Kubectl_Exe) {
 		$Kubectl_Exe = "kubectl"
+	} else {
+		$Custom_Exe_Exists = Test-Path $Kubectl_Exe -PathType Leaf
+		if(-not $Custom_Exe_Exists) {
+			Write-Error "The custom kubectl location of $Kubectl_Exe does not exist"
+			Exit 1
+		}
+		New-Alias kubectl $Kubectl_Exe
 	}
-
-	New-Alias kubectl $Kubectl_Exe
 
     if($K8S_AccountType -eq "Token") {
         Write-Host "Creating kubectl context to $K8S_ClusterUrl using a Token"
