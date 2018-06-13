@@ -153,7 +153,12 @@
             {
                 return $"Octopus.Action.Package[{key}].Extract";
             }
-    }
+
+            public static string DestinationPath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].Path";
+            }
+        }
 
         public static class Vhd
         {

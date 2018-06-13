@@ -218,14 +218,15 @@ namespace Calamari.Commands
                     Log.Verbose($"Extracting package '{packageOriginalPath}' to '{extractionPath}'");
                     var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
                     extractor.GetExtractor(packageOriginalPath).Extract(packageOriginalPath, extractionPath, true);
-                    // ToDo: set extracted location variable
+                    variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), extractionPath);
                 }
                 else
                 {
-                    var localPackageFileName = sanitizedPackageReferenceName + Path.GetExtension(packageOriginalPath); 
-                    Log.Verbose($"Copying package: '{packageOriginalPath}' -> '{Path.Combine(Environment.CurrentDirectory, localPackageFileName)}'");
-                    fileSystem.CopyFile(packageOriginalPath, Path.Combine(Environment.CurrentDirectory, localPackageFileName));
-                    // ToDo: set copied location variable
+                    var localPackageFileName = sanitizedPackageReferenceName + Path.GetExtension(packageOriginalPath);
+                    var destinationFileName = Path.Combine(Environment.CurrentDirectory, localPackageFileName);
+                    Log.Verbose($"Copying package: '{packageOriginalPath}' -> '{destinationFileName}'");
+                    fileSystem.CopyFile(packageOriginalPath, destinationFileName);
+                    variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), destinationFileName);
                 }
             }
         }
