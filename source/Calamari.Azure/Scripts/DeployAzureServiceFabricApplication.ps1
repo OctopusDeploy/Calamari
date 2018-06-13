@@ -160,7 +160,7 @@ if ($IsUpgrade -and $AppExists)
 
     Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
 
-    if (!timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
+    if (!$timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
 
@@ -192,7 +192,7 @@ else
     }
 
     Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
-    if ($RegisterApplicationTypeTimeoutSec) {
+    if (!$timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
    
