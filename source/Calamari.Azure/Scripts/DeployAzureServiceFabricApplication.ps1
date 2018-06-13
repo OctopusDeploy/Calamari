@@ -142,7 +142,6 @@ if ($IsUpgrade -and $AppExists)
         Action = $Action
         UnregisterUnusedVersions = $UnregisterUnusedApplicationVersionsAfterUpgrade
         ApplicationParameter = $ApplicationParameter
-        OverwriteBehavior = $OverwriteBehavior
         SkipPackageValidation = $SkipPackageValidation
     }
 
@@ -163,8 +162,6 @@ if ($IsUpgrade -and $AppExists)
     if (!$timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
-
-    Write-Verbose "Parameters: " + $parameters
 
     Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
 }
@@ -191,12 +188,10 @@ else
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
 
-    Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
+    Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
     if (!$timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
-   
-    Write-Verbose "Parameters: " + $parameters
 
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
