@@ -153,18 +153,20 @@ if ($IsUpgrade -and $AppExists)
         # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
-
-    $parameters.$UpgradeParameters = $UpgradeParameters    
         
     if ($CopyPackageTimeoutSec) {
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
 
-    if ($RegisterApplicationTypeTimeoutSec) {
+    Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
+
+    if (!timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
 
-    Publish-UpgradedServiceFabricApplication @parameters -ErrorAction Stop
+    Write-Verbose "Parameters: " + $parameters
+
+    Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
 }
 else
 {
@@ -189,9 +191,12 @@ else
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
 
+    Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
     if ($RegisterApplicationTypeTimeoutSec) {
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
    
+    Write-Verbose "Parameters: " + $parameters
+
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
