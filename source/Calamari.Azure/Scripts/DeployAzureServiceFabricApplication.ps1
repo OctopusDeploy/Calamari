@@ -166,8 +166,10 @@ if ($IsUpgrade -and $AppExists)
     Write-Verbose "Calling Publish-UpgradedServiceFabricApplication"
     $p = $parameters | Out-String
     $up = $UpgradeParameters | Out-String
-    Write-Verbose "Parameters: " $p
-    Write-Verbose "Upgrade parameters: " $up
+    Write-Verbose "Parameters: "
+    Write-Verbose $p
+    Write-Verbose "Upgrade parameters: "
+    Write-Verbose $up
 
     Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
 }
@@ -200,7 +202,8 @@ else
 
     Write-Verbose "Calling Publish-NewServiceFabricApplication"
     $p = $parameters | Out-String
-    Write-Verbose "Parameters: " $p
+    Write-Verbose "Parameters: "
+    Write-Verbose $p
 
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
