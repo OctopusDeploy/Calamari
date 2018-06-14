@@ -163,11 +163,14 @@ if ($IsUpgrade -and $AppExists)
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
 
+    Write-Verbose "Calling Publish-UpgradedServiceFabricApplication"
+    Write-Verbose "Parameters: " @parameters
+    Write-Verbose "Upgrade parameters: " @UpgradeParameters
+
     Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
 }
 else
 {
-
     $Action = "RegisterAndCreate"
     if ($DeployOnly)
     {
@@ -192,6 +195,9 @@ else
     if (!$timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
+
+    Write-Verbose "Calling Publish-NewServiceFabricApplication with the following parameters"
+    Write-Verbose @parameters
 
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
