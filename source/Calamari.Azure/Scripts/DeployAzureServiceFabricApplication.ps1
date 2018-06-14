@@ -164,8 +164,10 @@ if ($IsUpgrade -and $AppExists)
     }
 
     Write-Verbose "Calling Publish-UpgradedServiceFabricApplication"
-    Write-Verbose "Parameters: " @parameters
-    Write-Verbose "Upgrade parameters: " @UpgradeParameters
+    $p = $parameters | Out-String
+    $up = $UpgradeParameters | Out-String
+    Write-Verbose "Parameters: " $p
+    Write-Verbose "Upgrade parameters: " $up
 
     Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
 }
@@ -196,8 +198,9 @@ else
         $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
     }
 
-    Write-Verbose "Calling Publish-NewServiceFabricApplication with the following parameters"
-    Write-Verbose @parameters
+    Write-Verbose "Calling Publish-NewServiceFabricApplication"
+    $p = $parameters | Out-String
+    Write-Verbose "Parameters: " $p
 
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
