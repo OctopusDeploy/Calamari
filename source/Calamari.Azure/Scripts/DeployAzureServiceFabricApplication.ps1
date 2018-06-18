@@ -58,8 +58,7 @@ function Read-XmlElementAsHashtable
     )
 
     $hashtable = @{}
-    if ($Element.Attributes)
-    {
+    if ($Element.Attributes) {
         $Element.Attributes | 
             ForEach-Object {
                 $boolVal = $null
@@ -89,11 +88,9 @@ function Read-PublishProfile
     $publishProfile.ClusterConnectionParameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("ClusterConnectionParameters")
     $publishProfile.UpgradeDeployment = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("UpgradeDeployment")
 
-    if ($publishProfileXml.PublishProfile.Item("UpgradeDeployment"))
-    {
+    if ($publishProfileXml.PublishProfile.Item("UpgradeDeployment")) {
         $publishProfile.UpgradeDeployment.Parameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("UpgradeDeployment").Item("Parameters")
-        if ($publishProfile.UpgradeDeployment["Mode"])
-        {
+        if ($publishProfile.UpgradeDeployment["Mode"]) {
             $publishProfile.UpgradeDeployment.Parameters[$publishProfile.UpgradeDeployment["Mode"]] = $true
         }
     }
@@ -109,8 +106,7 @@ $ApplicationPackagePath = Resolve-Path $ApplicationPackagePath
 $publishProfile = Read-PublishProfile $PublishProfileFile
 
 # This global clusterConnection should be set by now, from our ServiceFabricContext.
-if (-not $global:clusterConnection)
-{
+if (-not $global:clusterConnection) {
     Write-Warning "Service Fabric cluster may not be connected."
     throw
 }
@@ -131,8 +127,7 @@ $AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $App
 if ($IsUpgrade -and $AppExists)
 {
     $Action = "RegisterAndUpgrade"
-    if ($DeployOnly)
-    {
+    if ($DeployOnly) {
         $Action = "Register"
     }
 
@@ -147,8 +142,7 @@ if ($IsUpgrade -and $AppExists)
 
     $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
 
-    if ($OverrideUpgradeBehavior -eq 'ForceUpgrade')
-    {
+    if ($OverrideUpgradeBehavior -eq 'ForceUpgrade') {
         # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
@@ -167,20 +161,17 @@ if ($IsUpgrade -and $AppExists)
     }
 
     Write-Verbose "Calling Publish-UpgradedServiceFabricApplication"
-    $p = $parameters | Out-String
-    $up = $UpgradeParameters | Out-String
     Write-Verbose "Parameters: "
-    Write-Verbose $p
+    Write-Verbose $($parameters | Out-String)
     Write-Verbose "Upgrade parameters: "
-    Write-Verbose $up
+    Write-Verbose $($UpgradeParameters | Out-String)
 
     Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
 }
 else
 {
     $Action = "RegisterAndCreate"
-    if ($DeployOnly)
-    {
+    if ($DeployOnly) {
         $Action = "Register"
     }
     
@@ -191,7 +182,6 @@ else
         ApplicationParameter = $ApplicationParameter
         OverwriteBehavior = $OverwriteBehavior
         SkipPackageValidation = $SkipPackageValidation
-        
     }
 
     if ($CopyPackageTimeoutSec) {
@@ -203,14 +193,13 @@ else
         if (!$timeoutParamMissing) {
             $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec    
         } else {
-            
+            Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
         }
     }
         
     Write-Verbose "Calling Publish-NewServiceFabricApplication"
-    $p = $parameters | Out-String
     Write-Verbose "Parameters: "
-    Write-Verbose $p
+    Write-Verbose $($parameters | Out-String)
 
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
