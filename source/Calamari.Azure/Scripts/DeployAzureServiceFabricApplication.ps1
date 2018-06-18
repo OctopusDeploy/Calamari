@@ -157,10 +157,13 @@ if ($IsUpgrade -and $AppExists)
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
 
-    Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
-
-    if (!$timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
-        $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
+    if ($RegisterApplicationTypeTimeoutSec) {
+        Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
+        if (!$timeoutParamMissing) {
+            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
+        } else {
+            Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
+        }
     }
 
     Write-Verbose "Calling Publish-UpgradedServiceFabricApplication"
@@ -195,11 +198,15 @@ else
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
 
-    Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
-    if (!$timeoutParamMissing -and $RegisterApplicationTypeTimeoutSec) {
-        $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
+    if ($RegisterApplicationTypeTimeoutSec) {
+        Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
+        if (!$timeoutParamMissing) {
+            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec    
+        } else {
+            
+        }
     }
-
+        
     Write-Verbose "Calling Publish-NewServiceFabricApplication"
     $p = $parameters | Out-String
     Write-Verbose "Parameters: "
