@@ -42,7 +42,12 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                         environmentVars, 
                         userName, 
                         password);
-                    return commandLineRunner.Execute(invocation);
+                    var result = commandLineRunner.Execute(invocation);
+
+                    if (variables.IsSet(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo))
+                        CopyWorkingDirectory(variables, workingDirectory, arguments);
+                    
+                    return result;
                 }
             }
         }
@@ -56,6 +61,30 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 s.AppendChar(c);
                 return s;
             });
+        }
+        
+        
+        static void CopyWorkingDirectory(CalamariVariableDictionary variables, string workingDirectory, string arguments)
+        {
+            var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
+            var copyToParent = Path.Combine(
+                variables.Get(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo),
+                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Project.Name)),
+                variables.Get(SpecialVariables.Deployment.Id),
+                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Action.Name))
+            );
+
+            string copyTo;
+            var n = 1;
+            do
+            {
+                copyTo = Path.Combine(copyToParent, $"{n++}");
+            } while (Directory.Exists(copyTo));
+
+            fs.CopyDirectory(workingDirectory, copyTo);
+            File.WriteAllText(Path.Combine(copyTo, "PowershellArguments.txt"), arguments);
+            File.WriteAllText(Path.Combine(copyTo, "CopiedFromDirectory.txt"), workingDirectory);
         }
     }
 }
