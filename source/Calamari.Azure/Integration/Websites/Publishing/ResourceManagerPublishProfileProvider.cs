@@ -35,8 +35,18 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 Log.Verbose($"Looking up siteAndSlotName {siteAndSlotName} in resourceGroup {resourceGroupName}");
 
-                var matchingSite = webSiteClient.WebApps
-                    .List()
+                var sites = webSiteClient.WebApps
+                    .List();
+                if (sites.Any())
+                {
+                    Log.Verbose("Found sites:");
+                    foreach (var site in sites)
+                    {
+                        Log.Verbose($"{site.ResourceGroup} / {site.Name}");
+                    }
+                }
+
+                var matchingSite = sites
                     .FirstOrDefault(webApp => string.Equals(webApp.Name, siteAndSlotName, StringComparison.CurrentCultureIgnoreCase) &&
                                          (string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(webApp.ResourceGroup, resourceGroupName, StringComparison.InvariantCultureIgnoreCase)));
 
