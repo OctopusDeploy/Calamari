@@ -37,7 +37,7 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
-
+            ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
