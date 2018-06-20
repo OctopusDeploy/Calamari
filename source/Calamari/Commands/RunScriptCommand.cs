@@ -104,7 +104,6 @@ namespace Calamari.Commands
             using (new TemporaryFile(scriptFilePath))
             {
                 File.WriteAllBytes(scriptFilePath, scriptBody.EncodeInUtf8Bom());
-                SubstituteVariablesInScript(scriptFilePath, this.variables);
                 return InvokeScript(scriptFilePath, variables);
             }
         }
