@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -170,15 +172,18 @@ namespace Calamari.Integration.Packages.Download
                 try
                 {
                     Log.Verbose($"Downloading Attempt {downloadUrl} TO {localDownloadName}");
-                    using (var client = new WebClient()
-                        {Credentials = feedCredentials})
+                    using (var client = new WebClient() {Credentials = feedCredentials})
                     {
                         client.DownloadFile(downloadUrl, localDownloadName);
                         return PackagePhysicalFileMetadata.Build(localDownloadName);
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
+                    if (retry == maxDownloadAttempts)
+                    {
+                        throw new MavenDownloadException("Failed to download the Maven artifact.\r\nLast Exception Message: " + ex.Message);
+                    }
                     Thread.Sleep(downloadAttemptBackoff);
                 }
             }
@@ -200,16 +205,31 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
 
-            return JarExtractor.EXTENSIONS
-                       .Union(AdditionalExtensions)
-                       .AsParallel()
-                       .Select(extension => new MavenPackageID(
-                           mavenPackageId.Group,
-                           mavenPackageId.Artifact,
-                           mavenPackageId.Version,
-                           Regex.Replace(extension, "^\\.", "")))
-                       .FirstOrDefault(mavenGavParser => MavenPackageExists(mavenGavParser, feedUri, feedCredentials, snapshotMetadata))
-                   ?? throw new MavenDownloadException("Failed to find the Maven artifact");
+            var errors = new HashSet<string>();
+            var fileChecks = JarExtractor.EXTENSIONS
+                .Union(AdditionalExtensions)
+                .AsParallel()
+                .Select(extension =>
+                {
+                    var packageId = new MavenPackageID(mavenPackageId.Group, mavenPackageId.Artifact,
+                        mavenPackageId.Version, Regex.Replace(extension, "^\\.", ""));
+                    var result = MavenPackageExists(packageId, feedUri, feedCredentials, snapshotMetadata);
+                    errors.Add(result.ErrorMsg);
+                    return new
+                    {
+                        result.Found,
+                        MavenPackageId = packageId
+                    };
+                });
+
+
+            var firstFound = fileChecks.FirstOrDefault(res => res.Found);
+            if (firstFound != null)
+            {
+                return firstFound.MavenPackageId;
+            }
+
+            throw new MavenDownloadException($"Failed to find the Maven artifact.\r\nRecieved Error(s):\r\n{string.Join("\r\n", errors.ToList())}");
         }
 
         /// <summary>
@@ -217,8 +237,7 @@ namespace Calamari.Integration.Packages.Download
         /// given extension.
         /// </summary>
         /// <returns>true if the package exists, and false otherwise</returns>
-        bool MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials,
-            XmlDocument snapshotMetadata)
+        (bool Found, string ErrorMsg) MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials, XmlDocument snapshotMetadata)
         {
             var uri = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
                           ? mavenGavParser.DefaultArtifactPath
@@ -235,12 +254,12 @@ namespace Calamari.Integration.Packages.Download
                 req.Credentials = feedCredentials;
                 using (var response = (HttpWebResponse) req.GetResponse())
                 {
-                    return ((int) response.StatusCode >= 200 && (int) response.StatusCode <= 299);
+                    return (((int) response.StatusCode >= 200 && (int) response.StatusCode <= 299), $"Unexpected Response: {response.StatusCode}");
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                return false;
+                return (false, ex.Message);
             }
         }
 
@@ -263,9 +282,9 @@ namespace Calamari.Integration.Packages.Download
                 {
                     var request = WebRequest.Create(url);
                     request.Credentials = feedCredentials;
-                    using (var response = (HttpWebResponse) request.GetResponse())
+                    using (var response = (HttpWebResponse)request.GetResponse())
                     {
-                        if (response.IsSuccessStatusCode() || (int) response.StatusCode == 404)
+                        if (response.IsSuccessStatusCode() || (int)response.StatusCode == 404)
                         {
                             using (var respStream = response.GetResponseStream())
                             {
@@ -275,27 +294,25 @@ namespace Calamari.Integration.Packages.Download
                             }
                         }
                     }
+
                     return null;
                 }
-                catch (WebException ex)
+                catch (WebException ex) when (ex.Response is HttpWebResponse response &&
+                                              response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    if (ex.Response is HttpWebResponse response)
-                    {
-                        if ((int)(response.StatusCode) == 404)
-                        {
-                            return null;
-                        }
-                    }
-                    
-                    Thread.Sleep(downloadAttemptBackoff);
+                    return null;
                 }
-                catch 
+                catch (Exception ex)
                 {
+                    if (retry == maxDownloadAttempts)
+                    {
+                        throw new MavenDownloadException("Unable to retrieve Maven Snapshot Metadata.\r\nLast Exception Message: "+ ex.Message);
+                    }
                     Thread.Sleep(downloadAttemptBackoff);
                 }
             }
 
-            throw new MavenDownloadException("Failed to download the Maven artifact");
+            return null;
         }
 
         //Shared code with Server. Should live in Common Location
