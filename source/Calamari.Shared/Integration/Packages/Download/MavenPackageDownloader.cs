@@ -204,7 +204,8 @@ namespace Calamari.Integration.Packages.Download
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
-
+            ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
+            Console.WriteLine(ServicePointManager.SecurityProtocol);
             var errors = new HashSet<string>();
             var fileChecks = JarExtractor.EXTENSIONS
                 .Union(AdditionalExtensions)
