@@ -25,6 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
         public void Blah()
         {
             var downloader = new MavenPackageDownloader();
