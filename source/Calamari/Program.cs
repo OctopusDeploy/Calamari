@@ -5,6 +5,7 @@ using Calamari.Modules;
 using Calamari.Util;
 using System;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using Calamari.Commands;
 using Calamari.Extensions;
@@ -28,6 +29,7 @@ namespace Calamari
 
         static int Main(string[] args)
         {
+            EnableTLS12();
             using (var container = BuildContainer(args))
             {
                 return container.Resolve<Program>().Execute(args);
@@ -95,6 +97,18 @@ namespace Calamari
         {
             helpCommand.HelpWasAskedFor = false;
             return helpCommand.Execute(new[] { action });
+        }
+
+        public static void EnableTLS12()
+        {
+            // https://developer.github.com/changes/2018-02-01-weak-crypto-removal-notice/
+            // TLS1.2 was required to access GitHub apis as of 22 Feb 2018. 
+
+            //https://central.sonatype.org/articles/2018/May/04/discontinue-support-for-tlsv11-and-below/
+            // TLS1.1 and below was discontinued on MavenCentral as of 18 June 2018
+
+            // Unfortunately SecurityProtocolType.TLS12 doesn't exist in net40 but its enum value works!
+            ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
         }
     }
 }

@@ -24,14 +24,6 @@ namespace Calamari.Integration.Packages.Download
         const string Extension = ".zip";
         const char OwnerRepoSeperator = '/';
 
-        public GitHubPackageDownloader()
-        {
-            // https://developer.github.com/changes/2018-02-01-weak-crypto-removal-notice/
-            // TLS1.2 was required to access GitHub apis as of 22 Feb 2018. 
-            // Unfortunately SecurityProtocolType.TLS12 doesn't exist in net40 but its enum value works!
-            ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
-        }
-
         public PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
             IVersion version,
