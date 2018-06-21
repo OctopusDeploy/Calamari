@@ -16,9 +16,9 @@ namespace Calamari.Tests
         [OneTimeSetUp]
         public void EnableTLS12()
         {
-            // Enabling of TLS1.2 happens on Calamar.exe startup in main,
+            // Enabling of TLS1.2 happens on Calamari.exe startup in main,
             // however this will ensure it is applied during Unit Tests which will bypass the main entrypoint
-            Calamari.Program.EnableTLS12();
+            Calamari.Program.EnableAllSecurityProtocols();
         }
     }
 }

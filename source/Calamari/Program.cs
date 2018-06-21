@@ -29,7 +29,7 @@ namespace Calamari
 
         static int Main(string[] args)
         {
-            EnableTLS12();
+            EnableAllSecurityProtocols();
             using (var container = BuildContainer(args))
             {
                 return container.Resolve<Program>().Execute(args);
@@ -99,16 +99,21 @@ namespace Calamari
             return helpCommand.Execute(new[] { action });
         }
 
-        public static void EnableTLS12()
+        public static void EnableAllSecurityProtocols()
         {
-            // https://developer.github.com/changes/2018-02-01-weak-crypto-removal-notice/
             // TLS1.2 was required to access GitHub apis as of 22 Feb 2018. 
+            // https://developer.github.com/changes/2018-02-01-weak-crypto-removal-notice/
 
-            //https://central.sonatype.org/articles/2018/May/04/discontinue-support-for-tlsv11-and-below/
             // TLS1.1 and below was discontinued on MavenCentral as of 18 June 2018
+            //https://central.sonatype.org/articles/2018/May/04/discontinue-support-for-tlsv11-and-below/
 
-            // Unfortunately SecurityProtocolType.TLS12 doesn't exist in net40 but its enum value works!
-            ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
+            ServicePointManager.SecurityProtocol =
+#if !NETCOREAPP2_0
+                SecurityProtocolType.Ssl3 |
+#endif
+                SecurityProtocolType.Tls
+                | SecurityProtocolType.Tls11
+                | (SecurityProtocolType) 3072; // Unfortunately SecurityProtocolType.TLS12 doesn't exist in net40 but its enum value works!
         }
     }
 }
