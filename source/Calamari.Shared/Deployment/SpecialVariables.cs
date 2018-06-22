@@ -45,6 +45,8 @@
         public static readonly string FreeDiskSpaceOverrideInMegaBytes = "OctopusFreeDiskSpaceOverrideInMegaBytes";
 
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
+        
+        public static readonly string CopyWorkingDirectoryIncludingKeyTo = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
 
         public static class Bootstrapper
         {
@@ -87,6 +89,8 @@
 
         public static class Deployment
         {
+            public static string Id = "Octopus.Deployment.Id";
+            
             public static class Tenant
             {
                 public static string Id = "Octopus.Deployment.Tenant.Id";
