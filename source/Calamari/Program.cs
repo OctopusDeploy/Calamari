@@ -112,7 +112,7 @@ namespace Calamari
                 SecurityProtocolType.Ssl3 |
 #endif
                 SecurityProtocolType.Tls
-                | SecurityProtocolType.Tls11
+                | (SecurityProtocolType) 768 // TLS1.1
                 | (SecurityProtocolType) 3072; // Unfortunately SecurityProtocolType.TLS12 doesn't exist in net40 but its enum value works!
         }
     }
