@@ -469,6 +469,18 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldNotDoubleReplaceVariables()
+        {
+            var (output, _) = RunScript("DontDoubleReplace.ps1", new Dictionary<string, string>()
+                { ["Octopus.Machine.Name"] = "Foo" });
+
+            output.AssertSuccess();
+            output.AssertOutput("The  Octopus variable for machine name is #{Octopus.Machine.Name}");
+            output.AssertOutput("An example of this evaluated is: 'Foo'");
+        }
+
+        [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ThrowsExceptionOnNixOrMac()

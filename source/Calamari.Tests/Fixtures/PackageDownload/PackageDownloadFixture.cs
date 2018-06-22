@@ -83,6 +83,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
+        [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenPackage()
         {
             var result = DownloadPackage(
@@ -107,6 +109,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
+        [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenSnapshotPackage()
         {
             var result = DownloadPackage(
@@ -169,6 +173,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
+        [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenPackageFromCache()
         {
             DownloadPackage(MavenPublicFeed.PackageId,
@@ -196,6 +202,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
+        [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenSnapshotPackageFromCache()
         {
             DownloadPackage(MavenPublicFeed.PackageId,
@@ -247,6 +255,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
         
         [Test]
+        [RequiresMonoVersion480OrAbove]
+        [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
 
@@ -281,6 +291,8 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
         
         [Test]
+        [RequiresMonoVersion480OrAbove]
+        [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenSnapshotPackage()
         {
 
