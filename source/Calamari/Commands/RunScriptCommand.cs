@@ -61,7 +61,7 @@ namespace Calamari.Commands
                 return ExecuteScriptFromPackage(scriptFilePath);
             }
 
-            var scriptBody = variables.GetRaw(SpecialVariables.Action.Script.ScriptBody);
+            var scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBody);
             if (WasProvided(scriptBody))
             {
                 return ExecuteScriptFromVariables(scriptFilePath, scriptBody);
