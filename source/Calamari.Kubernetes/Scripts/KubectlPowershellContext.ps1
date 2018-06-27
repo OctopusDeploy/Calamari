@@ -15,6 +15,11 @@ function SetupContext {
 		Exit 1
 	}
 
+	if([string]::IsNullOrEmpty($K8S_AccountType)){
+		Write-Error "Kubernetes account type is missing"
+		Exit 1
+	}
+
 	if([string]::IsNullOrEmpty($K8S_ServerUrl)){
 		$K8S_Namespace="default"
 	}
@@ -58,8 +63,8 @@ function SetupContext {
 }
 
 function ConfigureKubeCtlPath {
-    $env:KUBECONFIG=$OctopusKubernetesKubeCtlConfig
-    Write-Host "Temporary kubectl config set to $OctopusKubernetesKubeCtlConfig"
+    $env:KUBECONFIG=$OctopusParameters["Octopus.Action.Kubernetes.KubectlConfig"]
+    Write-Host "Temporary kubectl config set to $env:KUBECONFIG"
 }
 
 Write-Host "##octopus[stdout-verbose]"
@@ -69,4 +74,4 @@ Write-Host "##octopus[stdout-default]"
 
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 
-Invoke-Expression ". $OctopusKubernetesTargetScript $OctopusKubernetesTargetScriptParameters"
+Invoke-Expression ". "$OctopusKubernetesTargetScript" $OctopusKubernetesTargetScriptParameters"

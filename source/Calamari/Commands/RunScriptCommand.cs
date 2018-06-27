@@ -106,7 +106,11 @@ namespace Calamari.Commands
         {
             using (new TemporaryFile(scriptFilePath))
             {
-                File.WriteAllBytes(scriptFilePath, scriptBody.EncodeInUtf8Bom());
+                //Bash files need SheBang as first few characters. This does not play well with BOM characters
+                var scriptBytes = DetermineSyntax(variables) == ScriptSyntax.Bash
+                    ? scriptBody.EncodeInUtf8NoBom()
+                    : scriptBody.EncodeInUtf8Bom();
+                File.WriteAllBytes(scriptFilePath, scriptBytes);
                 return InvokeScript(scriptFilePath, variables);
             }
         }
@@ -141,13 +145,29 @@ namespace Calamari.Commands
             }
         }
 
+        ScriptSyntax DetermineSyntax(VariableDictionary variables)
+        {
+            var scriptFileName = variables.Get(SpecialVariables.Action.Script.ScriptFileName);
+            if (WasProvided(scriptFileName) && Enum.TryParse(Path.GetExtension(scriptFileName), out ScriptSyntax fileNameSyntax))
+            {
+                return fileNameSyntax;
+            }
+
+            if (WasProvided(scriptFileArg) && Enum.TryParse(Path.GetExtension(scriptFileArg), out ScriptSyntax fileArgSyntax))
+            {
+                return fileArgSyntax;
+            }
+
+            return variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptSyntax.Powershell);
+        }
+
         private string DetermineScriptFilePath(VariableDictionary variables)
         {
             var scriptFileName = variables.Get(SpecialVariables.Action.Script.ScriptFileName);
 
             if (!WasProvided(scriptFileName) && !WasProvided(scriptFileArg))
             {
-                scriptFileName = "Script."+ variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptSyntax.Powershell).FileExtension();
+                scriptFileName = "Script."+ DetermineSyntax(variables).FileExtension();
             }
 
             return Path.GetFullPath(WasProvided(scriptFileName) ? scriptFileName : scriptFileArg);
