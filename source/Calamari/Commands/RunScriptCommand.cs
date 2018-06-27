@@ -209,7 +209,17 @@ namespace Calamari.Commands
             foreach (var packageReferenceName in packageReferenceNames)
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
-                var packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName))); 
+                
+                var packageOriginalPath = variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName));
+                
+                if (string.IsNullOrWhiteSpace(packageOriginalPath))
+                {
+                    Log.Verbose($"Package '{packageReferenceName}' was not acquired");
+                    continue;
+                }
+                
+                packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName)));
+
                 var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(packageReferenceName));
 
                 if (shouldExtract)
