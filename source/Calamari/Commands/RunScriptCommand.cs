@@ -111,6 +111,7 @@ namespace Calamari.Commands
                     ? scriptBody.EncodeInUtf8NoBom()
                     : scriptBody.EncodeInUtf8Bom();
                 File.WriteAllBytes(scriptFilePath, scriptBytes);
+                SubstituteVariablesInAdditionalFiles();
                 return InvokeScript(scriptFilePath, variables);
             }
         }
@@ -182,8 +183,13 @@ namespace Calamari.Commands
 
             var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             substituter.PerformSubstitution(scriptFileName, variables);
-            
+            SubstituteVariablesInAdditionalFiles();
+        }
+
+        private void SubstituteVariablesInAdditionalFiles()
+        {
             // Replace variables on any other files that may have been extracted with the package
+            var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             new SubstituteInFilesConvention(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), substituter)
                 .Install(deployment);
         }
