@@ -53,6 +53,8 @@ namespace Calamari.Commands
             journal = new DeploymentJournal(filesystem, semaphore, variables);
             deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
+            SubstituteVariablesInAdditionalFiles();
+
             ValidateArguments();
             var scriptFilePath = DetermineScriptFilePath(variables);
 
@@ -108,6 +110,7 @@ namespace Calamari.Commands
                     ? scriptBody.EncodeInUtf8NoBom()
                     : scriptBody.EncodeInUtf8Bom();
                 File.WriteAllBytes(scriptFilePath, scriptBytes);
+
                 return InvokeScript(scriptFilePath, variables);
             }
         }
@@ -179,8 +182,12 @@ namespace Calamari.Commands
 
             var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             substituter.PerformSubstitution(scriptFileName, variables);
-            
+        }
+
+        private void SubstituteVariablesInAdditionalFiles()
+        {
             // Replace variables on any other files that may have been extracted with the package
+            var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             new SubstituteInFilesConvention(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), substituter)
                 .Install(deployment);
         }
