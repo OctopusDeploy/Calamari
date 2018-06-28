@@ -37,7 +37,7 @@ namespace Calamari.Kubernetes
             variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
             variables.Set("Octopus.Action.Kubernetes.KubectlConfig", Path.Combine(workingDirectory, "kubectl-octo.yml"));
             
-            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
+            using (var contextScriptFile = new TemporaryFile(CreatePSContextScriptFile(workingDirectory)))
             {
                 return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
             }
@@ -48,6 +48,16 @@ namespace Calamari.Kubernetes
 
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.KubectlBashContext.sh");
             var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Kubernetes.Scripts.KubectlBashContext.sh");
+            fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
+            return azureContextScriptFile;
+        }
+
+        // todo: this was my hack to get kubectl working again. remove this in favour of whatever is in master.
+        string CreatePSContextScriptFile(string workingDirectory)
+        {
+
+            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.KubectlBashContext.ps1");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Kubernetes.Scripts.KubectlPowershellContext.ps1");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }
