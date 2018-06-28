@@ -72,6 +72,9 @@ ConfigureKubeCtlPath
 SetupContext
 Write-Host "##octopus[stdout-default]"
 
+$OctopusKubernetesTargetScript=$OctopusParameters["OctopusKubernetesTargetScript"]
+$OctopusKubernetesTargetScriptParameters=$OctopusParameters["OctopusKubernetesTargetScriptParameters"]
+
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 
-Invoke-Expression ". "$OctopusKubernetesTargetScript" $OctopusKubernetesTargetScriptParameters"
+Invoke-Expression ". $OctopusKubernetesTargetScript $OctopusKubernetesTargetScriptParameters"
