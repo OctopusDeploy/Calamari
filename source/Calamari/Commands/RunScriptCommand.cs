@@ -108,6 +108,7 @@ namespace Calamari.Commands
                     ? scriptBody.EncodeInUtf8NoBom()
                     : scriptBody.EncodeInUtf8Bom();
                 File.WriteAllBytes(scriptFilePath, scriptBytes);
+                SubstituteVariablesInScript(scriptFilePath, variables);
                 return InvokeScript(scriptFilePath, variables);
             }
         }
