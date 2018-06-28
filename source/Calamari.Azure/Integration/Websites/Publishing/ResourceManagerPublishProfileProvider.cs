@@ -17,7 +17,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, string siteAndSlotName, string slot, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
+        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, AzureTargetSite azureTargetSite, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
         {
             var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
             var baseUri = new Uri(resourceManagementEndpoint);
@@ -31,12 +31,9 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                 resourcesClient.HttpClient.BaseAddress = baseUri;
 
-                siteAndSlotName = AzureWebAppHelper.ConvertLegacyAzureWebAppSlotNames(siteAndSlotName);
+                Log.Verbose($"Looking up site {azureTargetSite.Site} in resourceGroup {resourceGroupName}");
 
-                Log.Verbose($"Looking up siteAndSlotName {siteAndSlotName} in resourceGroup {resourceGroupName}");
-
-                var sites = webSiteClient.WebApps
-                    .List();
+                var sites = webSiteClient.WebApps.List();
                 if (sites.Any())
                 {
                     Log.Verbose("Found sites:");
@@ -47,11 +44,11 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                 }
 
                 var matchingSite = sites
-                    .FirstOrDefault(webApp => string.Equals(webApp.Name, siteAndSlotName, StringComparison.CurrentCultureIgnoreCase) &&
+                    .FirstOrDefault(webApp => string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.CurrentCultureIgnoreCase) &&
                                          (string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(webApp.ResourceGroup, resourceGroupName, StringComparison.InvariantCultureIgnoreCase)));
 
                 if (matchingSite == null)
-                    throw new CommandException($"Could not find Azure WebSite '{siteAndSlotName}' in subscription '{subscriptionId}'");
+                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}' in subscription '{subscriptionId}'");
 
                 // ARM resource ID of the source app. App resource ID is of the form:
                 //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName} for production slots and
@@ -61,15 +58,10 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                 // step for backwards compatibility with older Azure steps.
                 var siteAndSlotPath = matchingSite.Name;
 
-                if (matchingSite.Name.Contains("/"))
+                if (azureTargetSite.HasSlot)
                 {
-                    Log.Verbose($"Using the deployment slot found on the site name {matchingSite.Name}.");
-                    siteAndSlotPath = matchingSite.Name.Replace("/", "/slots/");
-                }
-                else if (!string.IsNullOrWhiteSpace(slot))
-                {
-                    Log.Verbose($"Using the override slot from the step {slot}");
-                    siteAndSlotPath = $"{siteAndSlotPath}/slots/{slot}";
+                    Log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
+                    siteAndSlotPath = $"{matchingSite.Name}/slots/{azureTargetSite.Slot}";
                 }
                 
                 // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
