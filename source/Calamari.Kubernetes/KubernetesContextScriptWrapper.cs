@@ -56,7 +56,7 @@ namespace Calamari.Kubernetes
         string CreatePSContextScriptFile(string workingDirectory)
         {
 
-            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.KubectlBashContext.ps1");
+            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.KubectlPowershellContext.ps1");
             var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Kubernetes.Scripts.KubectlPowershellContext.ps1");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
