@@ -122,7 +122,8 @@ $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDepl
 $ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
 $manifestXml = [Xml] (Get-Content $ManifestFilePath)
 $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
-$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName }) -ne $null
+$AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.ApplicationParameterFile
+$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
  
 if ($IsUpgrade -and $AppExists)
 {
