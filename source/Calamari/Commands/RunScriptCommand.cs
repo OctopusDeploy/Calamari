@@ -52,9 +52,7 @@ namespace Calamari.Commands
             var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var semaphore = SemaphoreFactory.Get();
             journal = new DeploymentJournal(filesystem, semaphore, variables);
-            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
-
-            SubstituteVariablesInAdditionalFiles();
+            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);            
 
             ValidateArguments();
             var scriptFilePath = DetermineScriptFilePath(variables);
@@ -112,8 +110,7 @@ namespace Calamari.Commands
                 var scriptBytes = DetermineSyntax(variables) == ScriptSyntax.Bash
                     ? scriptBody.EncodeInUtf8NoBom()
                     : scriptBody.EncodeInUtf8Bom();
-                File.WriteAllBytes(scriptFilePath, scriptBytes);
-
+                File.WriteAllBytes(scriptFilePath, scriptBytes);                
                 return InvokeScript(scriptFilePath, variables);
             }
         }
@@ -197,6 +194,9 @@ namespace Calamari.Commands
 
         private int InvokeScript(string scriptFileName, CalamariVariableDictionary variables)
         {
+            // Any additional files extracted from the packages or sent by the action handler are processed here
+            SubstituteVariablesInAdditionalFiles();
+
             var scriptParameters = variables.Get(SpecialVariables.Action.Script.ScriptParameters);
             if (WasProvided(scriptParametersArg) && WasProvided(scriptParameters))
             {
