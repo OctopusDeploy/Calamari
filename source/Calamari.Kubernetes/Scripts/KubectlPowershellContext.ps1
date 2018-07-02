@@ -36,8 +36,11 @@ function SetupContext {
 			Write-Error "The custom kubectl location of $Kubectl_Exe does not exist"
 			Exit 1
 		}
-		New-Alias kubectl $Kubectl_Exe
 	}
+
+	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl --namespace=$K8S_Namespace
+	& $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster
+    & $Kubectl_Exe config use-context octocontext
 
     if($K8S_AccountType -eq "Token") {
         Write-Host "Creating kubectl context to $K8S_ClusterUrl using a Token"
@@ -52,14 +55,38 @@ function SetupContext {
 		$K8S_Username=$OctopusParameters["Octopus.Account.Username"]
         Write-Host "Creating kubectl context to $K8S_ClusterUrl using Username $K8S_Username"
         & $Kubectl_Exe config set-credentials octouser --username=$K8S_Username --password=$($OctopusParameters["Octopus.Account.Password"])
-    }else {
+    } elseif($K8S_AccountType -eq "AmazonWebServicesAccount") {
+		# kubectl doesn't yet support exec authentication
+		# https://github.com/kubernetes/kubernetes/issues/64751
+		# so build this manually
+		$K8S_ClusterName=$OctopusParameters["Octopus.Action.Kubernetes.ClusterName"]
+        Write-Host "Creating kubectl context to $K8S_ClusterUrl using EKS cluster name $K8S_ClusterName"
+
+		Get-Content $env:KUBECONFIG
+		
+		# The call to set-cluster above will create a file with empty users. We need to call
+		# set-cluster first, because if we try to add the exec user first, set-cluster will
+		# delete those settings. So we now delete the users line (the last line of the yaml file)
+		# and add our own.
+
+		(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
+
+		# https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "users:`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "- name: octouser`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "  user:`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "    exec:`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      apiVersion: client.authentication.k8s.io/v1alpha1`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      command: heptio-authenticator-aws`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      args:`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"token`"`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"-i`"`n"
+		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"$K8S_ClusterName`""
+        
+    } else {
 		Write-Error "Account Type $K8S_AccountType is currently not valid for kubectl contexts"
 		Exit 1
-	}
-   
-    & $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl --namespace=$K8S_Namespace
-    & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster
-    & $Kubectl_Exe config use-context octocontext
+	}      
 }
 
 function ConfigureKubeCtlPath {
