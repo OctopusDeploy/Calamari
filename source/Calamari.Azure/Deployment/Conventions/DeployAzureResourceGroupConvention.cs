@@ -22,21 +22,19 @@ namespace Calamari.Azure.Deployment.Conventions
 {
     public class DeployAzureResourceGroupConvention : IInstallConvention
     {
-        private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
-        
         readonly string templateFile;
         readonly string templateParametersFile;
         private readonly bool filesInPackage;
-        readonly ICalamariFileSystem fileSystem;
+        private readonly TemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
 
         public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, bool filesInPackage, 
-            ICalamariFileSystem fileSystem, IResourceGroupTemplateNormalizer parameterNormalizer)
+            TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
             this.filesInPackage = filesInPackage;
-            this.fileSystem = fileSystem;
+            this.templateService = templateService;
             this.parameterNormalizer = parameterNormalizer;
         }
 
@@ -61,9 +59,9 @@ namespace Calamari.Azure.Deployment.Conventions
                     : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = TemplateReplacement.ResolveAndSubstituteFile(fileSystem, templateFile, filesInPackage, variables); 
+            var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackage, variables); 
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
-                ? parameterNormalizer.Normalize(TemplateReplacement.ResolveAndSubstituteFile(fileSystem, templateParametersFile, filesInPackage, variables))
+                ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackage, variables))
                 : null;
 
             Log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");

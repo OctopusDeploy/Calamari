@@ -9,6 +9,7 @@ using Calamari.Integration.Processes;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Util;
 
 namespace Calamari.Aws.Commands
 {
@@ -59,6 +60,9 @@ namespace Calamari.Aws.Commands
 
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
             var environment = new AwsEnvironmentGeneration(variables);
+            var templateResolver = new TemplateResolver(fileSystem);
+            var templateService = new TemplateService(fileSystem, templateResolver, new TemplateReplacement(templateResolver));
+
 
             var conventions = new List<IConvention>
             {
@@ -75,7 +79,7 @@ namespace Calamari.Aws.Commands
                     stackName,
                     iamCapabilities,
                     Boolean.TrueString.Equals(disableRollback, StringComparison.InvariantCultureIgnoreCase), // false by default
-                    fileSystem,
+                    templateService,
                     environment)
             };
 

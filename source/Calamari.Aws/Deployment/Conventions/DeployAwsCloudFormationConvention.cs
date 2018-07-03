@@ -41,16 +41,14 @@ namespace Calamari.Aws.Deployment.Conventions
         private const int RetryCount = 3;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
 
-        private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
-
         private readonly string templateFile;
         private readonly string templateParametersFile;
         private readonly bool filesInPackage;
-        private readonly ICalamariFileSystem fileSystem;
         private readonly bool waitForComplete;
         private readonly string action;
         private readonly string stackName;
         private readonly bool disableRollback;
+        private readonly TemplateService templateService;
         private readonly List<string> capabilities = new List<string>();
         private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
 
@@ -75,18 +73,18 @@ namespace Calamari.Aws.Deployment.Conventions
             string stackName,
             string iamCapabilities,
             bool disableRollback,
-            ICalamariFileSystem fileSystem,
+            TemplateService templateService,
             IAwsEnvironmentGeneration awsEnvironmentGeneration)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
             this.filesInPackage = filesInPackage;
-            this.fileSystem = fileSystem;
             this.waitForComplete = waitForComplete;
             this.action = action;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
             this.disableRollback = disableRollback;
+            this.templateService = templateService;
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
             if (RecognisedCapabilities.Contains(iamCapabilities))
@@ -114,11 +112,9 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
 
             WaitForStackToComplete(deployment, false);
-
-            TemplateReplacement.ResolveAndSubstituteFile(
-                    fileSystem,
-                    templateFile,
-                    filesInPackage,
+            templateService.GetSubstitutedTemplateContent(
+                    templateFile, 
+                    filesInPackage, 
                     deployment.Variables)
                 .Tee(template => DeployStack(deployment, template));
 
@@ -159,8 +155,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 return null;
             }
 
-            var retValue = TemplateReplacement.ResolveAndSubstituteFile(
-                    fileSystem,
+            var retValue = templateService.GetSubstitutedTemplateContent(
                     templateParametersFile,
                     filesInPackage,
                     deployment.Variables)
@@ -246,15 +241,12 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
 
-            return TemplateReplacement.GetAbsolutePath(
-                    fileSystem,
+            return templateService.GetTemplateContent(
                     template,
                     filesInPackage,
                     deployment.Variables)
-                // The path is transformed to the string contents
-                .Map(path => fileSystem.ReadFile(path))
                 // The contents becomes true or false based on the regex match
-                .Map(contents => OutputsRe.IsMatch(contents));
+                .Map(OutputsRe.IsMatch);
         }
         
         /// <summary>
