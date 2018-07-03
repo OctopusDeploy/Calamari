@@ -33,8 +33,8 @@ namespace Calamari.Azure.Deployment.Conventions
                 ? string.Empty
                 : $" in Resource Group {resourceGroupName}";
             var slotText = targetSite.HasSlot
-                ? string.Empty 
-                : $", deployment slot '{targetSite.Slot}',";
+                ? $", deployment slot '{targetSite.Slot}'," 
+                : string.Empty;
             Log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
@@ -59,7 +59,6 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 try
                 {
-                    
                     Log.Verbose($"Using site {targetSite.Site}");
                     Log.Verbose($"Using slot {targetSite.Slot}");
                     var changeSummary = DeploymentManager
@@ -150,8 +149,8 @@ namespace Calamari.Azure.Deployment.Conventions
         {
             var relativePath = (variables.Get(SpecialVariables.Action.Azure.PhysicalPath) ?? "").TrimStart('\\');
             return relativePath != ""
-                ? site.SiteAndSlot + "\\" + relativePath
-                : site.SiteAndSlot;
+                ? site.Site + "\\" + relativePath
+                : site.Site;
         }
 
         private static DeploymentBaseOptions DeploymentOptions(AzureTargetSite targetSite, SitePublishProfile publishProfile)
@@ -165,7 +164,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 UserName = publishProfile.UserName,
                 Password = publishProfile.Password,
                 UserAgent = "OctopusDeploy/1.0",
-                ComputerName = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={targetSite.SiteAndSlot}").ToString()
+                ComputerName = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={targetSite.Site}").ToString()
             };
             options.Trace += (sender, eventArgs) => LogDeploymentEvent(eventArgs);
 
