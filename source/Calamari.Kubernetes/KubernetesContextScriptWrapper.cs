@@ -33,10 +33,10 @@ namespace Calamari.Kubernetes
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 
-            variables.Set("OctopusKubernetesTargetScript", $"\"{script.File}\"");
+            variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
             variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
-            variables.Set("OctopusKubernetesKubeCtlConfig", Path.Combine(workingDirectory, "kubectl-octo.yml"));
-
+            variables.Set("Octopus.Action.Kubernetes.KubectlConfig", Path.Combine(workingDirectory, "kubectl-octo.yml"));
+            
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
                 return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
@@ -45,8 +45,9 @@ namespace Calamari.Kubernetes
 
         string CreateContextScriptFile(string workingDirectory)
         {
-            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.KubectlPowershellContext.ps1");
-            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Kubernetes.Scripts.KubectlPowershellContext.ps1");
+
+            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.KubectlBashContext.sh");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Kubernetes.Scripts.KubectlBashContext.sh");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }

@@ -22,9 +22,11 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Scripts\KubectlBashContext.sh" />
     <None Remove="Scripts\KubectlPowershellContext.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Scripts\KubectlBashContext.sh" />
     <EmbeddedResource Include="Scripts\KubectlPowershellContext.ps1" />
   </ItemGroup>
   <ItemGroup>
