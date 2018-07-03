@@ -4,10 +4,17 @@ using System.Linq;
 using Amazon.S3.Model;
 ﻿using System;
 using System.Security.Cryptography;
-using Calamari.Integration.FileSystem;
+ using System.Threading;
+ using Amazon.CloudFormation;
+ using Amazon.CloudFormation.Model;
+ using Amazon.Runtime;
+ using Calamari.Aws.Deployment.Conventions;
+ using Calamari.Aws.Exceptions;
+ using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
+ using Tag = Amazon.S3.Model.Tag;
 
 namespace Calamari.Aws.Integration.S3
 {
