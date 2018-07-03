@@ -9,6 +9,11 @@ function SetupContext {
 	$K8S_SkipTlsVerification=$OctopusParameters["Octopus.Action.Kubernetes.SkipTlsVerification"]
 	$K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]
 	$Kubectl_Exe = $OctopusParameters["Octopus.Action.Kubernetes.CustomKubectlExecutable"]
+	$K8S_Client_Cert = $OctopusParameters["Octopus.Action.Kubernetes.ClientCertificate"]
+	$K8S_Client_Cert_Pem = $OctopusParameters["$($K8S_Client_Cert).CertificatePem"]
+	$K8S_Client_Cert_Key = $OctopusParameters["$($K8S_Client_Cert).PrivateKeyPem"]
+	$K8S_Server_Cert = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuthority"]
+	$K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
 	
 	if([string]::IsNullOrEmpty($K8S_ClusterUrl)){
 		Write-Error "Kubernetes cluster URL is missing"
@@ -41,6 +46,35 @@ function SetupContext {
 	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl --namespace=$K8S_Namespace
 	& $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster
     & $Kubectl_Exe config use-context octocontext
+
+	if(-not [string]::IsNullOrEmpty($K8S_Client_Cert)) {
+		if ([string]::IsNullOrEmpty($K8S_Client_Cert_Pem)) {
+			Write-Error "Kubernetes client certificate does not include the certificate data"
+			Exit 1
+		}
+
+		if ([string]::IsNullOrEmpty($K8S_Client_Cert_Key)) {
+			Write-Error "Kubernetes client certificate does not include the private key data"
+			Exit 1
+		}
+
+		Set-Content -Path octo-client-key.pem -Value $K8S_Client_Cert_Key
+		Set-Content -Path octo-client-cert.pem -Value $K8S_Client_Cert_Pem
+
+		& $Kubectl_Exe config set-credentials octouser --client-certificate=octo-client-cert.pem
+		& $Kubectl_Exe config set-credentials octouser --client-key=octo-client-key.pem
+	}
+
+	if(-not [string]::IsNullOrEmpty($K8S_Server_Cert)) {
+		if ([string]::IsNullOrEmpty($K8S_Server_Cert_Pem)) {
+			Write-Error "Kubernetes server certificate does not include the certificate data"
+			Exit 1
+		}
+
+		Set-Content -Path octo-server-cert.pem -Value $K8S_Server_Cert_Pem
+
+		& $Kubectl_Exe config set-cluster octocluster --certificate-authority=octo-server-cert.pem
+	}
 
     if($K8S_AccountType -eq "Token") {
         Write-Host "Creating kubectl context to $K8S_ClusterUrl using a Token"
