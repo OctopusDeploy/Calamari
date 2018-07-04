@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 
 namespace Calamari.Integration.Scripting
@@ -28,17 +29,32 @@ namespace Calamari.Integration.Scripting
                     .FirstOrDefault();
         }
 
-        public static ScriptSyntax ToScriptType(this string extension)
+        public static ScriptSyntax FileNameToScriptType(string filename)
         {
-            var scriptTypeField = typeof (ScriptSyntax).GetFields()
-                .SingleOrDefault(
-                    field => field.GetCustomAttributes(typeof (FileExtensionAttribute), false)
-                            .Any(attr => ((FileExtensionAttribute) attr).Extension == extension.ToLower()));
-
-            if (scriptTypeField != null)
-                return (ScriptSyntax)scriptTypeField.GetValue(null);
+            var extension = Path.GetExtension(filename)?.TrimStart('.');
+            if (extension.TryToScriptType(out var syntax))
+            {
+                return syntax;
+            }
 
             throw new CommandException("Unknown script-extension: " + extension);
+        }
+
+        public static bool TryToScriptType(this string extension, out ScriptSyntax syntax)
+        {
+            var scriptTypeField = typeof(ScriptSyntax).GetFields()
+                .SingleOrDefault(
+                    field => field.GetCustomAttributes(typeof(FileExtensionAttribute), false)
+                        .Any(attr => ((FileExtensionAttribute)attr).Extension == extension.ToLower()));
+
+            if (scriptTypeField != null)
+            {
+                syntax = (ScriptSyntax) scriptTypeField.GetValue(null);
+                return true;
+            }
+
+            syntax = 0;
+            return false;
         }
     }
 }
