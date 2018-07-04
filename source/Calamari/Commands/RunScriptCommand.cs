@@ -55,9 +55,8 @@ namespace Calamari.Commands
             deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
             ValidateArguments();
-            var scriptFilePath = DetermineScriptFilePath(variables);
 
-            var result = ExecuteScriptFromPackage(scriptFilePath) ??
+            var result = ExecuteScriptFromPackage() ??
                          ExecuteScriptFromVariables() ??
                          ExecuteScriptFromParameters();
 
@@ -107,9 +106,6 @@ namespace Calamari.Commands
             {
                 return null;
             }
-            scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBody);
-            
-            syntax = ScriptSyntax.Powershell;
             var fullPath = Path.GetFullPath(scriptFileName);
             using (new TemporaryFile(fullPath))
             {
@@ -169,13 +165,14 @@ namespace Calamari.Commands
             return false;
         }
 
-        private int? ExecuteScriptFromPackage(string scriptFilePath)
+        private int? ExecuteScriptFromPackage()
         {
             if (!WasProvided(packageFile))
             {
                 return null;
             }
 
+            var scriptFilePath = DetermineScriptFilePath(variables);
             ExtractScriptFromPackage(variables);
             SubstituteVariablesInScript(scriptFilePath, variables);
             return InvokeScript(scriptFilePath, variables);
