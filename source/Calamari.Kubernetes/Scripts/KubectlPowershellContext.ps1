@@ -25,7 +25,7 @@ function SetupContext {
 		Exit 1
 	}
 
-	if([string]::IsNullOrEmpty($K8S_ServerUrl)){
+	if([string]::IsNullOrEmpty($K8S_Namespace)){
 		$K8S_Namespace="default"
 	}
 
@@ -43,8 +43,9 @@ function SetupContext {
 		}
 	}
 
-	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl --namespace=$K8S_Namespace
+	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
 	& $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster
+	& $Kubectl_Exe config set-context octocontext --namespace=$K8S_Namespace
     & $Kubectl_Exe config use-context octocontext
 
 	if(-not [string]::IsNullOrEmpty($K8S_Client_Cert)) {
