@@ -34,20 +34,21 @@ namespace Calamari.Integration.Scripting
         public ScriptSyntax[] GetSupportedTypes()
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                ? new[] { ScriptSyntax.CSharp, ScriptSyntax.Bash, ScriptSyntax.FSharp }
-                : new[] { ScriptSyntax.CSharp, ScriptSyntax.Powershell, ScriptSyntax.FSharp };
+                ? new[] { ScriptSyntax.Bash, ScriptSyntax.CSharp, ScriptSyntax.FSharp }
+                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp };
         }
 
         public CommandResult Execute(
             Script script,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null) =>
-                BuildWrapperChain(ValidateScriptType(script)).ExecuteScript(
-                    script,
-                    variables,
-                    commandLineRunner,
-                    environmentVars);
+            StringDictionary environmentVars = null)
+        {
+            var syntax = ValidateScriptType(script);
+            return BuildWrapperChain(syntax)
+                .ExecuteScript(script, syntax, variables, commandLineRunner, environmentVars);
+        }
+            
 
 
         /// <summary>
@@ -82,9 +83,7 @@ namespace Calamari.Integration.Scripting
         
         private ScriptSyntax ValidateScriptType(Script script)
         {
-            var scriptExtension = Path.GetExtension(script.File)?.TrimStart('.');
-            var type = scriptExtension.ToScriptType();
-
+            var type = ScriptTypeExtensions.FileNameToScriptType(script.File);
             if (!GetSupportedTypes().Contains(type))
                 throw new CommandException($"{type} scripts are not supported on this platform");
 

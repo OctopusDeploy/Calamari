@@ -74,4 +74,4 @@ Write-Host "##octopus[stdout-default]"
 
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 
-Invoke-Expression ". "$OctopusKubernetesTargetScript" $OctopusKubernetesTargetScriptParameters"
+Invoke-Expression ". `"$OctopusKubernetesTargetScript`" $OctopusKubernetesTargetScriptParameters"

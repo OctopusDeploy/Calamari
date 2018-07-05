@@ -10,7 +10,7 @@ namespace Calamari.Integration.Scripting
     {
         private readonly Dictionary<ScriptSyntax, IScriptEngine> scriptEngines = new Dictionary<ScriptSyntax, IScriptEngine>
         {
-            {ScriptSyntax.Powershell, new PowerShellScriptEngine() },
+            {ScriptSyntax.PowerShell, new PowerShellScriptEngine() },
             {ScriptSyntax.CSharp, new ScriptCSScriptEngine() },
             {ScriptSyntax.Bash, new BashScriptEngine()},
             {ScriptSyntax.FSharp, new FSharpEngine()}
