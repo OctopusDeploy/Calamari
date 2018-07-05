@@ -35,19 +35,20 @@ namespace Calamari.Integration.Scripting
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 ? new[] { ScriptSyntax.Bash, ScriptSyntax.CSharp, ScriptSyntax.FSharp }
-                : new[] { ScriptSyntax.Powershell, ScriptSyntax.CSharp, ScriptSyntax.FSharp };
+                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp };
         }
 
         public CommandResult Execute(
             Script script,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null) =>
-                BuildWrapperChain(ValidateScriptType(script)).ExecuteScript(
-                    script,
-                    variables,
-                    commandLineRunner,
-                    environmentVars);
+            StringDictionary environmentVars = null)
+        {
+            var syntax = ValidateScriptType(script);
+            return BuildWrapperChain(syntax)
+                .ExecuteScript(script, syntax, variables, commandLineRunner, environmentVars);
+        }
+            
 
 
         /// <summary>

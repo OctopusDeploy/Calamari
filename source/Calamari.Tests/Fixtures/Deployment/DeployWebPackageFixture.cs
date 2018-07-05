@@ -226,7 +226,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
             else
             {
-                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, ScriptSyntax.Powershell), "Write-Host 'The wheels on the bus go round...'");
+                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.Deploy, ScriptSyntax.PowerShell), "Write-Host 'The wheels on the bus go round...'");
             }
 
             var result = DeployPackage();

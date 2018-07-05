@@ -107,6 +107,7 @@ namespace Calamari.Commands
                 return null;
             }
             var fullPath = Path.GetFullPath(scriptFileName);
+            
             using (new TemporaryFile(fullPath))
             {
                 //Bash files need SheBang as first few characters. This does not play well with BOM characters
@@ -114,6 +115,7 @@ namespace Calamari.Commands
                     ? scriptBody.EncodeInUtf8NoBom()
                     : scriptBody.EncodeInUtf8Bom();
                 File.WriteAllBytes(fullPath, scriptBytes);
+
                 return InvokeScript(fullPath, variables);
             }
         }
@@ -127,6 +129,7 @@ namespace Calamari.Commands
                 if (WasProvided(scriptFileName))
                 {
                     syntax = ScriptTypeExtensions.FileNameToScriptType(scriptFileName);
+                 
                     return true;
                 }
 
@@ -138,7 +141,7 @@ namespace Calamari.Commands
                 }
                 else if (!Enum.TryParse(scriptSyntax, out syntax))
                 {
-                    throw new CommandException("Unknown script syntax `{scriptSyntax}` provided");
+                    throw new CommandException($"Unknown script syntax `{scriptSyntax}` provided");
                 }
 
                 scriptFileName = "Script." + syntax.FileExtension();
@@ -214,7 +217,7 @@ namespace Calamari.Commands
                 return fileArgSyntax;
             }
 
-            return variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptSyntax.Powershell);
+            return variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptSyntax.PowerShell);
         }
 
         private string DetermineScriptFilePath(VariableDictionary variables)
@@ -250,6 +253,7 @@ namespace Calamari.Commands
 
         private int InvokeScript(string scriptFileName, CalamariVariableDictionary variables)
         {
+
             // Any additional files extracted from the packages or sent by the action handler are processed here
             SubstituteVariablesInAdditionalFiles();
 
@@ -263,6 +267,7 @@ namespace Calamari.Commands
             var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", scriptFileName);
             var result = scriptEngine.Execute(new Script(scriptFileName, scriptParametersArg ?? scriptParameters), variables, runner);
+
             var shouldWriteJournal = CanWriteJournal(variables) && deployment != null && !deployment.SkipJournal;
 
             if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))

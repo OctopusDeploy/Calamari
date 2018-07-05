@@ -7,7 +7,7 @@ namespace Calamari.Integration.Scripting
     public enum ScriptSyntax
     {
         [FileExtension("ps1")]
-        Powershell,
+        PowerShell,
 
         [FileExtension("csx")]
         CSharp,
