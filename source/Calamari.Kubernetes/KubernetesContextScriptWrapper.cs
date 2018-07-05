@@ -59,10 +59,10 @@ namespace Calamari.Kubernetes
                     throw new InvalidOperationException("No kubernetes context wrapper exists for "+ syntax);
             }
 
-            var azureContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
+            var k8sContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
             var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Kubernetes.Scripts.{contextFile}");
-            fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
-            return azureContextScriptFile;
+            fileSystem.OverwriteFile(k8sContextScriptFile, contextScript);
+            return k8sContextScriptFile;
         }
     }
 }
