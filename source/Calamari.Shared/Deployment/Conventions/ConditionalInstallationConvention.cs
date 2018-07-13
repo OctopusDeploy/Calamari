@@ -14,11 +14,6 @@ namespace Calamari.Deployment.Conventions
 
         protected T Decorated { get; }
 
-        public ConditionalInstallationConvention(T decorated)
-        {
-            Decorated = decorated;
-        }
-
         public void Install(RunningDeployment deployment)
         {
             if (predicate(deployment))

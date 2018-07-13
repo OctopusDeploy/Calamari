@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Octopus.CoreUtilities;
 using Octostache;
 
 namespace Calamari.Util
@@ -16,16 +17,23 @@ namespace Calamari.Util
             this.filesystem = filesystem;
         }
 
-        public string ResolveAbsolutePath(string relativeFilePath, bool inPackage, VariableDictionary variables)
+        public ResolvedTemplatePath Resolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
+        {
+            var result = MaybeResolve(relativeFilePath, inPackage, variables);
+            
+            if (result.Some())
+                return result.Value;
+
+            throw new CommandException($"Could not resolve '{relativeFilePath}' to physical file");
+        }
+
+        public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
         {
             var absolutePath = inPackage
                 ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(relativeFilePath))
                 : Path.Combine(Environment.CurrentDirectory, relativeFilePath);
 
-            if (!filesystem.FileExists(absolutePath))
-                throw new CommandException($"Could not resolve '{relativeFilePath}' to physical file");
-
-            return absolutePath;
+            return !filesystem.FileExists(absolutePath) ? Maybe<ResolvedTemplatePath>.None : new ResolvedTemplatePath(absolutePath).AsSome();
         }
     }
 }

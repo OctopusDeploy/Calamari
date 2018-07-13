@@ -16,7 +16,7 @@ namespace Calamari.Util
         public string ResolveAndSubstituteFile(Func<string, string> readContent, string relativeFilePath, bool inPackage, VariableDictionary variables)
         {
             return ResolveAndSubstituteFile(
-                () => resolver.ResolveAbsolutePath(relativeFilePath, inPackage, variables),
+                () => resolver.Resolve(relativeFilePath, inPackage, variables).Value,
                 readContent,
                 variables);
         }

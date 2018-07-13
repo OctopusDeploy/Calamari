@@ -10,6 +10,7 @@ using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Newtonsoft.Json;
@@ -18,11 +19,10 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
-  
-    
     public static class CloudFormationDefaults
     {
         public static readonly TimeSpan StatusWaitPeriod;
+        public static readonly int RetryCount = 3;
 
         static CloudFormationDefaults()
         {
@@ -37,7 +37,6 @@ namespace Calamari.Aws.Deployment.Conventions
 
     public interface ITemplateInputs<TInput>
     {
-        bool HasInputs { get; }
         IReadOnlyList<TInput> Inputs { get; }
     }
 
@@ -59,38 +58,47 @@ namespace Calamari.Aws.Deployment.Conventions
 
     public class CloudFormationParametersFile : ITemplate, ITemplateInputs<Parameter>
     {
-        private readonly Func<Maybe<string>> content;
+        private readonly Func<string> content;
         private readonly Func<string, List<Parameter>> parse;
 
-        public CloudFormationParametersFile(Func<Maybe<string>> content, Func<string, List<Parameter>> parse)
+        public static CloudFormationParametersFile Create(ResolvedTemplatePath path, ICalamariFileSystem fileSystem)
+        {
+            return new CloudFormationParametersFile(() => fileSystem.ReadFile(path.Value), JsonConvert.DeserializeObject<List<Parameter>>);
+        }
+
+        public CloudFormationParametersFile(Func<string> content, Func<string, List<Parameter>> parse)
         {
             this.content = content;
             this.parse = parse;
         }
 
-        public string Content => content().SelectValueOr(x => x, string.Empty);
-        public bool HasInputs => Inputs.Any();
-        public IReadOnlyList<Parameter> Inputs => content().Select(parse).SelectValueOr(x => x, new List<Parameter>());
+        public string Content => content();
+        public IReadOnlyList<Parameter> Inputs => content().Map(parse);
     }
  
     public class CloudFormationTemplate: ITemplate, ITemplateInputs<Parameter>, ITemplateOutputs<StackFormationNamedOutput>
     {
         private readonly Func<string> content;
         private readonly Func<string, List<StackFormationNamedOutput>> parse;
-        private Maybe<ITemplateInputs<Parameter>> parameters;
+        private ITemplateInputs<Parameter> parameters;
         private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
         
-        public CloudFormationTemplate(Func<string> content, Maybe<ITemplateInputs<Parameter>> parameters, Func<string, List<StackFormationNamedOutput>> parse)
+        public CloudFormationTemplate(Func<string> content, ITemplateInputs<Parameter> parameters, Func<string, List<StackFormationNamedOutput>> parse)
         {
             this.content = content;
             this.parameters = parameters;
             this.parse = parse;
         }
 
+        public static CloudFormationTemplate Create(ResolvedTemplatePath path, ITemplateInputs<Parameter> parameters, ICalamariFileSystem filesSystem)
+        {
+            Guard.NotNull(path, "Path must not be null");
+            return new CloudFormationTemplate(() => filesSystem.ReadFile(path.Value), parameters, JsonConvert.DeserializeObject<List<StackFormationNamedOutput>> );
+        }
+
         public string Content => content();
 
-        public bool HasInputs => parameters.SelectValueOrDefault(x => x.HasInputs);
-        public IReadOnlyList<Parameter> Inputs => parameters.SelectValueOr(x => x.Inputs, new List<Parameter>());
+        public IReadOnlyList<Parameter> Inputs => parameters.Inputs;
         public bool HasOutputs => Content.Map(OutputsRe.IsMatch);
         public IReadOnlyList<StackFormationNamedOutput> Outputs  => HasOutputs ? parse(Content) : new List<StackFormationNamedOutput>();
     }
@@ -211,10 +219,15 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly Func<AmazonCloudFormationClient> clientFactory;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
         private readonly Func<RunningDeployment, ChangeSetArn> changeSetProvider;
+        private readonly CloudFormationExecutionContext context;
+        private readonly ILog logger;
 
-        public ExecuteCloudFormationChangeSetConvention(Func<AmazonCloudFormationClient> clientFactory,
+        public ExecuteCloudFormationChangeSetConvention(
+            Func<AmazonCloudFormationClient> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider, 
-            Func<RunningDeployment, ChangeSetArn> changeSetProvider)
+            Func<RunningDeployment, ChangeSetArn> changeSetProvider,
+            CloudFormationExecutionContext context,
+            ILog logger)
         {
             Guard.NotNull(stackProvider, "Stack provider must not be null");
             Guard.NotNull(changeSetProvider, "Change set provider must nobe null");
@@ -223,6 +236,8 @@ namespace Calamari.Aws.Deployment.Conventions
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;
             this.changeSetProvider = changeSetProvider;
+            this.context = context;
+            this.logger = logger;
         }
 
         public void Install(RunningDeployment deployment)
@@ -238,12 +253,26 @@ namespace Calamari.Aws.Deployment.Conventions
             if (result.None())
             {
                 Log.Info("No changes changes are to be performed.");
+                return;
             }
-            else
+            
+            //If Wait for completion
+            var stackLogger = new StackEventLogger(logger, x => clientFactory.GetLastStackEvent(stack, x));
+            clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, status =>
             {
-                //Wait for stack completion
-                
-            }
+                stackLogger.Log(status);
+                stackLogger.LogRollbackError(status);
+                return status.ToMaybe().SelectValueOr(x => 
+                    (x.ResourceStatus.Value.EndsWith("_COMPLETE") ||
+                     x.ResourceStatus.Value.EndsWith("_FAILED")) &&
+                     x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
+            });
+            
+            context.GetAndPipeOutputVariablesWithRetry(() => clientFactory.DescribeStack(stack).ToMaybe(), 
+                deployment.Variables, 
+                true, 
+                CloudFormationDefaults.RetryCount, 
+                CloudFormationDefaults.StatusWaitPeriod);
         }
 
         private Maybe<RunningChangeset> ExecuteChangeset(Func<AmazonCloudFormationClient> factory, StackArn stack,
@@ -299,17 +328,12 @@ namespace Calamari.Aws.Deployment.Conventions
     {
         public CloudFormationTemplate Template { get; }
         
-        private readonly Func<AmazonCloudFormationClient> client;
-        private readonly TemplateService templateService;
-
         public CloudFormationExecutionContext(
-            Func<AmazonCloudFormationClient> client,
             CloudFormationTemplate template)
         {
-            this.client = client;
             Template = template;
         }
-        
+                
         public (IReadOnlyList<VariableOutput> result, bool success) GetOutputVariables(
             Func<Maybe<Stack>> query)
         {
@@ -338,7 +362,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             for (var retry = 0; retry < retryCount; ++retry)
             {
-                var (result, success) = GetOutputVariables(query, variables);
+                var (result, success) = GetOutputVariables(query);
                 if (success || !wait)
                 {
                     PipeOutputs(result, variables);

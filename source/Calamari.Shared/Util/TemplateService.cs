@@ -19,14 +19,15 @@ namespace Calamari.Util
 
         public string GetTemplateContent(string relativePath, bool inPackage, CalamariVariableDictionary variables)
         {
-            return resolver.ResolveAbsolutePath(relativePath, inPackage, variables)
+            return resolver.Resolve(relativePath, inPackage, variables)
+                .Map(x => x.Value)
                 .Map(fileSystem.ReadFile);
         }
 
         public string GetSubstitutedTemplateContent(string relativePath, bool inPackage, CalamariVariableDictionary variables)
         {
             return replacement.ResolveAndSubstituteFile(
-                () => resolver.ResolveAbsolutePath(relativePath, inPackage, variables),
+                () => resolver.Resolve(relativePath, inPackage, variables).Value,
                 fileSystem.ReadFile,
                 variables);
         }

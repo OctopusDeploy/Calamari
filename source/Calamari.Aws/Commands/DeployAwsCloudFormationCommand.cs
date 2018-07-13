@@ -6,9 +6,11 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using System;
 using System.Collections.Generic;
 using System.IO;
+using Amazon.CloudFormation;
+using Calamari.Aws.Deployment;
+using Calamari.Aws.Util;
 using Calamari.Util;
 
 namespace Calamari.Aws.Commands
@@ -61,15 +63,33 @@ namespace Calamari.Aws.Commands
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
             var environment = new AwsEnvironmentGeneration(variables);
             var templateResolver = new TemplateResolver(fileSystem);
-            var templateService = new TemplateService(fileSystem, templateResolver, new TemplateReplacement(templateResolver));
 
+            AmazonCloudFormationClient ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
+            StackArn StackProvider (RunningDeployment x) => new StackArn(stackName);
+            ChangeSetArn ChangesetProvider (RunningDeployment x) => 
+                new ChangeSetArn(x.Variables[AwsSpecialVariables.Changesets.Changeset]);
 
+            var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
+            var resolvedParameters = templateResolver.Resolve(templateParameterFile, filesInPackage, variables);
+
+            var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem);
+            var template = CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem);
+            var context = new CloudFormationExecutionContext(template);
+            
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
+                
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                
+                new GenerateCloudFormationChangesetNameConvention(),
+                new CreateCloudFormationChangeSetConvention( ClientFactory, StackProvider, context ),
+                new DescribeCloudFormationChangeSetConvention( ClientFactory, StackProvider, ChangesetProvider),
+                new ExecuteCloudFormationChangeSetConvention( ClientFactory, StackProvider, ChangesetProvider, context, new LogWrapper() )
+                
+                /*
                 new DeployAwsCloudFormationConvention(
                     templateFile, 
                     templateParameterFile, 
@@ -80,7 +100,7 @@ namespace Calamari.Aws.Commands
                     iamCapabilities,
                     Boolean.TrueString.Equals(disableRollback, StringComparison.InvariantCultureIgnoreCase), // false by default
                     templateService,
-                    environment)
+                    environment)*/
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
