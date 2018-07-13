@@ -13,5 +13,20 @@ namespace Calamari.Aws.Deployment
             public const string FileSelections = "Octopus.Action.Aws.S3.FileSelections";
             public const string PackageOptions = "Octopus.Action.Aws.S3.PackageOptions";
         }
+
+        public const string Action = "Octopus.Action.Aws.CloudFormationAction";
+        public const string StackName = "Octopus.Action.Aws.CloudFormationStackName";
+        public const string Template = "Octopus.Action.Aws.CloudFormationTemplate";
+        public const string TemplateParameters = "Octopus.Action.Aws.CloudFormationTemplateParameters";
+        public const string TemplateParametersRaw = "Octopus.Action.Aws.CloudFormationTemplateParametersRaw";
+
+        public static class Changesets
+        {
+            public const string Changeset = "Octopus.Action.Aws.Changeset.Arn";
+            public const string Name = "Octopus.Action.Aws.Changeset.Name";
+            public const string Mode = "Octopus.Action.Aws.Changeset.Mode";
+            public const string Enabled = "Octopus.Action.Aws.Changeset.Enabled";
+            public const string Generate = "Octopus.Action.Aws.Changeset.GenerateName";
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -18,9 +19,23 @@ using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
 namespace Calamari.Aws.Integration.CloudFormation
 {
-    
     public static class CloudFormationObjectExtensions
     {
+        // These status indicate that an update or create was not successful.
+        // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
+        private static HashSet<string> UnsuccessfulStackEvents =
+            new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                "CREATE_ROLLBACK_COMPLETE",
+                "CREATE_ROLLBACK_FAILED",
+                "UPDATE_ROLLBACK_COMPLETE",
+                "UPDATE_ROLLBACK_FAILED",
+                "ROLLBACK_COMPLETE",
+                "ROLLBACK_FAILED",
+                "DELETE_FAILED",
+                "CREATE_FAILED"
+            };
+    
         public static DescribeChangeSetResponse DescribeChangeSet(this Func<AmazonCloudFormationClient> factory, StackArn stack, ChangeSetArn changeSet)
         {
             return factory().Map(client => client.DescribeChangeSet(new DescribeChangeSetRequest
@@ -30,12 +45,12 @@ namespace Calamari.Aws.Integration.CloudFormation
             }));
         }
 
-        public static DescribeChangeSetResponse WaitForChangeSetCompletion(this Func<AmazonCloudFormationClient> clientFactory, TimeSpan waitPeriod, StackArn stack, ChangeSetArn changeSet)
+        public static DescribeChangeSetResponse WaitForChangeSetCompletion(this Func<AmazonCloudFormationClient> clientFactory, TimeSpan waitPeriod, RunningChangeset runningChangeset)
         {
             var completion = new HashSet<ChangeSetStatus> { ChangeSetStatus.FAILED, ChangeSetStatus.CREATE_COMPLETE, ChangeSetStatus.DELETE_COMPLETE };
             while (true)
             {
-                var result = clientFactory.DescribeChangeSet(stack, changeSet);
+                var result = clientFactory.DescribeChangeSet(runningChangeset.Stack, runningChangeset.ChangeSet);
                 if (completion.Contains(result.Status))
                 {
                     return result;
@@ -125,5 +140,37 @@ namespace Calamari.Aws.Integration.CloudFormation
                     .Map(message => "An exception was thrown while contacting the AWS API.\n" + message)
                     ?? "An exception was thrown while contacting the AWS API.";
         }
+
+        public static void WaitForStackToComplete(this Func<AmazonCloudFormationClient> clientFactory, TimeSpan waitPeriod, StackArn stack)
+        {
+            var status = clientFactory.GetStackStatus(stack, StackStatus.DoesNotExist);
+            if (status == StackStatus.DoesNotExist || status == StackStatus.Completed)
+            {
+                return;
+            }
+
+            do
+            {
+                Thread.Sleep(waitPeriod);
+                clientFactory.GetLastStackEvent(stack);
+            } while (clientFactory.GetStackStatus(stack, StackStatus.Completed) == StackStatus.InProgress);
+        }
+
+        private static void StackEventCompleted(bool expectSuccess = true, bool missingIsFailure = true)
+        {
+            
+        }
+        
+        /// <summary>
+        /// Check the stack event status to detemrine whether it was successful.
+        /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
+        /// </summary>
+        /// <param name="status">The status to check</param>
+        /// <returns>true if the status indcates a failed create or update, and false otherwise</returns>
+        private static Maybe<bool> IsStackEventSuccessful(Maybe<StackEvent> status)
+        {
+            return status.Select(x=> !UnsuccessfulStackEvents.Contains(x.ResourceStatus.Value));
+        }
+        
     }
 }

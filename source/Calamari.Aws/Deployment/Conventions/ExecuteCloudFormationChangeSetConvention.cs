@@ -10,7 +10,6 @@ using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Newtonsoft.Json;
@@ -19,6 +18,8 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
+  
+    
     public static class CloudFormationDefaults
     {
         public static readonly TimeSpan StatusWaitPeriod;
@@ -29,89 +30,154 @@ namespace Calamari.Aws.Deployment.Conventions
         }
     }
 
-    public class ExecuteCloudFormationChangeSetConvention : IInstallConvention
+    public interface ITemplate
+    {
+        string Content { get; }
+    }
+
+    public interface ITemplateInputs<TInput>
+    {
+        bool HasInputs { get; }
+        IReadOnlyList<TInput> Inputs { get; }
+    }
+
+    public interface ITemplateOutputs<TOutput>
+    {
+        bool HasOutputs { get; }
+        IReadOnlyList<TOutput> Outputs { get; }
+    }
+    
+    public class StackFormationNamedOutput
+    {
+        public string Name { get; }
+
+        public StackFormationNamedOutput(string name)
+        {
+            Name = name;
+        }
+    }
+
+    public class CloudFormationParametersFile : ITemplate, ITemplateInputs<Parameter>
+    {
+        private readonly Func<Maybe<string>> content;
+        private readonly Func<string, List<Parameter>> parse;
+
+        public CloudFormationParametersFile(Func<Maybe<string>> content, Func<string, List<Parameter>> parse)
+        {
+            this.content = content;
+            this.parse = parse;
+        }
+
+        public string Content => content().SelectValueOr(x => x, string.Empty);
+        public bool HasInputs => Inputs.Any();
+        public IReadOnlyList<Parameter> Inputs => content().Select(parse).SelectValueOr(x => x, new List<Parameter>());
+    }
+ 
+    public class CloudFormationTemplate: ITemplate, ITemplateInputs<Parameter>, ITemplateOutputs<StackFormationNamedOutput>
+    {
+        private readonly Func<string> content;
+        private readonly Func<string, List<StackFormationNamedOutput>> parse;
+        private Maybe<ITemplateInputs<Parameter>> parameters;
+        private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
+        
+        public CloudFormationTemplate(Func<string> content, Maybe<ITemplateInputs<Parameter>> parameters, Func<string, List<StackFormationNamedOutput>> parse)
+        {
+            this.content = content;
+            this.parameters = parameters;
+            this.parse = parse;
+        }
+
+        public string Content => content();
+
+        public bool HasInputs => parameters.SelectValueOrDefault(x => x.HasInputs);
+        public IReadOnlyList<Parameter> Inputs => parameters.SelectValueOr(x => x.Inputs, new List<Parameter>());
+        public bool HasOutputs => Content.Map(OutputsRe.IsMatch);
+        public IReadOnlyList<StackFormationNamedOutput> Outputs  => HasOutputs ? parse(Content) : new List<StackFormationNamedOutput>();
+    }
+
+    public static class TemplateExtensions
+    {
+        public static string ApplyVariableSubstitution(this ITemplate template, CalamariVariableDictionary variables)
+        {
+            return variables.Evaluate(template.Content);
+        }
+    }
+
+    public class GenerateCloudFormationChangesetNameConvention : IInstallConvention
+    {
+        public void Install(RunningDeployment deployment)
+        {
+            var name = $"octo-{Guid.NewGuid():N}";
+            
+            if (string.Compare(deployment.Variables[AwsSpecialVariables.Changesets.Generate], "True", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                deployment.Variables.Set(AwsSpecialVariables.Changesets.Name, name);
+            }
+
+            Log.SetOutputVariable("ChangesetName", name);
+        }
+    }
+
+    public class CreateCloudFormationChangeSetConvention : IInstallConvention
     {
         private readonly Func<AmazonCloudFormationClient> clientFactory;
+        private readonly CloudFormationExecutionContext context;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
-        private readonly Func<RunningDeployment, ChangeSetArn> changeSetProvider;
 
-        public ExecuteCloudFormationChangeSetConvention(Func<AmazonCloudFormationClient> clientFactory,
-            Func<RunningDeployment, StackArn> stackProvider, Func<RunningDeployment, ChangeSetArn> changeSetProvider)
+        public CreateCloudFormationChangeSetConvention(Func<AmazonCloudFormationClient> clientFactory,
+            Func<RunningDeployment, StackArn> stackProvider,
+            CloudFormationExecutionContext context
+            )
         {
-            Guard.NotNull(stackProvider, "Stack provider must not be null");
-            Guard.NotNull(changeSetProvider, "Change set provider must nobe null");
-            Guard.NotNull(clientFactory, "Client factory should not be null");
-
+            Guard.NotNull(stackProvider, "Stack provider should not be null");
+            Guard.NotNull(context, "Execution context may not be null");
             this.clientFactory = clientFactory;
+            this.context = context;
             this.stackProvider = stackProvider;
-            this.changeSetProvider = changeSetProvider;
         }
 
         public void Install(RunningDeployment deployment)
         {
             var stack = stackProvider(deployment);
-            var changeSet = changeSetProvider(deployment);
+            Guard.NotNull(stack, "The stack must be provided to create a change set");
+            
+            var name = deployment.Variables[AwsSpecialVariables.Changesets.Name];
+            Guard.NotNullOrWhiteSpace(name, "The changeset name was not specified.");
+           
+            var status = clientFactory.GetStackStatus(stack, StackStatus.DoesNotExist);
 
-            Guard.NotNull(stack, "The provided stack identifer or name may not be null");
-            Guard.NotNull(changeSet, "The provided change set identifier or name may not be null");
+            var request = CreateChangesetRequest(
+                status, 
+                name, 
+                context.Template.ApplyVariableSubstitution(deployment.Variables), 
+                stack, 
+                context.Template.Inputs.ToList()
+            );
 
-            try
-            {
-                ExecuteStackChange(clientFactory, stack, changeSet);
-            }
-            catch (Exception e)
-            {
-                //Ignore?
-            }
+            var result = clientFactory().CreateChangeSet(request)
+                .Map(x => new RunningChangeset(stack, new ChangeSetArn(x.Id)));
+            
+            clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
+            
+            Log.SetOutputVariable("ChangesetId", result.ChangeSet.Value);
+            Log.SetOutputVariable("StackId", result.Stack.Value);
+            
+            deployment.Variables.Set(AwsSpecialVariables.Changesets.Changeset, result.ChangeSet.Value);
         }
 
-        private Maybe<RunningChangeset> ExecuteStackChange(Func<AmazonCloudFormationClient> factory, StackArn stack,
-            ChangeSetArn changeSet)
+        public CreateChangeSetRequest CreateChangesetRequest(StackStatus status, string changesetName, string template, StackArn stack, List<Parameter> parameters)
         {
-            try
+            return new CreateChangeSetRequest
             {
-                var changes =
-                    factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, stack, changeSet);
-
-                if (changes.Changes.Count == 0)
-                {
-                    return Maybe<RunningChangeset>.None;
-                }
-
-                factory().ExecuteChangeSet(new ExecuteChangeSetRequest
-                {
-                    ChangeSetName = changeSet.Value,
-                    StackName = stack.Value
-                });
-
-                return new RunningChangeset(stack, changeSet).AsSome();
-            }
-            catch (AmazonCloudFormationException exception)
-            {
-                if (exception.Message.Contains("No updates are to be performed"))
-                {
-                    Log.Info("No updates are to be performed");
-                    return Maybe<RunningChangeset>.None;
-                }
-
-                if (exception.ErrorCode == "AccessDenied")
-                {
-                    throw new PermissionException(
-                        "AWS-CLOUDFORMATION-ERROR-0011: The AWS account used to perform the operation does not have " +
-                        "the required permissions to update the stack.\n" +
-                        exception.Message + "\n" +
-                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011");
-                }
-
-                throw new UnknownException(
-                    "AWS-CLOUDFORMATION-ERROR-0011: An unrecognised exception was thrown while updating a CloudFormation stack.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011",
-                    exception);
-            }
+                StackName = stack.Value,
+                TemplateBody = template,
+                Parameters = parameters,
+                ChangeSetName = changesetName,
+                ChangeSetType = status == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE
+            };
         }
     }
-
-
+    
     public class DescribeCloudFormationChangeSetConvention : IInstallConvention
     {
         private readonly Func<AmazonCloudFormationClient> clientFactory;
@@ -140,75 +206,123 @@ namespace Calamari.Aws.Deployment.Conventions
         }
     }
 
-    public class CloudFormationExecutionContext
+    public class ExecuteCloudFormationChangeSetConvention : IInstallConvention
     {
-        public class StackOutput
-        {
-            public string Name { get; }
-            public string Value { get; }
+        private readonly Func<AmazonCloudFormationClient> clientFactory;
+        private readonly Func<RunningDeployment, StackArn> stackProvider;
+        private readonly Func<RunningDeployment, ChangeSetArn> changeSetProvider;
 
-            public StackOutput(string name, string value)
+        public ExecuteCloudFormationChangeSetConvention(Func<AmazonCloudFormationClient> clientFactory,
+            Func<RunningDeployment, StackArn> stackProvider, 
+            Func<RunningDeployment, ChangeSetArn> changeSetProvider)
+        {
+            Guard.NotNull(stackProvider, "Stack provider must not be null");
+            Guard.NotNull(changeSetProvider, "Change set provider must nobe null");
+            Guard.NotNull(clientFactory, "Client factory should not be null");
+
+            this.clientFactory = clientFactory;
+            this.stackProvider = stackProvider;
+            this.changeSetProvider = changeSetProvider;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            var stack = stackProvider(deployment);
+            var changeSet = changeSetProvider(deployment);
+
+            Guard.NotNull(stack, "The provided stack identifer or name may not be null");
+            Guard.NotNull(changeSet, "The provided change set identifier or name may not be null");
+
+            var result = ExecuteChangeset(clientFactory, stack, changeSet);
+
+            if (result.None())
             {
-                Name = name;
-                Value = value;
+                Log.Info("No changes changes are to be performed.");
+            }
+            else
+            {
+                //Wait for stack completion
+                
             }
         }
 
+        private Maybe<RunningChangeset> ExecuteChangeset(Func<AmazonCloudFormationClient> factory, StackArn stack,
+            ChangeSetArn changeSet)
+        {
+            try
+            {
+                var changes = factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, new RunningChangeset(stack, changeSet));
+
+                if (changes.Changes.Count == 0)
+                    return Maybe<RunningChangeset>.None;
+
+                factory().ExecuteChangeSet(new ExecuteChangeSetRequest
+                {
+                    ChangeSetName = changeSet.Value,
+                    StackName = stack.Value
+                });
+
+                return new RunningChangeset(stack, changeSet).AsSome();
+            }
+            catch (AmazonCloudFormationException exception)
+            {
+                if (exception.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0011: The AWS account used to perform the operation does not have " +
+                        "the required permissions to update the stack.\n" +
+                        exception.Message + "\n" +
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011");
+                }
+
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0011: An unrecognised exception was thrown while updating a CloudFormation stack.\n" +
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011",
+                    exception);
+            }
+        }
+    }
+    
+    public class VariableOutput
+    {
+        public VariableOutput(string name, string value)
+        {
+            Name = name;
+            Value = value;
+        }
+        
+        public string Name { get; }
+        public string Value { get; }
+    }
+    
+    public class CloudFormationExecutionContext
+    {
+        public CloudFormationTemplate Template { get; }
+        
         private readonly Func<AmazonCloudFormationClient> client;
         private readonly TemplateService templateService;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly ITemplateReplacement templateReplacement;
-        private readonly string templateFile;
-        private readonly string templateParameterFile;
-        private readonly string package;
 
-        private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
-
-        public bool FilesInPackage => !string.IsNullOrWhiteSpace(package);
-
-        public CloudFormationExecutionContext(Func<AmazonCloudFormationClient> client,
-            TemplateService templateService,
-            string templateFile,
-            string templateParameterFile,
-            string package)
+        public CloudFormationExecutionContext(
+            Func<AmazonCloudFormationClient> client,
+            CloudFormationTemplate template)
         {
             this.client = client;
-            this.templateService = templateService;
-            this.templateFile = templateFile;
-            this.templateParameterFile = templateParameterFile;
-            this.package = package;
+            Template = template;
         }
-
-        public string ResolveAndSubstituteTemplate(CalamariVariableDictionary variables)
-        {
-            Guard.NotNull(variables, "Variables may not be null");
-            return templateService.GetSubstitutedTemplateContent(templateFile, FilesInPackage, variables);
-        }
-
-        /// <summary>
-        /// Look at the template file and see if there were any outputs.
-        /// </summary>
-        /// <returns>true if the Outputs marker was found, and false otherwise</returns>
-        public bool TemplateFileContainsOutputs(CalamariVariableDictionary variables)
-        {
-            Guard.NotNull(variables, "Variables may not be null");
-            return templateService.GetTemplateContent(templateFile, FilesInPackage, variables)
-                .Map(OutputsRe.IsMatch);
-        }
-
-        public (IReadOnlyList<StackOutput> result, bool success) GetOutputVariables(
-            Func<Maybe<Stack>> query, CalamariVariableDictionary variables)
+        
+        public (IReadOnlyList<VariableOutput> result, bool success) GetOutputVariables(
+            Func<Maybe<Stack>> query)
         {
             Guard.NotNull(query, "Query for stack may not be null");
 
-            List<StackOutput> ConvertStackOutputs(Stack stack) =>
-                stack.Outputs.Select(p => new StackOutput(p.OutputKey, p.OutputValue)).ToList();
+            List<VariableOutput> ConvertStackOutputs(Stack stack) =>
+                stack.Outputs.Select(p => new VariableOutput(p.OutputKey, p.OutputValue)).ToList();
 
             return query().Select(ConvertStackOutputs)
-                .Map(result => (result: result.SomeOr(new List<StackOutput>()), success: !TemplateFileContainsOutputs(variables) || result.Some()));
+                .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: Template.HasOutputs || result.Some()));
         }
 
-        public void PipeOutputs(IEnumerable<StackOutput> outputs, CalamariVariableDictionary variables, string name = "AwsOutputs")
+        public void PipeOutputs(IEnumerable<VariableOutput> outputs, CalamariVariableDictionary variables, string name = "AwsOutputs")
         {
             Guard.NotNull(variables, "Variables may not be null");
 
@@ -234,80 +348,6 @@ namespace Calamari.Aws.Deployment.Conventions
                 // Wait for a bit for and try again
                 Thread.Sleep(waitPeriod);
             }
-        }
-
-        public List<Parameter> GetParameters(CalamariVariableDictionary variables)
-        {
-            Guard.NotNull(variables, "variables can not be null");
-
-            if (string.IsNullOrWhiteSpace(templateParameterFile))
-            {
-                return null;
-            }
-
-            return templateService.GetSubstitutedTemplateContent(templateParameterFile, FilesInPackage, variables)
-                .Map(JsonConvert.DeserializeObject<List<Parameter>>);
-        }
-
-    }
-
-
-    public class CreateCloudFormationChangeSetConvention : IInstallConvention
-    {
-        private readonly Func<AmazonCloudFormationClient> clientFactory;
-        private readonly CloudFormationExecutionContext context;
-        private readonly Func<RunningDeployment, StackArn> stackProvider;
-
-        public CreateCloudFormationChangeSetConvention(Func<AmazonCloudFormationClient> clientFactory,
-            Func<RunningDeployment, StackArn> stackProvider,
-            ICalamariFileSystem fileSystem,
-            CloudFormationExecutionContext context
-            )
-        {
-            Guard.NotNull(stackProvider, "Stack provider should not be null");
-            Guard.NotNull(context, "Execution context may not be null");
-            this.clientFactory = clientFactory;
-            this.context = context;
-        }
-
-        public void Install(RunningDeployment deployment)
-        {
-            var stack = stackProvider(deployment);
-            Guard.NotNull(stack, "The stack must be provided to create a change set");
-
-            var name = $"octo-{Guid.NewGuid():N}";
-            var status = clientFactory.GetStackStatus(stack, StackStatus.DoesNotExist);
-
-            var request = CreateChangesetRequest(
-                status, 
-                name, 
-                context.ResolveAndSubstituteTemplate(deployment.Variables), 
-                stack, 
-                context.GetParameters(deployment.Variables)
-            );
-
-            var result = clientFactory().CreateChangeSet(request);
-            
-            Log.SetOutputVariable("ChangesetId", result.Id);
-            Log.SetOutputVariable("StackId", result.StackId);
-        }
-
-        public CreateChangeSetRequest CreateChangesetRequest(StackStatus status, string changesetName, string template, StackArn stack, List<Parameter> parameters)
-        {
-            return new CreateChangeSetRequest
-            {
-                StackName = stack.Value,
-                TemplateBody = template,
-                Parameters = parameters,
-                ChangeSetName = changesetName,
-                ChangeSetType = status == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE
-            };
-        }
-
-        private void PollStackEventsToCompletion(Func<AmazonCloudFormationClient> clientFactory,
-            StackArn stack)
-        {
-            clientFactory.GetLastStackEvent(stack);
         }
     }
 
