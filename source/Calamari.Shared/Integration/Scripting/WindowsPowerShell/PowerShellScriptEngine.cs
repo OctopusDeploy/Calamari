@@ -12,7 +12,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     {
         public ScriptSyntax[] GetSupportedTypes()
         {
-            return new[] {ScriptSyntax.Powershell};
+            return new[] {ScriptSyntax.PowerShell};
         }
 
         public CommandResult Execute(
@@ -70,9 +70,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             var copyToParent = Path.Combine(
                 variables.Get(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Project.Name)),
-                variables.Get(SpecialVariables.Deployment.Id),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Action.Name))
+                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Project.Name, "Non-Project")),
+                variables.Get(SpecialVariables.Deployment.Id, "Non-Deployment"),
+                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Action.Name, "Non-Action"))
             );
 
             string copyTo;

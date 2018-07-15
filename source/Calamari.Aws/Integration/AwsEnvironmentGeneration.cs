@@ -230,14 +230,14 @@ namespace Calamari.Aws.Integration
         public bool Enabled { get; } = true;
         public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(
-            Script script, 
-            CalamariVariableDictionary variables, 
+        public CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
+            CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars)
         {
             return NextWrapper.ExecuteScript(
-                script, 
+                script, scriptSyntax, 
                 variables, 
                 commandLineRunner,
                 environmentVars.MergeDictionaries(EnvironmentVars));

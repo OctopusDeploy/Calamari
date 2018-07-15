@@ -182,16 +182,17 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting, [string]$azureWebAppSlot) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
+    $azureWebAppSlot = Convert-ToServiceMessageParameter -name "webAppSlot" -value $azureWebAppSlot
     $azureResourceGroupName = Convert-ToServiceMessageParameter -name "resourceGroupName" -value $azureResourceGroupName
     $octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
-	$parameters = $name, $azureWebApp, $azureResourceGroupName, $octopusAccountIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
+	$parameters = $name, $azureWebApp, $azureWebAppSlot, $azureResourceGroupName, $octopusAccountIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
 
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
 }

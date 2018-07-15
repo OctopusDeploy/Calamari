@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Calamari.Commands.Support;
+﻿using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -13,6 +12,7 @@ using Calamari.Integration.Substitutions;
 using Octostache;
 using System;
 using System.IO;
+using System.Linq;
 using Calamari.Modules;
 using Calamari.Util;
 
@@ -34,7 +34,7 @@ namespace Calamari.Commands
             CalamariVariableDictionary variables,
             CombinedScriptEngine scriptEngine)
         {
-            Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
             Options.Add("scriptParameters=", $"Parameters to pass to the script.", v => scriptParametersArg = v);
             VariableDictionaryUtils.PopulateOptions(Options);
@@ -52,30 +52,18 @@ namespace Calamari.Commands
             var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var semaphore = SemaphoreFactory.Get();
             journal = new DeploymentJournal(filesystem, semaphore, variables);
-            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);            
+            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
 
             ValidateArguments();
-            var scriptFilePath = DetermineScriptFilePath(variables);
-            
-            GrabAdditionalPackages(variables, filesystem);
 
-            if (WasProvided(packageFile))
+            var result = ExecuteScriptFromPackage() ??
+                         ExecuteScriptFromVariables() ??
+                         ExecuteScriptFromParameters();
+
+            if (result.HasValue)
             {
-                return ExecuteScriptFromPackage(scriptFilePath);
+                return result.Value;
             }
-
-            var scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBody);
-            if (WasProvided(scriptBody))
-            {
-                return ExecuteScriptFromVariables(scriptFilePath, scriptBody);
-            }
-
-            if (WasProvided(scriptFileArg))
-            {
-                // Fallback for old argument usage. Use the file path provided by the calamari arguments
-                // Variable substitution will not take place since we dont want to modify the file provided
-                return ExecuteScriptFromParameters();
-        }
 
             throw new CommandException("No script details provided.\r\n" +
                                        $"Pleave provide the script either via the `{SpecialVariables.Action.Script.ScriptBody}` variable, " +
@@ -95,28 +83,99 @@ namespace Calamari.Commands
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
         }
 
-        private int ExecuteScriptFromParameters()
+
+        /// <summary>
+        /// Fallback for old argument usage. Use the file path provided by the calamari arguments
+        /// Variable substitution will not take place since we dont want to modify the file provided
+        /// </summary>
+        /// <returns></returns>
+        private int? ExecuteScriptFromParameters()
         {
+            if (!WasProvided(scriptFileArg))
+            {
+                return null;
+            }
+
             var scriptFilePath = Path.GetFullPath(scriptFileArg);
-            InvokeScript(scriptFilePath, variables);
             return InvokeScript(scriptFilePath, variables);
         }
 
-        private int ExecuteScriptFromVariables(string scriptFilePath, string scriptBody)
+        private int? ExecuteScriptFromVariables()
         {
-            using (new TemporaryFile(scriptFilePath))
+            if (!TryGetScriptFromVariables(out var scriptBody, out var scriptFileName, out var syntax))
+            {
+                return null;
+            }
+            var fullPath = Path.GetFullPath(scriptFileName);
+            
+            using (new TemporaryFile(fullPath))
             {
                 //Bash files need SheBang as first few characters. This does not play well with BOM characters
-                var scriptBytes = DetermineSyntax(variables) == ScriptSyntax.Bash
+                var scriptBytes = syntax == ScriptSyntax.Bash
                     ? scriptBody.EncodeInUtf8NoBom()
                     : scriptBody.EncodeInUtf8Bom();
-                File.WriteAllBytes(scriptFilePath, scriptBytes);                
-                return InvokeScript(scriptFilePath, variables);
+                File.WriteAllBytes(fullPath, scriptBytes);
+
+                return InvokeScript(fullPath, variables);
             }
         }
 
-        private int ExecuteScriptFromPackage(string scriptFilePath)
+        private bool TryGetScriptFromVariables(out string scriptBody, out string scriptFileName, out ScriptSyntax syntax)
         {
+            scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBody);
+            if (WasProvided(scriptBody))
+            {
+                scriptFileName = variables.Get(SpecialVariables.Action.Script.ScriptFileName);
+                if (WasProvided(scriptFileName))
+                {
+                    syntax = ScriptTypeExtensions.FileNameToScriptType(scriptFileName);
+                 
+                    return true;
+                }
+
+                var scriptSyntax = variables.Get(SpecialVariables.Action.Script.Syntax);
+                if (scriptSyntax == null)
+                {
+                    syntax = scriptEngine.GetSupportedTypes().FirstOrDefault();
+                    Log.Warn($"No script syntax provided. Defaulting to first known supported type {syntax}");
+                }
+                else if (!Enum.TryParse(scriptSyntax, out syntax))
+                {
+                    throw new CommandException($"Unknown script syntax `{scriptSyntax}` provided");
+                }
+
+                scriptFileName = "Script." + syntax.FileExtension();
+                return true;
+            }
+
+            // Try get any supported script body variable
+            foreach (var supportedSyntax in scriptEngine.GetSupportedTypes())
+            {
+                scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBodyBySyntax(supportedSyntax));
+                if (scriptBody == null)
+                {
+                    continue;
+                }
+
+                scriptFileName = "Script." + supportedSyntax.FileExtension();
+                syntax = supportedSyntax;
+                return true;
+            }
+
+            scriptBody = null;
+            syntax = 0;
+            scriptFileName = null;
+            return false;
+        }
+
+        private int? ExecuteScriptFromPackage()
+        {
+            if (!WasProvided(packageFile))
+            {
+                return null;
+            }
+
+            var scriptFilePath = DetermineScriptFilePath(variables);
             ExtractScriptFromPackage(variables);
             SubstituteVariablesInScript(scriptFilePath, variables);
             return InvokeScript(scriptFilePath, variables);
@@ -158,7 +217,7 @@ namespace Calamari.Commands
                 return fileArgSyntax;
             }
 
-            return variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptSyntax.Powershell);
+            return variables.GetEnum(SpecialVariables.Action.Script.Syntax, ScriptSyntax.PowerShell);
         }
 
         private string DetermineScriptFilePath(VariableDictionary variables)
@@ -194,6 +253,7 @@ namespace Calamari.Commands
 
         private int InvokeScript(string scriptFileName, CalamariVariableDictionary variables)
         {
+
             // Any additional files extracted from the packages or sent by the action handler are processed here
             SubstituteVariablesInAdditionalFiles();
 
@@ -207,6 +267,7 @@ namespace Calamari.Commands
             var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", scriptFileName);
             var result = scriptEngine.Execute(new Script(scriptFileName, scriptParametersArg ?? scriptParameters), variables, runner);
+
             var shouldWriteJournal = CanWriteJournal(variables) && deployment != null && !deployment.SkipJournal;
 
             if (result.ExitCode == 0 && result.HasErrors && variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
@@ -226,49 +287,6 @@ namespace Calamari.Commands
         bool WasProvided(string value)
         {
             return !string.IsNullOrEmpty(value);
-        }
-        
-        static void GrabAdditionalPackages(VariableDictionary variables, ICalamariFileSystem fileSystem)
-        {
-            var packageReferenceNames = variables.GetIndexes(SpecialVariables.Packages.PackageCollection);
-
-            foreach (var packageReferenceName in packageReferenceNames)
-            {
-                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
-                
-                var packageOriginalPath = variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName));
-                
-                if (string.IsNullOrWhiteSpace(packageOriginalPath))
-                {
-                    Log.Verbose($"Package '{packageReferenceName}' was not acquired");
-                    continue;
-                }
-                
-                packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName)));
-
-                // In the case of container images, the original path is not a file-path.  We won't try and extract or move it.
-                if (!fileSystem.FileExists(packageOriginalPath))
-                    continue;
-
-                var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(packageReferenceName));
-
-                if (shouldExtract)
-                {
-                    var extractionPath = Path.Combine(Environment.CurrentDirectory, sanitizedPackageReferenceName);
-                    Log.Verbose($"Extracting package '{packageOriginalPath}' to '{extractionPath}'");
-                    var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
-                    extractor.GetExtractor(packageOriginalPath).Extract(packageOriginalPath, extractionPath, true);
-                    variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), extractionPath);
-                }
-                else
-                {
-                    var localPackageFileName = sanitizedPackageReferenceName + Path.GetExtension(packageOriginalPath);
-                    var destinationFileName = Path.Combine(Environment.CurrentDirectory, localPackageFileName);
-                    Log.Verbose($"Copying package: '{packageOriginalPath}' -> '{destinationFileName}'");
-                    fileSystem.CopyFile(packageOriginalPath, destinationFileName);
-                    variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), destinationFileName);
-                }
-            }
         }
 
         private bool CanWriteJournal(VariableDictionary variables)

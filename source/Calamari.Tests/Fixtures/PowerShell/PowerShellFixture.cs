@@ -7,6 +7,7 @@ using Assent;
 using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -483,10 +484,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
-        public void ThrowsExceptionOnNixOrMac()
+        public void PowershellThrowsExceptionOnNixOrMac()
         {
             var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("Powershell scripts are not supported on this platform");
+            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
         }
 
         [Test]
@@ -497,6 +498,29 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("45\r\n226\r\n128\r\n147");
+        }
+
+
+        [Test]
+        public void ShouldAllowPlatformSpecificScriptToExecute()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput(CalamariEnvironment.IsRunningOnWindows ? "Hello Powershell" : "Hello Bash");
+            }
         }
     }
 }

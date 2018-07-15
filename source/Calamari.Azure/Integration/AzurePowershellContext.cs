@@ -41,8 +41,8 @@ namespace Calamari.Azure.Integration
 
         public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(
-            Script script,
+        public CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars)
@@ -76,14 +76,14 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
                 {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
                 }
             }
         }
