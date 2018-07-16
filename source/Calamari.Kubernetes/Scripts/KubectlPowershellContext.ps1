@@ -3,12 +3,24 @@
 ##
 ## This script is used to configure the default kubectl context for this step.
 
+function GetKubectl() {
+	$Kubectl_Exe = $OctopusParameters["Octopus.Action.Kubernetes.CustomKubectlExecutable"]
+	if ([string]::IsNullOrEmpty($Kubectl_Exe)) {
+		$Kubectl_Exe = "kubectl"
+	} else {
+		$Custom_Exe_Exists = Test-Path $Kubectl_Exe -PathType Leaf
+		if(-not $Custom_Exe_Exists) {
+			Write-Error "The custom kubectl location of $Kubectl_Exe does not exist"
+			Exit 1
+		}
+	}
+}
+
 function SetupContext {
 	$K8S_ClusterUrl=$OctopusParameters["Octopus.Action.Kubernetes.ClusterUrl"]
 	$K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
 	$K8S_SkipTlsVerification=$OctopusParameters["Octopus.Action.Kubernetes.SkipTlsVerification"]
-	$K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]
-	$Kubectl_Exe = $OctopusParameters["Octopus.Action.Kubernetes.CustomKubectlExecutable"]
+	$K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]	
 	
 	if([string]::IsNullOrEmpty($K8S_ClusterUrl)){
 		Write-Error "Kubernetes cluster URL is missing"
@@ -27,17 +39,6 @@ function SetupContext {
 	 if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
         $K8S_SkipTlsVerification = $false;
     }
-
-	if ([string]::IsNullOrEmpty($Kubectl_Exe)) {
-		$Kubectl_Exe = "kubectl"
-	} else {
-		$Custom_Exe_Exists = Test-Path $Kubectl_Exe -PathType Leaf
-		if(-not $Custom_Exe_Exists) {
-			Write-Error "The custom kubectl location of $Kubectl_Exe does not exist"
-			Exit 1
-		}
-		New-Alias kubectl $Kubectl_Exe
-	}
 
     if($K8S_AccountType -eq "Token") {
         Write-Host "Creating kubectl context to $K8S_ClusterUrl using a Token"
@@ -77,6 +78,7 @@ function CreateNamespace {
 }
 
 Write-Host "##octopus[stdout-verbose]"
+GetKubectl
 CreateNamespace
 ConfigureKubeCtlPath
 SetupContext
