@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Calamari.Aws.Integration.S3;
+using Calamari.Aws.Deployment;
 using Calamari.Aws.Serialization;
 using Calamari.Integration.Processes;
 using Calamari.Serialization;
@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Aws.Deployment.Conventions
+namespace Calamari.Aws.Integration.S3
 {
     public class VariableS3TargetOptionsProvider : IProvideS3TargetOptions
     {

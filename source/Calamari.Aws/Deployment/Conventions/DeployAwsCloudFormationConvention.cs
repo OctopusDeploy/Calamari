@@ -12,6 +12,7 @@ using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
+using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;

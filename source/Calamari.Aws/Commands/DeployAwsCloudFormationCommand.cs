@@ -14,6 +14,7 @@ using System.Linq;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
+using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.Util;
 
@@ -93,7 +94,7 @@ namespace Calamari.Aws.Commands
                     new DescribeCloudFormationChangeSetConvention( ClientFactory, StackProvider, ChangesetProvider),
                     new ExecuteCloudFormationChangeSetConvention(ClientFactory, StackProvider, ChangesetProvider,  stackEventLogger, waitForComplete)
                         .When(ExecuteChangesetsImmediately),
-                    new StackOutputsAsVariablesConvention(ClientFactory, StackProvider, template)
+                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, StackProvider, template)
                         .When(ExecuteChangesetsImmediately)
                 ).When(ChangesetsEnabled),
                 
