@@ -97,11 +97,14 @@ namespace Calamari.Aws.Commands
                     new CloudFormationOutputsAsVariablesConvention(ClientFactory, StackProvider, template)
                         .When(ExecuteChangesetsImmediately)
                 ).When(ChangesetsEnabled),
-                
+             
                 //Create or update stack using a template (no changesets)
                 new AggregateInstallationConvention(
                         new  DeployAwsCloudFormationConvention(
+                            ClientFactory,
                             template,
+                            stackEventLogger,
+                            StackProvider,
                             waitForComplete,
                             stackName,
                             iamCapabilities,

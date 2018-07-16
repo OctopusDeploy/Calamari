@@ -35,19 +35,26 @@ namespace Calamari.Aws.Integration.CloudFormation
                 "DELETE_FAILED",
                 "CREATE_FAILED"
             };
-    
-        public static DescribeChangeSetResponse DescribeChangeSet(this Func<AmazonCloudFormationClient> factory, StackArn stack, ChangeSetArn changeSet)
+
+        public static DescribeChangeSetResponse DescribeChangeSet(this Func<AmazonCloudFormationClient> factory,
+            StackArn stack, ChangeSetArn changeSet)
         {
             return factory().Map(client => client.DescribeChangeSet(new DescribeChangeSetRequest
             {
-                ChangeSetName = changeSet.Value, 
+                ChangeSetName = changeSet.Value,
                 StackName = stack.Value
             }));
         }
 
-        public static DescribeChangeSetResponse WaitForChangeSetCompletion(this Func<AmazonCloudFormationClient> clientFactory, TimeSpan waitPeriod, RunningChangeSet runningChangeSet)
+        public static DescribeChangeSetResponse WaitForChangeSetCompletion(
+            this Func<AmazonCloudFormationClient> clientFactory, TimeSpan waitPeriod, RunningChangeSet runningChangeSet)
         {
-            var completion = new HashSet<ChangeSetStatus> { ChangeSetStatus.FAILED, ChangeSetStatus.CREATE_COMPLETE, ChangeSetStatus.DELETE_COMPLETE };
+            var completion = new HashSet<ChangeSetStatus>
+            {
+                ChangeSetStatus.FAILED,
+                ChangeSetStatus.CREATE_COMPLETE,
+                ChangeSetStatus.DELETE_COMPLETE
+            };
             while (true)
             {
                 var result = clientFactory.DescribeChangeSet(runningChangeSet.Stack, runningChangeSet.ChangeSet);
@@ -65,24 +72,64 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// </summary>
         /// <param name="predicate">The optional predicate used to filter events</param>
         /// <returns>The stack event</returns>
-        public static StackEvent GetLastStackEvent(this Func<AmazonCloudFormationClient> clientFactory, StackArn stack, Func<StackEvent, bool> predicate = null)
+        public static Maybe<StackEvent> GetLastStackEvent(this Func<AmazonCloudFormationClient> clientFactory, StackArn stack,
+            Func<StackEvent, bool> predicate = null)
         {
-            var client = clientFactory();
+            try
+            {
+                return clientFactory()
+                    .DescribeStackEvents(new DescribeStackEventsRequest {StackName = stack.Value})
+                    .Map(response => response?.StackEvents
+                        .OrderByDescending(stackEvent => stackEvent.Timestamp)
+                        .FirstOrDefault(stackEvent => predicate == null || predicate(stackEvent))
+                    ).AsSome();
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0002: The AWS account used to perform the operation does not have " +
+                        "the required permissions to query the current state of the CloudFormation stack. " +
+                        "This step will complete without waiting for the stack to complete, and will not fail if the " +
+                        "stack finishes in an error state.\n" +
+                        ex.Message + "\n" +
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0002");
+                }
 
-            return client.DescribeStackEvents(new DescribeStackEventsRequest { StackName = stack.Value })
-                .Map(response => response?.StackEvents
-                    .OrderByDescending(stackEvent => stackEvent.Timestamp)
-                    .FirstOrDefault(stackEvent => predicate == null || predicate(stackEvent))
-                );
+                return Maybe<StackEvent>.None;
+            }
         }
 
         public static Stack DescribeStack(this Func<AmazonCloudFormationClient> clientFactory, StackArn stack)
         {
-            return clientFactory()
-                // The client becomes the result of the API call
-                .Map(client => client.DescribeStacks(new DescribeStacksRequest { StackName = stack.Value }))
-                // Get the first stack
-                .Map(response => response.Stacks.FirstOrDefault());
+            try
+            {
+                return clientFactory()
+                    // The client becomes the result of the API call
+                    .Map(client => client.DescribeStacks(new DescribeStacksRequest {StackName = stack.Value}))
+                    // Get the first stack
+                    .Map(response => response.Stacks.FirstOrDefault());
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0004: The AWS account used to perform the operation does not have " +
+                        "the required permissions to describe the CloudFormation stack. " +
+                        "This means that the step is not able to generate any output variables.\n" +
+                        ex.Message + "\n" +
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004",
+                        ex);
+                }
+
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005",
+                    ex);
+                
+            }
         }
 
 
@@ -134,19 +181,20 @@ namespace Calamari.Aws.Integration.CloudFormation
         public static string GetWebExceptionMessage(this AmazonServiceException exception)
         {
             return (exception.InnerException as WebException)?
-                    .Response?
-                    .GetResponseStream()?
-                    .Map(stream => new StreamReader(stream).ReadToEnd())
-                    .Map(message => "An exception was thrown while contacting the AWS API.\n" + message)
-                    ?? "An exception was thrown while contacting the AWS API.";
+                   .Response?
+                   .GetResponseStream()?
+                   .Map(stream => new StreamReader(stream).ReadToEnd())
+                   .Map(message => "An exception was thrown while contacting the AWS API.\n" + message)
+                   ?? "An exception was thrown while contacting the AWS API.";
         }
 
-        public static void WaitForStackToComplete(this Func<AmazonCloudFormationClient> clientFactory, TimeSpan waitPeriod, StackArn stack, Func<StackEvent, bool> predicate)
+        public static void WaitForStackToComplete(this Func<AmazonCloudFormationClient> clientFactory,
+            TimeSpan waitPeriod, StackArn stack, Func<Maybe<StackEvent>, bool> predicate)
         {
             Guard.NotNull(predicate, "Predicate should not be null");
             Guard.NotNull(stack, "Stack should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
-            
+
             var status = clientFactory.GetStackStatus(stack, StackStatus.DoesNotExist);
             if (status == StackStatus.DoesNotExist || status == StackStatus.Completed)
             {
@@ -168,8 +216,63 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <returns>true if the status indcates a failed create or update, and false otherwise</returns>
         public static Maybe<bool> IndicatesSuccess(this StackEvent status)
         {
-            return status.ToMaybe().Select(x=> !UnsuccessfulStackEvents.Contains(x.ResourceStatus.Value));
+            return status.ToMaybe().Select(x => !UnsuccessfulStackEvents.Contains(x.ResourceStatus.Value));
         }
-        
+
+        public static void DeleteStack(this Func<AmazonCloudFormationClient> clientFactory, StackArn stack)
+        {
+            Guard.NotNull(clientFactory, "clientFactory should not be null");
+            Guard.NotNull(stack, "Stack should not be null");
+
+            try
+            {
+                clientFactory().Map(client =>
+                    client.DeleteStack(new DeleteStackRequest {StackName = stack.Value}));
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0009: The AWS account used to perform the operation does not have " +
+                        "the required permissions to delete the stack.\n" +
+                        ex.Message + "\n" +
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0009");
+                }
+
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0010: An unrecognised exception was thrown while deleting a CloudFormation stack.\n" +
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010",
+                    ex);
+            }
+        }
+
+        public static string CreateStack(this Func<AmazonCloudFormationClient> clientFactory,
+            CreateStackRequest request)
+        {
+            try
+            {
+                return clientFactory()
+                    .Map(client => client.CreateStack(request))
+                    // Narrow the response to the stack ID
+                    .Map(response => response.StackId);
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0007: The AWS account used to perform the operation does not have " +
+                        "the required permissions to create the stack.\n" +
+                        ex.Message + "\n" +
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0007");
+                }
+
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0008: An unrecognised exception was thrown while creating a CloudFormation stack.\n" +
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0008",
+                    ex);
+            }
+        }
     }
 }

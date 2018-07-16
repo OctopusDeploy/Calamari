@@ -59,7 +59,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     logger.Log(status);
                     logger.LogRollbackError(status, x => clientFactory.GetLastStackEvent(stack, x));
-                    return status.ToMaybe().SelectValueOr(x =>
+                    return status.SelectValueOr(x =>
                         (x.ResourceStatus.Value.EndsWith("_COMPLETE") ||
                          x.ResourceStatus.Value.EndsWith("_FAILED")) &&
                         x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);

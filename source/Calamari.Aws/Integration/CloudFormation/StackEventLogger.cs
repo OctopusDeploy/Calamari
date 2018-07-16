@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Calamari.Aws.Exceptions;
 using Octopus.CoreUtilities;
@@ -18,7 +19,13 @@ namespace Calamari.Aws.Integration.CloudFormation
             this.log = log;
         }
 
-        public void Warn(string errorCode, string message)
+        /// <summary>
+        /// Display an warning message to the user (without duplicates)
+        /// </summary>
+        /// <param name="errorCode">The error message code</param>
+        /// <param name="message">The error message body</param>
+        /// <returns>true if it was displayed, and false otherwise</returns>
+        public bool Warn(string errorCode, string message)
         {
             if (!warnings.Contains(errorCode))
             {
@@ -26,7 +33,10 @@ namespace Calamari.Aws.Integration.CloudFormation
                 log.Warn( errorCode + ": " + message + "\n" +
                           "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#" +
                           errorCode.ToLower());
+                return true;
             }
+
+            return false;
         }
         
         
@@ -35,10 +45,9 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// writing the same message more than once, do it as verbose logging.
         /// </summary>
         /// <param name="status">The current status of the stack</param>
-        public void Log(StackEvent status)
+        public void Log(Maybe<StackEvent> status)
         {
-            var statusMessage =
-                $"{status?.ResourceType.Map(type => type + " ")}{status?.ResourceStatus.Value ?? "Does not exist"}";
+            var statusMessage = status.SelectValueOrDefault(x => $"{x.ResourceType} {x.ResourceStatus.Value ?? "Does not exist"}");
             if (statusMessage != lastMessage)
             {
                 log.Info($"Current stack state: {statusMessage}");
@@ -58,13 +67,13 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <param name="expectSuccess">True if the status should indicate success</param>
         /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         public void LogRollbackError(
-            StackEvent status,
-            Func<Func<StackEvent, bool>, StackEvent> query,
+            Maybe<StackEvent> status,
+            Func<Func<StackEvent, bool>, Maybe<StackEvent>> query,
             bool expectSuccess = true,
             bool missingIsFailure = true)
         {
-            var isUnsuccessful = status.IndicatesSuccess().SelectValueOr(x => x, missingIsFailure);
-            var isStackType = status?.ResourceType.Equals("AWS::CloudFormation::Stack") ?? true;
+            var isUnsuccessful = status.Select(x => x.IndicatesSuccess()).SelectValueOr(x => x.Value, missingIsFailure);
+            var isStackType = status.SelectValueOr(x => x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
 
             if (expectSuccess && isUnsuccessful && isStackType)
             {
@@ -73,10 +82,11 @@ namespace Calamari.Aws.Integration.CloudFormation
                     "Review the stack in the AWS console to find any errors that may have occured during deployment.");
                 try
                 {
-                    var progressStatus = query(stack => stack.ResourceStatusReason != null);
-                    if (progressStatus != null)
+                    var progressStatus = query(stack => stack?.ResourceStatusReason != null);
+                    
+                    if (progressStatus.Some())
                     {
-                        log.Warn(progressStatus.ResourceStatusReason);
+                        log.Warn(progressStatus.Value.ResourceStatusReason);
                     }
                 }
                 catch (PermissionException)
