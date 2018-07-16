@@ -1,12 +1,15 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
+using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
+using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -55,6 +58,102 @@ namespace Calamari.Aws.Deployment.Conventions
             Name = name;
         }
     }
+
+    public class DeleteCloudFormationStackConvention : IInstallConvention
+    {
+        private readonly Func<AmazonCloudFormationClient> clientFactory;
+        private readonly StackEventLogger logger;
+        private readonly Func<RunningDeployment, StackArn> stackProvider;
+        private readonly IAwsEnvironmentGeneration environment;
+        private readonly bool waitForComplete;
+
+        public DeleteCloudFormationStackConvention(
+            IAwsEnvironmentGeneration environment,
+            StackEventLogger logger,
+            Func<AmazonCloudFormationClient> clientFactory,
+            Func<RunningDeployment, StackArn> stackProvider,
+            bool waitForComplete
+            )
+        {
+            Guard.NotNull(clientFactory, "Client must not be null");
+            Guard.NotNull(stackProvider, "Stack provider must not be null");
+            Guard.NotNull(environment, "Aws environment generation may not be null");
+            
+            
+            this.clientFactory = clientFactory;
+            this.logger = logger;
+            this.stackProvider = stackProvider;
+            this.waitForComplete = waitForComplete;
+            this.environment = environment;
+        }
+        
+        public void Install(RunningDeployment deployment)
+        {
+            Guard.NotNull(deployment, "deployment can not be null");
+
+            var stack = stackProvider(deployment);
+
+            if (clientFactory.GetStackStatus(stack, StackStatus.Completed) != StackStatus.DoesNotExist)
+            {
+               DeleteCloudFormation(stack);
+            }
+            else
+            {
+                Log.Info(
+                    $"No stack called {stack.Value} exists in region {environment.AwsRegion.SystemName}");
+            }
+
+            if (waitForComplete)
+            {
+                clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, status =>
+                {
+                    logger.Log(status);
+                    logger.LogRollbackError(status, x => clientFactory.GetLastStackEvent(stack, x), true, false);
+                    return status.ToMaybe().SelectValueOr(x => 
+                        (x.ResourceStatus.Value.EndsWith("_COMPLETE") ||
+                         x.ResourceStatus.Value.EndsWith("_FAILED")) &&
+                        x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
+                });
+            }
+        }
+
+        private void DeleteCloudFormation(StackArn stack)
+        {
+            try
+            {
+                clientFactory()
+                    // Client becomes the API response
+                    .Map(client => client.DeleteStack(new DeleteStackRequest {StackName = stack.Value}))
+                    // Log the response details
+                    .Tee(status =>
+                        Log.Info(
+                            $"Deleted stack called {stack.Value} in region {environment.AwsRegion.SystemName}"));
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0009: The AWS account used to perform the operation does not have " +
+                        "the required permissions to delete the stack.\n" +
+                        ex.Message + "\n" +
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0009");
+                }
+
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0010: An unrecognised exception was thrown while deleting a CloudFormation stack.\n" +
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0010",
+                    ex);
+            }
+            catch (AmazonServiceException ex)
+            {
+                ex.GetWebExceptionMessage()
+                    .Tee(message => logger.Warn("AWS-CLOUDFORMATION-ERROR-0014", message));
+                throw ex;
+            }
+        }
+    }
+    
 
     public class CloudFormationParametersFile : ITemplate, ITemplateInputs<Parameter>
     {
@@ -117,9 +216,9 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             var name = $"octo-{Guid.NewGuid():N}";
             
-            if (string.Compare(deployment.Variables[AwsSpecialVariables.Changesets.Generate], "True", StringComparison.OrdinalIgnoreCase) == 0)
+            if (string.Compare(deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Generate], "True", StringComparison.OrdinalIgnoreCase) == 0)
             {
-                deployment.Variables.Set(AwsSpecialVariables.Changesets.Name, name);
+                deployment.Variables.Set(AwsSpecialVariables.CloudFormation.Changesets.Name, name);
             }
 
             Log.SetOutputVariable("ChangesetName", name);
@@ -129,19 +228,18 @@ namespace Calamari.Aws.Deployment.Conventions
     public class CreateCloudFormationChangeSetConvention : IInstallConvention
     {
         private readonly Func<AmazonCloudFormationClient> clientFactory;
-        private readonly CloudFormationExecutionContext context;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
+        private readonly CloudFormationTemplate template;
 
         public CreateCloudFormationChangeSetConvention(Func<AmazonCloudFormationClient> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider,
-            CloudFormationExecutionContext context
+            CloudFormationTemplate template
             )
         {
             Guard.NotNull(stackProvider, "Stack provider should not be null");
-            Guard.NotNull(context, "Execution context may not be null");
             this.clientFactory = clientFactory;
-            this.context = context;
             this.stackProvider = stackProvider;
+            this.template = template;
         }
 
         public void Install(RunningDeployment deployment)
@@ -149,28 +247,28 @@ namespace Calamari.Aws.Deployment.Conventions
             var stack = stackProvider(deployment);
             Guard.NotNull(stack, "The stack must be provided to create a change set");
             
-            var name = deployment.Variables[AwsSpecialVariables.Changesets.Name];
+            var name = deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Name];
             Guard.NotNullOrWhiteSpace(name, "The changeset name was not specified.");
            
             var status = clientFactory.GetStackStatus(stack, StackStatus.DoesNotExist);
 
             var request = CreateChangesetRequest(
                 status, 
-                name, 
-                context.Template.ApplyVariableSubstitution(deployment.Variables), 
+                name,
+                template.ApplyVariableSubstitution(deployment.Variables),
                 stack, 
-                context.Template.Inputs.ToList()
+                template.Inputs.ToList()
             );
 
             var result = clientFactory().CreateChangeSet(request)
-                .Map(x => new RunningChangeset(stack, new ChangeSetArn(x.Id)));
+                .Map(x => new RunningChangeSet(stack, new ChangeSetArn(x.Id)));
             
             clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
             
             Log.SetOutputVariable("ChangesetId", result.ChangeSet.Value);
             Log.SetOutputVariable("StackId", result.Stack.Value);
             
-            deployment.Variables.Set(AwsSpecialVariables.Changesets.Changeset, result.ChangeSet.Value);
+            deployment.Variables.Set(AwsSpecialVariables.CloudFormation.Changesets.Arn, result.ChangeSet.Value);
         }
 
         public CreateChangeSetRequest CreateChangesetRequest(StackStatus status, string changesetName, string template, StackArn stack, List<Parameter> parameters)
@@ -219,15 +317,15 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly Func<AmazonCloudFormationClient> clientFactory;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
         private readonly Func<RunningDeployment, ChangeSetArn> changeSetProvider;
-        private readonly CloudFormationExecutionContext context;
-        private readonly ILog logger;
+        private readonly StackEventLogger logger;
+        private readonly bool waitForComplete;
 
         public ExecuteCloudFormationChangeSetConvention(
             Func<AmazonCloudFormationClient> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider, 
             Func<RunningDeployment, ChangeSetArn> changeSetProvider,
-            CloudFormationExecutionContext context,
-            ILog logger)
+            StackEventLogger logger,
+            bool waitForComplete)
         {
             Guard.NotNull(stackProvider, "Stack provider must not be null");
             Guard.NotNull(changeSetProvider, "Change set provider must nobe null");
@@ -236,8 +334,8 @@ namespace Calamari.Aws.Deployment.Conventions
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;
             this.changeSetProvider = changeSetProvider;
-            this.context = context;
             this.logger = logger;
+            this.waitForComplete = waitForComplete;
         }
 
         public void Install(RunningDeployment deployment)
@@ -255,35 +353,41 @@ namespace Calamari.Aws.Deployment.Conventions
                 Log.Info("No changes changes are to be performed.");
                 return;
             }
-            
-            //If Wait for completion
-            var stackLogger = new StackEventLogger(logger, x => clientFactory.GetLastStackEvent(stack, x));
-            clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, status =>
+
+            if (waitForComplete)
             {
-                stackLogger.Log(status);
-                stackLogger.LogRollbackError(status);
-                return status.ToMaybe().SelectValueOr(x => 
-                    (x.ResourceStatus.Value.EndsWith("_COMPLETE") ||
-                     x.ResourceStatus.Value.EndsWith("_FAILED")) &&
-                     x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
-            });
-            
-            context.GetAndPipeOutputVariablesWithRetry(() => clientFactory.DescribeStack(stack).ToMaybe(), 
-                deployment.Variables, 
-                true, 
-                CloudFormationDefaults.RetryCount, 
-                CloudFormationDefaults.StatusWaitPeriod);
+                clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, status =>
+                {
+                    logger.Log(status);
+                    logger.LogRollbackError(status, x => clientFactory.GetLastStackEvent(stack, x));
+                    return status.ToMaybe().SelectValueOr(x =>
+                        (x.ResourceStatus.Value.EndsWith("_COMPLETE") ||
+                         x.ResourceStatus.Value.EndsWith("_FAILED")) &&
+                        x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
+                });
+            }
         }
 
-        private Maybe<RunningChangeset> ExecuteChangeset(Func<AmazonCloudFormationClient> factory, StackArn stack,
+        private Maybe<RunningChangeSet> ExecuteChangeset(Func<AmazonCloudFormationClient> factory, StackArn stack,
             ChangeSetArn changeSet)
         {
             try
             {
-                var changes = factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, new RunningChangeset(stack, changeSet));
+                var changes = factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, new RunningChangeSet(stack, changeSet));
 
-                if (changes.Changes.Count == 0)
-                    return Maybe<RunningChangeset>.None;
+                if (changes.Status == ChangeSetStatus.FAILED &&
+                    string.Compare(changes.StatusReason, "No updates are to be performed.",
+                        StringComparison.InvariantCultureIgnoreCase) == 0)
+                {
+                    //We don't need the failed changeset to hang around if there are no changes
+                    factory().DeleteChangeSet(new DeleteChangeSetRequest
+                    {
+                        ChangeSetName = changeSet.Value,
+                        StackName = stack.Value
+                    });
+                    
+                    return Maybe<RunningChangeSet>.None;
+                }
 
                 factory().ExecuteChangeSet(new ExecuteChangeSetRequest
                 {
@@ -291,7 +395,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     StackName = stack.Value
                 });
 
-                return new RunningChangeset(stack, changeSet).AsSome();
+                return new RunningChangeSet(stack, changeSet).AsSome();
             }
             catch (AmazonCloudFormationException exception)
             {
@@ -311,29 +415,41 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
     }
-    
-    public class VariableOutput
+
+    public class StackOutputsAsVariablesConvention : IInstallConvention
     {
-        public VariableOutput(string name, string value)
-        {
-            Name = name;
-            Value = value;
-        }
-        
-        public string Name { get; }
-        public string Value { get; }
-    }
-    
-    public class CloudFormationExecutionContext
-    {
-        public CloudFormationTemplate Template { get; }
-        
-        public CloudFormationExecutionContext(
+        private readonly Func<AmazonCloudFormationClient> clientFactory;
+        private readonly Func<RunningDeployment, StackArn> stackProvider;
+        private readonly CloudFormationTemplate template;
+
+        public StackOutputsAsVariablesConvention(
+            Func<AmazonCloudFormationClient> clientFactory,
+            Func<RunningDeployment, StackArn> stackProvider,
             CloudFormationTemplate template)
         {
-            Template = template;
+            Guard.NotNull(clientFactory, "Client factory must not be null");
+            Guard.NotNull(stackProvider, "Stack provider must not be null");
+            Guard.NotNull(template, "Template must not be null");
+            
+            this.clientFactory = clientFactory;
+            this.stackProvider = stackProvider;
+            this.template = template;
         }
-                
+        
+        public void Install(RunningDeployment deployment)
+        {
+            Guard.NotNull(deployment, "Deployment must not be null");
+            var stack = stackProvider(deployment);
+            
+            Guard.NotNull(stack, "The provided stack may not be null.");
+            
+            GetAndPipeOutputVariablesWithRetry(() => clientFactory.DescribeStack(stack).ToMaybe(), 
+                deployment.Variables, 
+                true, 
+                CloudFormationDefaults.RetryCount, 
+                CloudFormationDefaults.StatusWaitPeriod);
+        }
+      
         public (IReadOnlyList<VariableOutput> result, bool success) GetOutputVariables(
             Func<Maybe<Stack>> query)
         {
@@ -343,7 +459,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 stack.Outputs.Select(p => new VariableOutput(p.OutputKey, p.OutputValue)).ToList();
 
             return query().Select(ConvertStackOutputs)
-                .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: Template.HasOutputs || result.Some()));
+                .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: template.HasOutputs || result.Some()));
         }
 
         public void PipeOutputs(IEnumerable<VariableOutput> outputs, CalamariVariableDictionary variables, string name = "AwsOutputs")
@@ -374,13 +490,25 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
     }
+    
+    public class VariableOutput
+    {
+        public VariableOutput(string name, string value)
+        {
+            Name = name;
+            Value = value;
+        }
+        
+        public string Name { get; }
+        public string Value { get; }
+    }
 
-    public class RunningChangeset
+    public class RunningChangeSet
         {
             public StackArn Stack { get; }
             public ChangeSetArn ChangeSet { get; }
 
-            public RunningChangeset(StackArn stack, ChangeSetArn changeSet)
+            public RunningChangeSet(StackArn stack, ChangeSetArn changeSet)
             {
                 Stack = stack;
                 ChangeSet = changeSet;

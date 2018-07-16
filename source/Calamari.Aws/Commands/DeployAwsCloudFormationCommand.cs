@@ -1,4 +1,5 @@
-﻿using Calamari.Aws.Deployment.Conventions;
+﻿using System;
+using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -7,9 +8,12 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
+using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
 using Calamari.Util;
 
@@ -24,11 +28,10 @@ namespace Calamari.Aws.Commands
         private string sensitiveVariablesPassword;
         private string templateFile;
         private string templateParameterFile;
-        private string waitForComplete;
-        private string action;
+        private bool waitForComplete;
         private string stackName;
         private string iamCapabilities;
-        private string disableRollback;
+        private bool disableRollback;
 
         public DeployCloudFormationCommand()
         {
@@ -41,11 +44,12 @@ namespace Calamari.Aws.Commands
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
-            Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete = v);
-            Options.Add("action=", "Deploy if the deployment is to deploy or update a stack, and Delete if it is to remove the stack.", v => action = v);
+            Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", 
+                v => waitForComplete = !bool.FalseString.Equals(v, StringComparison.InvariantCultureIgnoreCase)); //True by default
             Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
             Options.Add("iamCapabilities=", "CAPABILITY_IAM if the stack requires IAM capabilities, or CAPABILITY_NAMED_IAM if the stack requires named IAM caoabilities.", v => iamCapabilities = v);
-            Options.Add("disableRollback=", "True to disable the CloudFormation stack rollback on failure, and False otherwise.", v => disableRollback = v);
+            Options.Add("disableRollback=", "True to disable the CloudFormation stack rollback on failure, and False otherwise.", 
+                v => disableRollback = bool.TrueString.Equals(v, StringComparison.InvariantCultureIgnoreCase)); //False by default
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -67,40 +71,40 @@ namespace Calamari.Aws.Commands
             AmazonCloudFormationClient ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
             StackArn StackProvider (RunningDeployment x) => new StackArn(stackName);
             ChangeSetArn ChangesetProvider (RunningDeployment x) => 
-                new ChangeSetArn(x.Variables[AwsSpecialVariables.Changesets.Changeset]);
+                new ChangeSetArn(x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
 
             var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
             var resolvedParameters = templateResolver.Resolve(templateParameterFile, filesInPackage, variables);
-
             var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem);
             var template = CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem);
-            var context = new CloudFormationExecutionContext(template);
-            
+            var stackEventLogger = new StackEventLogger(new LogWrapper());
+
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
                 
-                new GenerateCloudFormationChangesetNameConvention(),
-                new CreateCloudFormationChangeSetConvention( ClientFactory, StackProvider, context ),
-                new DescribeCloudFormationChangeSetConvention( ClientFactory, StackProvider, ChangesetProvider),
-                new ExecuteCloudFormationChangeSetConvention( ClientFactory, StackProvider, ChangesetProvider, context, new LogWrapper() )
+                //Create or Update the stack using changesets
+                new AggregateInstallationConvention(
+                    new GenerateCloudFormationChangesetNameConvention(),
+                    new CreateCloudFormationChangeSetConvention( ClientFactory, StackProvider, template ),
+                    new DescribeCloudFormationChangeSetConvention( ClientFactory, StackProvider, ChangesetProvider),
+                    new ExecuteCloudFormationChangeSetConvention(ClientFactory, StackProvider, ChangesetProvider,  stackEventLogger, waitForComplete)
+                        .When(ExecuteChangesetsImmediately),
+                    new StackOutputsAsVariablesConvention(ClientFactory, StackProvider, template)
+                        .When(ExecuteChangesetsImmediately)
+                ).When(ChangesetsEnabled),
                 
-                /*
-                new DeployAwsCloudFormationConvention(
-                    templateFile, 
-                    templateParameterFile, 
-                    filesInPackage,
-                    action,
-                    !Boolean.FalseString.Equals(waitForComplete, StringComparison.InvariantCultureIgnoreCase), // true by default
+                //Create or update stack using a template (no changesets)
+                new  DeployAwsCloudFormationConvention(
+                    template,
+                    waitForComplete,
                     stackName,
                     iamCapabilities,
-                    Boolean.TrueString.Equals(disableRollback, StringComparison.InvariantCultureIgnoreCase), // false by default
-                    templateService,
-                    environment)*/
+                    disableRollback,
+                    environment).When(ChangesetsDisabled)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
@@ -110,5 +114,21 @@ namespace Calamari.Aws.Commands
             return 0;
         }
 
+        private bool ExecuteChangesetsImmediately(RunningDeployment deployment)
+        {
+            return string.Compare(deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Mode], "Immediate",
+                       StringComparison.OrdinalIgnoreCase) == 0;
+        }
+
+        private bool ChangesetsEnabled(RunningDeployment deployment)
+        {
+            return deployment.Variables.Get(SpecialVariables.Package.EnabledFeatures)
+                       ?.Contains(AwsSpecialVariables.CloudFormation.Changesets.Feature) ?? false;
+        }
+
+        private bool ChangesetsDisabled(RunningDeployment deployment)
+        {
+            return !ChangesetsEnabled(deployment);
+        }
     }
 }

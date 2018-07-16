@@ -513,7 +513,7 @@ public class ModifiedDeployAwsCloudFormationConvention : IInstallConvention
         /// <param name="template">The CloudFormation template</param>
         /// <param name="parameters">The parameters JSON file</param>
         /// <returns>Reference to the running stack change if there are changes to apply</returns>
-        private Maybe<RunningChangeset> CreateCloudFormation(string template, List<Parameter> parameters)
+        private Maybe<RunningChangeSet> CreateCloudFormation(string template, List<Parameter> parameters)
         {
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
 
@@ -563,14 +563,14 @@ public class ModifiedDeployAwsCloudFormationConvention : IInstallConvention
             }
         }
 
-        private Maybe<RunningChangeset> ApplyStackChange(ChangeSetArn changeSet, StackArn stack)
+        private Maybe<RunningChangeSet> ApplyStackChange(ChangeSetArn changeSet, StackArn stack)
         {
             AmazonCloudFormationClient ClientFactory() => ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration);
             var response = WaitForChangeset(ClientFactory, stack.Value, changeSet.Value);
             
             if (response.Status == ChangeSetStatus.FAILED && response.StatusReason.Contains("No updates are to be performed"))
             {
-                return Maybe<RunningChangeset>.None;
+                return Maybe<RunningChangeSet>.None;
             }
 
             if (response.Status == ChangeSetStatus.FAILED)
@@ -589,7 +589,7 @@ public class ModifiedDeployAwsCloudFormationConvention : IInstallConvention
                 StackName = stack.Value
             });
 
-            return Maybe<RunningChangeset>.Some(new RunningChangeset(stack, changeSet));
+            return Maybe<RunningChangeSet>.Some(new RunningChangeSet(stack, changeSet));
         }
 
         private DescribeChangeSetResponse DescribeChangeSet(Func<AmazonCloudFormationClient> factory, string stackId, string changeSetId)
@@ -659,7 +659,7 @@ public class ModifiedDeployAwsCloudFormationConvention : IInstallConvention
         /// <param name="parameters">The parameters JSON file</param>
         /// <param name="deployment">The current deployment</param>
         /// <returns>stackId</returns>
-        private Maybe<RunningChangeset> UpdateCloudFormation(
+        private Maybe<RunningChangeSet> UpdateCloudFormation(
             RunningDeployment deployment,
             string template,
             List<Parameter> parameters)
@@ -698,7 +698,7 @@ public class ModifiedDeployAwsCloudFormationConvention : IInstallConvention
                     if (DealWithUpdateException(ex))
                     {
                         // There was nothing to update
-                        return Maybe<RunningChangeset>.None;
+                        return Maybe<RunningChangeSet>.None;
                     }
                 }
 

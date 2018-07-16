@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,6 +11,7 @@ using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
+using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -39,16 +41,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
         private const int StatusWaitPeriod = 5000;
         private const int RetryCount = 3;
-        private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
 
-        private readonly string templateFile;
-        private readonly string templateParametersFile;
-        private readonly bool filesInPackage;
+        private readonly CloudFormationTemplate template;
         private readonly bool waitForComplete;
-        private readonly string action;
         private readonly string stackName;
         private readonly bool disableRollback;
-        private readonly TemplateService templateService;
         private readonly List<string> capabilities = new List<string>();
         private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
 
@@ -65,26 +62,18 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly IList<String> displayedWarnings = new List<String>();
 
         public DeployAwsCloudFormationConvention(
-            string templateFile,
-            string templateParametersFile,
-            bool filesInPackage,
-            string action,
+            CloudFormationTemplate template,
             bool waitForComplete,
             string stackName,
             string iamCapabilities,
             bool disableRollback,
-            TemplateService templateService,
             IAwsEnvironmentGeneration awsEnvironmentGeneration)
         {
-            this.templateFile = templateFile;
-            this.templateParametersFile = templateParametersFile;
-            this.filesInPackage = filesInPackage;
+            this.template = template;
             this.waitForComplete = waitForComplete;
-            this.action = action;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
             this.disableRollback = disableRollback;
-            this.templateService = templateService;
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
             if (RecognisedCapabilities.Contains(iamCapabilities))
@@ -96,15 +85,7 @@ namespace Calamari.Aws.Deployment.Conventions
         public void Install(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-
-            if ("Delete".Equals(action, StringComparison.InvariantCultureIgnoreCase))
-            {
-                RemoveCloudFormation(deployment);
-            }
-            else
-            {
-                DeployCloudFormation(deployment);
-            }
+            DeployCloudFormation(deployment);
         }
 
         private void DeployCloudFormation(RunningDeployment deployment)
@@ -112,73 +93,28 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "deployment can not be null");
 
             WaitForStackToComplete(deployment, false);
-            templateService.GetSubstitutedTemplateContent(
-                    templateFile, 
-                    filesInPackage, 
-                    deployment.Variables)
-                .Tee(template => DeployStack(deployment, template));
-
+            DeployStack(deployment, template);
+            
             GetOutputVars(deployment);
-        }
-
-        private void RemoveCloudFormation(RunningDeployment deployment)
-        {
-            Guard.NotNull(deployment, "deployment can not be null");
-
-            if (StackExists(StackStatus.Completed) != StackStatus.DoesNotExist)
-            {
-                DeleteCloudFormation();
-            }
-            else
-            {
-                Log.Info(
-                    $"No stack called {stackName} exists in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
-            }
-
-            if (waitForComplete)
-            {
-                WaitForStackToComplete(deployment, true, false);
-            }
-        }
-
-        /// <summary>
-        /// Convert the parameters file to a list of parameters
-        /// </summary>
-        /// <param name="deployment">The current deployment</param>
-        /// <returns>The AWS parameters</returns>
-        private List<Parameter> GetParameters(RunningDeployment deployment)
-        {
-            Guard.NotNull(deployment, "deployment can not be null");
-
-            if (string.IsNullOrWhiteSpace(templateParametersFile))
-            {
-                return null;
-            }
-
-            var retValue = templateService.GetSubstitutedTemplateContent(
-                    templateParametersFile,
-                    filesInPackage,
-                    deployment.Variables)
-                .Map(JsonConvert.DeserializeObject<List<Parameter>>);
-
-            return retValue;
         }
 
         /// <summary>
         /// Update or create the stack
         /// </summary>
         /// <param name="deployment">The current deployment</param>
-        /// <param name="template">The cloudformation template</param>
-        private void DeployStack(RunningDeployment deployment, string template)
+        /// <param name="templateContent">The cloudformation template</param>
+        private void DeployStack(RunningDeployment deployment, CloudFormationTemplate template)
         {
-            Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
+            Guard.NotNull(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
-
-            var stackId = GetParameters(deployment)
+            
+            var templateContent = template.ApplyVariableSubstitution(deployment.Variables);
+            
+            var stackId = template.Inputs
                 // Use the parameters to either create or update the stack
                 .Map(parameters => StackExists(StackStatus.DoesNotExist) != StackStatus.DoesNotExist
-                    ? UpdateCloudFormation(deployment, template, parameters)
-                    : CreateCloudFormation(template, parameters));
+                    ? UpdateCloudFormation(deployment, templateContent, parameters)
+                    : CreateCloudFormation(templateContent, parameters));
 
             if (waitForComplete) WaitForStackToComplete(deployment);
 
@@ -200,7 +136,7 @@ namespace Calamari.Aws.Deployment.Conventions
             // Try a few times to get the outputs (if there were any in the template file)
             for (var retry = 0; retry < RetryCount; ++retry)
             {
-                var successflyReadOutputs = TemplateFileContainsOutputs(templateFile, deployment)
+                var successflyReadOutputs = template.HasOutputs
                     // take the result of our scan of the template, and use it to determine
                     // if we need to wait for outputs to be created
                     .Map(outputsDefined =>
@@ -228,25 +164,6 @@ namespace Calamari.Aws.Deployment.Conventions
                 // Wait for a bit for and try again
                 Thread.Sleep(StatusWaitPeriod);
             }
-        }
-
-        /// <summary>
-        /// Look at the template file and see if there were any outputs.
-        /// </summary>
-        /// <param name="template">The template file</param>
-        /// <param name="deployment">The current deployment</param>
-        /// <returns>true if the Outputs marker was found, and false otherwise</returns>
-        private bool TemplateFileContainsOutputs(string template, RunningDeployment deployment)
-        {
-            Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
-            Guard.NotNull(deployment, "deployment can not be null");
-
-            return templateService.GetTemplateContent(
-                    template,
-                    filesInPackage,
-                    deployment.Variables)
-                // The contents becomes true or false based on the regex match
-                .Map(OutputsRe.IsMatch);
         }
         
         /// <summary>
@@ -510,7 +427,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="template">The CloudFormation template</param>
         /// <param name="parameters">The parameters JSON file</param>
         /// <returns>The stack id</returns>
-        private string CreateCloudFormation(string template, List<Parameter> parameters)
+        private string CreateCloudFormation(string template, IEnumerable<Parameter> parameters)
         {
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
 
@@ -519,11 +436,11 @@ namespace Calamari.Aws.Deployment.Conventions
                 return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                     // Client becomes the API response
                     .Map(client => client.CreateStack(
-                        new CreateStackRequest()
+                        new CreateStackRequest
                         {
                             StackName = stackName,
                             TemplateBody = template,
-                            Parameters = parameters,
+                            Parameters = parameters.ToList(),
                             Capabilities = capabilities,
                             DisableRollback = disableRollback
                         }))
@@ -564,6 +481,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             try
             {
+            
                 ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                     // Client becomes the API response
                     .Map(client => client.DeleteStack(new DeleteStackRequest() {StackName = stackName}))
@@ -605,7 +523,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private string UpdateCloudFormation(
             RunningDeployment deployment,
             string template,
-            List<Parameter> parameters)
+            IEnumerable<Parameter> parameters)
         {
             Guard.NotNullOrWhiteSpace(template, "template can not be null or empty");
             Guard.NotNull(deployment, "deployment can not be null");
@@ -615,11 +533,11 @@ namespace Calamari.Aws.Deployment.Conventions
                 return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                     // Client becomes the API response
                     .Map(client => client.UpdateStack(
-                        new UpdateStackRequest()
+                        new UpdateStackRequest
                         {
                             StackName = stackName,
                             TemplateBody = template,
-                            Parameters = parameters,
+                            Parameters = parameters.ToList(),
                             Capabilities = capabilities
                         }))
                     // Narrow to the stack id
