@@ -31,8 +31,8 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
 
         public string Content => content();
 
-        public IReadOnlyList<Parameter> Inputs => parameters.Inputs;
+        public IEnumerable<Parameter> Inputs => parameters.Inputs;
         public bool HasOutputs => Content.Map(OutputsRe.IsMatch);
-        public IReadOnlyList<StackFormationNamedOutput> Outputs  => HasOutputs ? parse(Content) : new List<StackFormationNamedOutput>();
+        public IEnumerable<StackFormationNamedOutput> Outputs  => HasOutputs ? parse(Content) : new List<StackFormationNamedOutput>();
     }
 }

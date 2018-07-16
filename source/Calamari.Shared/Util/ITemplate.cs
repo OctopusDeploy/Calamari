@@ -9,12 +9,12 @@ namespace Calamari.Util
     
     public interface ITemplateInputs<TInput>
     {
-        IReadOnlyList<TInput> Inputs { get; }
+        IEnumerable<TInput> Inputs { get; }
     }
     
     public interface ITemplateOutputs<TOutput>
     {
         bool HasOutputs { get; }
-        IReadOnlyList<TOutput> Outputs { get; }
+        IEnumerable<TOutput> Outputs { get; }
     }
 }

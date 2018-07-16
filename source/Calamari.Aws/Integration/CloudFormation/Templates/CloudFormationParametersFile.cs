@@ -25,6 +25,6 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
         }
 
         public string Content => content();
-        public IReadOnlyList<Parameter> Inputs => content().Map(parse);
+        public IEnumerable<Parameter> Inputs => content().Map(parse);
     }
 }
