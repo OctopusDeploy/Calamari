@@ -4,7 +4,7 @@
 ## This script is used to configure the default kubectl context for this step.
 
 function GetKubectl() {
-	$Kubectl_Exe = $OctopusParameters["Octopus.Action.Kubernetes.CustomKubectlExecutable"]
+	$Kubectl_Exe=$OctopusParameters["Octopus.Action.Kubernetes.CustomKubectlExecutable"]
 	if ([string]::IsNullOrEmpty($Kubectl_Exe)) {
 		$Kubectl_Exe = "kubectl"
 	} else {
@@ -14,14 +14,17 @@ function GetKubectl() {
 			Exit 1
 		}
 	}
+	return $Kubectl_Exe;
 }
 
-function SetupContext {
-	$K8S_ClusterUrl=$OctopusParameters["Octopus.Action.Kubernetes.ClusterUrl"]
-	$K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
-	$K8S_SkipTlsVerification=$OctopusParameters["Octopus.Action.Kubernetes.SkipTlsVerification"]
-	$K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]	
-	
+$K8S_ClusterUrl=$OctopusParameters["Octopus.Action.Kubernetes.ClusterUrl"]
+$K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
+$K8S_SkipTlsVerification=$OctopusParameters["Octopus.Action.Kubernetes.SkipTlsVerification"]
+$K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]	
+$K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
+$Kubectl_Exe=GetKubectl
+
+function SetupContext {	
 	if([string]::IsNullOrEmpty($K8S_ClusterUrl)){
 		Write-Error "Kubernetes cluster URL is missing"
 		Exit 1
@@ -70,15 +73,29 @@ function ConfigureKubeCtlPath {
 
 function CreateNamespace {
 	if (-not [string]::IsNullOrEmpty($K8S_Namespace)) {
-		& $Kubectl_Exe get namespace $K8S_Namespace
-		if ($LASTEXITCODE -ne 0) {
-			& $Kubectl_Exe create namespace $K8S_Namespace
+		
+		try
+		{
+			# We need to continue if "kubectl get namespace" fails
+			$backupErrorActionPreference = $script:ErrorActionPreference
+			$script:ErrorActionPreference = "Continue"
+
+			# Attempt to get the outputs. This will fail if none are defined.
+			$outputResult = & $Kubectl_Exe get namespace $K8S_Namespace 2> $null
+		}
+		finally
+		{
+			# Restore the default setting
+			$script:ErrorActionPreference = $backupErrorActionPreference
+
+			if ($LASTEXITCODE -ne 0) {
+				& $Kubectl_Exe create namespace $K8S_Namespace
+			}
 		}
 	}
 }
 
 Write-Host "##octopus[stdout-verbose]"
-GetKubectl
 CreateNamespace
 ConfigureKubeCtlPath
 SetupContext
