@@ -68,9 +68,11 @@ function ConfigureKubeCtlPath {
 }
 
 function CreateNamespace {
-	& $Kubectl_Exe get namespace $K8S_Namespace
-	if ($LASTEXITCODE -ne 0) {
-		& $Kubectl_Exe create namespace $K8S_Namespace
+	if (-not [string]::IsNullOrEmpty($K8S_Namespace)) {
+		& $Kubectl_Exe get namespace $K8S_Namespace
+		if ($LASTEXITCODE -ne 0) {
+			& $Kubectl_Exe create namespace $K8S_Namespace
+		}
 	}
 }
 
