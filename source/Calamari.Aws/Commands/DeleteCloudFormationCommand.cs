@@ -14,8 +14,8 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Aws.Commands
 {
-    [Command("destroy-aws-cloudformation", Description = "Destroy an existing AWS CloudFormation stack")]
-    public class DestroyloudFormationCommand : Command
+    [Command("delete-aws-cloudformation", Description = "Destroy an existing AWS CloudFormation stack")]
+    public class DeleteCloudFormationCommand : Command
     {
         private string packageFile;
         private string variablesFile;
@@ -23,7 +23,7 @@ namespace Calamari.Aws.Commands
         private string sensitiveVariablesPassword;
         private bool waitForComplete;
         
-        public DestroyloudFormationCommand()
+        public DeleteCloudFormationCommand()
         {
             Options.Add("variables=", "Path to a JSON file containing variables.",
                 v => variablesFile = Path.GetFullPath(v));
