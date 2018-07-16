@@ -99,13 +99,17 @@ namespace Calamari.Aws.Commands
                 ).When(ChangesetsEnabled),
                 
                 //Create or update stack using a template (no changesets)
-                new  DeployAwsCloudFormationConvention(
-                    template,
-                    waitForComplete,
-                    stackName,
-                    iamCapabilities,
-                    disableRollback,
-                    environment).When(ChangesetsDisabled)
+                new AggregateInstallationConvention(
+                        new  DeployAwsCloudFormationConvention(
+                            template,
+                            waitForComplete,
+                            stackName,
+                            iamCapabilities,
+                            disableRollback,
+                            environment),
+                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, StackProvider, template)
+                )
+               .When(ChangesetsDisabled)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

@@ -40,9 +40,6 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
 
-        private const int StatusWaitPeriod = 5000;
-        private const int RetryCount = 3;
-
         private readonly CloudFormationTemplate template;
         private readonly bool waitForComplete;
         private readonly string stackName;
@@ -95,8 +92,6 @@ namespace Calamari.Aws.Deployment.Conventions
 
             WaitForStackToComplete(deployment, false);
             DeployStack(deployment, template);
-            
-            GetOutputVars(deployment);
         }
 
         /// <summary>
@@ -125,48 +120,6 @@ namespace Calamari.Aws.Deployment.Conventions
                 $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
         }
 
-        /// <summary>
-        /// Attempt to get the output variables, taking into account whether any were defined in the template,
-        /// and if we are to wait for the deployment to finish.
-        /// </summary>
-        /// <param name="deployment">The current deployment</param>
-        private void GetOutputVars(RunningDeployment deployment)
-        {
-            Guard.NotNull(deployment, "deployment can not be null");
-
-            // Try a few times to get the outputs (if there were any in the template file)
-            for (var retry = 0; retry < RetryCount; ++retry)
-            {
-                var successflyReadOutputs = template.HasOutputs
-                    // take the result of our scan of the template, and use it to determine
-                    // if we need to wait for outputs to be created
-                    .Map(outputsDefined =>
-                        QueryStack()?.Outputs
-                            // For each output, save it as an output variable, and change the agregated value to true
-                            // to indicate that we have successfully extracted an output variable
-                            .Aggregate(false, (success, output) =>
-                            {
-                                Log.SetOutputVariable($"AwsOutputs[{output.OutputKey}]",
-                                    output.OutputValue ?? "", deployment.Variables);
-                                Log.Info(
-                                    $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[{output.OutputKey}]\"");
-                                return true;
-                            }) ??
-                        // Or if there were no outputs to wait for, then we have successfully read the (lack of) outputs
-                        !outputsDefined
-                    );
-
-                // If we have read the outputs, or we are not waiting, exit
-                if (successflyReadOutputs || !waitForComplete)
-                {
-                    break;
-                }
-
-                // Wait for a bit for and try again
-                Thread.Sleep(StatusWaitPeriod);
-            }
-        }
-        
         /// <summary>
         /// Query the stack for the outputs
         /// </summary>
@@ -223,7 +176,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             do
             {
-                Thread.Sleep(StatusWaitPeriod);
+                Thread.Sleep(CloudFormationDefaults.StatusWaitPeriod);
                 StackEventCompleted(deployment, expectSuccess, missingIsFailure);
             } while (StackExists(StackStatus.Completed) == StackStatus.InProgress);
         }
