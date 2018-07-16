@@ -67,7 +67,15 @@ function ConfigureKubeCtlPath {
     Write-Host "Temporary kubectl config set to $env:KUBECONFIG"
 }
 
+function CreateNamespace {
+	& $Kubectl_Exe get namespace $K8S_Namespace
+	if ($LASTEXITCODE -ne 0) {
+		& $Kubectl_Exe create namespace $K8S_Namespace
+	}
+}
+
 Write-Host "##octopus[stdout-verbose]"
+CreateNamespace
 ConfigureKubeCtlPath
 SetupContext
 Write-Host "##octopus[stdout-default]"

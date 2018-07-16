@@ -64,7 +64,12 @@ function configure_kubectl_path {
   echo "Temporary kubectl config set to $KUBECONFIG"
 }
 
+function create_namespace {
+	kubectl get namespace $Octopus_K8S_Namespace || kubectl create namespace $Octopus_K8S_Namespace
+}
+
 echo "##octopus[stdout-verbose]"
+create_namespace
 configure_kubectl_path
 setup_context
 echo $KUBECONFIG
