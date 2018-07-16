@@ -65,7 +65,7 @@ function configure_kubectl_path {
 }
 
 function create_namespace {
-	if [ -n "$Octopus_K8S_Namespace" ]; then
+	if [[ -n "$Octopus_K8S_Namespace" ]]; then
 		kubectl get namespace $Octopus_K8S_Namespace || kubectl create namespace $Octopus_K8S_Namespace
 	fi
 }
