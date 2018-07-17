@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text.RegularExpressions;
-using System.Threading;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
@@ -15,10 +10,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Util;
-using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -34,17 +26,17 @@ namespace Calamari.Aws.Deployment.Conventions
         InProgress
     }
 
-    public class DeployAwsCloudFormationConvention : IInstallConvention
+    public class DeployAwsCloudFormationConvention : CloudFormationInstallationConventionBase
     {
         /// <summary>
         /// These are the capabilities that we recognise. All others are ignored.
         /// </summary>
         private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
 
-        private readonly Func<AmazonCloudFormationClient> clientFactory;
+        private readonly Func<IAmazonCloudFormation> clientFactory;
         private readonly CloudFormationTemplate template;
-        private readonly StackEventLogger logger;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
+        private readonly Func<RunningDeployment, string> roleArnProvider;
         private readonly bool waitForComplete;
         private readonly string stackName;
         private readonly bool disableRollback;
@@ -52,20 +44,21 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
 
         public DeployAwsCloudFormationConvention(
-            Func<AmazonCloudFormationClient> clientFactory,
+            Func<IAmazonCloudFormation> clientFactory,
             CloudFormationTemplate template,
             StackEventLogger logger,
             Func<RunningDeployment, StackArn> stackProvider,
+            Func<RunningDeployment, string> roleArnProvider,
             bool waitForComplete,
             string stackName,
             string iamCapabilities,
             bool disableRollback,
-            IAwsEnvironmentGeneration awsEnvironmentGeneration)
+            IAwsEnvironmentGeneration awsEnvironmentGeneration): base(logger)
         {
             this.clientFactory = clientFactory;
             this.template = template;
-            this.logger = logger;
             this.stackProvider = stackProvider;
+            this.roleArnProvider = roleArnProvider;
             this.waitForComplete = waitForComplete;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
@@ -78,7 +71,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        public void Install(RunningDeployment deployment)
+        public override void Install(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             var stack = stackProvider(deployment);
@@ -90,33 +83,10 @@ namespace Calamari.Aws.Deployment.Conventions
         private void DeployCloudFormation(RunningDeployment deployment, StackArn stack)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-            clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, StackEventCompleted(stack, false));
+           
+            clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false));
             DeployStack(deployment, stack);
         }
-
-        private Func<Maybe<StackEvent>, bool> StackEventCompleted(StackArn stack, bool expectSuccess = true, bool missingIsFailure = true)
-        {
-            return @event =>
-            {
-                try
-                {
-                    logger.Log(@event);
-                    logger.LogRollbackError(@event, x => StackEvent(stack, x), expectSuccess,
-                        missingIsFailure);
-                    return @event.SelectValueOr(x =>
-                        (x.ResourceStatus.Value.EndsWith("_COMPLETE") ||
-                         x.ResourceStatus.Value.EndsWith("_FAILED")) &&
-                        x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
-                }
-                catch (PermissionException exception)
-                {
-                    Log.Warn(exception.Message);
-                    return true;
-                }
-
-            };
-        }
-
 
         /// <summary>
         /// Update or create the stack
@@ -135,7 +105,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (waitForComplete)
             {
-                clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, StackEventCompleted(stack));
+                clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack));
             }
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
@@ -174,23 +144,21 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(template, "template can not be null");
 
-            try
+            return WithAmazonServiceExceptionHandling(() =>
             {
                 return clientFactory.CreateStack(new CreateStackRequest
-                {
-                    StackName = stackName,
-                    TemplateBody = template.ApplyVariableSubstitution(deployment.Variables),
-                    Parameters = template.Inputs.ToList(),
-                    Capabilities = capabilities,
-                    DisableRollback = disableRollback
-                })
-                .Tee(stackId => Log.Info($"Created stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
-            }
-            catch (AmazonServiceException ex)
-            {
-                HandleAmazonServiceException(ex);
-                throw;
-            }
+                    {
+                        StackName = stackName,
+                        TemplateBody = template.ApplyVariableSubstitution(deployment.Variables),
+                        Parameters = template.Inputs.ToList(),
+                        Capabilities = capabilities,
+                        DisableRollback = disableRollback,
+                        RoleARN = roleArnProvider(deployment)
+                    })
+                    .Tee(stackId =>
+                        Log.Info(
+                            $"Created stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}"));
+            });
         }
 
         /// <summary>
@@ -198,16 +166,11 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         private void DeleteCloudFormation(StackArn stack)
         {
-            try
+            WithAmazonServiceExceptionHandling(() =>
             {
                 clientFactory.DeleteStack(stack);
                 Log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
-            }
-            catch (AmazonServiceException ex)
-            {
-                HandleAmazonServiceException(ex);
-                throw;
-            }
+            });
         }
         
         /// <summary>
@@ -232,7 +195,8 @@ namespace Calamari.Aws.Deployment.Conventions
                             StackName = stackName,
                             TemplateBody = template.ApplyVariableSubstitution(deployment.Variables),
                             Parameters = template.Inputs.ToList(),
-                            Capabilities = capabilities
+                            Capabilities = capabilities,
+                            RoleARN = roleArnProvider(deployment)
                         }))
                     // Narrow to the stack id
                     .Map(response => response.StackId)
@@ -245,7 +209,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 // Some stack states indicate that we can delete the stack and start again. Otherwise we have some other
                 // exception that needs to be dealt with.
-                if (!StackMustBeDeleted(stack, false))
+                if (!StackMustBeDeleted(stack).SelectValueOrDefault(x => x))
                 {
                     // Is this an unrecoverable state, or just a stack that has nothing to update?
                     if (DealWithUpdateException(ex))
@@ -259,7 +223,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 // created in the first place, we can end up here. In this case we try to create
                 // the stack from scratch.
                 DeleteCloudFormation(stack);
-                clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, StackEventCompleted(stack, false));
+                clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false));
                 return CreateCloudFormation(deployment);
             }
             catch (AmazonServiceException ex)
@@ -304,89 +268,20 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
-        /// Some statuses indicate that the only way forward is to delete the stack and try again.
-        /// Here are some of the explainations of the stack states from the docs.
-        /// 
-        /// CREATE_FAILED: Unsuccessful creation of one or more stacks. View the stack events to see any associated error
-        /// messages. Possible reasons for a failed creation include insufficient permissions to work with all resources
-        /// in the stack, parameter values rejected by an AWS service, or a timeout during resource creation. 
-        ///  	
-        /// DELETE_FAILED: Unsuccessful deletion of one or more stacks. Because the delete failed, you might have some
-        /// resources that are still running; however, you cannot work with or update the stack. Delete the stack again
-        /// or view the stack events to see any associated error messages. 
-        /// 
-        /// ROLLBACK_COMPLETE: This status exists only after a failed stack creation. It signifies that all operations
-        /// from the partially created stack have been appropriately cleaned up. When in this state, only a delete operation
-        /// can be performed.
-        /// 
-        /// ROLLBACK_FAILED: Unsuccessful removal of one or more stacks after a failed stack creation or after an explicitly
-        /// canceled stack creation. Delete the stack or view the stack events to see any associated error messages.
-        /// 
-        /// UPDATE_ROLLBACK_FAILED: Unsuccessful return of one or more stacks to a previous working state after a failed stack
-        /// update. When in this state, you can delete the stack or continue rollback. You might need to fix errors before
-        /// your stack can return to a working state. Or, you can contact customer support to restore the stack to a usable state. 
-        /// 
-        /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
+        /// Check whether the stack must be deleted in order to recover.
         /// </summary>
         /// <param name="stack">The stack id or name</param>
-        /// <param name="defaultValue">the default value if the status is null</param>
         /// <returns>true if this status indicates that the stack has to be deleted, and false otherwise</returns>
-        private bool StackMustBeDeleted(StackArn stack, bool defaultValue)
+        private Maybe<bool> StackMustBeDeleted(StackArn stack)
         {
             try
             {
-                return new[]
-                    {
-                        "CREATE_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED",
-                        "UPDATE_ROLLBACK_FAILED"
-                    }
-                    .Any(
-                        x => StackEvent(stack).SelectValueOr(
-                            @event => @event.ResourceStatus.Value.Equals(x, StringComparison.InvariantCultureIgnoreCase), defaultValue));
+                return StackEvent(stack).Select(x => x.StackIsUnrecoverable());
             }
             catch (PermissionException)
             {
                 // If we can't get the stack status, assume it is not in a state that we can recover from
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Display an warning message to the user (without duplicates)
-        /// </summary>
-        /// <param name="errorCode">The error message code</param>
-        /// <param name="message">The error message body</param>
-        /// <returns>true if it was displayed, and false otherwise</returns>
-        private bool DisplayWarning(string errorCode, string message)
-        {
-            return logger.Warn(errorCode, message);
-        }
-
-        /// <summary>
-        /// The AmazonServiceException can hold additional information that is useful to include in
-        /// the log.
-        /// </summary>
-        /// <param name="exception">The exception</param>
-        private void HandleAmazonServiceException(AmazonServiceException exception)
-        {
-            exception.GetWebExceptionMessage()
-                .Tee(message => DisplayWarning("AWS-CLOUDFORMATION-ERROR-0014", message));
-        }
-
-        /// <summary>
-        /// The AmazonServiceException can hold additional information that is useful to include in the log.
-        /// </summary>
-        /// <param name="func">The exception</param>
-        private T WithAmazonServiceExceptionHandling<T>(Func<T> func)
-        {
-            try
-            {
-                return func();
-            }
-            catch (AmazonServiceException exception)
-            {
-                HandleAmazonServiceException(exception);
-                throw;
+                return Maybe<bool>.None;
             }
         }
     }

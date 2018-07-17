@@ -69,10 +69,10 @@ namespace Calamari.Aws.Commands
             var environment = new AwsEnvironmentGeneration(variables);
             var templateResolver = new TemplateResolver(fileSystem);
 
-            AmazonCloudFormationClient ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
+            IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
             StackArn StackProvider (RunningDeployment x) => new StackArn(stackName);
-            ChangeSetArn ChangesetProvider (RunningDeployment x) => 
-                new ChangeSetArn(x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
+            ChangeSetArn ChangesetProvider (RunningDeployment x) => new ChangeSetArn(x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
+            string RoleArnProvider (RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
 
             var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
             var resolvedParameters = templateResolver.Resolve(templateParameterFile, filesInPackage, variables);
@@ -90,11 +90,11 @@ namespace Calamari.Aws.Commands
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(
                     new GenerateCloudFormationChangesetNameConvention(),
-                    new CreateCloudFormationChangeSetConvention( ClientFactory, StackProvider, template ),
-                    new DescribeCloudFormationChangeSetConvention( ClientFactory, StackProvider, ChangesetProvider),
-                    new ExecuteCloudFormationChangeSetConvention(ClientFactory, StackProvider, ChangesetProvider,  stackEventLogger, waitForComplete)
+                    new CreateCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, RoleArnProvider, template ),
+                    new DescribeCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
+                    new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete)
                         .When(ExecuteChangesetsImmediately),
-                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, StackProvider, template)
+                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, template)
                         .When(ExecuteChangesetsImmediately)
                 ).When(ChangesetsEnabled),
              
@@ -105,12 +105,13 @@ namespace Calamari.Aws.Commands
                             template,
                             stackEventLogger,
                             StackProvider,
+                            RoleArnProvider,
                             waitForComplete,
                             stackName,
                             iamCapabilities,
                             disableRollback,
                             environment),
-                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, StackProvider, template)
+                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider, template)
                 )
                .When(ChangesetsDisabled)
             };

@@ -6,6 +6,8 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Util
 {
+    
+    
     public static class ClientExtensions
     {
         public static TConfig AsClientConfig<TConfig>(this IAwsEnvironmentGeneration environment)
@@ -27,7 +29,7 @@ namespace Calamari.Aws.Util
             return new AmazonS3Client(environment.AwsCredentials, environment.AsClientConfig<AmazonS3Config>());
         }
 
-        public static AmazonCloudFormationClient CreateCloudFormationClient(IAwsEnvironmentGeneration environment)
+        public static IAmazonCloudFormation CreateCloudFormationClient(IAwsEnvironmentGeneration environment)
         {
             return new AmazonCloudFormationClient(environment.AwsCredentials, 
                 environment.AsClientConfig<AmazonCloudFormationConfig>());

@@ -69,13 +69,13 @@ namespace Calamari.Aws.Integration.CloudFormation
         public void LogRollbackError(
             Maybe<StackEvent> status,
             Func<Func<StackEvent, bool>, Maybe<StackEvent>> query,
-            bool expectSuccess = true,
-            bool missingIsFailure = true)
+            Maybe<bool> expectSuccess,
+            Maybe<bool> missingIsFailure)
         {
-            var isUnsuccessful = status.Select(x => x.IndicatesSuccess()).SelectValueOr(x => x.Value, missingIsFailure);
+            var isUnsuccessful = status.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, missingIsFailure.SelectValueOr(x => x, true));
             var isStackType = status.SelectValueOr(x => x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
 
-            if (expectSuccess && isUnsuccessful && isStackType)
+            if (expectSuccess.SelectValueOr(x => x, true) && isUnsuccessful && isStackType)
             {
                 log.Warn(
                     "Stack was either missing, in a rollback state, or in a failed state. This means that the stack was not processed correctly. " +

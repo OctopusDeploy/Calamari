@@ -35,8 +35,39 @@ namespace Calamari.Aws.Integration.CloudFormation
                 "DELETE_FAILED",
                 "CREATE_FAILED"
             };
+        
+        /// <summary>
+        /// Some statuses indicate that the only way forward is to delete the stack and try again.
+        /// Here are some of the explainations of the stack states from the docs.
+        /// 
+        /// CREATE_FAILED: Unsuccessful creation of one or more stacks. View the stack events to see any associated error
+        /// messages. Possible reasons for a failed creation include insufficient permissions to work with all resources
+        /// in the stack, parameter values rejected by an AWS service, or a timeout during resource creation. 
+        ///  	
+        /// DELETE_FAILED: Unsuccessful deletion of one or more stacks. Because the delete failed, you might have some
+        /// resources that are still running; however, you cannot work with or update the stack. Delete the stack again
+        /// or view the stack events to see any associated error messages. 
+        /// 
+        /// ROLLBACK_COMPLETE: This status exists only after a failed stack creation. It signifies that all operations
+        /// from the partially created stack have been appropriately cleaned up. When in this state, only a delete operation
+        /// can be performed.
+        /// 
+        /// ROLLBACK_FAILED: Unsuccessful removal of one or more stacks after a failed stack creation or after an explicitly
+        /// canceled stack creation. Delete the stack or view the stack events to see any associated error messages.
+        /// 
+        /// UPDATE_ROLLBACK_FAILED: Unsuccessful return of one or more stacks to a previous working state after a failed stack
+        /// update. When in this state, you can delete the stack or continue rollback. You might need to fix errors before
+        /// your stack can return to a working state. Or, you can contact customer support to restore the stack to a usable state. 
+        /// 
+        /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
+        private static HashSet<string> UnrecoverableStackStatuses =
+            new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                "CREATE_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED",
+                "UPDATE_ROLLBACK_FAILED"
+            };
 
-        public static DescribeChangeSetResponse DescribeChangeSet(this Func<AmazonCloudFormationClient> factory,
+        public static DescribeChangeSetResponse DescribeChangeSet(this Func<IAmazonCloudFormation> factory,
             StackArn stack, ChangeSetArn changeSet)
         {
             return factory().Map(client => client.DescribeChangeSet(new DescribeChangeSetRequest
@@ -47,7 +78,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         }
 
         public static DescribeChangeSetResponse WaitForChangeSetCompletion(
-            this Func<AmazonCloudFormationClient> clientFactory, TimeSpan waitPeriod, RunningChangeSet runningChangeSet)
+            this Func<IAmazonCloudFormation> clientFactory, TimeSpan waitPeriod, RunningChangeSet runningChangeSet)
         {
             var completion = new HashSet<ChangeSetStatus>
             {
@@ -72,7 +103,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// </summary>
         /// <param name="predicate">The optional predicate used to filter events</param>
         /// <returns>The stack event</returns>
-        public static Maybe<StackEvent> GetLastStackEvent(this Func<AmazonCloudFormationClient> clientFactory, StackArn stack,
+        public static Maybe<StackEvent> GetLastStackEvent(this Func<IAmazonCloudFormation> clientFactory, StackArn stack,
             Func<StackEvent, bool> predicate = null)
         {
             try
@@ -101,7 +132,15 @@ namespace Calamari.Aws.Integration.CloudFormation
             }
         }
 
-        public static Stack DescribeStack(this Func<AmazonCloudFormationClient> clientFactory, StackArn stack)
+        /// <summary>
+        /// Describe the stack
+        /// </summary>
+        /// <param name="clientFactory"></param>
+        /// <param name="stack"></param>
+        /// <returns></returns>
+        /// <exception cref="PermissionException"></exception>
+        /// <exception cref="UnknownException"></exception>
+        public static Stack DescribeStack(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
             try
             {
@@ -136,9 +175,11 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <summary>
         /// Check to see if the stack name exists.
         /// </summary>
-        /// <param name="defaultValue">The return value when the user does not have the permissions to query the stacks</param>
+        /// <param name="clientFactory">The client factory method</param>
+        /// <param name="stackArn">The stack name or id</param>
+        /// <param name="defaultValue">The default value to return given no permission to query the stack</param>
         /// <returns>The current status of the stack</returns>
-        public static StackStatus GetStackStatus(this Func<AmazonCloudFormationClient> clientFactory, StackArn stackArn,
+        public static StackStatus GetStackStatus(this Func<IAmazonCloudFormation> clientFactory, StackArn stackArn,
             StackStatus defaultValue)
         {
             try
@@ -188,10 +229,17 @@ namespace Calamari.Aws.Integration.CloudFormation
                    ?? "An exception was thrown while contacting the AWS API.";
         }
 
-        public static void WaitForStackToComplete(this Func<AmazonCloudFormationClient> clientFactory,
-            TimeSpan waitPeriod, StackArn stack, Func<Maybe<StackEvent>, bool> predicate)
+        /// <summary>
+        /// Wait for a given stack to complete by polling the stack events
+        /// </summary>
+        /// <param name="clientFactory">The client factory method to use</param>
+        /// <param name="waitPeriod">The period to wait between events</param>
+        /// <param name="stack">The stack name or id to query</param>
+        /// param name="action">Callback for each event while waiting
+        /// <param name="filter">The predicate for filtering the stack events</param>
+        public static void WaitForStackToComplete(this Func<IAmazonCloudFormation> clientFactory,
+            TimeSpan waitPeriod, StackArn stack, Action<Maybe<StackEvent>> action = null, Func<StackEvent, bool> filter= null)
         {
-            Guard.NotNull(predicate, "Predicate should not be null");
             Guard.NotNull(stack, "Stack should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
 
@@ -204,29 +252,36 @@ namespace Calamari.Aws.Integration.CloudFormation
             do
             {
                 Thread.Sleep(waitPeriod);
-                predicate(clientFactory.GetLastStackEvent(stack));
+                var @event = clientFactory.GetLastStackEvent(stack, filter);
+                action?.Invoke(@event);
             } while (clientFactory.GetStackStatus(stack, StackStatus.Completed) == StackStatus.InProgress);
         }
-
+                
         /// <summary>
         /// Check the stack event status to detemrine whether it was successful.
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
         /// </summary>
         /// <param name="status">The status to check</param>
         /// <returns>true if the status indcates a failed create or update, and false otherwise</returns>
-        public static Maybe<bool> IndicatesSuccess(this StackEvent status)
+        public static Maybe<bool> MaybeIndicatesSuccess(this StackEvent status)
         {
             return status.ToMaybe().Select(x => !UnsuccessfulStackEvents.Contains(x.ResourceStatus.Value));
         }
 
-        public static void DeleteStack(this Func<AmazonCloudFormationClient> clientFactory, StackArn stack)
+        public static bool StackIsUnrecoverable(this StackEvent status)
+        {
+            Guard.NotNull(status, "Status should not be null");
+            return UnrecoverableStackStatuses.Contains(status.ResourceStatus.Value);
+        }
+
+        public static DeleteStackResponse DeleteStack(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
             Guard.NotNull(clientFactory, "clientFactory should not be null");
             Guard.NotNull(stack, "Stack should not be null");
 
             try
             {
-                clientFactory().Map(client =>
+                return clientFactory().Map(client =>
                     client.DeleteStack(new DeleteStackRequest {StackName = stack.Value}));
             }
             catch (AmazonCloudFormationException ex)
@@ -247,7 +302,7 @@ namespace Calamari.Aws.Integration.CloudFormation
             }
         }
 
-        public static string CreateStack(this Func<AmazonCloudFormationClient> clientFactory,
+        public static string CreateStack(this Func<IAmazonCloudFormation> clientFactory,
             CreateStackRequest request)
         {
             try

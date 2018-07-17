@@ -48,7 +48,7 @@ namespace Calamari.Aws.Commands
             var stackEventLogger = new StackEventLogger(new LogWrapper());
          
             
-            AmazonCloudFormationClient ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
+            IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
             StackArn StackProvider (RunningDeployment x) => new StackArn( x.Variables.Get(AwsSpecialVariables.CloudFormation.StackName));
             
             var conventions = new List<IConvention>

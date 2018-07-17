@@ -14,16 +14,17 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
-    public class CloudFormationOutputsAsVariablesConvention : IInstallConvention
+    public class CloudFormationOutputsAsVariablesConvention : CloudFormationInstallationConventionBase
     {
-        private readonly Func<AmazonCloudFormationClient> clientFactory;
+        private readonly Func<IAmazonCloudFormation> clientFactory;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
         private readonly CloudFormationTemplate template;
 
         public CloudFormationOutputsAsVariablesConvention(
-            Func<AmazonCloudFormationClient> clientFactory,
+            Func<IAmazonCloudFormation> clientFactory,
+            StackEventLogger logger,
             Func<RunningDeployment, StackArn> stackProvider,
-            CloudFormationTemplate template)
+            CloudFormationTemplate template): base(logger)
         {
             Guard.NotNull(clientFactory, "Client factory must not be null");
             Guard.NotNull(stackProvider, "Stack provider must not be null");
@@ -34,14 +35,15 @@ namespace Calamari.Aws.Deployment.Conventions
             this.template = template;
         }
         
-        public void Install(RunningDeployment deployment)
+        public override void Install(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "Deployment must not be null");
             var stack = stackProvider(deployment);
             
             Guard.NotNull(stack, "The provided stack may not be null.");
             
-            GetAndPipeOutputVariablesWithRetry(() => clientFactory.DescribeStack(stack).ToMaybe(), 
+            GetAndPipeOutputVariablesWithRetry(() => 
+                WithAmazonServiceExceptionHandling(() => clientFactory.DescribeStack(stack).ToMaybe()), 
                 deployment.Variables, 
                 true, 
                 CloudFormationDefaults.RetryCount, 
@@ -57,7 +59,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 stack.Outputs.Select(p => new VariableOutput(p.OutputKey, p.OutputValue)).ToList();
 
             return query().Select(ConvertStackOutputs)
-                .Map(result => (result: MaybeExtentions.SomeOr(result, new List<VariableOutput>()), success: template.HasOutputs || MaybeExtentions.Some<List<VariableOutput>>(result)));
+                .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: template.HasOutputs || result.Some()));
         }
 
         public void PipeOutputs(IEnumerable<VariableOutput> outputs, CalamariVariableDictionary variables, string name = "AwsOutputs")
