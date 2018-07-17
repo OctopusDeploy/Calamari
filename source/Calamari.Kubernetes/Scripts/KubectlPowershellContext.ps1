@@ -89,7 +89,9 @@ function CreateNamespace {
 			$script:ErrorActionPreference = $backupErrorActionPreference
 
 			if ($LASTEXITCODE -ne 0) {
+				Write-Host "##octopus[stdout-default]"
 				& $Kubectl_Exe create namespace $K8S_Namespace
+				Write-Host "##octopus[stdout-verbose]"
 			}
 		}
 	}
