@@ -26,8 +26,8 @@ namespace Calamari.Hooks
         /// Execute the wrapper. The call to this is usually expected to
         /// call the NextWrapper.ExecuteScript() method as it's final step.
         /// </summary>
-        CommandResult ExecuteScript(
-            Script script,
+        CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars);
