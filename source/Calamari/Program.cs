@@ -68,7 +68,7 @@ namespace Calamari
         {
             this.command = command;
             this.helpCommand = helpCommand;
-        }        
+        }
 
         public int Execute(string[] args)
         {
@@ -90,7 +90,7 @@ namespace Calamari
             catch (Exception ex)
             {
                 return ConsoleFormatter.PrintError(ex);
-            }            
+            }
         }
 
         private int PrintHelp(string action)
@@ -107,13 +107,25 @@ namespace Calamari
             // TLS1.1 and below was discontinued on MavenCentral as of 18 June 2018
             //https://central.sonatype.org/articles/2018/May/04/discontinue-support-for-tlsv11-and-below/
 
-            ServicePointManager.SecurityProtocol =
+            var securityProcotolTypes =
 #if !NETCOREAPP2_0
                 SecurityProtocolType.Ssl3 |
 #endif
-                SecurityProtocolType.Tls
-                | (SecurityProtocolType) 768 // TLS1.1
-                | (SecurityProtocolType) 3072; // Unfortunately SecurityProtocolType.TLS12 doesn't exist in net40 but its enum value works!
+                SecurityProtocolType.Tls;
+
+            if (Enum.IsDefined(typeof(SecurityProtocolType), 768))
+                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType)768;
+
+            if (Enum.IsDefined(typeof(SecurityProtocolType), 3072))
+            {
+                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType)3072;
+            }
+            else
+            {
+                Log.Verbose($"TLS1.2 is not supported, this means that some outgoing connections to third party endpoints will not work as they now only support TLS1.2.{Environment.NewLine}This includes GitHub feeds and Maven feeds.");
+            }
+
+            ServicePointManager.SecurityProtocol = securityProcotolTypes;
         }
     }
 }
