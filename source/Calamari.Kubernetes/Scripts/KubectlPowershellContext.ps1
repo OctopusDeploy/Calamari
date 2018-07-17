@@ -98,9 +98,9 @@ function CreateNamespace {
 }
 
 Write-Host "##octopus[stdout-verbose]"
-CreateNamespace
 ConfigureKubeCtlPath
 SetupContext
+CreateNamespace
 Write-Host "##octopus[stdout-default]"
 
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
