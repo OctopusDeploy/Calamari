@@ -93,9 +93,9 @@ namespace Calamari.Aws.Commands
                     new CreateCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, RoleArnProvider, template ),
                     new DescribeCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
                     new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete)
-                        .When(ExecuteChangesetsImmediately),
+                        .When(ImmediateChangesetExecution),
                     new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, () => template.HasOutputs)
-                        .When(ExecuteChangesetsImmediately)
+                        .When(ImmediateChangesetExecution)
                 ).When(ChangesetsEnabled),
              
                 //Create or update stack using a template (no changesets)
@@ -123,12 +123,17 @@ namespace Calamari.Aws.Commands
             return 0;
         }
 
-        private bool ExecuteChangesetsImmediately(RunningDeployment deployment)
+        private bool ChangesetsDeferred(RunningDeployment deployment)
         {
-            return string.Compare(deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Mode], "Immediate",
+            return string.Compare(deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Defer], bool.TrueString,
                        StringComparison.OrdinalIgnoreCase) == 0;
         }
 
+        private bool ImmediateChangesetExecution(RunningDeployment deployment)
+        {
+            return !ChangesetsDeferred(deployment);
+        }
+        
         private bool ChangesetsEnabled(RunningDeployment deployment)
         {
             return deployment.Variables.Get(SpecialVariables.Package.EnabledFeatures)
