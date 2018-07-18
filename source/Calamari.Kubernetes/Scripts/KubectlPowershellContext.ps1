@@ -35,8 +35,8 @@ function SetupContext {
 		Exit 1
 	}
 
-	if([string]::IsNullOrEmpty($K8S_AccountType)){
-		Write-Error "Kubernetes account type is missing"
+	if([string]::IsNullOrEmpty($K8S_AccountType) -and [string]::IsNullOrEmpty($K8S_Client_Cert){
+		Write-Error "Kubernetes account type or certificate is missing"
 		Exit 1
 	}
 
