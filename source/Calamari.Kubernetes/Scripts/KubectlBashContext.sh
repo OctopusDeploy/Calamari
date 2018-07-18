@@ -79,9 +79,9 @@ function create_namespace {
 
 echo "##octopus[stdout-verbose]"
 get_kubectl
-create_namespace
 configure_kubectl_path
 setup_context
+create_namespace
 echo $KUBECONFIG
 echo "##octopus[stdout-verbose]"
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
