@@ -150,6 +150,16 @@ namespace Calamari.Deployment
         {
             public static readonly string PackageCollection = "Octopus.Action.Package";
 
+            public static string PackageId(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageId";
+            }
+
+            public static string PackageVersion(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageVersion";
+            }
+
             public static string OriginalPath(string key)
             {
                 return $"Octopus.Action.Package[{key}].OriginalPath";
