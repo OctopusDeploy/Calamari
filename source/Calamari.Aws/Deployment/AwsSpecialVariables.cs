@@ -26,9 +26,11 @@ namespace Calamari.Aws.Deployment
             public static class Changesets
             {
                 public const string Feature = "Octopus.Features.CloudFormation.ChangeSet.Feature";
+                //The Name is generally used when the user doesn't want octopus to generate the change set name
                 public const string Name = "Octopus.Action.Aws.CloudFormation.ChangeSet.Name";
-                public const string Mode = "Octopus.Action.Aws.CloudFormation.ChangeSet.Mode";
+                public const string Defer = "Octopus.Action.Aws.CloudFormation.ChangeSet.Defer";
                 public const string Generate = "Octopus.Action.Aws.CloudFormation.ChangeSet.GenerateName";
+                //The ARN is either specified or dynamically provided when the change set is created
                 public const string Arn = "Octopus.Action.Aws.CloudFormation.ChangeSet.Arn";
             }
         }
