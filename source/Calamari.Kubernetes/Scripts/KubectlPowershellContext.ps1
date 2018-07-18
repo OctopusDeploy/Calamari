@@ -35,7 +35,7 @@ function SetupContext {
 		Exit 1
 	}
 
-	if([string]::IsNullOrEmpty($K8S_ServerUrl)){
+	if([string]::IsNullOrEmpty($K8S_Namespace)){
 		$K8S_Namespace="default"
 	}
 
