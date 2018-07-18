@@ -63,7 +63,7 @@ namespace Calamari.Aws.Commands
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile,
                 sensitiveVariablesPassword);
 
-            var fileSystem = new WindowsPhysicalFileSystem();
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
             var environment = new AwsEnvironmentGeneration(variables);
@@ -94,7 +94,7 @@ namespace Calamari.Aws.Commands
                     new DescribeCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
                     new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete)
                         .When(ExecuteChangesetsImmediately),
-                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, template)
+                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, () => template.HasOutputs)
                         .When(ExecuteChangesetsImmediately)
                 ).When(ChangesetsEnabled),
              
@@ -111,7 +111,7 @@ namespace Calamari.Aws.Commands
                             iamCapabilities,
                             disableRollback,
                             environment),
-                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider, template)
+                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider, () => template.HasOutputs)
                 )
                .When(ChangesetsDisabled)
             };

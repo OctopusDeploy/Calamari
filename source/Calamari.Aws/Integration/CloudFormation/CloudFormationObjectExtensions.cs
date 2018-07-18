@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -77,6 +78,11 @@ namespace Calamari.Aws.Integration.CloudFormation
             }));
         }
 
+        public static CreateChangeSetResponse CreateChangeSet(this Func<IAmazonCloudFormation> factory, CreateChangeSetRequest request)
+        {
+            return factory().Map(client => client.CreateChangeSet(request));
+        }
+
         public static DescribeChangeSetResponse WaitForChangeSetCompletion(
             this Func<IAmazonCloudFormation> clientFactory, TimeSpan waitPeriod, RunningChangeSet runningChangeSet)
         {
@@ -138,37 +144,13 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <param name="clientFactory"></param>
         /// <param name="stack"></param>
         /// <returns></returns>
-        /// <exception cref="PermissionException"></exception>
-        /// <exception cref="UnknownException"></exception>
         public static Stack DescribeStack(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
-            try
-            {
-                return clientFactory()
-                    // The client becomes the result of the API call
-                    .Map(client => client.DescribeStacks(new DescribeStacksRequest {StackName = stack.Value}))
-                    // Get the first stack
-                    .Map(response => response.Stacks.FirstOrDefault());
-            }
-            catch (AmazonCloudFormationException ex)
-            {
-                if (ex.ErrorCode == "AccessDenied")
-                {
-                    throw new PermissionException(
-                        "AWS-CLOUDFORMATION-ERROR-0004: The AWS account used to perform the operation does not have " +
-                        "the required permissions to describe the CloudFormation stack. " +
-                        "This means that the step is not able to generate any output variables.\n" +
-                        ex.Message + "\n" +
-                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004",
-                        ex);
-                }
-
-                throw new UnknownException(
-                    "AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005",
-                    ex);
-                
-            }
+            return clientFactory()
+                // The client becomes the result of the API call
+                .Map(client => client.DescribeStacks(new DescribeStacksRequest {StackName = stack.Value}))
+                // Get the first stack
+                .Map(response => response.Stacks.FirstOrDefault());
         }
 
 
@@ -179,7 +161,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <param name="stackArn">The stack name or id</param>
         /// <param name="defaultValue">The default value to return given no permission to query the stack</param>
         /// <returns>The current status of the stack</returns>
-        public static StackStatus GetStackStatus(this Func<IAmazonCloudFormation> clientFactory, StackArn stackArn,
+        public static StackStatus StackExists(this Func<IAmazonCloudFormation> clientFactory, StackArn stackArn,
             StackStatus defaultValue)
         {
             try
@@ -242,8 +224,8 @@ namespace Calamari.Aws.Integration.CloudFormation
         {
             Guard.NotNull(stack, "Stack should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
-
-            var status = clientFactory.GetStackStatus(stack, StackStatus.DoesNotExist);
+            
+            var status = clientFactory.StackExists(stack, StackStatus.DoesNotExist);
             if (status == StackStatus.DoesNotExist || status == StackStatus.Completed)
             {
                 return;
@@ -254,7 +236,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                 Thread.Sleep(waitPeriod);
                 var @event = clientFactory.GetLastStackEvent(stack, filter);
                 action?.Invoke(@event);
-            } while (clientFactory.GetStackStatus(stack, StackStatus.Completed) == StackStatus.InProgress);
+            } while (clientFactory.StackExists(stack, StackStatus.Completed) == StackStatus.InProgress);
         }
                 
         /// <summary>

@@ -44,7 +44,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             var stack = stackProvider(deployment);
 
-            if (clientFactory.GetStackStatus(stack, StackStatus.Completed) != StackStatus.DoesNotExist)
+            if (clientFactory.StackExists(stack, StackStatus.Completed) != StackStatus.DoesNotExist)
             {
                 DeleteCloudFormation(stack);
                 Log.Info($"Deleted stack called {stack.Value} in region {environment.AwsRegion.SystemName}");

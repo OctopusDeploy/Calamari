@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
@@ -53,6 +54,9 @@ namespace Calamari.Aws.Commands
             
             var conventions = new List<IConvention>
             {
+                new LogAwsUserInfoConvention(environment),
+                new ContributeEnvironmentVariablesConvention(),
+                new LogVariablesConvention(),
                 new DeleteCloudFormationStackConvention(environment, stackEventLogger, ClientFactory, StackProvider, waitForComplete)
             };
             

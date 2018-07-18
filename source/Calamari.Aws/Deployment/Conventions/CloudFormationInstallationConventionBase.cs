@@ -6,6 +6,7 @@ using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Processes;
 using Microsoft.Data.OData.Query.SemanticAst;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
@@ -54,7 +55,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <summary>
         /// Run an action and log any AmazonServiceException detail.
         /// </summary>
-        /// <param name="func">The exception</param>
+        /// <param name="action">The action to invoke</param>
         protected void WithAmazonServiceExceptionHandling(Action action)
         {
             WithAmazonServiceExceptionHandling<ValueTuple>(() => default(ValueTuple).Tee(x=> action()));
@@ -90,14 +91,46 @@ namespace Calamari.Aws.Deployment.Conventions
                     Logger.Log(@event);
                     Logger.LogRollbackError(@event, x => 
                         WithAmazonServiceExceptionHandling(() => clientFactory.GetLastStackEvent(stack, x)), 
-                        expectSuccess.AsSome(), 
-                        missingIsFailure.AsSome());
+                        expectSuccess, 
+                        missingIsFailure);
                 }
                 catch (PermissionException exception)
                 {
                     Log.Warn(exception.Message);
                 }
             };
+        }
+
+        protected void SetOutputVariable(CalamariVariableDictionary variables, string name, string value)
+        {
+            Log.SetOutputVariable($"AwsOutputs[{name}]", value ?? "", variables);
+            Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{name}]\"");
+        }
+
+        protected Stack QueryStack(Func<IAmazonCloudFormation> clientFactory, StackArn stack)
+        {
+            try
+            {
+                return clientFactory.DescribeStack(stack);
+            }
+            catch (AmazonServiceException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        "AWS-CLOUDFORMATION-ERROR-0004: The AWS account used to perform the operation does not have " +
+                        "the required permissions to describe the CloudFormation stack. " +
+                        "This means that the step is not able to generate any output variables.\n" +
+                        ex.Message + "\n" +
+                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004",
+                        ex);
+                }
+
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005",
+                    ex);
+            }
         }
     }
 }

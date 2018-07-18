@@ -132,7 +132,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>The current status of the stack</returns>
         private StackStatus StackExists(StackArn stack, StackStatus defaultValue)
         {
-            return WithAmazonServiceExceptionHandling(() => clientFactory.GetStackStatus(stack, defaultValue));
+            return WithAmazonServiceExceptionHandling(() => clientFactory.StackExists(stack, defaultValue));
         }
         
         /// <summary>
@@ -215,7 +215,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     if (DealWithUpdateException(ex))
                     {
                         // There was nothing to update, but we return the id for consistency anyway
-                        return clientFactory.DescribeStack(stack).StackId;
+                        return QueryStack(clientFactory, stack).StackId;
                     }
                 }
 

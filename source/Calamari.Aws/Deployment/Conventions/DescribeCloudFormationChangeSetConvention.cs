@@ -1,8 +1,11 @@
 ﻿using System;
 using Amazon.CloudFormation;
+using Amazon.Runtime;
+using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Processes;
 using Newtonsoft.Json;
 
 namespace Calamari.Aws.Deployment.Conventions
@@ -28,15 +31,37 @@ namespace Calamari.Aws.Deployment.Conventions
             var stack = stackProvider(deployment);
             var changeSet = changeSetProvider(deployment);
 
+            WithAmazonServiceExceptionHandling(() => DescribeChangeset(stack, changeSet, deployment.Variables));
+        }
+        
+        public void DescribeChangeset(StackArn stack, ChangeSetArn changeSet, CalamariVariableDictionary variables)
+        {
             Guard.NotNull(stack, "The provided stack identifer or name may not be null");
             Guard.NotNull(changeSet, "The provided change set identifier or name may not be null");
-            
-            WithAmazonServiceExceptionHandling(() =>
+            Guard.NotNull(variables, "The variable dictionary may not be null");
+
+            try
             {
                 var response = clientFactory.DescribeChangeSet(stack, changeSet);
-                Log.SetOutputVariable("ChangeCount", response.Changes.Count.ToString(), deployment.Variables);
-                Log.SetOutputVariable("Changes", JsonConvert.SerializeObject(response.Changes), deployment.Variables);
-            });
+                SetOutputVariable(variables, "ChangeCount", response.Changes.Count.ToString());
+                SetOutputVariable(variables, "Changes", JsonConvert.SerializeObject(response.Changes));
+            }
+            catch (AmazonCloudFormationException ex)
+            {
+                if (ex.ErrorCode == "AccessDenied")
+                {
+                    throw new PermissionException(
+                        @"AWS-CLOUDFORMATION-ERROR-0015: The AWS account used to perform the operation does not have " +
+                        "the required permissions to describe the change set.\n" +
+                        ex.Message + "\n" +
+                        "For more information visit the [octopus docs](https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0015)");
+                }
+                
+                throw new UnknownException(
+                    "AWS-CLOUDFORMATION-ERROR-0016: An unrecognised exception was thrown while describing the CloudFormation change set.\n" +
+                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0016",
+                    ex);
+            }
         }
     }
 }
