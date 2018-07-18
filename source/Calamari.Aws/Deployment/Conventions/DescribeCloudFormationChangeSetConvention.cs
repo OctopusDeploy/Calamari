@@ -44,7 +44,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 var response = clientFactory.DescribeChangeSet(stack, changeSet);
                 SetOutputVariable(variables, "ChangeCount", response.Changes.Count.ToString());
-                SetOutputVariable(variables, "Changes", JsonConvert.SerializeObject(response.Changes));
+                SetOutputVariable(variables, "Changes", JsonConvert.SerializeObject(response.Changes, Formatting.Indented));
             }
             catch (AmazonCloudFormationException ex)
             {
