@@ -29,7 +29,7 @@ namespace Calamari.Aws.Deployment
                 public const string Name = "Octopus.Action.Aws.CloudFormation.ChangeSet.Name";
                 public const string Mode = "Octopus.Action.Aws.CloudFormation.ChangeSet.Mode";
                 public const string Generate = "Octopus.Action.Aws.CloudFormation.ChangeSet.GenerateName";
-                public const string Arn = "Octopus.Action.Aws.ChangeSet.Arn";
+                public const string Arn = "Octopus.Action.Aws.CloudFormation.ChangeSet.Arn";
             }
         }
     }
