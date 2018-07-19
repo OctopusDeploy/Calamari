@@ -122,12 +122,11 @@ function SetupContext {
 		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"-i`"`n"
 		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"$K8S_ClusterName`""        
     }	
-	else {
+	elseif ([string]::IsNullOrEmpty($K8S_Client_Cert)) {
+
 		Write-Error "Account Type $K8S_AccountType is currently not valid for kubectl contexts"
 		Exit 1
-	}
-   
-   
+	}     
 }
 
 function ConfigureKubeCtlPath {
