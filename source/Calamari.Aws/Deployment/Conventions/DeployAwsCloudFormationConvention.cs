@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -34,7 +35,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
 
         private readonly Func<IAmazonCloudFormation> clientFactory;
-        private readonly CloudFormationTemplate template;
+        private readonly Func<CloudFormationTemplate> templateFactory;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
         private readonly Func<RunningDeployment, string> roleArnProvider;
         private readonly bool waitForComplete;
@@ -45,7 +46,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
-            CloudFormationTemplate template,
+            Func<CloudFormationTemplate> templateFactory,
             StackEventLogger logger,
             Func<RunningDeployment, StackArn> stackProvider,
             Func<RunningDeployment, string> roleArnProvider,
@@ -56,7 +57,7 @@ namespace Calamari.Aws.Deployment.Conventions
             IAwsEnvironmentGeneration awsEnvironmentGeneration): base(logger)
         {
             this.clientFactory = clientFactory;
-            this.template = template;
+            this.templateFactory = templateFactory;
             this.stackProvider = stackProvider;
             this.roleArnProvider = roleArnProvider;
             this.waitForComplete = waitForComplete;
@@ -75,17 +76,20 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
             var stack = stackProvider(deployment);
-            
             Guard.NotNull(stack, "Stack can not be null");
-            DeployCloudFormation(deployment, stack);
+            var template = templateFactory();
+            Guard.NotNull(template, "CloudFormation template can not be null.");
+            
+            DeployCloudFormation(deployment, stack, template);
+            
         }
 
-        private void DeployCloudFormation(RunningDeployment deployment, StackArn stack)
+        private void DeployCloudFormation(RunningDeployment deployment, StackArn stack, CloudFormationTemplate template)
         {
             Guard.NotNull(deployment, "deployment can not be null");
            
             clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false));
-            DeployStack(deployment, stack);
+            DeployStack(deployment, stack, template);
         }
 
         /// <summary>
@@ -93,15 +97,16 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="deployment">The current deployment</param>
         /// <param name="stack"></param>
-        private void DeployStack(RunningDeployment deployment, StackArn stack)
+        /// <param name="template"></param>
+        private void DeployStack(RunningDeployment deployment, StackArn stack, CloudFormationTemplate template)
         {
             Guard.NotNull(deployment, "deployment can not be null");
            
             var stackId = template.Inputs
                 // Use the parameters to either create or update the stack
                 .Map(parameters => StackExists(stack, StackStatus.DoesNotExist) != StackStatus.DoesNotExist
-                    ? UpdateCloudFormation(deployment, stack)
-                    : CreateCloudFormation(deployment));
+                    ? UpdateCloudFormation(deployment, stack, template)
+                    : CreateCloudFormation(deployment, template));
 
             if (waitForComplete)
             {
@@ -140,7 +145,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="deployment">The running deployment</param>
         /// <returns>The stack id</returns>
-        private string CreateCloudFormation(RunningDeployment deployment)
+        private string CreateCloudFormation(RunningDeployment deployment, CloudFormationTemplate template)
         {
             Guard.NotNull(template, "template can not be null");
 
@@ -149,7 +154,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 return clientFactory.CreateStack(new CreateStackRequest
                     {
                         StackName = stackName,
-                        TemplateBody = template.ApplyVariableSubstitution(deployment.Variables),
+                        TemplateBody = template.Content,
                         Parameters = template.Inputs.ToList(),
                         Capabilities = capabilities,
                         DisableRollback = disableRollback,
@@ -172,19 +177,20 @@ namespace Calamari.Aws.Deployment.Conventions
                 Log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
             });
         }
-        
+
         /// <summary>
         /// Updates the stack and returns the stack ID
         /// </summary>
         /// <param name="stack">The stack name or id</param>
         /// <param name="deployment">The current deployment</param>
+        /// <param name="template">The CloudFormation template</param>
         /// <returns>stackId</returns>
         private string UpdateCloudFormation(
             RunningDeployment deployment,
-            StackArn stack)
+            StackArn stack,
+            CloudFormationTemplate template)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-
             try
             {
                 return ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
@@ -193,7 +199,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         new UpdateStackRequest
                         {
                             StackName = stackName,
-                            TemplateBody = template.ApplyVariableSubstitution(deployment.Variables),
+                            TemplateBody = template.Content,
                             Parameters = template.Inputs.ToList(),
                             Capabilities = capabilities,
                             RoleARN = roleArnProvider(deployment)
@@ -224,7 +230,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 // the stack from scratch.
                 DeleteCloudFormation(stack);
                 clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false));
-                return CreateCloudFormation(deployment);
+                return CreateCloudFormation(deployment, template);
             }
             catch (AmazonServiceException ex)
             {

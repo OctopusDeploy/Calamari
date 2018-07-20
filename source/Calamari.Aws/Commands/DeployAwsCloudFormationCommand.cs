@@ -10,7 +10,6 @@ using Calamari.Integration.Processes;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
@@ -56,7 +55,6 @@ namespace Calamari.Aws.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
@@ -74,12 +72,16 @@ namespace Calamari.Aws.Commands
             ChangeSetArn ChangesetProvider (RunningDeployment x) => new ChangeSetArn(x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
             string RoleArnProvider (RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
 
-            var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
-            var resolvedParameters = templateResolver.Resolve(templateParameterFile, filesInPackage, variables);
-            var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem);
-            var template = CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem);
-            var stackEventLogger = new StackEventLogger(new LogWrapper());
+            CloudFormationTemplate TemplateFactory()
+            {
+                var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
+                var resolvedParameters = templateResolver.Resolve(templateParameterFile, filesInPackage, variables);
+                var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables);
+                return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
+            }
 
+            var stackEventLogger = new StackEventLogger(new LogWrapper());
+            
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
@@ -90,11 +92,11 @@ namespace Calamari.Aws.Commands
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(
                     new GenerateCloudFormationChangesetNameConvention(),
-                    new CreateCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, RoleArnProvider, template ),
+                    new CreateCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, RoleArnProvider, TemplateFactory ),
                     new DescribeCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
                     new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete)
                         .When(ImmediateChangesetExecution),
-                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, () => template.HasOutputs)
+                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, () => TemplateFactory().HasOutputs)
                         .When(ImmediateChangesetExecution)
                 ).When(ChangesetsEnabled),
              
@@ -102,7 +104,7 @@ namespace Calamari.Aws.Commands
                 new AggregateInstallationConvention(
                         new  DeployAwsCloudFormationConvention(
                             ClientFactory,
-                            template,
+                            TemplateFactory,
                             stackEventLogger,
                             StackProvider,
                             RoleArnProvider,
@@ -111,7 +113,7 @@ namespace Calamari.Aws.Commands
                             iamCapabilities,
                             disableRollback,
                             environment),
-                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider, () => template.HasOutputs)
+                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider, () => TemplateFactory().HasOutputs)
                 )
                .When(ChangesetsDisabled)
             };

@@ -29,6 +29,7 @@ namespace Calamari.Util
 
         public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
         {
+            
             var absolutePath = inPackage
                 ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(relativeFilePath))
                 : Path.Combine(Environment.CurrentDirectory, relativeFilePath);

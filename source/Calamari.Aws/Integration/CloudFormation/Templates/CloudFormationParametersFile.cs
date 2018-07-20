@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Amazon.CloudFormation.Model;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
@@ -13,9 +14,9 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
         private readonly Func<string> content;
         private readonly Func<string, List<Parameter>> parse;
 
-        public static CloudFormationParametersFile Create(ResolvedTemplatePath path, ICalamariFileSystem fileSystem)
+        public static CloudFormationParametersFile Create(ResolvedTemplatePath path, ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
         {
-            return new CloudFormationParametersFile(() => fileSystem.ReadFile(path.Value), JsonConvert.DeserializeObject<List<Parameter>>);
+            return new CloudFormationParametersFile(() => variables.Evaluate(fileSystem.ReadFile(path.Value)), JsonConvert.DeserializeObject<List<Parameter>>);
         }
 
         public CloudFormationParametersFile(Func<string> content, Func<string, List<Parameter>> parse)
