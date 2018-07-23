@@ -92,7 +92,7 @@ namespace Calamari.Aws.Commands
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(
                     new GenerateCloudFormationChangesetNameConvention(),
-                    new CreateCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, RoleArnProvider, TemplateFactory ),
+                    new CreateCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, RoleArnProvider, TemplateFactory, iamCapabilities),
                     new DescribeCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
                     new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete)
                         .When(ImmediateChangesetExecution),

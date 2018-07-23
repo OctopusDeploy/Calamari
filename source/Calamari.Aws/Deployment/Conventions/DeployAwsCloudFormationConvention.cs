@@ -29,10 +29,6 @@ namespace Calamari.Aws.Deployment.Conventions
 
     public class DeployAwsCloudFormationConvention : CloudFormationInstallationConventionBase
     {
-        /// <summary>
-        /// These are the capabilities that we recognise. All others are ignored.
-        /// </summary>
-        private static readonly string[] RecognisedCapabilities = new[] {"CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"};
 
         private readonly Func<IAmazonCloudFormation> clientFactory;
         private readonly Func<CloudFormationTemplate> templateFactory;
@@ -66,7 +62,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.disableRollback = disableRollback;
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
-            if (RecognisedCapabilities.Contains(iamCapabilities))
+            if (iamCapabilities.IsKnownIamCapability())
             {
                 capabilities.Add(iamCapabilities);
             }

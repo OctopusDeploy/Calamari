@@ -22,6 +22,11 @@ namespace Calamari.Aws.Integration.CloudFormation
 {
     public static class CloudFormationObjectExtensions
     {
+        private static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"
+        };
+
         // These status indicate that an update or create was not successful.
         // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
         private static HashSet<string> UnsuccessfulStackEvents =
@@ -311,5 +316,12 @@ namespace Calamari.Aws.Integration.CloudFormation
                     ex);
             }
         }
+
+        // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
+        public static bool IsKnownIamCapability(this string capability)
+        {
+            return RecognisedCapabilities.Contains(capability);
+        }
+
     }
 }

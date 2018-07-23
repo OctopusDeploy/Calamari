@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -20,12 +21,15 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly Func<RunningDeployment, string> roleArnProvider;
         private readonly Func<CloudFormationTemplate> templateFactory;
 
+        private readonly List<string> Capabilities = new List<string>();
+
         public CreateCloudFormationChangeSetConvention(Func<IAmazonCloudFormation> clientFactory,
             StackEventLogger logger,
             Func<RunningDeployment, StackArn> stackProvider,
             Func<RunningDeployment, string> roleArnProvider,
-            Func<CloudFormationTemplate> templateFactory
-        ): base(logger)
+            Func<CloudFormationTemplate> templateFactory,
+            string iamCapabilities
+        ) : base(logger)
         {
             Guard.NotNull(stackProvider, "Stack provider should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
@@ -36,6 +40,10 @@ namespace Calamari.Aws.Deployment.Conventions
             this.stackProvider = stackProvider;
             this.roleArnProvider = roleArnProvider;
             this.templateFactory = templateFactory;
+            if (iamCapabilities.IsKnownIamCapability())
+            {
+                Capabilities.Add(iamCapabilities);
+            }
         }
 
         public override void Install(RunningDeployment deployment)
@@ -58,7 +66,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     name,
                     stack,
                     roleArnProvider?.Invoke(deployment),
-                    template
+                    template,
+                    Capabilities
                 )
                 .Map(CreateChangeSet)
                 .Tee(WaitForChangesetCompletion)
@@ -86,7 +95,7 @@ namespace Calamari.Aws.Deployment.Conventions
             };
         }
 
-        private CreateChangeSetRequest CreateChangesetRequest(StackStatus status, string changesetName, StackArn stack, string roleArn, CloudFormationTemplate template)
+        private CreateChangeSetRequest CreateChangesetRequest(StackStatus status, string changesetName, StackArn stack, string roleArn, CloudFormationTemplate template, List<string> capabilities)
         {
             return new CreateChangeSetRequest
             {
@@ -95,6 +104,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 Parameters = template.Inputs.ToList(),
                 ChangeSetName = changesetName,
                 ChangeSetType = status == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
+                Capabilities = capabilities,
                 RoleARN = roleArn 
             };
         }

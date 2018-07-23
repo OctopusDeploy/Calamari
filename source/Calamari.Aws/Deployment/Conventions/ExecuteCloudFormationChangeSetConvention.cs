@@ -82,6 +82,12 @@ namespace Calamari.Aws.Deployment.Conventions
                     return Maybe<RunningChangeSet>.None;
                 }
 
+                if (changes.Status == ChangeSetStatus.FAILED)
+                {
+                    throw new UnknownException($"AWS-CLOUDFORMATION-ERROR-0019: The changeset failed to create.\n{changes.StatusReason}");
+                }
+
+
                 factory().ExecuteChangeSet(new ExecuteChangeSetRequest
                 {
                     ChangeSetName = changeSet.Value,
