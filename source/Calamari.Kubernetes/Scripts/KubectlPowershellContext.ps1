@@ -47,9 +47,8 @@ function SetupContext {
 	 if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
         $K8S_SkipTlsVerification = $false;
     }
-
-	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl --namespace=$K8S_Namespace
-    & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster
+	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
+    & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
     & $Kubectl_Exe config use-context octocontext
 
 	if(-not [string]::IsNullOrEmpty($K8S_Client_Cert)) {
@@ -82,7 +81,7 @@ function SetupContext {
 	}
 
     if($K8S_AccountType -eq "Token") {
-        Write-Host "Creating kubectl context to $K8S_ClusterUrl using a Token"
+        Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using a Token"
 		$K8S_Token=$OctopusParameters["Octopus.Account.Token"]
 		if([string]::IsNullOrEmpty($K8S_Token)) {
 			Write-Error "Kubernetes authentication Token is missing"
@@ -92,14 +91,14 @@ function SetupContext {
         & $Kubectl_Exe config set-credentials octouser --token=$K8S_Token
     } elseif($K8S_AccountType -eq "UsernamePassword") {
 		$K8S_Username=$OctopusParameters["Octopus.Account.Username"]
-        Write-Host "Creating kubectl context to $K8S_ClusterUrl using Username $K8S_Username"
+        Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using Username $K8S_Username"
         & $Kubectl_Exe config set-credentials octouser --username=$K8S_Username --password=$($OctopusParameters["Octopus.Account.Password"])
     } elseif($K8S_AccountType -eq "AmazonWebServicesAccount") {
 		# kubectl doesn't yet support exec authentication
 		# https://github.com/kubernetes/kubernetes/issues/64751
 		# so build this manually
 		$K8S_ClusterName=$OctopusParameters["Octopus.Action.Kubernetes.ClusterName"]
-        Write-Host "Creating kubectl context to $K8S_ClusterUrl using EKS cluster name $K8S_ClusterName"
+        Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using EKS cluster name $K8S_ClusterName"
 
 		Get-Content $env:KUBECONFIG
 		

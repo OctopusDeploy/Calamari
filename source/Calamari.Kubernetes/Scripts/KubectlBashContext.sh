@@ -40,7 +40,7 @@ function setup_context {
 
   if [[ "$Octopus_AccountType" == "Token" ]]; then
     Octopus_K8S_Token=$(get_octopusvariable "Octopus.Account.Token")
-    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl using a Token"
+    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using a Token"
     if [[ -z $Octopus_K8S_Token ]]; then
       echo >2 "Kubernetes authentication Token is missing"
       exit 1
@@ -48,15 +48,15 @@ function setup_context {
 	kubectl config set-credentials octouser --token=$Octopus_K8S_Token
   elif [[ "$Octopus_AccountType" == "UsernamePassword" ]]; then
 	Octopus_K8S_Username=$(get_octopusvariable "Octopus.Account.Username")
-    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl using $Octopus_K8S_Username"
+    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using $Octopus_K8S_Username"
     kubectl config set-credentials octouser --username=$Octopus_K8S_Username --password=$(get_octopusvariable "Octopus.Account.Password")
   else
     echo >&2 "The account $Octopus_AccountType is currently not valid for kubectl contexts"
     exit 1
   fi
 
-   kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification --server=$Octopus_K8S_ClusterUrl --namespace=$Octopus_K8S_Namespace
-   kubectl config set-context octocontext --user=octouser --cluster=octocluster
+   kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification --server=$Octopus_K8S_ClusterUrl
+   kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
    kubectl config use-context octocontext
 }
 
