@@ -35,7 +35,7 @@ function SetupContext {
 		Exit 1
 	}
 
-	if([string]::IsNullOrEmpty($K8S_ServerUrl)){
+	if([string]::IsNullOrEmpty($K8S_Namespace)){
 		$K8S_Namespace="default"
 	}
 
@@ -98,9 +98,9 @@ function CreateNamespace {
 }
 
 Write-Host "##octopus[stdout-verbose]"
-CreateNamespace
 ConfigureKubeCtlPath
 SetupContext
+CreateNamespace
 Write-Host "##octopus[stdout-default]"
 
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
