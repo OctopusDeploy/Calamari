@@ -80,12 +80,7 @@ Execute-WithRetry{
             Write-Host "##octopus[stdout-default]"
         }
         catch { 
-            
             # fail quietly if the Azure CLI is not available in the System Path
-            Write-Host "##octopus[stdout-verbose]"
-            Write-Host "Failed to authenticate for Azure CLI"
-            Write-Host $_.Exception.Message
-            Write-Host "##octopus[stdout-default]"
         }
 
     } Else {
