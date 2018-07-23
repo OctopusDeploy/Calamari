@@ -16,6 +16,7 @@ namespace Calamari.Kubernetes
         {
             public const string Install = "Octopus.Action.Helm.Install";
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
+            public const string Variables = "Octopus.Action.Helm.Variables";
         }
     }
 }

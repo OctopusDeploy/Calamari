@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -17,6 +18,7 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
+using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -54,33 +56,22 @@ namespace Calamari.Kubernetes.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            //var azurePackageUploader = new AzurePackageUploader();
             var certificateStore = new CalamariCertificateStore();
-            //var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
-//            var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
             var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             //var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonVariablesReplacer = new JsonConfigurationVariableReplacer();
 
+            //helm upgrade --namespace calamari-testing --install --reset-values --set SpecialMessage=Parameter  myrelease ./
+            //--values newval.yaml
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                //new SwapAzureDeploymentConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
-//                new FindCloudServicePackageConvention(fileSystem),
-//                new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
-//                new ExtractAzureCloudServicePackageConvention(fileSystem),
-//                new ChooseCloudServiceConfigurationFileConvention(fileSystem),
-                //new ConfigureAzureCloudServiceConvention(fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever),
                 new SubstituteInFilesConvention(fileSystem, substituter),
-                //new ConfigurationVariablesConvention(fileSystem, replacer),
                 new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem)
-//                new RePackageCloudServiceConvention(fileSystem, SemaphoreFactory.Get()),
-//                new UploadAzureCloudServicePackageConvention(fileSystem, azurePackageUploader, cloudCredentialsFactory),
-//                new DeployAzureCloudServicePackageConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
@@ -91,6 +82,8 @@ namespace Calamari.Kubernetes.Commands
         }
     }
 
+    
+    
     public class HelmUpgradeConvention: IInstallConvention
     {
         private readonly IScriptEngine scriptEngine;
@@ -106,41 +99,35 @@ namespace Calamari.Kubernetes.Commands
         
         public void Install(RunningDeployment deployment)
         {
-            
-            
             var releaseName = deployment.Variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
             if (string.IsNullOrWhiteSpace(releaseName))
             {
-                
                 throw new CommandException("ReleaseName has not been set");
             }
-//SpecialVariables.Package.Output.InstallationDirectoryPath
             
-            var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
-            packagePath = Path.Combine(packagePath, "mychart");
-            
-            if (!fileSystem.DirectoryExists(packagePath) || !fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
-            {
-                throw new CommandException($"Unexpected error. Chart.yaml was not found in {packagePath}");
-            }
-            
-            var sb = new StringBuilder($"helm upgrade");
+            var packagePath = GetChartLocation(deployment);
+
+            var sb = new StringBuilder($"helm upgrade --reset-values"); //Force reset to use values now in release
+           
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
             {
                 sb.Append(" --install");
             }
 
-            sb.Append($" \"{releaseName}\" \"{packagePath}\"");
+            if (!TryGenerateVariablesFile(deployment, out var valuesFile))
+            {
+                sb.Append($" --values \"{valuesFile}\"");
+            }
 
+            sb.Append($" \"{releaseName}\" \"{packagePath}\"");
+            
             
             var fileName = Path.Combine(fileSystem.CreateTemporaryDirectory(), "HelmUpgrade.ps1");
-            using (var tempFile = new TemporaryFile(fileName))
+            using (new TemporaryFile(fileName))
             {
                 fileSystem.OverwriteFile(fileName, sb.ToString());
                 
-                //Log.VerboseFormat("Executing '{0}'", script);
-                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables,
-                    commandLineRunner);
+                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
                     throw new CommandException(string.Format(
@@ -154,6 +141,40 @@ namespace Calamari.Kubernetes.Commands
                         $"Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
                 }
             }
+        }
+
+        private string GetChartLocation(RunningDeployment deployment)
+        {
+            var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
+            packagePath = Path.Combine(packagePath, "mychart");
+
+            if (!fileSystem.DirectoryExists(packagePath) || !fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
+            {
+                throw new CommandException($"Unexpected error. Chart.yaml was not found in {packagePath}");
+            }
+
+            return packagePath;
+        }
+
+        private static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
+        {
+            fileName = null;
+            var variables = deployment.Variables.Get(SpecialVariables.Helm.Variables, "{}");
+            var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(variables);
+            if (values.Keys.Any())
+            {
+                fileName = Path.Combine(deployment.CurrentDirectory, "newValues.yaml");
+                using (var outputFile = new StreamWriter(fileName, false))
+                {
+                    foreach (var kvp in values)
+                    {
+                        outputFile.WriteLine($"{kvp.Key}: \"{kvp.Value}\"");
+                    }
+                }
+                return true;
+            }
+
+            return false;
         }
     }
 }
