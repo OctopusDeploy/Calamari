@@ -31,6 +31,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="4.8.0" />
+    <PackageReference Include="Octostache" Version="2.1.11-enh-get-indexes0002" />
+    <PackageReference Include="Octostache" Version="2.1.14" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />

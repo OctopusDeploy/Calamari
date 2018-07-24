@@ -104,6 +104,7 @@ namespace Calamari.Deployment
         {
             public static readonly string TransferPath = "Octopus.Action.Package.TransferPath";
             public static readonly string NuGetPackageId = "Octopus.Action.Package.NuGetPackageId";
+            public static readonly string PackageId = "Octopus.Action.Package.PackageId";
             public static readonly string NuGetPackageVersion = "Octopus.Action.Package.NuGetPackageVersion";
             public static readonly string ShouldDownloadOnTentacle = "Octopus.Action.Package.DownloadOnTentacle";
             public static readonly string NuGetFeedId = "Octopus.Action.Package.NuGetFeedId";

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Autofac;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
@@ -37,6 +38,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables = new VariableDictionary();
             Variables.EnrichWithEnvironmentVariables();
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
+            Variables.Set(SpecialVariables.Package.PackageId, "mychart");
             
             // K8S Config
             Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
@@ -81,13 +83,36 @@ namespace Calamari.Tests.KubernetesFixtures
             //Helm Config
             Variables.Set(Kubernetes.SpecialVariables.Helm.Install, "True");
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, "mynewrelease");
-            Variables.Set(Kubernetes.SpecialVariables.Helm.Variables, "{\"SpecialMessage\": \"FooBar\"}");
+            Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
             
             DeployPackage("mychart-0.3.1.tgz").AssertSuccess();
 
             var configMapValue = GetConfigMapValue();
             Assert.AreEqual("Hello FooBar", configMapValue);
         }
+        
+        
+        [Test]
+        public void ValuesFromPackage_NewValuesUsed()
+        {
+            //Helm Config
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Install, "True");
+            Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, "mynewrelease");
+            Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
+            
+            Variables.Set(SpecialVariables.Packages.PackageId("Pack-1"), "fakePackage");
+            Variables.Set(SpecialVariables.Packages.OriginalPath("Pack-1"), GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.PerformVariableReplace("Pack-1"), "True");
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
+            Variables.Set("MySecretMessage","From A Variable Replaced In Package");
+                
+            DeployPackage("mychart-0.3.1.tgz").AssertSuccess();
+
+            var configMapValue = GetConfigMapValue();
+            Assert.AreEqual("Hello FooBar", configMapValue);
+        }
+        
+        
 
         string GetConfigMapValue()
         {
@@ -110,10 +135,46 @@ namespace Calamari.Tests.KubernetesFixtures
         
         CalamariResult DeployPackage(string chartName)
         {
+            /*
+             *  [SetUp]
+        public void SetUp()
+        {
+            ExternalVariables.LogMissingVariables();
+            container = Calamari.Program.BuildContainer(Args);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            container?.Dispose();
+        }
+
+        [Test]
+        public void RunScript()
+        {
+            var retCode = container.Resolve<Calamari.Program>().Execute(Args);
+            Assert.AreEqual(0, retCode);
+        }
+             * 
+             */
+
+            
+            
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
+                
                 var pkg = GetFixtureResouce("Charts", chartName);
                 Variables.Save(variablesFile.FilePath);
+
+//                var args = new [] {"helm-upgrade",
+//                    "--extensions", "Calamari.Kubernetes",
+//                    "--package", pkg,
+//                    "--variables", variablesFile.FilePath};
+//                
+//                var container = global::Calamari.Program.BuildContainer(args);
+//                var t = container.Resolve<Calamari.Program>().Execute(args);
+//                return null;
+//                
                 return Invoke(Calamari()
                     .Action("helm-upgrade")
                     .Argument("extensions", "Calamari.Kubernetes")
