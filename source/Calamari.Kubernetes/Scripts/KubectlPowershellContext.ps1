@@ -100,8 +100,6 @@ function SetupContext {
 		# so build this manually
 		$K8S_ClusterName=$OctopusParameters["Octopus.Action.Kubernetes.ClusterName"]
         Write-Host "Creating kubectl context to $K8S_ClusterUrl using EKS cluster name $K8S_ClusterName"
-
-		Get-Content $env:KUBECONFIG
 		
 		# The call to set-cluster above will create a file with empty users. We need to call
 		# set-cluster first, because if we try to add the exec user first, set-cluster will
