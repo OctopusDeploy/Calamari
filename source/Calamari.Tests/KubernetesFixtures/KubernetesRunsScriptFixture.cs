@@ -48,15 +48,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(temp.FilePath, "kubectl get nodes");
 
                 var deploymentVariables = new CalamariVariableDictionary();
-                deploymentVariables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
-                deploymentVariables.Set(Kubernetes.SpecialVariables.Namespace, "default");
-                deploymentVariables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "true");
-                deploymentVariables.Set(Calamari.Deployment.SpecialVariables.Account.Token, ClusterToken);
-                deploymentVariables.Set(Calamari.Deployment.SpecialVariables.Account.AccountType, "Token");
-
+                deploymentVariables.Set(SpecialVariables.ClusterUrl, ServerUrl);
+                
+                deploymentVariables.Set(SpecialVariables.SkipTlsVerification, "true");
+                deploymentVariables.Set(SpecialVariables.Namespace, "calamari-testing");
+                deploymentVariables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+                deploymentVariables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+                
                 var output = ExecuteScript(wrapper, temp.FilePath, deploymentVariables);
                 output.AssertSuccess();
-                output.AssertOutput("ASKROB");
             }
         }
 

@@ -16,6 +16,7 @@ using System.Linq;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.JsonVariables;
+using Calamari.Integration.Packages;
 using Calamari.Modules;
 using Calamari.Util;
 
@@ -62,6 +63,8 @@ namespace Calamari.Commands
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonVariableReplacer = new JsonConfigurationVariableReplacer();
+            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+
 
             ValidateArguments();
 
@@ -71,7 +74,7 @@ namespace Calamari.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new StageScriptPackagesConvention(packageFile, fileSystem),
+                new StageScriptPackagesConvention(packageFile, fileSystem, extractor),
                 new SubstituteInFilesConvention(fileSystem, fileSubstituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),

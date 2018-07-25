@@ -351,7 +351,7 @@ namespace Calamari.Integration.FileSystem
         string GetTempBasePath()
         {
             var path1 = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            path1 = Path.Combine(path1, Assembly.GetEntryAssembly()?.GetName().Name);
+            path1 = Path.Combine(path1, Assembly.GetEntryAssembly()?.GetName().Name ?? "Octopus.Calamari");
             path1 = Path.Combine(path1, "Temp");
             var path = path1;
             if (!Directory.Exists(path))

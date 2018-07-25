@@ -77,7 +77,7 @@ function setup_context {
 
   if [[ "$Octopus_AccountType" == "Token" ]]; then
     Octopus_K8S_Token=$(get_octopusvariable "Octopus.Account.Token")
-    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl using a Token"
+    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using a Token"
     if [[ -z $Octopus_K8S_Token ]]; then
       echo >2 "Kubernetes authentication Token is missing"
       exit 1
@@ -85,7 +85,7 @@ function setup_context {
 	kubectl config set-credentials octouser --token=$Octopus_K8S_Token
   elif [[ "$Octopus_AccountType" == "UsernamePassword" ]]; then
 	Octopus_K8S_Username=$(get_octopusvariable "Octopus.Account.Username")
-    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl using $Octopus_K8S_Username"
+    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using $Octopus_K8S_Username"
     kubectl config set-credentials octouser --username=$Octopus_K8S_Username --password=$(get_octopusvariable "Octopus.Account.Password")
   elif [[ "$Octopus_AccountType" == "AmazonWebServicesAccount" ]]; then
         # kubectl doesn't yet support exec authentication

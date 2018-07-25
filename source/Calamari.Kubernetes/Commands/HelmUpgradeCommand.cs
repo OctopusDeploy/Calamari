@@ -1,0 +1,114 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.IO;
+using System.Linq;
+using Calamari.Commands.Support;
+using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
+using Calamari.Integration.Certificates;
+using Calamari.Integration.ConfigurationTransforms;
+using Calamari.Integration.EmbeddedResources;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.JsonVariables;
+using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
+using Calamari.Integration.ServiceMessages;
+using Calamari.Integration.Substitutions;
+using Calamari.Kubernetes.Conventions;
+using Octostache;
+
+namespace Calamari.Kubernetes.Commands
+{
+    [Command("helm-upgrade", Description = "Performs Helm Upgrade with Chart while performing variable replacement")]
+    public class HelmUpgradeCommand : Command
+    {
+        private string variablesFile;
+        private string packageFile;
+        private string sensitiveVariablesFile;
+        private string sensitiveVariablesPassword;
+        private readonly CombinedScriptEngine scriptEngine;
+        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        
+        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine)
+        {
+            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            this.scriptEngine = scriptEngine;
+        }
+        
+        public override int Execute(string[] commandLineArguments)
+        {
+              Options.Parse(commandLineArguments);
+
+            if (!File.Exists(packageFile))
+                throw new CommandException("Could not find package file: " + packageFile);
+            
+            if (variablesFile != null && !File.Exists(variablesFile))
+                throw new CommandException("Could not find variables file: " + variablesFile);
+
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+            var substituter = new FileSubstituter(fileSystem);
+            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            
+            var conventions = new List<IConvention>
+            {
+                new ContributeEnvironmentVariablesConvention(),
+                new LogVariablesConvention(),
+                new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
+                new StageScriptPackagesConvention(null, fileSystem, extractor, true),
+                new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
+                new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem)
+            };
+
+            var deployment = new RunningDeployment(packageFile, variables);
+            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            
+            conventionRunner.RunConventions();
+
+            var exitCode = variables.GetInt32(Deployment.SpecialVariables.Action.Script.ExitCode);
+            
+//            var shouldWriteJournal = CanWriteJournal(variables) && !deployment.SkipJournal;
+//            if (shouldWriteJournal)
+//            {
+//                var journal = new DepoymentJournal(fileSystem, semaphore, variables);
+//                journal.AddJournalEntry(new JournalEntry(deployment, exitCode == 0));
+//            }
+//                
+
+            return exitCode.Value;
+        }
+        
+        
+        
+        bool CanWriteJournal(VariableDictionary variables)
+        {
+            return variables.Get(Deployment.SpecialVariables.Tentacle.Agent.JournalPath) != null;
+        }
+
+        private IEnumerable<string> FileTargetFactory(RunningDeployment deployment)
+        {
+            var variables = deployment.Variables;
+            var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
+            foreach (var packageReferenceName in packageReferenceNames)
+            {
+                if (!variables.GetFlag(SpecialVariables.Helm.Packages.PerformVariableReplace(packageReferenceName)))
+                {
+                    continue;
+                }
+
+                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
+                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
+                
+                foreach (var path in paths)
+                {
+                    yield return Path.Combine(sanitizedPackageReferenceName, path);    
+                }
+            }
+        }
+    }
+}
