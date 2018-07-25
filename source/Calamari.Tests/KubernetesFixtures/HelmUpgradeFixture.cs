@@ -34,7 +34,6 @@ namespace Calamari.Tests.KubernetesFixtures
             FileSystem.PurgeDirectory(StagingDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
-
             Variables = BaseRequiredVariableDictionary();
             AddChartPackage(Variables);
             AddK8SAuth(Variables);
