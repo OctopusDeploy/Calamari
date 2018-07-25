@@ -6,6 +6,7 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Deployment.Journal;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.EmbeddedResources;
@@ -29,15 +30,17 @@ namespace Calamari.Kubernetes.Commands
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
+        private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         
-        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine)
+        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             this.scriptEngine = scriptEngine;
+            this.deploymentJournalWriter = deploymentJournalWriter;
         }
         
         public override int Execute(string[] commandLineArguments)
@@ -62,34 +65,27 @@ namespace Calamari.Kubernetes.Commands
                 new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
                 new StageScriptPackagesConvention(null, fileSystem, extractor, true),
                 new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
-                new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem)
+                new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
             
-            conventionRunner.RunConventions();
-
-            var exitCode = variables.GetInt32(Deployment.SpecialVariables.Action.Script.ExitCode);
             
-//            var shouldWriteJournal = CanWriteJournal(variables) && !deployment.SkipJournal;
-//            if (shouldWriteJournal)
-//            {
-//                var journal = new DepoymentJournal(fileSystem, semaphore, variables);
-//                journal.AddJournalEntry(new JournalEntry(deployment, exitCode == 0));
-//            }
-//                
+            try
+            {
+                conventionRunner.RunConventions();
+                deploymentJournalWriter.AddJournalEntry(deployment, true, packageFile);
+            }
+            catch (Exception)
+            {
+                deploymentJournalWriter.AddJournalEntry(deployment, false, packageFile);
+                throw;
+            }
 
-            return exitCode.Value;
+            return 0;
         }
         
-        
-        
-        bool CanWriteJournal(VariableDictionary variables)
-        {
-            return variables.Get(Deployment.SpecialVariables.Tentacle.Agent.JournalPath) != null;
-        }
-
         private IEnumerable<string> FileTargetFactory(RunningDeployment deployment)
         {
             var variables = deployment.Variables;

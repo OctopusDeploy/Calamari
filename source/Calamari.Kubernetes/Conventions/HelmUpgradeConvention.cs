@@ -8,6 +8,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Util;
 using Newtonsoft.Json;
 using Octostache;
 
@@ -38,10 +39,10 @@ namespace Calamari.Kubernetes.Conventions
 
             var sb = new StringBuilder($"helm upgrade --reset-values"); //Force reset to use values now in release
            
-            if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
-            {
-                sb.Append(" --install");
-            }
+            /*if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
+            {*/
+            sb.Append(" --install");
+            /*}*/
 
             if (TryGenerateVariablesFile(deployment, out var valuesFile))
             {
@@ -96,17 +97,19 @@ namespace Calamari.Kubernetes.Conventions
                 
                 foreach (var providedPath in paths)
                 {
+                    var packageId = variables.Get(Deployment.SpecialVariables.Packages.PackageId(packageReferenceName));
+                    var version = variables.Get(Deployment.SpecialVariables.Packages.PackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
                     var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
                     if (!files.Any())
                     {
-                        var packageId = variables.Get(Deployment.SpecialVariables.Packages.PackageId(packageReferenceName));
-                        var version = variables.Get(Deployment.SpecialVariables.Packages.PackageVersion(packageReferenceName));
                         throw new CommandException($"Unable to find file `{providedPath}` for package {packageId} v{version}");
                     }
                     
                     foreach (var file in files)
                     {
+                        var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
+                        Log.Info($"Including values file `{relative}` from package {packageId} v{version}");
                         yield return Path.GetFullPath(file);
                     }
                 }
@@ -117,7 +120,7 @@ namespace Calamari.Kubernetes.Conventions
         {
             var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
             
-            var packageId = deployment.Variables.Get(Deployment.SpecialVariables.Package.PackageId);
+            var packageId = deployment.Variables.Get(Deployment.SpecialVariables.Package.NuGetPackageId);
 
             if (fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
             {
