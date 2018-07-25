@@ -2,7 +2,8 @@
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Commands.Support;
-using Microsoft.WindowsAzure;
+using Microsoft.Azure;
+using Microsoft.WindowsAzure.Management.WebSites;
 using Microsoft.WindowsAzure.Management.WebSites.Models;
 
 namespace Calamari.Azure.Integration.Websites.Publishing
@@ -13,7 +14,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         {
             Log.Verbose($"Service Management endpoint is {serviceManagementEndpoint}");
             Log.Verbose($"Retrieving publishing profile for {targetSite.SiteAndSlotLegacy}");
-            using (var cloudClient = CloudContext.Clients.CreateWebSiteManagementClient(
+            using (var cloudClient = new WebSiteManagementClient(
                 new CertificateCloudCredentials(subscriptionId, new X509Certificate2(certificateBytes)),new Uri(serviceManagementEndpoint)))
             {
                 var webApp = cloudClient.WebSpaces.List()

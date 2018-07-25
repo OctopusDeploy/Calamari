@@ -1,5 +1,5 @@
 ﻿using Calamari.Integration.Certificates;
-using Microsoft.WindowsAzure;
+using Microsoft.Azure;
 
 namespace Calamari.Azure.Integration
 {

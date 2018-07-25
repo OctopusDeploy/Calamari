@@ -6,7 +6,6 @@ using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
-using Calamari.Util;
 
 namespace Calamari.Integration.Certificates
 {
@@ -14,15 +13,15 @@ namespace Calamari.Integration.Certificates
     {
         public X509Certificate2 GetOrAdd(string thumbprint, string bytes)
         {
-            return GetOrAdd(thumbprint, bytes, new X509Store("Octopus", StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, bytes, null, new X509Store("Octopus", StoreLocation.CurrentUser));
         }
 
-        public X509Certificate2 GetOrAdd(string thumbprint, string bytes, StoreName storeName)
+        public X509Certificate2 GetOrAdd(string thumbprint, string bytes, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser, string password = null)
         {
-            return GetOrAdd(thumbprint, bytes, new X509Store(storeName, StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, bytes, password, new X509Store(storeName, storeLocation));
         }
 
-        static X509Certificate2 GetOrAdd(string thumbprint, string bytes, X509Store store)
+        static X509Certificate2 GetOrAdd(string thumbprint, string bytes, string password, X509Store store)
         {
             store.Open(OpenFlags.ReadWrite);
 
@@ -47,10 +46,10 @@ namespace Calamari.Integration.Certificates
                 {
                     File.WriteAllBytes(file, raw);
 
-                    var certificate = LoadCertificateWithPrivateKey(file);
+                    var certificate = LoadCertificateWithPrivateKey(file, password);
                     if (CheckThatCertificateWasLoadedWithPrivateKey(certificate) == false)
                     {
-                        certificate = LoadCertificateWithPrivateKey(file);
+                        certificate = LoadCertificateWithPrivateKey(file, password);
                     }
 
                     Log.Info("Adding certificate to store");
@@ -69,14 +68,14 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static X509Certificate2 LoadCertificateWithPrivateKey(string file)
+        static X509Certificate2 LoadCertificateWithPrivateKey(string file, string password)
         {
-            return TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, true)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, true)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, true)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, false)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, false)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false);
+            return TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, true, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, true, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, true, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, false, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, false, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false, password);
         }
 
         static bool CheckThatCertificateWasLoadedWithPrivateKey(X509Certificate2 certificate)
@@ -141,14 +140,17 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static X509Certificate2 TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey)
+        static X509Certificate2 TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey, string password = null)
         {
             try
             {
-                var cert = new X509Certificate2(file, (string)null, flags);
+                var cert = new X509Certificate2(file, password, flags);
 
                 if (!HasPrivateKey(cert) && requirePrivateKey)
+                {
+                    cert.Reset();
                     return null;
+                }
 
                 return cert;
             }
