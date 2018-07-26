@@ -16,6 +16,7 @@ using System.Linq;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.JsonVariables;
+using Calamari.Integration.Packages;
 using Calamari.Modules;
 using Calamari.Util;
 
@@ -28,12 +29,13 @@ namespace Calamari.Commands
         private string scriptFileArg;
         private string packageFile;
         private string scriptParametersArg;
-        private DeploymentJournal journal;
+        private readonly IDeploymentJournalWriter deploymentJournalWriter;
         private readonly CalamariVariableDictionary variables;
         private readonly CombinedScriptEngine scriptEngine;
         private IFileSubstituter fileSubstituter; 
 
         public RunScriptCommand(
+            IDeploymentJournalWriter deploymentJournalWriter,
             CalamariVariableDictionary variables,
             CombinedScriptEngine scriptEngine)
         {
@@ -41,6 +43,7 @@ namespace Calamari.Commands
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
             Options.Add("scriptParameters=", $"Parameters to pass to the script.", v => scriptParametersArg = v);
             VariableDictionaryUtils.PopulateOptions(Options);
+            this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.scriptEngine = scriptEngine;
         }
@@ -55,13 +58,14 @@ namespace Calamari.Commands
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
                 new ServiceMessageCommandOutput(variables)));
-            var semaphore = SemaphoreFactory.Get();
-            journal = new DeploymentJournal(fileSystem, semaphore, variables);
+          
             fileSubstituter = new FileSubstituter(fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonVariableReplacer = new JsonConfigurationVariableReplacer();
+            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+
 
             ValidateArguments();
 
@@ -71,7 +75,7 @@ namespace Calamari.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new StageScriptPackagesConvention(packageFile, fileSystem),
+                new StageScriptPackagesConvention(packageFile, fileSystem, extractor),
                 new SubstituteInFilesConvention(fileSystem, fileSubstituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
@@ -83,13 +87,8 @@ namespace Calamari.Commands
             var conventionRunner = new ConventionProcessor(deployment, conventions);
             
             conventionRunner.RunConventions();
-
             var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
-            
-            var shouldWriteJournal = CanWriteJournal(variables) && HasPackages() && !deployment.SkipJournal;
-            if (shouldWriteJournal)
-                journal.AddJournalEntry(new JournalEntry(deployment, exitCode == 0));
-
+            deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, packageFile);
             return exitCode.Value;
         }
 
@@ -224,16 +223,6 @@ namespace Calamari.Commands
         bool WasProvided(string value)
         {
             return !string.IsNullOrEmpty(value);
-        }
-
-        bool CanWriteJournal(VariableDictionary variables)
-        {
-            return variables.Get(SpecialVariables.Tentacle.Agent.JournalPath) != null;
-        }
-
-        bool HasPackages()
-        {
-            return WasProvided(packageFile) || variables.GetIndexes(SpecialVariables.Packages.PackageCollection).Any();
         }
     }
 }

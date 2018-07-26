@@ -1,22 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Deployment.Journal;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Kubernetes.Conventions;
+using Octostache;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -28,14 +30,17 @@ namespace Calamari.Kubernetes.Commands
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
-
-        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine)
+        private readonly IDeploymentJournalWriter deploymentJournalWriter;
+        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        
+        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             this.scriptEngine = scriptEngine;
+            this.deploymentJournalWriter = deploymentJournalWriter;
         }
         
         public override int Execute(string[] commandLineArguments)
@@ -48,35 +53,58 @@ namespace Calamari.Kubernetes.Commands
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
-            Log.Info("Deploying package:    " + packageFile);
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-
-            var fileSystem = new WindowsPhysicalFileSystem();
-            var embeddedResources = new AssemblyEmbeddedResources();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var certificateStore = new CalamariCertificateStore();
             var substituter = new FileSubstituter(fileSystem);
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
-            //var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var jsonVariablesReplacer = new JsonConfigurationVariableReplacer();
-
-            //helm upgrade --namespace calamari-testing --install --reset-values --set SpecialMessage=Parameter  myrelease ./
-            //--values newval.yaml
+            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
-                new SubstituteInFilesConvention(fileSystem, substituter),
-                new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem)
+                new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
+                new StageScriptPackagesConvention(null, fileSystem, extractor, true),
+                new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
+                new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
-            conventionRunner.RunConventions();
+            
+            
+            try
+            {
+                conventionRunner.RunConventions();
+                deploymentJournalWriter.AddJournalEntry(deployment, true, packageFile);
+            }
+            catch (Exception)
+            {
+                deploymentJournalWriter.AddJournalEntry(deployment, false, packageFile);
+                throw;
+            }
 
             return 0;
+        }
+        
+        private IEnumerable<string> FileTargetFactory(RunningDeployment deployment)
+        {
+            var variables = deployment.Variables;
+            var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
+            foreach (var packageReferenceName in packageReferenceNames)
+            {
+                if (!variables.GetFlag(SpecialVariables.Helm.Packages.PerformVariableReplace(packageReferenceName)))
+                {
+                    continue;
+                }
+
+                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
+                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
+                
+                foreach (var path in paths)
+                {
+                    yield return Path.Combine(sanitizedPackageReferenceName, path);    
+                }
+            }
         }
     }
 }

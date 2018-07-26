@@ -105,7 +105,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
             output.AssertSuccess();
-            output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is depricated.");
+            output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
             output.AssertOutput("Hello!");
         }
 
@@ -155,7 +155,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldConsumeParametersWithQuotesUsingDepricatedArgument()
+        public void ShouldConsumeParametersWithQuotesUsingDeprecatedArgument()
         {
             var (output, _) = RunScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
             {

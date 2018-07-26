@@ -14,9 +14,22 @@ namespace Calamari.Kubernetes
 
         public static class Helm
         {
-            public const string Install = "Octopus.Action.Helm.Install";
+//            public const string Install = "Octopus.Action.Helm.Install";
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
-            public const string Variables = "Octopus.Action.Helm.Variables";
+            public const string KeyValues = "Octopus.Action.Helm.KeyValues";
+
+            public static class Packages
+            {
+                public static string PerformVariableReplace(string key)
+                {
+                    return $"Octopus.Action.Package[{key}].PerformVariableReplace";
+                }
+
+                public static string ValuesFilePath(string key)
+                {
+                    return $"Octopus.Action.Package[{key}].ValuesFilePath";
+                }
+            }
         }
     }
 }

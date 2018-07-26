@@ -56,7 +56,6 @@
     <PackageReference Include="Octopus.Dependencies.AzureBinaries" Version="2.9.0" />
     <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="5.4.0" />
     <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="5.7.0" />
-    <PackageReference Include="Octostache" Version="2.1.11-enh-get-indexes0002" />
     <PackageReference Include="Octostache" Version="2.1.14" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="System.Spatial" Version="5.8.3" />

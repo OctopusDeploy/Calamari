@@ -9,11 +9,15 @@ namespace Calamari.Deployment.Conventions
     {
         private readonly string packagePathContainingScript;
         private readonly ICalamariFileSystem fileSystem;
+        private readonly IGenericPackageExtractor extractor;
+        private readonly bool forceExtract;
 
-        public StageScriptPackagesConvention(string packagePathContainingScript, ICalamariFileSystem fileSystem)
+        public StageScriptPackagesConvention(string packagePathContainingScript, ICalamariFileSystem fileSystem, IGenericPackageExtractor extractor, bool forceExtract = false)
         {
             this.packagePathContainingScript = packagePathContainingScript;
             this.fileSystem = fileSystem;
+            this.extractor = extractor;
+            this.forceExtract = forceExtract;
         }
         
         public void Install(RunningDeployment deployment)
@@ -56,7 +60,7 @@ namespace Calamari.Deployment.Conventions
 
                 var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(packageReferenceName));
 
-                if (shouldExtract)
+                if (forceExtract || shouldExtract)
                 {
                     var extractionPath = Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName);
                     ExtractPackage(packageOriginalPath, extractionPath, deployment);
@@ -80,7 +84,6 @@ namespace Calamari.Deployment.Conventions
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
             
-            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             extractor.GetExtractor(packageFile).Extract(packageFile, extractionDirectory, true);
         }
     }
