@@ -51,7 +51,7 @@ namespace Calamari.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
+            
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
@@ -66,21 +66,20 @@ namespace Calamari.Commands
             var jsonVariableReplacer = new JsonConfigurationVariableReplacer();
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
 
-
             ValidateArguments();
-
-            DetermineScriptFileAndParameters(out var scriptFile, out var scriptParameters);
+            WriteVariableScriptToFile();
 
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new StageScriptPackagesConvention(packageFile, fileSystem, extractor),
+                new SubstituteInFilesConvention(fileSystem, fileSubstituter, _ => true, FileTargetFactory),
                 new SubstituteInFilesConvention(fileSystem, fileSubstituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonVariableReplacer, fileSystem),
-                new ExecuteScriptConvention(scriptFile, scriptParameters, scriptEngine, commandLineRunner) 
+                new ExecuteScriptConvention(scriptEngine, commandLineRunner) 
             };
             
             var deployment = new RunningDeployment(packageFile, variables);
@@ -92,56 +91,37 @@ namespace Calamari.Commands
             return exitCode.Value;
         }
 
-        void DetermineScriptFileAndParameters(out string scriptFile, out string scriptParameters)
+        private IEnumerable<string> FileTargetFactory(RunningDeployment deployment)
         {
-            // There are a number of ways the script can be supplied
-            
-            // If the package-file argument is supplied, then the script file is within the package
-            if (WasProvided(packageFile))
+            // We shouldnt preform variable replacement if a file arg is passed in since this deprecated property
+            // should only be coming through if something isnt using the variables dictionary and hence will
+            // have already been replaced
+            if (WasProvided(scriptFileArg) && !WasProvided(packageFile))
             {
-                // The script file can be supplied either via an argument or a variable
-                var relativeScriptFile = WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName))
-                    ? variables.Get(SpecialVariables.Action.Script.ScriptFileName)
-                    : scriptFileArg;
+                yield break;
+            }
+            var scriptFile = deployment.Variables.Get(SpecialVariables.Action.Script.ScriptFileName);
+            yield return Path.Combine(deployment.CurrentDirectory, scriptFile);
+        }
 
-                if (string.IsNullOrWhiteSpace(relativeScriptFile))
-                    throw new CommandException("Package argument was supplied but no script file was specified.");
+        void WriteVariableScriptToFile()
+        {
+            if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
+                !WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
+            {
+                throw new CommandException($"Could not determine script to run.  Please provide either a `{SpecialVariables.Action.Script.ScriptBody}` variable, " + 
+                                           $"or a `{SpecialVariables.Action.Script.ScriptFileName}` variable."); 
+            }
 
-                scriptFile = Path.GetFullPath(relativeScriptFile);
-                scriptParameters = WasProvided(scriptParametersArg)
-                    ? scriptParametersArg
-                    : variables.Get(SpecialVariables.Action.Script.ScriptParameters);
+            if (WasProvided(scriptBody))
+            {
+                var scriptFile = Path.GetFullPath(relativeScriptFile);
                 
-                // Automatically perform variable-substitution on the script file itself,
-                // since it didn't come out of the variable dictionary
-                fileSubstituter.PerformSubstitution(scriptFile, variables);
-            }
-            
-            // A script file can be directly supplied as an argument.
-            // We don't perform variable-substitution on this file, as in some cases the server has already performed it. 
-            else if (WasProvided(scriptFileArg))
-            {
-                scriptFile = Path.GetFullPath(scriptFileArg);
-                scriptParameters = null;
-            }
-            
-            // The final way to supply a script is as source-code via a variable  
-            else
-            {
-                if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax))
-                {
-                   throw new CommandException($"Could not determine script to run.  Please provide either a `{SpecialVariables.Action.Script.ScriptBody}` variable, " + 
-                    $"or a `{SpecialVariables.Action.Script.ScriptFileName}` variable."); 
-                }
-
-                scriptFile = Path.GetFullPath(relativeScriptFile);
-                scriptParameters = WasProvided(scriptParametersArg)
-                    ? scriptParametersArg
-                    : variables.Get(SpecialVariables.Action.Script.ScriptParameters);
+                //Set the name of the script we are about to create to the variables collection for replacement later on
+                variables.Set(SpecialVariables.Action.Script.ScriptFileName, relativeScriptFile);
                 
                 // If the script body was supplied via a variable, then we write it out to a file.
                 // This will be deleted with the working directory.
-                
                 // Bash files need SheBang as first few characters. This does not play well with BOM characters
                 var scriptBytes = scriptSyntax == ScriptSyntax.Bash
                     ? scriptBody.EncodeInUtf8NoBom()
@@ -153,7 +133,7 @@ namespace Calamari.Commands
 
         bool TryGetScriptFromVariables(out string scriptBody, out string scriptFileName, out ScriptSyntax syntax)
         {
-            scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBody);
+            scriptBody = variables.GetRaw(SpecialVariables.Action.Script.ScriptBody);
             if (WasProvided(scriptBody))
             {
                 var scriptSyntax = variables.Get(SpecialVariables.Action.Script.Syntax);
@@ -174,7 +154,7 @@ namespace Calamari.Commands
             // Try get any supported script body variable
             foreach (var supportedSyntax in scriptEngine.GetSupportedTypes())
             {
-                scriptBody = variables.Get(SpecialVariables.Action.Script.ScriptBodyBySyntax(supportedSyntax));
+                scriptBody = variables.GetRaw(SpecialVariables.Action.Script.ScriptBodyBySyntax(supportedSyntax));
                 if (scriptBody == null)
                 {
                     continue;
@@ -208,15 +188,32 @@ namespace Calamari.Commands
                         $"The `--script` parameter and `{SpecialVariables.Action.Script.ScriptFileName}` variable are both set." +
                         $"\r\nThe variable value takes precedence to allow for variable replacement of the script file.");
                 }
+                else
+                {
+                    variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptFileArg);
+                }
 
                 Log.Warn($"The `--script` parameter is deprecated.\r\n" +
                          $"Please set the `{SpecialVariables.Action.Script.ScriptBody}` and `{SpecialVariables.Action.Script.ScriptFileName}` variable to allow for variable replacement of the script file.");
             }
-            
-            if (WasProvided(scriptParametersArg) && WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptParameters)))
+
+            if (WasProvided(scriptParametersArg))
             {
+                if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptParameters)))
+                {
                     Log.Warn($"The `--scriptParameters` parameter and `{SpecialVariables.Action.Script.ScriptParameters}` variable are both set.\r\n" +
                              $"Please provide just the `{SpecialVariables.Action.Script.ScriptParameters}` variable instead.");
+                }
+                else
+                {
+                    variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
+                }    
+            }
+            
+            if (WasProvided(packageFile))
+            {
+                if (!WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
+                    throw new CommandException("Package argument was supplied but no script file was specified.");
             }
         }
 

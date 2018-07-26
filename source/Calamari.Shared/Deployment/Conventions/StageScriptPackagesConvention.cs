@@ -25,7 +25,7 @@ namespace Calamari.Deployment.Conventions
             // If the script is contained in a package, then extract the containing package in the working directory 
             if (!string.IsNullOrWhiteSpace(packagePathContainingScript))
             {
-                ExtractPackage(packagePathContainingScript, deployment.CurrentDirectory, deployment);
+                ExtractPackage(packagePathContainingScript, deployment.CurrentDirectory);
                 deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
             }
             
@@ -63,7 +63,7 @@ namespace Calamari.Deployment.Conventions
                 if (forceExtract || shouldExtract)
                 {
                     var extractionPath = Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName);
-                    ExtractPackage(packageOriginalPath, extractionPath, deployment);
+                    ExtractPackage(packageOriginalPath, extractionPath);
                     variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), extractionPath);
                 }
                 else
@@ -77,7 +77,7 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void ExtractPackage(string packageFile, string extractionDirectory, RunningDeployment deployment)
+        void ExtractPackage(string packageFile, string extractionDirectory)
         {
            Log.Verbose($"Extracting package '{packageFile}' to '{extractionDirectory}'"); 
             
