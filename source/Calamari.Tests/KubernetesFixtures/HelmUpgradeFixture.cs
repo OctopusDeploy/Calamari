@@ -113,7 +113,6 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Packages.PackageId("Pack-1"), "CustomValues");
             Variables.Set(SpecialVariables.Packages.PackageVersion("Pack-1"), "2.0.0");
             Variables.Set(SpecialVariables.Packages.OriginalPath("Pack-1"), GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
-            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.PerformVariableReplace("Pack-1"), "True");
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
             Variables.Set("MySecretMessage","From A Variable Replaced In Package");
                 

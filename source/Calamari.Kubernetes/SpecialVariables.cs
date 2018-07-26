@@ -20,11 +20,6 @@ namespace Calamari.Kubernetes
 
             public static class Packages
             {
-                public static string PerformVariableReplace(string key)
-                {
-                    return $"Octopus.Action.Package[{key}].PerformVariableReplace";
-                }
-
                 public static string ValuesFilePath(string key)
                 {
                     return $"Octopus.Action.Package[{key}].ValuesFilePath";

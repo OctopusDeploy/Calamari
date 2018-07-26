@@ -87,11 +87,6 @@ namespace Calamari.Kubernetes.Conventions
             var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
-                if (!variables.GetFlag(SpecialVariables.Helm.Packages.PerformVariableReplace(packageReferenceName)))
-                {
-                    continue;
-                }
-                
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
                 
