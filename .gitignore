@@ -194,3 +194,6 @@ tools/
 **/.idea
 **launchSettings.json
 source/Calamari.Tests/Some sample text
+
+# CodeRush settings
+.cr/
