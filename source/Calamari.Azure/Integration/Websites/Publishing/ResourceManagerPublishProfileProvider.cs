@@ -49,19 +49,21 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                                          .ToList();
 
                 if (!matchingSites.Any())
-                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}' in subscription '{subscriptionId}'");
+                {
+                    var resourceGroupMessage = !string.IsNullOrWhiteSpace(resourceGroupName)
+                        ? $" in resource group '{resourceGroupName}' and"
+                        : " in";
+                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}'{resourceGroupMessage} subscription '{subscriptionId}'");
+                }
+                    
                 
                 // if more than one site, fail
                 if (matchingSites.Count > 1)
                     throw new CommandException(
                         $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{subscriptionId}'.{(string.IsNullOrWhiteSpace(resourceGroupName) ? " Please supply a Resource Group name." : string.Empty)}");
 
-                var matchingSite = matchingSites.First();
-
-                if (string.IsNullOrWhiteSpace(resourceGroupName))
-                {
-                    resourceGroupName = matchingSite.ResourceGroup;
-                }
+                var matchingSite = matchingSites.Single();
+                resourceGroupName = matchingSite.ResourceGroup;
 
                 // ARM resource ID of the source app. App resource ID is of the form:
                 //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName} for production slots and
