@@ -1,9 +1,9 @@
 ﻿using System;
+using Calamari.Azure.Integration.Security;
 using Microsoft.Azure.Management.Compute;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.Storage;
 using Microsoft.Azure.Management.WebSites;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 
 namespace Calamari.Azure.Accounts
@@ -45,20 +45,8 @@ namespace Calamari.Azure.Accounts
 
         static string GetAuthorizationToken(AzureServicePrincipalAccount account)
         {
-            var adDirectory = "https://login.windows.net/";
-            if (!string.IsNullOrWhiteSpace(account.ActiveDirectoryEndpointBaseUri))
-            {
-                adDirectory = account.ActiveDirectoryEndpointBaseUri;
-            }
-            var context = new AuthenticationContext(adDirectory + account.TenantId);
-
-            var resourceManagementEndpointBaseUri = "https://management.core.windows.net/";
-            if (!string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri))
-            {
-                resourceManagementEndpointBaseUri = account.ResourceManagementEndpointBaseUri;
-            }
-            var result = context.AcquireTokenAsync(resourceManagementEndpointBaseUri, new ClientCredential(account.ClientId, account.Password)).GetAwaiter().GetResult();
-            return result.AccessToken;
+            return ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password,
+                account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
         }
     }
 }

@@ -1,12 +1,12 @@
 ﻿using System;
 using Calamari.Deployment;
-using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Azure.Accounts
 {
     public static class AccountFactory
     {
-        public static Account Create(CalamariVariableDictionary variables)
+        public static Account Create(VariableDictionary variables)
         {
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
 

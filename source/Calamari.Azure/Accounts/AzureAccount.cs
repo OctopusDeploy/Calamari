@@ -1,15 +1,16 @@
-﻿using Calamari.Deployment;
-using Calamari.Integration.Processes;
+﻿using Calamari.Azure.Integration;
+using Calamari.Deployment;
+using Octostache;
 
 namespace Calamari.Azure.Accounts
 {
     public class AzureAccount : Account
     {
-        public AzureAccount(CalamariVariableDictionary variables)
+        public AzureAccount(VariableDictionary variables)
         {
             AzureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
-            ServiceManagementEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint);
-            ServiceManagementEndpointSuffix = variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix);
+            ServiceManagementEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
+            ServiceManagementEndpointSuffix = variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix, DefaultVariables.StorageEndpointSuffix);
 
             CertificateThumbprint = variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint);
             CertificateBytes = variables.Get(SpecialVariables.Action.Azure.CertificateBytes);

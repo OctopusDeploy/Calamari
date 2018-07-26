@@ -1,11 +1,12 @@
-﻿using Calamari.Deployment;
-using Calamari.Integration.Processes;
+﻿using Calamari.Azure.Integration;
+using Calamari.Deployment;
+using Octostache;
 
 namespace Calamari.Azure.Accounts
 {
     public class AzureServicePrincipalAccount : Account
     {
-        public AzureServicePrincipalAccount(CalamariVariableDictionary variables)
+        public AzureServicePrincipalAccount(VariableDictionary variables)
         {
             SubscriptionNumber = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             ClientId = variables.Get(SpecialVariables.Action.Azure.ClientId);
@@ -13,8 +14,8 @@ namespace Calamari.Azure.Accounts
             Password = variables.Get(SpecialVariables.Action.Azure.Password);
 
             AzureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint);
+            ResourceManagementEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+            ActiveDirectoryEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
         }
 
         public string SubscriptionNumber { get; set; }
