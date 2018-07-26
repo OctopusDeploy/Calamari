@@ -120,7 +120,7 @@ namespace Calamari.Deployment.Retention
                     var preservedDirectories = (!string.IsNullOrEmpty(journalEntry.ExtractedTo)
                             ? new List<string> {journalEntry.ExtractedTo}
                             : new List<string>())
-                        .Concat(journalEntry.Packages.Select(p => p.DeployedFrom))
+                        .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(d => !string.IsNullOrEmpty(d)))
                         .ToList();
                     
                     Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it is the {FormatWithThPostfix(preservedEntries.Count)}most recent successful release");
@@ -141,7 +141,7 @@ namespace Calamari.Deployment.Retention
                 var preservedDirectories = (!string.IsNullOrEmpty(journalEntry.ExtractedTo)
                         ? new List<string> {journalEntry.ExtractedTo}
                         : new List<string>())
-                    .Concat(journalEntry.Packages.Select(p => p.DeployedFrom))
+                    .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(p => !string.IsNullOrEmpty(p)))
                     .ToList();
 
                 Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it was installed {installedAgo.Days} days and {installedAgo.Hours} hours ago");

@@ -27,9 +27,12 @@ namespace Calamari.Tests.Fixtures.Retention
         JournalEntry fourDayOldSameLocationDeployment;
         JournalEntry fourDayOldMultiPackageDeployment;
         JournalEntry twoDayOldMultiPackageDeployment;
+        JournalEntry twoDayOldDeploymentWithPackageThatWasNotAcquired;
+        JournalEntry fiveDayOldDeploymentWithPackageThatWasNotAcquired;
 
         const string policySet2 = "policySet2";
         const string policySet3 = "policySet3";
+        const string policySet4 = "policySet4";
         JournalEntry fiveDayOldNonMatchingDeployment;
 
         [SetUp]
@@ -91,6 +94,24 @@ namespace Calamari.Tests.Fixtures.Retention
                     new DeployedPackage("blah", "blah", "C:\\packages\\Acme.1.2.0.nupkg"),
                     new DeployedPackage("foo", "blah", "C:\\packages\\Foo.1.0.0.nupkg")
                 });
+
+            // We may reference packages which are not acquired (e.g. docker containers from script steps).
+            // These will not have a `DeployedFrom` path.
+            twoDayOldDeploymentWithPackageThatWasNotAcquired = new JournalEntry("twoDayOldNotAcquired", 
+                "blah", "blah", "blah", policySet4,
+                now.AddDays(-2).LocalDateTime, null, null, true,
+                new[]
+                {
+                    new DeployedPackage("blah", "blah", null)
+                });
+            
+            fiveDayOldDeploymentWithPackageThatWasNotAcquired = new JournalEntry("fiveDayOldNotAcquired", 
+                "blah", "blah", "blah", policySet4,
+                now.AddDays(-5).LocalDateTime, null, null, true,
+                new[]
+                {
+                    new DeployedPackage("blah", "blah", null)
+                });
             
 
             var journalEntries = new List<JournalEntry>
@@ -101,7 +122,8 @@ namespace Calamari.Tests.Fixtures.Retention
                 twoDayOldDeployment,
                 oneDayOldUnsuccessfulDeployment,
                 fourDayOldMultiPackageDeployment,
-                twoDayOldMultiPackageDeployment
+                twoDayOldMultiPackageDeployment,
+                fiveDayOldDeploymentWithPackageThatWasNotAcquired
             };
 
             deploymentJournal.GetAllJournalEntries().Returns(journalEntries);
@@ -204,6 +226,16 @@ namespace Calamari.Tests.Fixtures.Retention
             
             // The older entry should have been removed from the journal
             deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldMultiPackageDeployment.Id)));
+        }
+
+        [Test]
+        public void ShouldNotExplodeIfPackageWasNotAcquired()
+        {
+            const int days = 3;
+            retentionPolicy.ApplyRetentionPolicy(policySet4, days, null);
+            
+            // The entry should have been removed from the journal
+            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fiveDayOldDeploymentWithPackageThatWasNotAcquired.Id)));
         }
     }
 }

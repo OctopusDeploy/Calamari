@@ -27,10 +27,16 @@ namespace Calamari.Deployment.Journal
 
         public XElement ToXmlElement()
         {
-            return new XElement("Package",
+            var attributes = new List<XAttribute>
+            {
                 new XAttribute("PackageId", PackageId),
                 new XAttribute("PackageVersion", PackageVersion),
-                new XAttribute("DeployedFrom", DeployedFrom));
+            }; 
+            
+            if (!string.IsNullOrEmpty(DeployedFrom))
+                attributes.Add(new XAttribute("DeployedFrom", DeployedFrom));
+            
+            return new XElement("Package", attributes);
         }
         
         public static IEnumerable<DeployedPackage> GetDeployedPackages(RunningDeployment deployment)
@@ -72,7 +78,7 @@ namespace Calamari.Deployment.Journal
 
             // Otherwise we try to read them from the legacy attributes
             var packageIdAttribute = deploymentElement.Attribute("PackageId"); 
-            if (packageIdAttribute != null)
+            if (packageIdAttribute != null && !string.IsNullOrEmpty(packageIdAttribute.Value))
             {
                 return new[]
                 {
