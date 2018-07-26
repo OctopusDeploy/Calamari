@@ -56,7 +56,6 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}'{resourceGroupMessage} subscription '{subscriptionId}'");
                 }
                     
-                
                 // if more than one site, fail
                 if (matchingSites.Count > 1)
                     throw new CommandException(
