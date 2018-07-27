@@ -9,7 +9,7 @@ using Calamari.Integration.Processes;
 namespace Calamari.Integration.Packages.Java
 {
     /// <summary>
-    /// Wrapper class for invoking the Java Archive Tool http://docs.oracle.com/javase/7/docs/technotes/tools/windows/jar.html  
+    /// Wrapper class for invoking the Java Archive Tool http://docs.oracle.com/javase/7/docs/technotes/tools/windows/jar.html
     /// </summary>
     public class JarTool
     {
@@ -23,14 +23,14 @@ namespace Calamari.Integration.Packages.Java
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
             this.commandOutput = commandOutput;
-            
+
             /*
                 The precondition script will also set the location of the java libray files
             */
             toolsPath = Path.Combine(
-                Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaLibraryEnvVar) ?? "", 
-                "contentFiles", 
-                "any", 
+                Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaLibraryEnvVar) ?? "",
+                "contentFiles",
+                "any",
                 "any",
                 "tools.jar");
         }
@@ -39,6 +39,9 @@ namespace Calamari.Integration.Packages.Java
         {
             try
             {
+                var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
+                var manifestExists = File.Exists(manifestPath);
+
                 /*
                      The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
                      on where it found the java executable based on the JAVA_HOME environment
@@ -48,15 +51,17 @@ namespace Calamari.Integration.Packages.Java
                 var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
                 var createJarCommand = new CommandLineInvocation(
                     Path.Combine(javaBin, "java"),
-                    $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
+                    manifestExists ?
+                        $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ." :
+                        $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
                     contentsDirectory);
 
                 Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
-                
+
                 /*
                      All extraction messages should be verbose
                  */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]");                
+                commandOutput.WriteInfo("##octopus[stdout-verbose]");
 
                 var result = commandLineRunner.Execute(createJarCommand);
                 result.VerifySuccess();
@@ -158,7 +163,7 @@ namespace Calamari.Integration.Packages.Java
                 result.VerifySuccess();
 
                 // Ensure our slashes point in the correct direction
-                var extractedManifestPathComponents = new List<string>{tempDirectory}; 
+                var extractedManifestPathComponents = new List<string> { tempDirectory };
                 extractedManifestPathComponents.AddRange(manifestJarPath.Split('/'));
 
                 return File.ReadAllText(Path.Combine(extractedManifestPathComponents.ToArray()));
@@ -169,7 +174,7 @@ namespace Calamari.Integration.Packages.Java
             }
             finally
             {
-               fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure); 
+                fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
             }
         }
     }

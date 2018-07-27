@@ -43,12 +43,26 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     }
                 }
 
-                var matchingSite = sites
-                    .FirstOrDefault(webApp => string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.CurrentCultureIgnoreCase) &&
-                                         (string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(webApp.ResourceGroup, resourceGroupName, StringComparison.InvariantCultureIgnoreCase)));
+                var matchingSites = sites
+                    .Where(webApp => string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.CurrentCultureIgnoreCase) &&
+                                         (string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(webApp.ResourceGroup, resourceGroupName, StringComparison.InvariantCultureIgnoreCase)))
+                                         .ToList();
 
-                if (matchingSite == null)
-                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}' in subscription '{subscriptionId}'");
+                if (!matchingSites.Any())
+                {
+                    var resourceGroupMessage = !string.IsNullOrWhiteSpace(resourceGroupName)
+                        ? $" in resource group '{resourceGroupName}' and"
+                        : " in";
+                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}'{resourceGroupMessage} subscription '{subscriptionId}'");
+                }
+                    
+                // if more than one site, fail
+                if (matchingSites.Count > 1)
+                    throw new CommandException(
+                        $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{subscriptionId}'.{(string.IsNullOrWhiteSpace(resourceGroupName) ? " Please supply a Resource Group name." : string.Empty)}");
+
+                var matchingSite = matchingSites.Single();
+                resourceGroupName = matchingSite.ResourceGroup;
 
                 // ARM resource ID of the source app. App resource ID is of the form:
                 //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName} for production slots and
@@ -57,7 +71,6 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                 // We allow the slot to be defined on both the target directly (which will come through on the matchingSite.Name) or on the 
                 // step for backwards compatibility with older Azure steps.
                 var siteAndSlotPath = matchingSite.Name;
-
                 if (azureTargetSite.HasSlot)
                 {
                     Log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
