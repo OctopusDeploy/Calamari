@@ -31,12 +31,11 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
                 ? string.Empty
-                : $" in Resource Group {resourceGroupName}";
+                : $" in Resource Group '{resourceGroupName}'";
             var slotText = targetSite.HasSlot
-                ? $", deployment slot '{targetSite.Slot}',"
+                ? $", deployment slot '{targetSite.Slot}'" 
                 : string.Empty;
-            Log.Info(
-                $"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
+            Log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;

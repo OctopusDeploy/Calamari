@@ -111,7 +111,7 @@ namespace Calamari.Azure.Deployment.Conventions
 
             using (var armClient = createArmClient())
             {
-                var createDeploymentResult = armClient.Deployments.CreateOrUpdate(resourceGroupName, deploymentName,
+                var createDeploymentResult = armClient.Deployments.BeginCreateOrUpdate(resourceGroupName, deploymentName,
                     new Microsoft.Azure.Management.ResourceManager.Models.Deployment
                     {
                         Properties = new DeploymentProperties

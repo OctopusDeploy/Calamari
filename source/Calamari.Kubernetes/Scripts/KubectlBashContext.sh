@@ -1,13 +1,25 @@
 ﻿#!/bin/bash
 
+Octopus_K8S_ClusterUrl=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterUrl")
+Octopus_K8S_Namespace=$(get_octopusvariable "Octopus.Action.Kubernetes.Namespace")
+Octopus_K8S_SkipTlsVerification=$(get_octopusvariable "Octopus.Action.Kubernetes.SkipTlsVerification")
+Octopus_AccountType=$(get_octopusvariable "Octopus.Account.AccountType")
+Octopus_K8S_KubectlExe=$(get_octopusvariable "Octopus.Action.Kubernetes.CustomKubectlExecutable")
+
+function get_kubectl {
+  if [[ -z $Octopus_K8S_KubectlExe ]]; then
+    Octopus_K8S_KubectlExe="kubectl"
+  else
+    command -v $Octopus_K8S_KubectlExe &>/dev/null
+    if [[ $? != 0 ]]; then
+      echo >&2 "The custom kubectl location of $Octopus_K8S_KubectlExe does not exist";
+      exit 1
+    fi
+    alias kubectl=$Octopus_K8S_KubectlExe
+  fi
+}
 
 function setup_context {
-  Octopus_K8S_ClusterUrl=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterUrl")
-  Octopus_K8S_Namespace=$(get_octopusvariable "Octopus.Action.Kubernetes.Namespace")
-  Octopus_K8S_SkipTlsVerification=$(get_octopusvariable "Octopus.Action.Kubernetes.SkipTlsVerification")
-  Octopus_AccountType=$(get_octopusvariable "Octopus.Account.AccountType")
-  Octopus_K8S_KubectlExe=$(get_octopusvariable "Octopus.Action.Kubernetes.CustomKubectlExecutable")
-
   if [[ -z $Octopus_K8S_ClusterUrl ]]; then
     echo >&2  "Kubernetes cluster URL is missing"
     exit 1
@@ -24,17 +36,6 @@ function setup_context {
 
   if [[ -z $Octopus_K8S_SkipTlsVerification ]]; then
     Octopus_K8S_SkipTlsVerification=true
-  fi
-
-  if [[ -z $Octopus_K8S_KubectlExe ]]; then
-    Octopus_K8S_KubectlExe="kubectl"
-  else
-    command -v $Octopus_K8S_KubectlExe &>/dev/null
-    if [[ $? != 0 ]]; then
-      echo >&2 "The custom kubectl location of $Octopus_K8S_KubectlExe does not exist";
-      exit 1
-    fi
-    alias kubectl=$Octopus_K8S_KubectlExe
   fi
 
   if [[ "$Octopus_AccountType" == "Token" ]]; then
@@ -64,9 +65,23 @@ function configure_kubectl_path {
   echo "Temporary kubectl config set to $KUBECONFIG"
 }
 
+function create_namespace {
+	if [[ -n "$Octopus_K8S_Namespace" ]]; then
+		kubectl get namespace $Octopus_K8S_Namespace > /dev/null 2>&1 
+		if [[ $? -ne 0 ]]; then
+			echo "##octopus[stdout-default]"
+			kubectl create namespace $Octopus_K8S_Namespace
+			echo "##octopus[stdout-verbose]"
+		fi
+		
+	fi
+}
+
 echo "##octopus[stdout-verbose]"
+get_kubectl
 configure_kubectl_path
 setup_context
+create_namespace
 echo $KUBECONFIG
 echo "##octopus[stdout-verbose]"
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
