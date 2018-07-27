@@ -34,8 +34,7 @@ namespace Calamari.Deployment.Conventions
 
             foreach (ScriptSyntax scriptType in Enum.GetValues(typeof(ScriptSyntax)))
             {
-                var scriptName = GetScriptName(deploymentStage, scriptType);
-                
+                var scriptName = SpecialVariables.Action.CustomScripts.GetCustomScriptStage(deploymentStage, scriptType);
                 string error;
                 var scriptBody = deployment.Variables.Get(scriptName, out error);
                 if (!string.IsNullOrEmpty(error))

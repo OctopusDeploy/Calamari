@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Scripting;
+﻿using System.Security.Policy;
+using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment
 {
@@ -202,6 +203,8 @@ namespace Calamari.Deployment
             public const string ConfigurationTransforms = "Octopus.Features.ConfigurationTransforms";
         }
 
+     
+
         public static class Action
         {
             public const string Name = "Octopus.Action.Name";
@@ -350,6 +353,16 @@ namespace Calamari.Deployment
                 public static string ScriptBodyBySyntax(ScriptSyntax syntax)
                 {
                     return $"Octopus.Action.Script.ScriptBody[{syntax.ToString()}]";
+                }
+            }
+            
+            public static class CustomScripts
+            {
+                public static readonly string Prefix = "Octopus.Action.CustomScripts.";
+
+                public static string GetCustomScriptStage(string deploymentStage, ScriptSyntax scriptSyntax)
+                {
+                    return $"{Prefix}{deploymentStage}.{scriptSyntax.FileExtension()}";
                 }
             }
 

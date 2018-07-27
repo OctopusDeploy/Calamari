@@ -64,8 +64,11 @@ namespace Calamari.Kubernetes.Commands
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
                 new StageScriptPackagesConvention(null, fileSystem, extractor, true),
+                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
+                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
+                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

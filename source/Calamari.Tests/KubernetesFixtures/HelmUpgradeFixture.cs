@@ -12,17 +12,21 @@ using Octostache;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Ignore("Not yet")]
+    [Category(TestEnvironment.CompatibleOS.Windows)] //Lets see how badly multiple instances clash
     public class HelmUpgradeFixture: CalamariFixture
     {
         private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
         static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
-        
-        protected ICalamariFileSystem FileSystem { get; private set; }
-        protected VariableDictionary Variables { get; private set; }
-        protected string StagingDirectory { get; private set; }
-        const string ConfigMapName = "mychart-configmap"; //Might clash with concurrent exections. Should make this dynamic
+
+        private ICalamariFileSystem FileSystem { get; set; }
+        private VariableDictionary Variables { get; set; }
+        private string StagingDirectory { get; set; }
+        private static readonly string ReleaseName = "calamaritest-"+ Guid.NewGuid().ToString("N").Substring(0, 6);
+        private static readonly  string ConfigMapName = "mychart-configmap-" + ReleaseName; //Might clash with concurrent exections. Should make this dynamic
         private const string Namespace = "calamari-testing";
+        private const string ChartPackageName = "mychart-0.3.7.tgz";
+        
+        
         [SetUp]
         public void SetUp()
         {
@@ -34,20 +38,22 @@ namespace Calamari.Tests.KubernetesFixtures
             FileSystem.PurgeDirectory(StagingDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
-            Variables = BaseRequiredVariableDictionary();
-            AddChartPackage(Variables);
+            Variables = new VariableDictionary();
+            Variables.EnrichWithEnvironmentVariables();
+            Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
+
+            //Chart Pckage
+            Variables.Set(SpecialVariables.Package.NuGetPackageId, "mychart");
+            Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "0.3.7");
+            
+            //Helm Options
+            Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
+           
+            //K8S Auth
             AddK8SAuth(Variables);
         }
 
-        VariableDictionary BaseRequiredVariableDictionary()
-        {
-            var variables = new VariableDictionary();
-            variables.EnrichWithEnvironmentVariables();
-            variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
-            return variables;
-        }
-        
-        void AddK8SAuth(VariableDictionary variables)
+        private void AddK8SAuth(VariableDictionary variables)
         {
             variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
             variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "True");
@@ -56,107 +62,105 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.Account.Token, ClusterToken);
         }
 
-        void AddChartPackage(VariableDictionary variables)
+        [TearDown]
+        public void RemoveTheCreatedRelease()
         {
-            variables.Set(SpecialVariables.Package.NuGetPackageId, "mychart");
-            variables.Set(SpecialVariables.Package.NuGetPackageVersion, "0.3.1");
+            var variables = new VariableDictionary();
+            variables.EnrichWithEnvironmentVariables();
+            variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
+            AddK8SAuth(variables);
+            variables.Set(SpecialVariables.Action.Script.ScriptBody, $"helm delete {ReleaseName} --purge");
+            variables.Set(SpecialVariables.Action.Script.Syntax,
+                (CalamariEnvironment.IsRunningOnWindows ? ScriptSyntax.PowerShell : ScriptSyntax.Bash).ToString());
+
+            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                variables.Save(variablesFile.FilePath);
+                Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("extensions", "Calamari.Kubernetes")
+                    .Argument("variables", variablesFile.FilePath))
+                    .AssertSuccess();
+            }
         }
 
         [Test]
         public void Upgrade_Suceeds()
         {
-            //Helm Config
-            Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, "mynewrelease");
-            
-            var res = DeployPackage("mychart-0.3.1.tgz");
+            var res = DeployPackage();
 
             //res.AssertOutputMatches("NAME:   mynewrelease"); //Does not appear on upgrades, only installs
-            res.AssertOutputMatches("NAMESPACE: calamari-testing");
+            res.AssertOutputMatches($"NAMESPACE: {Namespace}");
             res.AssertOutputMatches("STATUS: DEPLOYED");
-            res.AssertOutputMatches("mychart-configmap");
+            res.AssertOutputMatches(ConfigMapName);
             res.AssertSuccess();
         }
         
         [Test]
         public void NoValues_EmbededValuesUsed()
         {
-            //Helm Config
-            Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, "mynewrelease");
+            AddPostDeployMessageCheck();
             
-            DeployPackage("mychart-0.3.1.tgz").AssertSuccess();
-
-            var configMapValue = GetConfigMapValue();
-            Assert.AreEqual(configMapValue, "Hello Embedded Variables");
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
         
         [Test]
         public void ExplicitValues_NewValuesUsed()
         {
             //Helm Config
-            Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, "mynewrelease");
             Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
+            AddPostDeployMessageCheck();
             
-            DeployPackage("mychart-0.3.1.tgz").AssertSuccess();
-
-            var configMapValue = GetConfigMapValue();
-            Assert.AreEqual("Hello FooBar", configMapValue);
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
         
         [Test]
         public void ValuesFromPackage_NewValuesUsed()
         {
             //Helm Config
-            Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, "mynewrelease");
             Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
+            AddPostDeployMessageCheck();
             
+            //Additional Package
             Variables.Set(SpecialVariables.Packages.PackageId("Pack-1"), "CustomValues");
             Variables.Set(SpecialVariables.Packages.PackageVersion("Pack-1"), "2.0.0");
             Variables.Set(SpecialVariables.Packages.OriginalPath("Pack-1"), GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
+            
+            //Variable that will replace packaged value in package
             Variables.Set("MySecretMessage","From A Variable Replaced In Package");
-                
-            DeployPackage("mychart-0.3.1.tgz").AssertSuccess();
-
-            var configMapValue = GetConfigMapValue();
-            Assert.AreEqual("Hello From A Variable Replaced In Package", configMapValue);
+            
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello From A Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
         
-        string GetConfigMapValue()
+        void AddPostDeployMessageCheck()
         {
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace +" -o jsonpath=\"{.data.myvalue}\"";
-            var scriptVariables = BaseRequiredVariableDictionary();
-            AddK8SAuth(scriptVariables);
-            scriptVariables.Set(SpecialVariables.Action.Script.ScriptBody, $"Set-OctopusVariable -name Message -Value $({kubectlCmd})");
-            scriptVariables.Set(SpecialVariables.Action.Script.Syntax, ScriptSyntax.PowerShell.ToString());
+            var syntax = ScriptSyntax.Bash;
+            var script = $"set_octopusvariable Message ${kubectlCmd})";
             
-            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            if (CalamariEnvironment.IsRunningOnWindows)
             {
-                scriptVariables.Save(variablesFile.FilePath);            
-              var t = Invoke(Calamari()
-                  .Action("run-script")
-                  .Argument("extensions", "Calamari.Kubernetes")
-                  .Argument("variables", variablesFile.FilePath));
-              t.AssertSuccess();
-              return t.CapturedOutput.OutputVariables["Message"];
-          }
-      }
-      
-      CalamariResult DeployPackage(string chartName)
+                syntax = ScriptSyntax.PowerShell;
+                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})";
+            }
+
+            Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
+            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+        }
+        
+      CalamariResult DeployPackage()
       {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                var pkg = GetFixtureResouce("Charts", chartName);
+                var pkg = GetFixtureResouce("Charts", ChartPackageName);
                 Variables.Save(variablesFile.FilePath);
-
-//                var args = new [] {"helm-upgrade",
-//                    "--extensions", "Calamari.Kubernetes",
-//                    "--package", pkg,
-//                    "--variables", variablesFile.FilePath};
-//                
-//                var container = global::Calamari.Program.BuildContainer(args);
-//                var t = container.Resolve<Calamari.Program>().Execute(args);
-//                return null;
 
                 return Invoke(Calamari()
                     .Action("helm-upgrade")
