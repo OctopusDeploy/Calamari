@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Calamari.Util;
 
 namespace Calamari.Integration.Processes
@@ -9,50 +10,37 @@ namespace Calamari.Integration.Processes
     {
         readonly string executable;
         readonly Func<string[], int> func;
+        List<Arg> args = new List<Arg>();
         string action;
-        readonly List<string> arguments = new List<string>();
-        bool rawArgList;
-        bool doubleDash;
         bool useDotnet;
-
 
         public CommandLine(Func<string[], int> func)
         {
             this.func = func;
-            rawArgList = true;
         }
 
         public CommandLine(string executable)
         {
-            if (executable == null) throw new ArgumentNullException("executable");
-            this.executable = executable;
+            this.executable = executable ?? throw new ArgumentNullException(nameof(executable));
         }
 
         public CommandLine Action(string actionName)
         {
-            if (actionName == null) throw new ArgumentNullException("actionName");
             if (action != null) throw new InvalidOperationException("Action is already set");
-            action = Normalize(actionName);
+            action = actionName ?? throw new ArgumentNullException(nameof(actionName));
+            args.Insert(0, Arg.MakeRaw(actionName));
             return this;
         }
 
         public CommandLine Argument(string argument)
         {
-            arguments.Add(Escape(argument));
+            args.Add(Arg.MakePositional(argument));
             return this;
         }
-
-
-
-        public CommandLine DoubleDash()
-        {
-            doubleDash = true;
-            return this;
-        }
-
+        
         public CommandLine Flag(string flagName)
         {
-            arguments.Add(MakeFlag(flagName));
+            args.Add(Arg.MakeFlag(flagName));
             return this;
         }
 
@@ -62,125 +50,155 @@ namespace Calamari.Integration.Processes
             return this;
         }
 
-        string MakeFlag(string flagName)
-        {
-            return GetDash() + Normalize(flagName);
-        }
-
-        string GetDash()
-        {
-            return doubleDash ? "--" : "-";
-        }
-
         public CommandLine PositionalArgument(object argValue)
         {
-            arguments.Add(MakePositionalArg(argValue));
+            args.Add(Arg.MakePositional(argValue));
             return this;
         }
 
         public CommandLine Argument(string argName, object argValue)
         {
-            arguments.Add(MakeArg(argName, argValue));
+            args.Add(Arg.MakeArg(argName, argValue));
             return this;
-        }
-
-        string MakePositionalArg(object argValue)
-        {
-            var sval = "";
-            var f = argValue as IFormattable;
-            if (f != null)
-                sval = f.ToString(null, CultureInfo.InvariantCulture);
-            else if (argValue != null)
-                sval = argValue.ToString();
-
-            return Escape(sval);
-        }
-
-        string MakeArg(string argName, object argValue)
-        {
-            var sval = "";
-            var f = argValue as IFormattable;
-            if (f != null)
-                sval = f.ToString(null, CultureInfo.InvariantCulture);
-            else if (argValue != null)
-                sval = argValue.ToString();
-
-            return string.Format("{2}{0} {1}", Normalize(argName), Escape(sval), GetDash());
-        }
-
-        string Escape(string argValue)
-        {
-            if (argValue == null) throw new ArgumentNullException("argValue");
-            if (rawArgList)
-                return argValue;
-
-            // Though it isn't aesthetically pleasing, we always return a double-quoted
-            // value.
-
-            var last = argValue.Length - 1;
-            var preq = true;
-            while (last >= 0)
-            {
-                // Escape backslashes only when they're butted up against the
-                // end of the value, or an embedded double quote
-
-                var cur = argValue[last];
-                if (cur == '\\' && preq)
-                {
-                    argValue = argValue.Insert(last, "\\");
-                }
-                else if (cur == '"')
-                {
-                    preq = true;
-                }
-                else
-                {
-                    preq = false;
-                }
-                last -= 1;
-            }
-
-#if WORKAROUND_FOR_EMPTY_STRING_BUG
-            // linux under bash on netcore empty "" gets eaten, hand "\0"
-            // which gets through as a null string
-            if(argValue == "")
-                argValue = "\0";
-#endif
-            // Double-quotes are always escaped.
-            return "\"" + argValue.Replace("\"", "\\\"") + "\"";
-        }
-
-        static string Normalize(string s)
-        {
-            if (s == null) throw new ArgumentNullException("s");
-            return s.Trim();
         }
 
         public CommandLineInvocation Build()
         {
-            var argLine = new List<string>();
+            var argLine = new List<Arg>();
+
             var actualExe = executable;
 
-            if (useDotnet)
-            {
-                argLine.Add(MakePositionalArg(executable));
+            if (useDotnet){
+                argLine.Add(Arg.MakePositional(executable));
                 actualExe = "dotnet";
             }
 
-            if (action != null)
-                argLine.Add(action);
-            argLine.AddRange(arguments);
+            argLine.AddRange(args);
 
-            return new CommandLineInvocation(actualExe, string.Join(" ", argLine));
+            return new CommandLineInvocation(actualExe, string.Join(" ", argLine.Select(b => b.Build(true))));
         }
-
+        
         public LibraryCallInvocation BuildLibraryCall()
         {
-            var argLine = new List<string>();
-            if (action != null)
-                argLine.Add(action);
-            argLine.AddRange(arguments);
-            return new LibraryCallInvocation(func, argLine.ToArray());
+            return new LibraryCallInvocation(func, args.Select(b => b.Build(false)).ToArray());
+        }
+
+        public string[] GetRawArgs()
+        {
+            return args.SelectMany(b => b.Raw()).ToArray();
+        }
+
+        class Arg
+        {
+            private string Name { get; set; }
+            private object Value { get; set; }
+            private bool Flag { get; set; }
+            private bool IsRaw { get; set; }
+
+            public static Arg MakeArg(string name , object value)
+            {
+                return new Arg(){Name = name, Value = value};
+            }
+
+            public static Arg MakePositional(object value)
+            {
+                return new Arg() {Value = value, Flag = false };
+            }
+            
+            public static Arg MakeFlag(string flag)
+            {
+                return new Arg() {Name = flag, Flag = true};
+            }
+            
+            public static Arg MakeRaw(string value)
+            {
+                return new Arg() {Name = value, IsRaw = true};
+            }
+
+            public string[] Raw()
+            {
+                if (Flag || IsRaw || string.IsNullOrWhiteSpace(Name))
+                {
+                    return new []{ Build(false) };
+                }
+
+                return new[] {$"-{Normalize(Name)}", GetValue(false)};
+            }
+            
+            public string Build(bool escapeArg)
+            {
+                if (Flag)
+                {
+                    return $"-{Normalize(Name)}";
+                } else if (IsRaw)
+                {
+                    return Normalize(Name);
+                }
+                
+                var sval = GetValue(escapeArg);
+
+                return string.IsNullOrWhiteSpace(Name) ? sval : $"-{Normalize(Name)} {sval}";
+            }
+
+            static string Normalize(string text)
+            {
+                if (text == null) throw new ArgumentNullException(nameof(text));
+                return text.Trim();
+            }
+            
+            private string GetValue(bool escapeArg)
+            {
+                var sval = "";
+                if (Value is IFormattable f)
+                    sval = f.ToString(null, CultureInfo.InvariantCulture);
+                else if (Value != null)
+                    sval = Value.ToString();
+
+                sval = Escape(sval, escapeArg);
+                return sval;
+            }
+
+            string Escape(string argValue, bool escapeArg)
+            {
+                if (argValue == null) throw new ArgumentNullException("argValue");
+                if (!escapeArg)
+                    return argValue;
+
+                // Though it isn't aesthetically pleasing, we always return a double-quoted
+                // value.
+
+                var last = argValue.Length - 1;
+                var preq = true;
+                while (last >= 0)
+                {
+                    // Escape backslashes only when they're butted up against the
+                    // end of the value, or an embedded double quote
+
+                    var cur = argValue[last];
+                    if (cur == '\\' && preq)
+                    {
+                        argValue = argValue.Insert(last, "\\");
+                    }
+                    else if (cur == '"')
+                    {
+                        preq = true;
+                    }
+                    else
+                    {
+                        preq = false;
+                    }
+                    last -= 1;
+                }
+
+#if WORKAROUND_FOR_EMPTY_STRING_BUG
+// linux under bash on netcore empty "" gets eaten, hand "\0"
+// which gets through as a null string
+            if(argValue == "")
+                argValue = "\0";
+#endif
+                // Double-quotes are always escaped.
+                return "\"" + argValue.Replace("\"", "\\\"") + "\"";
+            }
         }
     }
 }
