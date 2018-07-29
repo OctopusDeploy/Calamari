@@ -12,8 +12,8 @@ using Octostache;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    //[Category(TestEnvironment.CompatibleOS.Windows)] //Lets see how badly multiple instances clash
-    [Ignore("Need kubectl & helm on server")]
+    [Category(TestEnvironment.CompatibleOS.Windows)] //Lets see how badly multiple instances clash
+    //[Ignore("Need kubectl & helm on server")]
     public class HelmUpgradeFixture: CalamariFixture
     {
         private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
