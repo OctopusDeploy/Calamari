@@ -1,42 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using Calamari.Azure.Accounts;
-using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.WindowsAzure.Management.WebSites;
 using Microsoft.WindowsAzure.Management.WebSites.Models;
 
-namespace Calamari.Azure.Commands
+namespace Calamari.Azure.HealthChecks
 {
-    [Command("hc-azure-web", Description = "Run a health check on an Azure Web Application")]
-    public class HealthCheckAzureWebAppCommand : Command
+    public class WebAppHealthChecker : IDoesDeploymentTargetTypeHealthChecks
     {
         private readonly ILog log;
         private readonly ICertificateStore certificateStore;
-        private string variablesFile;
-        private string sensitiveVariablesFile;
-        private string sensitiveVariablesPassword;
 
-        public HealthCheckAzureWebAppCommand(ILog log, ICertificateStore certificateStore)
+        public WebAppHealthChecker(ILog log, ICertificateStore certificateStore)
         {
             this.log = log;
             this.certificateStore = certificateStore;
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
 
-        public override int Execute(string[] commandLineArguments)
+        public bool HandlesDeploymentTargetTypeName(string deploymentTargetTypeName)
         {
-            Options.Parse(commandLineArguments);
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            return deploymentTargetTypeName == "AzureWebApp";
+        }
 
+        public int ExecuteHealthCheck(CalamariVariableDictionary variables)
+        {
             var account = AccountFactory.Create(variables);
 
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
@@ -96,6 +90,5 @@ namespace Calamari.Azure.Commands
                     throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {servicePrincipalAccount.SubscriptionNumber}");
             }
         }
-
     }
 }

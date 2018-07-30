@@ -1,41 +1,35 @@
 ﻿using System;
 using System.Fabric;
 using System.Fabric.Security;
-using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Azure.Util;
-using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace Calamari.Azure.Commands
+namespace Calamari.Azure.HealthChecks
 {
-    [Command("hc-azure-sf", Description = "Run a health check on an Azure Service Fabric cluster")]
-    public class HealthCheckAzureServiceFabricCommand : Command
+    public class ServiceFabricHealthChecker : IDoesDeploymentTargetTypeHealthChecks
     {
         private readonly ILog log;
         private readonly ICertificateStore certificateStore;
-        private string variablesFile;
-        private string sensitiveVariablesFile;
-        private string sensitiveVariablesPassword;
 
-        public HealthCheckAzureServiceFabricCommand(ILog log, ICertificateStore certificateStore)
+        public ServiceFabricHealthChecker(ILog log, ICertificateStore certificateStore)
         {
             this.log = log;
             this.certificateStore = certificateStore;
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
 
-        public override int Execute(string[] commandLineArguments)
+        public bool HandlesDeploymentTargetTypeName(string deploymentTargetTypeName)
         {
-            Options.Parse(commandLineArguments);
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            return deploymentTargetTypeName == "AzureServiceFabricCluster";
+        }
 
+        public int ExecuteHealthCheck(CalamariVariableDictionary variables)
+        {
             var connectionEndpoint = variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint);
             var securityMode = (AzureServiceFabricSecurityMode)Enum.Parse(typeof(AzureServiceFabricSecurityMode), variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode));
             var serverCertThumbprint = variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint);
