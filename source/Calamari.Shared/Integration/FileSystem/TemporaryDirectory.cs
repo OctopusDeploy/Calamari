@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
-using Calamari.Integration.FileSystem;
 
-namespace Calamari.Tests.Helpers
+namespace Calamari.Integration.FileSystem
 {
     public class TemporaryDirectory : IDisposable
     {

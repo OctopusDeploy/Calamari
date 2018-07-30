@@ -92,6 +92,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Integration\Packages\Download\Scripts\*.*" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="Integration\Scripting\Bash\Bootstrap.sh" />
     <None Remove="Integration\Scripting\FSharp\Bootstrap.fsx" />
     <None Remove="Integration\Scripting\ScriptCS\Bootstrap.csx" />
