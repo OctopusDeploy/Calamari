@@ -115,7 +115,7 @@ namespace Calamari.Integration.Packages.Download
             switch (syntax)
             {
                 case ScriptSyntax.Bash:
-                    contextFile = "HelmFetch.sh";
+                    contextFile = "helmFetch.sh";
                     break;
                 case ScriptSyntax.PowerShell:
                     contextFile = "HelmFetch.ps1";
