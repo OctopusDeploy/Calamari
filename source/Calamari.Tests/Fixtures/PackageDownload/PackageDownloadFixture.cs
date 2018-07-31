@@ -476,12 +476,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             }
         }
 
-        private TemporaryFile CreateSamplePackage()
-        {
-            return new TemporaryFile(PackageBuilder.BuildSamplePackage(FileShare.PackageId, FileShare.Version.ToString()));
-        }
-
-     
         [Test]
         public void ShouldFailWhenNoPackageId()
         {
@@ -606,6 +600,11 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             var newPacakgeRegex = PackageName.ToRegexPattern(testFeed.PackageId, testFeed.Version, testFeed.DownloadFolder);
             result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine", Does.Match(newPacakgeRegex +".*"));
+        }
+        
+        private TemporaryFile CreateSamplePackage()
+        {
+            return new TemporaryFile(PackageBuilder.BuildSamplePackage(FileShare.PackageId, FileShare.Version.ToString()));
         }
 
         class SampleFeedPackage
