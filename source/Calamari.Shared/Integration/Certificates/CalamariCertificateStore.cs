@@ -31,7 +31,7 @@ namespace Calamari.Integration.Certificates
                 var certificateFromStore =
                     store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false)
                         .OfType<X509Certificate2>()
-                        .FirstOrDefault(CheckThatCertificateWasLoadedWithPrivateKey);
+                        .FirstOrDefault(CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired);
                 if (certificateFromStore != null)
                 {
                     Log.Verbose("Certificate was found in store");
@@ -47,7 +47,7 @@ namespace Calamari.Integration.Certificates
                     File.WriteAllBytes(file, raw);
 
                     var certificate = LoadCertificateWithPrivateKey(file, password);
-                    if (CheckThatCertificateWasLoadedWithPrivateKey(certificate) == false)
+                    if (CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(certificate) == false)
                     {
                         certificate = LoadCertificateWithPrivateKey(file, password);
                     }
@@ -78,7 +78,7 @@ namespace Calamari.Integration.Certificates
                 ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false, password);
         }
 
-        static bool CheckThatCertificateWasLoadedWithPrivateKey(X509Certificate2 certificate)
+        static bool CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(X509Certificate2 certificate)
         {
             try
             {
@@ -145,7 +145,8 @@ namespace Calamari.Integration.Certificates
             try
             {
                 var cert = new X509Certificate2(file, password, flags);
-
+                
+                // ReSharper disable once InvertIf
                 if (!HasPrivateKey(cert) && requirePrivateKey)
                 {
                     cert.Reset();
@@ -170,7 +171,7 @@ namespace Calamari.Integration.Certificates
             if (current == null || current.User == null)
                 throw new Exception("There is no current windows identity.");
 
-            DirectoryInfo directoryInfo = new DirectoryInfo(folderPath);
+            var directoryInfo = new DirectoryInfo(folderPath);
             var security = directoryInfo.GetAccessControl();
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             directoryInfo.SetAccessControl(security);
