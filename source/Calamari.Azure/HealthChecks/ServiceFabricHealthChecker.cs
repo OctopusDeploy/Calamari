@@ -30,6 +30,9 @@ namespace Calamari.Azure.HealthChecks
 
         public int ExecuteHealthCheck(CalamariVariableDictionary variables)
         {
+            if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
+                throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running health checks on Service Fabric targets.");
+
             var connectionEndpoint = variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint);
             var securityMode = (AzureServiceFabricSecurityMode)Enum.Parse(typeof(AzureServiceFabricSecurityMode), variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode));
             var serverCertThumbprint = variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint);
