@@ -99,7 +99,7 @@ function setup_context {
 		# delete those settings. So we now delete the users line (the last line of the yaml file)
 		# and add our own.
 
-		(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
+		#(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
 
 		# https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
 		echo "users:" >> $KUBECONFIG
@@ -109,7 +109,7 @@ function setup_context {
 		echo "      apiVersion: client.authentication.k8s.io/v1alpha1" >> $KUBECONFIG
 		echo "      command: heptio-authenticator-aws" >> $KUBECONFIG
 		echo "      args:" >> $KUBECONFIG
-		echo "        - \""token\"" >> $KUBECONFIG
+		echo "        - \"token\"" >> $KUBECONFIG
 		echo "        - \"-i\"" >> $KUBECONFIG
 		echo "        - \"$K8S_ClusterName\"" >> $KUBECONFIG
   elif [[ -z $Octopus_K8S_Client_Cert ]]; then
