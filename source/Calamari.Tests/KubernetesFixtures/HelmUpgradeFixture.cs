@@ -157,8 +157,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         void AddPostDeployMessageCheckAndCleanup()
         {
-            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace +
-                             " -o jsonpath=\"{.data.myvalue}\"";
+            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace;
             var syntax = ScriptSyntax.Bash;
             //var script = $"set_octopusvariable Message $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
             var script = kubectlCmd;
