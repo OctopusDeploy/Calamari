@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -29,11 +30,16 @@ namespace Calamari.Kubernetes.Conventions
         
         public void Install(RunningDeployment deployment)
         {
+            var validChars = new Regex("[^a-zA-Z0-9-]");
             var releaseName = deployment.Variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
             if (string.IsNullOrWhiteSpace(releaseName))
             {
-                throw new CommandException("ReleaseName has not been set");
+                releaseName =
+                    $"{deployment.Variables.Get(Deployment.SpecialVariables.Action.Name)}-{deployment.Variables.Get(Deployment.SpecialVariables.Environment.Name)}";
+                releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
             }
+            Log.SetOutputVariable("ReleaseName", releaseName, deployment.Variables);
+            Log.Info($"Using Release Name {releaseName}");
             
             var packagePath = GetChartLocation(deployment);
 
@@ -57,8 +63,6 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" \"{releaseName}\" \"{packagePath}\"");
             
             Log.Verbose(sb.ToString());
-            
-            
             var fileName = Path.Combine(deployment.CurrentDirectory, "Calamari.HelmUpgrade.ps1");
             using (new TemporaryFile(fileName))
             {
