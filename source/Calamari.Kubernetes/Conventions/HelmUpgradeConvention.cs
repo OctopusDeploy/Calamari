@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -54,7 +54,7 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" \"{releaseName}\" \"{packagePath}\"");
             
             Log.Verbose(sb.ToString());
-            var fileName = Path.Combine(deployment.CurrentDirectory, "Calamari.HelmUpgrade.ps1");
+            var fileName = GetFileName(deployment);
             using (new TemporaryFile(fileName))
             {
                 fileSystem.OverwriteFile(fileName, sb.ToString());
@@ -73,6 +73,17 @@ namespace Calamari.Kubernetes.Conventions
                         $"Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
                 }
             }
+        }
+
+        private string GetFileName(RunningDeployment deployment)
+        {
+            var scriptType = scriptEngine.GetSupportedTypes();
+            if (scriptType.Contains(ScriptSyntax.PowerShell))
+            {
+                return Path.Combine(deployment.CurrentDirectory, "Calamari.HelmUpgrade.ps1");
+            }
+            
+            return Path.Combine(deployment.CurrentDirectory, "Calamari.HelmUpgrade.sh");
         }
 
         private static string GetReleaseName(CalamariVariableDictionary variables)
