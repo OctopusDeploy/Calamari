@@ -8,13 +8,12 @@ using  Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 using Octostache;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatibleOS.Windows)] //Lets see how badly multiple instances clash
-    //[Ignore("Need kubectl & helm on server")]
     public class HelmUpgradeFixture : CalamariFixture
     {
         private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
@@ -34,9 +33,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
 
         [SetUp]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
         public void SetUp()
         {
             FileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -60,32 +56,13 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
 
             //K8S Auth
-            AddK8SAuth(Variables);
-        }
-
-        [TearDown]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
-        public void RemoveTheCreatedRelease()
-        {
-            var variables = new VariableDictionary();
-            variables.EnrichWithEnvironmentVariables();
-            variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
-            AddK8SAuth(variables);
-            variables.Set(SpecialVariables.Action.Script.ScriptBody, $"helm delete {ReleaseName} --purge");
-            variables.Set(SpecialVariables.Action.Script.Syntax,
-                (CalamariEnvironment.IsRunningOnWindows ? ScriptSyntax.PowerShell : ScriptSyntax.Bash).ToString());
-
-            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
-            {
-                variables.Save(variablesFile.FilePath);
-                Invoke(Calamari()
-                        .Action("run-script")
-                        .Argument("extensions", "Calamari.Kubernetes")
-                        .Argument("variables", variablesFile.FilePath))
-                    .AssertSuccess();
-            }
+            Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
+            Variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "True");
+            Variables.Set(Kubernetes.SpecialVariables.Namespace, Namespace);
+            Variables.Set(SpecialVariables.Account.AccountType, "Token");
+            Variables.Set(SpecialVariables.Account.Token, ClusterToken);
+            
+            AddPostDeployMessageCheckAndCleanup();
         }
 
         [Test]
@@ -100,6 +77,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches($"NAMESPACE: {Namespace}");
             result.AssertOutputMatches("STATUS: DEPLOYED");
             result.AssertOutputMatches(ConfigMapName);
+            result.AssertOutputMatches($"release \"{ReleaseName}\" deleted");
             result.AssertSuccess();
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
@@ -107,12 +85,13 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
         public void NoValues_EmbededValuesUsed()
         {
-            AddPostDeployMessageCheck();
-
             var result = DeployPackage();
+            
             result.AssertSuccess();
+            
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
 
@@ -124,7 +103,6 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             //Helm Config
             Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
-            AddPostDeployMessageCheck();
 
             var result = DeployPackage();
             result.AssertSuccess();
@@ -137,9 +115,29 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonMacAttribute]
         public void ValuesFromPackage_NewValuesUsed()
         {
-            //Helm Config
+            //Additional Package
+            Variables.Set(SpecialVariables.Packages.PackageId("Pack-1"), "CustomValues");
+            Variables.Set(SpecialVariables.Packages.PackageVersion("Pack-1"), "2.0.0");
+            Variables.Set(SpecialVariables.Packages.OriginalPath("Pack-1"), GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
+
+            //Variable that will replace packaged value in package
+            Variables.Set("MySecretMessage", "Variable Replaced In Package");
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
+        }
+        
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void ValuesFromPackageAndExplicit_ExplicitTakesPrecedence()
+        {
+            //Helm Config (lets make sure Explicit values take precedence
             Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
-            AddPostDeployMessageCheck();
 
             //Additional Package
             Variables.Set(SpecialVariables.Packages.PackageId("Pack-1"), "CustomValues");
@@ -153,21 +151,21 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello From A Variable Replaced In Package",
-                result.CapturedOutput.OutputVariables["Message"]);
+            Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
 
-        void AddPostDeployMessageCheck()
+
+        void AddPostDeployMessageCheckAndCleanup()
         {
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace +
                              " -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            var script = $"set_octopusvariable Message ${kubectlCmd})";
+            var script = $"set_octopusvariable Message ${kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
 
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
-                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})";
+                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
             }
 
             Variables.Set(
@@ -183,21 +181,12 @@ namespace Calamari.Tests.KubernetesFixtures
                 var pkg = GetFixtureResouce("Charts", ChartPackageName);
                 Variables.Save(variablesFile.FilePath);
 
-                return Invoke(Calamari()
+                return InvokeInProcess(Calamari()
                     .Action("helm-upgrade")
                     .Argument("extensions", "Calamari.Kubernetes")
                     .Argument("package", pkg)
                     .Argument("variables", variablesFile.FilePath));
             }
-        }
-
-        private void AddK8SAuth(VariableDictionary variables)
-        {
-            variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
-            variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "True");
-            variables.Set(Kubernetes.SpecialVariables.Namespace, Namespace);
-            variables.Set(SpecialVariables.Account.AccountType, "Token");
-            variables.Set(SpecialVariables.Account.Token, ClusterToken);
         }
     }
 }

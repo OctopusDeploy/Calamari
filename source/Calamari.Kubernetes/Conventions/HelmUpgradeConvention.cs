@@ -30,34 +30,25 @@ namespace Calamari.Kubernetes.Conventions
         
         public void Install(RunningDeployment deployment)
         {
-            var validChars = new Regex("[^a-zA-Z0-9-]");
-            var releaseName = deployment.Variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
-            if (string.IsNullOrWhiteSpace(releaseName))
-            {
-                releaseName =
-                    $"{deployment.Variables.Get(Deployment.SpecialVariables.Action.Name)}-{deployment.Variables.Get(Deployment.SpecialVariables.Environment.Name)}";
-                releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
-            }
-            Log.SetOutputVariable("ReleaseName", releaseName, deployment.Variables);
-            Log.Info($"Using Release Name {releaseName}");
-            
+            var releaseName = GetReleaseName(deployment.Variables);
+
             var packagePath = GetChartLocation(deployment);
 
-            var sb = new StringBuilder($"helm upgrade --reset-values"); //Force reset to use values now in release
+            var sb = new StringBuilder($"helm upgrade --reset-values"); //Force reset to use values now in this release
            
             /*if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
             {*/
             sb.Append(" --install");
             /*}*/
-
-            if (TryGenerateVariablesFile(deployment, out var valuesFile))
-            {
-                sb.Append($" --values \"{valuesFile}\"");
-            }
             
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
                 sb.Append($" --values \"{additionalValuesFile}\"");
+            }
+            
+            if (TryGenerateVariablesFile(deployment, out var valuesFile))
+            {
+                sb.Append($" --values \"{valuesFile}\"");
             }
          
             sb.Append($" \"{releaseName}\" \"{packagePath}\"");
@@ -82,6 +73,21 @@ namespace Calamari.Kubernetes.Conventions
                         $"Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
                 }
             }
+        }
+
+        private static string GetReleaseName(CalamariVariableDictionary variables)
+        {
+            var validChars = new Regex("[^a-zA-Z0-9-]");
+            var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
+            if (string.IsNullOrWhiteSpace(releaseName))
+            {
+                releaseName = $"{variables.Get(Deployment.SpecialVariables.Action.Name)}-{variables.Get(Deployment.SpecialVariables.Environment.Name)}";
+                releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
+            }
+
+            Log.SetOutputVariable("ReleaseName", releaseName, variables);
+            Log.Info($"Using Release Name {releaseName}");
+            return releaseName;
         }
 
 
