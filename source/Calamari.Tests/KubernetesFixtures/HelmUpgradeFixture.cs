@@ -6,6 +6,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using  Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Tests.Fixtures;
 using NUnit.Framework;
 using Octostache;
 
@@ -86,18 +87,23 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void Upgrade_Suceeds()
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        public void Upgrade_Succeeds()
         {
-            var res = DeployPackage();
+            var result = DeployPackage();
 
             //res.AssertOutputMatches("NAME:   mynewrelease"); //Does not appear on upgrades, only installs
-            res.AssertOutputMatches($"NAMESPACE: {Namespace}");
-            res.AssertOutputMatches("STATUS: DEPLOYED");
-            res.AssertOutputMatches(ConfigMapName);
-            res.AssertSuccess();
+            result.AssertOutputMatches($"NAMESPACE: {Namespace}");
+            result.AssertOutputMatches("STATUS: DEPLOYED");
+            result.AssertOutputMatches(ConfigMapName);
+            result.AssertSuccess();
+            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
         
         [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
         public void NoValues_EmbededValuesUsed()
         {
             AddPostDeployMessageCheck();
@@ -108,6 +114,8 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
         public void ExplicitValues_NewValuesUsed()
         {
             //Helm Config
@@ -120,6 +128,8 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
         public void ValuesFromPackage_NewValuesUsed()
         {
             //Helm Config
