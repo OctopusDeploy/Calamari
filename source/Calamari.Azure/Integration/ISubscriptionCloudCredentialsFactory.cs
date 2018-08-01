@@ -1,9 +1,10 @@
 ﻿using Microsoft.Azure;
+using Octostache;
 
 namespace Calamari.Azure.Integration
 {
     public interface ISubscriptionCloudCredentialsFactory
     {
-        SubscriptionCloudCredentials GetCredentials(string subscriptionId, string certificateThumbprint, string certificateBytes);
+        SubscriptionCloudCredentials GetCredentials(VariableDictionary variables);
     }
 }

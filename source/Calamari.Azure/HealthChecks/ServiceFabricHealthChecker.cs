@@ -4,6 +4,7 @@ using System.Fabric.Security;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Azure.Util;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
@@ -60,11 +61,9 @@ namespace Calamari.Azure.HealthChecks
                         log.Info("Connecting with Secure Client Certificate");
 
                         var clientCertThumbprint = variables.Get(clientCertVariable + ".Thumbprint");
-                        var rawOriginalBytes = variables.Get(clientCertVariable + ".RawOriginal");
-                        var password = variables.Get(clientCertVariable + ".Password");
                         var commonName = variables.Get(clientCertVariable + ".SubjectCommonName");
 
-                        EnsureServiceFabricCertificateExistsInStore(clientCertThumbprint, rawOriginalBytes, password, certificateStoreLocation, certificateStoreName, false);
+                        certificateStore.GetOrAdd(variables, clientCertVariable, certificateStoreName, certificateStoreLocation);
 
                         var xc = GetCredentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
                         try
@@ -123,22 +122,6 @@ namespace Calamari.Azure.HealthChecks
             }
 
             return 0;
-        }
-
-        void EnsureServiceFabricCertificateExistsInStore(string thumbprint, string rawOriginalBytes, string password, string certificateStoreLocation, string certificateStoreName, bool throwOnFail)
-        {
-            try
-            {
-                var storeName = (StoreName)Enum.Parse(typeof(StoreName), certificateStoreName);
-                var storeLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), certificateStoreLocation);
-                certificateStore.GetOrAdd(thumbprint, rawOriginalBytes, storeName, storeLocation, password);
-            }
-            catch (Exception ex)
-            {
-                log.Warn($"Failed to add or confirm whether the Service Fabric certificate was available in the expected store (this warning can be ignored for self-signed certificates).\n{ex.PrettyPrint()}");
-                if (throwOnFail)
-                    throw;
-            }
         }
 
         #region Auth helpers
