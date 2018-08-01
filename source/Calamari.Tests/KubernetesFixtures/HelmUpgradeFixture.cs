@@ -160,7 +160,8 @@ namespace Calamari.Tests.KubernetesFixtures
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace +
                              " -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            var script = $"set_octopusvariable Message $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
+            //var script = $"set_octopusvariable Message $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
+            var script = kubectlCmd;
 
             if (CalamariEnvironment.IsRunningOnWindows)
             {
