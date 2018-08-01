@@ -16,8 +16,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string AuthFeedUri =   "https://octopusdeploy.jfrog.io/octopusdeploy/helm-testing/";
         static readonly string FeedUsername = "e2e-reader";
         static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.HelmPassword);
-        
         private static string home = Path.GetTempPath();
+        
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
@@ -31,6 +31,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
         
         [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
         public void PackageWithCredentials_Loads()
         {
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
@@ -43,6 +46,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }        
         
         [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
         public void PackageWithWrongCredentials_Fails()
         {
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
