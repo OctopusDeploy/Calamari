@@ -48,7 +48,7 @@ function setup_context {
   kubectl config use-context octocontext
 
   if [[ ! -z $Octopus_K8S_Client_Cert ]]; then
-	if [[ -z $Octopus_K8S_Client_Cert_Pem ]]
+	if [[ -z $Octopus_K8S_Client_Cert_Pem ]]; then
 	  echo 2> "Kubernetes client certificate does not include the certificate data"
       exit 1
 	fi
