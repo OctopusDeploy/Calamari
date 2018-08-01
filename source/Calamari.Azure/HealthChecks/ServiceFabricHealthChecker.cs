@@ -60,11 +60,11 @@ namespace Calamari.Azure.HealthChecks
                         log.Info("Connecting with Secure Client Certificate");
 
                         var clientCertThumbprint = variables.Get(clientCertVariable + ".Thumbprint");
-                        var certificateBytes = variables.Get(clientCertVariable + ".Certificate");
+                        var rawOriginalBytes = variables.Get(clientCertVariable + ".RawOriginal");
                         var password = variables.Get(clientCertVariable + ".Password");
                         var commonName = variables.Get(clientCertVariable + ".SubjectCommonName");
 
-                        EnsureServiceFabricCertificateExistsInStore(clientCertThumbprint, certificateBytes, password, certificateStoreLocation, certificateStoreName, false);
+                        EnsureServiceFabricCertificateExistsInStore(clientCertThumbprint, rawOriginalBytes, password, certificateStoreLocation, certificateStoreName, false);
 
                         var xc = GetCredentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
                         try
@@ -125,13 +125,13 @@ namespace Calamari.Azure.HealthChecks
             return 0;
         }
 
-        void EnsureServiceFabricCertificateExistsInStore(string thumbprint, string certificateBytes, string password, string certificateStoreLocation, string certificateStoreName, bool throwOnFail)
+        void EnsureServiceFabricCertificateExistsInStore(string thumbprint, string rawOriginalBytes, string password, string certificateStoreLocation, string certificateStoreName, bool throwOnFail)
         {
             try
             {
                 var storeName = (StoreName)Enum.Parse(typeof(StoreName), certificateStoreName);
                 var storeLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), certificateStoreLocation);
-                certificateStore.GetOrAdd(thumbprint, certificateBytes, storeName, storeLocation, password);
+                certificateStore.GetOrAdd(thumbprint, rawOriginalBytes, storeName, storeLocation, password);
             }
             catch (Exception ex)
             {
