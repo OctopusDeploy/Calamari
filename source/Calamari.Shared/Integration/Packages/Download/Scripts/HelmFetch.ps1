@@ -14,18 +14,22 @@ $Url=$OctopusParameters["Url"]
 $version=$OctopusParameters["Version"]
 $package=$OctopusParameters["Package"]
 
-helm init --home $TempHelmHome --client-only
+Write-Host "Creating local helm context"
+Write-Verbose "helm init --home $TempHelmHome --client-only"
+helm init --home $TempHelmHome --client-only  | Write-Verbose
 if($Username -eq $Null)
 {
-    helm repo add --home $TempHelmHome $TempRepoName $Url
+    helm repo add --home $TempHelmHome $TempRepoName $Url | Write-Verbose
 } else {
-    helm repo add --home $TempHelmHome --username $Username --password $Password $TempRepoName $Url
+    helm repo add --home $TempHelmHome --username $Username --password $Password $TempRepoName $Url | Write-Verbose
 }
 
 if(!$?) {
     exit 1
 }
 
+Write-Host "Fetching Chart"
+Write-Verbose "helm fetch --home $TempHelmHome --version $Version --destination $TempStaging $TempRepoName/$Package"
 helm fetch --home $TempHelmHome --version $Version --destination $TempStaging $TempRepoName/$Package
 
 #$files=(Get-ChildItem "$TempStaging/*");

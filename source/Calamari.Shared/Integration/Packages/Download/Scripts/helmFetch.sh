@@ -5,17 +5,14 @@ url=$(get_octopusvariable "Url")
 version=$(get_octopusvariable "Version")
 package=$(get_octopusvariable "Package")
 
-#username="steve"
-#password="steve"
-#url="http://localhost:8030"
-#package="mychart"
-#version="0.3.5"
-
 tempHelmHome=$(pwd)/helm
 tempStaging=$(pwd)/staging
 tempRepoName="octopusfeed"
 
 mkdir $tempStaging 1>/dev/null
+
+echo "Creating local helm context"
+write_verbose "helm init --home $tempHelmHome --client-only"
 
 helm init --home $tempHelmHome --client-only
 
@@ -29,4 +26,6 @@ if [[ $? != 0 ]]; then
   exit 1
 fi
 
+echo "Fetching Chart"
+write_verbose "helm fetch --home $tempHelmHome --version $version --destination $tempStaging $tempRepoName/$package"
 helm fetch --home $tempHelmHome --version $version --destination $tempStaging $tempRepoName/$package
