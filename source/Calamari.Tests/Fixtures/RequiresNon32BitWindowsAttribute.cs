@@ -10,7 +10,7 @@ namespace Calamari.Tests.Fixtures
         {
             if (CalamariEnvironment.IsRunningOnWindows && !Environment.Is64BitOperatingSystem)
             {
-                Assert.Ignore($"This test does not run on FreeBSD");
+                Assert.Ignore($"This test does not run on 32Bit Windows");
             }
         }
 
