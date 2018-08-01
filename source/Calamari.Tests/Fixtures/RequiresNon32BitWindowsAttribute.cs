@@ -8,7 +8,7 @@ namespace Calamari.Tests.Fixtures
     {
         public void BeforeTest(ITest testDetails)
         {
-            if (CalamariEnvironment.IsRunningOnWindows && (Environment.GetEnvironmentVariable("teamcity.agent.jvm.os.arch")?.Contains("x86") ?? false))
+            if (CalamariEnvironment.IsRunningOnWindows && !Environment.Is64BitOperatingSystem)
             {
                 Assert.Ignore($"This test does not run on FreeBSD");
             }
