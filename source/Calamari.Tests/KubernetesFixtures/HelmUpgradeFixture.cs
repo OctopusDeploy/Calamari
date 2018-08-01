@@ -89,6 +89,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
         public void Upgrade_Succeeds()
         {
             var result = DeployPackage();
@@ -116,6 +117,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
         public void ExplicitValues_NewValuesUsed()
         {
             //Helm Config
@@ -130,6 +132,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
         public void ValuesFromPackage_NewValuesUsed()
         {
             //Helm Config
