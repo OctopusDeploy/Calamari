@@ -10,12 +10,12 @@ namespace Calamari.Integration.Certificates
     {
         public X509Certificate2 GetOrAdd(string thumbprint, string bytes)
         {
-            return GetOrAdd(thumbprint, Convert.FromBase64String(bytes), null, null, new X509Store("Octopus", StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, Convert.FromBase64String(bytes), null, null, new X509Store("Octopus", StoreLocation.CurrentUser), true);
         }
 
         public X509Certificate2 GetOrAdd(string thumbprint, string bytes, StoreName storeName)
         {
-            return GetOrAdd(thumbprint, Convert.FromBase64String(bytes), null, null, new X509Store(storeName, StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, Convert.FromBase64String(bytes), null, null, new X509Store(storeName, StoreLocation.CurrentUser), true);
         }
 
         public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
@@ -35,13 +35,13 @@ namespace Calamari.Integration.Certificates
             return GetOrAdd(thumbprint, pfxBytes, password, subject, new X509Store(storeName, storeLocation));
         }
 
-        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, string subject, X509Store store)
+        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, string subject, X509Store store, bool privateKeyExportable = false)
         {
             var certificate = FindCertificateInStore(thumbprint, store);
             if (certificate.Some())
                 return certificate.Value;
 
-            AddCertificateToStore(bytes, password, subject, store);
+            AddCertificateToStore(bytes, password, subject, store, privateKeyExportable);
 
             return FindCertificateInStore(thumbprint, store).Value;
         }
@@ -72,13 +72,13 @@ namespace Calamari.Integration.Certificates
 #endif
         }
 
-        static void AddCertificateToStore(byte[] certificateBytes, string password, string subject, X509Store store)
+        static void AddCertificateToStore(byte[] certificateBytes, string password, string subject, X509Store store, bool privateKeyExportable)
         {
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT
-            Log.Info($"Adding certificate into Cert:\\{store.Location}\\{store.Name}");
+            Log.Info($"Adding certificate '{subject}' into Cert:\\{store.Location}\\{store.Name} {(privateKeyExportable ? " (marked exportable)" : " (not exportable)")}");
             try
             {
-                WindowsX509CertificateStore.ImportCertificateToStore(certificateBytes, password, store.Location, store.Name, false);
+                WindowsX509CertificateStore.ImportCertificateToStore(certificateBytes, password, store.Location, store.Name, privateKeyExportable);
             }
             catch (Exception)
             {
