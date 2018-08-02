@@ -41,6 +41,7 @@ function SetupContext {
 	}
 
 	if([string]::IsNullOrEmpty($K8S_Namespace)){
+		Write-Verbose "No namespace provded. Using default"
 		$K8S_Namespace="default"
 	}
 

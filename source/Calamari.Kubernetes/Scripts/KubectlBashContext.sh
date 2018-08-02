@@ -36,6 +36,7 @@ function setup_context {
   fi
 
   if [[ -z $Octopus_K8S_Namespace ]]; then
+    write_verbose "No namespace provded. Using default"
     Octopus_K8S_Namespace="default"
   fi
 
