@@ -17,7 +17,7 @@ namespace Calamari.Tests.KubernetesFixtures
     public class HelmUpgradeFixture : CalamariFixture
     {
         private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
-        static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
+        private static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
 
         private ICalamariFileSystem FileSystem { get; set; }
         private VariableDictionary Variables { get; set; }
@@ -157,20 +157,16 @@ namespace Calamari.Tests.KubernetesFixtures
 
         void AddPostDeployMessageCheckAndCleanup()
         {
-            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace;
+            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            //var script = $"set_octopusvariable Message $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
-            var script = kubectlCmd;
-
+            var script = "set_octopusvariable Message \"$("+ kubectlCmd +")\"\nhelm delete "+ ReleaseName +" --purge";
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
                 script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
             }
 
-            Variables.Set(
-                SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax),
-                script);
+            Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
         }
 
@@ -181,7 +177,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 var pkg = GetFixtureResouce("Charts", ChartPackageName);
                 Variables.Save(variablesFile.FilePath);
 
-                return InvokeInProcess(Calamari()
+                return Invoke(Calamari()
                     .Action("helm-upgrade")
                     .Argument("extensions", "Calamari.Kubernetes")
                     .Argument("package", pkg)

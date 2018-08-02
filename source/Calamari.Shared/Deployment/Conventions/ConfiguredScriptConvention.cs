@@ -6,6 +6,7 @@ using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -50,8 +51,10 @@ namespace Calamari.Deployment.Conventions
                     throw new CommandException($"{scriptType} scripts are not supported on this platform ({deploymentStage})");
 
                 var scriptFile = Path.Combine(deployment.CurrentDirectory, scriptName);
-
-                fileSystem.OverwriteFile(scriptFile, scriptBody, Encoding.UTF8);
+                var scriptBytes = scriptType == ScriptSyntax.Bash
+                    ? scriptBody.EncodeInUtf8NoBom()
+                    : scriptBody.EncodeInUtf8Bom();
+                fileSystem.WriteAllBytes(scriptFile, scriptBytes);
 
                 // Execute the script
                 Log.VerboseFormat("Executing '{0}'", scriptFile);

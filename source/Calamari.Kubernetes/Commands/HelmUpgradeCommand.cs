@@ -57,6 +57,7 @@ namespace Calamari.Kubernetes.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var substituter = new FileSubstituter(fileSystem);
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            ValidateRequiredVariables(variables);
             
             var conventions = new List<IConvention>
             {
@@ -70,10 +71,8 @@ namespace Calamari.Kubernetes.Commands
                 new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
-
             var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
-            
             
             try
             {
@@ -87,6 +86,14 @@ namespace Calamari.Kubernetes.Commands
             }
 
             return 0;
+        }
+
+        private void ValidateRequiredVariables(CalamariVariableDictionary variables)
+        {
+            if (!variables.IsSet(SpecialVariables.ClusterUrl))
+            {
+                throw new CommandException($"The variable `{SpecialVariables.ClusterUrl}` is not provided.");
+            }
         }
         
         private IEnumerable<string> FileTargetFactory(RunningDeployment deployment)
