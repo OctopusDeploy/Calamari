@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Net;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
@@ -10,7 +13,17 @@ namespace Calamari.Integration.Packages.Download
     /// </summary>
     public class PackageDownloaderStrategy
     {
-        public static PackagePhysicalFileMetadata DownloadPackage(
+        private readonly IScriptEngine engine;
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly ICommandLineRunner commandLineRunner;
+
+        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        {
+            this.engine = engine;
+            this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
+        }
+        public PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
             IVersion version,
             string feedId,
@@ -32,6 +45,9 @@ namespace Calamari.Integration.Packages.Download
                     break;
                 case FeedType.GitHub:
                     downloader = new GitHubPackageDownloader();
+                    break;
+                case FeedType.Helm :
+                    downloader = new HelmChartPackageDownloader(engine, fileSystem, commandLineRunner);
                     break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");

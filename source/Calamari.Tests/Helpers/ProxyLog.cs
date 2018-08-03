@@ -2,6 +2,7 @@ using System;
 using System.CodeDom.Compiler;
 using System.IO;
 using System.Text;
+using Calamari.Integration.Processes;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Helpers
@@ -35,15 +36,32 @@ namespace Calamari.Tests.Helpers
             Log.StdErr = new IndentedTextWriter(new StringWriter(interceptedErrWriter));
         }
 
-        public string StdOut
+        public void Flush(ICommandOutput output)
         {
-            get { return interceptedOutWriter.ToString(); }
+            using (var strReader = new StringReader(StdOut))
+            {
+                string line = strReader.ReadLine();
+                while (line != null)
+                {
+                    output.WriteInfo(line);
+                    line = strReader.ReadLine();
+                }
+            }
+            
+            using (var strReader = new StringReader(StdErr))
+            {
+                string line = strReader.ReadLine();
+                while (line != null)
+                {
+                    output.WriteError(line);
+                    line = strReader.ReadLine();
+                }
+            }
         }
 
-        public string StdErr
-        {
-            get { return interceptedErrWriter.ToString(); }
-        }
+        public string StdOut => interceptedOutWriter.ToString();
+
+        public string StdErr => interceptedErrWriter.ToString();
 
         public void Dispose()
         {

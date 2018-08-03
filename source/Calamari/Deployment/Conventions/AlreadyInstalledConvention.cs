@@ -1,4 +1,6 @@
-﻿using Calamari.Deployment.Journal;
+﻿using System;
+using System.Linq;
+using Calamari.Deployment.Journal;
 
 namespace Calamari.Deployment.Conventions
 {

@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Scripting;
+﻿using System.Security.Policy;
+using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment
 {
@@ -146,6 +147,36 @@ namespace Calamari.Deployment
             }
         }
 
+        public static class Packages
+        {
+            public static readonly string PackageCollection = "Octopus.Action.Package";
+
+            public static string PackageId(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageId";
+            }
+
+            public static string PackageVersion(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageVersion";
+            }
+
+            public static string OriginalPath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].OriginalPath";
+            }
+            
+            public static string Extract(string key)
+            {
+                return $"Octopus.Action.Package[{key}].Extract";
+            }
+
+            public static string DestinationPath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].Path";
+            }
+        }
+
         public static class Vhd
         {
             public static readonly string ApplicationPath = "Octopus.Action.Vhd.ApplicationPath";
@@ -171,6 +202,8 @@ namespace Calamari.Deployment
             public const string Vhd = "Octopus.Features.Vhd";
             public const string ConfigurationTransforms = "Octopus.Features.ConfigurationTransforms";
         }
+
+     
 
         public static class Action
         {
@@ -315,10 +348,21 @@ namespace Calamari.Deployment
                 public static readonly string ScriptFileName = "Octopus.Action.Script.ScriptFileName";
                 public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
                 public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
+                public static readonly string ExitCode = "Octopus.Action.Script.ExitCode";
 
                 public static string ScriptBodyBySyntax(ScriptSyntax syntax)
                 {
                     return $"Octopus.Action.Script.ScriptBody[{syntax.ToString()}]";
+                }
+            }
+            
+            public static class CustomScripts
+            {
+                public static readonly string Prefix = "Octopus.Action.CustomScripts.";
+
+                public static string GetCustomScriptStage(string deploymentStage, ScriptSyntax scriptSyntax)
+                {
+                    return $"{Prefix}{deploymentStage}.{scriptSyntax.FileExtension()}";
                 }
             }
 

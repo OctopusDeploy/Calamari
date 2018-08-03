@@ -25,7 +25,10 @@ namespace Calamari.Tests
         GitHubUsername,
 
         [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account")]
-        GitHubPassword
+        GitHubPassword,
+        
+        [EnvironmentVariable("Helm_OctopusAPITester_Password", "Helm Password for https://octopusdeploy.jfrog.io")]
+        HelmPassword
     }
 
     public static class ExternalVariables

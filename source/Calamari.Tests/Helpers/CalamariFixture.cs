@@ -6,9 +6,10 @@ using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
-using System.Reflection;
+using Autofac;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Scripting;
 
 namespace Calamari.Tests.Helpers
 {
@@ -37,22 +38,36 @@ namespace Calamari.Tests.Helpers
             return new CommandLine(octoDiffExe);
         }
 
-        protected CalamariResult Invoke(CommandLine command, VariableDictionary variables)
+        protected CalamariResult InvokeInProcess(CommandLine command, VariableDictionary variables = null)
+        {
+            using (var logs = new ProxyLog())
+            {
+                var args = command.GetRawArgs();
+                var container = global::Calamari.Program.BuildContainer(args);
+                var exitCode = container.Resolve<Calamari.Program>().Execute(args);
+
+                var capture = new CaptureCommandOutput();
+                var sco = new SplitCommandOutput(
+                    new ConsoleCommandOutput(), 
+                    new ServiceMessageCommandOutput(variables ?? new VariableDictionary()),
+                    capture);
+                logs.Flush(sco);
+                return new CalamariResult(exitCode, capture);
+            }
+        }
+
+        protected CalamariResult Invoke(CommandLine command, VariableDictionary variables = null)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(
                 new SplitCommandOutput(
                     new ConsoleCommandOutput(),
-                    new ServiceMessageCommandOutput(variables),
+                    new ServiceMessageCommandOutput(variables ?? new VariableDictionary()),
                     capture));
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, capture);
         }
 
-        protected CalamariResult Invoke(CommandLine command)
-        {
-            return Invoke(command, new VariableDictionary());
-        }
 
         protected string GetFixtureResouce(params string[] paths)
         {
@@ -76,6 +91,8 @@ namespace Calamari.Tests.Helpers
             var variables = new VariableDictionary();
             variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptName);
             variables.Set(SpecialVariables.Action.Script.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
+            variables.Set(SpecialVariables.Action.Script.Syntax, ScriptTypeExtensions.FileNameToScriptType(scriptName).ToString());
+            
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 
             using (new TemporaryFile(variablesFile))

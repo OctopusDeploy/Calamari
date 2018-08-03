@@ -14,12 +14,14 @@ namespace Calamari.Commands
     [Command("transfer-package", Description = "Copies a deployment package to a specific directory")]
     public class TransferPackageCommand : Command
     {
+        private readonly IDeploymentJournalWriter deploymentJournalWriter;
         private string variablesFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
 
-        public TransferPackageCommand()
+        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter)
         {
+            this.deploymentJournalWriter = deploymentJournalWriter;
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
@@ -62,13 +64,11 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, true));
+                deploymentJournalWriter.AddJournalEntry(deployment, true);
             }
             catch (Exception)
             {
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, false));
+                deploymentJournalWriter.AddJournalEntry(deployment, false);
                 throw;
             }
 

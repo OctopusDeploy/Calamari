@@ -24,8 +24,6 @@
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <DefineConstants>$(DefineConstants);NETFX;AZURE;KUBERNETES;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
-
-  
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
@@ -38,12 +36,10 @@
     <PackageReference Include="Polly" Version="5.4.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
-  
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' ">
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
   </ItemGroup>
-  
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
@@ -60,7 +56,6 @@
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System" />
   </ItemGroup>
-  
   <ItemGroup>
     <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx" />
@@ -123,6 +118,9 @@
     <None Include="Fixtures\ScriptCS\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="KubernetesFixtures\Charts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Substitutions\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -131,16 +129,11 @@
     </None>
     <Compile Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
     <EmbeddedResource Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
-    <None Remove="Fixtures\Deployment\Packages\Acme.Web\bin\**" />
-    <None Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**" />
-    <None Remove="Fixtures\Deployment\Packages\Acme.Service\bin\**" />
-    <None Remove="Fixtures\Deployment\Packages\Acme.Service\obj\**" />
-    <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\bin\**" />
-    <None Remove="Fixtures\Deployment\Packages\Acme.Web.Tests\obj\**" />
-    <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\bin\**" />
-    <None Remove="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\obj\**" />
+    <Compile Remove="Fixtures\Deployment\Packages\**\bin\**" />
+    <Compile Remove="Fixtures\Deployment\Packages\**\obj\**" />
+    <None Remove="Fixtures\Deployment\Packages\**\bin\**" />
+    <None Remove="Fixtures\Deployment\Packages\**\obj\**" />
   </ItemGroup>
-  
   <ItemGroup>
     <None Remove="TestResults\**" />
   </ItemGroup>
