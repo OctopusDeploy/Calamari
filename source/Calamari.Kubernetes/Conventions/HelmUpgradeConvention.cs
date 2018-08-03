@@ -34,8 +34,13 @@ namespace Calamari.Kubernetes.Conventions
 
             var packagePath = GetChartLocation(deployment);
 
-            var sb = new StringBuilder($"helm upgrade --reset-values"); //Force reset to use values now in this release
-           
+            var sb = new StringBuilder($"helm upgrade"); //Force reset to use values now in this release
+
+            if (deployment.Variables.GetFlag(SpecialVariables.Helm.ReleaseName, true))
+            {
+                sb.Append(" --reset-values");
+            }
+            
             /*if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
             {*/
             sb.Append(" --install");
