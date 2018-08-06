@@ -78,10 +78,13 @@ namespace Calamari.Aws.Integration.CloudFormation
             
             if (expectSuccess && !isSuccess && isStackType)
             {
-                
                 log.Warn(
-                    "Stack was either missing, in a rollback state, or in a failed state. This means that the stack was not processed correctly. " +
-                    "Review the stack in the AWS console to find any errors that may have occured during deployment.");
+                    status.SelectValueOr(x => 
+                            $"Stack status {x.ResourceStatus.Value} indicated rollback or failed state. This means that the stack was not processed correctly. ", 
+                            "Stack was unexpectedly missing during processing. ") +
+                        "This means that the stack was not processed correctly. " +
+                        "Review the stack in the AWS console to find any errors that may have occured during deployment."
+                    );
                 try
                 {
                     var progressStatus = query(stack => stack?.ResourceStatusReason != null);
