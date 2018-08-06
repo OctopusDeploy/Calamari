@@ -19,11 +19,11 @@
     <Description>Interfaces and utilities to build Calamari plugins</Description>
     <ApplicationManifest>Calamari.Shared.manifest</ApplicationManifest>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <ApplicationIcon/>
-    <StartupObject/>
-    <RootNamespace>Calamari</RootNamespace>
+    <ApplicationIcon />
+    <StartupObject />
+    <RootNamespace>Calamari.Shared</RootNamespace>
   </PropertyGroup>
-  
+  <!--
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
     <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
@@ -110,6 +110,5 @@
     <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx"/>
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1"/>
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1"/>
-  </ItemGroup>
-  
+  </ItemGroup>-->
 </Project>

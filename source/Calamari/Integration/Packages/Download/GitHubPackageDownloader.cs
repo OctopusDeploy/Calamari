@@ -254,14 +254,13 @@ namespace Calamari.Integration.Packages.Download
         /// Takes files from the root inner directory, and moves down to root.
         /// Currently only relevent for Git archives.
         ///  e.g. /Dir/MyFile => /MyFile
-        /// This was created indpependantly from the version above since Calamari needs to support .net 4.0 here which does not have `System.IO.Compression` library.
+        /// This was created independantly from the version above since Calamari needs to support .net 4.0 here which does not have `System.IO.Compression` library.
         /// The reason this library is preferred over `SharpCompress` is that it can update zips in-place and it preserves empty directories.
         /// https://github.com/adamhathcock/sharpcompress/issues/62
         /// https://github.com/adamhathcock/sharpcompress/issues/34
         /// https://github.com/adamhathcock/sharpcompress/issues/242
         /// Unfortunately the server needs the same logic so that we can ensure that the Hash comparisons match.
         /// </summary>
-        /// <param name="fileName"></param>
         static void DeNestContents(string src, string dest)
         {
             int rootPathSeperator = -1;

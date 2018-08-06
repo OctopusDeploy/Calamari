@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net40;net452</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+    <DefineConstants>$(DefineConstants);IIS_SUPPORT;</DefineConstants>
+    <PlatformTarget>anycpu</PlatformTarget>
+  </PropertyGroup>
+</Project>

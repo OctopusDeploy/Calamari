@@ -7,9 +7,10 @@ using Octopus.Versioning;
 using Octopus.Versioning.Maven;
 using Octopus.Versioning.Semver;
 
-/// These classes are shared with Octopus.Server. Ideally should be moved to a common location.
 namespace Calamari.Integration.Packages
 {
+    // These classes are all shared with Octopus.Server. Ideally should be moved to a common location.
+    
     public class PackageFileNameMetadata
     {
         public string PackageId { get; }
