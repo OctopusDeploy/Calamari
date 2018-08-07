@@ -13,6 +13,7 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Util;
 
 namespace Calamari.Azure.Commands
 {
@@ -50,6 +51,9 @@ namespace Calamari.Azure.Commands
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var fileSystem = new WindowsPhysicalFileSystem();
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
+            var templateResolver = new TemplateResolver(fileSystem);
+            var templateService = new TemplateService(fileSystem, templateResolver, new TemplateReplacement(templateResolver));
+            
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
@@ -59,7 +63,7 @@ namespace Calamari.Azure.Commands
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, fileSystem, new ResourceGroupTemplateNormalizer()),
+                new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, templateService, new ResourceGroupTemplateNormalizer()),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };

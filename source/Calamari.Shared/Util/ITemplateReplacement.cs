@@ -1,4 +1,4 @@
-﻿using Calamari.Integration.FileSystem;
+﻿using System;
 using Octostache;
 
 namespace Calamari.Util
@@ -11,30 +11,20 @@ namespace Calamari.Util
         /// <summary>
         /// Reads a file and replaces any template markup with the values from the supplied variables
         /// </summary>
-        /// <param name="fileSystem">The calamari file system</param>
+        /// <param name="fetch">Callback to fetch the content given the absolute template path</param>
         /// <param name="relativeFilePath">The relative path to the file to process</param>
         /// <param name="inPackage">True if the file is in a package, and false otherwise</param>
         /// <param name="variables">The variables used for the replacement values</param>
         /// <returns>The contents of the source file with the variables replaced</returns>
         string ResolveAndSubstituteFile(
-            ICalamariFileSystem fileSystem, 
+            Func<string, string> fetch,
             string relativeFilePath, 
             bool inPackage, 
             VariableDictionary variables);
-        
-        
-        /// <summary>
-        /// Gets the path to the supplied file
-        /// </summary>
-        /// <param name="fileSystem">The calamari file system</param>
-        /// <param name="relativeFilePath">The relative path to the file to process</param>
-        /// <param name="inPackage">True if the file is in a package, and false otherwise</param>
-        /// /// <param name="variables">The variables that contain the deployment locations</param>
-        /// <returns>The path to the supplied file</returns>
-        string GetAbsolutePath(
-            ICalamariFileSystem fileSystem, 
-            string relativeFilePath,
-            bool inPackage,
+
+        string ResolveAndSubstituteFile(
+            Func<string> resolve,
+            Func<string, string> fetch,
             VariableDictionary variables);
     }
 }

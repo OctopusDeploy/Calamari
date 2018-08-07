@@ -1,14 +1,14 @@
 ﻿#if AZURE
 using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
-using Calamari.Integration.FileSystem;
+using Calamari.Util;
 using NUnit.Framework;
 
 namespace Calamari.Tests.AzureFixtures
 {
     public class GenerateDeploymentNameFromStepNameTestWrapper : DeployAzureResourceGroupConvention
     {
-        public GenerateDeploymentNameFromStepNameTestWrapper(string templateFile, string templateParametersFile, bool filesInPackage, ICalamariFileSystem fileSystem, IResourceGroupTemplateNormalizer parameterNormalizer) : base(templateFile, templateParametersFile, filesInPackage, fileSystem, parameterNormalizer)
+        public GenerateDeploymentNameFromStepNameTestWrapper(string templateFile, string templateParametersFile, bool filesInPackage, TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer) : base(templateFile, templateParametersFile, filesInPackage, templateService, parameterNormalizer)
         {
         }
 
