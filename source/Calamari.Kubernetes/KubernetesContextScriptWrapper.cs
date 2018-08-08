@@ -1,47 +1,22 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
-using Calamari.Hooks;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
+using Octostache;
 
 namespace Calamari.Kubernetes
 {
     public class KubernetesContextScriptWrapper : IScriptWrapper
     {
-        private readonly CalamariVariableDictionary variables;
-        private readonly WindowsPhysicalFileSystem fileSystem;
-        private readonly AssemblyEmbeddedResources embeddedResources;
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly ICalamariEmbeddedResources embeddedResources;
 
-        public KubernetesContextScriptWrapper(CalamariVariableDictionary variables)
+        public KubernetesContextScriptWrapper(ICalamariFileSystem filesystem, ICalamariEmbeddedResources embeddedResources)
         {
-            this.fileSystem = new WindowsPhysicalFileSystem();
-            this.embeddedResources = new AssemblyEmbeddedResources();
-            this.variables = variables;
-        }
-
-        public bool Enabled => !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, ""));
-        public IScriptWrapper NextWrapper { get; set; }
-
-        public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
-            ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
-        {
-            var workingDirectory = Path.GetDirectoryName(script.File);
-
-            variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
-            variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
-            variables.Set("Octopus.Action.Kubernetes.KubectlConfig", Path.Combine(workingDirectory, "kubectl-octo.yml"));
-            
-            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
-            {
-                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
-            }
+            this.fileSystem = filesystem;
+            this.embeddedResources = embeddedResources;
         }
 
         string CreateContextScriptFile(string workingDirectory, ScriptSyntax syntax)
@@ -63,6 +38,44 @@ namespace Calamari.Kubernetes
             var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Kubernetes.Scripts.{contextFile}");
             fileSystem.OverwriteFile(k8sContextScriptFile, contextScript);
             return k8sContextScriptFile;
+        }
+
+        public bool Enabled(VariableDictionary variables) => !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, ""));
+        
+        public void ExecuteScript(IScriptExecutionContext context, Script script, Action<Script> next)
+        {
+            var workingDirectory = Path.GetDirectoryName(script.File);
+
+            context.Variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
+            context.Variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
+            context.Variables.Set("Octopus.Action.Kubernetes.KubectlConfig", Path.Combine(workingDirectory, "kubectl-octo.yml"));
+            
+            using (var contextScriptFile = new TemporaryFile(this.fileSystem, CreateContextScriptFile(workingDirectory, context.ScriptSyntax)))
+            {
+                next(new Script(contextScriptFile.FilePath));
+            }
+        }
+    }
+
+  
+    public class TemporaryFile : IDisposable
+    {
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly string filePath;
+
+        public TemporaryFile(ICalamariFileSystem fileSystem, string filePath)
+        {
+            this.fileSystem = fileSystem;
+            this.filePath = filePath;
+        }
+
+        public string DirectoryPath => "file://" + Path.GetDirectoryName(FilePath);
+
+        public string FilePath => filePath;
+
+        public void Dispose()
+        {
+            this.fileSystem.DeleteFile(filePath, FailureOptions.IgnoreFailure);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Calamari.Deployment
+﻿namespace Calamari.Shared
 {
     public static class DeploymentStages
     {

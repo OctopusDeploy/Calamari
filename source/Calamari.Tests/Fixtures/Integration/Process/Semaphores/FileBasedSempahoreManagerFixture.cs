@@ -1,5 +1,6 @@
 using System;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;

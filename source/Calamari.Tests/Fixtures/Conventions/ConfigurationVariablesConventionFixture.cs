@@ -3,6 +3,8 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using NSubstitute;
 using NUnit.Framework;
 

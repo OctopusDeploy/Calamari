@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 
-namespace Calamari.Integration.Certificates
+namespace Calamari.Shared.Certificates
 {
     public interface ICertificateStore
     {

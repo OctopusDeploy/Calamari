@@ -1,13 +1,14 @@
 ﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Shared.Scripting;
 using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using Script = Calamari.Integration.Scripting.Script;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
 {

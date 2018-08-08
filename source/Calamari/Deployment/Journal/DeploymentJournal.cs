@@ -5,6 +5,8 @@ using System.Linq;
 using System.Xml.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Octostache;
 
 namespace Calamari.Deployment.Journal

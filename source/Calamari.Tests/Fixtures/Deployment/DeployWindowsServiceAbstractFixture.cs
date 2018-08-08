@@ -5,6 +5,7 @@ using System.Linq;
 using System.ServiceProcess;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using NUnit.Framework;
 

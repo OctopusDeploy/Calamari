@@ -3,10 +3,13 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class LegacyIisWebSiteConvention : IInstallConvention
+    public class LegacyIisWebSiteConvention :  Calamari.Shared.Commands.IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IInternetInformationServer iis;
@@ -17,7 +20,7 @@ namespace Calamari.Deployment.Conventions
             this.iis = iis;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             if (!deployment.Variables.GetFlag(SpecialVariables.Package.UpdateIisWebsite))
                 return;
@@ -47,7 +50,7 @@ namespace Calamari.Deployment.Conventions
             Log.Info("The IIS website named '{0}' has had its path updated to: '{1}'", iisSiteName, webRoot);
         }
 
-        string GetRootMostDirectoryContainingWebConfig(RunningDeployment deployment)
+        string GetRootMostDirectoryContainingWebConfig(IExecutionContext deployment)
         {
             // Optimize for most common case.
             if (fileSystem.FileExists(Path.Combine(deployment.CurrentDirectory, "Web.config")))

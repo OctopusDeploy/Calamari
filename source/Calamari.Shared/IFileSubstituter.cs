@@ -1,6 +1,6 @@
 ﻿using Octostache;
 
-namespace Calamari.Integration.Substitutions
+namespace Calamari.Shared
 {
     public interface IFileSubstituter
     {

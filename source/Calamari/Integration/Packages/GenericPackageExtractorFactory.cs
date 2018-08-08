@@ -3,6 +3,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Integration.Packages
 {

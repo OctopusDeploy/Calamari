@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 
 namespace Calamari.Deployment.Features.Java
 {

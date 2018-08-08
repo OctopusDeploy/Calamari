@@ -2,6 +2,8 @@
 using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Octostache;
 
 namespace Calamari.Integration.Substitutions

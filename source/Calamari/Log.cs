@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 using Calamari.Util;
 using Octopus.Versioning;
 using Octostache;
@@ -49,19 +50,6 @@ namespace Calamari
         {
             Log.ErrorFormat(message, args);
         }
-
-    }
-
-    public interface ILog
-    {
-        void Verbose(string message);
-        void VerboseFormat(string message, params object[] args);
-        void Info(string message);
-        void InfoFormat(string message, params object[] args);
-        void Warn(string message);
-        void WarnFormat(string message, params object[] args);
-        void Error(string message);
-        void ErrorFormat(string message, params object[] args);
     }
 
     public class Log

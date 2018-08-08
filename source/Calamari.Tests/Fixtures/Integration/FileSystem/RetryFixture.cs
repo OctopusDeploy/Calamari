@@ -1,5 +1,5 @@
 ﻿using System;
-using Calamari.Integration.Retry;
+using Calamari.Shared.Retry;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem

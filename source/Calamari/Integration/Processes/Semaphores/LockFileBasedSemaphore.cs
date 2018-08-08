@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 
 namespace Calamari.Integration.Processes.Semaphores
 {

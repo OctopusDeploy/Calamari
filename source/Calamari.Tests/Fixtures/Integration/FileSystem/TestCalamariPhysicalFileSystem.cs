@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {

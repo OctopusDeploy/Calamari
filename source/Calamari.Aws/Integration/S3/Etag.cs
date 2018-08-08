@@ -8,7 +8,6 @@ namespace Calamari.Aws.Integration.S3
    
         public ETag(string value)
         {
-            Guard.NotNullOrWhiteSpace(value, "Etag value should may not be null or empty.");
             var match = EtagRegex.Match(value);
             RawValue = value;
             Hash = match.Success ? match.Groups["etag"].Value : RawValue;

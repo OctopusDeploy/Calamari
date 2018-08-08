@@ -1,25 +1,77 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Integration;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.Certificates;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
+using Octostache;
 
 namespace Calamari.Azure.Commands
 {
+
+ 
+    
+    public class DeployAzureCloudServiceCommand2: ICustomCommand
+    {
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly ICalamariEmbeddedResources embeddedResources;
+        private readonly IScriptEngine engine;
+        private readonly ISemaphoreFactory semaphorefactory;
+
+        public DeployAzureCloudServiceCommand2(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, IScriptEngine engine, ISemaphoreFactory semaphorefactory)
+        {
+            this.fileSystem = fileSystem;
+            this.embeddedResources = embeddedResources;
+            this.engine = engine;
+            this.semaphorefactory = semaphorefactory;
+        }
+
+        public IOptionsBuilder Options(IOptionsBuilder optionsBuilder)
+        {
+            return optionsBuilder;
+        }
+        
+        public ICommandBuilder Run(ICommandBuilder commandBuilder)
+        {
+
+            commandBuilder
+                    //Extract
+                .PreDeploy()
+                    //
+                .Deploy()
+                .PostDeploy();
+
+
+            return commandBuilder
+//                .AddContributeEnvironmentVariables()
+//                .AddLogVariables()
+                .AddConvention<SwapAzureDeploymentConvention>()
+                .AddExtractPackageToStagingDirectory()
+                .AddConvention<FindCloudServicePackageConvention>()
+                .AddConvention<ExtractAzureCloudServicePackageConvention>()
+                .AddConvention<ChooseCloudServiceConfigurationFileConvention>()
+                .RunPreScripts()
+                .AddConvention<ConfigureAzureCloudServiceConvention>() //new ConfigureAzureCloudServiceConvention(fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever),
+                .AddSubsituteInFiles()
+                .AddConfigurationTransform()
+                .AddConfigurationVariables()
+                .AddJsonVariables()
+                .RunDeployScripts()
+                .AddConvention(new RePackageCloudServiceConvention(fileSystem, semaphorefactory.Get()))
+                .AddConvention<UploadAzureCloudServicePackageConvention>()
+                .AddConvention<DeployAzureCloudServicePackageConvention>()
+                .RunPostScripts();
+//                .AddPackagedScriptConvention(DeploymentStages.PostDeploy)
+//                .AddConfiguredScriptConvention(DeploymentStages.PostDeploy);
+        }
+    }
+
+
+    
+
     [Command("deploy-azure-cloud-service", Description = "Extracts and installs an Azure Cloud-Service")]
     public class DeployAzureCloudServiceCommand : Command
     {

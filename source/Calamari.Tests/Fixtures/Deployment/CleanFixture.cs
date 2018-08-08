@@ -6,6 +6,7 @@ using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;

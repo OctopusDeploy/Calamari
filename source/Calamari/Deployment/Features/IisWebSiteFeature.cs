@@ -1,15 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Newtonsoft.Json.Linq;
 using Octostache;
 
 namespace Calamari.Deployment.Features
 {
-    public abstract class IisWebSiteFeature : IFeature
+    public abstract class IisWebSiteFeature : Calamari.Shared.Commands.IFeature
     {
         public string Name => "Octopus.Features.IISWebSite";
         public abstract string DeploymentStage { get; }
-        public abstract void Execute(RunningDeployment deployment);
+        public abstract void Execute(IExecutionContext deployment);
 
         protected static IEnumerable<dynamic> GetEnabledBindings(VariableDictionary variables)
         {

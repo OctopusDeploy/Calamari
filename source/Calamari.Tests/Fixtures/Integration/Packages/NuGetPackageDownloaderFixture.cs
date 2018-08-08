@@ -2,6 +2,7 @@
 using System.Net;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Shared.FileSystem;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning;

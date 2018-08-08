@@ -7,6 +7,8 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Calamari.Util;
 
 namespace Calamari.Commands

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared.FileSystem;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;

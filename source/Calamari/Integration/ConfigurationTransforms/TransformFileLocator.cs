@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Integration.ConfigurationTransforms
 {
@@ -20,7 +20,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             this.log = log ?? new LogWrapper();
         }
 
-        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, RunningDeployment deployment)
+        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, string currentDeployment)
         {
             var defaultTransformFileName = DetermineTransformFileName(sourceFile, transformation, true);
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
@@ -50,7 +50,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             {
                 foreach (var transformFile in enumerateFiles)
                 {
-                    var sourceFileName = GetSourceFileName(sourceFile, transformation, transformFileName, transformFile, deployment);
+                    var sourceFileName = GetSourceFileName(sourceFile, transformation, transformFileName, transformFile, currentDeployment);
 
                     if (transformation.Advanced && !transformation.IsSourceWildcard &&
                         !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.OrdinalIgnoreCase))
@@ -95,12 +95,12 @@ namespace Calamari.Integration.ConfigurationTransforms
         }
 
         private string GetSourceFileName(string sourceFile, XmlConfigTransformDefinition transformation,
-            string transformFileName, string transformFile, RunningDeployment deployment)
+            string transformFileName, string transformFile, string currentDirectory)
         {
             var sourcePattern = transformation.SourcePattern ?? "";
             if (Path.IsPathRooted(transformFileName) && sourcePattern.StartsWith("." + Path.DirectorySeparatorChar))
             {
-                var path = fileSystem.GetRelativePath(deployment.CurrentDirectory, sourceFile);
+                var path = fileSystem.GetRelativePath(currentDirectory, sourceFile);
                 return "." + path.Substring(path.IndexOf(Path.DirectorySeparatorChar));
             }
 

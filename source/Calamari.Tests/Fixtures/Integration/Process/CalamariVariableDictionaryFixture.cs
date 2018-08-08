@@ -4,6 +4,8 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Util;
 using Newtonsoft.Json;

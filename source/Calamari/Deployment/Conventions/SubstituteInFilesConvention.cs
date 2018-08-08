@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class SubstituteInFilesConvention : IInstallConvention
+    public class SubstituteInFilesConvention :  Calamari.Shared.Commands.IConvention
     {
-        private readonly Func<RunningDeployment, bool> predicate;
-        private readonly Func<RunningDeployment, IEnumerable<string>> fileTargets;
+        private readonly Func<IExecutionContext, bool> predicate;
+        private readonly Func<IExecutionContext, IEnumerable<string>> fileTargets;
         private readonly ICalamariFileSystem fileSystem;
         readonly IFileSubstituter substituter;
 
@@ -24,14 +24,14 @@ namespace Calamari.Deployment.Conventions
         }
 
         public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter,
-            Func<RunningDeployment, bool> predicate,
-            Func<RunningDeployment, IEnumerable<string>> fileTargetFactory):this(fileSystem, substituter)
+            Func<IExecutionContext, bool> predicate,
+            Func<IExecutionContext, IEnumerable<string>> fileTargetFactory):this(fileSystem, substituter)
         {
             this.predicate = predicate;
             this.fileTargets = fileTargetFactory;
         }
         
-        public void Install(RunningDeployment deployment)
+        public void Install(IExecutionContext deployment)
         {
             if (!predicate(deployment))
                 return;
@@ -57,7 +57,7 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        private List<string> MatchingFiles(RunningDeployment deployment, string target)
+        private List<string> MatchingFiles(IExecutionContext deployment, string target)
         {
             var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
 
@@ -69,6 +69,32 @@ namespace Calamari.Deployment.Conventions
             }
 
             return files;
+        }
+
+        public void Run(IExecutionContext deployment)
+        {
+            if (!predicate(deployment))
+                return;
+
+            foreach (var target in fileTargets(deployment))
+            {
+                var matchingFiles = MatchingFiles(deployment, target);
+
+                if (!matchingFiles.Any())
+                {
+                    if (deployment.Variables.GetFlag(SpecialVariables.Package.EnableNoMatchWarning, true))
+                    {
+                        Log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
+                    }
+
+                    continue;
+                }
+
+                foreach (var file in matchingFiles)
+                {
+                    substituter.PerformSubstitution(file, deployment.Variables);
+                }
+            }
         }
     }
 }

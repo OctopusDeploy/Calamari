@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Assent;
 using Assent.Reporters;
 using Assent.Reporters.DiffPrograms;
+using Calamari.Shared;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {

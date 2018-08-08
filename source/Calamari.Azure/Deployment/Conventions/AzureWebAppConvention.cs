@@ -4,22 +4,27 @@ using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Calamari.Azure.Commands;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Azure.Util;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Retry;
+using Calamari.Shared;
+using Calamari.Shared.Retry;
 using Microsoft.Web.Deployment;
 using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class AzureWebAppConvention : IInstallConvention
+    public class AzureWebAppConvention : IConvention
     {
-        public void Install(RunningDeployment deployment)
+        private readonly ILog log;
+
+        public AzureWebAppConvention(ILog log)
+        {
+            this.log = log;
+        }
+        
+        public void Run(IExecutionContext deployment)
         {
             var variables = deployment.Variables;
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
@@ -35,7 +40,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var slotText = targetSite.HasSlot
                 ? $", deployment slot '{targetSite.Slot}'" 
                 : string.Empty;
-            Log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
+            log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishProfile = GetPublishProfile(variables);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
@@ -43,7 +48,7 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
-                DeployToAzure(deployment, targetSite, variables, publishProfile);
+                DeployToAzure(deployment, targetSite, publishProfile);
             }
             finally
             {
@@ -51,26 +56,25 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static void DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite, CalamariVariableDictionary variables,
-            SitePublishProfile publishProfile)
+        private void DeployToAzure(IExecutionContext deployment, AzureTargetSite targetSite, SitePublishProfile publishProfile)
         {
             var retry = GetRetryTracker();
             while (retry.Try())
             {
                 try
                 {
-                    Log.Verbose($"Using site {targetSite.Site}");
-                    Log.Verbose($"Using slot {targetSite.Slot}");
+                    log.Verbose($"Using site {targetSite.Site}");
+                    log.Verbose($"Using slot {targetSite.Slot}");
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
                             "contentPath",
-                            BuildPath(targetSite,  variables),
+                            BuildPath(targetSite, deployment.Variables),
                             DeploymentOptions(targetSite, publishProfile),
-                            DeploymentSyncOptions(variables)
+                            DeploymentSyncOptions(deployment.Variables)
                         );
 
-                    Log.Info(
+                    log.InfoFormat(
                         "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                         changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
 
@@ -82,8 +86,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry,
-                                ex.Message);
+                            log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry, ex.Message);
                         }
                         Thread.Sleep(retry.Sleep());
                     }
@@ -95,20 +98,20 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
+        private bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
         {
             switch (sslpolicyerrors)
             {
                 case SslPolicyErrors.None:
                     return true;
                 case SslPolicyErrors.RemoteCertificateNameMismatch:
-                    Log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
+                    log.Error("A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
                     break;
             }
             return false;
         }
 
-        private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
+        private SitePublishProfile GetPublishProfile(VariableDictionary variables)
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
@@ -122,18 +125,18 @@ namespace Calamari.Azure.Deployment.Conventions
                 case AzureAccountTypes.ServicePrincipalAccountType:
                     var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
                     if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
-                        Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
+                        log.InfoFormat("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
 
                     var activeDirectoryEndpoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
                     if (activeDirectoryEndpoint != DefaultVariables.ActiveDirectoryEndpoint)
-                        Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndpoint);
+                        log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndpoint);
                     
                     return ResourceManagerPublishProfileProvider.GetPublishProperties(subscriptionId, variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty), targetSite, variables.Get(SpecialVariables.Action.Azure.TenantId), variables.Get(SpecialVariables.Action.Azure.ClientId), variables.Get(SpecialVariables.Action.Azure.Password), resourceManagementEndpoint, activeDirectoryEndpoint);
 
                 case AzureAccountTypes.ManagementCertificateAccountType:
                     var serviceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
                     if (serviceManagementEndpoint != DefaultVariables.ServiceManagementEndpoint)
-                        Log.Info("Using override for service management endpoint - {0}", serviceManagementEndpoint);
+                        log.InfoFormat("Using override for service management endpoint - {0}", serviceManagementEndpoint);
 
                     return ServiceManagementPublishProfileProvider.GetPublishProperties(subscriptionId,
                         Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
@@ -153,7 +156,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 : site.Site;
         }
 
-        private static DeploymentBaseOptions DeploymentOptions(AzureTargetSite targetSite, SitePublishProfile publishProfile)
+        private DeploymentBaseOptions DeploymentOptions(AzureTargetSite targetSite, SitePublishProfile publishProfile)
         {
             var options = new DeploymentBaseOptions
             {
@@ -171,7 +174,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return options;
         }
 
-        private static DeploymentSyncOptions DeploymentSyncOptions(VariableDictionary variables)
+        private DeploymentSyncOptions DeploymentSyncOptions(VariableDictionary variables)
         {
             var syncOptions = new DeploymentSyncOptions
             {
@@ -218,7 +221,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        private static void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
+        private void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
             VariableDictionary variables)
         {
             // ReSharper disable once InvertIf
@@ -228,26 +231,26 @@ namespace Calamari.Azure.Deployment.Conventions
                 if (rules.TryGetValue("AppOffline", out var rule))
                     syncOptions.Rules.Add(rule);
                 else
-                    Log.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
+                    log.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
             }
         }
 
-        private static void LogDeploymentEvent(DeploymentTraceEventArgs args)
+        private void LogDeploymentEvent(DeploymentTraceEventArgs args)
         {
             switch (args.EventLevel)
             {
                 case TraceLevel.Verbose:
-                    Log.Verbose(args.Message);
+                    log.Verbose(args.Message);
                     break;
                 case TraceLevel.Info:
                     // The deploy-log is noisy; we'll log info as verbose
-                    Log.Verbose(args.Message);
+                    log.Verbose(args.Message);
                     break;
                 case TraceLevel.Warning:
-                    Log.Warn(args.Message);
+                    log.Warn(args.Message);
                     break;
                 case TraceLevel.Error:
-                    Log.Error(args.Message);
+                    log.Error(args.Message);
                     break;
             }
         }

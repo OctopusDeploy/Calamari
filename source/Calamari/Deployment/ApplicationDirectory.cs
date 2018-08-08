@@ -3,6 +3,8 @@ using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Octostache;
 
 namespace Calamari.Deployment

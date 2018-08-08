@@ -1,4 +1,6 @@
 using System;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Integration.Scripting
 {

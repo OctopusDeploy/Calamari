@@ -1,23 +1,25 @@
 ﻿using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Integration.Scripting
 {
-    public enum ScriptSyntax
-    {
-        [FileExtension("ps1")]
-        PowerShell,
-
-        [FileExtension("csx")]
-        CSharp,
-
-        [FileExtension("sh")]
-        Bash,
-
-        [FileExtension("fsx")]
-        FSharp
-    }
+//    public enum ScriptSyntax
+//    {
+//        [FileExtension("ps1")]
+//        PowerShell,
+//
+//        [FileExtension("csx")]
+//        CSharp,
+//
+//        [FileExtension("sh")]
+//        Bash,
+//
+//        [FileExtension("fsx")]
+//        FSharp
+//    }
 
     public static class ScriptTypeExtensions
     {

@@ -1,6 +1,8 @@
 ﻿using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Hooks;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 using Calamari.Tests.Commands;
 using Calamari.Tests.Hooks;
 using NUnit.Framework.Interfaces;

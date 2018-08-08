@@ -4,6 +4,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using System.IO;
+using Calamari.Shared;
 
 namespace Calamari.Tests.Commands
 {

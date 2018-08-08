@@ -1,5 +1,6 @@
 using System.IO;
 using Calamari.Deployment;
+using Calamari.Shared;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

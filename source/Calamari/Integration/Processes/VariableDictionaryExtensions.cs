@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text;
 using Calamari.Deployment;
+using Calamari.Shared;
 using Octostache;
 
 namespace Calamari.Integration.Processes

@@ -1,6 +1,9 @@
 ﻿using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Deployment.Conventions
 {

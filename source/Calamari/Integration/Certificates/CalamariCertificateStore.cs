@@ -6,6 +6,7 @@ using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
+using Calamari.Shared.Certificates;
 using Calamari.Util;
 
 namespace Calamari.Integration.Certificates

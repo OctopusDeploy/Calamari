@@ -18,6 +18,7 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
+using Calamari.Shared;
 
 namespace Calamari.Commands
 {
@@ -58,69 +59,127 @@ namespace Calamari.Commands
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
 
-            var featureClasses = new List<IFeature>();
-
-            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var generator = new JsonConfigurationVariableReplacer();
-            var substituter = new FileSubstituter(fileSystem);
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
-            var embeddedResources = new AssemblyEmbeddedResources();
-#if IIS_SUPPORT
-            var iis = new InternetInformationServer();
-            featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(), new IisWebSiteAfterPostDeployFeature() });
-#endif
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
+//            var featureClasses = new List<IFeature>();
+//
+//            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
+//            var generator = new JsonConfigurationVariableReplacer();
+//            var substituter = new FileSubstituter(fileSystem);
+//            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
+//            var transformFileLocator = new TransformFileLocator(fileSystem);
+//            var embeddedResources = new AssemblyEmbeddedResources();
+//
+//            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
-            var conventions = new List<IConvention>
-            {
-                new ContributeEnvironmentVariablesConvention(),
-                new ContributePreviousInstallationConvention(journal),
-                new ContributePreviousSuccessfulInstallationConvention(journal),
-                new LogVariablesConvention(),
-                new AlreadyInstalledConvention(journal),
-                new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
-                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new SubstituteInFilesConvention(fileSystem, substituter),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(generator, fileSystem),
-                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
-                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
+
+            var cb = new CommandBuilder(null);
+
+            cb.UsesDeploymentJournal = true;
+            
 #if IIS_SUPPORT
-                new LegacyIisWebSiteConvention(fileSystem, iis),
+            cb.Features.Add<IisWebSiteBeforeDeployFeature>();
+            cb.Features.Add<IisWebSiteAfterPostDeployFeature>();
+            var iis = new InternetInformationServer();
 #endif
-                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptCapability, commandLineRunner, embeddedResources),
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner),
-                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptCapability, commandLineRunner, embeddedResources)
+           
+            
+            
+            
+            cb.AddContributeEnvironmentVariables()
+                .AddConvention(new ContributePreviousInstallationConvention(journal))
+                .AddConvention(new ContributePreviousSuccessfulInstallationConvention(journal))
+                .AddLogVariables()
+                .AddConvention(new AlreadyInstalledConvention(journal))
+                .AddExtractPackageToStagingDirectory()
+                .RunPreScripts()
+                .AddSubsituteInFiles()
+                .AddConfigurationTransform()
+                .AddConfigurationVariables()
+                .AddJsonVariables()
+                .AddConvention<CopyPackageToCustomInstallationDirectoryConvention>()
+                .RunDeployScripts();
+            
+#if IIS_SUPPORT
+                cb.AddConvention(new LegacyIisWebSiteConvention(fileSystem, iis))
+#endif
+
+            cb.RunPostScripts();
+
+            var ctx = new CalamariExecutionContext()
+            {
+                Variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword),
+                PackageFilePath = packageFile
             };
-
-            var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
-
+            
+            
             try
             {
-                conventionRunner.RunConventions();
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, true));
+                foreach (var v in cb.ConventionSteps)
+                {
+                    v.Invoke(ctx);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, false));
-                throw;
+                    
             }
+
+         /*
+          *public class CommandExecution
+    {
+        private readonly Container container;
+
+        public CommandExecution(Container container)
+        {
+            this.container = container;
+        }
+
+
+        public void Run()
+        {
+            ICustomCommand blah = null;
+            var blder = new CommandBuilder(container);
+
+            
+            
+            var x = new CalamariExecutionContext();
+            blah.Run(blder);
+
+
+            foreach (var v in blder.ConventionSteps)
+            {
+                try
+                {
+                    v.Invoke(x);
+                }
+                catch (Exception ex)
+                {
+                    
+                }
+            }
+        }
+
+    }
+          * 
+          */
+            
+
+//            var deployment = new RunningDeployment(packageFile, variables);
+//            var conventionRunner = new ConventionProcessor(deployment, conventions);
+//
+//            try
+//            {
+//                conventionRunner.RunConventions();
+//                if (!deployment.SkipJournal) 
+//                    journal.AddJournalEntry(new JournalEntry(deployment, true));
+//            }
+//            catch (Exception)
+//            {
+//                if (!deployment.SkipJournal) 
+//                    journal.AddJournalEntry(new JournalEntry(deployment, false));
+//                throw;
+//            }
 
             return 0;
         }

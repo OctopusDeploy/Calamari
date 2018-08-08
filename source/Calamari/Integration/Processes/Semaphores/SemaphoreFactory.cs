@@ -1,3 +1,5 @@
+using Calamari.Shared;
+
 namespace Calamari.Integration.Processes.Semaphores
 {
     public static class SemaphoreFactory

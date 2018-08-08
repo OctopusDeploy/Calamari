@@ -17,6 +17,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Java.Deployment.Conventions;
+using Calamari.Shared;
 
 namespace Calamari.Commands.Java
 {

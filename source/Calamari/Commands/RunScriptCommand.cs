@@ -14,7 +14,10 @@ using System;
 using System.IO;
 using System.Linq;
 using Calamari.Modules;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 using Calamari.Util;
+using Script = Calamari.Integration.Scripting.Script;
 
 namespace Calamari.Commands
 {

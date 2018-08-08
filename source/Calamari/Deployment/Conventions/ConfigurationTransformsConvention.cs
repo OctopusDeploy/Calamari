@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class ConfigurationTransformsConvention : IInstallConvention
+    public class ConfigurationTransformsConvention : Calamari.Shared.Commands.IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IConfigurationTransformer configurationTransformer;
@@ -22,7 +24,7 @@ namespace Calamari.Deployment.Conventions
             this.log = log ?? new LogWrapper();
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
@@ -53,7 +55,7 @@ namespace Calamari.Deployment.Conventions
             deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformFilesApplied.Select(t => t.Item1), "|");
         }
 
-        private static List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)
+        private static List<XmlConfigTransformDefinition> GetAutomaticTransforms(IExecutionContext deployment)
         {
             var result = new List<XmlConfigTransformDefinition>();
             if (deployment.Variables.GetFlag(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
@@ -75,7 +77,7 @@ namespace Calamari.Deployment.Conventions
             return result;
         }
 
-        private static List<XmlConfigTransformDefinition> GetExplicitTransforms(RunningDeployment deployment)
+        private static List<XmlConfigTransformDefinition> GetExplicitTransforms(IExecutionContext deployment)
         {
             var transforms = deployment.Variables.Get(SpecialVariables.Package.AdditionalXmlConfigurationTransforms);
 
@@ -96,7 +98,7 @@ namespace Calamari.Deployment.Conventions
             IList<XmlConfigTransformDefinition> transformDefinitionsApplied,
             IList<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
-            RunningDeployment deployment)
+            IExecutionContext deployment)
         {
             foreach (var transformation in transformations)
             {
@@ -128,12 +130,12 @@ namespace Calamari.Deployment.Conventions
             ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied,
             ICollection<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
-            RunningDeployment deployment)
+            IExecutionContext deployment)
         {
             if (transformation == null)
                 return;
             
-            var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled, deployment)
+            var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled, deployment.CurrentDirectory)
                 .Distinct()
                 .ToArray();
 
@@ -157,7 +159,7 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        private static string[] GetSourceExtensions(RunningDeployment deployment, List<XmlConfigTransformDefinition> transformDefinitions)
+        private static string[] GetSourceExtensions(IExecutionContext deployment, List<XmlConfigTransformDefinition> transformDefinitions)
         {
             var extensions = new HashSet<string>();
 
@@ -201,7 +203,7 @@ namespace Calamari.Deployment.Conventions
             return Path.GetFileName(path) ?? string.Empty;
         }
 
-        private List<string> MatchingFiles(RunningDeployment deployment, string[] sourceExtensions)
+        private List<string> MatchingFiles(IExecutionContext deployment, string[] sourceExtensions)
         {
             var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions).ToList();
 

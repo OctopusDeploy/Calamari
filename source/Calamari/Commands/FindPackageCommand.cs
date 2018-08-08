@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Shared;
 using Octopus.Versioning;
 
 namespace Calamari.Commands

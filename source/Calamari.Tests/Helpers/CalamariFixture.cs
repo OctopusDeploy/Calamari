@@ -9,6 +9,7 @@ using Octostache;
 using Autofac;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 
 namespace Calamari.Tests.Helpers
 {

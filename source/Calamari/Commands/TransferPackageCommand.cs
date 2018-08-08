@@ -8,6 +8,7 @@ using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared;
 
 namespace Calamari.Commands
 {

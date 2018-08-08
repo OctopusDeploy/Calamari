@@ -1,9 +1,8 @@
-﻿using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.Certificates;
+﻿using Calamari.Deployment.Conventions;
 using Octostache;
 using System;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Shared;
 
 namespace Calamari.Azure.Deployment.Conventions
 {

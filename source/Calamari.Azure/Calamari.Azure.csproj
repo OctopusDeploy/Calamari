@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <Version>1.0.0.0</Version>
     <TargetFramework>net452</TargetFramework>
@@ -22,7 +21,6 @@
     <StartupObject />
     <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="Scripts\AzureContext.ps1" />
     <EmbeddedResource Include="Scripts\AzureServiceFabricContext.ps1" />
@@ -30,11 +28,9 @@
     <EmbeddedResource Include="Scripts\DeployAzureServiceFabricApplication.ps1" />
     <EmbeddedResource Include="Scripts\SwapAzureCloudServiceDeployment.ps1" />
   </ItemGroup>
-
-  <ItemGroup>    
+  <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Hyak.Common" Version="1.1.3" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
@@ -77,13 +73,11 @@
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
   </ItemGroup>
-
   <ItemGroup>
     <None Update="Calamari.Azure.exe.manifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
   <Target Name="GetToolFiles">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />

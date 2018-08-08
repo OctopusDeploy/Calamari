@@ -1,6 +1,6 @@
-﻿using Calamari.Integration.Scripting;
+﻿using Calamari.Shared.Scripting;
 
-namespace Calamari.Deployment
+namespace Calamari.Shared
 {
     public static class SpecialVariables
     {

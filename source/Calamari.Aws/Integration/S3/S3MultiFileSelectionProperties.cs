@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace Calamari.Aws.Integration.S3
+﻿namespace Calamari.Aws.Integration.S3
 {
     public class S3MultiFileSelectionProperties : S3FileSelectionProperties
     {

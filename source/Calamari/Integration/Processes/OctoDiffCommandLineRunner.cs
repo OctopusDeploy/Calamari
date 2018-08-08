@@ -6,6 +6,7 @@ using Calamari.Integration.ServiceMessages;
 using Calamari.Util;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Calamari.Shared;
 
 namespace Calamari.Integration.Processes
 {

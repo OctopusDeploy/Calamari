@@ -1,46 +1,49 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Azure.Commands;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class DeployAzureCloudServicePackageConvention : IInstallConvention
+    public class DeployAzureCloudServicePackageConvention : IInstallConvention, IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
+        private readonly ILog log;
 
         public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
-            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ILog log)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
+            this.log = log;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Install(IExecutionContext deployment)
         {
-            Log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
+            log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
-            Log.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzurePackageUri", deployment.Variables.Get(SpecialVariables.Action.Azure.UploadedPackageUri), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot), deployment.Variables);
+            log.SetOutputVariable("OctopusAzurePackageUri", deployment.Variables.Get(SpecialVariables.Action.Azure.UploadedPackageUri), deployment.Variables);
 
             var deploymentLabel = deployment.Variables.Get(SpecialVariables.Action.Azure.DeploymentLabel, defaultValue: deployment.Variables.Get(SpecialVariables.Action.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number));
-            Log.SetOutputVariable("OctopusAzureDeploymentLabel", deploymentLabel, deployment.Variables);
+            log.SetOutputVariable("OctopusAzureDeploymentLabel", deploymentLabel, deployment.Variables);
 
-            Log.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureUseCurrentInstanceCount", deployment.Variables.Get(SpecialVariables.Action.Azure.UseCurrentInstanceCount), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureUseCurrentInstanceCount", deployment.Variables.Get(SpecialVariables.Action.Azure.UseCurrentInstanceCount), deployment.Variables);
 
             // The script name 'DeployToAzure.ps1' is used for backwards-compatibility
             var scriptFile = Path.Combine(deployment.CurrentDirectory, "DeployToAzure.ps1");

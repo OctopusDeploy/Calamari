@@ -4,14 +4,15 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Deployment;
 using Calamari.Hooks;
-using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Shared;
+using Calamari.Shared.Certificates;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
 using Octostache;
 
 namespace Calamari.Azure.Integration
@@ -21,25 +22,23 @@ namespace Calamari.Azure.Integration
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
-        private readonly CalamariVariableDictionary variables;
+        private readonly ILog log;
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
         public const string DefaultAzureEnvironment = "AzureCloud";
 
-        public AzurePowerShellContext(CalamariVariableDictionary variables)
+        public AzurePowerShellContext(ICalamariFileSystem fileSystem, ICertificateStore certificateStore, ICalamariEmbeddedResources embeddedResources, ILog log)
         {
-            this.fileSystem = new WindowsPhysicalFileSystem();
-            this.certificateStore = new CalamariCertificateStore();
-            this.embeddedResources = new AssemblyEmbeddedResources();
-            this.variables = variables;
+            this.fileSystem = fileSystem;
+            this.certificateStore = certificateStore;
+            this.embeddedResources = embeddedResources;
+            this.log = log;
         }
 
-        public bool Enabled => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
-                               string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
+        
 
-        public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
@@ -47,13 +46,6 @@ namespace Calamari.Azure.Integration
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars)
         {
-            // Only run this hook if we have an azure account
-            if (!Enabled)
-            {
-                throw new InvalidOperationException(
-                    "This script wrapper hook is not enabled, and should not have been run");
-            }
-
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
@@ -63,7 +55,7 @@ namespace Calamari.Azure.Integration
             var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
             if (azureEnvironment != DefaultAzureEnvironment)
             {
-                Log.Info("Using Azure Environment override - {0}", azureEnvironment);
+                log.Info("Using Azure Environment override - {0}", azureEnvironment);
             }
             SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
 
@@ -126,6 +118,17 @@ namespace Calamari.Azure.Integration
             var bytes = new byte[PasswordSizeBytes];
             random.GetBytes(bytes);
             return Convert.ToBase64String(bytes);
+        }
+
+        bool Enabled(VariableDictionary variables)
+        {
+            return variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
+                string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint))
+        }
+
+        public void ExecuteScript(IScriptExecutionContext context, Script script, Action<Script> next)
+        {
+            throw new NotImplementedException();
         }
     }
 }

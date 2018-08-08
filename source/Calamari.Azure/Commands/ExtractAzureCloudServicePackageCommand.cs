@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Calamari.Azure.Deployment.Conventions;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 
 namespace Calamari.Azure.Commands
 {

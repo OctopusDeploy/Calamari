@@ -10,6 +10,7 @@ using System.Xml;
 using Calamari.Exceptions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
+using Calamari.Shared.FileSystem;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;

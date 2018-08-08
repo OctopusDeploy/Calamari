@@ -6,6 +6,8 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Octopus.Versioning;
 
 namespace Calamari.Java.Deployment.Conventions

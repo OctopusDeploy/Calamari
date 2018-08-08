@@ -1,5 +1,7 @@
 ﻿using System;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Deployment
 {

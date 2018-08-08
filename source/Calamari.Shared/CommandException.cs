@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.Commands.Support
+namespace Calamari.Shared
 {
     public class CommandException : Exception
     {

@@ -2,6 +2,8 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -18,7 +20,7 @@ namespace Calamari.Deployment.Conventions
             SubDirectory = subDirectory;
         }
 
-        protected override string GetTargetPath(RunningDeployment deployment)
+        protected override string GetTargetPath(IExecutionContext deployment)
         {
             var targetPath = String.IsNullOrEmpty(SubDirectory) ?
                 Environment.CurrentDirectory :

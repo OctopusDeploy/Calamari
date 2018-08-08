@@ -4,6 +4,7 @@ using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
+using Calamari.Shared;
 using Octopus.Versioning;
 
 namespace Calamari.Commands

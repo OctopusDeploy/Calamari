@@ -4,6 +4,7 @@ using System.Xml;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;
 #else

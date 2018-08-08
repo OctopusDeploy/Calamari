@@ -5,14 +5,12 @@ using System.IO;
 using System.Linq;
 using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Shared;
 
 namespace Calamari.Azure.Commands
 {

@@ -5,6 +5,8 @@ using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Calamari.Util;
 using Octostache;
 

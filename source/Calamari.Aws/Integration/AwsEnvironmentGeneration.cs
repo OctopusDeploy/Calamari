@@ -8,11 +8,7 @@ using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Exceptions;
-using Calamari.Hooks;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Newtonsoft.Json;
-using Octopus.CoreUtilities.Extensions;
+using Calamari.Shared.Scripting;
 using Octostache;
 
 namespace Calamari.Aws.Integration
@@ -56,7 +52,7 @@ namespace Calamari.Aws.Integration
             }
         }
 
-        public AwsEnvironmentGeneration(CalamariVariableDictionary variables)
+        public AwsEnvironmentGeneration(VariableDictionary variables)
         {
             account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
@@ -206,15 +202,13 @@ namespace Calamari.Aws.Integration
         {
             if ("True".Equals(assumeRole, StringComparison.InvariantCultureIgnoreCase))
             {
+
                 var credentials = new AmazonSecurityTokenServiceClient(AwsCredentials)
-                    // Client becomes the response of the API call
-                    .Map(client => client.AssumeRole(new AssumeRoleRequest
+                    .AssumeRole(new AssumeRoleRequest
                     {
                         RoleArn = assumeRoleArn,
                         RoleSessionName = assumeRoleSession
-                    }))
-                    // Get the credentials details from the response
-                    .Map(response => response.Credentials);
+                    }).Credentials;
 
                 envVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
                 envVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;
@@ -222,20 +216,36 @@ namespace Calamari.Aws.Integration
             }
         }
 
-        public bool Enabled { get; } = true;
-        public IScriptWrapper NextWrapper { get; set; }
+//        public bool Enabled { get; } = true;
+//        public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
-            ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+//        public CommandResult ExecuteScript(Script script,
+//            ScriptSyntax scriptSyntax,
+//            CalamariVariableDictionary variables,
+//            ICommandLineRunner commandLineRunner,
+//            StringDictionary environmentVars)
+//        {
+//            return NextWrapper.ExecuteScript(
+//                script, scriptSyntax, 
+//                variables, 
+//                commandLineRunner,
+//                environmentVars.MergeDictionaries(EnvironmentVars));
+//        }
+
+        bool IScriptWrapper.Enabled(VariableDictionary variables)
         {
-            return NextWrapper.ExecuteScript(
-                script, scriptSyntax, 
-                variables, 
-                commandLineRunner,
-                environmentVars.MergeDictionaries(EnvironmentVars));
+            //This doesnt feel right...
+            return true;
+        }
+
+        public void ExecuteScript(IScriptExecutionContext context, Script script, Action<Script> next)
+        {
+            foreach (string environmentVar in EnvironmentVars)
+            {
+                context.EnvironmentVariables.Add(environmentVar, EnvironmentVars[environmentVar]);        
+            }
+
+            next(script);
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure.Integration.Security;
 using Calamari.Azure.Util;
-using Calamari.Commands.Support;
+using Calamari.Shared;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Models;
 using Microsoft.Azure.Management.WebSites;

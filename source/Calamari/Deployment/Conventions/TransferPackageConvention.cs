@@ -1,5 +1,7 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions

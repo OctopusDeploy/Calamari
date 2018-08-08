@@ -1,4 +1,4 @@
-﻿namespace Calamari.Integration.Retry
+﻿namespace Calamari.Shared.Retry
 {
     public abstract class RetryInterval
     {

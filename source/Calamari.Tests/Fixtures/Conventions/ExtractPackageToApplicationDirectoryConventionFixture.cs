@@ -4,6 +4,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+using Calamari.Shared.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NSubstitute;

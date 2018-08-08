@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Calamari.Azure.Deployment.Conventions;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
@@ -10,12 +8,39 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
+using Calamari.Shared;
 
 namespace Calamari.Azure.Commands
 {
+
+    public class DeployAzureWebCommand2 : ICustomCommand
+    {
+        public IOptionsBuilder Options(IOptionsBuilder optionsBuilder)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public ICommandBuilder Run(ICommandBuilder commandBuilder)
+        {
+           return commandBuilder
+               .AddContributeEnvironmentVariables()
+               .AddLogVariables()
+               .AddExtractPackageToStagingDirectory()
+               .AddConfiguredScriptConvention(DeploymentStages.PreDeploy)
+               .AddPackagedScriptConvention(DeploymentStages.PreDeploy)
+               .AddSubsituteInFiles()
+               .AddConfigurationTransform()
+               .AddConfigurationVariables()
+               .AddJsonVariables()
+               .AddConfiguredScriptConvention(DeploymentStages.Deploy)
+               .AddPackagedScriptConvention(DeploymentStages.Deploy)
+               .AddConvention<AzureWebAppConvention>()
+               .AddPackagedScriptConvention(DeploymentStages.PostDeploy)
+               .AddConfiguredScriptConvention(DeploymentStages.PostDeploy)
+        }
+    }
+    
     [Command("deploy-azure-web", Description = "Extracts and installs a deployment package to an Azure Web Application")]
     public class DeployAzureWebCommand : Command
     {

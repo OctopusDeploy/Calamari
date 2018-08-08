@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Integration.Retry
+namespace Calamari.Shared.Retry
 {
     /// <summary>
     /// Implements a linear backoff interval as retryCount * retryInterval

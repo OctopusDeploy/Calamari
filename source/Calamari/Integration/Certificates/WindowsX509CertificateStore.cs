@@ -10,6 +10,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Integration.Certificates.WindowsNative;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;

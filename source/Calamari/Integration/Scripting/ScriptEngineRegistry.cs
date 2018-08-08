@@ -3,10 +3,18 @@ using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.FSharp;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Integration.Scripting
 {
-    public class ScriptEngineRegistry
+
+    public interface IScriptEngineRegistry
+    {
+        IDictionary<ScriptSyntax, IScriptEngine> ScriptEngines { get; }
+    }
+
+    public class ScriptEngineRegistry: IScriptEngineRegistry
     {
         private readonly Dictionary<ScriptSyntax, IScriptEngine> scriptEngines = new Dictionary<ScriptSyntax, IScriptEngine>
         {

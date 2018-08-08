@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
+using Calamari.Shared;
 using NUnit.Framework;
 using Octostache;
 

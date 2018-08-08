@@ -3,6 +3,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 using NSubstitute;
 using NUnit.Framework;
 

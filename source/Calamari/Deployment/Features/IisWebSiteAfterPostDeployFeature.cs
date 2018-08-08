@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Calamari.Commands.Support;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
+using Calamari.Shared;
 using Octostache;
 
 namespace Calamari.Deployment.Features

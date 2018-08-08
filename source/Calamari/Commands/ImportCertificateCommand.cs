@@ -8,6 +8,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 using Octostache;
 
 

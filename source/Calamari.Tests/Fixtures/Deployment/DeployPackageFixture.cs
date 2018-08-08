@@ -3,6 +3,8 @@ using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Calamari.Tests.Helpers;
 using Octostache;
 

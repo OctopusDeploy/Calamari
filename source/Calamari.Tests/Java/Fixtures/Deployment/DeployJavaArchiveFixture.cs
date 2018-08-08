@@ -4,12 +4,12 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using Calamari.Commands.Java;
-using Calamari.Deployment;
-using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Shared;
 using Calamari.Tests.Helpers;
+using Calamari.Shared.FileSystem;
 using NUnit.Framework;
 using Octostache;
 

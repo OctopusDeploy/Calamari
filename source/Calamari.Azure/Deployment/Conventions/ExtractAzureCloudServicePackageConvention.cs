@@ -4,9 +4,9 @@ using System.IO.Packaging;
 using System.Linq;
 using Calamari.Azure.Integration.CloudServicePackage;
 using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions

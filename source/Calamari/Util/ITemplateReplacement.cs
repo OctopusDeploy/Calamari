@@ -1,4 +1,5 @@
 ﻿using Calamari.Integration.FileSystem;
+using Calamari.Shared.FileSystem;
 using Octostache;
 
 namespace Calamari.Util

@@ -1,5 +1,6 @@
 ﻿using Calamari.Deployment;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Conventions

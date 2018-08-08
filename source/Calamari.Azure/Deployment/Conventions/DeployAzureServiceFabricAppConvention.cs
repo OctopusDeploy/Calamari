@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Reflection;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using System.IO;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions

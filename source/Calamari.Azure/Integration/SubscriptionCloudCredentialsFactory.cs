@@ -1,4 +1,4 @@
-﻿using Calamari.Integration.Certificates;
+﻿using Calamari.Shared.Certificates;
 using Microsoft.WindowsAzure;
 
 namespace Calamari.Azure.Integration

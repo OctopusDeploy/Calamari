@@ -1,11 +1,10 @@
-﻿using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
-using Calamari.Deployment.Conventions;
-using Calamari.Deployment;
+﻿using Calamari.Azure.Commands;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class SubstituteVariablesInAzureServiceFabricPackageConvention : IInstallConvention
+    public class SubstituteVariablesInAzureServiceFabricPackageConvention : IConvention
     {
         private readonly ICalamariFileSystem fileSystem;
         readonly IFileSubstituter substituter;
@@ -16,7 +15,7 @@ namespace Calamari.Azure.Deployment.Conventions
             this.substituter = substituter;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             var configurationFiles = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config", "*.xml");
             foreach (var configurationFile in configurationFiles)

@@ -2,10 +2,13 @@
 using System.Linq;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class ConfigurationVariablesConvention : IInstallConvention
+    public class ConfigurationVariablesConvention : Calamari.Shared.Commands.IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IConfigurationVariablesReplacer replacer;
@@ -16,7 +19,7 @@ namespace Calamari.Deployment.Conventions
             this.replacer = replacer;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings) == false)
             {
@@ -42,7 +45,7 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        private string[] MatchingFiles(RunningDeployment deployment)
+        private string[] MatchingFiles(IExecutionContext deployment)
         {
             var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
 

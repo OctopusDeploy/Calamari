@@ -1,8 +1,10 @@
 ﻿using Calamari.Deployment.Journal;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class ContributePreviousInstallationConvention : IInstallConvention
+    public class ContributePreviousInstallationConvention : Calamari.Shared.Commands.IConvention
     {
         readonly IDeploymentJournal journal;
 
@@ -11,7 +13,7 @@ namespace Calamari.Deployment.Conventions
             this.journal = journal;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             var policySet = deployment.Variables.Get(SpecialVariables.RetentionPolicySet);
             var previous = journal.GetLatestInstallation(policySet);
@@ -36,5 +38,6 @@ namespace Calamari.Deployment.Conventions
             deployment.Variables.Set(SpecialVariables.Tentacle.PreviousInstallation.PackageFilePath, previousExtractedFrom);
             deployment.Variables.Set(SpecialVariables.Tentacle.PreviousInstallation.PackageVersion, previousVersion);
         }
+
     }
 }

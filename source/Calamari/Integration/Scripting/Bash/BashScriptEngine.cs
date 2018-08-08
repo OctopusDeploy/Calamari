@@ -2,6 +2,8 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Integration.Scripting.Bash
 {

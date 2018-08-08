@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using Calamari.Azure.Integration;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions

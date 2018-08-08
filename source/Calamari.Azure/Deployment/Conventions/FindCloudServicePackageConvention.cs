@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Linq;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Azure.Commands;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class FindCloudServicePackageConvention : IInstallConvention
+    public class FindCloudServicePackageConvention : IInstallConvention, IConvention
     {
         readonly ICalamariFileSystem fileSystem;
 

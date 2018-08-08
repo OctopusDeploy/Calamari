@@ -1,7 +1,12 @@
-﻿using Calamari.Hooks;
+﻿using System;
+using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using System.Collections.Specialized;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
+using Octostache;
+using Script = Calamari.Shared.Scripting.Script;
 
 namespace Calamari.Tests.Hooks
 {
@@ -10,21 +15,27 @@ namespace Calamari.Tests.Hooks
     /// </summary>
     public class ScriptHookMock : IScriptWrapper
     {
+        private readonly bool enabled;
+
         /// <summary>
         /// This is how we know if this wrapper was called or not
         /// </summary>
         public bool WasCalled { get; private set; } = false;
-        public bool Enabled { get; } = true;
-        public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
-            ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+        public ScriptHookMock(bool enabled = true)
+        {
+            this.enabled = enabled;
+        }
+        
+        public bool Enabled(VariableDictionary variables)
+        {
+            return this.enabled;
+        }
+
+        public void ExecuteScript(IScriptExecutionContext context, Script script, Action<Script> next)
         {
             WasCalled = true;
-            return NextWrapper.ExecuteScript(script, scriptSyntax, variables, commandLineRunner, environmentVars);
+            next(script);
         }
     }
 }

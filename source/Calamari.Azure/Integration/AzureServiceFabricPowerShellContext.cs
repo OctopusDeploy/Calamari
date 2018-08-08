@@ -1,16 +1,14 @@
 ﻿using Calamari.Azure.Util;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
 using Calamari.Hooks;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Octostache;
 using System;
 using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
+using Calamari.Shared;
 
 namespace Calamari.Azure.Integration
 {

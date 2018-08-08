@@ -3,7 +3,8 @@ using System.Net;
 using System.Threading;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
-using Calamari.Integration.Retry;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Retry;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet

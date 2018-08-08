@@ -1,6 +1,7 @@
 ﻿using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;

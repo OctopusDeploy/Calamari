@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
+using Calamari.Shared;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using NUnit.Framework;

@@ -1,4 +1,5 @@
 ﻿using Calamari.Integration.FileSystem;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Integration.Packages
 {

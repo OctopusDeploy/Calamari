@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
 
-namespace Calamari.Integration.EmbeddedResources
+namespace Calamari.Shared
 {
     public interface ICalamariEmbeddedResources
     {

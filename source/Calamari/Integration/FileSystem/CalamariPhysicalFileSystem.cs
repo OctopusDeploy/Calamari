@@ -6,9 +6,11 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using Calamari.Deployment;
-using Calamari.Integration.Retry;
 using Calamari.Util;
 using System.Runtime.InteropServices;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Retry;
 
 namespace Calamari.Integration.FileSystem
 {

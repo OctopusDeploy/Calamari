@@ -3,6 +3,8 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
 

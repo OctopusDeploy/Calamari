@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Shared;
 
 namespace Calamari.Integration.Processes.Semaphores
 {

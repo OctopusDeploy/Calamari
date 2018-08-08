@@ -5,6 +5,7 @@ using Calamari.Deployment.Journal;
 using Calamari.Deployment.Retention;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Time;
+using Calamari.Shared.FileSystem;
 using NSubstitute;
 using NUnit.Framework;
 

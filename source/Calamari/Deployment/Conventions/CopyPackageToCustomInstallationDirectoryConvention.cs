@@ -3,10 +3,13 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class CopyPackageToCustomInstallationDirectoryConvention : IInstallConvention
+    public class CopyPackageToCustomInstallationDirectoryConvention : Calamari.Shared.Commands.IConvention
     {
         readonly ICalamariFileSystem fileSystem;
 
@@ -15,7 +18,7 @@ namespace Calamari.Deployment.Conventions
             this.fileSystem = fileSystem;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             string errorString;
             var customInstallationDirectory = deployment.Variables.Get(SpecialVariables.Package.CustomInstallationDirectory, out errorString);

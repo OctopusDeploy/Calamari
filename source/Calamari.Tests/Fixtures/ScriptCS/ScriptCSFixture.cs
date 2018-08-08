@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;

@@ -3,6 +3,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Integration.Processes.Semaphores
 {

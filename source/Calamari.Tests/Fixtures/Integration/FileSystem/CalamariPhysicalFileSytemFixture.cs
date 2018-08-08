@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;

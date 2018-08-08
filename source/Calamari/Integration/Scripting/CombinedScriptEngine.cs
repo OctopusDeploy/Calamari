@@ -1,15 +1,19 @@
-﻿using Calamari.Commands.Support;
+﻿using System;
+using Calamari.Commands.Support;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Integration.Scripting
 {
     public class CombinedScriptEngine : IScriptEngine
     {
+        private readonly IScriptEngineRegistry scriptEngineRegistry;
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
     
         /// <summary>
@@ -19,15 +23,21 @@ namespace Calamari.Integration.Scripting
         {
             this.scriptWrapperHooks = Enumerable.Empty<IScriptWrapper>();
         }
+        
+        public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks) : this(ScriptEngineRegistry.Instance, scriptWrapperHooks)
+        {
+        }
 
         /// <summary>
         /// The Autofac enriched constructor. Autofac will pick this constructor
         /// because it is the constructor with the most parameters that can be
         /// fulfilled by injection.
         /// </summary>
+        /// <param name="scriptEngineRegistry"></param>
         /// <param name="scriptWrapperHooks">The collecton of IScriptWrapper objects available in autofac</param>
-        public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
+        public CombinedScriptEngine(IScriptEngineRegistry scriptEngineRegistry, IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
+            this.scriptEngineRegistry = scriptEngineRegistry;
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
 
@@ -44,43 +54,35 @@ namespace Calamari.Integration.Scripting
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars = null)
         {
-            var syntax = ValidateScriptType(script);
-            return BuildWrapperChain(syntax)
-                .ExecuteScript(script, syntax, variables, commandLineRunner, environmentVars);
-        }
-            
+            var ctx = new ScriptExecutionContext()
+            {
+                EnvironmentVariables = environmentVars,
+                ScriptSyntax = ValidateScriptType(script),
+                Variables = variables
+            };
 
-
-        /// <summary>
-        /// Script wrappers form a chain, with one wrapper calling the next, much like
-        /// a linked list. The last wrapper to be called is the TerminalScriptWrapper,
-        /// which simply executes a ScriptEngine without any additional processing.
-        /// In this way TerminalScriptWrapper is what actually executes the script
-        /// that is to be run, with all other wrappers contributing to the script
-        /// context.
-        /// </summary>
-        /// <param name="scriptSyntax">The type of the script being run</param>
-        /// <returns>
-        /// The start of the wrapper chain. Because each IScriptWrapper is expected to call its NextWrapper,
-        /// calling ExecuteScript() on the start of the chain will result in every part of the chain being
-        /// executed, down to the final TerminalScriptWrapper.
-        /// </returns>
-        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax) =>
-            // get the type of script
+            CommandResult final = null;
             scriptWrapperHooks
-                .Where(hook => hook.Enabled)
-                .Aggregate(
-                // The last wrapper is always the TerminalScriptWrapper
-                new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptSyntax]),
-                (IScriptWrapper current, IScriptWrapper next) =>
-                {
-                    // the next wrapper is pointed to the current one
-                    next.NextWrapper = current;
-                    // the next wrapper is carried across to the next aggregate call
-                    return next;
-                });
-                 
-        
+                .Where(k => k.Enabled(variables))
+                .Aggregate((Action<IScriptExecutionContext, Shared.Scripting.Script>) ((a, vv) =>
+                    {
+                        var engine = scriptEngineRegistry.ScriptEngines[ctx.ScriptSyntax];
+                        final = engine.Execute(new Script(vv.File, vv.Parameters),
+                            (CalamariVariableDictionary) ctx.Variables,
+                            commandLineRunner, environmentVars);
+                    }),
+                    (inner, wrapper) =>
+                    {
+                        return ((ctx1, script1) => wrapper.ExecuteScript(ctx, script1, (k) => inner(ctx, k)));
+                    })(ctx, new Shared.Scripting.Script(script.File, script.Parameters));
+
+            return final;
+        }
+
+
+
+
+
         private ScriptSyntax ValidateScriptType(Script script)
         {
             var type = ScriptTypeExtensions.FileNameToScriptType(script.File);

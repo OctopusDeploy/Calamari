@@ -2,6 +2,7 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
+using Calamari.Shared;
 
 namespace Calamari.Integration.Processes.Semaphores
 {

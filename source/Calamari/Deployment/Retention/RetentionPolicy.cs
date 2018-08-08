@@ -5,6 +5,7 @@ using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Time;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Deployment.Retention
 {

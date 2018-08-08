@@ -11,6 +11,8 @@ using Calamari.Deployment;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.Core;

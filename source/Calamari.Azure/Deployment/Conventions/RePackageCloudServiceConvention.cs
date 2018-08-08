@@ -3,33 +3,36 @@ using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 using System.Security.Cryptography;
+using Calamari.Azure.Commands;
 using Calamari.Azure.Integration.CloudServicePackage;
 using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes.Semaphores;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class RePackageCloudServiceConvention : IInstallConvention
+    public class RePackageCloudServiceConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         private readonly ISemaphoreFactory semaphoreFactory;
+        private readonly ILog log;
 
-        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
+        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, ILog log)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
+            this.log = log;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, false))
                 return;
 
-            Log.Verbose("Re-packaging cspkg.");
+            log.Verbose("Re-packaging cspkg.");
             var workingDirectory = deployment.CurrentDirectory;
             var originalPackagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             var newPackagePath = Path.Combine(Path.GetDirectoryName(originalPackagePath), Path.GetFileNameWithoutExtension(originalPackagePath) + "_repacked.cspkg");
@@ -61,7 +64,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex.PrettyPrint());
+                    log.Error(ex.PrettyPrint());
                     throw new Exception("An exception occured re-packaging the cspkg");
                 }
             }

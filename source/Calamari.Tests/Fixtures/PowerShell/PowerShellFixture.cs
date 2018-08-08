@@ -8,6 +8,8 @@ using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using NUnit.Framework;

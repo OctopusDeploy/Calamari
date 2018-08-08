@@ -5,6 +5,8 @@ using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Integration.Packages.Java
 {

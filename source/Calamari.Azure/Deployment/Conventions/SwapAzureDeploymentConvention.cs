@@ -1,40 +1,44 @@
 ﻿using System.IO;
 using System.Reflection;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Azure.Commands;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class SwapAzureDeploymentConvention : IInstallConvention
+    public class SwapAzureDeploymentConvention : IInstallConvention, IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptEngine scriptEngine;
+        private readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
 
         public SwapAzureDeploymentConvention(ICalamariFileSystem fileSystem,
             ICalamariEmbeddedResources embeddedResources,
             IScriptEngine scriptEngine,
+            ILog log,
             ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
             this.scriptEngine = scriptEngine;
+            this.log = log;
             this.commandLineRunner = commandLineRunner;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Install(IExecutionContext deployment)
         {
-            Log.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureDeploymentLabel", deployment.Variables.Get(SpecialVariables.Action.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureDeploymentLabel", deployment.Variables.Get(SpecialVariables.Action.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number), deployment.Variables);
+            log.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()), deployment.Variables);
 
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
             var scriptFile = Path.Combine(tempDirectory, "SwapAzureCloudServiceDeployment.ps1");

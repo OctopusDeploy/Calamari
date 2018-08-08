@@ -5,6 +5,7 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using System.Reflection;
+using Calamari.Shared;
 
 namespace Calamari.Integration.Scripting.FSharp
 {

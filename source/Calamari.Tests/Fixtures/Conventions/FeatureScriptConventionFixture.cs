@@ -7,8 +7,12 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
 using NSubstitute;
 using NUnit.Framework;
+using Script = Calamari.Integration.Scripting.Script;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {

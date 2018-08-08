@@ -1,8 +1,10 @@
 ﻿using Calamari.Deployment.Journal;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class AlreadyInstalledConvention : IInstallConvention
+    public class AlreadyInstalledConvention : Calamari.Shared.Commands.IConvention
     {
         readonly IDeploymentJournal journal;
 
@@ -11,7 +13,7 @@ namespace Calamari.Deployment.Conventions
             this.journal = journal;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             if (!deployment.Variables.GetFlag(SpecialVariables.Package.SkipIfAlreadyInstalled))
             {

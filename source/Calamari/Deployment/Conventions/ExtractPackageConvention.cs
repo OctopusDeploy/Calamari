@@ -1,11 +1,14 @@
 ﻿using System;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions
 {
-    public abstract class ExtractPackageConvention : IInstallConvention
+    public abstract class ExtractPackageConvention : Calamari.Shared.Commands.IConvention
     {
         readonly IPackageExtractor extractor;
         protected readonly ICalamariFileSystem fileSystem;
@@ -16,12 +19,20 @@ namespace Calamari.Deployment.Conventions
             this.fileSystem = fileSystem;
         }
 
-        public void Install(RunningDeployment deployment)
+       
+        void LogAccessDenied()
+        {
+            Log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
+        }
+        
+        protected abstract string GetTargetPath(IExecutionContext deployment);
+
+        public void Run(IExecutionContext deployment)
         {
             if (string.IsNullOrWhiteSpace(deployment.PackageFilePath))
             {
-               Log.Verbose("No package path defined. Skipping package extraction.");
-               return;
+                Log.Verbose("No package path defined. Skipping package extraction.");
+                return;
             }
 
             try
@@ -54,13 +65,5 @@ namespace Calamari.Deployment.Conventions
                 throw;
             }
         }
-
-        void LogAccessDenied()
-        {
-            Log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
-        }
-
-        protected abstract string GetTargetPath(RunningDeployment deployment);
-
     }
 }

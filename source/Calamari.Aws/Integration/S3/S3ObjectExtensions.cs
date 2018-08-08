@@ -1,13 +1,10 @@
 
-﻿using System.Collections.Generic;
+ using System.Collections.Generic;
 using System.Linq;
 using Amazon.S3.Model;
 ﻿using System;
 using System.Security.Cryptography;
-using Calamari.Integration.FileSystem;
-using Calamari.Util;
-using Octopus.CoreUtilities;
-using Octopus.CoreUtilities.Extensions;
+ using Calamari.Shared.FileSystem;
 
 namespace Calamari.Aws.Integration.S3
 {

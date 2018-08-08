@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Integration.Packages;
+using Calamari.Shared.FileSystem;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.FileSystem

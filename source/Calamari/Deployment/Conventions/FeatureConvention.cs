@@ -9,19 +9,29 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using System.Reflection;
 using Calamari.Deployment.Features;
+using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
+using Script = Calamari.Integration.Scripting.Script;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class FeatureConvention : FeatureConventionBase, IInstallConvention
+    public class FeatureConvention : FeatureConventionBase, IInstallConvention, Shared.Commands.IConvention
     {
-        public FeatureConvention(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) 
-            : base(deploymentStage, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+        public FeatureConvention(string deploymentStage, Calamari.Shared.Commands.IFeature[] featureClasses, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICalamariEmbeddedResources embeddedResources) 
+            : base(deploymentStage, featureClasses, fileSystem, scriptEngine,  embeddedResources)
         {
         }
 
         public void Install(RunningDeployment deployment)
         {
             Run(deployment);
+        }
+
+        public void Run(IExecutionContext context)
+        {
+            InnerRun(context);
         }
     }
 
@@ -48,23 +58,21 @@ namespace Calamari.Deployment.Conventions
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptEngine scriptEngine;
-        readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
-        readonly ICollection<IFeature> featureClasses;
+        readonly Calamari.Shared.Commands.IFeature[] featureClasses;
         static readonly Assembly Assembly = typeof(FeatureConventionBase).Assembly; 
 
-        protected FeatureConventionBase(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, 
-            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
+        protected FeatureConventionBase(string deploymentStage, Calamari.Shared.Commands.IFeature[] featureClasses, ICalamariFileSystem fileSystem, 
+            IScriptEngine scriptEngine, ICalamariEmbeddedResources embeddedResources)
         {
             this.deploymentStage = deploymentStage;
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
             this.scriptEngine = scriptEngine;
-            this.commandLineRunner = commandLineRunner;
-            this.featureClasses = featureClasses?.ToList();
+            this.featureClasses = featureClasses;
         }
 
-        protected void Run(RunningDeployment deployment)
+        protected void InnerRun(IExecutionContext deployment)
         {
             var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
@@ -79,10 +87,27 @@ namespace Calamari.Deployment.Conventions
                 ExecuteFeatureClasses(deployment, feature);
                 ExecuteFeatureScripts(deployment, feature, embeddedResourceNames);
             }
+        } 
+        
+//        protected void Run(RunningDeployment deployment)
+//        {
+//            var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+//
+//            if (!features.Any())
+//                return;
+//
+//            var embeddedResourceNames = new HashSet<string>(embeddedResources.GetEmbeddedResourceNames(Assembly));
+//
+//            foreach (var feature in features)
+//            {
+//                // Features can be implemented as either classes or scripts (or both)
+//                ExecuteFeatureClasses(deployment, feature);
+//                ExecuteFeatureScripts(deployment, feature, embeddedResourceNames);
+//            }
+//
+//        }
 
-        }
-
-        void ExecuteFeatureClasses(RunningDeployment deployment, string feature)
+        void ExecuteFeatureClasses(IExecutionContext deployment, string feature)
         {
             var compiledFeature = featureClasses?.FirstOrDefault(f =>
                 f.Name.Equals(feature, StringComparison.OrdinalIgnoreCase) &&
@@ -95,7 +120,7 @@ namespace Calamari.Deployment.Conventions
             compiledFeature.Execute(deployment);
         }
 
-        void ExecuteFeatureScripts(RunningDeployment deployment, string feature, HashSet<string> embeddedResourceNames)
+        void ExecuteFeatureScripts(IExecutionContext deployment, string feature, HashSet<string> embeddedResourceNames)
         {
             foreach (var featureScript in GetScriptNames(feature))
             {
@@ -123,7 +148,7 @@ namespace Calamari.Deployment.Conventions
 
                 // Execute the script
                 Log.VerboseFormat("Executing '{0}'", scriptFile);
-                var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
+                var result = scriptEngine.Execute(new Calamari.Shared.Scripting.Script(scriptFile));
 
                 // And then delete it
                 Log.VerboseFormat("Deleting '{0}'", scriptFile);

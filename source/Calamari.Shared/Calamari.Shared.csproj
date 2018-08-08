@@ -23,6 +23,13 @@
     <StartupObject />
     <RootNamespace>Calamari.Shared</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Octostache" Version="2.1.15" />
+  </ItemGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+    <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT;</DefineConstants>
+    <PlatformTarget>anycpu</PlatformTarget>
+  </PropertyGroup>
   <!--
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
     <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>

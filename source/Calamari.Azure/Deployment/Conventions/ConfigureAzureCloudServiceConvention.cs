@@ -3,30 +3,34 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Azure.Commands;
 using Calamari.Azure.Integration;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
+using Calamari.Shared;
+using Calamari.Shared.FileSystem;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class ConfigureAzureCloudServiceConvention : IInstallConvention
+    public class ConfigureAzureCloudServiceConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ISubscriptionCloudCredentialsFactory credentialsFactory;
         readonly IAzureCloudServiceConfigurationRetriever configurationRetriever;
+        private readonly ILog log;
 
-        public ConfigureAzureCloudServiceConvention(ICalamariFileSystem fileSystem, ISubscriptionCloudCredentialsFactory subscriptionCloudCredentialsFactory, IAzureCloudServiceConfigurationRetriever configurationRetriever)
+        public ConfigureAzureCloudServiceConvention(ICalamariFileSystem fileSystem,
+            ISubscriptionCloudCredentialsFactory subscriptionCloudCredentialsFactory,
+            IAzureCloudServiceConfigurationRetriever configurationRetriever,
+            ILog log)
         {
             this.fileSystem = fileSystem;
             this.credentialsFactory = subscriptionCloudCredentialsFactory;
             this.configurationRetriever = configurationRetriever;
+            this.log = log;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             // Validate we actually have a real path to the real config file since this value is potentially passed via variable or a previous convention
             var configurationFilePath = deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile);
@@ -44,9 +48,9 @@ namespace Calamari.Azure.Deployment.Conventions
             fileSystem.OverwriteFile(configurationFilePath, document.ToString());
         }
 
-        static void UpdateConfigurationSettings(XContainer configurationFile, VariableDictionary variables)
+        void UpdateConfigurationSettings(XContainer configurationFile, VariableDictionary variables)
         {
-            Log.Verbose("Updating configuration settings...");
+            log.Verbose("Updating configuration settings...");
             var foundSettings = false;
 
             WithConfigurationSettings(configurationFile, (roleName, settingName, settingValueAttribute) =>
@@ -59,14 +63,14 @@ namespace Calamari.Azure.Deployment.Conventions
                 if (setting != null)
                 {
                     foundSettings = true;
-                    Log.Info("Updating setting for role {0}: {1} = {2}", roleName, settingName, setting);
+                    log.InfoFormat("Updating setting for role {0}: {1} = {2}", roleName, settingName, setting);
                     settingValueAttribute.Value = setting;
                 }
             });
 
             if (!foundSettings)
             {
-                Log.Info("No settings that match provided variables were found.");
+                log.Info("No settings that match provided variables were found.");
             }
         }
 
@@ -87,16 +91,16 @@ namespace Calamari.Azure.Deployment.Conventions
 
             if (remoteConfigurationFile == null)
             {
-                Log.Info("There is no current deployment of service '{0}' in slot '{1}', so existing instance counts will not be imported.", serviceName, slot);
+                log.InfoFormat("There is no current deployment of service '{0}' in slot '{1}', so existing instance counts will not be imported.", serviceName, slot);
                 return;
             }
 
             var rolesByCount = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            Log.Verbose("Local instance counts (from " + Path.GetFileName(configurationFileName) + "): ");
+            log.Verbose("Local instance counts (from " + Path.GetFileName(configurationFileName) + "): ");
             WithInstanceCounts(localConfigurationFile, (roleName, attribute) =>
             {
-                Log.Verbose(" - " + roleName + " = " + attribute.Value);
+                log.Verbose(" - " + roleName + " = " + attribute.Value);
 
                 string value;
                 if (rolesByCount.TryGetValue(roleName, out value))
@@ -105,14 +109,14 @@ namespace Calamari.Azure.Deployment.Conventions
                 }
             });
 
-            Log.Verbose("Remote instance counts: ");
+            log.Verbose("Remote instance counts: ");
             WithInstanceCounts(remoteConfigurationFile, (roleName, attribute) =>
             {
                 rolesByCount[roleName] = attribute.Value;
-                Log.Verbose(" - " + roleName + " = " + attribute.Value);
+                log.Verbose(" - " + roleName + " = " + attribute.Value);
             });
 
-            Log.Verbose("Replacing local instance count settings with remote settings: ");
+            log.Verbose("Replacing local instance count settings with remote settings: ");
             WithInstanceCounts(localConfigurationFile, (roleName, attribute) =>
             {
                 string value;
@@ -120,7 +124,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     return;
 
                 attribute.SetValue(value);
-                Log.Verbose(" - " + roleName + " = " + attribute.Value);
+                log.Verbose(" - " + roleName + " = " + attribute.Value);
             });
         }
 
