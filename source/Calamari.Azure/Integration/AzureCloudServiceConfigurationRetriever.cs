@@ -2,7 +2,9 @@
 using System.Net;
 using System.Xml.Linq;
 using Microsoft.WindowsAzure;
+using Microsoft.WindowsAzure.Management.Compute;
 using Microsoft.WindowsAzure.Management.Compute.Models;
+using SubscriptionCloudCredentials = Microsoft.Azure.SubscriptionCloudCredentials;
 
 namespace Calamari.Azure.Integration
 {
@@ -10,7 +12,7 @@ namespace Calamari.Azure.Integration
     {
         public XDocument GetConfiguration(SubscriptionCloudCredentials credentials, string serviceName, DeploymentSlot slot)
         {
-            using (var client = CloudContext.Clients.CreateComputeManagementClient(credentials))
+            using (var client = new ComputeManagementClient(credentials))
             {
                 try
                 {

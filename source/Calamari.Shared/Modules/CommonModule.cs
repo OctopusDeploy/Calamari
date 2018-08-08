@@ -2,6 +2,7 @@
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using System.IO;
+using Calamari.Integration.Certificates;
 using Octostache;
 using Module = Autofac.Module;
 
@@ -59,6 +60,9 @@ namespace Calamari.Modules
                     .AsSelf()
                     .As<VariableDictionary>();
             }
+
+            builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().InstancePerLifetimeScope();
+            builder.RegisterType<LogWrapper>().As<ILog>().InstancePerLifetimeScope();
         }
     }
 }
