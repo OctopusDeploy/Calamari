@@ -79,9 +79,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var slot = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), variables.Get(SpecialVariables.Action.Azure.Slot));
 
             var remoteConfigurationFile = configurationRetriever.GetConfiguration(
-                credentialsFactory.GetCredentials(variables.Get(SpecialVariables.Action.Azure.SubscriptionId),
-                    variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                    variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
+                credentialsFactory.GetCredentials(variables),
                 serviceName,
                 slot);
 

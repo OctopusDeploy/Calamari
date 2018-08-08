@@ -1,7 +1,8 @@
 ﻿using Autofac;
+using Calamari.HealthChecks;
 using Calamari.Hooks;
 
-namespace Calamari.Azure
+namespace Calamari.Azure.Modules
 {
     /// <summary>
     /// The script wrapper exposed by this module needs to be used for Azure script steps
@@ -14,6 +15,11 @@ namespace Calamari.Azure
                 .AssignableTo<IScriptWrapper>()
                 .As<IScriptWrapper>()
                 .SingleInstance();
+
+            builder.RegisterAssemblyTypes(ThisAssembly)
+                .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
+                .As<IDoesDeploymentTargetTypeHealthChecks>()
+                .InstancePerDependency();
         }
     }
 }
