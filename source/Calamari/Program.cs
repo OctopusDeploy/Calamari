@@ -4,15 +4,82 @@ using Calamari.Integration.Proxies;
 using Calamari.Modules;
 using Calamari.Util;
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using Autofac.Features.ResolveAnything;
 using Calamari.Commands;
+using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
+using Calamari.Integration.ConfigurationTransforms;
+using Calamari.Integration.ConfigurationVariables;
+using Calamari.Integration.EmbeddedResources;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.JsonVariables;
+using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.NuGet;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
+using Calamari.Integration.ServiceMessages;
+using Calamari.Integration.Substitutions;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 using Calamari.Util.Environments;
+using Module = Autofac.Module;
+using Calamari.Shared;
+using Calamari.Shared.Scripting;
+using Octostache;
+using IConvention = Calamari.Shared.Commands.IConvention;
 
 namespace Calamari
 {
+
+    class CalamariProgramModule : Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            
+
+            builder.Register(context =>
+            {
+                var dictionary = context.Resolve<VariableDictionary>();
+                return new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
+                    new ServiceMessageCommandOutput(dictionary)));
+            }).As<ICommandLineRunner>().SingleInstance();
+            
+            
+            
+            builder.RegisterInstance(new ScriptEngineRegistry()).As<IScriptEngineRegistry>();
+            builder.RegisterInstance<ICalamariFileSystem>(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            builder.RegisterInstance(new LogWrapper()).As<ILog>().SingleInstance();
+            
+            
+                
+            builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>().SingleInstance();
+            builder.RegisterType<ConfigurationTransformer>().As<IConfigurationTransformer>().SingleInstance();
+            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>().SingleInstance();
+            builder.RegisterType<CombinedScriptEngine>().As<IScriptRunner>().SingleInstance();
+            //builder.RegisterType<NupkgExtractor>().As<IPackageExtractor>().SingleInstance();
+            builder.RegisterType<GenericPackageExtractor>()
+                .As<IGenericPackageExtractor>()
+                .As<IPackageExtractor>()
+                .SingleInstance();
+            builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>().SingleInstance();
+            builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
+            builder.RegisterType<JsonConfigurationVariableReplacer>().As<IJsonConfigurationVariableReplacer>();
+            
+/*  scriptWrapperHooks,
+            VariableDictionary variables,
+            ICommandLineRunner commandLineRunner,
+            StringDictionary environmentVars = null*/
+
+        }
+    }
+    
+    
     public class Program
     {
         private static readonly IPluginUtils PluginUtils = new PluginUtils();
@@ -24,17 +91,97 @@ namespace Calamari
             typeof(Program).Assembly,
             typeof(CalamariCommandsModule).Assembly
         };
-        private readonly ICommand command;
-        private readonly HelpCommand helpCommand;
+        private readonly ICommand command = null;
 
-        static int Main(string[] args)
+        public static int Main(string[] args)
         {
+            Log.Verbose($"Octopus Deploy: Calamari version {typeof(Program).Assembly.GetInformationalVersion()}");
+            Log.Verbose($"Environment Information:{Environment.NewLine}" +
+                        $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}");
+            
             EnableAllSecurityProtocols();
-            using (var container = BuildContainer(args))
+            var firstArg = PluginUtils.GetFirstArgument(args);
+            
+            
+            var commands =
+                (from type in typeof(Program).Assembly.GetTypes()
+                    where typeof(ICommand).IsAssignableFrom(type)
+                    let attribute = (ICommandMetadata)type.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
+                    where attribute != null
+                    select new {attribute, type}).ToArray();
+
+            var cmd = commands.FirstOrDefault(t => t.attribute.Name.Equals(firstArg));
+
+            if (cmd != null && !typeof(Shared.Commands.ICustomCommand).IsAssignableFrom(cmd.type))
             {
-                return container.Resolve<Program>().Execute(args);
+                //This is not a CustomCommand, this is one of the other types used by calamari. e.g. apply-delta, find-package, clean etc.
+                var cc = (ICommand) Activator.CreateInstance(cmd.type);
+                return cc.Execute(args);
             }
+            
+            
+            var ml = ModuleLoaderNew.GetExtensions(args); //Add
+            if (cmd == null)
+            {
+                throw new Exception("XXX");
+            }
+
+
+            
+
+            var Options = new OptionSet();
+            string variablesFile =null;
+                string packageFile=null;
+            string sensitiveVariablesPassword =null; string sensitiveVariablesFile = null;
+            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            Options.Parse(args);
+
+
+
+            var variables =
+                new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            
+            var builder = new ContainerBuilder();
+            builder.RegisterSource(new AnyConcreteTypeNotAlreadyRegisteredSource());
+            builder.RegisterInstance(variables).As<VariableDictionary>().As<CalamariVariableDictionary>();
+            builder.RegisterModule<CalamariProgramModule>();
+            builder.RegisterType(cmd.type).AsSelf();
+            
+            //Embeded Conventions
+            foreach (var type1 in typeof(Program).Assembly.GetTypes().Where(type => typeof(IConvention).IsAssignableFrom(type)))
+            {
+                builder.RegisterType(type1).AsSelf();
+            }
+            
+            
+//            foreach (var type1 in typeof(Program).Assembly.GetTypes().Where(type => typeof(IPackageExtractor).IsAssignableFrom(type)))
+//            {
+//                builder.RegisterType(type1).As<IPackageExtractor>();
+//            }
+//            
+                
+            
+            var container = builder.Build();
+
+            var x = (ICustomCommand)container.Resolve(cmd.type);
+            
+            var cb = new CommandBuilder(container);
+            x.Run(cb);
+            
+            var cr = new CommandRunner(cb, container.Resolve<ICalamariFileSystem>());
+            cr.Run(variables, packageFile);
+            
+            return 0;
+//            using (var container = BuildContainer(args))
+//            {
+//                return container.Resolve<Program>().Execute(args);
+//            }
         }
+
+        public static List<string> Extensions = new List<string>();
 
         public static IContainer BuildContainer(string[] args)
         {
@@ -64,11 +211,11 @@ namespace Calamari
             return builder.Build();
         }
 
-        public Program(ICommand command, HelpCommand helpCommand)
-        {
-            this.command = command;
-            this.helpCommand = helpCommand;
-        }
+//        public Program(ICommand command, HelpCommand helpCommand)
+//        {
+//            this.command = command;
+//            this.helpCommand = helpCommand;
+//        }
 
         public int Execute(string[] args)
         {
@@ -95,8 +242,10 @@ namespace Calamari
 
         private int PrintHelp(string action)
         {
-            helpCommand.HelpWasAskedFor = false;
-            return helpCommand.Execute(new[] { action });
+            Console.WriteLine("Help");
+            return -2;
+//            helpCommand.HelpWasAskedFor = false;
+//            return helpCommand.Execute(new[] { action });
         }
 
         public static void EnableAllSecurityProtocols()

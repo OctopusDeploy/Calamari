@@ -26,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             Assert.That(deployment.CurrentDirectory, Is.EqualTo("C:\\Apps\\MyPackage\\1.0.0_1"));
 
             // After the package contents is copied to the custom installation directory, the current directory changes
-            deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
+            deployment.CurrentDirectoryProvider = Calamari.Shared.Commands.DeploymentWorkingDirectory.CustomDirectory;
             Assert.That(deployment.StagingDirectory, Is.EqualTo("C:\\Apps\\MyPackage\\1.0.0_1"));
             Assert.That(deployment.CustomDirectory, Is.EqualTo("C:\\MyWebsite"));
             Assert.That(deployment.CurrentDirectory, Is.EqualTo("C:\\MyWebsite"));

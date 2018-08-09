@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Substitutions;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Calamari.Tests.Helpers;
 using NSubstitute;
@@ -23,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         ICalamariFileSystem fileSystem;
         IFileSubstituter substituter;
-        RunningDeployment deployment;
+        IExecutionContext deployment;
         CalamariVariableDictionary variables;
 
         [SetUp]
@@ -33,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             substituter = Substitute.For<IFileSubstituter>();
             variables = new CalamariVariableDictionary();
 
-            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
+            deployment = new CalamariExecutionContext(TestEnvironment.ConstructRootedPath("packages"), variables)
             {
                 StagingDirectory = StagingDirectory
             };
@@ -50,7 +52,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, glob);
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch), variables);
         }
@@ -66,7 +68,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, substitutionTarget);
             variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             substituter.DidNotReceive().PerformSubstitution(Arg.Any<string>(), Arg.Any<VariableDictionary>());
         }

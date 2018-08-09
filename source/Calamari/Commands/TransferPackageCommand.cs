@@ -9,11 +9,12 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Commands
 {
     [Command("transfer-package", Description = "Copies a deployment package to a specific directory")]
-    public class TransferPackageCommand : Command
+    public class TransferPackageCommand : Command, Shared.Commands.ICustomCommand
     {
         private string variablesFile;
         private string sensitiveVariablesFile;
@@ -42,38 +43,19 @@ namespace Calamari.Commands
             if (!fileSystem.FileExists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);    
 
-            fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
-            fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
             
-            var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
+            var cb = new CommandBuilder(null);
+            cb.AddConvention<TransferPackageConvention>();
+
+            var cr = new CommandRunner(cb, fileSystem);
+            cr.Run(new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword),  packageFile);
             
-            var conventions = new List<IConvention>
-            {
-                new ContributeEnvironmentVariablesConvention(),
-                new ContributePreviousInstallationConvention(journal),
-                new ContributePreviousSuccessfulInstallationConvention(journal),
-                new LogVariablesConvention(),
-                new AlreadyInstalledConvention(journal),
-                new TransferPackageConvention(fileSystem),
-            };
-
-            var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
-
-            try
-            {
-                conventionRunner.RunConventions();
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, true));
-            }
-            catch (Exception)
-            {
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, false));
-                throw;
-            }
-
             return 0;
+        }
+
+        public ICommandBuilder Run(ICommandBuilder commandBuilder)
+        {
+            return commandBuilder.AddConvention<TransferPackageConvention>();
         }
     }
 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using Calamari.Integration.Processes;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Deployment.Features.Java
 {
-    public class TomcatFeature : JavaBaseFeature, IFeature
+    public class TomcatFeature : JavaBaseFeature, Shared.Commands.IFeature
     {
         public TomcatFeature(ICommandLineRunner commandLineRunner)
             : base(commandLineRunner)
@@ -15,7 +16,7 @@ namespace Calamari.Deployment.Features.Java
 
         public string DeploymentStage => DeploymentStages.BeforeDeploy; 
 
-        public void Execute(RunningDeployment deployment)
+        public void Execute(IExecutionContext deployment)
         {
             var variables = deployment.Variables;
 

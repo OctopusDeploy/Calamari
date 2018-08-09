@@ -7,6 +7,7 @@ using Calamari.Shared;
 using Calamari.Shared.Scripting;
 using NSubstitute;
 using NUnit.Framework;
+using Octostache;
 using Script = Calamari.Integration.Scripting.Script;
 
 namespace Calamari.Tests.Hooks
@@ -32,8 +33,8 @@ namespace Calamari.Tests.Hooks
         {
             var sw = new ScriptHookMock();
 
-            var combined = new CombinedScriptEngine(engineRegistry, new []{ sw });
-            combined.Execute(new Script("Foo.csx", "Bar"), new CalamariVariableDictionary(), commandLineRunner, new StringDictionary());
+            var combined = new CombinedScriptEngine(engineRegistry, new []{ sw }, new VariableDictionary(), commandLineRunner);
+            combined.Execute(new Shared.Scripting.Script("Foo.csx", "Bar"));
 
             Assert.IsTrue(sw.WasCalled);
         }
@@ -43,8 +44,8 @@ namespace Calamari.Tests.Hooks
         {
             var sw = new ScriptHookMock(false);
 
-            var combined = new CombinedScriptEngine(engineRegistry, new []{ sw });
-            combined.Execute(new Script("Foo.csx", "Bar"), new CalamariVariableDictionary(), commandLineRunner, new StringDictionary());
+            var combined = new CombinedScriptEngine(engineRegistry, new []{ sw }, new CalamariVariableDictionary(), commandLineRunner);
+            combined.Execute(new Shared.Scripting.Script("Foo.csx", "Bar"));
 
             Assert.IsFalse(sw.WasCalled);
         }
@@ -52,12 +53,12 @@ namespace Calamari.Tests.Hooks
         [Test]
         public void InvokesInnerScriptHandler()
         {
-            var combined = new CombinedScriptEngine(engineRegistry, new []{ new ScriptHookMock() });
-
             var calamariVariables = new CalamariVariableDictionary();
             var environmentVariables = new StringDictionary();
+            
+            var combined = new CombinedScriptEngine(engineRegistry, new []{ new ScriptHookMock() }, calamariVariables, commandLineRunner);
           
-            combined.Execute(new Script("Foo.csx", "Bar"), calamariVariables, commandLineRunner, environmentVariables);
+            combined.Execute(new Shared.Scripting.Script("Foo.csx", "Bar"));
 
             innerEngine.Received().Execute(Arg.Any<Script>(), calamariVariables, commandLineRunner, environmentVariables);
         }
@@ -65,16 +66,14 @@ namespace Calamari.Tests.Hooks
         [Test]
         public void ReturnsInnerScriptResult()
         {
-            var combined = new CombinedScriptEngine(engineRegistry, new []{ new ScriptHookMock() });
-
             var calamariVariables = new CalamariVariableDictionary();
             var environmentVariables = new StringDictionary();
-
+            var combined = new CombinedScriptEngine(engineRegistry, new []{ new ScriptHookMock() }, calamariVariables, commandLineRunner);
             var commandResult = new CommandResult("CMD", 55);
             innerEngine.Execute(Arg.Any<Script>(), calamariVariables, commandLineRunner, environmentVariables)
                 .Returns(commandResult);
             
-            var result = combined.Execute(new Script("Foo.csx", "Bar"), calamariVariables, commandLineRunner, environmentVariables);
+            var result = combined.Execute(new Shared.Scripting.Script("Foo.csx", "Bar"));
 
             Assert.AreEqual(commandResult, result);
         }

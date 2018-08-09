@@ -37,7 +37,7 @@ namespace Calamari.Commands
                 v => skipVerification = true);
 
             packageStore = new PackageStore(
-                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
+                new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
         }
         public override int Execute(string[] commandLineArguments)
         {

@@ -55,71 +55,34 @@ namespace Calamari.Commands.Java
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
 
-            var semaphore = SemaphoreFactory.Get();
-            var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-            var substituter = new FileSubstituter(fileSystem);
-            var commandOutput =
-                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));
-            var commandLineRunner = new CommandLineRunner(commandOutput);
-            var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var packageExtractor = new JavaPackageExtractor(commandLineRunner, commandOutput, fileSystem);
-            var embeddedResources = new AssemblyEmbeddedResources();
-
-            var featureClasses = new List<IFeature>
-            {
-                new TomcatFeature(commandLineRunner),
-                new WildflyFeature(commandLineRunner)
-            };
-
             var deployExploded = variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
 
-            var conventions = new List<IConvention>
-            {
-                new ContributeEnvironmentVariablesConvention(),
-                new ContributePreviousInstallationConvention(journal),
-                new ContributePreviousSuccessfulInstallationConvention(journal),
-                new LogVariablesConvention(),
-                new AlreadyInstalledConvention(journal),
-                // If we are deploying the package exploded then extract directly to the application directory.
-                // Else, if we are going to re-pack, then we extract initially to a temporary directory 
-                deployExploded
-                    ? (IInstallConvention)new ExtractPackageToApplicationDirectoryConvention(packageExtractor, fileSystem) 
-                    : new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
-                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new SubstituteInFilesConvention(fileSystem, substituter),
-                new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
-                new RePackArchiveConvention(fileSystem, commandOutput, commandLineRunner),                
-                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
-                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
-            };
+            var cb = new CommandBuilder(null)
+                {UsesDeploymentJournal = true};
 
-            var deployment = new RunningDeployment(archiveFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            cb.Features.Add<TomcatFeature>().Add<WildflyFeature>();
 
-            try
+            // If we are deploying the package exploded then extract directly to the application directory.
+            // Else, if we are going to re-pack, then we extract initially to a temporary directory 
+            if (deployExploded)
             {
-                conventionRunner.RunConventions();
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, true));
+                cb.AddExtractPackageToApplicationDirectory();
             }
-            catch (Exception)
+            else
             {
-                if (!deployment.SkipJournal) 
-                    journal.AddJournalEntry(new JournalEntry(deployment, false));
-                throw;
+                cb.AddExtractPackageToStagingDirectory();
             }
+
+            cb.RunPreScripts()
+                .AddSubsituteInFiles()
+                .AddJsonVariables()
+                .AddConvention<RePackArchiveConvention>()
+                .AddConvention<CopyPackageToCustomInstallationDirectoryConvention>()
+                .RunDeployScripts()
+                .RunPostScripts();
+                
+            new CommandRunner(cb, fileSystem).Run(new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword), archiveFile);
+            
 
             return 0;
         }

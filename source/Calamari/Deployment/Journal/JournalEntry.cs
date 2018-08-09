@@ -2,11 +2,29 @@
 using System.Globalization;
 using System.Xml.Linq;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Deployment.Journal
 {
     public class JournalEntry
     {
+        public JournalEntry(IExecutionContext deployment, bool wasSuccessful)
+            : this(Guid.NewGuid().ToString(),
+                deployment.Variables.Get(SpecialVariables.Environment.Id),
+                deployment.Variables.Get(SpecialVariables.Deployment.Tenant.Id),
+                deployment.Variables.Get(SpecialVariables.Project.Id),
+                deployment.Variables.Get(SpecialVariables.Package.NuGetPackageId),
+                deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion),
+                deployment.Variables.Get(SpecialVariables.RetentionPolicySet),
+                DateTime.UtcNow,
+                deployment.PackageFilePath,
+                deployment.Variables.Get(SpecialVariables.OriginalPackageDirectoryPath),
+                deployment.Variables.Get(SpecialVariables.Package.CustomInstallationDirectory),
+                wasSuccessful
+            )
+        { }
+        
+        
         public JournalEntry(RunningDeployment deployment, bool wasSuccessful)
             : this(Guid.NewGuid().ToString(),
                 deployment.Variables.Get(SpecialVariables.Environment.Id),

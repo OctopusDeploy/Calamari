@@ -14,10 +14,10 @@ namespace Calamari.Integration.ConfigurationTransforms
         private readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
-        public TransformFileLocator(ICalamariFileSystem fileSystem, ILog log = null)
+        public TransformFileLocator(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.log = log ?? new LogWrapper();
+            this.log = log;
         }
 
         public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, string currentDeployment)

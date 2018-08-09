@@ -9,6 +9,30 @@ using Module = Autofac.Module;
 
 namespace Calamari.Extensions
 {
+
+    public class ModuleLoaderNew
+    {
+        private readonly OptionSet optionSet = new OptionSet();
+        private List<string> extensions = new List<string>();
+        
+        ModuleLoaderNew(string[] args)
+        {
+            optionSet.Add("extensions=", "List of Calamari extensions to load.", ExtractNamedExtensions);
+            optionSet.Parse(args);
+        }
+
+        private void ExtractNamedExtensions(string v)
+        {
+            extensions.AddRange(v?.Split(',').Select(ext => ext.Trim()).Where(ext => !string.IsNullOrWhiteSpace(ext)) ?? new string[0]);
+        }
+
+        public static string[] GetExtensions(string[] args)
+        {
+            return new ModuleLoaderNew(args).extensions.ToArray();
+        }
+    }
+
+
     /// <summary>
     /// This class provides a way to find all the modules in a given assembly.
     /// Using this module will take care of registering a ICommand to be run, as

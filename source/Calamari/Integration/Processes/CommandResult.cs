@@ -1,6 +1,8 @@
-﻿namespace Calamari.Integration.Processes
+﻿using Calamari.Shared;
+
+namespace Calamari.Integration.Processes
 {
-    public class CommandResult
+    public class CommandResult : ICommandResult
     {
         private readonly string command;
         private readonly int exitCode;
@@ -31,7 +33,7 @@
 
         public bool HasErrors => !string.IsNullOrWhiteSpace(additionalErrors);
 
-        public CommandResult VerifySuccess()
+        public ICommandResult VerifySuccess()
         {
             if (exitCode != 0)
             {

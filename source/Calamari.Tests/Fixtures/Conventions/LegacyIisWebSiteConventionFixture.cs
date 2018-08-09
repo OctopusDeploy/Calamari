@@ -1,10 +1,12 @@
 ﻿using System.IO;
+using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Processes;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using NSubstitute;
 using NUnit.Framework;
@@ -17,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         ICalamariFileSystem fileSystem;
         IInternetInformationServer iis;
         CalamariVariableDictionary variables;
-        RunningDeployment deployment;
+        IExecutionContext deployment;
         const string stagingDirectory = "C:\\Applications\\Acme\\1.0.0";
 
         [SetUp]
@@ -26,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables = new CalamariVariableDictionary();
             fileSystem = Substitute.For<ICalamariFileSystem>();
             iis = Substitute.For<IInternetInformationServer>();
-            deployment = new RunningDeployment("C:\\packages", variables)
+            deployment = new CalamariExecutionContext("C:\\packages", variables)
             {
                 StagingDirectory = stagingDirectory
             };
@@ -41,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
             iis.OverwriteHomeDirectory(websiteName, stagingDirectory, false).Returns(true);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             iis.Received().OverwriteHomeDirectory(websiteName, stagingDirectory, false);
         }
@@ -55,7 +57,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
             iis.OverwriteHomeDirectory(packageId, stagingDirectory, false).Returns(true);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             iis.Received().OverwriteHomeDirectory(packageId, stagingDirectory, false);
         }
@@ -70,7 +72,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
             iis.OverwriteHomeDirectory(websiteName, stagingDirectory, true).Returns(true);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             iis.Received().OverwriteHomeDirectory(websiteName, stagingDirectory, true);
         }
@@ -84,7 +86,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
             iis.OverwriteHomeDirectory(websiteName, stagingDirectory, false).Returns(true);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             iis.DidNotReceive().OverwriteHomeDirectory(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }

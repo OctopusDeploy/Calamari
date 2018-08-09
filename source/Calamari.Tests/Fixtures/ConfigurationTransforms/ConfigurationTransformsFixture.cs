@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         {
             log = new InMemoryLog();
             var variables = new CalamariVariableDictionary();
-            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            configurationTransformer = new ConfigurationTransformer(variables, log);
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         {
             var variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Package.IgnoreConfigTransformationErrors, "true");
-            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            configurationTransformer = new ConfigurationTransformer(variables, log);
 
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
         }
@@ -80,7 +80,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         {
             var variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, "false");
-            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            configurationTransformer = new ConfigurationTransformer(variables, log);
 
             PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
         }

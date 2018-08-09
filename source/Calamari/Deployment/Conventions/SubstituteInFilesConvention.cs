@@ -31,32 +31,6 @@ namespace Calamari.Deployment.Conventions
             this.fileTargets = fileTargetFactory;
         }
         
-        public void Install(IExecutionContext deployment)
-        {
-            if (!predicate(deployment))
-                return;
-
-            foreach (var target in fileTargets(deployment))
-            {
-                var matchingFiles = MatchingFiles(deployment, target);
-
-                if (!matchingFiles.Any())
-                {
-                    if (deployment.Variables.GetFlag(SpecialVariables.Package.EnableNoMatchWarning, true))
-                    {
-                        Log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
-                    }
-
-                    continue;
-                }
-
-                foreach (var file in matchingFiles)
-                {
-                    substituter.PerformSubstitution(file, deployment.Variables);
-                }
-            }
-        }
-
         private List<string> MatchingFiles(IExecutionContext deployment, string target)
         {
             var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();

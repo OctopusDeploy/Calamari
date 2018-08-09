@@ -18,10 +18,10 @@ namespace Calamari.Azure.Commands
     {
         private readonly ICalamariFileSystem fileSystem;
         private readonly ICalamariEmbeddedResources embeddedResources;
-        private readonly IScriptEngine engine;
+        private readonly IScriptRunner engine;
         private readonly ISemaphoreFactory semaphorefactory;
 
-        public DeployAzureCloudServiceCommand2(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, IScriptEngine engine, ISemaphoreFactory semaphorefactory)
+        public DeployAzureCloudServiceCommand2(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, IScriptRunner engine, ISemaphoreFactory semaphorefactory)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
@@ -36,14 +36,6 @@ namespace Calamari.Azure.Commands
         
         public ICommandBuilder Run(ICommandBuilder commandBuilder)
         {
-
-            commandBuilder
-                    //Extract
-                .PreDeploy()
-                    //
-                .Deploy()
-                .PostDeploy();
-
 
             return commandBuilder
 //                .AddContributeEnvironmentVariables()

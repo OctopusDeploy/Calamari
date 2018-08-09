@@ -2,6 +2,8 @@
 
 namespace Calamari.Shared.Commands
 {
+
+    
     public interface IExecutionContext
     {
         VariableDictionary Variables { get; }

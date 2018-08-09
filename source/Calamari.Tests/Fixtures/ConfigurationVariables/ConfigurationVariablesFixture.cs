@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
+using Calamari.Shared;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -108,8 +109,9 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
-            configurationVariablesReplacer = new ConfigurationVariablesReplacer(true);
+            configurationVariablesReplacer = new ConfigurationVariablesReplacer();
             var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Package.IgnoreVariableReplacementErrors, "true");
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
         }
 

@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Shared;
 using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 
@@ -14,8 +15,9 @@ namespace Calamari.Deployment.Conventions
         public ExtractPackageToStagingDirectoryConvention(
             IPackageExtractor extractor, 
             ICalamariFileSystem fileSystem,
+            ILog log,
             String subDirectory = "staging") 
-            : base(extractor, fileSystem)
+            : base(extractor, fileSystem, log)
         {
             SubDirectory = subDirectory;
         }

@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment;
+﻿using Calamari.Commands;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
@@ -13,7 +14,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     [TestFixture]
     public class ConfigurationVariablesConventionFixture
     {
-        RunningDeployment deployment;
+        CalamariExecutionContext deployment;
         ICalamariFileSystem fileSystem;
         IConfigurationVariablesReplacer replacer;
 
@@ -28,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 "C:\\App\\MyApp\\Views\\Web.config"
             });
 
-            deployment = new RunningDeployment("C:\\Packages", new CalamariVariableDictionary());
+            deployment = new CalamariExecutionContext("C:\\Packages", new CalamariVariableDictionary());
             replacer = Substitute.For<IConfigurationVariablesReplacer>();
         }
 
@@ -36,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldNotRunIfVariableNotSet()
         {
             var convention = new ConfigurationVariablesConvention(fileSystem, replacer);
-            convention.Install(deployment);
+            convention.Run(deployment);
             replacer.DidNotReceiveWithAnyArgs().ModifyConfigurationFile(null, null);
         }
 
@@ -45,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             deployment.Variables.Set(SpecialVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "true");
             var convention = new ConfigurationVariablesConvention(fileSystem, replacer);
-            convention.Install(deployment);
+            convention.Run(deployment);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.config", deployment.Variables);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.Release.config", deployment.Variables);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Views\\Web.config", deployment.Variables);

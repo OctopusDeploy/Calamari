@@ -1,10 +1,11 @@
 ﻿using System;
 using Calamari.Integration.Processes;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Deployment.Features.Java
 {
-    public class WildflyFeature : JavaBaseFeature, IFeature
+    public class WildflyFeature : JavaBaseFeature, Shared.Commands.IFeature
     {
         public WildflyFeature(ICommandLineRunner commandLineRunner)
             : base(commandLineRunner)
@@ -16,7 +17,7 @@ namespace Calamari.Deployment.Features.Java
 
         public string DeploymentStage => DeploymentStages.BeforeDeploy; 
 
-        public void Execute(RunningDeployment deployment)
+        public void Execute(IExecutionContext deployment)
         {
             var variables = deployment.Variables;
 

@@ -120,7 +120,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var realFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             fileSystem.GetRelativePath(Arg.Any<string>(), Arg.Any<string>())
                 .Returns(x => GetRelativePath(x, realFileSystem));
-            var transformFileLocator = new TransformFileLocator(fileSystem);
+            var transformFileLocator = new TransformFileLocator(fileSystem, new LogWrapper());
             var transform = new XmlConfigTransformDefinition(transformDefinition);
 
             var deploymentVariables = new CalamariVariableDictionary();
@@ -128,7 +128,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var deployment = new RunningDeployment(null, deploymentVariables);
 
             const bool diagnosticLoggingEnabled = false;
-            var result = transformFileLocator.DetermineTransformFileNames(sourceFile, transform, diagnosticLoggingEnabled, deployment).ToArray();
+            var result = transformFileLocator.DetermineTransformFileNames(sourceFile, transform, diagnosticLoggingEnabled, Environment.CurrentDirectory).ToArray();
             return result;
         }
 

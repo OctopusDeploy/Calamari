@@ -17,10 +17,10 @@ namespace Calamari.Deployment.Conventions
     public class ConfiguredScriptConvention : Calamari.Shared.Commands.IConvention
     {
         readonly string deploymentStage;
-        readonly IScriptEngine scriptEngine;
+        readonly IScriptRunner scriptEngine;
         readonly ICalamariFileSystem fileSystem;
 
-        public ConfiguredScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine)
+        public ConfiguredScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptRunner scriptEngine)
         {
             this.deploymentStage = deploymentStage;
             this.scriptEngine = scriptEngine;

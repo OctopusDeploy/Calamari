@@ -19,13 +19,13 @@ namespace Calamari.Integration.Packages
 
         public static char[] EscapedCharacters => InvalidCharacterSet.ToArray();
 
-        /// <summary>
 #pragma warning disable 1570
+        /// <summary>
         /// Encodes invalid Windows filename characters < > : " / \ | ? *
-#pragma warning restore 1570
         /// https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
         /// </summary>
         /// <returns></returns>
+#pragma warning restore 1570
         public static string Escape(string input)
         {
             var sb = new StringBuilder();

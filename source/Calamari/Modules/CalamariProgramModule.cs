@@ -18,7 +18,7 @@ namespace Calamari.Modules
                         (pi, ctx) => CommandLocator.GetOptionalNamedCommand(ctx, CalamariCommandsModule.RunCommand)))
                 .SingleInstance();
             builder.RegisterType<CombinedScriptEngine>().AsSelf();
-            builder.RegisterType<HelpCommand>().AsSelf();
+//            builder.RegisterType<HelpCommand>().AsSelf();
         }
     }
 }

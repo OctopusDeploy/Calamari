@@ -36,10 +36,10 @@ namespace Calamari.Modules
             // Only in the event that the primary command was the help command do
             // we go ahead and register the Command object that the help command
             // will display the details of.
-            if (CommandLocator.Find(commandName, ThisAssembly) == typeof(HelpCommand))
-            {
-                RegisterHelpCommand(builder);
-            }
+//            if (CommandLocator.Find(commandName, ThisAssembly) == typeof(HelpCommand))
+//            {
+//                RegisterHelpCommand(builder);
+//            }
             RegisterCommandAttributes(builder);
         }
 

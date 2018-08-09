@@ -106,8 +106,8 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             {
                 Variables.Save(variablesFile.FilePath);
 
-                var command = new DeployJavaArchiveCommand(new CombinedScriptEngine());
-                ReturnCode = command.Execute(new[] { "--archive", $"{packageName}", "--variables", $"{variablesFile.FilePath}" });
+                //var command = new DeployJavaArchiveCommand(new CombinedScriptEngine());
+                //ReturnCode = command.Execute(new[] { "--archive", $"{packageName}", "--variables", $"{variablesFile.FilePath}" });
             }
         }
     }

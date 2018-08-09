@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -19,79 +20,165 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Commands
 {
-    [Command("deploy-package", Description = "Extracts and installs a deployment package")]
-    public class DeployPackageCommand : Command
+
+    public class CommandRunner
     {
-        private string variablesFile;
-        private string packageFile;
-        private string sensitiveVariablesFile;
-        private string sensitiveVariablesPassword;
-        private CombinedScriptEngine scriptCapability;
+        private readonly CommandBuilder cb;
+        private readonly ICalamariFileSystem fileSystem;
 
-        public DeployPackageCommand(CombinedScriptEngine scriptCapability)
+        public CommandRunner(CommandBuilder cb, ICalamariFileSystem fileSystem)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
-
-            this.scriptCapability = scriptCapability;
+            this.cb = cb;
+            this.fileSystem = fileSystem;
         }
 
-        public override int Execute(string[] commandLineArguments)
+        public int Run(CalamariVariableDictionary variables, string packageFile)
         {
-            Options.Parse(commandLineArguments);
-
-            Guard.NotNullOrWhiteSpace(packageFile, "No package file was specified. Please pass --package YourPackage.nupkg");
-
-            if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);    
-
-            Log.Info("Deploying package:    " + packageFile);
+            var ctx = new CalamariExecutionContext()
+            {
+                Variables = variables,
+                PackageFilePath = packageFile
+            };
             
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var journal = cb.UsesDeploymentJournal ?
+                new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), ctx.Variables) :
+                null;
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            CalamariPhysicalFileSystem.FreeDiskSpaceOverrideInMegaBytes = ctx.Variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
+            CalamariPhysicalFileSystem.SkipFreeDiskSpaceCheck = ctx.Variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
+            
+            try
+            {
+                RunConventions(ctx, journal);
+                journal?.AddJournalEntry(new JournalEntry(ctx, true));
+            }
+            catch (Exception)
+            {
+                journal?.AddJournalEntry(new JournalEntry(ctx, false));
+                throw;
+            }
 
-            fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
-            fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
+            return 0;
+        }
+        
+        void RunInstallConventions(IExecutionContext ctx, IDeploymentJournal journal)
+        {
+            foreach (var convention in cb.BuildConventionSteps(journal))
+            {
+                if (ctx.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
+                {
+                    break;
+                }
+                
+                convention(ctx);
+            }
+        }
+        
+        void RunRollbackConventions(IExecutionContext ctx)
+        {
+            foreach (var convention in cb.BuildRollbackScriptSteps())
+            {
+                convention(ctx);
+            }
+        }
+        
+        void RunRollbackCleanup(IExecutionContext ctx)
+        {
+            foreach (var convention in cb.BuildCleanupScriptSteps())
+            {
+                if (ctx.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
+                {
+                    break;
+                }
+                
+                convention(ctx);
+            }
+        }
+        
+        
+        
+        void RunConventions(IExecutionContext ctx, IDeploymentJournal journal)
+        {
+            try
+            {
+                RunInstallConventions(ctx, journal);
+                RunRollbackCleanup(ctx);
+            }
+            catch (Exception ex)
+            {
+                if (ex is CommandException)
+                {
+                    Console.Error.WriteLine(ex.Message);
+                }
+                else
+                {
+                    Console.Error.WriteLine(ex);
+                }
+                Console.Error.WriteLine("Running rollback conventions...");
 
-//            var featureClasses = new List<IFeature>();
-//
-//            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-//            var generator = new JsonConfigurationVariableReplacer();
-//            var substituter = new FileSubstituter(fileSystem);
-//            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-//            var transformFileLocator = new TransformFileLocator(fileSystem);
-//            var embeddedResources = new AssemblyEmbeddedResources();
-//
-//            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var semaphore = SemaphoreFactory.Get();
-            var journal = new DeploymentJournal(fileSystem, semaphore, variables);
+                ex = ex.GetBaseException();
+                ctx.Variables.Set(SpecialVariables.LastError, ex.ToString());
+                ctx.Variables.Set(SpecialVariables.LastErrorMessage, ex.Message);
 
+                // Rollback conventions include tasks like DeployFailed.ps1
+                RunRollbackConventions(ctx);
 
-            var cb = new CommandBuilder(null);
+                // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
+                RunRollbackCleanup(ctx);
+
+                throw;
+            }
+        }
+    }
+    
+    
+    
+    [Command("deploy-package", Description = "Extracts and installs a deployment package")]
+    public class DeployPackageCommand : Command, Calamari.Shared.Commands.ICustomCommand
+    {
+        private readonly ICalamariFileSystem filesystem;
+//        private string variablesFile;
+//        private string packageFile;
+//        private string sensitiveVariablesFile;
+//        private string sensitiveVariablesPassword;
+//        private CombinedScriptEngine scriptCapability;
+
+        public DeployPackageCommand(ICalamariFileSystem filesystem)
+        {
+            this.filesystem = filesystem;
+        }
+        
+        public void DeployPackageCommand2(CombinedScriptEngine scriptCapability)
+        {
+//            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+//            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
+//            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+//            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+
+            //this.scriptCapability = scriptCapability;
+        }
+
+      
+   
+
+        public ICommandBuilder Run(ICommandBuilder cb)
+        {
 
             cb.UsesDeploymentJournal = true;
+
             
 #if IIS_SUPPORT
             cb.Features.Add<IisWebSiteBeforeDeployFeature>();
             cb.Features.Add<IisWebSiteAfterPostDeployFeature>();
             var iis = new InternetInformationServer();
 #endif
-           
             
-            
-            
-            cb.AddContributeEnvironmentVariables()
-                .AddConvention(new ContributePreviousInstallationConvention(journal))
-                .AddConvention(new ContributePreviousSuccessfulInstallationConvention(journal))
-                .AddLogVariables()
-                .AddConvention(new AlreadyInstalledConvention(journal))
-                .AddExtractPackageToStagingDirectory()
+            cb.AddExtractPackageToApplicationDirectory()
                 .RunPreScripts()
                 .AddSubsituteInFiles()
                 .AddConfigurationTransform()
@@ -101,87 +188,19 @@ namespace Calamari.Commands
                 .RunDeployScripts();
             
 #if IIS_SUPPORT
-                cb.AddConvention(new LegacyIisWebSiteConvention(fileSystem, iis))
+            cb.AddConvention(new LegacyIisWebSiteConvention(filesystem, iis));
 #endif
 
             cb.RunPostScripts();
 
-            var ctx = new CalamariExecutionContext()
-            {
-                Variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword),
-                PackageFilePath = packageFile
-            };
-            
-            
-            try
-            {
-                foreach (var v in cb.ConventionSteps)
-                {
-                    v.Invoke(ctx);
-                }
-            }
-            catch (Exception ex)
-            {
-                    
-            }
-
-         /*
-          *public class CommandExecution
-    {
-        private readonly Container container;
-
-        public CommandExecution(Container container)
-        {
-            this.container = container;
+            return cb;
+//            var cr = new CommandRunner(cb, fileSystem);
+//            cr.Run(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, packageFile);
         }
 
-
-        public void Run()
+        public override int Execute(string[] commandLineArguments)
         {
-            ICustomCommand blah = null;
-            var blder = new CommandBuilder(container);
-
-            
-            
-            var x = new CalamariExecutionContext();
-            blah.Run(blder);
-
-
-            foreach (var v in blder.ConventionSteps)
-            {
-                try
-                {
-                    v.Invoke(x);
-                }
-                catch (Exception ex)
-                {
-                    
-                }
-            }
-        }
-
-    }
-          * 
-          */
-            
-
-//            var deployment = new RunningDeployment(packageFile, variables);
-//            var conventionRunner = new ConventionProcessor(deployment, conventions);
-//
-//            try
-//            {
-//                conventionRunner.RunConventions();
-//                if (!deployment.SkipJournal) 
-//                    journal.AddJournalEntry(new JournalEntry(deployment, true));
-//            }
-//            catch (Exception)
-//            {
-//                if (!deployment.SkipJournal) 
-//                    journal.AddJournalEntry(new JournalEntry(deployment, false));
-//                throw;
-//            }
-
-            return 0;
+            throw new NotImplementedException();
         }
     }
 }

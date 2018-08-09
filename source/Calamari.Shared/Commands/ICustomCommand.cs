@@ -2,9 +2,7 @@
 {
     public interface ICustomCommand
     {
-        IOptionsBuilder Options(IOptionsBuilder optionsBuilder);
+        //IOptionsBuilder Options(IOptionsBuilder optionsBuilder);
         ICommandBuilder Run(ICommandBuilder commandBuilder);
-
-        IFeature[] Features();
     }
 }

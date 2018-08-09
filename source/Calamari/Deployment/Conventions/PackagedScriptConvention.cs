@@ -11,7 +11,7 @@ namespace Calamari.Deployment.Conventions
     /// </summary>
     public class PackagedScriptConvention : PackagedScriptRunner, Calamari.Shared.Commands.IConvention
     {
-        public PackagedScriptConvention(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine) : 
+        public PackagedScriptConvention(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptRunner scriptEngine) : 
             base(scriptFilePrefix, fileSystem, scriptEngine)
         {
         }

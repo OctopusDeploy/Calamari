@@ -43,7 +43,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem);
+            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             var packageStore = new PackageStore(extractor);
 
             if (!VersionFactory.TryCreateVersion(rawPackageVersion, out IVersion version, versionFormat))

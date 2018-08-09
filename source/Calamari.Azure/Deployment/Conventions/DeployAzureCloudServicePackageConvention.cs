@@ -16,12 +16,12 @@ namespace Calamari.Azure.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly IScriptEngine scriptEngine;
+        readonly IScriptRunner scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         private readonly ILog log;
 
         public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
-            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ILog log)
+            IScriptRunner scriptEngine, ICommandLineRunner commandLineRunner, ILog log)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;

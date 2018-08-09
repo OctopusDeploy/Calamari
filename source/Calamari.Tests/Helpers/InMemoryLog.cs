@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Calamari.Shared;
+using Octostache;
 
 namespace Calamari.Tests.Helpers
 {
@@ -45,6 +46,16 @@ namespace Calamari.Tests.Helpers
         public void ErrorFormat(string message, params object[] args)
         {
             Messages.Add(new Message(Level.Error, message, args));
+        }
+
+        public void SetOutputVariable(string name, string value)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetOutputVariable(string name, string value, VariableDictionary variables)
+        {
+            throw new System.NotImplementedException();
         }
 
 

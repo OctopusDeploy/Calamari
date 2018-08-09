@@ -5,6 +5,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using Calamari.Shared;
 using Calamari.Util;
 using Octostache;
 
@@ -12,13 +13,6 @@ namespace Calamari.Integration.ConfigurationVariables
 {
     public class ConfigurationVariablesReplacer : IConfigurationVariablesReplacer
     {
-        readonly bool ignoreVariableReplacementErrors;
-
-        public ConfigurationVariablesReplacer(bool ignoreVariableReplacementErrors = false)
-        {
-            this.ignoreVariableReplacementErrors = ignoreVariableReplacementErrors;
-        }
-
         public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
         {
             try
@@ -43,7 +37,7 @@ namespace Calamari.Integration.ConfigurationVariables
             }
             catch (Exception ex)
             {
-                if (ignoreVariableReplacementErrors)
+                if (variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors, false))
                 {
                     Log.Warn(ex.Message);
                     Log.Warn(ex.StackTrace);

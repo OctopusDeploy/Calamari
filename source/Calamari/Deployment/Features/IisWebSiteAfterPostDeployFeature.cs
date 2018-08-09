@@ -7,6 +7,7 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Octostache;
 
 namespace Calamari.Deployment.Features
@@ -15,7 +16,7 @@ namespace Calamari.Deployment.Features
     {
         public override string DeploymentStage => DeploymentStages.AfterPostDeploy;
 
-        public override void Execute(RunningDeployment deployment)
+        public override void Execute(IExecutionContext deployment)
         {
             var variables = deployment.Variables;
 

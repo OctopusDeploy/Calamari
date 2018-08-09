@@ -8,37 +8,46 @@ using System.IO;
 using System.Linq;
 using Calamari.Shared;
 using Calamari.Shared.Scripting;
+using Octostache;
 
 namespace Calamari.Integration.Scripting
 {
-    public class CombinedScriptEngine : IScriptEngine
+
+    
+    public class CombinedScriptEngine : IScriptRunner
     {
         private readonly IScriptEngineRegistry scriptEngineRegistry;
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
-    
+        private readonly VariableDictionary variables;
+        private readonly ICommandLineRunner commandLineRunner;
+
         /// <summary>
         /// The original default constructor.
         /// </summary>
-        public CombinedScriptEngine()
-        {
-            this.scriptWrapperHooks = Enumerable.Empty<IScriptWrapper>();
-        }
+//        public CombinedScriptEngine()
+//        {
+//            this.scriptWrapperHooks = Enumerable.Empty<IScriptWrapper>();
+//        }
         
-        public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks) : this(ScriptEngineRegistry.Instance, scriptWrapperHooks)
-        {
-        }
+//        public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, 
+//            VariableDictionary variables,
+//            ICommandLineRunner commandLineRunner,
+//            StringDictionary environmentVars = null
+//            ) : this(ScriptEngineRegistry.Instance, scriptWrapperHooks)
+//        {
+//        }
 
-        /// <summary>
-        /// The Autofac enriched constructor. Autofac will pick this constructor
-        /// because it is the constructor with the most parameters that can be
-        /// fulfilled by injection.
-        /// </summary>
-        /// <param name="scriptEngineRegistry"></param>
-        /// <param name="scriptWrapperHooks">The collecton of IScriptWrapper objects available in autofac</param>
-        public CombinedScriptEngine(IScriptEngineRegistry scriptEngineRegistry, IEnumerable<IScriptWrapper> scriptWrapperHooks)
+        
+        public CombinedScriptEngine(IScriptEngineRegistry scriptEngineRegistry,
+            IEnumerable<IScriptWrapper> scriptWrapperHooks,
+            VariableDictionary variables,
+            ICommandLineRunner commandLineRunner
+        )
         {
             this.scriptEngineRegistry = scriptEngineRegistry;
             this.scriptWrapperHooks = scriptWrapperHooks;
+            this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
         }
 
         public ScriptSyntax[] GetSupportedTypes()
@@ -48,11 +57,7 @@ namespace Calamari.Integration.Scripting
                 : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp };
         }
 
-        public CommandResult Execute(
-            Script script,
-            CalamariVariableDictionary variables,
-            ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null)
+        public ICommandResult Execute(Shared.Scripting.Script script, StringDictionary environmentVars = null)
         {
             var ctx = new ScriptExecutionContext()
             {
@@ -75,15 +80,10 @@ namespace Calamari.Integration.Scripting
                     {
                         return ((ctx1, script1) => wrapper.ExecuteScript(ctx, script1, (k) => inner(ctx, k)));
                     })(ctx, new Shared.Scripting.Script(script.File, script.Parameters));
-
             return final;
         }
 
-
-
-
-
-        private ScriptSyntax ValidateScriptType(Script script)
+        private ScriptSyntax ValidateScriptType(Shared.Scripting.Script script)
         {
             var type = ScriptTypeExtensions.FileNameToScriptType(script.File);
             if (!GetSupportedTypes().Contains(type))

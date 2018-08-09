@@ -11,17 +11,13 @@ namespace Calamari.Shared.Commands
     
     public interface ICommandBuilder
     {
-        
         IFeaturesList Features { get; }
         
-        ICommandBuilder AddContributeEnvironmentVariables();
-        ICommandBuilder AddLogVariables();
+        bool UsesDeploymentJournal { get; set; }
         
         ICommandBuilder AddExtractPackageToStagingDirectory();
         ICommandBuilder AddExtractPackageToApplicationDirectory();
         
-        ICommandBuilder AddConfiguredScriptConvention(string stage);
-        ICommandBuilder AddPackagedScriptConvention(string stage);
         ICommandBuilder AddSubsituteInFiles();
         ICommandBuilder AddConfigurationTransform();
         ICommandBuilder AddConfigurationVariables();
@@ -31,9 +27,9 @@ namespace Calamari.Shared.Commands
         ICommandBuilder RunPreScripts();
         ICommandBuilder RunDeployScripts();
         ICommandBuilder RunPostScripts();
-        
-        
-        ICommandBuilder AddConvention(Action<IExecutionContext> instance)
+
+
+        ICommandBuilder AddConvention(Action<IExecutionContext> instance);
         ICommandBuilder AddConvention(IConvention instance);
         ICommandBuilder AddConvention<TConvention>() where TConvention : IConvention;
     }

@@ -12,17 +12,19 @@ namespace Calamari.Deployment.Conventions
     {
         readonly IPackageExtractor extractor;
         protected readonly ICalamariFileSystem fileSystem;
+        private readonly ILog log;
 
-        protected ExtractPackageConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem)
+        protected ExtractPackageConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ILog log)
         {
             this.extractor = extractor;
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
        
         void LogAccessDenied()
         {
-            Log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
+            log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
         }
         
         protected abstract string GetTargetPath(IExecutionContext deployment);
@@ -31,7 +33,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (string.IsNullOrWhiteSpace(deployment.PackageFilePath))
             {
-                Log.Verbose("No package path defined. Skipping package extraction.");
+                log.Verbose("No package path defined. Skipping package extraction.");
                 return;
             }
 
@@ -39,19 +41,19 @@ namespace Calamari.Deployment.Conventions
             {
                 var targetPath = GetTargetPath(deployment);
 
-                Log.Verbose("Extracting package to: " + targetPath);
+                log.Verbose("Extracting package to: " + targetPath);
 
                 var filesExtracted = extractor.Extract(deployment.PackageFilePath, targetPath,
                     deployment.Variables.GetFlag(SpecialVariables.Package.SuppressNestedScriptWarning, false));
 
-                Log.Verbose("Extracted " + filesExtracted + " files");
+                log.Verbose("Extracted " + filesExtracted + " files");
 
                 deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
-                Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath,
+                log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, targetPath,
                     deployment.Variables);
-                Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, targetPath,
+                log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, targetPath,
                     deployment.Variables);
-                Log.SetOutputVariable(SpecialVariables.Package.Output.ExtractedFileCount, filesExtracted.ToString(),
+                log.SetOutputVariable(SpecialVariables.Package.Output.ExtractedFileCount, filesExtracted.ToString(),
                     deployment.Variables);
             }
             catch (UnauthorizedAccessException)

@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -59,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         void RunConvention()
         {
             var convention = new AlreadyInstalledConvention(journal);
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
+            convention.Run(new CalamariExecutionContext("C:\\Package.nupkg", variables));
         }
     }
 }

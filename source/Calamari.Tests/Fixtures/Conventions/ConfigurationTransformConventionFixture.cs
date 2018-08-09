@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
+using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
@@ -21,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         ICalamariFileSystem fileSystem;
         IConfigurationTransformer configurationTransformer;
         ITransformFileLocator transformFileLocator;
-        RunningDeployment deployment;
+        CalamariExecutionContext deployment;
         CalamariVariableDictionary variables;
         ProxyLog logs;
 
@@ -30,7 +31,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             configurationTransformer = Substitute.For<IConfigurationTransformer>();
-            transformFileLocator = new TransformFileLocator(fileSystem);
+            transformFileLocator = new TransformFileLocator(fileSystem, new LogWrapper());
             
             var deployDirectory = BuildConfigPath(null);
 
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
 
-            deployment = new RunningDeployment(deployDirectory, variables);
+            deployment = new CalamariExecutionContext(deployDirectory, variables);
             logs = new ProxyLog();
         }
 
@@ -53,7 +54,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun("bar.config", "bar.Release.config");
         }
@@ -63,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformNotRun("bar.config", "bar.Release.config");
         }
@@ -76,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             variables.Set(SpecialVariables.Environment.Name, environment);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun("bar.config", "bar.Release.config");
             AssertTransformRun("bar.config", "bar.Production.config");
@@ -92,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Environment.Name, environment);
             variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun("bar.config", "bar.Release.config");
             AssertTransformRun("bar.config", "bar.Production.config");
@@ -109,7 +110,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Environment.Name, environment);
             variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             Received.InOrder(() =>
             {
@@ -137,7 +138,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             // This will be applied even if the automatically run flag is set to false
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun("foo.config", "foo.bar.config");
         }
@@ -149,7 +150,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transform);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
             logs.AssertContains($"The transform pattern \"{transform}\" was not performed as no matching files could be found.");
         }
 
@@ -161,7 +162,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformA + Environment.NewLine + transformB);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
             logs.AssertContains($"The transform pattern \"{transformB}\" was not performed as it overlapped with another transform.");
         }
 
@@ -172,7 +173,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition.Replace('\\', Path.DirectorySeparatorChar));            
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun(sourceFile, expectedAppliedTransform);
             configurationTransformer.ReceivedWithAnyArgs(1).PerformTransform("", "", ""); // Only Called Once
@@ -184,7 +185,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "*.bar.blah => bar.blah");
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun("bar.blah", "foo.bar.blah");
             AssertTransformRun("bar.blah", "xyz.bar.blah");
@@ -197,7 +198,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "bar.blah => *.bar.blah");
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun("foo.bar.blah", "bar.blah");
             AssertTransformRun("xyz.bar.blah", "bar.blah");
@@ -214,7 +215,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, pattern);
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformRun(from, to);
         }
@@ -230,7 +231,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, pattern);
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             AssertTransformNotRun(from, to);
         }
@@ -247,7 +248,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deploymentVariables.Set(SpecialVariables.Environment.Name, "my-test-env");
             deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
             deploymentVariables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
-            var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
+            var runningDeployment = new CalamariExecutionContext(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
 
             //mock the world
             calamariFileSystem.DirectoryExists(@"c:\temp").Returns(true);
@@ -267,7 +268,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var log = new InMemoryLog();
             var transformer = Substitute.For<IConfigurationTransformer>();
             var fileLocator = new TransformFileLocator(calamariFileSystem, log);
-            new ConfigurationTransformsConvention(calamariFileSystem, transformer, fileLocator, log).Install(runningDeployment);
+            new ConfigurationTransformsConvention(calamariFileSystem, transformer, fileLocator, log).Run(runningDeployment);
 
             //not completely testing every scenario here, but this is a reasonable half way point to make sure it works without going overboard
             log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @"Recursively searching for transformation files that match *.config in folder 'c:\temp'");
@@ -328,7 +329,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private ConfigurationTransformsConvention CreateConvention()
         {
-            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator);
+            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator, new LogWrapper());
         }
 
         private void AssertTransformRun(string configFile, string transformFile)

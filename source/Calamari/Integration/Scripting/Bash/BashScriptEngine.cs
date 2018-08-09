@@ -4,6 +4,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Shared;
 using Calamari.Shared.Scripting;
+using Octostache;
 
 namespace Calamari.Integration.Scripting.Bash
 {

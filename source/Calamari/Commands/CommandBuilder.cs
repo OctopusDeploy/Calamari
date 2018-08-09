@@ -2,27 +2,33 @@
 using System.Collections.Generic;
 using Autofac;
 using Autofac.Core;
-using Calamari.Commands.Support;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
+using Calamari.Deployment.Journal;
 using Calamari.Integration.Scripting;
 using Calamari.Shared;
 using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Octostache;
-using Org.BouncyCastle.Crypto.Tls;
 using IConvention = Calamari.Shared.Commands.IConvention;
 
 namespace Calamari.Commands
 {
     
-
     public class CalamariExecutionContext : IExecutionContext
     {
         public VariableDictionary Variables { get; set; }
         public string PackageFilePath { get;set; }
         
         
+        public CalamariExecutionContext(string packageFilePath, VariableDictionary variables)
+        {
+            PackageFilePath = packageFilePath;
+            Variables = variables;
+        }
+        
+        public CalamariExecutionContext()
+        {
+        }
         
         public DeploymentWorkingDirectory CurrentDirectoryProvider { get; set; }
 
@@ -57,10 +63,10 @@ namespace Calamari.Commands
 
     public class FeaturesList : IFeaturesList 
     {
-        private readonly Container container;
+        private readonly IContainer container;
         public List<IFeature> Features = new List<IFeature>();
         
-        public FeaturesList(Container container)
+        public FeaturesList(IContainer container)
         {
             this.container = container;
         }
@@ -79,17 +85,40 @@ namespace Calamari.Commands
     
     public class CommandBuilder: ICommandBuilder
     {
-        private readonly Container container;
+        private readonly IContainer container;
         private readonly FeaturesList featuresList;
-        public List<Action<IExecutionContext>> ConventionSteps = new List<Action<IExecutionContext>>();
+        readonly List<Action<IExecutionContext>> conventionSteps = new List<Action<IExecutionContext>>();
 
-        public CommandBuilder(Container container)
+        public CommandBuilder(IContainer container)
         {
             this.container = container;
             featuresList = new FeaturesList(container);
         }
 
+
+        public IEnumerable<Action<IExecutionContext>> BuildConventionSteps(IDeploymentJournal journal)
+        {
+            yield return (ctx) => new ContributeEnvironmentVariablesConvention().Run(ctx);
+            if (journal != null)
+            {
+                yield return (ctx) => new ContributePreviousInstallationConvention(journal).Run(ctx);
+                yield return (ctx) => new ContributePreviousSuccessfulInstallationConvention(journal).Run(ctx);
+            }
+            yield return (ctx) => new LogVariablesConvention().Run(ctx);
+            
+            if (journal != null)
+            {
+                yield return (ctx) => new AlreadyInstalledConvention(journal).Run(ctx);
+            }
+
+            foreach (var action in conventionSteps)
+            {
+                yield return action;
+            }
+        }
+
         public bool UsesDeploymentJournal { get; set; }
+        public bool PerformFreespaceCheck { get; set; }
         
         public IFeaturesList Features => featuresList;
 
@@ -164,8 +193,6 @@ namespace Calamari.Commands
                 (new FeatureConvention(stage, featuresList.Features.ToArray(), fileSystem, scriptEngine, embededResources)).Run(ctx);
             });
         }
-
-        
         
         public ICommandBuilder RunPreScripts()
         {
@@ -198,28 +225,43 @@ namespace Calamari.Commands
 
         public List<Action<IExecutionContext>> BuildRollbackScriptSteps()
         {
+            var fileSystem = container.Resolve<ICalamariFileSystem>();
+            var scriptEngine = container.Resolve<CombinedScriptEngine>();
+            var embededResources = container.Resolve<ICalamariEmbeddedResources>();
+            
             // TODO: No variable based deploy failed?
-            var cb = new CommandBuilder(container);
-            cb.AddFeatureConvention(DeploymentStages.DeployFailed);
-            cb.AddPackagedScriptConvention(DeploymentStages.DeployFailed);
-            return cb.ConventionSteps;
+            return new List<Action<IExecutionContext>>()
+            {
+                (ctx) =>
+                {
+                  
+                    (new FeatureConvention(DeploymentStages.DeployFailed, featuresList.Features.ToArray(), fileSystem,
+                        scriptEngine,
+                        embededResources)).Run(ctx);
+                },
+                (ctx) =>
+                {
+                    (new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine)).Run(ctx);
+                }
+            };
         }
 
         public List<Action<IExecutionContext>> BuildCleanupScriptSteps()
         {
-            var cb = new CommandBuilder(container);
-            throw new NotImplementedException();
-            
-            /*if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
+            return new List<Action<IExecutionContext>>()
             {
-                DeleteScripts(deployment);
-            }*/
-            //return cb.ConventionSteps;
+                (ctx) =>
+                {
+                    var fileSystem = container.Resolve<ICalamariFileSystem>();
+                    var scriptEngine = container.Resolve<CombinedScriptEngine>();
+                    (new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine)).Cleanup(ctx);
+                }
+            };
         }
 
         public ICommandBuilder AddConvention(Action<IExecutionContext> instance)
         {
-            ConventionSteps.Add(instance);
+            conventionSteps.Add(instance);
             return this;
         }
         

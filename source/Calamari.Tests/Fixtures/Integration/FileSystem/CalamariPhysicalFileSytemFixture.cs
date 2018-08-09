@@ -50,6 +50,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void NonWindowsUsesWindowsFileSystem()
         {
+           
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             Assert.IsInstanceOf<NixCalamariPhysicalFileSystem>(fileSystem);
         }

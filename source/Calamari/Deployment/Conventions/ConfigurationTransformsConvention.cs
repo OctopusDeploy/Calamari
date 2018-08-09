@@ -16,12 +16,12 @@ namespace Calamari.Deployment.Conventions
         private readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
 
-        public ConfigurationTransformsConvention(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log = null)
+        public ConfigurationTransformsConvention(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log)
         {
             this.fileSystem = fileSystem;
             this.configurationTransformer = configurationTransformer;
             this.transformFileLocator = transformFileLocator;
-            this.log = log ?? new LogWrapper();
+            this.log = log;
         }
 
         public void Run(IExecutionContext deployment)

@@ -1,9 +1,11 @@
 ﻿using System;
+using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
@@ -16,7 +18,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     [TestFixture]
     public class CopyPackageToCustomInstallationDirectoryConventionFixture
     {
-        RunningDeployment deployment;
+        IExecutionContext deployment;
         ICalamariFileSystem fileSystem;
         CalamariVariableDictionary variables;
         readonly string customInstallationDirectory = (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac) ? "/var/tmp/myCustomInstallDir" : "C:\\myCustomInstallDir";
@@ -29,21 +31,21 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            deployment = new RunningDeployment(packageFilePath, variables);
+            deployment = new CalamariExecutionContext(packageFilePath, variables);
         }
 
         [Test]
         public void ShouldCopyFilesWhenCustomInstallationDirectoryIsSupplied()
         {
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
             fileSystem.Received().CopyDirectory( stagingDirectory, customInstallationDirectory);
         }
 
         [Test]
         public void ShouldNotCopyFilesWhenCustomInstallationDirectoryNotSupplied()
         {
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
             fileSystem.DidNotReceive().CopyDirectory(Arg.Any<string>(), customInstallationDirectory);
         }
 
@@ -53,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
             variables.Set(SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             // Assert directory was purged
             fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), new string[0]);
@@ -67,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.CustomInstallationDirectoryPurgeExclusions, "firstglob\nsecondglob");
 
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             // Assert we handed in the exclusion globs
             fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), Arg.Is<string[]>(a => a[0] == "firstglob" && a[1] == "secondglob"));
@@ -79,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
             variables.Set(SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, false.ToString());
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
 
             // Assert directory was purged
             fileSystem.DidNotReceive().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>());
@@ -89,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldSetCustomInstallationDirectoryVariable()
         {
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
             Assert.AreEqual(variables.Get(SpecialVariables.Package.CustomInstallationDirectory), customInstallationDirectory);
         }
 
@@ -100,7 +102,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set("CustomInstallDirectory", customInstallationDirectory);
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, "#{CustomInstalDirectory}");
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
         }
 
         [Test]
@@ -110,7 +112,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string relativeInstallDirectory = "relative/path/to/folder";
             variables.Set(SpecialVariables.Package.CustomInstallationDirectory, relativeInstallDirectory);
 
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
         }
 
         [Test]
@@ -123,7 +125,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.CopyDirectory(Arg.Any<string>(), Arg.Any<string>())
                 .ThrowsForAnyArgs(
                     new UnauthorizedAccessException($"Access to the path {customInstallationDirectory} was denied."));
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
         }
 
 
@@ -136,7 +138,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.CopyDirectory(Arg.Any<string>(), Arg.Any<string>())
                 .ThrowsForAnyArgs(
                     new UnauthorizedAccessException($"Access to the path {customInstallationDirectory} was denied."));
-            CreateConvention().Install(deployment);
+            CreateConvention().Run(deployment);
         }
 
         private CopyPackageToCustomInstallationDirectoryConvention CreateConvention()

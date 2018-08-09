@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading;
+using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
@@ -8,6 +10,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Calamari.Shared.Scripting;
 using NSubstitute;
@@ -21,9 +24,8 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         ICalamariFileSystem fileSystem;
         ICalamariEmbeddedResources embeddedResources;
-        IScriptEngine scriptEngine;
-        ICommandLineRunner commandLineRunner;
-        RunningDeployment deployment;
+        IScriptRunner scriptEngine;
+        IExecutionContext deployment;
         CalamariVariableDictionary variables;
         const string stagingDirectory = "c:\\applications\\acme\\1.0.0";
         const string scriptContents = "blah blah blah";
@@ -33,15 +35,14 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
             embeddedResources = Substitute.For<ICalamariEmbeddedResources>();
-            scriptEngine = Substitute.For<IScriptEngine>();
-            commandLineRunner = Substitute.For<ICommandLineRunner>();
+            scriptEngine = Substitute.For<IScriptRunner>();
 
             scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.PowerShell });
 
             variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.blah");
 
-            deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };
+            deployment = new CalamariExecutionContext("C:\\packages", variables) { StagingDirectory = stagingDirectory };
         }
 
         [Test]
@@ -53,12 +54,12 @@ namespace Calamari.Tests.Fixtures.Conventions
             Arrange(features, suffix);
 
             var convention = CreateConvention(suffix);
-            convention.Install(deployment);
+            convention.Run(deployment);
 
             foreach (var feature in features)
             {
                 var scriptPath = Path.Combine(stagingDirectory, FeatureConvention.GetScriptName(feature, suffix, "ps1"));
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner);
+                scriptEngine.Received().Execute(Arg.Is<Shared.Scripting.Script>(s => s.File == scriptPath));
             }
         }
 
@@ -74,8 +75,8 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.FileExists(scriptPath).Returns(false);
 
             var convention = CreateConvention(deployStage);
-            scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner).Returns(new CommandResult("", 0));
-            convention.Install(deployment);
+            scriptEngine.Execute(Arg.Is<Shared.Scripting.Script>(s => s.File == scriptPath)).Returns(new CommandResult("", 0));
+            convention.Run(deployment);
 
             fileSystem.Received().OverwriteFile(scriptPath, scriptContents );
         }
@@ -92,8 +93,8 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             var convention = CreateConvention(deployStage);
 
-            scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner).Returns(new CommandResult("", 0));
-            convention.Install(deployment);
+            scriptEngine.Execute(Arg.Is<Shared.Scripting.Script>(s => s.File == scriptPath)).Returns(new CommandResult("", 0));
+            convention.Run(deployment);
 
             fileSystem.DidNotReceive().OverwriteFile(scriptPath, Arg.Any<string>() );
         }
@@ -108,8 +109,8 @@ namespace Calamari.Tests.Fixtures.Conventions
             Arrange(new List<string>{ feature }, deployStage);
             var convention = CreateConvention(deployStage);
 
-            scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner).Returns(new CommandResult("", 0));
-            convention.Install(deployment);
+            scriptEngine.Execute(Arg.Is<Shared.Scripting.Script>(s => s.File == scriptPath)).Returns(new CommandResult("", 0));
+            convention.Run(deployment);
             fileSystem.Received().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
         }
 
@@ -126,7 +127,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 embeddedResources.GetEmbeddedResourceText(Arg.Any<Assembly>(), embeddedResourceName).Returns(scriptContents);
                 embeddedResourceNames.Add(embeddedResourceName);
                 var scriptPath = Path.Combine(stagingDirectory, scriptName);
-                scriptEngine.Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner)
+                scriptEngine.Execute(Arg.Is<Shared.Scripting.Script>(s => s.File == scriptPath))
                             .Returns(new CommandResult("", 0));
             }
 
@@ -135,7 +136,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private FeatureConvention CreateConvention(string deployStage)
         {
-            return new FeatureConvention(deployStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources);
+            return new FeatureConvention(deployStage, null, fileSystem, scriptEngine, embeddedResources);
         }
     }
 }

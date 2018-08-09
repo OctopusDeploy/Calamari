@@ -5,6 +5,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Calamari.Integration.Certificates.WindowsNative
 {
+#pragma warning disable 1584,1711,1572,1581,1580
     /// <summary>
     ///     <para>
     ///         SafeCertContextHandle provides a SafeHandle class for an X509Certificate's certificate context
@@ -19,11 +20,10 @@ namespace Calamari.Integration.Certificates.WindowsNative
     ///     </para>
     ///     <para>
     ///         A SafeCertificateContextHandle for an X509Certificate can be obtained by calling the <see
-#pragma warning disable 1584,1711,1572,1581,1580
     ///         cref="X509CertificateExtensionMethods.GetCertificateContext" /> extension method.
-#pragma warning restore 1584,1711,1572,1581,1580
     ///     </para>
     /// </summary>
+#pragma warning restore 1584,1711,1572,1581,1580
     internal sealed class SafeCertContextHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
         private SafeCertContextHandle() : base(true)

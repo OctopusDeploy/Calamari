@@ -28,8 +28,8 @@ namespace Calamari.Commands
         private string scriptFileArg;
         private string packageFile;
         private string scriptParametersArg;
-        private DeploymentJournal journal;
-        private RunningDeployment deployment;
+        private DeploymentJournal journal = null;
+        private RunningDeployment deployment = null;
         private readonly CalamariVariableDictionary variables;
         private readonly CombinedScriptEngine scriptEngine;
 
@@ -47,30 +47,31 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
-
-            variables.EnrichWithEnvironmentVariables();
-            variables.LogVariables();
-
-            var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var semaphore = SemaphoreFactory.Get();
-            journal = new DeploymentJournal(filesystem, semaphore, variables);
-            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
-
-            ValidateArguments();
-
-            var result = ExecuteScriptFromPackage() ??
-                         ExecuteScriptFromVariables() ??
-                         ExecuteScriptFromParameters();
-
-            if (result.HasValue)
-            {
-                return result.Value;
-            }
-
-            throw new CommandException("No script details provided.\r\n" +
-                                       $"Pleave provide the script either via the `{SpecialVariables.Action.Script.ScriptBody}` variable, " +
-                                       "through a package provided via the `--package` argument or directly via the `--script` argument.");
+//            Options.Parse(commandLineArguments);
+//
+//            variables.EnrichWithEnvironmentVariables();
+//            variables.LogVariables();
+//
+//            var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+//            var semaphore = SemaphoreFactory.Get();
+//            journal = new DeploymentJournal(filesystem, semaphore, variables);
+//            deployment = new RunningDeployment(packageFile, (CalamariVariableDictionary)variables);
+//
+//            ValidateArguments();
+//
+//            var result = ExecuteScriptFromPackage() ??
+//                         ExecuteScriptFromVariables() ??
+//                         ExecuteScriptFromParameters();
+//
+//            if (result.HasValue)
+//            {
+//                return result.Value;
+//            }
+//
+//            throw new CommandException("No script details provided.\r\n" +
+//                                       $"Pleave provide the script either via the `{SpecialVariables.Action.Script.ScriptBody}` variable, " +
+//                                       "through a package provided via the `--package` argument or directly via the `--script` argument.");
+            return -1;
         }
 
         void ExtractScriptFromPackage(VariableDictionary variables)
@@ -250,8 +251,8 @@ namespace Calamari.Commands
         {
             // Replace variables on any other files that may have been extracted with the package
             var substituter = new FileSubstituter(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
-            new SubstituteInFilesConvention(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), substituter)
-                .Install(deployment);
+//            new SubstituteInFilesConvention(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), substituter)
+//                .Install(deployment);
         }
 
         private int InvokeScript(string scriptFileName, CalamariVariableDictionary variables)
@@ -269,7 +270,7 @@ namespace Calamari.Commands
             
             var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             Log.VerboseFormat("Executing '{0}'", scriptFileName);
-            var result = scriptEngine.Execute(new Script(scriptFileName, scriptParametersArg ?? scriptParameters), variables, runner);
+            var result = scriptEngine.Execute(new Shared.Scripting.Script(scriptFileName, scriptParametersArg ?? scriptParameters));
 
             var shouldWriteJournal = CanWriteJournal(variables) && deployment != null && !deployment.SkipJournal;
 

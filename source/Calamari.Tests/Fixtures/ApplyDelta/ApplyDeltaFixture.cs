@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             if (messageOnError)
                 command = command.Flag("serviceMessageOnError");
 
-            return Invoke(command);
+            return InvokeInProcess(command);
         }
 
         [OneTimeSetUp]

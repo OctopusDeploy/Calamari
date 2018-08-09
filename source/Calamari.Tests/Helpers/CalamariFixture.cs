@@ -43,8 +43,18 @@ namespace Calamari.Tests.Helpers
             using (var logs = new ProxyLog())
             {
                 var args = command.GetRawArgs();
-                var container = global::Calamari.Program.BuildContainer(args);
-                var exitCode = container.Resolve<Calamari.Program>().Execute(args);
+
+                int exitCode = -999;
+                try
+                {
+                    exitCode = global::Calamari.Program.Main(args);
+                }
+                catch (Exception)
+                {
+                    
+                }
+                //var container = global::Calamari.Program.BuildContainer(args);
+                //var exitCode = container.Resolve<Calamari.Program>().Execute(args);
 
                 var capture = new CaptureCommandOutput();
                 var sco = new SplitCommandOutput(

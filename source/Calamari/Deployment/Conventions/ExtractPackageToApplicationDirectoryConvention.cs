@@ -1,5 +1,6 @@
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Shared;
 using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 
@@ -8,8 +9,8 @@ namespace Calamari.Deployment.Conventions
     public class ExtractPackageToApplicationDirectoryConvention : ExtractPackageConvention 
     {
 
-        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem) 
-            : base(extractor, fileSystem)
+        public ExtractPackageToApplicationDirectoryConvention(IPackageExtractor extractor, ICalamariFileSystem fileSystem, ILog log) 
+            : base(extractor, fileSystem, log)
         {
         }
 

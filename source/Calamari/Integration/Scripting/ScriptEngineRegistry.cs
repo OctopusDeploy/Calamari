@@ -14,6 +14,7 @@ namespace Calamari.Integration.Scripting
         IDictionary<ScriptSyntax, IScriptEngine> ScriptEngines { get; }
     }
 
+    //TODO: Replace with reflection?
     public class ScriptEngineRegistry: IScriptEngineRegistry
     {
         private readonly Dictionary<ScriptSyntax, IScriptEngine> scriptEngines = new Dictionary<ScriptSyntax, IScriptEngine>
@@ -24,9 +25,8 @@ namespace Calamari.Integration.Scripting
             {ScriptSyntax.FSharp, new FSharpEngine()}
         }; 
 
-        public static readonly ScriptEngineRegistry Instance = new ScriptEngineRegistry();
 
-        public IDictionary<ScriptSyntax, IScriptEngine> ScriptEngines { get { return scriptEngines; } }
+        public IDictionary<ScriptSyntax, IScriptEngine> ScriptEngines => scriptEngines;
     }
 
 }

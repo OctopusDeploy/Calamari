@@ -9,6 +9,7 @@ using Octostache;
 
 namespace Calamari
 {
+    //TODO: this can dissapear
     public class LogWrapper : ILog
     {
         public void Verbose(string message)
@@ -49,6 +50,16 @@ namespace Calamari
         public void ErrorFormat(string message, params object[] args)
         {
             Log.ErrorFormat(message, args);
+        }
+
+        public void SetOutputVariable(string name, string value)
+        {
+            Log.SetOutputVariable(name, value);
+        }
+
+        public void SetOutputVariable(string name, string value, VariableDictionary variables)
+        {
+           Log.SetOutputVariable(name, value, variables);
         }
     }
 

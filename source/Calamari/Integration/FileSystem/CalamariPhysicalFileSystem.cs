@@ -573,8 +573,8 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        public bool SkipFreeDiskSpaceCheck { get; set; }
-        public int? FreeDiskSpaceOverrideInMegaBytes { get; set; }
+        public static bool SkipFreeDiskSpaceCheck { get; set; }
+        public static int? FreeDiskSpaceOverrideInMegaBytes { get; set; }
 
         public void EnsureDiskHasEnoughFreeSpace(string directoryPath)
         {

@@ -15,13 +15,13 @@ namespace Calamari.Azure.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly IScriptEngine scriptEngine;
+        readonly IScriptRunner scriptEngine;
         private readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
 
         public SwapAzureDeploymentConvention(ICalamariFileSystem fileSystem,
             ICalamariEmbeddedResources embeddedResources,
-            IScriptEngine scriptEngine,
+            IScriptRunner scriptEngine,
             ILog log,
             ICommandLineRunner commandLineRunner)
         {

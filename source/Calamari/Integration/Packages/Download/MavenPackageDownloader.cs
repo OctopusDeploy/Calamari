@@ -57,6 +57,8 @@ namespace Calamari.Integration.Packages.Download
             return DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts, downloadAttemptBackoff);
         }
 
+
+        private string[] EXTENSIONS = {".jar", ".war", ".ear", ".rar", ".zip"};
         /// <summary>
         /// Attempt to find a package id and version in the local cache
         /// </summary>
@@ -68,7 +70,7 @@ namespace Calamari.Integration.Packages.Download
         {
             Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
-            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, JarExtractor.EXTENSIONS));
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, EXTENSIONS));
 
             foreach (var file in files)
             {
@@ -207,7 +209,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(feedUri, "feedUri can not be null");
 
             var errors = new HashSet<string>();
-            var fileChecks = JarExtractor.EXTENSIONS
+            var fileChecks = EXTENSIONS
                 .Union(AdditionalExtensions)
                 .AsParallel()
                 .Select(extension =>

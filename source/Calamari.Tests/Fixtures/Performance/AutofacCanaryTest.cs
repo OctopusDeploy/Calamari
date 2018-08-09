@@ -106,19 +106,19 @@ namespace Calamari.Tests.Fixtures.Performance
         /// </summary>
         private void DoOldCalamariExecutionPipeline()
         {
-            // We manually replicate the type lookups that used to happen
-            var runCommand = (ICommand)Activator.CreateInstance(
-                CommandLocator.Find("run-script", typeof(RunScriptCommand).Assembly),
-                new CalamariVariableDictionary(),
-                new CombinedScriptEngine());
-            var helpCommand = (ICommand)Activator.CreateInstance(
-                CommandLocator.Find("help", typeof(HelpCommand).Assembly),
-                CommandLocator.List(typeof(RunScriptCommand).Assembly),
-                runCommand);
-
-            new Calamari.Program(
-                helpCommand,
-                new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
+//            // We manually replicate the type lookups that used to happen
+//            var runCommand = (ICommand)Activator.CreateInstance(
+//                CommandLocator.Find("run-script", typeof(RunScriptCommand).Assembly),
+//                new CalamariVariableDictionary(),
+//                new CombinedScriptEngine());
+//            var helpCommand = (ICommand)Activator.CreateInstance(
+//                CommandLocator.Find("help", typeof(HelpCommand).Assembly),
+//                CommandLocator.List(typeof(RunScriptCommand).Assembly),
+//                runCommand);
+//
+//            new Calamari.Program(
+//                helpCommand,
+//                new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
         }
     }
 

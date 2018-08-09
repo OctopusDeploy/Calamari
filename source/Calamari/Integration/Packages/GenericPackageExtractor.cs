@@ -14,18 +14,10 @@ namespace Calamari.Integration.Packages
 
         private readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
 
+        
         public GenericPackageExtractor()
         {
-        }
-
-        /// <summary>
-        /// Construct a generic extractor supplying a list of additional extractors
-        /// that should be considered after the generic list has been exhausted.
-        /// </summary>
-        /// <param name="additionalExtractors">A list of additional extractors that are to be considered when dealing with packages</param>
-        public GenericPackageExtractor(List<IPackageExtractor> additionalExtractors)
-        {
-            this.additionalExtractors.AddRange(additionalExtractors);
+            //this.additionalExtractors.AddRange(additionalExtractors);
         }
 
         public string[] Extensions

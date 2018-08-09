@@ -16,7 +16,7 @@ namespace Calamari.Modules
                 where typeof(ICommand).IsAssignableFrom(t)
                 let attribute = (ICommandMetadata)t.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
                 where attribute != null
-                where attribute.Name == fixedName || attribute.Aliases.Any(a => a == fixedName)
+                where attribute.Name == fixedName // || attribute.Aliases.Any(a => a == fixedName)
                 select t).FirstOrDefault();
 
             return found;
