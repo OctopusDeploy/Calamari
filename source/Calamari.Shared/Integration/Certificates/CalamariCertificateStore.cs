@@ -8,14 +8,14 @@ namespace Calamari.Integration.Certificates
 {
     public class CalamariCertificateStore : ICertificateStore
     {
-        public X509Certificate2 GetOrAdd(string thumbprint, string bytes)
+        public X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes)
         {
-            return GetOrAdd(thumbprint, Convert.FromBase64String(bytes), null, null, new X509Store("Octopus", StoreLocation.CurrentUser), true);
+            return GetOrAdd(thumbprint, bytes, null, null, new X509Store("Octopus", StoreLocation.CurrentUser), true);
         }
 
-        public X509Certificate2 GetOrAdd(string thumbprint, string bytes, StoreName storeName)
+        public X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, StoreName storeName)
         {
-            return GetOrAdd(thumbprint, Convert.FromBase64String(bytes), null, null, new X509Store(storeName, StoreLocation.CurrentUser), true);
+            return GetOrAdd(thumbprint, bytes, null, null, new X509Store(storeName, StoreLocation.CurrentUser), true);
         }
 
         public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")

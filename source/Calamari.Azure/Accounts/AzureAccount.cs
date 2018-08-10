@@ -1,4 +1,5 @@
-﻿using Calamari.Azure.Integration;
+﻿using System;
+using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Octostache;
 
@@ -13,7 +14,7 @@ namespace Calamari.Azure.Accounts
             ServiceManagementEndpointSuffix = variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix, DefaultVariables.StorageEndpointSuffix);
 
             CertificateThumbprint = variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint);
-            CertificateBytes = variables.Get(SpecialVariables.Action.Azure.CertificateBytes);
+            CertificateBytes = Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
         }
 
         public string SubscriptionNumber { get; set; }
@@ -23,6 +24,6 @@ namespace Calamari.Azure.Accounts
         public string ServiceManagementEndpointBaseUri { get; set; }
         public string ServiceManagementEndpointSuffix { get; set; }
 
-        public string CertificateBytes { get; set; }
+        public byte[] CertificateBytes { get; set; }
     }
 }
