@@ -17,6 +17,7 @@ namespace Calamari.Kubernetes
 //            public const string Install = "Octopus.Action.Helm.Install";
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
             public const string KeyValues = "Octopus.Action.Helm.KeyValues";
+            public const string YamlValues = "Octopus.Action.Helm.YamlValues";
             public const string ResetValues = "Octopus.Action.Helm.ResetValues";
 
             public static class Packages

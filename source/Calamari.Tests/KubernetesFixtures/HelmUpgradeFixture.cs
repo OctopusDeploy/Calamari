@@ -153,6 +153,20 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
+        
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void ValuesFromRawYaml_ValuesAdded()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.YamlValues, "\"SpecialMessage\": \"YAML\"");
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
+        }
 
 
         void AddPostDeployMessageCheckAndCleanup()

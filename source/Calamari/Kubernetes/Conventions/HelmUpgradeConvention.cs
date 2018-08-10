@@ -36,7 +36,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var sb = new StringBuilder($"helm upgrade"); //Force reset to use values now in this release
 
-            if (deployment.Variables.GetFlag(SpecialVariables.Helm.ReleaseName, true))
+            if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
             {
                 sb.Append(" --reset-values");
             }
@@ -49,6 +49,11 @@ namespace Calamari.Kubernetes.Conventions
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
                 sb.Append($" --values \"{additionalValuesFile}\"");
+            }
+            
+            if (TryAddRawValuesYaml(deployment, out var rawValuesFile))
+            {
+                sb.Append($" --values \"{rawValuesFile}\"");
             }
             
             if (TryGenerateVariablesFile(deployment, out var valuesFile))
@@ -157,6 +162,21 @@ namespace Calamari.Kubernetes.Conventions
             return packagePath;
         }
 
+
+        private static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
+        {
+            fileName = null;
+            var yaml = deployment.Variables.Get(SpecialVariables.Helm.YamlValues);
+            if (!string.IsNullOrWhiteSpace(yaml))
+            {
+                fileName = Path.Combine(deployment.CurrentDirectory, "rawYamlValues.yaml");
+                File.WriteAllText(fileName, yaml);
+                return true;
+            }
+
+            return false;
+        }
+        
         private static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
@@ -164,7 +184,7 @@ namespace Calamari.Kubernetes.Conventions
             var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(variables);
             if (values.Keys.Any())
             {
-                fileName = Path.Combine(deployment.CurrentDirectory, "newValues.yaml");
+                fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
                 using (var outputFile = new StreamWriter(fileName, false))
                 {
                     foreach (var kvp in values)
