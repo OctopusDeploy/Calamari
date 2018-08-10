@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment;
+﻿using System;
+using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using Microsoft.Azure;
 using Octostache;
@@ -18,7 +19,7 @@ namespace Calamari.Azure.Integration
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var certificateThumbprint = variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint);
-            var certificateBytes = variables.Get(SpecialVariables.Action.Azure.CertificateBytes);
+            var certificateBytes = Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
 
             var certificate = certificateStore.GetOrAdd(certificateThumbprint, certificateBytes);
             return new CertificateCloudCredentials(subscriptionId, certificate);
