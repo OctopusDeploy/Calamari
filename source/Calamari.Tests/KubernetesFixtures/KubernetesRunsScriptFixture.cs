@@ -13,6 +13,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
+    [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
     public class KubernetesContextScriptWrapperFixture
     {
         private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
