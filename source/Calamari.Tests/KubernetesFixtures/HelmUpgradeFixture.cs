@@ -179,7 +179,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 return Invoke(Calamari()
                     .Action("helm-upgrade")
-                    .Argument("extensions", "Calamari.Kubernetes")
                     .Argument("package", pkg)
                     .Argument("variables", variablesFile.FilePath));
             }
