@@ -1,6 +1,10 @@
 using System;
+<<<<<<< HEAD
 using System.Threading;
 using Calamari.Commands;
+=======
+using System.Collections.Generic;
+>>>>>>> vNext
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -30,7 +34,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldSkipIfInstalled()
         {
             variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            previous = new JournalEntry("123", "tenant", "env", "proj", "pkg", "0.0.9", "rp01", DateTime.Now, "C:\\PackageOld.nupkg", "C:\\App", "C:\\MyApp", true);
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
+                new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
 
@@ -40,7 +45,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldOnlySkipIfSpecified()
         {
-            previous = new JournalEntry("123", "tenant", "env", "proj", "pkg", "0.0.9", "rp01", DateTime.Now, "C:\\PackageOld.nupkg", "C:\\App", "C:\\MyApp", true);
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
+                new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
 
@@ -51,7 +57,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldNotSkipIfPreviouslyFailed()
         {
             variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            previous = new JournalEntry("123", "tenant", "env", "proj", "pkg", "0.0.9", "rp01", DateTime.Now, "C:\\PackageOld.nupkg", "C:\\App", "C:\\MyApp", false);
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", false, 
+                new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
 

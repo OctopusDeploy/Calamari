@@ -13,6 +13,7 @@ using System.Reflection;
 using Autofac.Features.ResolveAnything;
 using Calamari.Commands;
 using Calamari.Deployment.Conventions;
+using Calamari.Deployment.Journal;
 using Calamari.Extensions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
@@ -132,17 +133,23 @@ namespace Calamari
             var Options = new OptionSet();
             string variablesFile =null;
                 string packageFile=null;
-            string sensitiveVariablesPassword =null; string sensitiveVariablesFile = null;
+            string base64Variables = null;
+            string sensitiveVariablesPassword =null;
+            string sensitiveVariablesFile = null;
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            Options.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
+            
+            //TODO: This exists for DeployJava command... lets get it to use package like everything else
+            Options.Add("archive=", "Path to the Java archive to deploy.", v => packageFile = Path.GetFullPath(v));
             Options.Parse(args);
 
 
 
             var variables =
-                new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+                new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, base64Variables);
             
             var builder = new ContainerBuilder();
             builder.RegisterSource(new AnyConcreteTypeNotAlreadyRegisteredSource());
@@ -168,10 +175,13 @@ namespace Calamari
 
             var x = (ICustomCommand)container.Resolve(cmd.type);
             
-            var cb = new CommandBuilder(container);
+            var cb = new CommandBuilder(container)
+            {
+                Variables = variables
+            };
             x.Run(cb);
             
-            var cr = new CommandRunner(cb, container.Resolve<ICalamariFileSystem>());
+            var cr = new CommandRunner(cb, container.Resolve<ICalamariFileSystem>(), new DeploymentJournalWriter(container.Resolve<ICalamariFileSystem>()));
             cr.Run(variables, packageFile);
             
             return 0;
@@ -193,7 +203,7 @@ namespace Calamari
             // Register the program entry point
             builder.RegisterModule(new CalamariProgramModule());
             // This will register common utilities and services
-            builder.RegisterModule(new CommonModule(args));
+//            builder.RegisterModule(new CommonModule(args));
             // For all the common locations (i.e. this assembly and the shared one)
             // load any commands, and any commands to support the help command (if
             // required).

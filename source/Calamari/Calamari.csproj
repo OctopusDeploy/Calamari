@@ -39,12 +39,21 @@
   <!--<ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">-->
   <!--<ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj"/>-->
   <!--</ItemGroup>-->
+  <!--<ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">-->
+  <!--<ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />-->
+  <!--<ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />-->
+  <!--<ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />-->
+  <!--</ItemGroup>-->
+  <!--<ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">-->
+  <!--<ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />-->
+  <!--</ItemGroup>-->
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Versioning" Version="4.1.0" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
+    <!--<PackageReference Include="Octostache" Version="2.1.14" />-->
     <!--<PackageReference Include="Octostache" Version="2.1.14" />-->
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />

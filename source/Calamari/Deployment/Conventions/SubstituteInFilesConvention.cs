@@ -15,20 +15,15 @@ namespace Calamari.Deployment.Conventions
         private readonly ICalamariFileSystem fileSystem;
         readonly IFileSubstituter substituter;
 
-        public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter)
+        public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter,
+            Func<IExecutionContext, bool> predicate = null,
+            Func<IExecutionContext, IEnumerable<string>> fileTargetFactory = null)
         {
             this.fileSystem = fileSystem;
             this.substituter = substituter;
-            predicate = (deployment) => deployment.Variables.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled);
-            fileTargets = (deployment) => deployment.Variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets);
-        }
-
-        public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter,
-            Func<IExecutionContext, bool> predicate,
-            Func<IExecutionContext, IEnumerable<string>> fileTargetFactory):this(fileSystem, substituter)
-        {
-            this.predicate = predicate;
-            this.fileTargets = fileTargetFactory;
+            
+            this.predicate = predicate ?? ((deployment) => deployment.Variables.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled));
+            this.fileTargets = fileTargetFactory ?? ((deployment) => deployment.Variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets));
         }
         
         private List<string> MatchingFiles(IExecutionContext deployment, string target)

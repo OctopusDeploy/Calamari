@@ -1,6 +1,7 @@
-﻿using Calamari.Deployment.Journal;
+﻿﻿using Calamari.Deployment.Journal;
 using Calamari.Shared;
 using Calamari.Shared.Commands;
+﻿using System.Linq;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -16,7 +17,9 @@ namespace Calamari.Deployment.Conventions
         public void Run(IExecutionContext deployment)
         {
             var policySet = deployment.Variables.Get(SpecialVariables.RetentionPolicySet);
+            
             var previous = journal.GetLatestInstallation(policySet);
+            
             string previousExtractedFrom;
             string previousExtractedTo;
             string previousVersion;
@@ -27,9 +30,12 @@ namespace Calamari.Deployment.Conventions
             }
             else
             {
-                previousExtractedFrom = previous.ExtractedFrom;
+                // This is assuming this convention is used only in steps with only one package
+                var previousPackage = previous.Packages.FirstOrDefault();
+                
                 previousExtractedTo = previous.ExtractedTo;
-                previousVersion = previous.PackageVersion;
+                previousExtractedFrom = previousPackage?.DeployedFrom ?? "";
+                previousVersion = previousPackage?.PackageVersion ?? "";
                 previousCustom = previous.CustomInstallationDirectory;
             }
 

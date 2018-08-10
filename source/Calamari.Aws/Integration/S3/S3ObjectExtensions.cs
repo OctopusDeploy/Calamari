@@ -4,7 +4,15 @@ using System.Linq;
 using Amazon.S3.Model;
 ﻿using System;
 using System.Security.Cryptography;
+<<<<<<< HEAD
  using Calamari.Shared.FileSystem;
+=======
+ using Calamari.Integration.FileSystem;
+using Calamari.Util;
+using Octopus.CoreUtilities;
+using Octopus.CoreUtilities.Extensions;
+ using Tag = Amazon.S3.Model.Tag;
+>>>>>>> vNext
 
 namespace Calamari.Aws.Integration.S3
 {

@@ -2,9 +2,12 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Calamari.Shared;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Octopus.Versioning;
 
 namespace Calamari.Commands
@@ -12,6 +15,7 @@ namespace Calamari.Commands
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
     public class DownloadPackageCommand : Command
     {
+        private readonly IScriptEngine scriptEngine;
         string packageId;
         string packageVersion;
         bool forcePackageDownload;
@@ -24,8 +28,9 @@ namespace Calamari.Commands
         private FeedType feedType = FeedType.NuGet;
         private VersionFormat versionFormat = VersionFormat.Semver;
 
-        public DownloadPackageCommand()
+        public DownloadPackageCommand(IScriptEngine scriptEngine)
         {
+            this.scriptEngine = scriptEngine;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
             Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
@@ -77,7 +82,8 @@ namespace Calamari.Commands
                     out var parsedMaxDownloadAttempts, 
                     out var parsedAttemptBackoff);
 
-                var pkg = PackageDownloaderStrategy.DownloadPackage(
+                var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
+                var pkg = new PackageDownloaderStrategy(scriptEngine, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), commandLineRunner).DownloadPackage(
                     packageId,
                     version,
                     feedId,

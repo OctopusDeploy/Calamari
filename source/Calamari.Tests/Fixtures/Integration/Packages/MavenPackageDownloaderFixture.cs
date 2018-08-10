@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Test]
         [RequiresMonoVersion480OrAbove]
         [RequiresNonFreeBSDPlatform]
-        public void Blah()
+        public void DownloadMavenPackage()
         {
             var downloader = new MavenPackageDownloader();
             var pkg = downloader.DownloadPackage("com.google.guava:guava", VersionFactory.CreateMavenVersion("22.0"), "feed-maven",

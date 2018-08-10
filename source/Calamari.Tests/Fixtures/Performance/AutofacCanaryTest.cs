@@ -6,7 +6,9 @@ using Calamari.Integration.Scripting;
 using NUnit.Framework;
 using System;
 using System.Linq;
+using Calamari.Deployment.Journal;
 using Calamari.Modules;
+using NSubstitute;
 
 
 namespace Calamari.Tests.Fixtures.Performance
@@ -106,6 +108,7 @@ namespace Calamari.Tests.Fixtures.Performance
         /// </summary>
         private void DoOldCalamariExecutionPipeline()
         {
+<<<<<<< HEAD
 //            // We manually replicate the type lookups that used to happen
 //            var runCommand = (ICommand)Activator.CreateInstance(
 //                CommandLocator.Find("run-script", typeof(RunScriptCommand).Assembly),
@@ -119,6 +122,22 @@ namespace Calamari.Tests.Fixtures.Performance
 //            new Calamari.Program(
 //                helpCommand,
 //                new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
+=======
+            // We manually replicate the type lookups that used to happen
+            var runCommand = (ICommand)Activator.CreateInstance(
+                CommandLocator.Find("run-script", typeof(RunScriptCommand).Assembly),
+                Substitute.For<IDeploymentJournalWriter>(),
+                new CalamariVariableDictionary(),
+                new CombinedScriptEngine());
+            var helpCommand = (ICommand)Activator.CreateInstance(
+                CommandLocator.Find("help", typeof(HelpCommand).Assembly),
+                CommandLocator.List(typeof(RunScriptCommand).Assembly),
+                runCommand);
+
+            new Calamari.Program(
+                helpCommand,
+                new HelpCommand(Enumerable.Empty<ICommandMetadata>()));
+>>>>>>> vNext
         }
     }
 

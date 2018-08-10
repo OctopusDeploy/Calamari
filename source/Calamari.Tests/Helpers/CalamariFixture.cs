@@ -9,7 +9,11 @@ using Octostache;
 using Autofac;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+<<<<<<< HEAD
 using Calamari.Shared;
+=======
+using Calamari.Integration.Scripting;
+>>>>>>> vNext
 
 namespace Calamari.Tests.Helpers
 {
@@ -101,6 +105,8 @@ namespace Calamari.Tests.Helpers
             var variables = new VariableDictionary();
             variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptName);
             variables.Set(SpecialVariables.Action.Script.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
+            variables.Set(SpecialVariables.Action.Script.Syntax, ScriptTypeExtensions.FileNameToScriptType(scriptName).ToString());
+            
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 
             using (new TemporaryFile(variablesFile))

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Xml.Linq;
 using Calamari.Shared;
 using Calamari.Shared.Commands;
@@ -13,14 +15,12 @@ namespace Calamari.Deployment.Journal
                 deployment.Variables.Get(SpecialVariables.Environment.Id),
                 deployment.Variables.Get(SpecialVariables.Deployment.Tenant.Id),
                 deployment.Variables.Get(SpecialVariables.Project.Id),
-                deployment.Variables.Get(SpecialVariables.Package.NuGetPackageId),
-                deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion),
                 deployment.Variables.Get(SpecialVariables.RetentionPolicySet),
                 DateTime.UtcNow,
-                deployment.PackageFilePath,
                 deployment.Variables.Get(SpecialVariables.OriginalPackageDirectoryPath),
                 deployment.Variables.Get(SpecialVariables.Package.CustomInstallationDirectory),
-                wasSuccessful
+                wasSuccessful,
+                DeployedPackage.GetDeployedPackages(deployment)
             )
         { }
         
@@ -30,63 +30,70 @@ namespace Calamari.Deployment.Journal
                 deployment.Variables.Get(SpecialVariables.Environment.Id),
                 deployment.Variables.Get(SpecialVariables.Deployment.Tenant.Id),
                 deployment.Variables.Get(SpecialVariables.Project.Id),
-                deployment.Variables.Get(SpecialVariables.Package.NuGetPackageId),
-                deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion),
                 deployment.Variables.Get(SpecialVariables.RetentionPolicySet),
                 DateTime.UtcNow,
-                deployment.PackageFilePath,
                 deployment.Variables.Get(SpecialVariables.OriginalPackageDirectoryPath),
                 deployment.Variables.Get(SpecialVariables.Package.CustomInstallationDirectory),
-                wasSuccessful
+                wasSuccessful,
+                DeployedPackage.GetDeployedPackages(deployment)
             )
         { }
 
         public JournalEntry(XElement element)
             : this(
-              GetAttribute(element, "Id"),
-              GetAttribute(element, "EnvironmentId"),
-              GetAttribute(element, "TenantId"),
-              GetAttribute(element, "ProjectId"),
-              GetAttribute(element, "PackageId"),
-              GetAttribute(element, "PackageVersion"),
-              GetAttribute(element, "RetentionPolicySet"),
-              ParseDate(GetAttribute(element, "InstalledOn")),
-              GetAttribute(element, "ExtractedFrom"),
-              GetAttribute(element, "ExtractedTo"),
-              GetAttribute(element, "CustomInstallationDirectory"),
-              ParseBool(GetAttribute(element, "WasSuccessful")) ?? true
-           ) 
+                element.Attribute("Id")?.Value,
+                element.Attribute("EnvironmentId")?.Value,
+                element.Attribute("TenantId")?.Value,
+                element.Attribute("ProjectId")?.Value,
+                element.Attribute("RetentionPolicySet")?.Value,
+                ParseDate(element.Attribute("InstalledOn")?.Value),
+                element.Attribute("ExtractedTo")?.Value,
+                element.Attribute("CustomInstallationDirectory")?.Value,
+                ParseBool(element.Attribute("WasSuccessful")?.Value) ?? true,
+                DeployedPackage.FromJournalEntryElement(element)
+            )
         { }
 
-        internal JournalEntry(string id, string environmentId, string tenantId, string projectId, string packageId, string packageVersion,
-            string retentionPolicySet, DateTime installedOn, string extractedFrom, string extractedTo, string customInstallationDirectory, bool wasSuccessful)
+        internal JournalEntry(string id, string environmentId, string tenantId, string projectId, 
+            string retentionPolicySet, DateTime installedOn, string extractedTo, string customInstallationDirectory, bool wasSuccessful,
+            IEnumerable<DeployedPackage> packages)
         {
             Id = id;
             EnvironmentId = environmentId;
             TenantId = tenantId;
             ProjectId = projectId;
-            PackageId = packageId;
-            PackageVersion = packageVersion;
             RetentionPolicySet = retentionPolicySet;
             InstalledOn = installedOn;
-            ExtractedFrom = extractedFrom;
-            ExtractedTo = extractedTo;
+            ExtractedTo = extractedTo ?? "";
             CustomInstallationDirectory = customInstallationDirectory;
             WasSuccessful = wasSuccessful;
+            Packages = packages?.ToList() ?? new List<DeployedPackage>();
         }
 
-        public string Id { get; private set; }
-        public string EnvironmentId { get; private set; }
-        public string TenantId { get; private set; }
-        public string ProjectId { get; private set; }
-        public string PackageId { get; private set; }
-        public string PackageVersion { get; private set; }
-        public string RetentionPolicySet { get; private set; }
-        public DateTime InstalledOn { get; set; }
-        public string ExtractedFrom { get; private set; }
-        public string ExtractedTo { get; private set; }
-        public string CustomInstallationDirectory { get; private set; }
-        public bool WasSuccessful { get; private set; }
+        internal JournalEntry(string id, string environmentId, string tenantId, string projectId,
+            string retentionPolicySet, DateTime installedOn, string extractedTo, string customInstallationDirectory,
+            bool wasSuccessful,
+            DeployedPackage package)
+            : this(id, environmentId, tenantId, projectId, retentionPolicySet, installedOn, extractedTo,
+                customInstallationDirectory, wasSuccessful,
+                package != null ? (IEnumerable<DeployedPackage>) new[] {package} : new List<DeployedPackage>())
+        {
+        }
+
+        public string Id { get; }
+        public string EnvironmentId { get; }
+        public string TenantId { get; }
+        public string ProjectId { get; }
+        public string RetentionPolicySet { get; }
+        public DateTime InstalledOn { get; }
+        public string ExtractedTo { get; }
+        public string CustomInstallationDirectory { get; }
+        public bool WasSuccessful { get; }
+        
+        public ICollection<DeployedPackage> Packages { get; }
+
+        // Short-cut for deployments with a single package
+        public DeployedPackage Package => Packages.FirstOrDefault(); 
 
         public XElement ToXmlElement()
         {
@@ -95,20 +102,13 @@ namespace Calamari.Deployment.Journal
                 new XAttribute("EnvironmentId", EnvironmentId ?? string.Empty),
                 new XAttribute("TenantId", TenantId ?? string.Empty),
                 new XAttribute("ProjectId", ProjectId ?? string.Empty),
-                new XAttribute("PackageId", PackageId ?? string.Empty),
-                new XAttribute("PackageVersion", PackageVersion ?? string.Empty),
                 new XAttribute("InstalledOn", InstalledOn.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
-                new XAttribute("ExtractedFrom", ExtractedFrom ?? string.Empty),
-                new XAttribute("ExtractedTo", ExtractedTo ?? string.Empty),
                 new XAttribute("RetentionPolicySet", RetentionPolicySet ?? string.Empty),
+                new XAttribute("ExtractedTo", ExtractedTo ?? string.Empty),
                 new XAttribute("CustomInstallationDirectory", CustomInstallationDirectory ?? string.Empty),
-                new XAttribute("WasSuccessful", WasSuccessful.ToString()));
-        }
-
-        static string GetAttribute(XElement element, string attributeName)
-        {
-            var attribute = element.Attribute(attributeName);
-            return attribute != null ? attribute.Value : null;
+                new XAttribute("WasSuccessful", WasSuccessful.ToString()),
+                Packages.Select(pkg => pkg.ToXmlElement()) 
+                );
         }
 
         static DateTime ParseDate(string s)
@@ -128,9 +128,7 @@ namespace Calamari.Deployment.Journal
 
         static bool? ParseBool(string s)
         {
-            bool b;
-
-            if (!string.IsNullOrWhiteSpace(s) && bool.TryParse(s, out b))
+            if (!string.IsNullOrWhiteSpace(s) && bool.TryParse(s, out var b))
             {
                 return b;
             }

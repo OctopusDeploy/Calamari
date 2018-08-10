@@ -3,7 +3,7 @@ using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Shared.FileSystem;
 
-namespace Calamari.Tests.Helpers
+namespace Calamari.Integration.FileSystem
 {
     public class TemporaryDirectory : IDisposable
     {

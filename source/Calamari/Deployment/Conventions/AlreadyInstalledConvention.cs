@@ -1,4 +1,4 @@
-﻿using Calamari.Deployment.Journal;
+﻿﻿using Calamari.Deployment.Journal;
 using Calamari.Shared;
 using Calamari.Shared.Commands;
 

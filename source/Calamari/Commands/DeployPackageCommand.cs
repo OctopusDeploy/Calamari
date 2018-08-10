@@ -30,11 +30,13 @@ namespace Calamari.Commands
     {
         private readonly CommandBuilder cb;
         private readonly ICalamariFileSystem fileSystem;
+        private readonly IDeploymentJournalWriter deploymentJournalWriter;
 
-        public CommandRunner(CommandBuilder cb, ICalamariFileSystem fileSystem)
+        public CommandRunner(CommandBuilder cb, ICalamariFileSystem fileSystem, IDeploymentJournalWriter deploymentJournalWriter)
         {
             this.cb = cb;
             this.fileSystem = fileSystem;
+            this.deploymentJournalWriter = deploymentJournalWriter;
         }
 
         public int Run(CalamariVariableDictionary variables, string packageFile)
@@ -48,6 +50,8 @@ namespace Calamari.Commands
             var journal = cb.UsesDeploymentJournal ?
                 new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), ctx.Variables) :
                 null;
+            
+            
 
             CalamariPhysicalFileSystem.FreeDiskSpaceOverrideInMegaBytes = ctx.Variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             CalamariPhysicalFileSystem.SkipFreeDiskSpaceCheck = ctx.Variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
@@ -55,11 +59,13 @@ namespace Calamari.Commands
             try
             {
                 RunConventions(ctx, journal);
-                journal?.AddJournalEntry(new JournalEntry(ctx, true));
+                deploymentJournalWriter.AddJournalEntry(ctx, true);
+                //journal?.AddJournalEntry(new JournalEntry(ctx, true));
             }
             catch (Exception)
             {
-                journal?.AddJournalEntry(new JournalEntry(ctx, false));
+                deploymentJournalWriter.AddJournalEntry(ctx, false);
+                //journal?.AddJournalEntry(new JournalEntry(ctx, false));
                 throw;
             }
 

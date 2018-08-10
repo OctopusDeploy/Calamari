@@ -51,8 +51,13 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine.Execute(Arg.Any<Shared.Scripting.Script>()).Returns(new CommandResult("", 0));
             convention.Run(deployment);
 
+<<<<<<< HEAD
             fileSystem.Received().OverwriteFile(scriptPath, scriptBody, Encoding.UTF8);
             scriptEngine.Received().Execute(Arg.Is<Shared.Scripting.Script>(s => s.File == scriptPath));
+=======
+            fileSystem.Received().WriteAllBytes(scriptPath, Arg.Any<byte[]>());
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner);
+>>>>>>> vNext
         }
 
         [Test]

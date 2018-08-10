@@ -62,27 +62,32 @@ namespace Calamari.Deployment.Retention
             foreach (var deployment in deployments)
             {
                 DeleteExtractionDestination(deployment, preservedEntries);
-                DeleteExtractionSource(deployment, preservedEntries);
+
+                foreach (var package in deployment.Packages)
+                {
+                    DeleteExtractionSource(package, preservedEntries);
+                }
             }
             deploymentJournal.RemoveJournalEntries(deployments.Select(x => x.Id));
 
             RemovedFailedPackageDownloads();
         }
 
-        void DeleteExtractionSource(JournalEntry deployment, List<JournalEntry> preservedEntries)
+        void DeleteExtractionSource(DeployedPackage deployedPackage, List<JournalEntry> preservedEntries)
         {
-            if (string.IsNullOrWhiteSpace(deployment.ExtractedFrom)
-                || !fileSystem.FileExists(deployment.ExtractedFrom)
-                || preservedEntries.Any(entry => deployment.ExtractedFrom.Equals(entry.ExtractedFrom, StringComparison.Ordinal)))
+            if (string.IsNullOrWhiteSpace(deployedPackage.DeployedFrom)
+                || !fileSystem.FileExists(deployedPackage.DeployedFrom)
+                || preservedEntries.Any(entry => entry.Packages.Any(p => deployedPackage.DeployedFrom.Equals(p.DeployedFrom, StringComparison.Ordinal))))
                 return;
 
-            Log.Info($"Removing package file '{deployment.ExtractedFrom}'");
-            fileSystem.DeleteFile(deployment.ExtractedFrom, FailureOptions.IgnoreFailure);
+            Log.Info($"Removing package file '{deployedPackage.DeployedFrom}'");
+            fileSystem.DeleteFile(deployedPackage.DeployedFrom, FailureOptions.IgnoreFailure);
         }
 
         void DeleteExtractionDestination(JournalEntry deployment, List<JournalEntry> preservedEntries)
         {
-            if (!fileSystem.DirectoryExists(deployment.ExtractedTo)
+            if (string.IsNullOrWhiteSpace(deployment.ExtractedTo)
+                || !fileSystem.DirectoryExists(deployment.ExtractedTo)
                 || preservedEntries.Any(entry => deployment.ExtractedTo.Equals(entry.ExtractedTo, StringComparison.Ordinal)))
                 return;
 
@@ -96,7 +101,7 @@ namespace Calamari.Deployment.Retention
             catch (Exception ex)
             {
                 Log.VerboseFormat("Could not delete directory '{0}' because some files could not be deleted: {1}",
-                    deployment.ExtractedFrom, ex.Message);
+                    deployment.ExtractedTo, ex.Message);
             }
         }
 
@@ -112,7 +117,14 @@ namespace Calamari.Deployment.Retention
                 if (journalEntry.WasSuccessful)
                 {
                     preservedEntries.Add(journalEntry);
-                    Log.Verbose($"Keeping {journalEntry.ExtractedTo} and {journalEntry.ExtractedFrom} as it is the {FormatWithThPostfix(preservedEntries.Count)}most recent successful release");
+                    
+                    var preservedDirectories = (!string.IsNullOrEmpty(journalEntry.ExtractedTo)
+                            ? new List<string> {journalEntry.ExtractedTo}
+                            : new List<string>())
+                        .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(d => !string.IsNullOrEmpty(d)))
+                        .ToList();
+                    
+                    Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it is the {FormatWithThPostfix(preservedEntries.Count)}most recent successful release");
                 }
                 return true;
             };
@@ -126,12 +138,26 @@ namespace Calamari.Deployment.Retention
 
                 if (installedAgo.TotalDays > days)
                     return true;
+                
+                var preservedDirectories = (!string.IsNullOrEmpty(journalEntry.ExtractedTo)
+                        ? new List<string> {journalEntry.ExtractedTo}
+                        : new List<string>())
+                    .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(p => !string.IsNullOrEmpty(p)))
+                    .ToList();
 
-                Log.Verbose($"Keeping {journalEntry.ExtractedTo} and {journalEntry.ExtractedFrom} as it was installed {installedAgo.Days} days and {installedAgo.Hours} hours ago");
+                Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it was installed {installedAgo.Days} days and {installedAgo.Hours} hours ago");
 
                 preservedEntries.Add(journalEntry);
                 return false;
             };
+        }
+        
+        static string FormatList(IList<string> items)
+        {
+            if (items.Count <= 1)
+                return $"{items.FirstOrDefault() ?? ""}";
+
+            return string.Join(", ", items.Take(items.Count - 1)) + $" and {items[items.Count - 1]}";
         }
 
         static string FormatWithThPostfix(int value)

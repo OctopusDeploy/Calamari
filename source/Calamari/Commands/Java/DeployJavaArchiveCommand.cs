@@ -18,47 +18,24 @@ using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Java.Deployment.Conventions;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 
 namespace Calamari.Commands.Java
 {
     [Command("deploy-java-archive", Description = "Deploys a Java archive (.jar, .war, .ear)")]
-    public class DeployJavaArchiveCommand : Command
+    public class DeployJavaArchiveCommand : Command, Shared.Commands.ICustomCommand
     {
-        string variablesFile;
-        string archiveFile;
-        string sensitiveVariablesFile;
-        string sensitiveVariablesPassword;
-        private readonly CombinedScriptEngine scriptEngine;
-
-        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine)
-        {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
-
-            this.scriptEngine = scriptEngine;
-        }
-
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
+            return -99;
+        }
 
-            Guard.NotNullOrWhiteSpace(archiveFile, "No archive file was specified. Please pass --archive YourPackage.jar");
+        public ICommandBuilder Run(ICommandBuilder cb)
+        {
+            //Log.Info("Deploying:    " + archiveFile);
+            var deployExploded = cb.Variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
 
-            if (!File.Exists(archiveFile))
-                throw new CommandException("Could not find archive file: " + archiveFile);
-
-            Log.Info("Deploying:    " + archiveFile);
-            
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-
-            var deployExploded = variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
-
-            var cb = new CommandBuilder(null)
-                {UsesDeploymentJournal = true};
+            cb.UsesDeploymentJournal = true;
 
             cb.Features.Add<TomcatFeature>().Add<WildflyFeature>();
 
@@ -73,18 +50,13 @@ namespace Calamari.Commands.Java
                 cb.AddExtractPackageToStagingDirectory();
             }
 
-            cb.RunPreScripts()
+            return cb.RunPreScripts()
                 .AddSubsituteInFiles()
                 .AddJsonVariables()
                 .AddConvention<RePackArchiveConvention>()
                 .AddConvention<CopyPackageToCustomInstallationDirectoryConvention>()
                 .RunDeployScripts()
                 .RunPostScripts();
-                
-            new CommandRunner(cb, fileSystem).Run(new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword), archiveFile);
-            
-
-            return 0;
         }
     }
 }

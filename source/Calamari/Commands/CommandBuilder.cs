@@ -119,7 +119,8 @@ namespace Calamari.Commands
 
         public bool UsesDeploymentJournal { get; set; }
         public bool PerformFreespaceCheck { get; set; }
-        
+
+        public VariableDictionary Variables { get; set; }
         public IFeaturesList Features => featuresList;
 
         public ICommandBuilder AddContributeEnvironmentVariables()
@@ -162,9 +163,17 @@ namespace Calamari.Commands
             });
         }
 
-        public ICommandBuilder AddSubsituteInFiles()
+        public ICommandBuilder AddSubsituteInFiles(
+            Func<IExecutionContext, bool> predicate = null,
+            Func<IExecutionContext, IEnumerable<string>> fileTargetFactory = null)
         {
-            return AddConvention<SubstituteInFilesConvention>();
+            return AddConvention(ctx =>
+            {
+                new SubstituteInFilesConvention(container.Resolve<ICalamariFileSystem>(),
+                    container.Resolve<IFileSubstituter>(),
+                    predicate,
+                    fileTargetFactory).Run(ctx);
+            });
         }
 
         public ICommandBuilder AddConfigurationTransform()

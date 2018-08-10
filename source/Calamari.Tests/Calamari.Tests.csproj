@@ -115,6 +115,9 @@
     <None Include="Fixtures\ScriptCS\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="KubernetesFixtures\Charts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Substitutions\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

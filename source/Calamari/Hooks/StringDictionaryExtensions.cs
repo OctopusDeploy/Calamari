@@ -24,7 +24,7 @@ namespace Calamari.Hooks
                 {
                     foreach (var key in current.Keys)
                     {
-                        collection.Add(key.ToString(), current[key.ToString()].ToString());
+                        collection.Add(key.ToString(), current[key.ToString()]?.ToString());
                     }
 
                     return collection;
