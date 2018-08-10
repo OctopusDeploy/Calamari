@@ -13,7 +13,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Ignore("Not Yet")]
     public class KubernetesContextScriptWrapperFixture
     {
         private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
@@ -27,13 +26,13 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script.ps1");
         }
         
-//        [Test]
-//
-//        [Category(TestEnvironment.CompatibleOS.Nix)]
-//        public void BashKubeCtlScripts()
-//        {
-//            //TestScript(new KubernetesBashScriptEngine(), "Test-Script.sh");
-//        }
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void BashKubeCtlScripts()
+        {
+            var wrapper = new KubernetesContextScriptWrapper(new CalamariVariableDictionary());
+            TestScript(wrapper, "Test-Script.sh");
+        }
 
         private void TestScript(IScriptWrapper wrapper, string scriptName)
         {
