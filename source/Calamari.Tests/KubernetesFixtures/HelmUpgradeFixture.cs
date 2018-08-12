@@ -16,8 +16,8 @@ namespace Calamari.Tests.KubernetesFixtures
     [TestFixture]
     public class HelmUpgradeFixture : CalamariFixture
     {
-        private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
-        private static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
+        private static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
+        private static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
 
         private ICalamariFileSystem FileSystem { get; set; }
         private VariableDictionary Variables { get; set; }
