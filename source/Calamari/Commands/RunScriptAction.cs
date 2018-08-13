@@ -16,7 +16,7 @@ using Calamari.Shared.Scripting;
 
 namespace Calamari.Commands
 {
-    [Command("run-script", Description = "Invokes a script")]
+    [DeploymentAction("run-script", Description = "Invokes a script")]
     public class RunScriptAction : IDeploymentAction
     {
         //This can dissapear once we remove `script=` parameter
@@ -47,7 +47,7 @@ namespace Calamari.Commands
             
             deploymentStrategyBuilder
                 .AddConvention<WriteVariablesScriptToFileConvention>()
-                .AddConvention<StageScriptPackagesConvention>()
+                .AddStageScriptPackages()
                 .AddSubsituteInFiles(_ => !scriptFromParameter, FileTargetFactory)
                 .AddSubsituteInFiles()
                 .AddConfigurationTransform()

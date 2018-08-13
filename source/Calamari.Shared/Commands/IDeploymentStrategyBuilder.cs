@@ -34,6 +34,7 @@ namespace Calamari.Shared.Commands
         IDeploymentStrategyBuilder AddConfigurationTransform();
         IDeploymentStrategyBuilder AddConfigurationVariables();
         IDeploymentStrategyBuilder AddJsonVariables();
+        IDeploymentStrategyBuilder AddStageScriptPackages(bool forceExtract = false);
 
 
         IDeploymentStrategyBuilder RunPreScripts();

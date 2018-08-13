@@ -3,33 +3,36 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Util;
+ using Calamari.Shared;
+ using Calamari.Shared.Commands;
+ using Calamari.Shared.FileSystem;
+ using Calamari.Shared.Scripting;
+ using Calamari.Util;
 using Newtonsoft.Json;
 using Octostache;
 
 namespace Calamari.Kubernetes.Conventions
 {
-    public class HelmUpgradeConvention: IInstallConvention
+    public class HelmUpgradeConvention: IConvention
     {
-        private readonly IScriptEngine scriptEngine;
-        private readonly ICommandLineRunner commandLineRunner;
+        private readonly IScriptRunner scriptEngine;
         private readonly ICalamariFileSystem fileSystem;
+        private readonly ILog log;
 
-        public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(IScriptRunner scriptEngine, ICalamariFileSystem fileSystem, ILog log)
         {
             this.scriptEngine = scriptEngine;
-            this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.log = log;
         }
         
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
+            if (string.IsNullOrEmpty(deployment.Variables.Get(SpecialVariables.ClusterUrl)))
+            {
+                throw new CommandException($"The variable `{SpecialVariables.ClusterUrl}` is not provided.");
+            }
+
             var releaseName = GetReleaseName(deployment.Variables);
 
             var packagePath = GetChartLocation(deployment);
@@ -53,13 +56,13 @@ namespace Calamari.Kubernetes.Conventions
          
             sb.Append($" \"{releaseName}\" \"{packagePath}\"");
             
-            Log.Verbose(sb.ToString());
+            log.Verbose(sb.ToString());
             var fileName = GetFileName(deployment);
-            using (new TemporaryFile(fileName))
+            using (new TemporaryFile(fileSystem, fileName))
             {
                 fileSystem.OverwriteFile(fileName, sb.ToString());
                 
-                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
+                var result = scriptEngine.Execute(new Script(fileName));
                 if (result.ExitCode != 0)
                 {
                     throw new CommandException(string.Format(
@@ -67,7 +70,7 @@ namespace Calamari.Kubernetes.Conventions
                 }
 
                 if (result.HasErrors &&
-                    deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
+                    deployment.Variables.GetFlag(Shared.SpecialVariables.Action.FailScriptOnErrorOutput, false))
                 {
                     throw new CommandException(
                         $"Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
@@ -75,7 +78,7 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        private string GetFileName(RunningDeployment deployment)
+        private string GetFileName(IExecutionContext deployment)
         {
             var scriptType = scriptEngine.GetSupportedTypes();
             if (scriptType.Contains(ScriptSyntax.PowerShell))
@@ -86,26 +89,26 @@ namespace Calamari.Kubernetes.Conventions
             return Path.Combine(deployment.CurrentDirectory, "Calamari.HelmUpgrade.sh");
         }
 
-        private static string GetReleaseName(CalamariVariableDictionary variables)
+        private string GetReleaseName(VariableDictionary variables)
         {
             var validChars = new Regex("[^a-zA-Z0-9-]");
             var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
             if (string.IsNullOrWhiteSpace(releaseName))
             {
-                releaseName = $"{variables.Get(Deployment.SpecialVariables.Action.Name)}-{variables.Get(Deployment.SpecialVariables.Environment.Name)}";
+                releaseName = $"{variables.Get(Shared.SpecialVariables.Action.Name)}-{variables.Get(Shared.SpecialVariables.Environment.Name)}";
                 releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
             }
 
-            Log.SetOutputVariable("ReleaseName", releaseName, variables);
-            Log.Info($"Using Release Name {releaseName}");
+            log.SetOutputVariable("ReleaseName", releaseName, variables);
+            log.Info($"Using Release Name {releaseName}");
             return releaseName;
         }
 
 
-        private IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
+        private IEnumerable<string> AdditionalValuesFiles(IExecutionContext deployment)
         {
             var variables = deployment.Variables;
-            var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
+            var packageReferenceNames = variables.GetIndexes(Shared.SpecialVariables.Packages.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
@@ -113,8 +116,8 @@ namespace Calamari.Kubernetes.Conventions
                 
                 foreach (var providedPath in paths)
                 {
-                    var packageId = variables.Get(Deployment.SpecialVariables.Packages.PackageId(packageReferenceName));
-                    var version = variables.Get(Deployment.SpecialVariables.Packages.PackageVersion(packageReferenceName));
+                    var packageId = variables.Get(Shared.SpecialVariables.Packages.PackageId(packageReferenceName));
+                    var version = variables.Get(Shared.SpecialVariables.Packages.PackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
                     var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
                     if (!files.Any())
@@ -125,18 +128,18 @@ namespace Calamari.Kubernetes.Conventions
                     foreach (var file in files)
                     {
                         var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                        Log.Info($"Including values file `{relative}` from package {packageId} v{version}");
+                        log.Info($"Including values file `{relative}` from package {packageId} v{version}");
                         yield return Path.GetFullPath(file);
                     }
                 }
             }
         }
 
-        private string GetChartLocation(RunningDeployment deployment)
+        private string GetChartLocation(IExecutionContext deployment)
         {
-            var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
+            var packagePath = deployment.Variables.Get(Shared.SpecialVariables.Package.Output.InstallationDirectoryPath);
             
-            var packageId = deployment.Variables.Get(Deployment.SpecialVariables.Package.NuGetPackageId);
+            var packageId = deployment.Variables.Get(Shared.SpecialVariables.Package.NuGetPackageId);
 
             if (fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
             {
@@ -152,7 +155,7 @@ namespace Calamari.Kubernetes.Conventions
             return packagePath;
         }
 
-        private static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
+        private static bool TryGenerateVariablesFile(IExecutionContext deployment, out string fileName)
         {
             fileName = null;
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");

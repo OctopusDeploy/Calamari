@@ -4,7 +4,7 @@ using Calamari.Shared.Commands;
 
 namespace Calamari.Commands
 {
-    [Command("transfer-package", Description = "Copies a deployment package to a specific directory")]
+    [DeploymentAction("transfer-package", Description = "Copies a deployment package to a specific directory")]
     public class TransferPackageAction : IDeploymentAction
     {
         public void Build(IDeploymentStrategyBuilder deploymentStrategyBuilder)

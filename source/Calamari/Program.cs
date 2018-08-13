@@ -137,7 +137,7 @@ namespace Calamari
             var commands =
                 (from type in typeof(Program).Assembly.GetTypes()
                     where typeof(ICommand).IsAssignableFrom(type)
-                    let attribute = (ICommandMetadata)type.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
+                    let attribute = (CommandAttribute)type.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
                     where attribute != null
                     select new {attribute, type}).ToArray();
 
@@ -151,7 +151,17 @@ namespace Calamari
             }
             
             
-            
+            var deploymentActions =
+                (from type in typeof(Program).Assembly.GetTypes()
+                    where typeof(IDeploymentAction).IsAssignableFrom(type)
+                    let attribute = (DeploymentActionAttribute)type.GetCustomAttributes(typeof(DeploymentActionAttribute), true).FirstOrDefault()
+                    where attribute != null
+                    select new {attribute, type}).ToArray();
+            var deploymentAction = commands.FirstOrDefault(t => t.attribute.Name.Equals(firstArg));
+            if (deploymentAction == null)
+            {
+                throw new CommandException($"Unable to find comnd with name {firstArg}");
+            }
             
             var ml = ModuleLoaderNew.GetExtensions(args); //Add
             

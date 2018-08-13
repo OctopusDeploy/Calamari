@@ -20,7 +20,7 @@ using Calamari.Shared.FileSystem;
 
 namespace Calamari.Commands
 {
-    [Command("deploy-package", Description = "Extracts and installs a deployment package")]
+    [DeploymentAction("deploy-package", Description = "Extracts and installs a deployment package")]
     public class DeployPackageAction : IDeploymentAction
     {
         private readonly ICalamariFileSystem filesystem;

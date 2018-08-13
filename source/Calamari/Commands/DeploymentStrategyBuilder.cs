@@ -4,6 +4,7 @@ using Autofac;
 using Autofac.Core;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Scripting;
 using Calamari.Shared;
 using Calamari.Shared.Commands;
@@ -172,8 +173,17 @@ namespace Calamari.Commands
             return AddConvention<JsonConfigurationVariablesConvention>();
         }
 
+        public IDeploymentStrategyBuilder AddStageScriptPackages(bool forceExtract = false)
+        {
+            return AddConvention(ctx =>
+            {
+                new StageScriptPackagesConvention(container.Resolve<ICalamariFileSystem>(),
+                    container.Resolve<IGenericPackageExtractor>(),
+                    forceExtract).Run(ctx);
+            });
+        }
 
-        
+
         void AddConfiguredScriptConvention(string stage)
         {
             AddConvention((ctx) =>
