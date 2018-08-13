@@ -1,19 +1,18 @@
 ﻿#if JAVA_SUPPORT
+
 using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using Calamari.Commands.Java;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Shared;
-using Calamari.Tests.Helpers;
 using Calamari.Shared.FileSystem;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Java.Fixtures.Deployment
+namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
     public class DeployJavaArchiveFixture : CalamariFixture
@@ -22,16 +21,11 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         protected ICalamariFileSystem FileSystem { get; private set; }
         protected string ApplicationDirectory { get; private set; }
 
-        protected int ReturnCode { get; set; }
-
-        protected ProxyLog ProxyLog { get; set; }
-
 
         [SetUp]
         public virtual void SetUp()
         {
             FileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            ProxyLog = new ProxyLog();
 
             // Ensure staging directory exists and is empty
             ApplicationDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
@@ -49,31 +43,18 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public virtual void CleanUp()
         {
             CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(ApplicationDirectory, FailureOptions.IgnoreFailure);
-            ProxyLog.Dispose();
         }
 
-        [Test]
-        public void CanDeployJavaArchive()
-        {
-            DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
-            Assert.AreEqual(0, ReturnCode);
-
-            //Archive is re-packed
-            ProxyLog.AssertContains($"Re-packaging archive: '{Path.Combine(ApplicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar")}'");
-        }
-
-        // https://github.com/OctopusDeploy/Issues/issues/4733
         [Test]
         public void EnsureMetafileDataRepacked()
         {
-            DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
-            Assert.AreEqual(0, ReturnCode);
-
             var targetFile = Path.Combine(ApplicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");
-
-            //Archive is re-packed
-            ProxyLog.AssertContains($"Re-packaging archive: '{targetFile}'");
-
+            
+            var result = DeployPackage(TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
+            
+            result.AssertSuccess();
+            result.AssertOutput($"Re-packaging archive: '{targetFile}'");
+            
             //Check the manifest is copied from the original
             using (var stream = new FileStream(targetFile, FileMode.Open))
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
@@ -95,19 +76,22 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             Variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
             Variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, configFile);
 
-            DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
-            Assert.AreEqual(0, ReturnCode);
-            ProxyLog.AssertContains($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
+            var result = DeployPackage(TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
+            result.AssertSuccess();
+            result.AssertOutput($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
         }
 
-        protected void DeployPackage(string packageName)
+        protected CalamariResult DeployPackage(string packageName)
         {
+            
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
                 Variables.Save(variablesFile.FilePath);
 
-                //var command = new DeployJavaArchiveCommand(new CombinedScriptEngine());
-                //ReturnCode = command.Execute(new[] { "--archive", $"{packageName}", "--variables", $"{variablesFile.FilePath}" });
+                return InvokeInProcess(Calamari()
+                    .Action("deploy-java-archive")
+                    .Argument("archive", packageName)
+                    .Argument("variables", variablesFile.FilePath));
             }
         }
     }

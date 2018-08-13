@@ -6,14 +6,9 @@ using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
-using Autofac;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-<<<<<<< HEAD
 using Calamari.Shared;
-=======
-using Calamari.Integration.Scripting;
->>>>>>> vNext
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Tests.Helpers
 {
@@ -22,7 +17,7 @@ namespace Calamari.Tests.Helpers
         protected CommandLine Calamari()
         {
 #if NETFX
-            var calamariFullPath = typeof(DeployPackageCommand).Assembly.FullLocalPath();
+            var calamariFullPath = typeof(DeployPackageAction).Assembly.FullLocalPath();
             return new CommandLine(calamariFullPath);
 
 #else
@@ -128,7 +123,7 @@ namespace Calamari.Tests.Helpers
 
                 cmdBase = (additionalParameters ?? new Dictionary<string, string>()).Aggregate(cmdBase, (cmd, param) => cmd.Argument(param.Key, param.Value));
 
-                var output = Invoke(cmdBase, variables);
+                var output = InvokeInProcess(cmdBase, variables);
 
                 return (output, variables);
 

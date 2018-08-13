@@ -34,7 +34,7 @@ namespace Calamari.Azure.Commands
             return optionsBuilder;
         }
         
-        public ICommandBuilder Run(ICommandBuilder commandBuilder)
+        public ICommandBuilder Build(ICommandBuilder commandBuilder)
         {
 
             return commandBuilder

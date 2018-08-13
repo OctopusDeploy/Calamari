@@ -83,13 +83,13 @@ namespace Calamari.Commands
         }
     }
     
-    public class CommandBuilder: ICommandBuilder
+    public class DeploymentStrategyBuilder: IDeploymentStrategyBuilder
     {
         private readonly IContainer container;
         private readonly FeaturesList featuresList;
         readonly List<Action<IExecutionContext>> conventionSteps = new List<Action<IExecutionContext>>();
 
-        public CommandBuilder(IContainer container)
+        public DeploymentStrategyBuilder(IContainer container)
         {
             this.container = container;
             featuresList = new FeaturesList(container);
@@ -118,52 +118,33 @@ namespace Calamari.Commands
         }
 
         public bool UsesDeploymentJournal { get; set; }
-        public bool PerformFreespaceCheck { get; set; }
 
+        public PreExecutionHandler PreExecution { get; set; }
         public VariableDictionary Variables { get; set; }
         public IFeaturesList Features => featuresList;
 
-        public ICommandBuilder AddContributeEnvironmentVariables()
+        public IDeploymentStrategyBuilder AddContributeEnvironmentVariables()
         {
             return AddConvention<ContributeEnvironmentVariablesConvention>();
         }
 
-        public ICommandBuilder AddLogVariables()
+        public IDeploymentStrategyBuilder AddLogVariables()
         {
             return AddConvention<LogVariablesConvention>();
         }
 
-        public ICommandBuilder AddExtractPackageToStagingDirectory()
+        public IDeploymentStrategyBuilder AddExtractPackageToStagingDirectory()
         {
             return AddConvention<ExtractPackageToStagingDirectoryConvention>();
         }
 
-        public ICommandBuilder AddExtractPackageToApplicationDirectory()
+        public IDeploymentStrategyBuilder AddExtractPackageToApplicationDirectory()
         {
             return AddConvention<ExtractPackageToApplicationDirectoryConvention>();
         }
 
-        public ICommandBuilder AddConfiguredScriptConvention(string stage)
-        {
-            return AddConvention((ctx) =>
-            {
-                var fileSystem = container.Resolve<ICalamariFileSystem>();
-                var scriptEngine = container.Resolve<CombinedScriptEngine>();
-                (new ConfiguredScriptConvention(stage, fileSystem, scriptEngine)).Run(ctx);
-            });
-        }
-
-        public ICommandBuilder AddPackagedScriptConvention(string stage)
-        {
-            return AddConvention((ctx) =>
-            {
-                var fileSystem = container.Resolve<ICalamariFileSystem>();
-                var scriptEngine = container.Resolve<CombinedScriptEngine>();
-                (new PackagedScriptConvention(stage, fileSystem, scriptEngine)).Run(ctx);
-            });
-        }
-
-        public ICommandBuilder AddSubsituteInFiles(
+    
+        public IDeploymentStrategyBuilder AddSubsituteInFiles(
             Func<IExecutionContext, bool> predicate = null,
             Func<IExecutionContext, IEnumerable<string>> fileTargetFactory = null)
         {
@@ -176,25 +157,46 @@ namespace Calamari.Commands
             });
         }
 
-        public ICommandBuilder AddConfigurationTransform()
+        public IDeploymentStrategyBuilder AddConfigurationTransform()
         {
             return AddConvention<ConfigurationTransformsConvention>();
         }
 
-        public ICommandBuilder AddConfigurationVariables()
+        public IDeploymentStrategyBuilder AddConfigurationVariables()
         {
             return AddConvention<ConfigurationVariablesConvention>();
         }
 
-        public ICommandBuilder AddJsonVariables()
+        public IDeploymentStrategyBuilder AddJsonVariables()
         {
             return AddConvention<JsonConfigurationVariablesConvention>();
         }
 
 
-        ICommandBuilder AddFeatureConvention(string stage)
+        
+        void AddConfiguredScriptConvention(string stage)
         {
-            return AddConvention((ctx) =>
+            AddConvention((ctx) =>
+            {
+                var fileSystem = container.Resolve<ICalamariFileSystem>();
+                var scriptEngine = container.Resolve<CombinedScriptEngine>();
+                (new ConfiguredScriptConvention(stage, fileSystem, scriptEngine)).Run(ctx);
+            });
+        }
+
+        void AddPackagedScriptConvention(string stage)
+        {
+            AddConvention((ctx) =>
+            {
+                var fileSystem = container.Resolve<ICalamariFileSystem>();
+                var scriptEngine = container.Resolve<CombinedScriptEngine>();
+                (new PackagedScriptConvention(stage, fileSystem, scriptEngine)).Run(ctx);
+            });
+        }
+        
+        void AddFeatureConvention(string stage)
+        {
+            AddConvention((ctx) =>
             {
                 var fileSystem = container.Resolve<ICalamariFileSystem>();
                 var scriptEngine = container.Resolve<CombinedScriptEngine>();
@@ -203,7 +205,7 @@ namespace Calamari.Commands
             });
         }
         
-        public ICommandBuilder RunPreScripts()
+        public IDeploymentStrategyBuilder RunPreScripts()
         {
             //TODO: confirm only during Pre-Deploy the variable scripts are run before package scripts
             AddFeatureConvention(DeploymentStages.BeforePreDeploy);
@@ -213,7 +215,7 @@ namespace Calamari.Commands
             return this;
         }
 
-        public ICommandBuilder RunDeployScripts()
+        public IDeploymentStrategyBuilder RunDeployScripts()
         {
             AddFeatureConvention(DeploymentStages.BeforeDeploy);
             AddPackagedScriptConvention(DeploymentStages.Deploy);
@@ -222,7 +224,7 @@ namespace Calamari.Commands
             return this;
         }
 
-        public ICommandBuilder RunPostScripts()
+        public IDeploymentStrategyBuilder RunPostScripts()
         {
             AddFeatureConvention(DeploymentStages.BeforePostDeploy);
             AddPackagedScriptConvention(DeploymentStages.PostDeploy);
@@ -268,18 +270,20 @@ namespace Calamari.Commands
             };
         }
 
-        public ICommandBuilder AddConvention(Action<IExecutionContext> instance)
+        
+        // Custom-defined conventions
+        public IDeploymentStrategyBuilder AddConvention(Action<IExecutionContext> instance)
         {
             conventionSteps.Add(instance);
             return this;
         }
         
-        public ICommandBuilder AddConvention(IConvention instance)
+        public IDeploymentStrategyBuilder AddConvention(IConvention instance)
         {
             return this.AddConvention(ctx => instance.Run(ctx));
         }
 
-        public ICommandBuilder AddConvention<TConvention>() where TConvention : IConvention
+        public IDeploymentStrategyBuilder AddConvention<TConvention>() where TConvention : IConvention
         {
             return this.AddConvention((ctx) => ((IConvention)container.Resolve(typeof(TConvention))).Run(ctx));
         }

@@ -2,24 +2,34 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Integration.Processes;
+using Calamari.Shared.FileSystem;
 using Calamari.Support;
 
 namespace Calamari.Integration.Packages
 {
     public class GenericPackageExtractor : IGenericPackageExtractor
     {
+        private readonly ICommandLineRunner commandLineRunner;
+        private readonly ICommandOutput commandOutput;
+        private readonly ICalamariFileSystem fileSystem;
+
         private readonly List<IPackageExtractor> additionalExtractors =
             new List<IPackageExtractor>();
 
         private readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
 
-        
-        public GenericPackageExtractor()
-        {
-            //this.additionalExtractors.AddRange(additionalExtractors);
-        }
 
+        public GenericPackageExtractor(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput,
+            ICalamariFileSystem fileSystem)
+        {
+            this.commandLineRunner = commandLineRunner;
+            this.commandOutput = commandOutput;
+            this.fileSystem = fileSystem;
+        }
+        
         public string[] Extensions
         {
             get { return Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
@@ -81,7 +91,8 @@ namespace Calamari.Integration.Packages
             new TarBzipPackageExtractor(),
             //new TarLzwPackageExtractor(), // For some reason this doesnt currently work...
             new ZipPackageExtractor(),
-            new TarPackageExtractor()
+            new TarPackageExtractor(),
+            new JarExtractor(commandLineRunner, commandOutput, fileSystem)
         }.Concat(additionalExtractors).ToList();
 
         private IPackageExtractor FindByExtension(PackageFileNameMetadata packageFile)

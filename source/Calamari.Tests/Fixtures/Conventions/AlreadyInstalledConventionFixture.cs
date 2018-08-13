@@ -1,11 +1,6 @@
 using System;
-<<<<<<< HEAD
-using System.Threading;
 using Calamari.Commands;
-=======
 using System.Collections.Generic;
->>>>>>> vNext
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.Processes;

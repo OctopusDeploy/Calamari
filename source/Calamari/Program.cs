@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Autofac.Features.ResolveAnything;
 using Calamari.Commands;
 using Calamari.Deployment.Conventions;
@@ -50,7 +51,15 @@ namespace Calamari
                 return new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
                     new ServiceMessageCommandOutput(dictionary)));
             }).As<ICommandLineRunner>().SingleInstance();
-            
+
+
+            //TODO: This is just here to deal with java exctrator
+            builder.Register(context =>
+            {
+                var dictionary = context.Resolve<VariableDictionary>();
+                return new SplitCommandOutput(new ConsoleCommandOutput(),
+                    new ServiceMessageCommandOutput(dictionary));
+            }).As<ICommandOutput>().SingleInstance();
             
             
             builder.RegisterInstance(new ScriptEngineRegistry()).As<IScriptEngineRegistry>();
@@ -79,7 +88,28 @@ namespace Calamari
 
         }
     }
-    
+
+
+    public class OptionsBuilder : IOptionsBuilder
+    {
+        private OptionSet _os;
+        public OptionsBuilder(OptionSet os)
+        {
+            _os = os;
+        }
+   
+        public IOptionsBuilder Add(string prototype, string description, Action<string> action)
+        {
+            _os.Add(prototype, description, action);
+            return this;
+        }
+
+        public IOptionsBuilder Add(string prototype, Action<string> action)
+        {
+            _os.Add(prototype, action);
+            return this;
+        }
+    }
     
     public class Program
     {
@@ -113,7 +143,7 @@ namespace Calamari
 
             var cmd = commands.FirstOrDefault(t => t.attribute.Name.Equals(firstArg));
 
-            if (cmd != null && !typeof(Shared.Commands.ICustomCommand).IsAssignableFrom(cmd.type))
+            if (cmd != null && !typeof(IDeploymentAction).IsAssignableFrom(cmd.type))
             {
                 //This is not a CustomCommand, this is one of the other types used by calamari. e.g. apply-delta, find-package, clean etc.
                 var cc = (ICommand) Activator.CreateInstance(cmd.type);
@@ -121,13 +151,9 @@ namespace Calamari
             }
             
             
+            
+            
             var ml = ModuleLoaderNew.GetExtensions(args); //Add
-            if (cmd == null)
-            {
-                throw new Exception("XXX");
-            }
-
-
             
 
             var Options = new OptionSet();
@@ -141,16 +167,14 @@ namespace Calamari
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             Options.Add("base64Variables=", "JSON string containing variables.", v => base64Variables = v);
-            
+
             //TODO: This exists for DeployJava command... lets get it to use package like everything else
             Options.Add("archive=", "Path to the Java archive to deploy.", v => packageFile = Path.GetFullPath(v));
             Options.Parse(args);
 
 
 
-            var variables =
-                new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, base64Variables);
-            
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, base64Variables);
             var builder = new ContainerBuilder();
             builder.RegisterSource(new AnyConcreteTypeNotAlreadyRegisteredSource());
             builder.RegisterInstance(variables).As<VariableDictionary>().As<CalamariVariableDictionary>();
@@ -168,23 +192,30 @@ namespace Calamari
 //            {
 //                builder.RegisterType(type1).As<IPackageExtractor>();
 //            }
-//            
-                
-            
             var container = builder.Build();
 
-            var x = (ICustomCommand)container.Resolve(cmd.type);
             
-            var cb = new CommandBuilder(container)
+            var x = (IDeploymentAction)container.Resolve(cmd.type);
+            
+            
+            var cb = new DeploymentStrategyBuilder(container)
             {
                 Variables = variables
             };
-            x.Run(cb);
-            
+            x.Build(cb);
+
+            //TODO: This should dissapear once custom params are removed
+            if (cb.PreExecution != null)
+            {
+                var Options2 = new OptionSet();
+                cb.PreExecution(new OptionsBuilder(Options2), variables);
+                Options2.Parse(args);
+            }
+           
             var cr = new CommandRunner(cb, container.Resolve<ICalamariFileSystem>(), new DeploymentJournalWriter(container.Resolve<ICalamariFileSystem>()));
             cr.Run(variables, packageFile);
-            
-            return 0;
+
+            return variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
 //            using (var container = BuildContainer(args))
 //            {
 //                return container.Resolve<Program>().Execute(args);

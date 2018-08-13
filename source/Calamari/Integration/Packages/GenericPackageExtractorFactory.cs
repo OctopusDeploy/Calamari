@@ -11,7 +11,7 @@ namespace Calamari.Integration.Packages
     {
         public GenericPackageExtractor createStandardGenericPackageExtractor()
         {
-            return new GenericPackageExtractor();
+            return new GenericPackageExtractor(null, null, null);
         }
 
 //        public GenericPackageExtractor createJavaGenericPackageExtractor(ICalamariFileSystem fileSystem)

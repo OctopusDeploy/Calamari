@@ -25,7 +25,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             nupkgFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0"));
         }
 
-
         protected string StagingDirectory { get; private set; }
         protected string CustomDirectory { get; private set; }
 
@@ -41,9 +40,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             fileSystem.EnsureDirectoryExists(StagingDirectory);
             fileSystem.PurgeDirectory(StagingDirectory, FailureOptions.ThrowOnFailure);
 
-
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
-
         }
 
         [Test]
@@ -105,7 +102,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 variables.Save(variablesFile.FilePath);
 
-                return Invoke(Calamari()
+                return InvokeInProcess(Calamari()
                     .Action("transfer-package")
                     .Argument("variables", variablesFile.FilePath));
             }

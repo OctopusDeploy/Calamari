@@ -1,38 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Features;
 using Calamari.Deployment.Journal;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Iis;
-using Calamari.Integration.JsonVariables;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 using Calamari.Shared;
 using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 
 namespace Calamari.Commands
 {
-
     public class CommandRunner
     {
-        private readonly CommandBuilder cb;
+        private readonly DeploymentStrategyBuilder cb;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
 
-        public CommandRunner(CommandBuilder cb, ICalamariFileSystem fileSystem, IDeploymentJournalWriter deploymentJournalWriter)
+        public CommandRunner(DeploymentStrategyBuilder cb, ICalamariFileSystem fileSystem, IDeploymentJournalWriter deploymentJournalWriter)
         {
             this.cb = cb;
             this.fileSystem = fileSystem;
@@ -139,74 +122,6 @@ namespace Calamari.Commands
 
                 throw;
             }
-        }
-    }
-    
-    
-    
-    [Command("deploy-package", Description = "Extracts and installs a deployment package")]
-    public class DeployPackageCommand : Command, Calamari.Shared.Commands.ICustomCommand
-    {
-        private readonly ICalamariFileSystem filesystem;
-//        private string variablesFile;
-//        private string packageFile;
-//        private string sensitiveVariablesFile;
-//        private string sensitiveVariablesPassword;
-//        private CombinedScriptEngine scriptCapability;
-
-        public DeployPackageCommand(ICalamariFileSystem filesystem)
-        {
-            this.filesystem = filesystem;
-        }
-        
-        public void DeployPackageCommand2(CombinedScriptEngine scriptCapability)
-        {
-//            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-//            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
-//            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
-//            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
-
-            //this.scriptCapability = scriptCapability;
-        }
-
-      
-   
-
-        public ICommandBuilder Run(ICommandBuilder cb)
-        {
-
-            cb.UsesDeploymentJournal = true;
-
-            
-#if IIS_SUPPORT
-            cb.Features.Add<IisWebSiteBeforeDeployFeature>();
-            cb.Features.Add<IisWebSiteAfterPostDeployFeature>();
-            var iis = new InternetInformationServer();
-#endif
-            
-            cb.AddExtractPackageToApplicationDirectory()
-                .RunPreScripts()
-                .AddSubsituteInFiles()
-                .AddConfigurationTransform()
-                .AddConfigurationVariables()
-                .AddJsonVariables()
-                .AddConvention<CopyPackageToCustomInstallationDirectoryConvention>()
-                .RunDeployScripts();
-            
-#if IIS_SUPPORT
-            cb.AddConvention(new LegacyIisWebSiteConvention(filesystem, iis));
-#endif
-
-            cb.RunPostScripts();
-
-            return cb;
-//            var cr = new CommandRunner(cb, fileSystem);
-//            cr.Run(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, packageFile);
-        }
-
-        public override int Execute(string[] commandLineArguments)
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             variables.Set("UserName", "AmericanEagles\\RogerRamjet");
             variables.Set(SpecialVariables.Action.Certificate.PrivateKeyAccessRules, json);
 
-            var result = ImportCertificateCommand.GetPrivateKeyAccessRules(variables).ToList();
+            var result = ImportCertificateDeploymentAction.GetPrivateKeyAccessRules(variables).ToList();
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("AmericanEagles\\RogerRamjet", result[0].Identity.ToString());

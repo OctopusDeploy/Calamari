@@ -138,7 +138,7 @@
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Java\Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
+    <None Update="Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Fixtures\Commands\Scripts\awsscript.ps1">

@@ -23,14 +23,14 @@ using Calamari.Shared.Commands;
 namespace Calamari.Commands.Java
 {
     [Command("deploy-java-archive", Description = "Deploys a Java archive (.jar, .war, .ear)")]
-    public class DeployJavaArchiveCommand : Command, Shared.Commands.ICustomCommand
+    public class DeployJavaArchiveAction : Command, Shared.Commands.IDeploymentAction
     {
         public override int Execute(string[] commandLineArguments)
         {
             return -99;
         }
 
-        public ICommandBuilder Run(ICommandBuilder cb)
+        public void Build(IDeploymentStrategyBuilder cb)
         {
             //Log.Info("Deploying:    " + archiveFile);
             var deployExploded = cb.Variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
@@ -50,7 +50,7 @@ namespace Calamari.Commands.Java
                 cb.AddExtractPackageToStagingDirectory();
             }
 
-            return cb.RunPreScripts()
+            cb.RunPreScripts()
                 .AddSubsituteInFiles()
                 .AddJsonVariables()
                 .AddConvention<RePackArchiveConvention>()
