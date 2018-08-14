@@ -51,10 +51,10 @@
   <!--<ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />-->
   <!--<ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />-->
   <!--</ItemGroup>-->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
-    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-  </ItemGroup>
+  <!--<ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">-->
+    <!--<ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />-->
+    <!--<ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />-->
+  <!--</ItemGroup>-->
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
