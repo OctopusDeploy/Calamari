@@ -35,13 +35,6 @@
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
-    <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
-    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
-    <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
@@ -49,7 +42,7 @@
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Versioning" Version="4.1.0" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
-    <PackageReference Include="Octostache" Version="2.1.14" />
+    <PackageReference Include="Octostache" Version="2.1.15" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
@@ -80,7 +73,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Kubernetes\Scripts\KubectlBashContext.sh" />
     <EmbeddedResource Include="Kubernetes\Scripts\KubectlPowershellContext.ps1" />
-    <EmbeddedResource Include="Scripts\**" />
     <EmbeddedResource Include="Scripts\**" />
     <None Update="Calamari.exe.manifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
