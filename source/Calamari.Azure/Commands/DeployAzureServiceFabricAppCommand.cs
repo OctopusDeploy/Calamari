@@ -15,6 +15,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Azure.Util;
+using Calamari.Integration.Certificates;
 
 namespace Calamari.Azure.Commands
 {
@@ -26,8 +27,9 @@ namespace Calamari.Azure.Commands
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
+        private readonly ICertificateStore certificateStore;
 
-        public DeployAzureServiceFabricAppCommand(CombinedScriptEngine scriptEngine)
+        public DeployAzureServiceFabricAppCommand(CombinedScriptEngine scriptEngine, ICertificateStore certificateStore)
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
@@ -35,6 +37,7 @@ namespace Calamari.Azure.Commands
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
+            this.certificateStore = certificateStore;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -89,7 +92,7 @@ namespace Calamari.Azure.Commands
                 new SubstituteVariablesInAzureServiceFabricPackageConvention(fileSystem, substituter),
 
                 // Main Service Fabric deployment script execution
-                new EnsureServiceFabricCertificateExistsInStoreConvention(),
+                new EnsureCertificateInstalledInStoreConvention(certificateStore, SpecialVariables.Action.ServiceFabric.ClientCertVariable, SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, SpecialVariables.Action.ServiceFabric.CertificateStoreName),
                 new DeployAzureServiceFabricAppConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
 
                 // PostDeploy stage

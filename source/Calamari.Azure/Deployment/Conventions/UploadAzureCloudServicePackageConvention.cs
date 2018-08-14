@@ -30,11 +30,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var nugetPackageVersion = deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion);
             var uploadedFileName = Path.ChangeExtension(Path.GetFileName(package), "." + nugetPackageVersion + "_" + packageHash + ".cspkg");
 
-            var credentials = credentialsFactory.GetCredentials(
-                deployment.Variables.Get(SpecialVariables.Action.Azure.SubscriptionId),
-                deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateBytes)
-                );
+            var credentials = credentialsFactory.GetCredentials(deployment.Variables);
 
             var storageAccountName = deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName);
             var storageEndpointSuffix =

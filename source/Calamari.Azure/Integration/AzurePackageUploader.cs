@@ -6,7 +6,8 @@ using System.Net;
 using System.Text;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
-using Microsoft.WindowsAzure;
+using Microsoft.Azure;
+using Microsoft.WindowsAzure.Management.Storage;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -121,7 +122,7 @@ namespace Calamari.Azure.Integration
 
         static string GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
         {
-            using (var cloudClient = CloudContext.Clients.CreateStorageManagementClient(credentials,new Uri(serviceManagementEndpoint)))
+            using (var cloudClient = new StorageManagementClient(credentials, new Uri(serviceManagementEndpoint)))
             {
                 var getKeysResponse = cloudClient.StorageAccounts.GetKeys(storageAccountName);
 
