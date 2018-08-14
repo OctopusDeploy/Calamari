@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Shared.Util;
 using Calamari.Util;
 
 namespace Calamari.Integration.Packages

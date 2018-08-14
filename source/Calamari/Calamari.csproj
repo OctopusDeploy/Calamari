@@ -48,9 +48,13 @@
   <!--<ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />-->
   <!--</ItemGroup>-->
   <!--<ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">-->
-    <!--<ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />-->
-    <!--<ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />-->
+  <!--<ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />-->
+  <!--<ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />-->
   <!--</ItemGroup>-->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
@@ -59,6 +63,7 @@
     <PackageReference Include="ScriptCS" Version="0.17.1" />
     <!--<PackageReference Include="Octostache" Version="2.1.14" />-->
     <!--<PackageReference Include="Octostache" Version="2.1.14" />-->
+    <PackageReference Include="Octostache" Version="2.1.15" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
@@ -141,6 +146,9 @@
     <EmbeddedResource Include="Kubernetes\Scripts\KubectlBashContext.sh" />
     <EmbeddedResource Include="Kubernetes\Scripts\KubectlPowershellContext.ps1" />
     <EmbeddedResource Include="Scripts\**" />
+    <None Update="Calamari.exe.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Target Name="GetToolFiles">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">

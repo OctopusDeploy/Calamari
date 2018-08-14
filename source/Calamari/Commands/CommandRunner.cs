@@ -14,12 +14,14 @@ namespace Calamari.Commands
         private readonly DeploymentStrategyBuilder cb;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
+        private readonly ILog log;
 
-        public CommandRunner(DeploymentStrategyBuilder cb, ICalamariFileSystem fileSystem, IDeploymentJournalWriter deploymentJournalWriter)
+        public CommandRunner(DeploymentStrategyBuilder cb, ICalamariFileSystem fileSystem, IDeploymentJournalWriter deploymentJournalWriter, ILog log)
         {
             this.cb = cb;
             this.fileSystem = fileSystem;
             this.deploymentJournalWriter = deploymentJournalWriter;
+            this.log = log;
         }
 
         public int Run(CalamariVariableDictionary variables, string packageFile)
@@ -27,7 +29,8 @@ namespace Calamari.Commands
             var ctx = new CalamariExecutionContext()
             {
                 Variables = variables,
-                PackageFilePath = packageFile
+                PackageFilePath = packageFile,
+                Log = log
             };
             
             var journal = cb.UsesDeploymentJournal ?

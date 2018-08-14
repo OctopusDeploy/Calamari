@@ -3,12 +3,10 @@ using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 using System.Security.Cryptography;
-using Calamari.Azure.Commands;
 using Calamari.Azure.Integration.CloudServicePackage;
 using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Calamari.Util;
 
@@ -18,13 +16,12 @@ namespace Calamari.Azure.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         private readonly ISemaphoreFactory semaphoreFactory;
-        private readonly ILog log;
+        private readonly ILog log = Log.Instance;
 
-        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, ILog log)
+        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
-            this.log = log;
         }
 
         public void Run(IExecutionContext deployment)

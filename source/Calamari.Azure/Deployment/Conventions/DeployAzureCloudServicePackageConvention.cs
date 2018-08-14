@@ -1,36 +1,30 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using Calamari.Azure.Commands;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Calamari.Shared.Scripting;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class DeployAzureCloudServicePackageConvention : IInstallConvention, IConvention
+    public class DeployAzureCloudServicePackageConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptRunner scriptEngine;
-        readonly ICommandLineRunner commandLineRunner;
-        private readonly ILog log;
+        private readonly ILog log = Log.Instance;
 
         public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
-            IScriptRunner scriptEngine, ICommandLineRunner commandLineRunner, ILog log)
+            IScriptRunner scriptEngine)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
             this.scriptEngine = scriptEngine;
-            this.commandLineRunner = commandLineRunner;
             this.log = log;
         }
 
-        public void Install(IExecutionContext deployment)
+        public void Run(IExecutionContext deployment)
         {
             log.Info("Config file: " + deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile));
 
@@ -54,14 +48,13 @@ namespace Calamari.Azure.Deployment.Conventions
                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureCloudService.ps1")); 
             }
 
-            var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
+            var result = scriptEngine.Execute(new Script(scriptFile));
 
             fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
 
             if (result.ExitCode != 0)
             {
-                throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile,
-                    result.ExitCode));
+                throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}", scriptFile, result.ExitCode));
             }
         }
     }

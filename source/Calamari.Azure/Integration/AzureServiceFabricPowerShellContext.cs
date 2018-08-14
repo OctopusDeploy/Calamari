@@ -1,52 +1,34 @@
 ﻿using Calamari.Azure.Util;
-using Calamari.Hooks;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Octostache;
 using System;
-using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using Calamari.Shared;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Scripting;
 
 namespace Calamari.Azure.Integration
 {
     public class AzureServiceFabricPowerShellContext : IScriptWrapper
     {
-        readonly ICalamariFileSystem fileSystem;
-        readonly ICalamariEmbeddedResources embeddedResources;
-        private readonly CalamariVariableDictionary variables;
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly ICalamariEmbeddedResources embeddedResources;
+        private readonly ILog log = Log.Instance;
 
-        public AzureServiceFabricPowerShellContext(CalamariVariableDictionary variables)
+        public AzureServiceFabricPowerShellContext(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources)
         {
-            this.fileSystem = new WindowsPhysicalFileSystem();
-            this.embeddedResources = new AssemblyEmbeddedResources();
-            this.variables = variables;
+            this.fileSystem = fileSystem;
+            this.embeddedResources = embeddedResources;
         }
 
-        public bool Enabled =>
-            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
 
-        public IScriptWrapper NextWrapper { get; set; }
-
-        public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
-            ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+        public void ExecuteScript(IScriptExecutionContext context, Script script, Action<Script> next)
         {
-            // We only execute this hook if the connection endpoint has been set
-            if (!Enabled)
-            {
-                throw new InvalidOperationException(
-                    "This script wrapper hook is not enabled, and should not have been run");
-            }
-
             if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
             var workingDirectory = Path.GetDirectoryName(script.File);
+            var variables = context.Variables;
             variables.Set("OctopusFabricTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusFabricTargetScriptParameters", script.Parameters);
 
@@ -79,7 +61,7 @@ namespace Calamari.Azure.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
+                next(new Script(contextScriptFile.FilePath));
             }
         }
 
@@ -91,22 +73,22 @@ namespace Calamari.Azure.Integration
             return azureContextScriptFile;
         }
 
-        static void SetAzureModulesLoadingMethod(VariableDictionary variables)
+        void SetAzureModulesLoadingMethod(VariableDictionary variables)
         {
             // We don't bundle the standard Azure PS module for Service Fabric work. We do however need
             // a certain Active Directory library that is bundled with Calamari.
             SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(AzureServiceFabricPowerShellContext).Assembly.Location), variables);
         }
 
-        static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        void SetOutputVariable(string name, string value, VariableDictionary variables)
         {
             if (variables.Get(name) != value)
             {
-                Log.SetOutputVariable(name, value, variables);
+                log.SetOutputVariable(name, value, variables);
             }
         }
 
-        string GetMandatoryVariable(CalamariVariableDictionary variables, string variableName)
+        string GetMandatoryVariable(VariableDictionary variables, string variableName)
         {
             var value = variables.Get(variableName);
 
@@ -114,6 +96,11 @@ namespace Calamari.Azure.Integration
                 throw new CommandException($"Variable {variableName} was not supplied");
 
             return value;
+        }
+
+        public bool Enabled(VariableDictionary variables)
+        {
+            return !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
         }
     }
 }

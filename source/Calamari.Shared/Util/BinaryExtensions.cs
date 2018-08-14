@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Util
+namespace Calamari.Shared.Util
 {
     public static class BinaryExtensions
     {

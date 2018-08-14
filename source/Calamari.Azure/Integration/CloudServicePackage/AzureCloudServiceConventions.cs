@@ -3,6 +3,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
+using Calamari.Shared.Util;
 using Calamari.Util;
 
 namespace Calamari.Azure.Integration.CloudServicePackage

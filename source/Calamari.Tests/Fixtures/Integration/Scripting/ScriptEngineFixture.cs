@@ -5,6 +5,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.Bash;
 using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Shared;
 using Calamari.Shared.Scripting;
 using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;

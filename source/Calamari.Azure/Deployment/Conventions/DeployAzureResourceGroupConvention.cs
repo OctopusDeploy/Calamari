@@ -6,51 +6,51 @@ using System.Threading;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Azure.Integration;
 using Calamari.Azure.Integration.Security;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.Util;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Models;
 using Microsoft.Rest;
-using Calamari.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class DeployAzureResourceGroupConvention : IInstallConvention
+    public class DeployAzureResourceGroupConvention : IConvention
     {
-        readonly string templateFile;
-        readonly string templateParametersFile;
-        private readonly bool filesInPackage;
-        private readonly TemplateService templateService;
+       
+        private readonly ITemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
+        private readonly ILog log = Log.Instance;
 
-        public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, bool filesInPackage, 
-            TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer)
+        public DeployAzureResourceGroupConvention(ITemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer)
         {
-            this.templateFile = templateFile;
-            this.templateParametersFile = templateParametersFile;
-            this.filesInPackage = filesInPackage;
             this.templateService = templateService;
             this.parameterNormalizer = parameterNormalizer;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             var variables = deployment.Variables;
+            
+            var templateFile = variables.Get(AzureSpecialVariables.ResourceGroupAction.Template);
+            var templateParametersFile = variables.Get(AzureSpecialVariables.ResourceGroupAction.TemplateParameters);
+            var filesInPackage = !string.IsNullOrEmpty(deployment.PackageFilePath);
+            
+            
             var subscriptionId = variables[SpecialVariables.Action.Azure.SubscriptionId];
             var tenantId = variables[SpecialVariables.Action.Azure.TenantId];
             var clientId = variables[SpecialVariables.Action.Azure.ClientId];
             var password = variables[SpecialVariables.Action.Azure.Password];
             var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
-                Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
+                log.InfoFormat("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
 
             var activeDirectoryEndPoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
             if (activeDirectoryEndPoint != DefaultVariables.ActiveDirectoryEndpoint)
-                Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
+                log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
 
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
@@ -63,7 +63,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackage, variables))
                 : null;
 
-            Log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
+            log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
             Func<IResourceManagementClient> createArmClient = () =>
@@ -97,13 +97,13 @@ namespace Calamari.Azure.Deployment.Conventions
             return deploymentName;
         }
 
-        static void CreateDeployment(Func<IResourceManagementClient> createArmClient, string resourceGroupName, string deploymentName,
+        void CreateDeployment(Func<IResourceManagementClient> createArmClient, string resourceGroupName, string deploymentName,
             DeploymentMode deploymentMode, string template, string parameters)
         {
-            Log.Verbose($"Template:\n{template}\n");
+            log.Verbose($"Template:\n{template}\n");
             if (parameters != null)
             {
-               Log.Verbose($"Parameters:\n{parameters}\n"); 
+               log.Verbose($"Parameters:\n{parameters}\n"); 
             }
 
             using (var armClient = createArmClient())
@@ -119,11 +119,11 @@ namespace Calamari.Azure.Deployment.Conventions
                         }
                     });
 
-                Log.Info($"Deployment created: {createDeploymentResult.Id}");
+                log.Info($"Deployment created: {createDeploymentResult.Id}");
             }
         }
 
-        static void PollForCompletion(Func<IResourceManagementClient> createArmClient, string resourceGroupName,
+        void PollForCompletion(Func<IResourceManagementClient> createArmClient, string resourceGroupName,
             string deploymentName, VariableDictionary variables)
         {
             // While the deployment is running, we poll to check its state.
@@ -137,22 +137,22 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 Thread.Sleep(TimeSpan.FromSeconds(Math.Min(currentPollWait, maxWaitSeconds)));
 
-                Log.Verbose("Polling for status of deployment...");
+                log.Verbose("Polling for status of deployment...");
                 using (var armClient = createArmClient())
                 {
                     var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName);
                     if (deployment.Properties == null)
                     {
-                        Log.Verbose($"Failed to find deployment.Properties");
+                        log.Verbose($"Failed to find deployment.Properties");
                         return;
                     }
 
-                    Log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
+                    log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
                     switch (deployment.Properties.ProvisioningState)
                     {
                         case "Succeeded":
-                            Log.Info($"Deployment {deploymentName} complete.");
-                            Log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
+                            log.Info($"Deployment {deploymentName} complete.");
+                            log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
                             CaptureOutputs(deployment.Properties.Outputs?.ToString(), variables);
                             continueToPoll = false;
                             break;
@@ -203,19 +203,19 @@ namespace Calamari.Azure.Deployment.Conventions
             return log.ToString();
         }
 
-        static void CaptureOutputs(string outputsJson, VariableDictionary variables)
+        void CaptureOutputs(string outputsJson, VariableDictionary variables)
         {
             if (string.IsNullOrWhiteSpace(outputsJson))
                 return;
 
-            Log.Verbose("Deployment Outputs:");
-            Log.Verbose(outputsJson);
+            log.Verbose("Deployment Outputs:");
+            log.Verbose(outputsJson);
 
             var outputs = JObject.Parse(outputsJson);
 
             foreach (var output in outputs)
             {
-                Log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
+                log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
             }
         }
     }

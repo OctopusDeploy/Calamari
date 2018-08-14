@@ -1,38 +1,29 @@
 ﻿using System.IO;
 using System.Reflection;
-using Calamari.Azure.Commands;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Calamari.Shared.Scripting;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class SwapAzureDeploymentConvention : IInstallConvention, IConvention
+    public class SwapAzureDeploymentConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptRunner scriptEngine;
-        private readonly ILog log;
-        readonly ICommandLineRunner commandLineRunner;
+        private readonly ILog log = Log.Instance;
 
         public SwapAzureDeploymentConvention(ICalamariFileSystem fileSystem,
             ICalamariEmbeddedResources embeddedResources,
-            IScriptRunner scriptEngine,
-            ILog log,
-            ICommandLineRunner commandLineRunner)
+            IScriptRunner scriptEngine)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
             this.scriptEngine = scriptEngine;
-            this.log = log;
-            this.commandLineRunner = commandLineRunner;
         }
 
-        public void Install(IExecutionContext deployment)
+        public void Run(IExecutionContext deployment)
         {
             log.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName), deployment.Variables);
             log.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName), deployment.Variables);
@@ -49,7 +40,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.SwapAzureCloudServiceDeployment.ps1"));
             }
 
-            var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
+            var result = scriptEngine.Execute(new Script(scriptFile));
 
             fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
 

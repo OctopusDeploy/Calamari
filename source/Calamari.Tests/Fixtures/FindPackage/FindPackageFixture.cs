@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Shared;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -21,7 +22,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
         readonly string packageVersion = "1.0.0";
         readonly string newpackageVersion = "1.0.1";
 
-        private readonly string mavenPackage = TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar");
+        private readonly string mavenPackage = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar");
         private string mavenPackageHash;
 
         [OneTimeSetUp]

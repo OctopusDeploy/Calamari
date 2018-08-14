@@ -6,6 +6,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using Calamari.Shared;
+using Calamari.Shared.Util;
 using Calamari.Util;
 using Octostache;
 

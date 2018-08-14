@@ -59,6 +59,7 @@ namespace Calamari
             }).As<ICommandOutput>().SingleInstance();
             
             
+            
             builder.RegisterInstance(new ScriptEngineRegistry()).As<IScriptEngineRegistry>();
             builder.RegisterInstance<ICalamariFileSystem>(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             builder.RegisterInstance(new LogWrapper()).As<ILog>().SingleInstance();
@@ -123,8 +124,12 @@ namespace Calamari
 
         public static int Main(string[] args)
         {
-            Log.Verbose($"Octopus Deploy: Calamari version {typeof(Program).Assembly.GetInformationalVersion()}");
-            Log.Verbose($"Environment Information:{Environment.NewLine}" +
+            Shared.Log.Instance = new LogWrapper();
+            
+            CalamariFileSystem.Instance = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            
+            Shared.Log.Instance.Verbose($"Octopus Deploy: Calamari version {typeof(Program).Assembly.GetInformationalVersion()}");
+            Shared.Log.Instance.Verbose($"Environment Information:{Environment.NewLine}" +
                         $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}");
             
             EnableAllSecurityProtocols();
@@ -208,7 +213,8 @@ namespace Calamari
             var container = builder.Build();
             var cb = new DeploymentStrategyBuilder(container)
             {
-                Variables = variables
+                Variables = variables,
+                
             };
             ((IDeploymentAction)container.Resolve(deploymentAction.type)).Build(cb);
 
@@ -220,7 +226,7 @@ namespace Calamari
                 Options2.Parse(args);
             }
            
-            var cr = new CommandRunner(cb, container.Resolve<ICalamariFileSystem>(), new DeploymentJournalWriter(container.Resolve<ICalamariFileSystem>()));
+            var cr = new CommandRunner(cb, container.Resolve<ICalamariFileSystem>(), new DeploymentJournalWriter(container.Resolve<ICalamariFileSystem>()), container.Resolve<ILog>());
             cr.Run(variables, packageFile);
 
             return variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;

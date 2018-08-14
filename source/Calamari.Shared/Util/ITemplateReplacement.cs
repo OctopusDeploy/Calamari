@@ -1,7 +1,7 @@
 ﻿using System;
 using Octostache;
 
-namespace Calamari.Util
+namespace Calamari.Shared.Util
 {
     /// <summary>
     /// Defines a service for replacing template markup in files

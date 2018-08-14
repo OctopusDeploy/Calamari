@@ -3,6 +3,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Shared;
+using Calamari.Shared.Util;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using Calamari.Util;

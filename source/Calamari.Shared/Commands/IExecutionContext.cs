@@ -19,7 +19,9 @@ namespace Calamari.Shared.Commands
         string StagingDirectory { get; }
         string CustomDirectory { get; }
         DeploymentWorkingDirectory CurrentDirectoryProvider { get; set; }
-    
+
+        ILog Log { get; }
+
     }
     
     public enum DeploymentWorkingDirectory

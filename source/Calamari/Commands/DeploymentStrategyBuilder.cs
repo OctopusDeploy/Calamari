@@ -32,6 +32,7 @@ namespace Calamari.Commands
         }
         
         public DeploymentWorkingDirectory CurrentDirectoryProvider { get; set; }
+        public ILog Log { get; set; }
 
         public string CurrentDirectory => CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ?
             (string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory)

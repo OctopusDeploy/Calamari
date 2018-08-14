@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Hooks;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Shared;
 using Calamari.Shared.Certificates;
 using Calamari.Shared.FileSystem;
@@ -22,30 +16,23 @@ namespace Calamari.Azure.Integration
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
-        private readonly ILog log;
+        private readonly ILog log = Log.Instance;
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
 
         public const string DefaultAzureEnvironment = "AzureCloud";
 
-        public AzurePowerShellContext(ICalamariFileSystem fileSystem, ICertificateStore certificateStore, ICalamariEmbeddedResources embeddedResources, ILog log)
+        public AzurePowerShellContext(ICalamariFileSystem fileSystem, ICertificateStore certificateStore, ICalamariEmbeddedResources embeddedResources)
         {
             this.fileSystem = fileSystem;
             this.certificateStore = certificateStore;
             this.embeddedResources = embeddedResources;
-            this.log = log;
         }
 
-        
-
-
-        public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
-            ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+        public void ExecuteScript(IScriptExecutionContext context, Script script, Action<Script> next)
         {
+            var variables = context.Variables;
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
@@ -55,7 +42,7 @@ namespace Calamari.Azure.Integration
             var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
             if (azureEnvironment != DefaultAzureEnvironment)
             {
-                log.Info("Using Azure Environment override - {0}", azureEnvironment);
+                log.InfoFormat("Using Azure Environment override - {0}", azureEnvironment);
             }
             SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
 
@@ -68,14 +55,16 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
+                    next(new Script(contextScriptFile.FilePath));
                 }
-
-                //otherwise use management certificate
-                SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
-                using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
+                else
                 {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
+                    //otherwise use management certificate
+                    SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
+                    using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
+                    {
+                        next(new Script(contextScriptFile.FilePath));
+                    }
                 }
             }
         }
@@ -94,7 +83,7 @@ namespace Calamari.Azure.Integration
             var certificatePassword = GenerateCertificatePassword();
             var azureCertificate = certificateStore.GetOrAdd(
                 variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                variables.Get(SpecialVariables.Action.Azure.CertificateBytes),
+                Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                 StoreName.My);
 
             variables.Set("OctopusAzureCertificateFileName", certificateFilePath);
@@ -104,11 +93,11 @@ namespace Calamari.Azure.Integration
             return certificateFilePath;
         }
 
-        static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        void SetOutputVariable(string name, string value, VariableDictionary variables)
         {
             if (variables.Get(name) != value)
             {
-                Log.SetOutputVariable(name, value, variables);
+                log.SetOutputVariable(name, value, variables);
             }
         }
 
@@ -120,15 +109,10 @@ namespace Calamari.Azure.Integration
             return Convert.ToBase64String(bytes);
         }
 
-        bool Enabled(VariableDictionary variables)
+        public bool Enabled(VariableDictionary variables)
         {
             return variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
-                string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint))
-        }
-
-        public void ExecuteScript(IScriptExecutionContext context, Script script, Action<Script> next)
-        {
-            throw new NotImplementedException();
+                   string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
         }
     }
 }

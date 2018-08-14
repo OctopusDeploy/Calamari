@@ -1,6 +1,6 @@
 ﻿using System.Xml;
 
-namespace Calamari.Util
+namespace Calamari.Shared.Util
 {
     public static class XmlUtils
     {

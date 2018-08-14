@@ -4,29 +4,30 @@ using System.IO.Packaging;
 using System.Linq;
 using Calamari.Azure.Integration.CloudServicePackage;
 using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
+using Calamari.Azure.Util;
 using Calamari.Shared;
-using Calamari.Util;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class ExtractAzureCloudServicePackageConvention : IInstallConvention
+    public class ExtractAzureCloudServicePackageConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
-
+        private readonly ILog log = Log.Instance;
+        
         public ExtractAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, false))
                 return;
 
             var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
-            Log.VerboseFormat("Extracting Cloud Service package: '{0}'", packagePath);
+            log.VerboseFormat("Extracting Cloud Service package: '{0}'", packagePath);
             using (var package = Package.Open(packagePath, FileMode.Open))
             {
                 var manifest = AzureCloudServiceConventions.ReadPackageManifest(package);
@@ -41,7 +42,7 @@ namespace Calamari.Azure.Deployment.Conventions
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.LogExtractedCspkg))
                 LogExtractedPackage(deployment.CurrentDirectory);
 
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.PackageExtractionPath, deployment.CurrentDirectory, deployment.Variables);
+            log.SetOutputVariable(SpecialVariables.Action.Azure.PackageExtractionPath, deployment.CurrentDirectory, deployment.Variables);
         }
 
         void ExtractContents(Package package, PackageDefinition manifest, string contentNamePrefix, string workingDirectory)
@@ -100,8 +101,8 @@ namespace Calamari.Azure.Deployment.Conventions
 
         void LogExtractedPackage(string workingDirectory)
         {
-            Log.Verbose("CSPKG extracted. Working directory contents:");
-            DirectoryLoggingHelper.LogDirectoryContents(fileSystem, workingDirectory, "", 0);
+            log.Verbose("CSPKG extracted. Working directory contents:");
+            DirectoryLoggingHelper.LogDirectoryContents(fileSystem, log, workingDirectory, "", 0);
         }
     }
 }

@@ -63,7 +63,7 @@ namespace Calamari
         }
     }
 
-    public class Log
+    public class Log 
     {
         static string stdOutMode;
 

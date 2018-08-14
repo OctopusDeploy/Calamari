@@ -1,7 +1,6 @@
-﻿using Octopus.CoreUtilities;
-using Octostache;
+﻿using Octostache;
 
-namespace Calamari.Util
+namespace Calamari.Shared.Util
 {
     public class ResolvedTemplatePath
     {
@@ -38,14 +37,11 @@ namespace Calamari.Util
         /// <param name="variables">The variables that contain the deployment locations</param>
         /// <returns>The path to the supplied file</returns>
         ResolvedTemplatePath Resolve(string relativeFilePath, bool inPackage, VariableDictionary variables);
-
-        /// <summary>
-        /// Gets the path to the supplied template file in a safe way.
-        /// </summary>
-        /// <param name="relativeFilePath">The relative path to the file to process</param>
-        /// <param name="inPackage">True if the file is in a package, and false otherwise</param>
-        /// <param name="variables">The variables that contain the deployment locations</param>
-        /// <returns>Maybe file path or Nothing if it doesn't exist</returns>
-        Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables);
+    }
+    
+    public interface ITemplateService
+    {
+        string GetTemplateContent(string relativePath, bool inPackage, VariableDictionary variables);
+        string GetSubstitutedTemplateContent(string relativePath, bool inPackage, VariableDictionary variables);
     }
 }

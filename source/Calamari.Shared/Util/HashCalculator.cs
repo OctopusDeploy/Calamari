@@ -2,9 +2,8 @@
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
-using Octopus.CoreUtilities;
 
-namespace Calamari.Util
+namespace Calamari.Shared.Util
 {
     public class HashCalculator
     {
@@ -46,8 +45,6 @@ namespace Calamari.Util
         /// <returns></returns>
         public static bool IsAvailableHashingAlgorithm(Func<HashAlgorithm> factory)
         {
-            Guard.NotNull(factory, "Factory method is required");
-
             try
             {
                 var result = factory();

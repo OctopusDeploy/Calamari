@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Shared.Util;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using Calamari.Util;

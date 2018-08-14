@@ -6,6 +6,11 @@ using System.Threading;
 
 namespace Calamari.Shared.FileSystem
 {
+    public static class CalamariFileSystem
+    {
+        public static ICalamariFileSystem Instance { get; internal set; }
+    }
+    
     public interface ICalamariFileSystem
     {
         bool FileExists(string path);

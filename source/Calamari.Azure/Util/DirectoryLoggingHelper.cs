@@ -1,14 +1,14 @@
-﻿using Calamari.Integration.FileSystem;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.Shared;
 using Calamari.Shared.FileSystem;
 
-namespace Calamari.Util
+namespace Calamari.Azure.Util
 {
     public static class DirectoryLoggingHelper
     {
-        public static void LogDirectoryContents(ICalamariFileSystem fileSystem, string workingDirectory, string currentDirectoryRelativePath, int depth = 0)
+        public static void LogDirectoryContents(ICalamariFileSystem fileSystem, ILog log, string workingDirectory, string currentDirectoryRelativePath, int depth = 0)
         {
             var directory = new DirectoryInfo(Path.Combine(workingDirectory, currentDirectoryRelativePath));
 
@@ -18,18 +18,18 @@ namespace Calamari.Util
                 // Only log the first 50 files in each directory
                 if (i == 50)
                 {
-                    Log.VerboseFormat("{0}And {1} more files...", Indent(depth), files.Count - i);
+                    log.VerboseFormat("{0}And {1} more files...", Indent(depth), files.Count - i);
                     break;
                 }
 
                 var file = files[i];
-                Log.Verbose(Indent(depth) + Path.GetFileName(file));
+                log.Verbose(Indent(depth) + Path.GetFileName(file));
             }
 
             foreach (var subDirectory in fileSystem.EnumerateDirectories(directory.FullName).Select(x => new DirectoryInfo(x)))
             {
-                Log.Verbose(Indent(depth + 1) + "\\" + subDirectory.Name);
-                LogDirectoryContents(fileSystem, workingDirectory, Path.Combine(currentDirectoryRelativePath, subDirectory.Name), depth + 1);
+                log.Verbose(Indent(depth + 1) + "\\" + subDirectory.Name);
+                LogDirectoryContents(fileSystem, log, workingDirectory, Path.Combine(currentDirectoryRelativePath, subDirectory.Name), depth + 1);
             }
         }
 

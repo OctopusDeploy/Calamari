@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Calamari.Util
+namespace Calamari.Shared.Util
 {
     public interface ITemplate
     {

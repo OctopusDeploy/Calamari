@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Calamari.Azure.Commands;
 using Calamari.Azure.Integration;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 using Octostache;
@@ -17,17 +17,15 @@ namespace Calamari.Azure.Deployment.Conventions
         readonly ICalamariFileSystem fileSystem;
         readonly ISubscriptionCloudCredentialsFactory credentialsFactory;
         readonly IAzureCloudServiceConfigurationRetriever configurationRetriever;
-        private readonly ILog log;
+        private readonly ILog log = Log.Instance;
 
         public ConfigureAzureCloudServiceConvention(ICalamariFileSystem fileSystem,
             ISubscriptionCloudCredentialsFactory subscriptionCloudCredentialsFactory,
-            IAzureCloudServiceConfigurationRetriever configurationRetriever,
-            ILog log)
+            IAzureCloudServiceConfigurationRetriever configurationRetriever)
         {
             this.fileSystem = fileSystem;
             this.credentialsFactory = subscriptionCloudCredentialsFactory;
             this.configurationRetriever = configurationRetriever;
-            this.log = log;
         }
 
         public void Run(IExecutionContext deployment)
@@ -83,9 +81,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var slot = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), variables.Get(SpecialVariables.Action.Azure.Slot));
 
             var remoteConfigurationFile = configurationRetriever.GetConfiguration(
-                credentialsFactory.GetCredentials(variables.Get(SpecialVariables.Action.Azure.SubscriptionId),
-                    variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                    variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
+                credentialsFactory.GetCredentials(variables),
                 serviceName,
                 slot);
 

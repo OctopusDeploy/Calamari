@@ -16,4 +16,10 @@ namespace Calamari.Shared
         void SetOutputVariable(string name, string value);
         void SetOutputVariable(string name, string value, VariableDictionary variables);
     }
+
+
+    public static class Log
+    {
+        public static ILog Instance { get; internal set; }
+    }
 }

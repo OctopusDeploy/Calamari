@@ -1,11 +1,11 @@
-﻿using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Shared.FileSystem;
+﻿using Calamari.Shared.FileSystem;
+using Calamari.Shared.Util;
 using Octopus.CoreUtilities.Extensions;
+using Octostache;
 
 namespace Calamari.Util
-{
-    public class TemplateService
+{    
+    public class TemplateService: ITemplateService
     {
         private readonly ICalamariFileSystem fileSystem;
         private readonly ITemplateResolver resolver;
@@ -18,14 +18,14 @@ namespace Calamari.Util
             this.replacement = replacement;
         }
 
-        public string GetTemplateContent(string relativePath, bool inPackage, CalamariVariableDictionary variables)
+        public string GetTemplateContent(string relativePath, bool inPackage, VariableDictionary variables)
         {
             return resolver.Resolve(relativePath, inPackage, variables)
                 .Map(x => x.Value)
                 .Map(fileSystem.ReadFile);
         }
 
-        public string GetSubstitutedTemplateContent(string relativePath, bool inPackage, CalamariVariableDictionary variables)
+        public string GetSubstitutedTemplateContent(string relativePath, bool inPackage, VariableDictionary variables)
         {
             return replacement.ResolveAndSubstituteFile(
                 () => resolver.Resolve(relativePath, inPackage, variables).Value,

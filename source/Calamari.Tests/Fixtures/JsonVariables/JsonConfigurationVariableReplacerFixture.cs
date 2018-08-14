@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
+using Calamari.Shared;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

@@ -406,6 +406,7 @@ namespace Calamari.Shared
         public static class Machine
         {
             public const string Name = "Octopus.Machine.Name";
+            public const string DeploymentTargetType = "Octopus.Machine.DeploymentTargetType";
         }
 
         public static class Account

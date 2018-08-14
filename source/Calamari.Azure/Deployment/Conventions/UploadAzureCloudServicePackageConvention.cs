@@ -1,17 +1,18 @@
 ﻿using System.IO;
 using Calamari.Azure.Integration;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Shared;
-using Calamari.Util;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
+using Calamari.Shared.Util;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class UploadAzureCloudServicePackageConvention : IInstallConvention
+    public class UploadAzureCloudServicePackageConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IAzurePackageUploader azurePackageUploader;
         readonly ISubscriptionCloudCredentialsFactory credentialsFactory;
+        private readonly ILog log = Log.Instance;
 
 
         public UploadAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, IAzurePackageUploader azurePackageUploader,
@@ -22,19 +23,15 @@ namespace Calamari.Azure.Deployment.Conventions
             this.credentialsFactory = credentialsFactory;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             var package = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath); 
-            Log.Info("Uploading package to Azure blob storage: '{0}'", package);
+            log.InfoFormat("Uploading package to Azure blob storage: '{0}'", package);
             var packageHash = HashCalculator.Hash(package);
             var nugetPackageVersion = deployment.Variables.Get(SpecialVariables.Package.NuGetPackageVersion);
             var uploadedFileName = Path.ChangeExtension(Path.GetFileName(package), "." + nugetPackageVersion + "_" + packageHash + ".cspkg");
 
-            var credentials = credentialsFactory.GetCredentials(
-                deployment.Variables.Get(SpecialVariables.Action.Azure.SubscriptionId),
-                deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                deployment.Variables.Get(SpecialVariables.Action.Azure.CertificateBytes)
-                );
+            var credentials = credentialsFactory.GetCredentials(deployment.Variables);
 
             var storageAccountName = deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName);
             var storageEndpointSuffix =
@@ -43,8 +40,8 @@ namespace Calamari.Azure.Deployment.Conventions
                 deployment.Variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
             var uploadedUri = azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName,storageEndpointSuffix, defaultServiceManagementEndpoint);
 
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), deployment.Variables);
-            Log.Info("Package uploaded to " + uploadedUri.ToString());
+            log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), deployment.Variables);
+            log.Info("Package uploaded to " + uploadedUri.ToString());
         }
     }
 }

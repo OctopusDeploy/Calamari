@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using Calamari.Shared.Util;
 using Calamari.Util;
 using NUnit.Framework;
 

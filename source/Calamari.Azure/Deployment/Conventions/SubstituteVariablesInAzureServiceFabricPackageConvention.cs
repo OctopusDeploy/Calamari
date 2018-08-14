@@ -1,5 +1,5 @@
-﻿using Calamari.Azure.Commands;
-using Calamari.Shared;
+﻿using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 
 namespace Calamari.Azure.Deployment.Conventions

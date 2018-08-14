@@ -1,52 +1,50 @@
 ﻿using System;
 using System.Reflection;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using System.IO;
+using Calamari.Azure.Util;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 using Calamari.Shared.Scripting;
 using Calamari.Util;
+using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class DeployAzureServiceFabricAppConvention : IInstallConvention
+    public class DeployAzureServiceFabricAppConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly IScriptRunner scriptEngine;
-        readonly ICommandLineRunner commandLineRunner;
+        private readonly ILog log = Log.Instance;
 
         public DeployAzureServiceFabricAppConvention(ICalamariFileSystem fileSystem,
             ICalamariEmbeddedResources embeddedResources,
-            IScriptRunner scriptEngine,
-            ICommandLineRunner commandLineRunner)
+            IScriptRunner scriptEngine)
         {
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
             this.scriptEngine = scriptEngine;
-            this.commandLineRunner = commandLineRunner;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
             var variables = deployment.Variables;
 
             // Set output variables for our script to access.
-            Log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.ServiceFabric.PublishProfileFile, "PublishProfiles\\Cloud.xml"), variables);
-            Log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.ServiceFabric.DeployOnly, defaultValue: false.ToString()), variables);
-            Log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.ServiceFabric.UnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
-            Log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverrideUpgradeBehavior, defaultValue: "None"), variables);
-            Log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
-            Log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.ServiceFabric.SkipPackageValidation, defaultValue: false.ToString()), variables);
-            Log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.ServiceFabric.CopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
+            log.SetOutputVariable("PublishProfileFile", variables.Get(SpecialVariables.Action.ServiceFabric.PublishProfileFile, "PublishProfiles\\Cloud.xml"), variables);
+            log.SetOutputVariable("DeployOnly", variables.Get(SpecialVariables.Action.ServiceFabric.DeployOnly, defaultValue: false.ToString()), variables);
+            log.SetOutputVariable("UnregisterUnusedApplicationVersionsAfterUpgrade", variables.Get(SpecialVariables.Action.ServiceFabric.UnregisterUnusedApplicationVersionsAfterUpgrade, defaultValue: false.ToString()), variables);
+            log.SetOutputVariable("OverrideUpgradeBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverrideUpgradeBehavior, defaultValue: "None"), variables);
+            log.SetOutputVariable("OverwriteBehavior", variables.Get(SpecialVariables.Action.ServiceFabric.OverwriteBehavior, defaultValue: "SameAppTypeAndVersion"), variables);
+            log.SetOutputVariable("SkipPackageValidation", variables.Get(SpecialVariables.Action.ServiceFabric.SkipPackageValidation, defaultValue: false.ToString()), variables);
+            log.SetOutputVariable("CopyPackageTimeoutSec", variables.Get(SpecialVariables.Action.ServiceFabric.CopyPackageTimeoutSec, defaultValue: 0.ToString()), variables);
             SetRegisterApplicationTypeTimeout(variables);
 
 
             // Package should have been extracted to the staging dir (as per the ExtractPackageToStagingDirectoryConvention).
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
-            Log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
+            log.SetOutputVariable("ApplicationPackagePath", targetPath, variables);
 
             if (deployment.Variables.GetFlag(SpecialVariables.Action.ServiceFabric.LogExtractedApplicationPackage))
                 LogExtractedPackage(deployment.CurrentDirectory);
@@ -59,7 +57,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.DeployAzureServiceFabricApplication.ps1"));
             }
 
-            var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
+            var result = scriptEngine.Execute(new Script(scriptFile));
 
             fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
 
@@ -70,19 +68,19 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        void SetRegisterApplicationTypeTimeout(CalamariVariableDictionary variables)
+        void SetRegisterApplicationTypeTimeout(VariableDictionary variables)
         {
             var registerAppTypeTimeout = variables.Get(SpecialVariables.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec);
             if (registerAppTypeTimeout != null)
             {
-                Log.SetOutputVariable("RegisterApplicationTypeTimeoutSec", registerAppTypeTimeout, variables);
+                log.SetOutputVariable("RegisterApplicationTypeTimeoutSec", registerAppTypeTimeout, variables);
             }
         }
 
         void LogExtractedPackage(string workingDirectory)
         {
-            Log.Verbose("Service Fabric extracted. Working directory contents:");
-            DirectoryLoggingHelper.LogDirectoryContents(fileSystem, workingDirectory, "", 0);
+            log.Verbose("Service Fabric extracted. Working directory contents:");
+            DirectoryLoggingHelper.LogDirectoryContents(fileSystem, log, workingDirectory, "", 0);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Xml.Linq;
-using Microsoft.WindowsAzure;
+using Calamari.Shared;
+using Microsoft.Azure;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 
 namespace Calamari.Azure.Integration

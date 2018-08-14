@@ -3,43 +3,49 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Azure.Accounts;
 using Calamari.Azure.Integration.Security;
-using Calamari.Azure.Util;
 using Calamari.Shared;
 using Microsoft.Azure.Management.ResourceManager;
-using Microsoft.Azure.Management.ResourceManager.Models;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
-using Microsoft.Rest.Azure.OData;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(string subscriptionId, string resourceGroupName, AzureTargetSite azureTargetSite, string tenantId, string applicationId, string password,string resourceManagementEndpoint, string activeDirectoryEndPoint)
+        private static ILog log = Log.Instance;
+        
+        public static SitePublishProfile GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
         {
-            var token = ServicePrincipal.GetAuthorizationToken(tenantId, applicationId, password, resourceManagementEndpoint, activeDirectoryEndPoint);
-            var baseUri = new Uri(resourceManagementEndpoint);
+            if (account.ResourceManagementEndpointBaseUri != DefaultVariables.ResourceManagementEndpoint)
+                log.InfoFormat("Using override for resource management endpoint - {0}", account.ResourceManagementEndpointBaseUri);
+
+            if (account.ActiveDirectoryEndpointBaseUri != DefaultVariables.ActiveDirectoryEndpoint)
+                log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
+
+            var token = ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password, account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
+            var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
             using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token))
 			{
-                SubscriptionId = subscriptionId,
+                SubscriptionId = account.SubscriptionNumber,
                 BaseUri = baseUri,
             })
-            using (var webSiteClient = new WebSiteManagementClient(new Uri(resourceManagementEndpoint), new TokenCredentials(token)) { SubscriptionId = subscriptionId})
+            using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
             {
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                 resourcesClient.HttpClient.BaseAddress = baseUri;
 
-                Log.Verbose($"Looking up site {azureTargetSite.Site} in resourceGroup {resourceGroupName}");
+                log.Verbose($"Looking up site {azureTargetSite.Site} in resourceGroup {resourceGroupName}");
 
                 var sites = webSiteClient.WebApps.List();
                 if (sites.Any())
                 {
-                    Log.Verbose("Found sites:");
+                    log.Verbose("Found sites:");
                     foreach (var site in sites)
                     {
-                        Log.Verbose($"{site.ResourceGroup} / {site.Name}");
+                        log.Verbose($"{site.ResourceGroup} / {site.Name}");
                     }
                 }
 
@@ -53,13 +59,13 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     var resourceGroupMessage = !string.IsNullOrWhiteSpace(resourceGroupName)
                         ? $" in resource group '{resourceGroupName}' and"
                         : " in";
-                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}'{resourceGroupMessage} subscription '{subscriptionId}'");
+                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}'{resourceGroupMessage} subscription '{account.SubscriptionNumber}'");
                 }
                     
                 // if more than one site, fail
                 if (matchingSites.Count > 1)
                     throw new CommandException(
-                        $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{subscriptionId}'.{(string.IsNullOrWhiteSpace(resourceGroupName) ? " Please supply a Resource Group name." : string.Empty)}");
+                        $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{account.SubscriptionNumber}'.{(string.IsNullOrWhiteSpace(resourceGroupName) ? " Please supply a Resource Group name." : string.Empty)}");
 
                 var matchingSite = matchingSites.Single();
                 resourceGroupName = matchingSite.ResourceGroup;
@@ -73,14 +79,14 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                 var siteAndSlotPath = matchingSite.Name;
                 if (azureTargetSite.HasSlot)
                 {
-                    Log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
+                    log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
                     siteAndSlotPath = $"{matchingSite.Name}/slots/{azureTargetSite.Slot}";
                 }
                 
                 // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
                 var publishSettingsUri = new Uri(resourcesClient.BaseUri,
-                    $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteAndSlotPath}/config/publishingCredentials/list?api-version=2016-08-01");
-                Log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
+                    $"/subscriptions/{account.SubscriptionNumber}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteAndSlotPath}/config/publishingCredentials/list?api-version=2016-08-01");
+                log.Verbose($"Retrieving publishing profile from {publishSettingsUri}");
 
                 SitePublishProfile publishProperties = null;
                 var request = new HttpRequestMessage { Method = HttpMethod.Post, RequestUri = publishSettingsUri };
@@ -92,7 +98,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                         var result = publishSettingsResponse.Result.Result;
                         if (!result.IsSuccessStatusCode)
                         {
-                            Log.Error($"Retrieving publishing credentials failed. Publish-settings URI: {publishSettingsUri}");
+                            log.Error($"Retrieving publishing credentials failed. Publish-settings URI: {publishSettingsUri}");
                             throw new Exception($"Retrieving publishing credentials failed with HTTP status {(int)result.StatusCode} - {result.ReasonPhrase}");
                         }
 
@@ -100,7 +106,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                         string publishUserName = response.properties.publishingUserName;
                         string publishPassword = response.properties.publishingPassword;
                         string scmUri = response.properties.scmUri;
-                        Log.Verbose($"Retrieved publishing profile. URI: {scmUri}  UserName: {publishUserName}");
+                        log.Verbose($"Retrieved publishing profile. URI: {scmUri}  UserName: {publishUserName}");
                         publishProperties = new SitePublishProfile(publishUserName, publishPassword, new Uri(scmUri));
                     }, TaskContinuationOptions.NotOnFaulted);
 

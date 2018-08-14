@@ -1,6 +1,6 @@
 using System.IO;
-using Calamari.Azure.Commands;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
 using Calamari.Shared.FileSystem;
 
 namespace Calamari.Azure.Deployment.Conventions
@@ -10,26 +10,25 @@ namespace Calamari.Azure.Deployment.Conventions
         static readonly string FallbackFileName = "ServiceConfiguration.Cloud.cscfg"; // Default from Visual Studio
         static readonly string EnvironmentFallbackFileName = "ServiceConfiguration.{0}.cscfg";
         readonly ICalamariFileSystem fileSystem;
-        private readonly ILog log;
+        private readonly ILog log = Log.Instance;
 
-        public ChooseCloudServiceConfigurationFileConvention(ICalamariFileSystem fileSystem, ILog log)
+        public ChooseCloudServiceConfigurationFileConvention(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.log = log;
         }
 
-        public void Run(IExecutionContext context)
+        public void Run(IExecutionContext deployment)
         {
-            var configurationFile = ChooseWhichConfigurationFileToUse(context);
+            var configurationFile = ChooseWhichConfigurationFileToUse(deployment);
             log.SetOutputVariable(SpecialVariables.Action.Azure.Output.ConfigurationFile,
-                configurationFile, context.Variables);
+                configurationFile, deployment.Variables);
         }
 
-        string ChooseWhichConfigurationFileToUse(IExecutionContext context)
+        string ChooseWhichConfigurationFileToUse(IExecutionContext deployment)
         {
-            var configurationFilePath = GetFirstExistingFile(context,
-                context.Variables.Get(SpecialVariables.Action.Azure.CloudServiceConfigurationFileRelativePath),
-                BuildEnvironmentSpecificFallbackFileName(context),
+            var configurationFilePath = GetFirstExistingFile(deployment,
+                deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceConfigurationFileRelativePath),
+                BuildEnvironmentSpecificFallbackFileName(deployment),
                 FallbackFileName);
 
             return configurationFilePath;
@@ -56,10 +55,10 @@ namespace Calamari.Azure.Deployment.Conventions
                 "Could not find an Azure Cloud Service Configuration file (*.cscfg) in the package.");
         }
 
-        static string BuildEnvironmentSpecificFallbackFileName(IExecutionContext context)
+        static string BuildEnvironmentSpecificFallbackFileName(IExecutionContext deployment)
         {
             return string.Format(EnvironmentFallbackFileName,
-                context.Variables.Get(SpecialVariables.Environment.Name));
+                deployment.Variables.Get(SpecialVariables.Environment.Name));
         }
     }
 }

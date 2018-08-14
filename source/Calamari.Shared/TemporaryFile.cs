@@ -3,12 +3,13 @@ using System.IO;
 using System.Security.Cryptography;
 using Calamari.Shared.FileSystem;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Shared
 {
     public class TemporaryFile : IDisposable
     {
         private readonly string filePath;
-        readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        private readonly ICalamariFileSystem fileSystem = CalamariFileSystem.Instance;
+
 
         public TemporaryFile(string filePath)
         {

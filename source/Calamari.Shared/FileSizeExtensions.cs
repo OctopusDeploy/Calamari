@@ -1,4 +1,4 @@
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Shared
 {
     public static class FileSizeExtensions
     {

@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Shared.Util;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
 

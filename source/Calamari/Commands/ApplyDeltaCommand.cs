@@ -9,6 +9,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Shared;
 using Calamari.Shared.FileSystem;
+using Calamari.Shared.Util;
 using Calamari.Util;
 
 namespace Calamari.Commands

@@ -4,6 +4,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Autofac;
+using Autofac.Core.Registration;
+using Calamari.Util;
 
 namespace Calamari.Modules
 {
@@ -39,8 +41,12 @@ namespace Calamari.Modules
             {
                 return ctx.ResolveNamed<ICommand>(named);
             }
-            catch
+            catch (ComponentNotRegisteredException)
             {
+                // If there is no component registered with the name we're looking for then let it
+                // through to the keeper. Program will display help to explain which commands can be
+                // found and the one you asked for that it couldn't find. Any other exception with
+                // registrations should go boom so we can see exactly what's wrong with the registrations.
                 return null;
             }
         }

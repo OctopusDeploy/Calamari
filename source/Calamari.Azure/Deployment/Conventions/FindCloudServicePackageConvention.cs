@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Linq;
-using Calamari.Azure.Commands;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Shared;
+using Calamari.Shared.Commands;
+using Calamari.Shared.FileSystem;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
-    public class FindCloudServicePackageConvention : IInstallConvention, IConvention
+    public class FindCloudServicePackageConvention : IConvention
     {
         readonly ICalamariFileSystem fileSystem;
 
@@ -16,7 +15,7 @@ namespace Calamari.Azure.Deployment.Conventions
             this.fileSystem = fileSystem;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Run(IExecutionContext deployment)
         {
            deployment.Variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, FindPackage(deployment.CurrentDirectory)); 
         }
