@@ -9,7 +9,7 @@ using Calamari.Shared.FileSystem;
 
 namespace Calamari.Kubernetes.Commands
 {
-    [DeploymentAction("helm-upgrade", Description = "Performs Helm Upgrade with Chart while performing variable replacement")]
+    [DeploymentActionAttribute("helm-upgrade", Description = "Performs Helm Upgrade with Chart while performing variable replacement")]
     public class HelmUpgradeDeploymentAction : IDeploymentAction
     {
         private readonly ICalamariFileSystem fileSystem;

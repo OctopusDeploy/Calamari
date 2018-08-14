@@ -22,7 +22,7 @@
     <DefineConstants>$(DefineConstants);NETCORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);NETFX;AZURE;KUBERNETES;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
@@ -138,6 +138,9 @@
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="KubernetesFixtures\Charts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

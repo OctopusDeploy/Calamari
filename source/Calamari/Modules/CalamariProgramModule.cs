@@ -4,6 +4,7 @@ using Autofac.Core;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Journal;
+using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 
@@ -23,7 +24,17 @@ namespace Calamari.Modules
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>();
 //            builder.Register((_) => CalamariPhysicalFileSystem.GetPhysicalFileSystem()).As<ICalamariFileSystem>();
             builder.RegisterType<CombinedScriptEngine>().AsSelf();
+//<<<<<<< HEAD
+////            builder.RegisterType<HelpCommand>().AsSelf();
+//=======
 //            builder.RegisterType<HelpCommand>().AsSelf();
+//            
+//            builder
+//                .RegisterAssemblyTypes(this.GetType().Assembly)
+//                .AssignableTo<IScriptWrapper>()
+//                .As<IScriptWrapper>()
+//                .SingleInstance();
+//>>>>>>> vnext
         }
     }
 }

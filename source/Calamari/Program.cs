@@ -5,15 +5,12 @@ using Calamari.Modules;
 using Calamari.Util;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Autofac.Features.ResolveAnything;
 using Calamari.Commands;
-using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Extensions;
 using Calamari.Integration.ConfigurationTransforms;
@@ -150,14 +147,13 @@ namespace Calamari
                 return cc.Execute(args);
             }
             
+            var xe = (from type in typeof(Program).Assembly.GetTypes()
+            where typeof(IDeploymentAction).IsAssignableFrom(type)
+                let attribute = (DeploymentActionAttribute)type.GetCustomAttributes(typeof(DeploymentActionAttribute), true).FirstOrDefault()
+                where attribute != null
+                select new {type, attribute}).ToArray();
             
-            var deploymentActions =
-                (from type in typeof(Program).Assembly.GetTypes()
-                    where typeof(IDeploymentAction).IsAssignableFrom(type)
-                    let attribute = (DeploymentActionAttribute)type.GetCustomAttributes(typeof(DeploymentActionAttribute), true).FirstOrDefault()
-                    where attribute != null
-                    select new {attribute, type}).ToArray();
-            var deploymentAction = commands.FirstOrDefault(t => t.attribute.Name.Equals(firstArg));
+            var deploymentAction = xe.FirstOrDefault(t => t.attribute.Name.Equals(firstArg));
             if (deploymentAction == null)
             {
                 throw new CommandException($"Unable to find comnd with name {firstArg}");
@@ -182,16 +178,14 @@ namespace Calamari
             Options.Add("archive=", "Path to the Java archive to deploy.", v => packageFile = Path.GetFullPath(v));
             Options.Parse(args);
 
-
-
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword, base64Variables);
             var builder = new ContainerBuilder();
             builder.RegisterSource(new AnyConcreteTypeNotAlreadyRegisteredSource());
             builder.RegisterInstance(variables).As<VariableDictionary>().As<CalamariVariableDictionary>();
             builder.RegisterModule<CalamariProgramModule>();
-            builder.RegisterType(cmd.type).AsSelf();
+            builder.RegisterType(deploymentAction.type).AsSelf();
             
-            //Embeded Conventions
+            //Embeded Conventions -> Also include module Conventions
             foreach (var type1 in typeof(Program).Assembly.GetTypes().Where(type => typeof(IConvention).IsAssignableFrom(type)))
             {
                 builder.RegisterType(type1).AsSelf();
@@ -202,17 +196,21 @@ namespace Calamari
 //            {
 //                builder.RegisterType(type1).As<IPackageExtractor>();
 //            }
+            
+            
+            //Embeded Wrappers -> Also include module Wrappers
+            foreach (var type1 in typeof(Program).Assembly.GetTypes().Where(type => typeof(IScriptWrapper).IsAssignableFrom(type)))
+            {
+                builder.RegisterType(type1).As<IScriptWrapper>();
+            }
+            
+            
             var container = builder.Build();
-
-            
-            var x = (IDeploymentAction)container.Resolve(cmd.type);
-            
-            
             var cb = new DeploymentStrategyBuilder(container)
             {
                 Variables = variables
             };
-            x.Build(cb);
+            ((IDeploymentAction)container.Resolve(deploymentAction.type)).Build(cb);
 
             //TODO: This should dissapear once custom params are removed
             if (cb.PreExecution != null)
