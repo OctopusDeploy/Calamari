@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Net;
 using System.Xml.Linq;
+using Calamari.Azure.Accounts;
+using Calamari.Integration.Certificates;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.Compute;
 using Microsoft.WindowsAzure.Management.Compute.Models;
-using SubscriptionCloudCredentials = Microsoft.Azure.SubscriptionCloudCredentials;
 
 namespace Calamari.Azure.Integration
 {
     public class AzureCloudServiceConfigurationRetriever : IAzureCloudServiceConfigurationRetriever
     {
-        public XDocument GetConfiguration(SubscriptionCloudCredentials credentials, string serviceName, DeploymentSlot slot)
+        public XDocument GetConfiguration(ICertificateStore certificateStore, AzureAccount account, string serviceName, DeploymentSlot slot)
         {
-            using (var client = new ComputeManagementClient(credentials))
+            using (var client = account.CreateComputeManagementClient(certificateStore))
             {
                 try
                 {
@@ -30,7 +31,14 @@ namespace Calamari.Azure.Integration
                 }
                 catch (CloudException cloudException)
                 {
-                    Log.VerboseFormat("Getting deployments for service '{0}', slot {1}, returned:\n{2}", serviceName, slot.ToString(), cloudException.Message);
+                    Log.VerboseFormat("Getting deployments for service '{0}', slot {1}, returned:\n{2}", serviceName,
+                        slot.ToString(), cloudException.Message);
+                    return null;
+                }
+                catch (Hyak.Common.CloudException exception)
+                {
+                    Log.VerboseFormat("Getting deployments for service '{0}', slot {1}, returned:\n{2}", serviceName,
+                        slot.ToString(), exception.Message);
                     return null;
                 }
             }
