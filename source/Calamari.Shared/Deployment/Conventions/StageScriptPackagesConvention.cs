@@ -48,7 +48,7 @@ namespace Calamari.Deployment.Conventions
                 
                 if (string.IsNullOrWhiteSpace(packageOriginalPath))
                 {
-                    Log.Verbose($"Package '{packageReferenceName}' was not acquired");
+                    Log.Info($"Package '{packageReferenceName}' was not acquired");
                     continue;
                 }
                 
@@ -70,7 +70,7 @@ namespace Calamari.Deployment.Conventions
                 {
                     var localPackageFileName = sanitizedPackageReferenceName + Path.GetExtension(packageOriginalPath);
                     var destinationFileName = Path.Combine(deployment.CurrentDirectory, localPackageFileName);
-                    Log.Verbose($"Copying package: '{packageOriginalPath}' -> '{destinationFileName}'");
+                    Log.Info($"Copying package: '{packageOriginalPath}' -> '{destinationFileName}'");
                     fileSystem.CopyFile(packageOriginalPath, destinationFileName);
                     variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), destinationFileName);
                 }
@@ -79,7 +79,7 @@ namespace Calamari.Deployment.Conventions
 
         void ExtractPackage(string packageFile, string extractionDirectory)
         {
-           Log.Verbose($"Extracting package '{packageFile}' to '{extractionDirectory}'"); 
+           Log.Info($"Extracting package '{packageFile}' to '{extractionDirectory}'"); 
             
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
