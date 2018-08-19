@@ -14,14 +14,14 @@ Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.Ce
 function get_kubectl {
   if [[ -z $Octopus_K8S_KubectlExe ]]; then
     Octopus_K8S_KubectlExe="kubectl"
-  else
-    command -v $Octopus_K8S_KubectlExe &>/dev/null
-    if [[ $? != 0 ]]; then
-      echo >&2 "The custom kubectl location of $Octopus_K8S_KubectlExe does not exist";
-      exit 1
-    fi
-    alias kubectl=$Octopus_K8S_KubectlExe
   fi
+
+  command -v $Octopus_K8S_KubectlExe &>/dev/null
+  if [[ $? != 0 ]]; then
+    echo >&2 "The executable $Octopus_K8S_KubectlExe does not exist, or is not on the path";
+    exit 1
+  fi
+  alias kubectl=$Octopus_K8S_KubectlExe
 }
 
 function setup_context {
