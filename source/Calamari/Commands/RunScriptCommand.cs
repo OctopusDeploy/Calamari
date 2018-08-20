@@ -198,12 +198,6 @@ namespace Calamari.Commands
                     variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
                 }    
             }
-            
-            if (WasProvided(packageFile))
-            {
-                if (!WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
-                    throw new CommandException("Package argument was supplied but no script file was specified.");
-            }
         }
         
         IEnumerable<string> ScriptFileTargetFactory(RunningDeployment deployment)
