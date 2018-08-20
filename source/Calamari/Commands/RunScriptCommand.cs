@@ -52,9 +52,6 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
             
-            variables.EnrichWithEnvironmentVariables();
-            variables.LogVariables();
-
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
                 new ServiceMessageCommandOutput(variables)));
