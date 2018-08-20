@@ -9,6 +9,7 @@ namespace Calamari.Azure.Accounts
     {
         public AzureAccount(VariableDictionary variables)
         {
+            SubscriptionNumber = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             AzureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
             ServiceManagementEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
             ServiceManagementEndpointSuffix = variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix, DefaultVariables.StorageEndpointSuffix);

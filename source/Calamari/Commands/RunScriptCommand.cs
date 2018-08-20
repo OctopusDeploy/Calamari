@@ -74,7 +74,9 @@ namespace Calamari.Commands
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new StageScriptPackagesConvention(packageFile, fileSystem, extractor),
-                new SubstituteInFilesConvention(fileSystem, fileSubstituter, _ => true, FileTargetFactory),
+                // Substitute the script source file
+                new SubstituteInFilesConvention(fileSystem, fileSubstituter, _ => true, ScriptFileTargetFactory),
+                // Substitute any user-specified files
                 new SubstituteInFilesConvention(fileSystem, fileSubstituter),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
@@ -89,19 +91,6 @@ namespace Calamari.Commands
             var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
             deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, packageFile);
             return exitCode.Value;
-        }
-
-        private IEnumerable<string> FileTargetFactory(RunningDeployment deployment)
-        {
-            // We shouldnt preform variable replacement if a file arg is passed in since this deprecated property
-            // should only be coming through if something isnt using the variables dictionary and hence will
-            // have already been replaced
-            if (WasProvided(scriptFileArg) && !WasProvided(packageFile))
-            {
-                yield break;
-            }
-            var scriptFile = deployment.Variables.Get(SpecialVariables.Action.Script.ScriptFileName);
-            yield return Path.Combine(deployment.CurrentDirectory, scriptFile);
         }
 
         void WriteVariableScriptToFile()
@@ -171,7 +160,7 @@ namespace Calamari.Commands
             return false;
         }
 
-        private void ValidateArguments()
+        void ValidateArguments()
         {
             if (WasProvided(scriptFileArg))
             {
@@ -209,12 +198,19 @@ namespace Calamari.Commands
                     variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
                 }    
             }
-            
-            if (WasProvided(packageFile))
+        }
+        
+        IEnumerable<string> ScriptFileTargetFactory(RunningDeployment deployment)
+        {
+            // We should not perform variable-replacement if a file arg is passed in since this deprecated property
+            // should only be coming through if something isn't using the variable-dictionary and hence will
+            // have already been replaced on the server
+            if (WasProvided(scriptFileArg) && !WasProvided(packageFile))
             {
-                if (!WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
-                    throw new CommandException("Package argument was supplied but no script file was specified.");
+                yield break;
             }
+            var scriptFile = deployment.Variables.Get(SpecialVariables.Action.Script.ScriptFileName);
+            yield return Path.Combine(deployment.CurrentDirectory, scriptFile);
         }
 
         bool WasProvided(string value)
