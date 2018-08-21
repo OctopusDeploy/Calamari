@@ -76,8 +76,8 @@ Execute-WithRetry{
         try {
             Write-Host "##octopus[stdout-verbose]"
             & { 
-                az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId 
-                az account set --subscription $OctopusAzureSubscriptionId
+                az cloud set --name $AzureEnvironment
+                az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId --subscription $OctopusAzureSubscriptionId
             }
             Write-Host "Successfully authenticated with the Azure CLI"
             Write-Host "##octopus[stdout-default]"
