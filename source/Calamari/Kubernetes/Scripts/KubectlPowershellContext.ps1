@@ -45,10 +45,10 @@ function SetupContext {
 		$K8S_Namespace="default"
 	}
 
-	 if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
+	if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
         $K8S_SkipTlsVerification = $false;
     }
-	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
+	
     & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
     & $Kubectl_Exe config use-context octocontext
 
@@ -63,11 +63,8 @@ function SetupContext {
 			Exit 1
 		}
 
-		Set-Content -Path octo-client-key.pem -Value $K8S_Client_Cert_Key
-		Set-Content -Path octo-client-cert.pem -Value $K8S_Client_Cert_Pem
-
-		& $Kubectl_Exe config set-credentials octouser --client-certificate=octo-client-cert.pem
-		& $Kubectl_Exe config set-credentials octouser --client-key=octo-client-key.pem
+		& $Kubectl_Exe config set users.octouser.client-certificate-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Pem)))
+		& $Kubectl_Exe config set users.octouser.client-key-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Key)))
 	}
 
 	if(-not [string]::IsNullOrEmpty($K8S_Server_Cert)) {
@@ -77,7 +74,10 @@ function SetupContext {
 		}
 
 		# Inline the certificate as base64 encoded data
-		& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($K8S_Server_Cert_Pem)))
+		& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Server_Cert_Pem)))
+	}
+	else {
+		& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
 	}
 
     if($K8S_AccountType -eq "Token") {
