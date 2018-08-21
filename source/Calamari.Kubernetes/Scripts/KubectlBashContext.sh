@@ -59,11 +59,8 @@ function setup_context {
   	  exit 1
 	fi
 
-	echo $Octopus_K8S_Client_Cert_Key > octo-client-key.pem
-	echo $Octopus_K8S_Client_Cert_Pem > octo-client-cert.pem
-
-	kubectl config set-credentials octouser --client-certificate=octo-client-cert.pem
-	kubectl config set-credentials octouser --client-key=octo-client-key.pem
+	kubectl config set users.octouser.client-certificate-data $(echo $Octopus_K8S_Client_Cert_Pem | base64)
+	kubectl config set users.octouser.client-key-data $(echo $Octopus_K8S_Client_Cert_Key | base64)
   fi
 
   if [[ ! -z $Octopus_K8S_Server_Cert ]]; then

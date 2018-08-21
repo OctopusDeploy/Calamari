@@ -63,6 +63,9 @@ function SetupContext {
 			Exit 1
 		}
 
+		& $Kubectl_Exe config set users.octouser.client-certificate-data $([Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($K8S_Client_Cert_Pem)))
+		& $Kubectl_Exe config set users.octouser.client-key-data $([Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($K8S_Client_Cert_Key)))
+
 		Set-Content -Path octo-client-key.pem -Value $K8S_Client_Cert_Key
 		Set-Content -Path octo-client-cert.pem -Value $K8S_Client_Cert_Pem
 
