@@ -73,19 +73,11 @@ Execute-WithRetry{
         Write-Host "##octopus[stdout-default]"
 
         # try and authenticate with the Azure CLI
-        try {
-            Write-Host "##octopus[stdout-verbose]"
-            & { 
-                az cloud set --name $AzureEnvironment
-                az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId --subscription $OctopusAzureSubscriptionId
-            }
-            Write-Host "Successfully authenticated with the Azure CLI"
-            Write-Host "##octopus[stdout-default]"
-        }
-        catch { 
-            # fail quietly if the Azure CLI is not available in the System Path
-        }
-
+        Write-Host "##octopus[stdout-verbose]"
+        az cloud set --name $AzureEnvironment
+        az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId --subscription $OctopusAzureSubscriptionId
+        Write-Host "Successfully authenticated with the Azure CLI"
+        Write-Host "##octopus[stdout-default]"
     } Else {
         # Authenticate via Management Certificate
         Write-Verbose "Loading the management certificate"
