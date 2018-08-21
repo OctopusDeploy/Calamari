@@ -45,10 +45,10 @@ function SetupContext {
 		$K8S_Namespace="default"
 	}
 
-	 if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
+	if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
         $K8S_SkipTlsVerification = $false;
     }
-	& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
+	
     & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
     & $Kubectl_Exe config use-context octocontext
 
@@ -65,6 +65,9 @@ function SetupContext {
 
 		& $Kubectl_Exe config set users.octouser.client-certificate-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Pem)))
 		& $Kubectl_Exe config set users.octouser.client-key-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Key)))
+	}
+	else {
+		& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
 	}
 
 	if(-not [string]::IsNullOrEmpty($K8S_Server_Cert)) {

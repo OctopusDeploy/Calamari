@@ -44,7 +44,6 @@ function setup_context {
     Octopus_K8S_SkipTlsVerification=true
   fi
 
-  kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification --server=$Octopus_K8S_ClusterUrl
   kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
   kubectl config use-context octocontext
 
@@ -61,6 +60,8 @@ function setup_context {
 
 	kubectl config set users.octouser.client-certificate-data $(echo $Octopus_K8S_Client_Cert_Pem | base64)
 	kubectl config set users.octouser.client-key-data $(echo $Octopus_K8S_Client_Cert_Key | base64)
+  else
+	kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification --server=$Octopus_K8S_ClusterUrl
   fi
 
   if [[ ! -z $Octopus_K8S_Server_Cert ]]; then
