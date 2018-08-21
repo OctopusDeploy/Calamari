@@ -66,9 +66,6 @@ function SetupContext {
 		& $Kubectl_Exe config set users.octouser.client-certificate-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Pem)))
 		& $Kubectl_Exe config set users.octouser.client-key-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Key)))
 	}
-	else {
-		& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
-	}
 
 	if(-not [string]::IsNullOrEmpty($K8S_Server_Cert)) {
 		if ([string]::IsNullOrEmpty($K8S_Server_Cert_Pem)) {
@@ -78,6 +75,9 @@ function SetupContext {
 
 		# Inline the certificate as base64 encoded data
 		& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Server_Cert_Pem)))
+	}
+	else {
+		& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification --server=$K8S_ClusterUrl
 	}
 
     if($K8S_AccountType -eq "Token") {
