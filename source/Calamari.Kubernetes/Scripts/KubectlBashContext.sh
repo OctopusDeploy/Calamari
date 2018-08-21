@@ -44,6 +44,7 @@ function setup_context {
     Octopus_K8S_SkipTlsVerification=true
   fi
 
+  kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
   kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
   kubectl config use-context octocontext
 
@@ -74,7 +75,7 @@ function setup_context {
 	Octopus_K8S_Server_Cert_Pem_Encoded=$(echo $Octopus_K8S_Server_Cert_Pem | base64 -w0)
 	kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
   else
-	kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification --server=$Octopus_K8S_ClusterUrl
+	kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
   fi
 
   if [[ "$Octopus_AccountType" == "Token" ]]; then
