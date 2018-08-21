@@ -76,9 +76,8 @@ function SetupContext {
 			Exit 1
 		}
 
-		Set-Content -Path octo-server-cert.pem -Value $K8S_Server_Cert_Pem
-
-		& $Kubectl_Exe config set-cluster octocluster --certificate-authority=octo-server-cert.pem
+		# Inline the certificate as base64 encoded data
+		& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($K8S_Server_Cert_Pem))
 	}
 
     if($K8S_AccountType -eq "Token") {

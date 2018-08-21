@@ -72,8 +72,7 @@ function setup_context {
 	  exit 1
 	fi
 
-	echo $Octopus_K8S_Server_Cert_Pem > octo-server-cert.pem
-	kubectl config set-cluster octocluster --certificate-authority=octo-server-cert.pem
+	kubectl config set clusters.octocluster.certificate-authority-data $(echo $Octopus_K8S_Server_Cert_Pem | base64)
   fi
 
   if [[ "$Octopus_AccountType" == "Token" ]]; then
