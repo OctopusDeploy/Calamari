@@ -59,8 +59,8 @@ function setup_context {
   	  exit 1
 	fi
 
-	Octopus_K8S_Client_Cert_Pem_Encoded=$(echo -n "$(get_octopusvariable "${Octopus_K8S_Client_Cert}.CertificatePem")" | base64 -w0)
-	Octopus_K8S_Client_Cert_Key_Encoded=$(echo -n "$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPem")" | base64 -w0)
+	Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$(get_octopusvariable "${Octopus_K8S_Client_Cert}.CertificatePem")" | base64 -w0)
+	Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPem")" | base64 -w0)
 
 	kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem_Encoded"
 	kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key_Encoded"
@@ -72,7 +72,7 @@ function setup_context {
 	  exit 1
 	fi
 
-	Octopus_K8S_Server_Cert_Pem_Encoded=$(echo -n "$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePem")" | base64 -w0)
+	Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePem")" | base64 -w0)
 	kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
   else
 	kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
