@@ -120,9 +120,13 @@ namespace Calamari.Aws.Integration
                     .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
                     // Any response is considered valid
                     .Map(response => true);
+
             }
             catch (AmazonServiceException ex)
             {
+                Log.Error("Error occured while verifying login");
+                Log.Error(ex.Message);
+                Log.Error(ex.StackTrace);
                 // Any exception is considered to be a failed login
                 return false;
             }
