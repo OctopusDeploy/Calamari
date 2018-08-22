@@ -30,8 +30,8 @@ function setup_context {
     exit 1
   fi
 
-  if [[ -z $Octopus_AccountType ]]; then
-    echo >&2  "Kubernetes account is missing"
+  if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert ]]; then
+    echo >&2  "Kubernetes account type or certificate is missing"
     exit 1
   fi
 
