@@ -195,7 +195,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Variables.Set(SpecialVariables.Packages.PackageId(customHelmExePackageId), "helmexe");
                 Variables.Set(SpecialVariables.Packages.PackageVersion(customHelmExePackageId), version);
 
-                var customLocation = "#{" + SpecialVariables.Packages.DestinationPath(customHelmExePackageId) + "}"+ Path.DirectorySeparatorChar + platformFile + Path.DirectorySeparatorChar +"helm.exe";
+                var customLocation = "#{" + SpecialVariables.Packages.DestinationPath(customHelmExePackageId) + "}"+ Path.DirectorySeparatorChar + platformFile + Path.DirectorySeparatorChar +"helm";
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
 
                 var result = DeployPackage();
