@@ -74,6 +74,7 @@ Execute-WithRetry{
 
         # try and authenticate with the Azure CLI
         Write-Host "##octopus[stdout-verbose]"
+        az logout
         az cloud set --name $AzureEnvironment
         az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId --subscription $OctopusAzureSubscriptionId
         Write-Host "Successfully authenticated with the Azure CLI"
