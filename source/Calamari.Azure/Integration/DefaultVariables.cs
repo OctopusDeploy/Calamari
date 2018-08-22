@@ -1,10 +1,12 @@
-﻿namespace Calamari.Azure.Integration
+﻿using Microsoft.Azure.Management.ResourceManager.Fluent;
+
+namespace Calamari.Azure.Integration
 {
     public static class DefaultVariables
     {
-        public const string ResourceManagementEndpoint = "https://management.azure.com/";
-        public const string ServiceManagementEndpoint = "https://management.core.windows.net/";
-        public const string ActiveDirectoryEndpoint = "https://login.windows.net/";
-        public const string StorageEndpointSuffix = "core.windows.net";
+        public static readonly string ResourceManagementEndpoint = AzureEnvironment.AzureGlobalCloud.ResourceManagerEndpoint;
+        public static readonly string ServiceManagementEndpoint =  AzureEnvironment.AzureGlobalCloud.ManagementEndpoint;
+        public static readonly string ActiveDirectoryEndpoint = AzureEnvironment.AzureGlobalCloud.AuthenticationEndpoint;
+        public static readonly string StorageEndpointSuffix = AzureEnvironment.AzureGlobalCloud.StorageEndpointSuffix;
     }
 }

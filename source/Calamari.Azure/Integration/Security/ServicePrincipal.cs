@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using System.Threading.Tasks;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Calamari.Azure.Integration.Security
 {
@@ -9,7 +10,16 @@ namespace Calamari.Azure.Integration.Security
             var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
             var context = new AuthenticationContext(authContext);
-            var result = context.AcquireTokenAsync(managementEndPoint, new ClientCredential(applicationId, password)).GetAwaiter().GetResult();
+            var result = context.AcquireToken(managementEndPoint, new ClientCredential(applicationId, password));
+            return result.AccessToken;
+        }
+
+        public static async Task<string> GetAuthorizationTokenAsync(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
+        {
+            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
+            Log.Verbose($"Authentication Context: {authContext}");
+            var context = new AuthenticationContext(authContext);
+            var result = await context.AcquireTokenAsync(managementEndPoint, new ClientCredential(applicationId, password)).ConfigureAwait(false);
             return result.AccessToken;
         }
 

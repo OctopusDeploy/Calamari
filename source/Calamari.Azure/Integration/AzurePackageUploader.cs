@@ -11,7 +11,6 @@ using Microsoft.WindowsAzure.Management.Storage;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Shared.Protocol;
 
 namespace Calamari.Azure.Integration
 {
@@ -76,13 +75,17 @@ namespace Calamari.Azure.Integration
             {
                 var statusCode = (int) args.Response.StatusCode;
                 var statusDescription = args.Response.StatusDescription;
-                Log.Verbose("Uploading, response received: " + statusCode + " " + statusDescription);
                 if (statusCode >= 400)
                 {
                     Log.Error("Error when uploading the package. Azure returned a HTTP status code of: " +
                               statusCode + " " + statusDescription);
                     Log.Verbose("The upload will be retried");
+
+                    return;
                 }
+
+                Log.Verbose("Uploading, response received: " + statusCode + " " + statusDescription);
+
             };
 
             blobClient.SetServiceProperties(blobClient.GetServiceProperties(), operationContext: operationContext); 
@@ -106,6 +109,7 @@ namespace Calamari.Azure.Integration
                     if (read == 0)
                     {
                         packageBlob.PutBlockList(blocklist);
+
                         break;
                     }
                     

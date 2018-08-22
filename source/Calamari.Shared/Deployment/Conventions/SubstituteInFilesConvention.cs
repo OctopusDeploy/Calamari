@@ -25,12 +25,12 @@ namespace Calamari.Deployment.Conventions
 
         public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter,
             Func<RunningDeployment, bool> predicate,
-            Func<RunningDeployment, IEnumerable<string>> fileTargetFactory):this(fileSystem, substituter)
+            Func<RunningDeployment, IEnumerable<string>> fileTargetFactory) : this(fileSystem, substituter)
         {
             this.predicate = predicate;
             this.fileTargets = fileTargetFactory;
         }
-        
+
         public void Install(RunningDeployment deployment)
         {
             if (!predicate(deployment))
