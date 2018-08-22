@@ -146,7 +146,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     case S3PackageOptions package:
                         yield return UploadUsingPackage(clientFactory, deployment, package);
                         break;
-                    case S3SingleFileSlectionProperties selection:
+                    case S3SingleFileSelectionProperties selection:
                         yield return UploadSingleFileSelection(clientFactory, deployment, selection);
                         break;
                     case S3MultiFileSelectionProperties selection:
@@ -168,7 +168,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private IEnumerable<S3UploadResult> UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
-            Guard.NotNull(selection, "Mutli file selection properties may not be null");
+            Guard.NotNull(selection, "Multi file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
             var files = fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, selection.Pattern).ToList();
@@ -186,9 +186,23 @@ namespace Calamari.Aws.Deployment.Conventions
                     _ => substitutionPatterns)
                 .Install(deployment);
 
+            var patternSegments = selection.Pattern.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var baseDir = deployment.StagingDirectory;
+
+            foreach (var segment in patternSegments)
+            {
+                var newBaseDir = Path.Combine(baseDir, segment);
+                if (!fileSystem.DirectoryExists(newBaseDir))
+                {
+                    break;
+                }
+
+                baseDir = newBaseDir;
+            }
+
             foreach (var matchedFile in files)
             {
-                yield return CreateRequest(matchedFile, GetBucketKey(fileSystem, matchedFile, new S3MultiFileSelectionBucketKeyAdapter(selection)), selection)
+                yield return CreateRequest(matchedFile, GetBucketKey(baseDir, matchedFile, new S3MultiFileSelectionBucketKeyAdapter(selection)), selection)
                     .Tee(x => LogPutObjectRequest(matchedFile, x))
                     //We only warn on multi file uploads 
                     .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));
@@ -201,13 +215,13 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        public S3UploadResult UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSlectionProperties selection)
+        public S3UploadResult UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Single file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
-            var filePath = Path.Combine(deployment.CurrentDirectory, selection.Path);
+            var filePath = Path.Combine(deployment.StagingDirectory, selection.Path);
 
             if (!fileSystem.FileExists(filePath))
             {
@@ -219,7 +233,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 _ => new List<string>{ filePath })
                 .Install(deployment);
     
-            return CreateRequest(filePath, GetBucketKey(fileSystem, filePath, selection), selection)
+            return CreateRequest(filePath, GetBucketKey(Path.GetDirectoryName(filePath), filePath, selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
                     .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -237,7 +251,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
             return CreateRequest(deployment.PackageFilePath,
-                    GetBucketKey(fileSystem, deployment.PackageFilePath, options), options)
+                    GetBucketKey(Path.GetDirectoryName(deployment.PackageFilePath), deployment.PackageFilePath, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -269,17 +283,28 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        private static Func<string> GetBucketKey(ICalamariFileSystem fileSystem, string filePath, IHaveBucketKeyBehaviour behaviour)
+        private static Func<string> GetBucketKey(string baseDir, string filePath, IHaveBucketKeyBehaviour behaviour)
         {
             switch (behaviour.BucketKeyBehaviour)
             {
                 case BucketKeyBehaviourType.Custom:
                     return () => behaviour.BucketKey;
                 case BucketKeyBehaviourType.Filename:
-                    return () => $"{behaviour.BucketKeyPrefix}{fileSystem.GetFileName(filePath)}";
+                    return () => $"{behaviour.BucketKeyPrefix}{ConvertToRelativeUri(filePath, baseDir)}";
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private static string ConvertToRelativeUri(string filePath, string baseDir)
+        {
+            var uri = new Uri(filePath);
+            if (!baseDir.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                baseDir += Path.DirectorySeparatorChar.ToString();
+            }
+            var baseUri = new Uri(baseDir);
+            return baseUri.MakeRelativeUri(uri).ToString();
         }
 
         /// <summary>
