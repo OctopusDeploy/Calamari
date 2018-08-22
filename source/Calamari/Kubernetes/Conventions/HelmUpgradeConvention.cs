@@ -30,45 +30,12 @@ namespace Calamari.Kubernetes.Conventions
         
         public void Install(RunningDeployment deployment)
         {
-            var releaseName = GetReleaseName(deployment.Variables);
-
-            var packagePath = GetChartLocation(deployment);
-
-            var sb = new StringBuilder($"helm upgrade"); //Force reset to use values now in this release
-
-            if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
-            {
-                sb.Append(" --reset-values");
-            }
+            var cmd = BuildHelmCommand(deployment);   
+            var fileName = SyntaxSpecificFileName(deployment);
             
-            /*if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
-            {*/
-            sb.Append(" --install");
-            /*}*/
-            
-            foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
-            {
-                sb.Append($" --values \"{additionalValuesFile}\"");
-            }
-            
-            if (TryAddRawValuesYaml(deployment, out var rawValuesFile))
-            {
-                sb.Append($" --values \"{rawValuesFile}\"");
-            }
-            
-            if (TryGenerateVariablesFile(deployment, out var valuesFile))
-            {
-                sb.Append($" --values \"{valuesFile}\"");
-            }
-         
-            sb.Append($" \"{releaseName}\" \"{packagePath}\"");
-            
-            Log.Verbose(sb.ToString());
-            var fileName = GetFileName(deployment);
             using (new TemporaryFile(fileName))
             {
-                fileSystem.OverwriteFile(fileName, sb.ToString());
-                
+                fileSystem.OverwriteFile(fileName, cmd);
                 var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
@@ -85,7 +52,68 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        private string GetFileName(RunningDeployment deployment)
+        private string BuildHelmCommand(RunningDeployment deployment)
+        {
+            var releaseName = GetReleaseName(deployment.Variables);
+            var packagePath = GetChartLocation(deployment);
+            var helmExecutable = GetHelmExecutable(deployment);
+
+            var sb = new StringBuilder();
+            
+            var scriptType = scriptEngine.GetSupportedTypes();
+            if (scriptType.Contains(ScriptSyntax.PowerShell))
+            {
+                sb.Append(". "); //With powershell we need to invoke custom executables
+            }
+
+            sb.Append($"{helmExecutable} upgrade");
+
+            if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
+            {
+                sb.Append(" --reset-values");
+            }
+
+            /*if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
+            {*/
+            sb.Append(" --install");
+            /*}*/
+
+            foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
+            {
+                sb.Append($" --values \"{additionalValuesFile}\"");
+            }
+
+            if (TryAddRawValuesYaml(deployment, out var rawValuesFile))
+            {
+                sb.Append($" --values \"{rawValuesFile}\"");
+            }
+            
+            if (TryGenerateVariablesFile(deployment, out var valuesFile))
+            {
+                sb.Append($" --values \"{valuesFile}\"");
+            }
+
+            sb.Append($" \"{releaseName}\" \"{packagePath}\"");
+
+            Log.Verbose(sb.ToString());
+            return sb.ToString();
+        }
+
+        private static string GetHelmExecutable(RunningDeployment deployment)
+        {
+            var helmExecutable = deployment.Variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
+            if (!string.IsNullOrWhiteSpace(helmExecutable))
+            {
+                Log.Info($"Using custom helm executable at {helmExecutable}");
+                return $"\"{helmExecutable}\"";
+            }
+            else
+            {
+                return "helm";
+            }
+        }
+
+        private string SyntaxSpecificFileName(RunningDeployment deployment)
         {
             var scriptType = scriptEngine.GetSupportedTypes();
             if (scriptType.Contains(ScriptSyntax.PowerShell))
@@ -110,7 +138,6 @@ namespace Calamari.Kubernetes.Conventions
             Log.Info($"Using Release Name {releaseName}");
             return releaseName;
         }
-
 
         private IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
         {
@@ -161,7 +188,6 @@ namespace Calamari.Kubernetes.Conventions
 
             return packagePath;
         }
-
 
         private static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
         {

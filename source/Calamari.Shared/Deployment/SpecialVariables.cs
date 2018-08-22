@@ -1,5 +1,4 @@
-﻿using System.Security.Policy;
-using Calamari.Integration.Scripting;
+﻿using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment
 {
