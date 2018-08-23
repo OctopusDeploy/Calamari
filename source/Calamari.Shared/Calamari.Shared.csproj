@@ -36,7 +36,6 @@
     <PackageReference Include="Octopus.Versioning" Version="4.1.0" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
     <PackageReference Include="Octostache" Version="2.1.14" />
-    <PackageReference Include="Octostache" Version="2.1.10" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
