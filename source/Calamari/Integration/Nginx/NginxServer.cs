@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Calamari.Integration.FileSystem;
 using Newtonsoft.Json.Linq;
 
@@ -9,10 +10,14 @@ namespace Calamari.Integration.Nginx
 {
     public abstract class NginxServer
     {
-        private readonly List<KeyValuePair<string, string>> serverBindingDirectives = new List<KeyValuePair<string, string>>();
+        private readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        private readonly List<KeyValuePair<string, string>> serverBindingDirectives =
+            new List<KeyValuePair<string, string>>();
+
         private bool useHostName;
         private string hostName;
         private readonly IDictionary<string, string> additionalLocations = new Dictionary<string, string>();
+        private readonly IDictionary<string, string> sslCerts = new Dictionary<string, string>();
         private string virtualServerName;
         private string virtualServerConfigRoot;
         private dynamic rootLocation;
@@ -34,26 +39,56 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public NginxServer WithServerBindings(IEnumerable<dynamic> bindings)
+        public NginxServer WithServerBindings(IEnumerable<dynamic> bindings, IDictionary<string, (string SubjectCommonName, string RawOriginal, string PrivateKeyPem)> certificates)
         {
             foreach (var binding in bindings)
             {
-                if (string.Equals("http", (string)binding.protocol, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals("http", (string) binding.protocol, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    AddServerBindingDirective(NginxDirectives.Server.Listen, GetListenValue((string)binding.ipAddress, (string)binding.port));
+                    AddServerBindingDirective(NginxDirectives.Server.Listen,
+                        GetListenValue((string) binding.ipAddress, (string) binding.port));
                 }
                 else
                 {
-                    AddServerBindingDirective(NginxDirectives.Server.Listen, GetListenValue((string)binding.ipAddress, (string)binding.port, true));
-                    AddServerBindingDirective(NginxDirectives.Server.Certificate, (string)binding.certificate);
-                    AddServerBindingDirective(NginxDirectives.Server.CertificateKey, (string)binding.certificateKey);
+                    string certificatePath = null;
+                    string certificateKeyPath = null;
+                    if (string.IsNullOrEmpty((string) binding.certificateLocation))
+                    {
+                        if (!certificates.TryGetValue((string) binding.certificateVariable, out var certificate))
+                        {
+                            Log.Warn($"Couldn't find certificate {binding.certificateVariable}");
+                            continue;
+                        }
 
-                    if (!string.IsNullOrWhiteSpace(binding.securityProtocols))
+                        var certificateRootPath = Path.Combine(GetSslCertRootDirectory(),
+                            fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName));
+
+                        certificatePath = Path.Combine(certificateRootPath,
+                            $"{fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName)}.crt");
+
+                        certificateKeyPath = Path.Combine(certificateRootPath,
+                            $"{fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName)}.key");
+
+                        sslCerts.Add(certificatePath, certificate.RawOriginal);
+
+                        sslCerts.Add(certificateKeyPath, certificate.PrivateKeyPem);
+                    }
+
+                    AddServerBindingDirective(NginxDirectives.Server.Listen,
+                        GetListenValue((string) binding.ipAddress, (string) binding.port, true));
+
+                    AddServerBindingDirective(NginxDirectives.Server.Certificate,
+                        certificatePath ?? (string) binding.certificateLocation);
+
+                    AddServerBindingDirective(NginxDirectives.Server.CertificateKey,
+                        certificateKeyPath ?? (string) binding.certificateKeyLocation);
+
+                    if (!string.IsNullOrWhiteSpace((string) binding.securityProtocols))
                     {
                         //AddServerBindingDirective(NginxDirectives.Server.SecurityProtocols, string.Join(" ", binding.securityProtocols));
                     }
 
-                    if (!string.IsNullOrWhiteSpace(binding.ciphers))
+                    if (!string.IsNullOrWhiteSpace((string) binding.ciphers))
                     {
                         //AddServerBindingDirective(NginxDirectives.Server.SslCiphers, string.Join(":", binding.ciphers));
                     }
@@ -81,7 +116,7 @@ namespace Calamari.Integration.Nginx
             {
                 var locationConfig = GetLocationConfig(location);
                 var locationConfFile = Path.Combine(virtualServerConfigRoot,
-                    $"location.{location.path.Trim("/")}.conf");
+                    $"location.{((string)location.path).Trim('/')}.conf");
 
                 additionalLocations.Add(locationConfFile, locationConfig);
             }
@@ -110,8 +145,8 @@ namespace Calamari.Integration.Nginx
 
         public void BuildConfiguration()
         {
-            virtualServerConfig = 
-$@"
+            virtualServerConfig =
+                $@"
 server {{
     {string.Join(Environment.NewLine, serverBindingDirectives.Select(binding => $"{binding.Key} {binding.Value};"))}
     {(useHostName ? $"{NginxDirectives.Server.HostName} {hostName};" : "")}
@@ -123,18 +158,24 @@ server {{
 
         public void SaveConfiguration()
         {
-            var filesystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            foreach (var sslCert in sslCerts)
+            {
+                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(sslCert.Key));
+                fileSystem.OverwriteFile(sslCert.Key, sslCert.Value);
+            }
 
             foreach (var additionalLocation in additionalLocations)
             {
-                filesystem.OverwriteFile(additionalLocation.Key, additionalLocation.Value);
+                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(additionalLocation.Key));
+                fileSystem.OverwriteFile(additionalLocation.Key, additionalLocation.Value);
             }
 
             var virtualServerConfFile = Path.Combine(GetConfigRootDirectory(), $"{virtualServerName}.conf");
-            filesystem.OverwriteFile(virtualServerConfFile, virtualServerConfig);
+            fileSystem.OverwriteFile(virtualServerConfFile, virtualServerConfig);
         }
 
         protected abstract string GetConfigRootDirectory();
+        protected abstract string GetSslCertRootDirectory();
 
         private string GetListenValue(string ipAddress, string port, bool isHttps = false)
         {
@@ -148,28 +189,33 @@ server {{
         private string GetLocationConfig(dynamic location)
         {
             return
-$@"
+                $@"
     location {location.path} {{
-    {GetLocationDirectives((string)location.directives)}
-    {GetLocationHeaders((string)location.headers)}
+    {GetLocationDirectives((string) location.directives)}
+    {GetLocationHeaders((string) location.headers)}
     }}
 ";
         }
 
         private static string GetLocationDirectives(string directivesString)
         {
+            if (string.IsNullOrEmpty(directivesString)) return string.Empty;
+            
             IEnumerable<dynamic> directives = JObject.Parse(directivesString);
-            return !directives.Any() 
-                ? string.Empty 
+            return !directives.Any()
+                ? string.Empty
                 : string.Join(Environment.NewLine, directives.Select(d => $"    {d.Name} {d.Value};"));
         }
 
         private static string GetLocationHeaders(string headersString)
         {
+            if (string.IsNullOrEmpty(headersString)) return string.Empty;
+            
             IEnumerable<dynamic> headers = JObject.Parse(headersString);
-            return !headers.Any() 
-                ? string.Empty 
-                : string.Join(Environment.NewLine, headers.Select(h => $"    {NginxDirectives.Location.Proxy.SetHeader} {h.Name} {h.Value};"));
+            return !headers.Any()
+                ? string.Empty
+                : string.Join(Environment.NewLine,
+                    headers.Select(h => $"    {NginxDirectives.Location.Proxy.SetHeader} {h.Name} {h.Value};"));
         }
 
         private void AddServerBindingDirective(string key, string value)

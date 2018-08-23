@@ -6,5 +6,10 @@
         {
             return "";
         }
+
+        protected override string GetSslCertRootDirectory()
+        {
+            return "";
+        }
     }
 }

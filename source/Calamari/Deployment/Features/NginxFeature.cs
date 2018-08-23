@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.Integration.Nginx;
+using Calamari.Integration.Processes;
 using Newtonsoft.Json.Linq;
 using Octostache;
 
@@ -24,10 +25,13 @@ namespace Calamari.Deployment.Features
             var (rootLocation, additionalLocations) = GetLocations(variables);
             if (rootLocation == null) throw new NginxMissingRootLocationException();
 
+            var enabledBindings = GetEnabledBindings(variables).ToList();
+            var sslCertificates = GetSslCertificates(enabledBindings, variables);
+            
             nginxServer
                 .WithVirtualServerName(variables.Get(SpecialVariables.Package.NuGetPackageId))
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))
-                .WithServerBindings(GetEnabledBindings(variables))
+                .WithServerBindings(enabledBindings, sslCertificates)
                 .WithRootLocation(rootLocation)
                 .WithAdditionalLocations(additionalLocations);
 
@@ -48,6 +52,25 @@ namespace Calamari.Deployment.Features
             {
                 throw new NginxReloadConfigurationFailedException(reloadConfigError);
             }
+        }
+
+        private IDictionary<string, (string, string, string)> GetSslCertificates(IEnumerable<dynamic> enabledBindings, CalamariVariableDictionary variables)
+        {
+            var sslCertsForEnabledBindings = new Dictionary<string, (string, string, string)>();
+            foreach (var httpsBinding in enabledBindings.Where(b =>
+                string.Equals("https", (string) b.protocol, StringComparison.InvariantCultureIgnoreCase) &&
+                !string.IsNullOrEmpty((string)b.certificateVariable)
+            ))
+            {
+                var certificateVariable = (string) httpsBinding.certificateVariable;
+                var subjectCommonName = variables.Get($"{certificateVariable}.SubjectCommonName");
+                var rawOriginal = variables.Get($"{certificateVariable}.CertificatePem");
+                Log.Verbose(rawOriginal);
+                var privateKeyPem = variables.Get($"{certificateVariable}.PrivateKeyPem");
+                sslCertsForEnabledBindings.Add(certificateVariable, (subjectCommonName, rawOriginal, privateKeyPem));
+            }
+
+            return sslCertsForEnabledBindings;
         }
 
         protected static IEnumerable<dynamic> GetEnabledBindings(VariableDictionary variables)
