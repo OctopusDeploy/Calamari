@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using Autofac;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
 using  Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -16,14 +18,16 @@ namespace Calamari.Tests.KubernetesFixtures
     [TestFixture]
     public class HelmUpgradeFixture : CalamariFixture
     {
-        private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
-        private static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
+        private static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
+        private static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
 
         private ICalamariFileSystem FileSystem { get; set; }
         private VariableDictionary Variables { get; set; }
         private string StagingDirectory { get; set; }
         private static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
 
+        readonly WebClient myWebClient = new WebClient();
+        
         private static readonly string
             ConfigMapName =
                 "mychart-configmap-" + ReleaseName; //Might clash with concurrent exections. Should make this dynamic
@@ -74,11 +78,13 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
 
             //res.AssertOutputMatches("NAME:   mynewrelease"); //Does not appear on upgrades, only installs
+            result.AssertSuccess();
             result.AssertOutputMatches($"NAMESPACE: {Namespace}");
             result.AssertOutputMatches("STATUS: DEPLOYED");
             result.AssertOutputMatches(ConfigMapName);
             result.AssertOutputMatches($"release \"{ReleaseName}\" deleted");
-            result.AssertSuccess();
+            result.AssertNoOutput("Using custom helm executable at");
+            
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
 
@@ -153,7 +159,49 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
+        
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void ValuesFromRawYaml_ValuesAdded()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.YamlValues, "\"SpecialMessage\": \"YAML\"");
 
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
+        }        
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void CustomDownloadedHelmExe_RelativePath()
+        {   
+            var version = "2.9.1";
+            var platformFile = CalamariEnvironment.IsRunningOnWindows ?  "windows-amd64" : "linux-amd64";
+            var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{platformFile}.tgz");
+            using (new TemporaryFile(fileName))
+            {
+                myWebClient.DownloadFile($"https://storage.googleapis.com/kubernetes-helm/helm-v{version}-{platformFile}.tar.gz", fileName);
+                
+                var customHelmExePackageId = Kubernetes.SpecialVariables.Helm.Packages.CustomHelmExePackageKey;
+                Variables.Set(SpecialVariables.Packages.OriginalPath(customHelmExePackageId), fileName);
+                Variables.Set(SpecialVariables.Packages.Extract(customHelmExePackageId), "True");
+                Variables.Set(SpecialVariables.Packages.PackageId(customHelmExePackageId), "helmexe");
+                Variables.Set(SpecialVariables.Packages.PackageVersion(customHelmExePackageId), version);
+
+                //If package is provided then it should be treated as a relative path
+                var customLocation = platformFile + Path.DirectorySeparatorChar +"helm";
+                Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
+
+                var result = DeployPackage();
+                result.AssertSuccess();
+                result.AssertOutput("Using custom helm executable at");
+            }
+        }
 
         void AddPostDeployMessageCheckAndCleanup()
         {
@@ -177,9 +225,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 var pkg = GetFixtureResouce("Charts", ChartPackageName);
                 Variables.Save(variablesFile.FilePath);
 
-                return Invoke(Calamari()
+                return InvokeInProcess(Calamari()
                     .Action("helm-upgrade")
-                    .Argument("extensions", "Calamari.Kubernetes")
                     .Argument("package", pkg)
                     .Argument("variables", variablesFile.FilePath));
             }
