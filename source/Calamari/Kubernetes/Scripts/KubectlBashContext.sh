@@ -11,16 +11,21 @@ Octopus_K8S_Client_Cert_Key=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.Pr
 Octopus_K8S_Server_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthority")
 Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePem")
 
+function check_app_exists {
+	command -v $1 > /dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		write_plainerror "The executable $1 does not exist, or is not on the path"
+		exit 1
+	fi
+}
+
 function get_kubectl {
   if [[ -z $Octopus_K8S_KubectlExe ]]; then
     Octopus_K8S_KubectlExe="kubectl"
   fi
 
-  command -v $Octopus_K8S_KubectlExe &>/dev/null
-  if [[ $? != 0 ]]; then
-    echo >&2 "The executable $Octopus_K8S_KubectlExe does not exist, or is not on the path";
-    exit 1
-  fi
+  check_app_exists $Octopus_K8S_KubectlExe
+
   alias kubectl=$Octopus_K8S_KubectlExe
 }
 
@@ -141,6 +146,7 @@ function create_namespace {
 }
 
 echo "##octopus[stdout-verbose]"
+check_app_exists base64
 get_kubectl
 configure_kubectl_path
 setup_context
