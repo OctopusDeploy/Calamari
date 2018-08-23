@@ -171,9 +171,19 @@ namespace Calamari.Deployment
                 return $"Octopus.Action.Package[{key}].Extract";
             }
 
-            public static string DestinationPath(string key)
+            public static string ExtractedPath(string key)
             {
-                return $"Octopus.Action.Package[{key}].Path";
+                return $"Octopus.Action.Package[{key}].ExtractedPath";
+            }
+            
+            public static string PackageFileName(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageFileName";
+            }
+
+            public static string PackageFilePath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageFilePath";
             }
         }
 

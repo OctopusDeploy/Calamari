@@ -64,15 +64,16 @@ namespace Calamari.Deployment.Conventions
                 {
                     var extractionPath = Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName);
                     ExtractPackage(packageOriginalPath, extractionPath);
-                    variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), extractionPath);
+                    Log.SetOutputVariable(SpecialVariables.Packages.ExtractedPath(packageReferenceName), extractionPath, variables);
                 }
                 else
                 {
                     var localPackageFileName = sanitizedPackageReferenceName + Path.GetExtension(packageOriginalPath);
-                    var destinationFileName = Path.Combine(deployment.CurrentDirectory, localPackageFileName);
-                    Log.Info($"Copying package: '{packageOriginalPath}' -> '{destinationFileName}'");
-                    fileSystem.CopyFile(packageOriginalPath, destinationFileName);
-                    variables.Set(SpecialVariables.Packages.DestinationPath(packageReferenceName), destinationFileName);
+                    var destinationPackagePath = Path.Combine(deployment.CurrentDirectory, localPackageFileName);
+                    Log.Info($"Copying package: '{packageOriginalPath}' -> '{destinationPackagePath}'");
+                    fileSystem.CopyFile(packageOriginalPath, destinationPackagePath);
+                    Log.SetOutputVariable(SpecialVariables.Packages.PackageFilePath(packageReferenceName), destinationPackagePath, variables);
+                    Log.SetOutputVariable(SpecialVariables.Packages.PackageFileName(packageReferenceName), localPackageFileName, variables);
                 }
             }
         }
