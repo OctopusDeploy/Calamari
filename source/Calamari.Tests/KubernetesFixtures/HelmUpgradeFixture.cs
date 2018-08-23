@@ -172,15 +172,13 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
-        }
+        }        
 
-        
-        
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
-        public void CustomDownloadedHelmExe()
+        public void CustomDownloadedHelmExe_RelativePath()
         {   
             var version = "2.9.1";
             var platformFile = CalamariEnvironment.IsRunningOnWindows ?  "windows-amd64" : "linux-amd64";
@@ -195,7 +193,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 Variables.Set(SpecialVariables.Packages.PackageId(customHelmExePackageId), "helmexe");
                 Variables.Set(SpecialVariables.Packages.PackageVersion(customHelmExePackageId), version);
 
-                var customLocation = "#{" + SpecialVariables.Packages.DestinationPath(customHelmExePackageId) + "}"+ Path.DirectorySeparatorChar + platformFile + Path.DirectorySeparatorChar +"helm";
+                //If package is provided then it should be treated as a relative path
+                var customLocation = platformFile + Path.DirectorySeparatorChar +"helm";
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
 
                 var result = DeployPackage();
@@ -203,7 +202,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 result.AssertOutput("Using custom helm executable at");
             }
         }
-
 
         void AddPostDeployMessageCheckAndCleanup()
         {

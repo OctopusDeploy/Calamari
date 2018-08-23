@@ -63,6 +63,12 @@ namespace Calamari.Kubernetes.Conventions
             if (!string.IsNullOrWhiteSpace(helmExecutable))
             {
                 Log.Info($"Using custom helm executable at {helmExecutable}");
+                if (deployment.Variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
+                    .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
+                {
+                    helmExecutable = Path.Combine(SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable);
+                    Log.Verbose($"Full helm executable path: {helmExecutable}");
+                }
                 
                 var scriptType = scriptEngine.GetSupportedTypes();
                 if (scriptType.Contains(ScriptSyntax.PowerShell))
