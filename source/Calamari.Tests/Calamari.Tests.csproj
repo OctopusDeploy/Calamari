@@ -153,6 +153,12 @@
     <None Update="AWS\S3\Package1\Extra\JavaScript.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="AWS\S3\Package2\Wild\Ignore\TextFile1.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="AWS\S3\Package2\Wild\Things\TextFile2.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Java\Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

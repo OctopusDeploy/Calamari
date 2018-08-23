@@ -18,7 +18,7 @@ using Octostache;
 
 namespace Calamari.Tests.AWS
 {
-    [TestFixture]
+    [TestFixture, Explicit]
     public class S3Fixture
     {
         private static JsonSerializerSettings GetEnrichedSerializerSettings()
@@ -31,11 +31,10 @@ namespace Calamari.Tests.AWS
                 });
         }
 
-        [Test, Explicit]
+        [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void Execute()
+        public void UploadPackage1()
         {
-            var bucketKeyPrefix = $"test/{Guid.NewGuid():N}/";
             var fileSelections = new List<S3FileSelectionProperties>
             {
                 new S3MultiFileSelectionProperties
@@ -43,8 +42,7 @@ namespace Calamari.Tests.AWS
                     Pattern = "Content/**/*", 
                     Type = S3FileSelectionTypes.MultipleFiles,
                     StorageClass = "STANDARD",
-                    CannedAcl = "private",
-                    BucketKeyPrefix = bucketKeyPrefix
+                    CannedAcl = "private"
                 },
                 new S3SingleFileSelectionProperties
                 {
@@ -52,10 +50,47 @@ namespace Calamari.Tests.AWS
                     Type = S3FileSelectionTypes.SingleFile,
                     StorageClass = "STANDARD",
                     CannedAcl = "private",
-                    BucketKeyPrefix = bucketKeyPrefix,
                     BucketKeyBehaviour = BucketKeyBehaviourType.Filename
                 }
             };
+
+            Upload("Package1", fileSelections);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void UploadPackage2()
+        {
+            var fileSelections = new List<S3FileSelectionProperties>
+            {
+                new S3MultiFileSelectionProperties
+                {
+                    Pattern = "**/Things/*", 
+                    Type = S3FileSelectionTypes.MultipleFiles,
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private"
+                }
+            };
+
+            Upload("Package2", fileSelections);
+        }
+
+        void Upload(string packageName, List<S3FileSelectionProperties> fileSelections)
+        {
+            var bucketKeyPrefix = $"test/{Guid.NewGuid():N}/";
+
+            fileSelections.ForEach(properties =>
+            {
+                if (properties is S3MultiFileSelectionProperties multiFileSelectionProperties)
+                {
+                    multiFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
+                }
+                if (properties is S3SingleFileSelectionProperties singleFileSelectionProperties)
+                {
+                    singleFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
+                }
+            });
+
 
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
@@ -66,8 +101,8 @@ namespace Calamari.Tests.AWS
             variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
             variables.Save(variablesFile);
 
-            var packageDirectory = TestEnvironment.GetTestPath("AWS", "S3", "Package1");
-            using (var package = new TemporaryFile(PackageBuilder.BuildSimpleZip("Package1", "1.0.0", packageDirectory)))
+            var packageDirectory = TestEnvironment.GetTestPath("AWS", "S3", packageName);
+            using (var package = new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
                 var command = new UploadAwsS3Command();
