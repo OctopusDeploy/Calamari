@@ -56,17 +56,32 @@ namespace Calamari.Kubernetes.Conventions
         {
             var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
-            var helmExecutable = GetHelmExecutable(deployment);
-
+            
             var sb = new StringBuilder();
             
-            var scriptType = scriptEngine.GetSupportedTypes();
-            if (scriptType.Contains(ScriptSyntax.PowerShell))
+            var helmExecutable = deployment.Variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
+            if (!string.IsNullOrWhiteSpace(helmExecutable))
             {
-                sb.Append(". "); //With powershell we need to invoke custom executables
+                Log.Info($"Using custom helm executable at {helmExecutable}");
+                
+                var scriptType = scriptEngine.GetSupportedTypes();
+                if (scriptType.Contains(ScriptSyntax.PowerShell))
+                {
+                    sb.Append(". "); //With powershell we need to invoke custom executables
+                }
+                else
+                {
+                    sb.Append($"chmod +x \"{helmExecutable}\"\n");
+                }
+                
+                sb.Append($"\"{helmExecutable}\"");
             }
-
-            sb.Append($"{helmExecutable} upgrade");
+            else
+            {
+                sb.Append("helm");
+            }
+            
+            sb.Append($" upgrade");
 
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
             {
@@ -97,20 +112,6 @@ namespace Calamari.Kubernetes.Conventions
 
             Log.Verbose(sb.ToString());
             return sb.ToString();
-        }
-
-        private static string GetHelmExecutable(RunningDeployment deployment)
-        {
-            var helmExecutable = deployment.Variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
-            if (!string.IsNullOrWhiteSpace(helmExecutable))
-            {
-                Log.Info($"Using custom helm executable at {helmExecutable}");
-                return $"\"{helmExecutable}\"";
-            }
-            else
-            {
-                return "helm";
-            }
         }
 
         private string SyntaxSpecificFileName(RunningDeployment deployment)
