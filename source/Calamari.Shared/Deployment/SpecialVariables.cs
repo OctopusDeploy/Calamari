@@ -412,6 +412,16 @@ namespace Calamari.Deployment
                     public static readonly string ServerType = "WildFly.Deploy.ServerType";
                 }
             }
+
+            public static class Nginx
+            {
+                public static class Server
+                {
+                    public static readonly string HostName = "Octopus.Action.Nginx.Server.HostName";
+                    public static readonly string Bindings = "Octopus.Action.Nginx.Server.Bindings";
+                    public static readonly string Locations = "Octopus.Action.Nginx.Server.Locations";
+                }
+            }
         }
 
         public static class Machine
