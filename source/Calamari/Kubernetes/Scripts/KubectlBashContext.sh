@@ -14,7 +14,7 @@ Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.Ce
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
-		write_plainerror "The executable $1 does not exist, or is not on the path"
+		echo >&2 "The executable $1 does not exist, or is not on the path"
 		exit 1
 	fi
 }
