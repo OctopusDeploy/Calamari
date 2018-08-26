@@ -7,7 +7,6 @@ using System.Threading;
 using Calamari.Azure.Accounts;
 using Calamari.Azure.Integration.Websites.Publishing;
 using Calamari.Azure.Util;
-using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
@@ -122,18 +121,9 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
 
-            if (account is AzureServicePrincipalAccount servicePrincipalAccount)
-            {
-                return ResourceManagerPublishProfileProvider.GetPublishProperties(servicePrincipalAccount,
-                    variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty), 
-                    targetSite);
-            }
-            else if (account is AzureAccount azureAccount)
-            {
-                return ServiceManagementPublishProfileProvider.GetPublishProperties(azureAccount, targetSite);
-            }
-
-            throw new CommandException("Account type must be either Azure Management Certificate or Azure Service Principal");
+            return ResourceManagerPublishProfileProvider.GetPublishProperties(account,
+                variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty), 
+                targetSite);
         }
 
         private static string BuildPath(AzureTargetSite site, VariableDictionary variables)

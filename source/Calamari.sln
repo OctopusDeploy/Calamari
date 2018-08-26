@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Shared", "Calamari
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Kubernetes", "Calamari.Kubernetes\Calamari.Kubernetes.csproj", "{2EC35EAF-0F40-4565-9FE5-CE3FF9FF2C15}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Azure.CloudServices", "Calamari.Azure.CloudServices\Calamari.Azure.CloudServices.csproj", "{D6E6B2E9-E7A7-4569-87AE-116CD05DD727}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{2EC35EAF-0F40-4565-9FE5-CE3FF9FF2C15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EC35EAF-0F40-4565-9FE5-CE3FF9FF2C15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EC35EAF-0F40-4565-9FE5-CE3FF9FF2C15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6E6B2E9-E7A7-4569-87AE-116CD05DD727}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6E6B2E9-E7A7-4569-87AE-116CD05DD727}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6E6B2E9-E7A7-4569-87AE-116CD05DD727}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6E6B2E9-E7A7-4569-87AE-116CD05DD727}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

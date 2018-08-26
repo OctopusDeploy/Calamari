@@ -8,9 +8,9 @@
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
 ##   $OctopusAzureSubscriptionId = "..."
-##   $OctopusAzureADTenantId = "..."
-##   $OctopusAzureADClientId = "..."
-##   $OctopusAzureADPassword = "..."
+##   $OctopusAzureStorageAccountName = "..."
+##   $OctopusAzureCertificateFileName = "..."
+##   $OctopusAzureCertificatePassword = "..."
 ##   $OctopusAzureEnvironment = "..."
 
 $ErrorActionPreference = "Stop"
@@ -50,36 +50,21 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 Execute-WithRetry{
-    # Authenticate via Service Principal
-    $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-    $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-    $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
+    # Authenticate via Management Certificate
+    Write-Verbose "Loading the management certificate"
+    Add-Type -AssemblyName "System"
+    $certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
+    $AzureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $OctopusAzureEnvironment}
+
     if (!$AzureEnvironment)
     {
-        Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
+        Write-Error "No Azure environment could be matched given name $OctopusAzureEnvironment"
         exit -2
     }
 
-    Write-Verbose "Authenticating with Service Principal"
-
-    # Force any output generated to be verbose in Octopus logs.
-    Write-Host "##octopus[stdout-verbose]"
-    Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-    Write-Host "##octopus[stdout-default]"
-
-    # try and authenticate with the Azure CLI
-    try {
-        Write-Host "##octopus[stdout-verbose]"
-        & { 
-            az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId 
-            az account set --subscription $OctopusAzureSubscriptionId
-        }
-        Write-Host "Successfully authenticated with the Azure CLI"
-        Write-Host "##octopus[stdout-default]"
-    }
-    catch { 
-        # fail quietly if the Azure CLI is not available in the System Path
-    }
+    $azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Certificate $certificate -Environment $AzureEnvironment
+    $azureProfile.Save(".\AzureProfile.json")
+    Select-AzureProfile -Profile $azureProfile | Out-Null
 }
 
 Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters"
