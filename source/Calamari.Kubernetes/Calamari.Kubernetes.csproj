@@ -17,7 +17,6 @@
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Kubernetes integration.</Description>
-    <ApplicationManifest>Calamari.Kubernetes.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
   </PropertyGroup>

@@ -17,7 +17,6 @@
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
-    <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
     <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
@@ -71,35 +70,4 @@
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Calamari.Azure.exe.manifest">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <Target Name="GetToolFiles">
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
-      <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
-    </CreateItem>
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
-      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
-    </CreateItem>
-    <PropertyGroup>
-      <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
-      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-    </PropertyGroup>
-    <ItemGroup>
-      <FSharpFiles Include="$(FSharpCompilerTools)" />
-      <ScriptCSFiles Include="$(ScriptCS)" />
-    </ItemGroup>
-  </Target>
-  <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
-  </Target>
-  <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
-  </Target>
 </Project>

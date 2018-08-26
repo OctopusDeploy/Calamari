@@ -38,6 +38,7 @@
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Kubernetes\Calamari.Kubernetes.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+    <ProjectReference Include="..\Calamari.Azure.CloudServices\Calamari.Azure.CloudServices.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
