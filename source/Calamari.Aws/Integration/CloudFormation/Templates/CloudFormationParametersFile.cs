@@ -5,27 +5,27 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Newtonsoft.Json;
-using Octopus.CoreUtilities.Extensions;
+using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
 {
     public class CloudFormationParametersFile : ITemplate, ITemplateInputs<Parameter>
     {
-        private readonly Func<string> content;
+        private readonly Func<Maybe<string>> content;
         private readonly Func<string, List<Parameter>> parse;
 
-        public static CloudFormationParametersFile Create(ResolvedTemplatePath path, ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
+        public static CloudFormationParametersFile Create(Maybe<ResolvedTemplatePath> path, ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
         {
-            return new CloudFormationParametersFile(() => variables.Evaluate(fileSystem.ReadFile(path.Value)), JsonConvert.DeserializeObject<List<Parameter>>);
+            return new CloudFormationParametersFile(() => path.Select(x => variables.Evaluate(fileSystem.ReadFile(x.Value))), JsonConvert.DeserializeObject<List<Parameter>>);
         }
 
-        public CloudFormationParametersFile(Func<string> content, Func<string, List<Parameter>> parse)
+        public CloudFormationParametersFile(Func<Maybe<string>> content, Func<string, List<Parameter>> parse)
         {
             this.content = content;
             this.parse = parse;
         }
 
-        public string Content => content();
-        public IEnumerable<Parameter> Inputs => content().Map(parse);
+        public string Content => content().SomeOrDefault();
+        public IEnumerable<Parameter> Inputs => content().Select(parse).SelectValueOr(x => x, new List<Parameter>());
     }
 }

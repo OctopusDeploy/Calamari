@@ -75,7 +75,7 @@ namespace Calamari.Aws.Commands
             CloudFormationTemplate TemplateFactory()
             {
                 var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
-                var resolvedParameters = templateResolver.Resolve(templateParameterFile, filesInPackage, variables);
+                var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
                 var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables);
                 return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
             }
