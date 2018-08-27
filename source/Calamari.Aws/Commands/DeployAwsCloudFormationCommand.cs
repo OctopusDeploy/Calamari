@@ -16,6 +16,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.Util;
+using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Commands
 {
@@ -57,6 +58,9 @@ namespace Calamari.Aws.Commands
             Options.Parse(commandLineArguments);
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
+            
+            if (templateParameterFile != null && !File.Exists(templateParameterFile))
+                throw new CommandException("Could not find template parameters file: " + templateParameterFile);
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile,
                 sensitiveVariablesPassword);
