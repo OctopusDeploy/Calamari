@@ -16,6 +16,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.Util;
+using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Commands
 {
@@ -57,6 +58,9 @@ namespace Calamari.Aws.Commands
             Options.Parse(commandLineArguments);
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
+            
+            if (templateParameterFile != null && !File.Exists(templateParameterFile))
+                throw new CommandException("Could not find template parameters file: " + templateParameterFile);
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile,
                 sensitiveVariablesPassword);
@@ -75,7 +79,7 @@ namespace Calamari.Aws.Commands
             CloudFormationTemplate TemplateFactory()
             {
                 var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
-                var resolvedParameters = templateResolver.Resolve(templateParameterFile, filesInPackage, variables);
+                var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
                 var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables);
                 return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
             }

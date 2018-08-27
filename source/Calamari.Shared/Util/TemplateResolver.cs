@@ -29,12 +29,14 @@ namespace Calamari.Util
 
         public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
         {
-            
-            var absolutePath = inPackage
-                ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(relativeFilePath))
-                : Path.Combine(Environment.CurrentDirectory, relativeFilePath);
+            var absolutePath = relativeFilePath.ToMaybe().Select(path => inPackage
+                ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(path))
+                : Path.Combine(Environment.CurrentDirectory, path));
 
-            return !filesystem.FileExists(absolutePath) ? Maybe<ResolvedTemplatePath>.None : new ResolvedTemplatePath(absolutePath).AsSome();
+            return absolutePath.SelectValueOr(x =>
+                    !filesystem.FileExists(x) ? Maybe<ResolvedTemplatePath>.None : new ResolvedTemplatePath(x).AsSome(),
+                Maybe<ResolvedTemplatePath>.None
+            );
         }
     }
 }
