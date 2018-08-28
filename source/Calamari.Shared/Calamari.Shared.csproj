@@ -23,26 +23,23 @@
     <StartupObject />
     <RootNamespace>Calamari</RootNamespace>
   </PropertyGroup>
-  
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
     <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
-  
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Versioning" Version="4.1.0" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
-    <PackageReference Include="Octostache" Version="2.1.10" />
+    <PackageReference Include="Octostache" Version="2.1.15" />
+    <PackageReference Include="Octostache" Version="2.1.14" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
-  
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
     <PackageReference Include="Autofac">
       <Version>4.8.0</Version>
@@ -58,7 +55,6 @@
     <PackageReference Include="System.IO.Packaging" Version="4.3.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.3.0" />
   </ItemGroup>
-  
   <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
     <PackageReference Include="BouncyCastle" Version="1.8.1-octopus" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
@@ -86,19 +82,19 @@
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
   </ItemGroup>
-  
   <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
     <PackageReference Include="Autofac">
       <Version>3.5.2</Version>
     </PackageReference>
   </ItemGroup>
-  
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <PackageReference Include="Autofac">
       <Version>4.8.0</Version>
     </PackageReference>
   </ItemGroup>
-  
+  <ItemGroup>
+    <EmbeddedResource Include="Integration\Packages\Download\Scripts\*.*" />
+  </ItemGroup>
   <ItemGroup>
     <None Remove="Integration\Scripting\Bash\Bootstrap.sh" />
     <None Remove="Integration\Scripting\FSharp\Bootstrap.fsx" />
@@ -111,5 +107,4 @@
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
   </ItemGroup>
-  
 </Project>

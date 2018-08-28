@@ -68,10 +68,12 @@ namespace Calamari.Deployment.Journal
         public JournalEntry GetLatestInstallation(string retentionPolicySubset, string packageId, string packageVersion)
         {
             return GetAllJournalEntries().Where(e =>
-                string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
-                && (packageId == null || string.Equals(packageId, e.PackageId, StringComparison.OrdinalIgnoreCase))
-                && (packageVersion == null || string.Equals(packageVersion, e.PackageVersion, StringComparison.OrdinalIgnoreCase))
-                ).OrderByDescending(o => o.InstalledOn)
+                    string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
+                    && ((packageId == null && packageVersion == null) ||
+                        e.Packages.Any(deployedPackage =>
+                            (packageId == null || string.Equals(packageId, deployedPackage.PackageId, StringComparison.OrdinalIgnoreCase)) &&
+                            (packageVersion == null || string.Equals(packageVersion, deployedPackage.PackageVersion, StringComparison.OrdinalIgnoreCase)))))
+                .OrderByDescending(o => o.InstalledOn)
                 .FirstOrDefault();
         }
 
@@ -84,10 +86,12 @@ namespace Calamari.Deployment.Journal
             string packageVersion)
         {
             return GetAllJournalEntries().Where(e =>
-                string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
-                && (packageId == null || string.Equals(packageId, e.PackageId, StringComparison.OrdinalIgnoreCase))
-                && (packageVersion == null || string.Equals(packageVersion, e.PackageVersion, StringComparison.OrdinalIgnoreCase))
-                && e.WasSuccessful)
+                    string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
+                    && ((packageId == null && packageVersion == null) ||
+                        e.Packages.Any(deployedPackage =>
+                            (packageId == null || string.Equals(packageId, deployedPackage.PackageId, StringComparison.OrdinalIgnoreCase)) &&
+                            (packageVersion == null || string.Equals(packageVersion, deployedPackage.PackageVersion, StringComparison.OrdinalIgnoreCase))))
+                    && e.WasSuccessful)
                 .OrderByDescending(o => o.InstalledOn)
                 .FirstOrDefault();
         }

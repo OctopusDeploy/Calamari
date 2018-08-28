@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using Calamari.Aws.Integration.S3;
 
-namespace Calamari.Aws.Deployment.Conventions
+namespace Calamari.Aws.Integration.S3
 {
     public interface IProvideS3TargetOptions
     {

@@ -1,8 +1,6 @@
-﻿#if KUBERNETES
-using System;
+﻿using System;
 using System.Collections.Specialized;
 using System.IO;
-using Alphaleonis.Win32.Filesystem;
 using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -11,16 +9,13 @@ using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Kubernetes;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using File = System.IO.File;
-using Path = System.IO.Path;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Ignore("NotYet")]
+    [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
     public class KubernetesContextScriptWrapperFixture
     {
-        //See "GitHub Test Account"
         private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
         static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
         
@@ -32,13 +27,13 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script.ps1");
         }
         
-//        [Test]
-//
-//        [Category(TestEnvironment.CompatibleOS.Nix)]
-//        public void BashKubeCtlScripts()
-//        {
-//            //TestScript(new KubernetesBashScriptEngine(), "Test-Script.sh");
-//        }
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        public void BashKubeCtlScripts()
+        {
+            var wrapper = new KubernetesContextScriptWrapper(new CalamariVariableDictionary());
+            TestScript(wrapper, "Test-Script.sh");
+        }
 
         private void TestScript(IScriptWrapper wrapper, string scriptName)
         {
@@ -48,15 +43,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(temp.FilePath, "kubectl get nodes");
 
                 var deploymentVariables = new CalamariVariableDictionary();
-                deploymentVariables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
-                deploymentVariables.Set(Kubernetes.SpecialVariables.Namespace, "default");
-                deploymentVariables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "true");
-                deploymentVariables.Set(Calamari.Deployment.SpecialVariables.Account.Token, ClusterToken);
-                deploymentVariables.Set(Calamari.Deployment.SpecialVariables.Account.AccountType, "Token");
-
+                deploymentVariables.Set(SpecialVariables.ClusterUrl, ServerUrl);
+                
+                deploymentVariables.Set(SpecialVariables.SkipTlsVerification, "true");
+                deploymentVariables.Set(SpecialVariables.Namespace, "calamari-testing");
+                deploymentVariables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+                deploymentVariables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+                
                 var output = ExecuteScript(wrapper, temp.FilePath, deploymentVariables);
                 output.AssertSuccess();
-                output.AssertOutput("ASKROB");
             }
         }
 
@@ -71,4 +66,3 @@ namespace Calamari.Tests.KubernetesFixtures
         }
     }
 }
-#endif

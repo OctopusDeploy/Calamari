@@ -26,11 +26,8 @@
     <None Remove="Scripts\KubectlPowershellContext.ps1" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\KubectlBashContext.sh" />
-    <EmbeddedResource Include="Scripts\KubectlPowershellContext.ps1" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Autofac" Version="4.8.0" />
+    <PackageReference Include="Octostache" Version="2.1.14" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
