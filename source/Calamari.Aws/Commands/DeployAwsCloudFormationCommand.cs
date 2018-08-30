@@ -59,9 +59,6 @@ namespace Calamari.Aws.Commands
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
             
-            if (templateParameterFile != null && !File.Exists(templateParameterFile))
-                throw new CommandException("Could not find template parameters file: " + templateParameterFile);
-
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile,
                 sensitiveVariablesPassword);
 
@@ -80,6 +77,10 @@ namespace Calamari.Aws.Commands
             {
                 var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
                 var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
+                
+                if (templateParameterFile != null && !resolvedParameters.Some())
+                    throw new CommandException("Could not find template parameters file: " + templateParameterFile);
+                
                 var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables);
                 return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
             }
