@@ -133,7 +133,7 @@ try {
     If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
         $previousErrorAction = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
-        az logout 2>$null
+        az logout 2>$null 3>$null
         $ErrorActionPreference = $previousErrorAction
     }
 }
