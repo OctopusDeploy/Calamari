@@ -40,18 +40,6 @@ namespace Calamari.Deployment.Features
 
             Log.Verbose("Saving nginx configuration");
             nginxServer.SaveConfiguration();
-
-            // Test nginx config? i.e. nginx -t
-            if (!nginxServer.ValidateConfiguration(out var validateConfigError))
-            {
-                throw new NginxConfigurationValidationFailedException(validateConfigError);
-            }
-
-            // Reload nginx? i.e. nginx -s reload
-            if (!nginxServer.ReloadConfiguration(out var reloadConfigError))
-            {
-                throw new NginxReloadConfigurationFailedException(reloadConfigError);
-            }
         }
 
         private IDictionary<string, (string, string, string)> GetSslCertificates(IEnumerable<dynamic> enabledBindings, CalamariVariableDictionary variables)

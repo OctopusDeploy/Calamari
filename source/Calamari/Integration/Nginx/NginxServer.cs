@@ -131,18 +131,6 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public bool ValidateConfiguration(out string errorMessage)
-        {
-            errorMessage = string.Empty;
-            return true;
-        }
-
-        public bool ReloadConfiguration(out string errorMessage)
-        {
-            errorMessage = string.Empty;
-            return true;
-        }
-
         public void BuildConfiguration()
         {
             virtualServerConfig =
