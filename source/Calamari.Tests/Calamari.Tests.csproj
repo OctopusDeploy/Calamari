@@ -114,6 +114,9 @@
     <None Include="Fixtures\PowerShell\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Python\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ScriptCS\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -169,6 +172,9 @@
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
       <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
+    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'pythonx86'">
+      <Output TaskParameter="Include" ItemName="PythonRef" />
+    </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net452' And '%(Name)' == 'NuGet.CommandLine'">
       <Output TaskParameter="Include" ItemName="NuGetCommandLineRef" />
     </CreateItem>
@@ -177,6 +183,8 @@
       <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
       <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
       <ScriptCSExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
+      <Python>@(pythonRef->'%(ResolvedPath)')/tools/**/*</Python>
+      <PythonExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'">@(PythonRef->'%(ResolvedPath)')/tools/*.exe</PythonExe>
       <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
     </PropertyGroup>
     <ItemGroup>
@@ -184,12 +192,16 @@
       <FSharpFilesExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'" Include="$(FSharpCompilerToolsExe)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
       <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'" Include="$(ScriptCSExe)" />
+      <PythonFiles Include="$(Python)" />
+      <PythonFilesExe Condition="'$(TargetFramework)' == 'netcoreapp2.0'" Include="$(PythonExe)" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net452'" />
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
+    <Copy SourceFiles="@(PythonFiles)" DestinationFolder="$(OutDir)/Python/%(RecursiveDir)" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" Condition="'$(TargetFramework)' == 'net452'" />
     <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.0'" />
     <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.0'" />
+    <Exec Command="chmod +x %(PythonFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.0'" />
   </Target>
 </Project>

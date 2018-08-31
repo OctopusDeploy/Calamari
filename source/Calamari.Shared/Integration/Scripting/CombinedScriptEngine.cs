@@ -34,8 +34,8 @@ namespace Calamari.Integration.Scripting
         public ScriptSyntax[] GetSupportedTypes()
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                ? new[] { ScriptSyntax.Bash, ScriptSyntax.CSharp, ScriptSyntax.FSharp }
-                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp };
+                ? new[] { ScriptSyntax.Bash, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python }
+                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
         }
 
         public CommandResult Execute(
