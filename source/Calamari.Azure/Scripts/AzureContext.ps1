@@ -16,6 +16,7 @@
 ##   $OctopusAzureADClientId = "..."
 ##   $OctopusAzureADPassword = "..."
 ##   $OctopusAzureEnvironment = "..."
+##   $OctopusDisableAzureCLI = "..."
 
 $ErrorActionPreference = "Stop"
 
@@ -72,20 +73,32 @@ Execute-WithRetry{
         Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
         Write-Host "##octopus[stdout-default]"
 
-        # try and authenticate with the Azure CLI
-        try {
-            Write-Host "##octopus[stdout-verbose]"
-            & { 
-                az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId 
-                az account set --subscription $OctopusAzureSubscriptionId
-            }
-            Write-Host "Successfully authenticated with the Azure CLI"
-            Write-Host "##octopus[stdout-default]"
-        }
-        catch { 
-            # fail quietly if the Azure CLI is not available in the System Path
-        }
+        If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
+            try {
+                # authenticate with the Azure CLI
+                Write-Host "##octopus[stdout-verbose]"
+                
+                $env:AZURE_CONFIG_DIR = (Get-Item -Path ".\").FullName
 
+                $previousErrorAction = $ErrorActionPreference
+                $ErrorActionPreference = "Continue"
+                az cloud set --name $OctopusAzureEnvironment 2>$null 3>$null 
+                $ErrorActionPreference = $previousErrorAction
+
+                Write-Host "Azure CLI: Authenticating with Service Principal"
+                az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId 
+        
+                Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
+                az account set --subscription $OctopusAzureSubscriptionId
+        
+                Write-Host "##octopus[stdout-default]"
+                Write-Verbose "Successfully authenticated with the Azure CLI"
+            } catch  {
+                # failed to authenticate with Azure CLI
+                Write-Verbose "Failed to authenticate with Azure CLI"
+                Write-Verbose $_.Exception.Message
+            }
+        }
     } Else {
         # Authenticate via Management Certificate
         Write-Verbose "Loading the management certificate"
@@ -116,4 +129,12 @@ try {
     }
 
     throw
+} finally {
+    If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
+        $previousErrorAction = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        az logout 2>$null 3>$null
+        $ErrorActionPreference = $previousErrorAction
+    }
 }
+
