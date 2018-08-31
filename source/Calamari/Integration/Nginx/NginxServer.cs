@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Calamari.Integration.FileSystem;
 using Newtonsoft.Json.Linq;
 
@@ -11,6 +10,7 @@ namespace Calamari.Integration.Nginx
     public abstract class NginxServer
     {
         private readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        
         private readonly List<KeyValuePair<string, string>> serverBindingDirectives =
             new List<KeyValuePair<string, string>>();
 
@@ -39,7 +39,7 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public NginxServer WithServerBindings(IEnumerable<dynamic> bindings, IDictionary<string, (string SubjectCommonName, string RawOriginal, string PrivateKeyPem)> certificates)
+        public NginxServer WithServerBindings(IEnumerable<dynamic> bindings, IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> certificates)
         {
             foreach (var binding in bindings)
             {
@@ -69,7 +69,7 @@ namespace Calamari.Integration.Nginx
                         certificateKeyPath = Path.Combine(certificateRootPath,
                             $"{fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName)}.key");
 
-                        sslCerts.Add(certificatePath, certificate.RawOriginal);
+                        sslCerts.Add(certificatePath, certificate.CertificatePem);
 
                         sslCerts.Add(certificateKeyPath, certificate.PrivateKeyPem);
                     }

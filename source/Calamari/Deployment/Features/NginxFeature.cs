@@ -28,8 +28,7 @@ namespace Calamari.Deployment.Features
             var enabledBindings = GetEnabledBindings(variables).ToList();
             var sslCertificates = GetSslCertificates(enabledBindings, variables);
             
-            nginxServer
-                .WithVirtualServerName(variables.Get(SpecialVariables.Package.NuGetPackageId))
+            nginxServer.WithVirtualServerName(variables.Get(SpecialVariables.Package.NuGetPackageId))
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))
                 .WithServerBindings(enabledBindings, sslCertificates)
                 .WithRootLocation(rootLocation)
@@ -42,7 +41,7 @@ namespace Calamari.Deployment.Features
             nginxServer.SaveConfiguration();
         }
 
-        private IDictionary<string, (string, string, string)> GetSslCertificates(IEnumerable<dynamic> enabledBindings, CalamariVariableDictionary variables)
+        IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> GetSslCertificates(IEnumerable<dynamic> enabledBindings, CalamariVariableDictionary variables)
         {
             var sslCertsForEnabledBindings = new Dictionary<string, (string, string, string)>();
             foreach (var httpsBinding in enabledBindings.Where(b =>
@@ -52,16 +51,15 @@ namespace Calamari.Deployment.Features
             {
                 var certificateVariable = (string) httpsBinding.certificateVariable;
                 var subjectCommonName = variables.Get($"{certificateVariable}.SubjectCommonName");
-                var rawOriginal = variables.Get($"{certificateVariable}.CertificatePem");
-                Log.Verbose(rawOriginal);
+                var certificatePem = variables.Get($"{certificateVariable}.CertificatePem");
                 var privateKeyPem = variables.Get($"{certificateVariable}.PrivateKeyPem");
-                sslCertsForEnabledBindings.Add(certificateVariable, (subjectCommonName, rawOriginal, privateKeyPem));
+                sslCertsForEnabledBindings.Add(certificateVariable, (subjectCommonName, certificatePem, privateKeyPem));
             }
 
             return sslCertsForEnabledBindings;
         }
 
-        protected static IEnumerable<dynamic> GetEnabledBindings(VariableDictionary variables)
+        static IEnumerable<dynamic> GetEnabledBindings(VariableDictionary variables)
         {
             var bindingsString = variables.Get(SpecialVariables.Action.Nginx.Server.Bindings);
             if (string.IsNullOrWhiteSpace(bindingsString)) return new List<dynamic>();
@@ -71,7 +69,7 @@ namespace Calamari.Deployment.Features
                 : new List<dynamic>();
         }
 
-        protected static (dynamic rootLocation, IEnumerable<dynamic> additionalLocations) GetLocations(VariableDictionary variables)
+        static (dynamic rootLocation, IEnumerable<dynamic> additionalLocations) GetLocations(VariableDictionary variables)
         {
             var locationsString = variables.Get(SpecialVariables.Action.Nginx.Server.Locations);
             if(string.IsNullOrWhiteSpace(locationsString)) return (null, new List<dynamic>());
@@ -81,7 +79,7 @@ namespace Calamari.Deployment.Features
                 : (null, new List<dynamic>());
         }
 
-        private static bool TryParseJson(string json, out IEnumerable<dynamic> items)
+        static bool TryParseJson(string json, out IEnumerable<dynamic> items)
         {
             try
             {
