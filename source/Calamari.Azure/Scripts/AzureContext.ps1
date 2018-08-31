@@ -77,15 +77,14 @@ Execute-WithRetry{
             try {
                 # authenticate with the Azure CLI
                 Write-Host "##octopus[stdout-verbose]"
-        
+                
+                $env:AZURE_CONFIG_DIR = (Get-Item -Path ".\").FullName
+
                 $previousErrorAction = $ErrorActionPreference
                 $ErrorActionPreference = "Continue"
-                az logout 2>$null
-        
-                Write-Host "Azure CLI: Setting cloud to $AzureEnvironment"
-                az cloud set --name $AzureEnvironment 2>$null
+                az cloud set --name $OctopusAzureEnvironment 2>$null 3>$null 
                 $ErrorActionPreference = $previousErrorAction
-        
+
                 Write-Host "Azure CLI: Authenticating with Service Principal"
                 az login --service-principal -u $OctopusAzureADClientId -p $OctopusAzureADPassword --tenant $OctopusAzureADTenantId 
         
