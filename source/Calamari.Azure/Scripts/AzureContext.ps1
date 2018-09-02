@@ -132,7 +132,7 @@ try {
 } finally {
     If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
 		# Save the last exit code so az logout doesn't clobber it
-        $PreviousLastExitCode = $LastExitCode
+		$PreviousLastExitCode = $LastExitCode
 		try {
 			$previousErrorAction = $ErrorActionPreference
 			$ErrorActionPreference = "Continue"
