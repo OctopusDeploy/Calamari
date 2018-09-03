@@ -99,13 +99,13 @@
     <None Remove="Integration\Scripting\Bash\Bootstrap.sh" />
     <None Remove="Integration\Scripting\FSharp\Bootstrap.fsx" />
     <None Remove="Integration\Scripting\ScriptCS\Bootstrap.csx" />
-    <None Remove="Integration\Scripting\Python\Bootstrap.py" />
+    <None Remove="Integration\Scripting\Python\Configuration.py" />
     <None Remove="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <None Remove="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
     <EmbeddedResource Include="Integration\Scripting\FSharp\Bootstrap.fsx" />
     <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
-    <EmbeddedResource Include="Integration\Scripting\Python\Bootstrap.py" />
+    <EmbeddedResource Include="Integration\Scripting\Python\Configuration.py" />
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
   </ItemGroup>

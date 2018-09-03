@@ -13,16 +13,15 @@ namespace Calamari.Integration.Scripting.Python
 {
     public class PythonBootstrapper
     {
-        public const string WindowsNewLine = "\r\n";
+        const string WindowsNewLine = "\r\n";
 
-        private static readonly string BootstrapScriptTemplate;
+        static readonly string ConfigurationScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
-        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static PythonBootstrapper()
         {
-            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PythonBootstrapper).Namespace + ".Bootstrap.py");
+            ConfigurationScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PythonBootstrapper).Namespace + ".Configuration.py");
         }
 
         public static string FormatCommandArguments(string bootstrapFile)
@@ -37,8 +36,8 @@ namespace Calamari.Integration.Scripting.Python
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".py");
 
-            var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariables(variables)));
+            var builder = new StringBuilder(ConfigurationScriptTemplate);
+            builder.Replace("{{VariableDeclarations}}", $"octopusvariables = {{ {string.Join(",", GetVariables(variables))} }}");
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -59,7 +58,7 @@ namespace Calamari.Integration.Scripting.Python
                     ? DecryptValueCommand(variables.Get(variable))
                     : $"decode(\"{EncodeValue(variables.Get(variable))}\")";
 
-                return $"\"{EncodeValue(variable)}\" : {variableValue}";
+                return $"decode(\"{EncodeValue(variable)}\") : {variableValue}";
             });
         }
 
@@ -101,16 +100,18 @@ namespace Calamari.Integration.Scripting.Python
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static string PrepareBootstrapFile(Script script, string workingDirectory, CalamariVariableDictionary variables)
+        public static string PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
 
-            var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("{{TargetScriptFile}}", script.File.EscapeSingleQuotedString())
-                .Replace("{{ScriptParameters}}", script.Parameters)
-                .Replace("{{VariableDeclarations}}", $"octopusvariables = {{ {string.Join(",", GetVariables(variables))} }}");
-
-            CalamariFileSystem.OverwriteFile(bootstrapFile, builder.ToString(), new UTF8Encoding(true));
+            using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
+            using (var writer = new StreamWriter(file, Encoding.UTF8))
+            {
+                writer.WriteLine("from runpy import run_path");
+                writer.WriteLine("configuration = run_path(\"" + configurationFile.Replace("\\", "\\\\") + "\")");
+                writer.WriteLine("run_path(\"" + script.File.Replace("\\", "\\\\") + "\", configuration)");
+                writer.Flush();
+            }
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             EnsureValidUnixFile(script.File);

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -28,10 +28,10 @@ namespace Calamari.Tests.Fixtures.Python
             });
 
             output.AssertSuccess();
-            output.AssertOutput("V1= ABC");
-            output.AssertOutput("V2= DEF");
-            output.AssertOutput("V3= GHI");
-            output.AssertOutput("Foo_bar= Hello");
+            output.AssertOutput("V1=ABC");
+            output.AssertOutput("V2=DEF");
+            output.AssertOutput("V3=GHI");
+            output.AssertOutput("Foo_bar=Hello");
         }
 
     }

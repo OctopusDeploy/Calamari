@@ -22,9 +22,11 @@ namespace Calamari.Integration.Scripting.Python
             var executable = PythonBootstrapper.FindPythonExecutable();
             var workingDirectory = Path.GetDirectoryName(script.File);
 
-            var bootstrapFile = PythonBootstrapper.PrepareBootstrapFile(script, workingDirectory, variables);
+            var configurationFile = PythonBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
+            var bootstrapFile = PythonBootstrapper.PrepareBootstrapFile(script, workingDirectory, configurationFile);
             var arguments = PythonBootstrapper.FormatCommandArguments(bootstrapFile);
 
+            using (new TemporaryFile(configurationFile))
             using (new TemporaryFile(bootstrapFile))
             {
                 return commandLineRunner.Execute(new CommandLineInvocation(executable, arguments, workingDirectory,
