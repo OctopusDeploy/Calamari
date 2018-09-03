@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -42,4 +42,13 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
             Assert.AreEqual("World!", variables.Get("TestA"));
         }
+        
+        [Test]
+        public void ShouldWriteServiceMessageForArtifacts()
+        {
+            var (output, _) = RunScript("createartifact.py");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
+        }
+    }
 }
