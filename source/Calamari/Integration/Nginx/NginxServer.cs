@@ -137,10 +137,10 @@ namespace Calamari.Integration.Nginx
             virtualServerConfig =
                 $@"
 server {{
-    {string.Join(Environment.NewLine, serverBindingDirectives.Select(binding => $"{binding.Key} {binding.Value};"))}
-    {(useHostName ? $"{NginxDirectives.Server.HostName} {hostName};" : "")}
-    {(additionalLocations.Any() ? $"{NginxDirectives.Include} {virtualServerConfigRoot}/location.*.conf;" : "")}
-    {GetLocationConfig(rootLocation)}
+{string.Join(Environment.NewLine, serverBindingDirectives.Select(binding => $"    {binding.Key} {binding.Value};"))}
+{(useHostName ? $"    {NginxDirectives.Server.HostName} {hostName};" : "")}
+{(additionalLocations.Any() ? $"    {NginxDirectives.Include} {virtualServerConfigRoot}/location.*.conf;" : "")}
+{GetLocationConfig(rootLocation)}
 }}
 ";
         }
@@ -180,8 +180,8 @@ server {{
             return
                 $@"
     location {location.path} {{
-    {GetLocationDirectives((string) location.directives)}
-    {GetLocationHeaders((string) location.headers)}
+{GetLocationDirectives((string) location.directives)}
+{GetLocationHeaders((string) location.headers)}
     }}
 ";
         }
@@ -193,7 +193,7 @@ server {{
             IEnumerable<dynamic> directives = JObject.Parse(directivesString);
             return !directives.Any()
                 ? string.Empty
-                : string.Join(Environment.NewLine, directives.Select(d => $"    {d.Name} {d.Value};"));
+                : string.Join(Environment.NewLine, directives.Select(d => $"        {d.Name} {d.Value};"));
         }
 
         private static string GetLocationHeaders(string headersString)
@@ -204,7 +204,7 @@ server {{
             return !headers.Any()
                 ? string.Empty
                 : string.Join(Environment.NewLine,
-                    headers.Select(h => $"    {NginxDirectives.Location.Proxy.SetHeader} {h.Name} {h.Value};"));
+                    headers.Select(h => $"        {NginxDirectives.Location.Proxy.SetHeader} {h.Name} {h.Value};"));
         }
 
         private void AddServerBindingDirective(string key, string value)
