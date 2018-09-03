@@ -83,27 +83,28 @@ namespace Calamari.Integration.Nginx
                     AddServerBindingDirective(NginxDirectives.Server.CertificateKey,
                         certificateKeyPath ?? (string) binding.certificateKeyLocation);
 
-                    if (!string.IsNullOrWhiteSpace((string) binding.securityProtocols))
+                    var securityProtocols = (IEnumerable<dynamic>) binding.securityProtocols;
+                    if (securityProtocols != null && securityProtocols.Any())
                     {
-                        //AddServerBindingDirective(NginxDirectives.Server.SecurityProtocols, string.Join(" ", binding.securityProtocols));
+                        AddServerBindingDirective(NginxDirectives.Server.SecurityProtocols, string.Join(" ", binding.securityProtocols));
                     }
 
-                    if (!string.IsNullOrWhiteSpace((string) binding.ciphers))
-                    {
-                        //AddServerBindingDirective(NginxDirectives.Server.SslCiphers, string.Join(":", binding.ciphers));
-                    }
+//                    if (!string.IsNullOrWhiteSpace((string) binding.ciphers))
+//                    {
+//                        AddServerBindingDirective(NginxDirectives.Server.SslCiphers, string.Join(":", binding.ciphers));
+//                    }
                 }
             }
 
             return this;
         }
 
-        public NginxServer WithHostName(string hostName)
+        public NginxServer WithHostName(string serverHostName)
         {
-            if (string.IsNullOrWhiteSpace(hostName) || hostName.Equals("*")) return this;
+            if (string.IsNullOrWhiteSpace(serverHostName) || serverHostName.Equals("*")) return this;
 
             useHostName = true;
-            this.hostName = hostName;
+            hostName = serverHostName;
 
             return this;
         }
