@@ -1,0 +1,5 @@
+set_octopusvariable("TestA","World!")
+set_octopusvariable("ThisIsAVeryLongVariableNameWithMoreThan33CharactersIThinkThisIsAVeryLongVariableNameWithMoreThan33CharactersIThinkThisIsAVeryLongVariableNameWithMoreThan33CharactersIThinkThisIsAVeryLongVariableNameWithMoreThan33CharactersIThink","World!")
+set_octopusvariable("TestB", "This is a really really really really really really really really really really really really really really really really really really really really really really really long string!")
+set_octopusvariable("TestC", "Hello?!@CW)*F@!(#*DDOLDSKC<>'")
+set_octopusvariable("SecretSquirrel", "X marks the spot", True)

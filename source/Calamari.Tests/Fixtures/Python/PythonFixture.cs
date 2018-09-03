@@ -34,5 +34,12 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("Foo_bar=Hello");
         }
 
-    }
+        [Test]
+        public void ShouldSetVariables()
+        {
+            var (output, variables) = RunScript("setvariable.py");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
+            Assert.AreEqual("World!", variables.Get("TestA"));
+        }
 }
