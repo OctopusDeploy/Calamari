@@ -37,4 +37,25 @@ def createartifact(path, fileName = None):
     print("##octopus[stdout-default]");
     print("##octopus[createArtifact path='{0}' name='{1}' length='{2}']".format(servicepath, serviceFileName, length))
 
+def printverbose(message):
+    print("##octopus[stdout-verbose]")
+    print(message)
+    print("##octopus[stdout-default]")
+
+def printhighlight(message):
+    print("##octopus[stdout-highlight]")
+    print(message)
+    print("##octopus[stdout-default]")
+
+def printwait(message):
+    print("##octopus[stdout-wait]")
+    print(message)
+    print("##octopus[stdout-default]")
+
+def printwarning(message):
+    print("##octopus[stdout-warning]")
+    print(message)
+    print("##octopus[stdout-default]")
+
+
 {{VariableDeclarations}}

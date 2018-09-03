@@ -50,5 +50,15 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
         }
+
+        [Test]
+        public void ShouldCaptureAllOutput()
+        {
+            var (output, _) = RunScript("output.py");
+            output.AssertSuccess();
+            output.AssertOutput("Hello!");
+            output.AssertOutput("Hello verbose!");
+            output.AssertOutput("Hello warning!");
+        }
     }
 }
