@@ -68,7 +68,7 @@ namespace Calamari.Integration.Scripting.Python
             byte[] iv;
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
             
-            return $"decrypt_variable(\"{Convert.ToBase64String(rawEncrypted)}\" \"{ToHex(iv)}\")";
+            return $"decrypt(\"{Convert.ToBase64String(rawEncrypted)}\",\"{ToHex(iv)}\")";
         }
 
         static string ToHex(byte[] bytes)
@@ -83,6 +83,7 @@ namespace Calamari.Integration.Scripting.Python
 
         public static string FindPythonExecutable()
         {
+            return "python";
             var myPath = typeof(PythonBootstrapper).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
             var executable = Path.GetFullPath(Path.Combine(parent, "Python", "python.exe"));
@@ -117,6 +118,5 @@ namespace Calamari.Integration.Scripting.Python
             EnsureValidUnixFile(script.File);
             return bootstrapFile;
         }
-    
     }
 }

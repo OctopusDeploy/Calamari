@@ -35,6 +35,22 @@ namespace Calamari.Tests.Fixtures.Python
         }
 
         [Test]
+        public void ShouldPrintSensitiveVariables()
+        {
+            var (output, _) = RunScript("printvariables.py", new Dictionary<string, string>
+            {
+                ["Variable1"] = "Secret",
+                ["Variable2"] = "DEF",
+                ["Variable3"] = "GHI",
+                ["Foo_bar"] = "Hello",
+                ["Host"] = "Never",
+            }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");  
+
+            output.AssertSuccess();
+            output.AssertOutput("V1=Secret");
+        }
+
+        [Test]
         public void ShouldSetVariables()
         {
             var (output, variables) = RunScript("setvariable.py");
