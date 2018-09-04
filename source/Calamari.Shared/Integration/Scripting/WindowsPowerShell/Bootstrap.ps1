@@ -402,6 +402,9 @@ function Initialize-ProxySettings()
 	{
 		$proxyUri = [System.Uri]"http://${proxyHost}:$proxyPort"
 		$proxy = New-Object System.Net.WebProxy($proxyUri)
+
+        $env:HTTP_PROXY = "http://$proxyUri"
+        $env:HTTPS_PROXY = "https://$proxyUri"
 	}
 
 	if ([string]::IsNullOrEmpty($proxyUsername)) 
@@ -418,7 +421,15 @@ function Initialize-ProxySettings()
 	else 
 	{
 		$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
+
+        Add-Type -AssemblyName System.Web
+        $proxyUrl = "$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
+        $env:HTTP_PROXY = "http://$proxyUrl"
+        $env:HTTPS_PROXY = "https://$proxyUrl"
 	}
+
+    Write-Host "HTTP Proxy " $env:HTTP_PROXY; 
+    Write-Host "HTTPS Proxy " $env:HTTPS_PROXY; 
 
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
 }
