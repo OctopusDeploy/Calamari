@@ -18,7 +18,7 @@ namespace Calamari.Integration.Processes
 
         public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
 
-        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string base64Variables = null)
+        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string outputVariablesFilePath = null)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -51,20 +51,21 @@ namespace Calamari.Integration.Processes
                 }
             }
 
-            if (!string.IsNullOrEmpty(base64Variables))
+            if (!string.IsNullOrEmpty(outputVariablesFilePath))
             {
+                var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath));
                 try
                 {
-                    var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Variables));
-                    var variables = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                    foreach (var variable in variables)
+                    var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
+                    foreach (var variable in outputVariables)
                     {
                         Set(variable.Key, variable.Value);
                     }
+
                 }
-                catch (JsonReaderException)
+                catch (JsonReaderException e)
                 {
-                    throw new CommandException("Unable to parse jsonVariables as valid JSON.");
+                    throw new CommandException("Unable to parse output variables as valid JSON.");
                 }
             }
         }
@@ -90,6 +91,20 @@ namespace Calamari.Integration.Processes
             catch (CryptographicException)
             {
                 throw new CommandException("Cannot decrypt sensitive-variables. Check your password is correct.");
+            }
+        }
+
+        static string DecryptWithMachineKey(string base64EncodedEncryptedVariables)
+        {
+            try
+            {
+                var encryptedVariables = Convert.FromBase64String(base64EncodedEncryptedVariables);
+                var bytes = ProtectedData.Unprotect(encryptedVariables, null, DataProtectionScope.LocalMachine);
+                return Encoding.UTF8.GetString(bytes);
+            }
+            catch (CryptographicException)
+            {
+                throw new CommandException("Cannot decrypt output variables.");
             }
         }
 
