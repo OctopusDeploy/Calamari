@@ -190,6 +190,10 @@ function log_environment_information
 
 function setup_proxy_configuration
 {
+    echo "##octopus[stdout-verbose]"    
+    echo "Configuring proxy"
+    echo "##octopus[stdout-default]"
+        
     if [ $HTTP_PROXY ] || [ $HTTPS_PROXY ]
     then
         echo "##octopus[stdout-verbose]"    
