@@ -405,7 +405,7 @@ function Initialize-ProxySettings()
 
         $env:HTTP_PROXY = "$proxyUri"
         $env:HTTPS_PROXY = "$proxyUri"
-        $env:NO_PROXY="127.0.0.1,localhost"
+        $env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
 	}
 
 	if ([string]::IsNullOrEmpty($proxyUsername)) 
@@ -427,7 +427,7 @@ function Initialize-ProxySettings()
         $proxyUrl = "$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
         $env:HTTP_PROXY = "http://$proxyUrl"
         $env:HTTPS_PROXY = "https://$proxyUrl"
-        $env:NO_PROXY="127.0.0.1,localhost"
+        $env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
 	}
 
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
