@@ -192,11 +192,17 @@ function setup_proxy_configuration
 {
     if [ $HTTP_PROXY ] || [ $HTTPS_PROXY ]
     then
+        echo "##octopus[stdout-verbose]"    
+        echo "HTTP_PROXY already set"
+        echo "##octopus[stdout-default]"
         return 0
     fi 
 
     if [ $TentacleProxyHost ] 
     then
+        echo "##octopus[stdout-verbose]"
+        echo "Setting HTTP_PROXY to $TentacleProxyHost:${TentacleProxyPort:-80}"
+        echo "##octopus[stdout-default]"    
         if [ $TentacleProxyUsername ]
         then
             proxyAuth = "$TentacleProxyUsername:$TentacleProxyPassword@"    
@@ -209,3 +215,4 @@ function setup_proxy_configuration
 }
 
 log_environment_information
+setup_proxy_configuration
