@@ -197,22 +197,24 @@ function setup_proxy_configuration
     if [ $HTTP_PROXY ] || [ $HTTPS_PROXY ]
     then
         echo "##octopus[stdout-verbose]"    
-        echo "HTTP_PROXY already set"
+        echo "Proxy already set"
         echo "##octopus[stdout-default]"
         return 0
     fi 
 
     if [ $TentacleProxyHost ] 
     then
+        proxyHost=$TentacleProxyHost:${TentacleProxyPort:-80}
+        
         echo "##octopus[stdout-verbose]"
-        echo "Setting HTTP_PROXY to $TentacleProxyHost:${TentacleProxyPort:-80}"
+        echo "Setting HTTP_PROXY to $proxyHost"
         echo "##octopus[stdout-default]"    
         if [ $TentacleProxyUsername ]
         then
-            proxyAuth = "$TentacleProxyUsername:$TentacleProxyPassword@"    
+            proxyAuth="$TentacleProxyUsername:$TentacleProxyPassword@"    
         fi
         
-        proxyUri = "http://$proxyAuth$TentacleProxyHost:${TentacleProxyPort:-80}"
+        proxyUri="http://$proxyAuth$proxyHost"
         export HTTP_PROXY=$proxyUri
         export HTTPS_PROXY=$proxyUri
     fi
