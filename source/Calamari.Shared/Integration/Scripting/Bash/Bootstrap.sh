@@ -217,6 +217,7 @@ function setup_proxy_configuration
         proxyUri="http://$proxyAuth$proxyHost"
         export HTTP_PROXY=$proxyUri
         export HTTPS_PROXY=$proxyUri
+        export NO_PROXY="127.0.0.1,localhost,169.254.169.254"
     fi
 }
 
