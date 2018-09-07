@@ -5,9 +5,9 @@
         public static class BlobStorage
         {
             public const string FileSelections = "Octopus.Action.Azure.BlobStorage.FileSelections";
-            public const string GlobsSelection = "Octopus.Action.Azure.BlobStorage.GlobsSelection";
-            public const string UploadPackage = "Octopus.Action.Azure.BlobStorage.UploadPackage";
-            public const string SubstitutionPatterns = "Octopus.Action.Azure.BlobStorage.SubstitutionPatterns";
+            public const string ContainerName = "Octopus.Action.Azure.BlobStorage.ContainerName";
+            public const string Mode = "Octopus.Action.Azure.BlobStorage.Mode";
+            public const string ResourceGroupName = "Octopus.Action.Azure.BlobStorage.ResourceGroupName";
         }
     }
 }

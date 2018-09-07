@@ -1,36 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure.Accounts;
+using Calamari.Azure.Deployment.Integration.BlobStorage;
 using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
+using Calamari.Util;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Blob;
+using Microsoft.Azure.Storage.Core.Util;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
     public class UploadToBlobStorage : IInstallConvention
     {
+        private static readonly bool IsMD5Supported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
+        private static readonly BlobRequestOptions BlobRequestOptionsDefault = new BlobRequestOptions {StoreBlobContentMD5 = IsMD5Supported, DisableContentMD5Validation = false, UseTransactionalMD5 = false};
+
         private readonly UploadToBlobStorageOptions options;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly IFileSubstituter substituter;
         private readonly AzureServicePrincipalAccount account;
 
         public UploadToBlobStorage(UploadToBlobStorageOptions options, ICalamariFileSystem fileSystem,
-            IFileSubstituter substituter, AzureServicePrincipalAccount account)
+            AzureServicePrincipalAccount account)
         {
             this.options = options;
             this.fileSystem = fileSystem;
-            this.substituter = substituter;
             this.account = account;
         }
 
@@ -54,7 +57,7 @@ namespace Calamari.Azure.Deployment.Conventions
         private async Task InstallAsync(RunningDeployment deployment)
         {
             var storageAccountName = deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName);
-            var resourceGroupName = deployment.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
+            var resourceGroupName = deployment.Variables.Get(AzureSpecialVariables.BlobStorage.ResourceGroupName);
             var storageEndpointSuffix = deployment.Variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix,
                 DefaultVariables.StorageEndpointSuffix);
 
@@ -64,46 +67,65 @@ namespace Calamari.Azure.Deployment.Conventions
                 new CloudStorageAccount(new StorageCredentials(storageAccountName, storageAccountPrimaryKey),
                     storageEndpointSuffix, true);
 
-            if (options.UploadPackage)
+            if (options.UploadEntirePackage)
             {
-                await Upload(cloudStorage, Path.GetDirectoryName(deployment.PackageFilePath),
-                    new[] {deployment.PackageFilePath}).ConfigureAwait(false);
-                return;
+                options.FilePaths.Add(new FileSelectionProperties {Pattern = "**/*"});
             }
 
             var files = new HashSet<string>();
+            var patterns = new List<string>();
+            var metadata = new Dictionary<string, Dictionary<string, string>>();
 
-            foreach (var path in options.FilePaths)
+            foreach (var properties in options.FilePaths)
             {
-                var filePath = Path.Combine(deployment.StagingDirectory, path);
-
-                if (!fileSystem.FileExists(filePath))
+                var matched = fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, properties.Pattern)
+                    .ToArray();
+                if (properties.FailIfNoMatches)
                 {
-                    throw new FileNotFoundException($"The file '{path}' could not be found in the package.");
+                    if (!matched.Any())
+                    {
+                        throw new FileNotFoundException(
+                            $"The glob patterns '{properties.Pattern}' didn't match any files.");
+                    }
                 }
 
-                files.Add(filePath);
+                patterns.Add(properties.Pattern);
+
+                files.UnionWith(matched);
+
+                if (properties.Metadata.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var matchFile in matched)
+                {
+                    if (metadata.TryGetValue(matchFile, out var dic))
+                    {
+                        foreach (var meta in properties.Metadata)
+                        {
+                            dic[meta.Key] = meta.Value;
+                        }
+
+                        continue;
+                    }
+
+                    metadata.Add(matchFile, new Dictionary<string, string>(properties.Metadata));
+                }
             }
 
-            files.UnionWith(fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, options.Globs.ToArray()));
             if (!files.Any())
             {
                 Log.Info(
-                    $"The glob patterns {options.Globs.ToSingleQuotedCommaSeperated()} didn't match any files. Nothing was uploaded to Azure Blob Storage.");
+                    $"The glob patterns {patterns.ToSingleQuotedCommaSeperated()} didn't match any files. Nothing was uploaded to Azure Blob Storage.");
                 return;
             }
 
-            var substitutionPatterns = options.SubstitutionPatterns;
-
-            new SubstituteInFilesConvention(fileSystem, substituter,
-                    _ => substitutionPatterns.Any(),
-                    _ => substitutionPatterns)
-                .Install(deployment);
-
-            await Upload(cloudStorage, deployment.StagingDirectory, files).ConfigureAwait(false);
+            await Upload(cloudStorage, deployment.StagingDirectory, files, metadata).ConfigureAwait(false);
         }
 
-        private async Task Upload(CloudStorageAccount cloudStorage, string baseDir, IEnumerable<string> files)
+        private async Task Upload(CloudStorageAccount cloudStorage, string baseDir, IEnumerable<string> files,
+            IReadOnlyDictionary<string, Dictionary<string, string>> metadata)
         {
             var blobClient = cloudStorage.CreateCloudBlobClient();
             blobClient.DefaultRequestOptions.StoreBlobContentMD5 = true;
@@ -115,26 +137,57 @@ namespace Calamari.Azure.Deployment.Conventions
                     $"Storage Container named '{options.ContainerName}' does not exist. Make sure the container exists.");
             }
 
+            MD5 md5 = null;
+
+            if (IsMD5Supported)
+            {
+                md5 = MD5.Create();
+            }
+
             foreach (var file in files)
             {
                 var blobName = ConvertToRelativeUri(file, baseDir);
                 var blob = container.GetBlockBlobReference(blobName);
+                var uploadBlob = true;
 
                 if (await blob.ExistsAsync().ConfigureAwait(false)) // I don't think does a MD5 check :(
                 {
-                    Log.VerboseFormat(
-                        "A blob named {0} already exists with the same length, so it will be used instead of uploading the new package.",
-                        blob.Name);
+                    Log.VerboseFormat("A blob named {0} already exists.", blob.Name);
+                    
+                    if (IsMD5Supported)
+                    {
+                        Log.VerboseFormat("Checking md5 {0} to see if we need to upload or not.", blob.Name);
+                        var md5Hash = Convert.ToBase64String(HashCalculator.Hash(file, () => md5));
+                        if (md5Hash == blob.Properties.ContentMD5)
+                        {
+                            Log.VerboseFormat("Blob {0} content matches md5, no need to upload.", blob.Name);
+                            uploadBlob = false;
+                        }
+                    }
+                }
+
+                if (uploadBlob)
+                {
+                    await UploadBlobWithProgress(new FileInfo(file), blob).ConfigureAwait(false);
+                }
+
+                if (!metadata.TryGetValue(file, out var dic))
+                {
                     continue;
                 }
 
-                await UploadBlobInChunks(new FileInfo(file), blob, blobClient).ConfigureAwait(false);
+                foreach (var meta in dic)
+                {
+                    blob.Metadata[meta.Key] = meta.Value;
+                }
+
+                await blob.SetMetadataAsync().ConfigureAwait(false);
             }
 
             Log.Info("Package upload complete");
         }
 
-        private static async Task UploadBlobInChunks(FileInfo fileInfo, CloudBlockBlob blob, CloudBlobClient blobClient)
+        private static async Task UploadBlobWithProgress(FileInfo fileInfo, CloudBlockBlob blob)
         {
             var operationContext = new OperationContext();
             operationContext.ResponseReceived += delegate(object sender, RequestEventArgs args)
@@ -153,47 +206,18 @@ namespace Calamari.Azure.Deployment.Conventions
                 Log.Verbose($"Uploading, response received: {statusCode} ({statusDescription})");
             };
 
-            await blobClient.SetServicePropertiesAsync(blobClient.GetServiceProperties(), null, operationContext)
-                .ConfigureAwait(false);
-
             Log.VerboseFormat("Uploading the package to blob storage. The package file is {0}.",
                 fileInfo.Length.ToFileSizeString());
-
-            using (var fileReader = fileInfo.OpenRead())
-            {
-                var blockList = new List<string>();
-
-                long uploadedSoFar = 0;
-
-                var data = new byte[1024 * 1024];
-                var id = 1;
-
-                while (true)
+            
+            await blob.UploadFromFileAsync(fileInfo.FullName, null, BlobRequestOptionsDefault, null,
+                new Progress<StorageProgress>(progress =>
                 {
-                    id++;
+                    var percentage = (int) (progress.BytesTransferred * 100 / fileInfo.Length);
 
-                    var read = await fileReader.ReadAsync(data, 0, data.Length).ConfigureAwait(false);
-                    if (read == 0)
-                    {
-                        await blob.PutBlockListAsync(blockList).ConfigureAwait(false);
-                        break;
-                    }
+                    Log.ServiceMessages.Progress(percentage, $"Uploading {fileInfo.Name} to blob storage");
+                }), CancellationToken.None).ConfigureAwait(false);
 
-                    var blockId =
-                        Convert.ToBase64String(
-                            Encoding.UTF8.GetBytes(id.ToString(CultureInfo.InvariantCulture).PadLeft(30, '0')));
-                    await blob.PutBlockAsync(blockId, new MemoryStream(data, 0, read, true), null)
-                        .ConfigureAwait(false);
-                    blockList.Add(blockId);
-
-                    uploadedSoFar += read;
-
-                    Log.ServiceMessages.Progress((int) (uploadedSoFar * 100 / fileInfo.Length),
-                        $"Uploading {fileInfo.Name} to blob storage");
-                }
-            }
-
-            Log.Verbose("Upload complete");
+            Log.Verbose($"Upload {fileInfo.Name} complete");
         }
 
         private static string ConvertToRelativeUri(string filePath, string baseDir)

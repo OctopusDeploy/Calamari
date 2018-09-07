@@ -16,7 +16,6 @@ namespace Calamari.Azure.Commands
     [Command("upload-to-azure-blob-storage", Description = "Uploads a package(s) or package file(s) to Azure Blob Storage container")]
     public class UploadToBlobStorageCommand : Command
     {
-        private string container;
         private string variablesFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
@@ -28,7 +27,6 @@ namespace Calamari.Azure.Commands
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
-            Options.Add("container=", "The container to use", v => container = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -51,15 +49,16 @@ namespace Calamari.Azure.Commands
             var substituter = new FileSubstituter(fileSystem);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
 
-            var uploadToBlobStorageOptions = new UploadToBlobStorageOptions(container, variables);
+            var uploadToBlobStorageOptions = new UploadToBlobStorageOptions(variables);
             var account = AccountFactory.Create(variables) as AzureServicePrincipalAccount;
 
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => !uploadToBlobStorageOptions.UploadPackage),
-                new UploadToBlobStorage(uploadToBlobStorageOptions, fileSystem, substituter, account)
+                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
+                new SubstituteInFilesConvention(fileSystem, substituter),
+                new UploadToBlobStorage(uploadToBlobStorageOptions, fileSystem, account)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

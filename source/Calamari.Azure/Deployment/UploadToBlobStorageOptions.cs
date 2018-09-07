@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Calamari.Azure.Deployment.Integration.BlobStorage;
 using Calamari.Integration.Processes;
 using Calamari.Serialization;
 using Newtonsoft.Json;
@@ -11,26 +12,25 @@ namespace Calamari.Azure.Deployment
     {
         private readonly CalamariVariableDictionary variables;
 
-        public UploadToBlobStorageOptions(string containerName, CalamariVariableDictionary variables)
+        public UploadToBlobStorageOptions(CalamariVariableDictionary variables)
         {
-            ContainerName = containerName;
             this.variables = variables;
+            FilePaths = variables.Get(AzureSpecialVariables.BlobStorage.FileSelections)
+                    ?.Map(Deserialize<List<FileSelectionProperties>>) ?? new List<FileSelectionProperties>();
         }
 
-        public bool UploadPackage => variables.GetFlag(AzureSpecialVariables.BlobStorage.UploadPackage);
+        public bool UploadEntirePackage =>
+            variables.GetEnum(AzureSpecialVariables.BlobStorage.Mode, TargetMode.EntirePackage) ==
+            TargetMode.EntirePackage;
 
-        public List<string> Globs => variables.Get(AzureSpecialVariables.BlobStorage.GlobsSelection)?.Map(Deserialize<List<string>>);
-        public List<string> FilePaths => variables.Get(AzureSpecialVariables.BlobStorage.FileSelections)?.Map(Deserialize<List<string>>);
-        public List<string> SubstitutionPatterns => variables.Get(AzureSpecialVariables.BlobStorage.SubstitutionPatterns)?.Map(Deserialize<List<string>>);
-        public string ContainerName { get; }
+        public List<FileSelectionProperties> FilePaths { get; }
+
+        public string ContainerName => variables.Get(AzureSpecialVariables.BlobStorage.ContainerName);
 
         private static JsonSerializerSettings GetEnrichedSerializerSettings()
         {
             return JsonSerialization.GetDefaultSerializerSettings()
-                .Tee(x =>
-                {
-                    x.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                });
+                .Tee(x => { x.ContractResolver = new CamelCasePropertyNamesContractResolver(); });
         }
 
         private static T Deserialize<T>(string value)

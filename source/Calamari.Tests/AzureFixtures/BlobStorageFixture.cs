@@ -9,6 +9,7 @@ using Calamari.Azure.Accounts;
 using Calamari.Azure.Commands;
 using Calamari.Azure.Deployment;
 using Calamari.Azure.Deployment.Conventions;
+using Calamari.Azure.Deployment.Integration.BlobStorage;
 using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -32,15 +33,90 @@ namespace Calamari.Tests.AzureFixtures
     {
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public async Task UploadPackage1()
+        public async Task SkipUploadIfMD5Matches()
         {
-            var fileSelections = new List<string> {"Page1.html"};
-            var globSelections = new List<string> {"scripts/**/*"};
-            var substitutions = new List<string>();
+            var fileSelections = new List<FileSelectionProperties>
+            {
+                new FileSelectionProperties {Pattern = "Page1.html", FailIfNoMatches = true},
+                new FileSelectionProperties {Pattern = "scripts/**/*"}
+            };
+
+            var containerName = $"{Guid.NewGuid():N}";
+            DateTimeOffset? lastModified = null;
 
             await Execute("Package1",
-                    new List<string> {"Page1.html", "scripts/Script1.js"}, fileSelections, globSelections,
-                    substitutions)
+                    new List<string> {"Page1.html", "scripts/Script1.js"}, fileSelections,
+                    containerName: containerName, deleteContainer: false, callback: blob =>
+                    {
+                        if (blob.Name == "Page1.html")
+                        {
+                            lastModified = blob.Properties.LastModified;
+                        }
+
+                        return Task.FromResult(0);
+                    })
+                .ConfigureAwait(false);
+
+            await Execute("Package1",
+                    new List<string> {"Page1.html", "scripts/Script1.js"}, fileSelections,
+                    containerName: containerName, callback: blob =>
+                    {
+                        if (blob.Name == "Page1.html")
+                        {
+                            blob.Properties.LastModified.Should().Be(lastModified);
+                        }
+
+                        return Task.FromResult(0);
+                    })
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public async Task WhenMD5SkipMakeSureMetadataIsStillUpdated()
+        {
+            var fileSelections = new List<FileSelectionProperties>
+            {
+                new FileSelectionProperties {Pattern = "Page1.html", FailIfNoMatches = true},
+                new FileSelectionProperties {Pattern = "scripts/**/*"}
+            };
+
+            var containerName = $"{Guid.NewGuid():N}";
+
+            await Execute("Package1",
+                    new List<string> {"Page1.html", "scripts/Script1.js"}, fileSelections,
+                    containerName: containerName, deleteContainer: false)
+                .ConfigureAwait(false);
+
+            fileSelections[0].Metadata.Add("one", "two");
+
+            await Execute("Package1",
+                    new List<string> {"Page1.html", "scripts/Script1.js"}, fileSelections,
+                    containerName: containerName, callback: blob =>
+                    {
+                        if (blob.Name == "Page1.html")
+                        {
+                            blob.Metadata.Should().ContainKey("one");
+                            blob.Metadata["one"].Should().Be("two");
+                        }
+
+                        return Task.FromResult(0);
+                    })
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public async Task UploadPackage1()
+        {
+            var fileSelections = new List<FileSelectionProperties>
+            {
+                new FileSelectionProperties {Pattern = "Page1.html", FailIfNoMatches = true},
+                new FileSelectionProperties {Pattern = "scripts/**/*"}
+            };
+
+            await Execute("Package1",
+                    new List<string> {"Page1.html", "scripts/Script1.js"}, fileSelections)
                 .ConfigureAwait(false);
         }
 
@@ -50,14 +126,18 @@ namespace Calamari.Tests.AzureFixtures
         {
             var BOMMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
 
-            var fileSelections = new List<string> {"Page1.html"};
-            var globSelections = new List<string> {"scripts/**/*"};
+            var fileSelections = new List<FileSelectionProperties>
+            {
+                new FileSelectionProperties {Pattern = "Page1.html", FailIfNoMatches = true},
+                new FileSelectionProperties {Pattern = "scripts/**/*"}
+            };
+
             var substitutions = new List<string> {"scripts/**/*"};
 
             await Execute("Package2",
                 new List<string> {"Page1.html", "scripts/replace.txt"},
                 fileSelections,
-                globSelections, substitutions, variables => variables.Set("ReplaceValue", "Hello World"), async blob =>
+                substitutions, variables => variables.Set("ReplaceValue", "Hello World"), async blob =>
                 {
                     if (blob.Name == "scripts/replace.txt")
                     {
@@ -69,31 +149,74 @@ namespace Calamari.Tests.AzureFixtures
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public async Task UploadPackage3AsAPackage()
+        public async Task UploadEntirePackage3()
         {
             await Execute("Package3",
-                    new List<string> {"Package3.1.0.0.zip"},
+                    new List<string> {"Page1.html", "scripts/JavaScript1.js"},
                     extraVariables: variables =>
-                        variables.Set(AzureSpecialVariables.BlobStorage.UploadPackage, Boolean.TrueString))
+                        variables.Set(AzureSpecialVariables.BlobStorage.Mode, TargetMode.EntirePackage.ToString()))
                 .ConfigureAwait(false);
         }
 
-        private async Task Execute(string packageName, IEnumerable<string> filesExist,
-            List<string> fileSelections = null,
-            List<string> globSelections = null,
-            List<string> substitutions = null, Action<VariableDictionary> extraVariables = null,
-            Func<CloudBlockBlob, Task> callback = null)
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public async Task UploadPackage3WithMetadata()
         {
+            var fileSelections = new List<FileSelectionProperties>
+            {
+                new FileSelectionProperties {Pattern = "Page1.html", FailIfNoMatches = true, Metadata = {{"one", "two"}} },
+                new FileSelectionProperties {Pattern = "scripts/**/*", Metadata = {{"three", "four"}}},
+                new FileSelectionProperties {Pattern = "scripts/**/*", Metadata = {{"five", "six"}}}
+            };
+
+            await Execute("Package3",
+                    new List<string> {"Page1.html", "scripts/JavaScript1.js"},
+                    fileSelections, callback: blob =>
+                    {
+                        switch (blob.Name)
+                        {
+                            case "scripts/JavaScript1.js":
+                                blob.Metadata.Should().ContainKey("three");
+                                blob.Metadata.Should().ContainKey("five");
+                                blob.Metadata["three"].Should().Be("four");
+                                blob.Metadata["five"].Should().Be("six");
+                                break;
+                            case "Page1.html":
+                                blob.Metadata.Should().ContainKey("one");
+                                blob.Metadata["one"].Should().Be("two");
+                                break;
+                        }
+
+                        return Task.FromResult(0);
+                    })
+                .ConfigureAwait(false);
+        }
+
+
+        private async Task Execute(string packageName, IEnumerable<string> filesExist,
+            List<FileSelectionProperties> fileSelections = null,
+            IReadOnlyCollection<string> substitutions = null, Action<VariableDictionary> extraVariables = null,
+            Func<CloudBlockBlob, Task> callback = null, string containerName = null, bool deleteContainer = true)
+        {
+            if (containerName == null)
+            {
+                containerName = $"{Guid.NewGuid():N}";
+            }
+
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
-            variables.Set(AzureSpecialVariables.BlobStorage.UploadPackage, Boolean.FalseString);
+
             var enrichedSerializerSettings = GetEnrichedSerializerSettings();
-            variables.Set(AzureSpecialVariables.BlobStorage.GlobsSelection,
-                JsonConvert.SerializeObject(globSelections, enrichedSerializerSettings));
             variables.Set(AzureSpecialVariables.BlobStorage.FileSelections,
                 JsonConvert.SerializeObject(fileSelections, enrichedSerializerSettings));
-            variables.Set(AzureSpecialVariables.BlobStorage.SubstitutionPatterns,
-                JsonConvert.SerializeObject(substitutions, enrichedSerializerSettings));
+            if (substitutions != null && substitutions.Count > 0)
+            {
+                variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, String.Join("\n", substitutions));
+                variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, Boolean.TrueString);
+            }
+            variables.Set(AzureSpecialVariables.BlobStorage.ResourceGroupName, "calamaritests");
+            variables.Set(AzureSpecialVariables.BlobStorage.ContainerName, containerName);
+            variables.Set(AzureSpecialVariables.BlobStorage.Mode, TargetMode.FileSelections.ToString());
 
             variables.Set(SpecialVariables.Account.AccountType, AzureAccountTypes.ServicePrincipalAccountType);
             variables.Set(SpecialVariables.Action.Azure.SubscriptionId,
@@ -105,8 +228,7 @@ namespace Calamari.Tests.AzureFixtures
             variables.Set(SpecialVariables.Action.Azure.Password,
                 Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
             variables.Set(SpecialVariables.Action.Azure.StorageAccountName, "calamaritests");
-            variables.Set(SpecialVariables.Action.Azure.ResourceGroupName, "calamaritests");
-
+            
             extraVariables?.Invoke(variables);
 
             variables.Save(variablesFile);
@@ -114,14 +236,13 @@ namespace Calamari.Tests.AzureFixtures
             var account = AccountFactory.Create(variables) as AzureServicePrincipalAccount;
             var storageAccountPrimaryKey = await UploadToBlobStorage.GetStorageAccountPrimaryKey(account,
                 variables.Get(SpecialVariables.Action.Azure.StorageAccountName),
-                variables.Get(SpecialVariables.Action.Azure.ResourceGroupName)).ConfigureAwait(false);
+                variables.Get(AzureSpecialVariables.BlobStorage.ResourceGroupName)).ConfigureAwait(false);
             var cloudStorage =
                 new CloudStorageAccount(
                     new StorageCredentials(variables.Get(SpecialVariables.Action.Azure.StorageAccountName),
                         storageAccountPrimaryKey), DefaultVariables.StorageEndpointSuffix, true);
 
             var blobClient = cloudStorage.CreateCloudBlobClient();
-            var containerName = $"{Guid.NewGuid():N}";
 
             var container = blobClient.GetContainerReference(containerName);
             try
@@ -137,8 +258,7 @@ namespace Calamari.Tests.AzureFixtures
                     var command = new UploadToBlobStorageCommand();
                     command.Execute(new[]
                     {
-                        "--package", $"{package.FilePath}", "--variables", $"{variablesFile}", "--container",
-                        containerName
+                        "--package", $"{package.FilePath}", "--variables", $"{variablesFile}"
                     });
                 }
 
@@ -156,7 +276,10 @@ namespace Calamari.Tests.AzureFixtures
             }
             finally
             {
-                await container.DeleteIfExistsAsync().ConfigureAwait(false);
+                if (deleteContainer)
+                {
+                    await container.DeleteIfExistsAsync().ConfigureAwait(false);
+                }
             }
         }
 
