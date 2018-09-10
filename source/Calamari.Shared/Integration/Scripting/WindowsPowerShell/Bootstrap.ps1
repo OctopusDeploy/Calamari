@@ -402,6 +402,18 @@ function Initialize-ProxySettings()
 	{
 		$proxyUri = [System.Uri]"http://${proxyHost}:$proxyPort"
 		$proxy = New-Object System.Net.WebProxy($proxyUri)
+        
+        if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+            $env:HTTP_PROXY = "$proxyUri"
+        }
+    
+        if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
+            $env:HTTPS_PROXY = "$proxyUri"
+        }
+
+        if([string]::IsNullOrEmpty($env:NO_PROXY)) {
+            $env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
+        }
 	}
 
 	if ([string]::IsNullOrEmpty($proxyUsername)) 
@@ -418,6 +430,20 @@ function Initialize-ProxySettings()
 	else 
 	{
 		$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
+
+        Add-Type -AssemblyName System.Web
+        $proxyUrl = "$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
+        if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+            $env:HTTP_PROXY = "$proxyUri"
+        }
+    
+        if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
+            $env:HTTPS_PROXY = "$proxyUri"
+        }
+
+        if([string]::IsNullOrEmpty($env:NO_PROXY)) {
+            $env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
+        }
 	}
 
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
