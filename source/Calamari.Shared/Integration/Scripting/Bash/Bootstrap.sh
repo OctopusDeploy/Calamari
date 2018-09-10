@@ -193,15 +193,7 @@ function setup_proxy_configuration
     echo "##octopus[stdout-verbose]"    
     echo "Configuring proxy"
     echo "##octopus[stdout-default]"
-        
-    if [ $HTTP_PROXY ] || [ $HTTPS_PROXY ]
-    then
-        echo "##octopus[stdout-verbose]"    
-        echo "Proxy already set"
-        echo "##octopus[stdout-default]"
-        return 0
-    fi 
-
+    
     if [ $TentacleProxyHost ] 
     then
         proxyHost=$TentacleProxyHost:${TentacleProxyPort:-80}
@@ -215,9 +207,10 @@ function setup_proxy_configuration
         fi
         
         proxyUri="http://$proxyAuth$proxyHost"
-        export HTTP_PROXY=$proxyUri
-        export HTTPS_PROXY=$proxyUri
-        export NO_PROXY="127.0.0.1,localhost,169.254.169.254"
+
+        export HTTP_PROXY=${HTTP_PROXY:-$proxyUri}
+        export HTTPS_PROXY=${HTTPS_PROXY:-$proxyUri}
+        export NO_PROXY=${NO_PROXY:-"127.0.0.1,localhost,169.254.169.254"}
     fi
 }
 
