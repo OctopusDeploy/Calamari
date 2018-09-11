@@ -18,6 +18,11 @@ namespace Calamari.Util.Environments
             return envVars.ToArray();
         }
 
+        public static void SetEnvironmentVariable(string name, string value)
+        {
+            Environment.SetEnvironmentVariable(name, value, EnvironmentVariableTarget.Process);
+        }
+
         private static string SafelyGet(Func<string> thingToGet)
         {
             try

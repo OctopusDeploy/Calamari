@@ -25,6 +25,11 @@ if ($PSVersionTable.PSVersion.Major -lt 5)
     throw "These Azure commands are only supported in PowerShell versions 5 and above. This server is currently running PowerShell version $($PSVersionTable.PSVersion.ToString())."
 }
 
+function EnsureDirectoryExists([string] $path)
+{
+    New-Item -ItemType Directory -Force -Path $path *>$null
+}
+
 function Execute-WithRetry([ScriptBlock] $command) {
     $attemptCount = 0
     $operationIncomplete = $true
@@ -78,7 +83,8 @@ Execute-WithRetry{
                 # authenticate with the Azure CLI
                 Write-Host "##octopus[stdout-verbose]"
                 
-                $env:AZURE_CONFIG_DIR = (Get-Item -Path ".\").FullName
+                $env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli")
+                EnsureDirectoryExists($env:AZURE_CONFIG_DIR)
 
                 $previousErrorAction = $ErrorActionPreference
                 $ErrorActionPreference = "Continue"
