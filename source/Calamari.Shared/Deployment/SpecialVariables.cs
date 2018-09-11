@@ -49,6 +49,7 @@ namespace Calamari.Deployment
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
         
         public static readonly string CopyWorkingDirectoryIncludingKeyTo = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
+        public static readonly string CalamariWorkingDirectory = "OctopusCalamariWorkingDirectory";
 
         public static class Bootstrapper
         {
