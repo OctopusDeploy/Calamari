@@ -265,29 +265,39 @@ function Fail-Step([string] $message)
 	exit -1
 }
 
-function New-OctopusArtifact([string]$path, [string]$name="""") 
+function New-OctopusArtifact
 {
-	if ((Test-Path $path) -eq $false) {
-		Write-Verbose "There is no file at '$path' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
-	}
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [Alias('path')]
+        [string]$fullpath, 
+        [string]$name=""""
+    )
+    process
+    {
+	    if ((Test-Path $fullpath) -eq $false) {
+		    Write-Verbose "There is no file at '$fullpath' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
+	    }
 
-	if ($name -eq """")	{
-		$name = [System.IO.Path]::GetFileName($path)
-	}
-	$servicename = Convert-ServiceMessageValue($name)
+	    if ($name -eq """")	{
+		    $name = [System.IO.Path]::GetFileName($fullpath)
+	    }
+	    $servicename = Convert-ServiceMessageValue($name)
 
-	$length = ([System.IO.FileInfo]$path).Length;
-	if (!$length) {
-		$length = 0;
-	}
-	$length = Convert-ServiceMessageValue($length.ToString());
+	    $length = ([System.IO.FileInfo]$fullpath).Length;
+	    if (!$length) {
+		    $length = 0;
+	    }
+	    $length = Convert-ServiceMessageValue($length.ToString());
 
-	$path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
-	$path = [System.IO.Path]::GetFullPath($path)
-    $servicepath = Convert-ServiceMessageValue($path)
+	    $fullpath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($fullpath)
+	    $fullpath = [System.IO.Path]::GetFullPath($fullpath)
+        $servicepath = Convert-ServiceMessageValue($fullpath)
 
-    Write-Verbose "Artifact $name will be collected from $path after this step completes"
-	Write-Host "##octopus[createArtifact path='$($servicepath)' name='$($servicename)' length='$($length)']"
+        Write-Verbose "Artifact $name will be collected from $fullpath after this step completes"
+	    Write-Host "##octopus[createArtifact path='$($servicepath)' name='$($servicename)' length='$($length)']"
+    }
 }
 
 function Write-Debug([string]$message)
