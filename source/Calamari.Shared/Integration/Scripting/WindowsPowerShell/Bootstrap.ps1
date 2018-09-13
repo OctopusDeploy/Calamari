@@ -295,7 +295,7 @@ function New-OctopusArtifact
 	    $fullpath = [System.IO.Path]::GetFullPath($fullpath)
 	    $servicepath = Convert-ServiceMessageValue($fullpath)
 
-        Write-Verbose "Artifact $name will be collected from $fullpath after this step completes"
+	    Write-Verbose "Artifact $name will be collected from $fullpath after this step completes"
 	    Write-Host "##octopus[createArtifact path='$($servicepath)' name='$($servicename)' length='$($length)']"
     }
 }
