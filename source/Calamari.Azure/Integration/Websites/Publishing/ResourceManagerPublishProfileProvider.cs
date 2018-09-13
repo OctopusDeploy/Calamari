@@ -161,7 +161,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
             bool hasResourceGroup = !string.IsNullOrWhiteSpace(resourceGroupName);
             StringBuilder sb = new StringBuilder($"Could not find Azure WebSite '{azureTargetSite.Site}'");
             sb.Append(hasResourceGroup ? $" in resource group '{resourceGroupName}'" : string.Empty);
-            sb.Append($"in subscription '{account.SubscriptionNumber}'.");
+            sb.Append($" in subscription '{account.SubscriptionNumber}'.");
             sb.Append(hasResourceGroup ? string.Empty : " Please supply a Resource Group name.");
             return sb.ToString();
         }
