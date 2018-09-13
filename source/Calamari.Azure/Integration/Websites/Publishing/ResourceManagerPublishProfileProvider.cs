@@ -47,6 +47,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                 if (string.IsNullOrWhiteSpace(resourceGroupName))
                 {
                     matchingSite = FindSiteByNameWithRetry(account, azureTargetSite, webSiteClient) ?? throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite));
+                    resourceGroupName = matchingSite.ResourceGroup;
                 }
                 else
                 {
@@ -63,7 +64,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 // We allow the slot to be defined on both the target directly (which will come through on the matchingSite.Name) or on the 
                 // step for backwards compatibility with older Azure steps.
-                resourceGroupName = matchingSite.ResourceGroup;
+                
                 var siteAndSlotPath = matchingSite.Name;
                 if (azureTargetSite.HasSlot)
                 {
