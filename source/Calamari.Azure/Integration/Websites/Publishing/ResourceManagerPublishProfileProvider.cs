@@ -54,9 +54,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                     Log.Verbose("Found site:");
                     LogSite(site);
 
-                    matchingSite =
-                        site ?? throw new CommandException(
-                            GetSiteNotFoundExceptionMessage(account, azureTargetSite, resourceGroupName));
+                    matchingSite = site ?? throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite, resourceGroupName));
                 }
 
                 // ARM resource ID of the source app. App resource ID is of the form:
@@ -112,7 +110,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
         {
             Site matchingSite = null;
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
-            while (retry.Try())
+            while (retry.Try() && matchingSite == null)
             {
                 var sites = webSiteClient.WebApps.List();
                 var matchingSites = sites.Where(webApp =>
@@ -120,12 +118,24 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 LogFoundSites(sites.ToList());
 
+                if (!matchingSites.Any())
+                {
+                    throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite));
+                }
+
                 if (matchingSites.Count > 1)
+                {
                     throw new CommandException(
                         $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{account.SubscriptionNumber}'. Please supply a Resource Group name.");
+                }
 
                 matchingSite = matchingSites.Single();
-                
+
+                if (retry.IsFirstAttempt)
+                {
+                    matchingSite = new Site(location: "westus", resourceGroup: null);
+                }
+
                 // ensure the site loaded the resource group
                 if (string.IsNullOrWhiteSpace(matchingSite.ResourceGroup))
                 {
@@ -137,6 +147,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                                 $"Azure Site query failed to return the resource group, trying again in {retry.Sleep()} ms.");
                         }
 
+                        matchingSite = null;
                         Thread.Sleep(retry.Sleep());
                     }
                     else
