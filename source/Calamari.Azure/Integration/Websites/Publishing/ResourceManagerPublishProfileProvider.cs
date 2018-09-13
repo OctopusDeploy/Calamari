@@ -1,14 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure.Accounts;
 using Calamari.Azure.Integration.Security;
+using Calamari.Azure.Util;
 using Calamari.Commands.Support;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.WebSites;
+using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
+using Microsoft.Rest.TransientFaultHandling;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Integration.Websites.Publishing
@@ -32,41 +37,27 @@ namespace Calamari.Azure.Integration.Websites.Publishing
             })
             using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
             {
+                webSiteClient.SetRetryPolicy(new Microsoft.Rest.TransientFaultHandling.RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                 resourcesClient.HttpClient.BaseAddress = baseUri;
 
-                Log.Verbose($"Looking up site {azureTargetSite.Site} in resourceGroup {resourceGroupName}");
+                Log.Verbose($"Looking up site {azureTargetSite.Site} {(string.IsNullOrWhiteSpace(resourceGroupName) ? string.Empty : $"in resourceGroup {resourceGroupName}")}");
 
-                var sites = webSiteClient.WebApps.List();
-                if (sites.Any())
+                Site matchingSite;
+                if (string.IsNullOrWhiteSpace(resourceGroupName))
                 {
-                    Log.Verbose("Found sites:");
-                    foreach (var site in sites)
-                    {
-                        Log.Verbose($"{site.ResourceGroup} / {site.Name}");
-                    }
+                    matchingSite = FindSiteByNameWithRetry(account, azureTargetSite, webSiteClient) ?? throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite));
                 }
-
-                var matchingSites = sites
-                    .Where(webApp => string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.CurrentCultureIgnoreCase) &&
-                                         (string.IsNullOrWhiteSpace(resourceGroupName) || string.Equals(webApp.ResourceGroup, resourceGroupName, StringComparison.InvariantCultureIgnoreCase)))
-                                         .ToList();
-
-                if (!matchingSites.Any())
+                else
                 {
-                    var resourceGroupMessage = !string.IsNullOrWhiteSpace(resourceGroupName)
-                        ? $" in resource group '{resourceGroupName}' and"
-                        : " in";
-                    throw new CommandException($"Could not find Azure WebSite '{azureTargetSite.Site}'{resourceGroupMessage} subscription '{account.SubscriptionNumber}'");
-                }
-                    
-                // if more than one site, fail
-                if (matchingSites.Count > 1)
-                    throw new CommandException(
-                        $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{account.SubscriptionNumber}'.{(string.IsNullOrWhiteSpace(resourceGroupName) ? " Please supply a Resource Group name." : string.Empty)}");
+                    var site = webSiteClient.WebApps.Get(resourceGroupName, azureTargetSite.Site);
+                    Log.Verbose("Found site:");
+                    LogSite(site);
 
-                var matchingSite = matchingSites.Single();
-                resourceGroupName = matchingSite.ResourceGroup;
+                    matchingSite =
+                        site ?? throw new CommandException(
+                            GetSiteNotFoundExceptionMessage(account, azureTargetSite, resourceGroupName));
+                }
 
                 // ARM resource ID of the source app. App resource ID is of the form:
                 //  - /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName} for production slots and
@@ -74,6 +65,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 // We allow the slot to be defined on both the target directly (which will come through on the matchingSite.Name) or on the 
                 // step for backwards compatibility with older Azure steps.
+                resourceGroupName = matchingSite.ResourceGroup;
                 var siteAndSlotPath = matchingSite.Name;
                 if (azureTargetSite.HasSlot)
                 {
@@ -106,10 +98,87 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                         string scmUri = response.properties.scmUri;
                         Log.Verbose($"Retrieved publishing profile. URI: {scmUri}  UserName: {publishUserName}");
                         publishProperties = new SitePublishProfile(publishUserName, publishPassword, new Uri(scmUri));
+                        
                     }, TaskContinuationOptions.NotOnFaulted);
 
                 requestTask.Wait();
+                
                 return publishProperties;
+            }
+        }
+
+        private static Site FindSiteByNameWithRetry(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite,
+            WebSiteManagementClient webSiteClient)
+        {
+            Site matchingSite = null;
+            var retry = AzureRetryTracker.GetDefaultRetryTracker();
+            while (retry.Try())
+            {
+                var sites = webSiteClient.WebApps.List();
+                var matchingSites = sites.Where(webApp =>
+                    string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.CurrentCultureIgnoreCase)).ToList();
+
+                LogFoundSites(sites.ToList());
+
+                if (matchingSites.Count > 1)
+                    throw new CommandException(
+                        $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{account.SubscriptionNumber}'. Please supply a Resource Group name.");
+
+                matchingSite = matchingSites.Single();
+                
+                // ensure the site loaded the resource group
+                if (string.IsNullOrWhiteSpace(matchingSite.ResourceGroup))
+                {
+                    if (retry.CanRetry())
+                    {
+                        if (retry.ShouldLogWarning())
+                        {
+                            Log.Warn(
+                                $"Azure Site query failed to return the resource group, trying again in {retry.Sleep()} ms.");
+                        }
+
+                        Thread.Sleep(retry.Sleep());
+                    }
+                    else
+                    {
+                        throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite));
+                    }
+                }
+            }
+
+            return matchingSite;
+        }
+
+        private static string GetSiteNotFoundExceptionMessage(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
+        {
+            bool hasResourceGroup = !string.IsNullOrWhiteSpace(resourceGroupName);
+            StringBuilder sb = new StringBuilder($"Could not find Azure WebSite '{azureTargetSite.Site}'");
+            sb.Append(hasResourceGroup ? $" in resource group '{resourceGroupName}'" : string.Empty);
+            sb.Append($"in subscription '{account.SubscriptionNumber}'.");
+            sb.Append(hasResourceGroup ? string.Empty : " Please supply a Resource Group name.");
+            return sb.ToString();
+        }
+
+        private static void LogFoundSites(List<Site> sites)
+        {
+            if (sites.Any())
+            {
+                Log.Verbose("Found sites:");
+                foreach (var site in sites)
+                {
+                    LogSite(site);
+                }
+            }
+        }
+
+        private static void LogSite(Site site)
+        {
+            if (site != null)
+            {
+                string resourceGroup = string.IsNullOrWhiteSpace(site.ResourceGroup)
+                    ? string.Empty
+                    : $"{site.ResourceGroup} / ";
+                Log.Verbose($"\t{resourceGroup}{site.Name}");
             }
         }
     }
