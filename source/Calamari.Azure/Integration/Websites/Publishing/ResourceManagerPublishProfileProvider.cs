@@ -131,11 +131,6 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 matchingSite = matchingSites.Single();
 
-                if (retry.IsFirstAttempt)
-                {
-                    matchingSite = new Site(location: "westus", resourceGroup: null);
-                }
-
                 // ensure the site loaded the resource group
                 if (string.IsNullOrWhiteSpace(matchingSite.ResourceGroup))
                 {
