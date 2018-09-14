@@ -146,14 +146,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
             
             var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" } ;
             var serialized = JsonConvert.SerializeObject(variables);
-            var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), null, DataProtectionScope.LocalMachine);
+            var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
             var encoded = Convert.ToBase64String(bytes);
             File.WriteAllText(outputVariablesFile, encoded);
             
             using (new TemporaryFile(outputVariablesFile))
             {
-                var (output, _) = RunScript("OuputVariableFromPrevious.ps1", null,
-                    new Dictionary<string, string>() {["outputVariables"] = outputVariablesFile});
+                var (output, _) = RunScript("OutputVariableFromPrevious.ps1", null,
+                    new Dictionary<string, string>() {["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg=="});
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello Steve");

@@ -18,7 +18,7 @@ namespace Calamari.Integration.Processes
 
         public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
 
-        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string outputVariablesFilePath = null)
+        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string outputVariablesFilePath = null, string outputVariablesFilePassword = null)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -53,7 +53,7 @@ namespace Calamari.Integration.Processes
 
             if (!string.IsNullOrEmpty(outputVariablesFilePath))
             {
-                var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath));
+                var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), outputVariablesFilePassword);
                 try
                 {
                     var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
@@ -94,12 +94,12 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        static string DecryptWithMachineKey(string base64EncodedEncryptedVariables)
+        static string DecryptWithMachineKey(string base64EncodedEncryptedVariables, string password)
         {
             try
             {
                 var encryptedVariables = Convert.FromBase64String(base64EncodedEncryptedVariables);
-                var bytes = ProtectedData.Unprotect(encryptedVariables, null, DataProtectionScope.LocalMachine);
+                var bytes = ProtectedData.Unprotect(encryptedVariables, Convert.FromBase64String(password ?? string.Empty), DataProtectionScope.CurrentUser);
                 return Encoding.UTF8.GetString(bytes);
             }
             catch (CryptographicException)

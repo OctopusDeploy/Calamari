@@ -20,11 +20,13 @@ namespace Calamari.Modules
         /// <param name="optionSet"></param>
         /// <param name="variablesFile">Callback to set the variables file</param>
         /// <param name="outputVariablesFile">Callback to set the output variables file</param>
+        /// <param name="outputVariablesPassword">Callback to set the output variables password</param>
         /// <param name="sensitiveVariablesFile">Callback to set the sensitive variables file</param>
         /// <param name="sensitiveVariablesPassword">Callback to set the sensitive variables password</param>
         void PopulateOptions(OptionSet optionSet,
             Action<string> variablesFile,
             Action<string> outputVariablesFile,
+            Action<string> outputVariablesPassword,
             Action<string> sensitiveVariablesFile,
             Action<string> sensitiveVariablesPassword);
 

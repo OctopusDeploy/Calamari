@@ -17,6 +17,7 @@ namespace Calamari.Modules
         private readonly OptionSet optionSet = new OptionSet();
         private string variablesFile;
         private string outputVariablesFile;
+        private string outputVariablesPassword;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
 
@@ -26,6 +27,7 @@ namespace Calamari.Modules
                 optionSet,
                 v => variablesFile = Path.GetFullPath(v),
                 v => outputVariablesFile = v,
+                v => outputVariablesPassword = v,
                 v => sensitiveVariablesFile = v,
                 v => sensitiveVariablesPassword = v);
             optionSet.Parse(args);
@@ -48,7 +50,8 @@ namespace Calamari.Modules
                     variablesFile,
                     sensitiveVariablesFile,
                     sensitiveVariablesPassword,
-                    outputVariablesFile))
+                    outputVariablesFile,
+                    outputVariablesPassword))
                     .AsSelf()
                     .As<VariableDictionary>();
                 
