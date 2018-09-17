@@ -9,6 +9,7 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using Calamari.Util.Environments;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -521,6 +522,78 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertSuccess();
                 output.AssertOutput(CalamariEnvironment.IsRunningOnWindows ? "Hello Powershell" : "Hello Bash");
             }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyConfigured_ShouldSetEnvrionmentVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: http://{proxyHost}:{proxyPort}");
+            output.AssertOutputContains($"HTTPS_PROXY: http://{proxyHost}:{proxyPort}");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyWithAuthConfigured_ShouldSetEnvrionmentVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            var proxyUsername = "username";
+            var proxyPassword = "password";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", proxyUsername);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", proxyPassword);
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: http://{proxyUsername}:{proxyPassword}@{proxyHost}:{proxyPort}");
+            output.AssertOutputContains($"HTTPS_PROXY: http://{proxyUsername}:{proxyPassword}@{proxyHost}:{proxyPort}");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyEnvironmentAlreadyConfigured_ShouldSetNotSetVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            var httpProxy = "http://proxy:port";
+            var httpsProxy = "http://proxy2:port";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", httpProxy );
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", httpsProxy );
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: {httpProxy}");
+            output.AssertOutputContains($"HTTPS_PROXY: {httpsProxy}");
+        }
+
+        private void ResetProxyEnvironmentVariables()
+        {
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", string.Empty);
         }
     }
 }
