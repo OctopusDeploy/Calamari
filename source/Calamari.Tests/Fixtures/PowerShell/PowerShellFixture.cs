@@ -584,6 +584,52 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutputContains($"HTTP_PROXY: {httpProxy}");
             output.AssertOutputContains($"HTTPS_PROXY: {httpsProxy}");
+
+            ResetProxyEnvironmentVariables();
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxySetToSystem_ShouldSetSetVariablesCorrectly()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var (output, _) = RunScript("Proxy.ps1");
+            var systemProxyUri = System.Net.WebRequest.GetSystemWebProxy().GetProxy(new Uri(@"https://octopus.com"));
+            if (systemProxyUri.Host == "octopus.com")
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: ");
+                output.AssertOutputContains($"HTTPS_PROXY: ");
+            }
+            else
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+                output.AssertOutputContains($"HTTPS_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyNoConfig_ShouldSetNotSetVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var (output, _) = RunScript("Proxy.ps1");
+            var systemProxyUri = System.Net.WebRequest.GetSystemWebProxy().GetProxy(new Uri(@"http://octopus.com"));
+            if (systemProxyUri.Host == "octopus.com")
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: ");
+                output.AssertOutputContains($"HTTPS_PROXY: ");
+            }
+            else
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+                output.AssertOutputContains($"HTTPS_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+            }
         }
 
         private void ResetProxyEnvironmentVariables()

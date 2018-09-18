@@ -395,6 +395,39 @@ function Decrypt-Variables($iv, $Encrypted)
 	return $parameters
 }
 
+function Set-ProxyEnvironmentVariables ([string] $proxyHost, [int] $proxyPort, [string] $proxyUsername, [string] $proxyPassword) {
+    $proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
+    if (![string]::IsNullOrEmpty($proxyUsername)) {
+		Add-Type -AssemblyName System.Web
+		$proxyUri = "http://$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
+	}
+	
+	if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+		$env:HTTP_PROXY = "$proxyUri"
+	}
+	
+	if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
+		$env:HTTPS_PROXY = "$proxyUri"
+	}
+	
+	if([string]::IsNullOrEmpty($env:NO_PROXY)) {
+		$env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
+	}
+}
+
+function Set-ProxyEnvironmentVariablesFromSystemProxy([string] $proxyUsername, [string] $proxyPassword) {
+	$testUri = New-Object Uri("https://octopus.com")
+	$systemProxy = [System.Net.WebRequest]::GetSystemWebProxy().GetProxy($testUri)
+	if ($systemProxy.Host -ne "octopus.com") {
+		Set-ProxyEnvironmentVariables -proxyHost $systemProxy.Host -proxyPort $systemProxy.Port -proxyUsername $proxyUsername -proxyPassword $proxyPassword
+	}
+}
+
+function Get-ProxyUri ([string] $proxyHost, [int] $proxyPort) {
+	$uri = "http://${proxyHost}:$proxyPort"
+	return New-Object Uri($uri)
+}
+
 function Initialize-ProxySettings() 
 {
 	$proxyUsername = $env:TentacleProxyUsername
@@ -403,32 +436,16 @@ function Initialize-ProxySettings()
 	[int]$proxyPort = $env:TentacleProxyPort
 	
 	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost) 
-	
 	if($useSystemProxy)
 	{
 		$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+		Set-ProxyEnvironmentVariablesFromSystemProxy -proxyUsername $proxyUsername -proxyPassword $proxyPassword
 	}	
 	else
 	{
-		$proxyUri = [System.Uri]"http://${proxyHost}:$proxyPort"
+		$proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
 		$proxy = New-Object System.Net.WebProxy($proxyUri)
-        
-        if (![string]::IsNullOrEmpty($proxyUsername)) {
-            Add-Type -AssemblyName System.Web
-            $proxyUri = "http://$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
-        }
-
-        if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-            $env:HTTP_PROXY = "$proxyUri"
-        }
-    
-        if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
-            $env:HTTPS_PROXY = "$proxyUri"
-        }
-
-        if([string]::IsNullOrEmpty($env:NO_PROXY)) {
-            $env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
-        }
+        Set-ProxyEnvironmentVariables -proxyHost $proxyHost -proxyPort $proxyPort -proxyUsername $proxyUsername -proxyPassword $proxyPassword
 	}
 
 	if ([string]::IsNullOrEmpty($proxyUsername)) 
