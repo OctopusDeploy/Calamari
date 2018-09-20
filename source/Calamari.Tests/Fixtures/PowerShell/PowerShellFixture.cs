@@ -526,7 +526,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ProxyConfigured_ShouldSetEnvrionmentVariables()
+        public void ProxyConfigured_ShouldSetEnvironmentVariables()
         {
             ResetProxyEnvironmentVariables();
 
@@ -544,7 +544,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ProxyWithAuthConfigured_ShouldSetEnvrionmentVariables()
+        public void ProxyWithAuthConfigured_ShouldSetEnvironmentVariables()
         {
             ResetProxyEnvironmentVariables();
 
@@ -590,7 +590,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ProxySetToSystem_ShouldSetSetVariablesCorrectly()
+        public void ProxySetToSystem_ShouldSetVariablesCorrectly()
         {
             ResetProxyEnvironmentVariables();
 

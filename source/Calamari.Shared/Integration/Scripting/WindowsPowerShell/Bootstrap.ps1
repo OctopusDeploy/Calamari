@@ -396,8 +396,8 @@ function Decrypt-Variables($iv, $Encrypted)
 }
 
 function Set-ProxyEnvironmentVariables ([string] $proxyHost, [int] $proxyPort, [string] $proxyUsername, [string] $proxyPassword) {
-    $proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
-    if (![string]::IsNullOrEmpty($proxyUsername)) {
+	$proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
+	if (![string]::IsNullOrEmpty($proxyUsername)) {
 		Add-Type -AssemblyName System.Web
 		$proxyUri = "http://$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
 	}
@@ -445,7 +445,7 @@ function Initialize-ProxySettings()
 	{
 		$proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
 		$proxy = New-Object System.Net.WebProxy($proxyUri)
-        Set-ProxyEnvironmentVariables -proxyHost $proxyHost -proxyPort $proxyPort -proxyUsername $proxyUsername -proxyPassword $proxyPassword
+		Set-ProxyEnvironmentVariables -proxyHost $proxyHost -proxyPort $proxyPort -proxyUsername $proxyUsername -proxyPassword $proxyPassword
 	}
 
 	if ([string]::IsNullOrEmpty($proxyUsername)) 
