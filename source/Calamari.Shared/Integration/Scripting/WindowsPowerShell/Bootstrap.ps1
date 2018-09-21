@@ -117,7 +117,7 @@ function Import-ScriptModule([string]$moduleName, [string]$moduleFilePath)
 	Try 
 	{
 		Write-Verbose "Importing Script Module '$moduleName' from '$moduleFilePath'"
-		Import-Module $moduleFilePath
+		Import-Module -DisableNameChecking $moduleFilePath
 	}
 	Catch
 	{
