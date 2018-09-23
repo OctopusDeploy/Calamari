@@ -19,7 +19,10 @@ namespace Calamari.Deployment.Features.Java
         {
             var variables = deployment.Variables;
 
-            if (!variables.GetFlag(SpecialVariables.Action.Java.Wildfly.Feature))
+            // Octopus.Features.WildflyDeployCLI was set to True previously,
+            // but now we rely on the feature being enabled
+            if (!(variables.GetFlag(SpecialVariables.Action.Java.Wildfly.Feature) ||
+                  (variables.Get(SpecialVariables.Package.EnabledFeatures) ?? "").Contains(SpecialVariables.Action.Java.Wildfly.Feature)))
                 return;
 
             // Environment variables are used to pass parameters to the Java library
