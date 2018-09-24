@@ -58,7 +58,7 @@ namespace Calamari.Commands
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
 
-            var featureClasses = new List<IFeature> {new NginxFeature()};
+            var featureClasses = new List<IFeature>();
 
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var generator = new JsonConfigurationVariableReplacer();
@@ -69,6 +69,9 @@ namespace Calamari.Commands
 #if IIS_SUPPORT
             var iis = new InternetInformationServer();
             featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(), new IisWebSiteAfterPostDeployFeature() });
+#endif
+#if NGINX_SUPPORT
+            featureClasses.Add(new NginxFeature());
 #endif
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();

@@ -17,10 +17,9 @@ namespace Calamari.Deployment.Features
 
         public void Execute(RunningDeployment deployment)
         {
-            Log.Info("Running nginx feature");
-            var nginxServer = NginxServer.AutoDetect();
-
             var variables = deployment.Variables;
+
+            var nginxServer = NginxServer.AutoDetect();
 
             var (rootLocation, additionalLocations) = GetLocations(variables);
             if (rootLocation == null) throw new NginxMissingRootLocationException();

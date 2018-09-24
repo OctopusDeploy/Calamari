@@ -4,12 +4,12 @@
     {
         protected override string GetConfigRootDirectory()
         {
-            return "";
+            throw new System.NotImplementedException();
         }
 
         protected override string GetSslCertRootDirectory()
         {
-            return "";
+            throw new System.NotImplementedException();
         }
     }
 }
