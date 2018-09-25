@@ -30,7 +30,7 @@ namespace Calamari.Util
                 $" in the package {packageId} {packageVersion}" 
                 : string.Empty;
             
-            throw new CommandException($"Could not resolve '{relativeFilePath}' to physical file{packageMessage}");
+            throw new CommandException($"Could not find '{relativeFilePath}'{packageMessage}");
         }
 
         public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
