@@ -610,6 +610,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
+#if NETFX
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ProxyNoConfig_ShouldSetNotSetVariables()
@@ -631,6 +632,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutputContains($"HTTPS_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
             }
         }
+#endif
+
 
         private void ResetProxyEnvironmentVariables()
         {
