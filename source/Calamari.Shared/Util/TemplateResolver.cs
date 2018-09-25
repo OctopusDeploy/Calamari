@@ -24,7 +24,13 @@ namespace Calamari.Util
             if (result.Some())
                 return result.Value;
 
-            throw new CommandException($"Could not resolve '{relativeFilePath}' to physical file");
+            var packageId = variables.Get("Octopus.Action.Package.PackageId");
+            var packageVersion = variables.Get("Octopus.Action.Package.PackageVersion");
+            var packageMessage = inPackage ? 
+                $" in the package {packageId} {packageVersion}" 
+                : string.Empty;
+            
+            throw new CommandException($"Could not find '{relativeFilePath}'{packageMessage}");
         }
 
         public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
