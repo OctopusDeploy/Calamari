@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Calamari.Integration.Nginx;
 using Calamari.Integration.Processes;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
 
@@ -27,7 +28,8 @@ namespace Calamari.Deployment.Features
             var enabledBindings = GetEnabledBindings(variables).ToList();
             var sslCertificates = GetSslCertificates(enabledBindings, variables);
             
-            nginxServer.WithVirtualServerName(variables.Get(SpecialVariables.Package.NuGetPackageId))
+            nginxServer
+                .WithVirtualServerName(variables.Get(SpecialVariables.Package.NuGetPackageId))
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))
                 .WithServerBindings(enabledBindings, sslCertificates)
                 .WithRootLocation(rootLocation)
@@ -40,15 +42,15 @@ namespace Calamari.Deployment.Features
             nginxServer.SaveConfiguration();
         }
 
-        IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> GetSslCertificates(IEnumerable<dynamic> enabledBindings, CalamariVariableDictionary variables)
+        IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> GetSslCertificates(IEnumerable<Binding> enabledBindings, CalamariVariableDictionary variables)
         {
             var sslCertsForEnabledBindings = new Dictionary<string, (string, string, string)>();
             foreach (var httpsBinding in enabledBindings.Where(b =>
-                string.Equals("https", (string) b.protocol, StringComparison.InvariantCultureIgnoreCase) &&
-                !string.IsNullOrEmpty((string)b.certificateVariable)
+                string.Equals("https", b.Protocol, StringComparison.InvariantCultureIgnoreCase) &&
+                !string.IsNullOrEmpty(b.CertificateVariable)
             ))
             {
-                var certificateVariable = (string) httpsBinding.certificateVariable;
+                var certificateVariable = httpsBinding.CertificateVariable;
                 var subjectCommonName = variables.Get($"{certificateVariable}.SubjectCommonName");
                 var certificatePem = variables.Get($"{certificateVariable}.CertificatePem");
                 var privateKeyPem = variables.Get($"{certificateVariable}.PrivateKeyPem");
@@ -58,31 +60,31 @@ namespace Calamari.Deployment.Features
             return sslCertsForEnabledBindings;
         }
 
-        static IEnumerable<dynamic> GetEnabledBindings(VariableDictionary variables)
+        static IEnumerable<Binding> GetEnabledBindings(VariableDictionary variables)
         {
             var bindingsString = variables.Get(SpecialVariables.Action.Nginx.Server.Bindings);
-            if (string.IsNullOrWhiteSpace(bindingsString)) return new List<dynamic>();
+            if (string.IsNullOrWhiteSpace(bindingsString)) return new List<Binding>();
 
-            return TryParseJson(bindingsString, out var bindings)
-                ? bindings.Where(b => bool.Parse((string)b.enabled))
-                : new List<dynamic>();
+            return TryParseJson<Binding>(bindingsString, out var bindings)
+                ? bindings.Where(b => b.Enabled)
+                : new List<Binding>();
         }
 
-        static (dynamic rootLocation, IEnumerable<dynamic> additionalLocations) GetLocations(VariableDictionary variables)
+        static (Location rootLocation, IEnumerable<Location> additionalLocations) GetLocations(VariableDictionary variables)
         {
             var locationsString = variables.Get(SpecialVariables.Action.Nginx.Server.Locations);
-            if(string.IsNullOrWhiteSpace(locationsString)) return (null, new List<dynamic>());
+            if(string.IsNullOrWhiteSpace(locationsString)) return (null, new List<Location>());
 
-            return TryParseJson(locationsString, out var locations)
-                ? (locations.FirstOrDefault(l => string.Equals("/", (string)l.path)), locations.Where(l => !string.Equals("/", (string)l.path)))
-                : (null, new List<dynamic>());
+            return TryParseJson<Location>(locationsString, out var locations)
+                ? (locations.FirstOrDefault(l => string.Equals("/", l.Path)), locations.Where(l => !string.Equals("/", l.Path)))
+                : (null, new List<Location>());
         }
 
-        static bool TryParseJson(string json, out IEnumerable<dynamic> items)
+        static bool TryParseJson<T>(string json, out IEnumerable<T> items)
         {
             try
             {
-                items = JArray.Parse(json);
+                items = JsonConvert.DeserializeObject<IEnumerable<T>>(json);
                 return true;
             }
             catch

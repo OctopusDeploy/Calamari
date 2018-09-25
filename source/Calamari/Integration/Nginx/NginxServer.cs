@@ -39,24 +39,24 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public NginxServer WithServerBindings(IEnumerable<dynamic> bindings, IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> certificates)
+        public NginxServer WithServerBindings(IEnumerable<Binding> bindings, IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> certificates)
         {
             foreach (var binding in bindings)
             {
-                if (string.Equals("http", (string) binding.protocol, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals("http", binding.Protocol, StringComparison.InvariantCultureIgnoreCase))
                 {
                     AddServerBindingDirective(NginxDirectives.Server.Listen,
-                        GetListenValue((string) binding.ipAddress, (string) binding.port));
+                        GetListenValue(binding.IpAddress, binding.Port));
                 }
                 else
                 {
                     string certificatePath = null;
                     string certificateKeyPath = null;
-                    if (string.IsNullOrEmpty((string) binding.certificateLocation))
+                    if (string.IsNullOrEmpty(binding.CertificateLocation))
                     {
-                        if (!certificates.TryGetValue((string) binding.certificateVariable, out var certificate))
+                        if (!certificates.TryGetValue(binding.CertificateVariable, out var certificate))
                         {
-                            Log.Warn($"Couldn't find certificate {binding.certificateVariable}");
+                            Log.Warn($"Couldn't find certificate {binding.CertificateVariable}");
                             continue;
                         }
 
@@ -75,18 +75,18 @@ namespace Calamari.Integration.Nginx
                     }
 
                     AddServerBindingDirective(NginxDirectives.Server.Listen,
-                        GetListenValue((string) binding.ipAddress, (string) binding.port, true));
+                        GetListenValue(binding.IpAddress, binding.Port, true));
 
                     AddServerBindingDirective(NginxDirectives.Server.Certificate,
-                        certificatePath ?? (string) binding.certificateLocation);
+                        certificatePath ?? binding.CertificateLocation);
 
                     AddServerBindingDirective(NginxDirectives.Server.CertificateKey,
-                        certificateKeyPath ?? (string) binding.certificateKeyLocation);
+                        certificateKeyPath ?? binding.CertificateKeyLocation);
 
-                    var securityProtocols = (IEnumerable<dynamic>) binding.securityProtocols;
+                    var securityProtocols = binding.SecurityProtocols;
                     if (securityProtocols != null && securityProtocols.Any())
                     {
-                        AddServerBindingDirective(NginxDirectives.Server.SecurityProtocols, string.Join(" ", binding.securityProtocols));
+                        AddServerBindingDirective(NginxDirectives.Server.SecurityProtocols, string.Join(" ", binding.SecurityProtocols));
                     }
 
 //                    if (!string.IsNullOrWhiteSpace((string) binding.ciphers))
@@ -109,7 +109,7 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public NginxServer WithAdditionalLocations(IEnumerable<dynamic> locations)
+        public NginxServer WithAdditionalLocations(IEnumerable<Location> locations)
         {
             if (!locations.Any()) return this;
 
@@ -117,7 +117,7 @@ namespace Calamari.Integration.Nginx
             {
                 var locationConfig = GetLocationConfig(location);
                 var locationConfFile = Path.Combine(virtualServerConfigRoot,
-                    $"location.{((string)location.path).Trim('/')}.conf");
+                    $"location.{(location.Path).Trim('/')}.conf");
 
                 additionalLocations.Add(locationConfFile, locationConfig);
             }
@@ -125,7 +125,7 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public NginxServer WithRootLocation(dynamic location)
+        public NginxServer WithRootLocation(Location location)
         {
             rootLocation = location;
 
@@ -175,13 +175,13 @@ server {{
             return $"{ipAddressParameter}{port}{sslParameter}";
         }
 
-        private string GetLocationConfig(dynamic location)
+        private string GetLocationConfig(Location location)
         {
             return
                 $@"
-    location {location.path} {{
-{GetLocationDirectives((string) location.directives)}
-{GetLocationHeaders((string) location.headers)}
+    location {location.Path} {{
+{GetLocationDirectives(location.Directives)}
+{GetLocationHeaders(location.Headers)}
     }}
 ";
         }
@@ -211,5 +211,24 @@ server {{
         {
             serverBindingDirectives.Add(new KeyValuePair<string, string>(key, value));
         }
+    }
+
+    public class Binding
+    {
+        public string Protocol { get; set; }
+        public string Port { get; set; }
+        public string IpAddress { get; set; }
+        public string CertificateLocation { get; set; }
+        public string CertificateKeyLocation { get; set; }
+        public string CertificateVariable { get; set; }
+        public IEnumerable<string> SecurityProtocols { get; set; }
+        public bool Enabled { get; set; }
+    }
+
+    public class Location
+    {
+        public string Path { get; set; }
+        public string Directives { get; set; }
+        public string Headers { get; set; }
     }
 }
