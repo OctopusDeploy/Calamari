@@ -236,11 +236,20 @@ namespace Calamari.Azure.Deployment.Conventions
             }
 
             if (error != null)
-            {
+            {   
                 string indent = new string(' ', count * 4);
-                Log.Error($"{indent}Message: {error.Message}");
-                Log.Error($"{indent}Code: {error.Code}");
-                Log.Error($"{indent}Target: {error.Target}");
+                if (!string.IsNullOrEmpty(error.Message))
+                {
+                    Log.Error($"{indent}Message: {error.Message}"); 
+                }
+                if (!string.IsNullOrEmpty(error.Code))
+                {
+                    Log.Error($"{indent}Code: {error.Code}"); 
+                }
+                if (!string.IsNullOrEmpty(error.Target))
+                {
+                    Log.Error($"{indent}Target: {error.Target}"); 
+                }
                 foreach (var errorDetail in error.Details)
                 {
                     LogCloudError(errorDetail, ++count);
