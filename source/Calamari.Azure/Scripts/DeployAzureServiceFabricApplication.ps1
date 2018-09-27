@@ -1,4 +1,4 @@
-﻿## Octopus Azure Service Fabric Application script, version 1.0
+## Octopus Azure Service Fabric Application script, version 1.0
 ## --------------------------------------------------------------------------------------
 ##
 ## This script is used to control how we deploy packages to Azure Service Fabric applications to a cluster. 
@@ -122,7 +122,9 @@ $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDepl
 $ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
 $manifestXml = [Xml] (Get-Content $ManifestFilePath)
 $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
-$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName }) -ne $null
+$AppTypeVersion = $manifestXml.ApplicationManifest.ApplicationTypeVersion
+$AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.ApplicationParameterFile
+$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
  
 if ($IsUpgrade -and $AppExists)
 {
@@ -174,6 +176,13 @@ else
     if ($DeployOnly) {
         $Action = "Register"
     }
+	
+	#If type exists and the versions matches only create the application
+	$TypeExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
+	if ($TypeExists) 
+	{
+		$Action = "Create"
+	}
     
     $parameters = @{
         ApplicationPackagePath =  $ApplicationPackagePath
