@@ -16,7 +16,8 @@ namespace Calamari.Modules
         private static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
         private readonly OptionSet optionSet = new OptionSet();
         private string variablesFile;
-        private string base64Variables;
+        private string outputVariablesFile;
+        private string outputVariablesPassword;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
 
@@ -25,7 +26,8 @@ namespace Calamari.Modules
             VariableDictionaryUtils.PopulateOptions(
                 optionSet,
                 v => variablesFile = Path.GetFullPath(v),
-                v => base64Variables = v,
+                v => outputVariablesFile = v,
+                v => outputVariablesPassword = v,
                 v => sensitiveVariablesFile = v,
                 v => sensitiveVariablesPassword = v);
             optionSet.Parse(args);
@@ -34,7 +36,7 @@ namespace Calamari.Modules
         private bool AnyValuesSet()
         {
             return !string.IsNullOrWhiteSpace(variablesFile) ||
-                !string.IsNullOrWhiteSpace(base64Variables) ||
+                !string.IsNullOrWhiteSpace(outputVariablesFile) ||
                 !string.IsNullOrWhiteSpace(sensitiveVariablesFile) ||
                 !string.IsNullOrWhiteSpace(sensitiveVariablesPassword);
         }
@@ -48,7 +50,8 @@ namespace Calamari.Modules
                     variablesFile,
                     sensitiveVariablesFile,
                     sensitiveVariablesPassword,
-                    base64Variables))
+                    outputVariablesFile,
+                    outputVariablesPassword))
                     .AsSelf()
                     .As<VariableDictionary>();
                 

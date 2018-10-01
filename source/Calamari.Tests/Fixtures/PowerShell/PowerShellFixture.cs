@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using Assent;
 using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
@@ -138,19 +140,24 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldCallHelloWithAdditionalBase64Variable()
+        public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
+            var outputVariablesFile = Path.GetTempFileName();
+            
             var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" } ;
             var serialized = JsonConvert.SerializeObject(variables);
-            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(serialized));
-
-            var (output, _) = RunScript("OuputVariableFromPrevious.ps1", null, new Dictionary<string, string>()
+            var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
+            var encoded = Convert.ToBase64String(bytes);
+            File.WriteAllText(outputVariablesFile, encoded);
+            
+            using (new TemporaryFile(outputVariablesFile))
             {
-                ["base64Variables"] = encoded
-            });
+                var (output, _) = RunScript("OutputVariableFromPrevious.ps1", null,
+                    new Dictionary<string, string>() {["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg=="});
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello Steve");
+                output.AssertSuccess();
+                output.AssertOutput("Hello Steve");
+            }
         }
 
         [Test]
