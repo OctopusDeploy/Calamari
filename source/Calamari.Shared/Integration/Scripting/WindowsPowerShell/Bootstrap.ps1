@@ -276,27 +276,27 @@ function New-OctopusArtifact
     )
     process
     {
-	    if ((Test-Path $fullpath) -eq $false) {
-		    Write-Verbose "There is no file at '$fullpath' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
-	    }
+        if ((Test-Path $fullpath) -eq $false) {
+        Write-Verbose "There is no file at '$fullpath' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
+        }
 
-	    if ($name -eq """")	{
-		    $name = [System.IO.Path]::GetFileName($fullpath)
-	    }
-	    $servicename = Convert-ServiceMessageValue($name)
+        if ($name -eq """")	{
+            $name = [System.IO.Path]::GetFileName($fullpath)
+        }
+        $servicename = Convert-ServiceMessageValue($name)
 
-	    $length = ([System.IO.FileInfo]$fullpath).Length;
-	    if (!$length) {
-		    $length = 0;
-	    }
-	    $length = Convert-ServiceMessageValue($length.ToString());
+        $length = ([System.IO.FileInfo]$fullpath).Length;
+        if (!$length) {
+            $length = 0;
+        }
+        $length = Convert-ServiceMessageValue($length.ToString());
 
-	    $fullpath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($fullpath)
-	    $fullpath = [System.IO.Path]::GetFullPath($fullpath)
-	    $servicepath = Convert-ServiceMessageValue($fullpath)
+        $fullpath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($fullpath)
+        $fullpath = [System.IO.Path]::GetFullPath($fullpath)
+        $servicepath = Convert-ServiceMessageValue($fullpath)
 
-	    Write-Verbose "Artifact $name will be collected from $fullpath after this step completes"
-	    Write-Host "##octopus[createArtifact path='$($servicepath)' name='$($servicename)' length='$($length)']"
+        Write-Verbose "Artifact $name will be collected from $fullpath after this step completes"
+        Write-Host "##octopus[createArtifact path='$($servicepath)' name='$($servicename)' length='$($length)']"
     }
 }
 
