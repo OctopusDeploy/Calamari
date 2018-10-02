@@ -24,7 +24,7 @@ namespace Calamari.Integration.Scripting.Python
 
             var configurationFile = PythonBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var bootstrapFile = PythonBootstrapper.PrepareBootstrapFile(script, workingDirectory, configurationFile);
-            var arguments = PythonBootstrapper.FormatCommandArguments(bootstrapFile);
+            var arguments = PythonBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             using (new TemporaryFile(configurationFile))
             using (new TemporaryFile(bootstrapFile))

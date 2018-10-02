@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Calamari.Deployment;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -76,5 +77,17 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("Hello verbose!");
             output.AssertOutput("Hello warning!");
         }
+
+        [Test]
+        public void ShouldConsumeParameters()
+        {
+            var (output, _) = RunScript("parameters.py", new Dictionary<string, string>
+            {
+                [SpecialVariables.Action.Script.ScriptParameters] = "parameter1 parameter2"
+            });
+            output.AssertSuccess();
+            output.AssertOutput("Parameters parameter1 parameter2");
+        }
+
     }
 }

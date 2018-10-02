@@ -24,11 +24,11 @@ namespace Calamari.Integration.Scripting.Python
             ConfigurationScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PythonBootstrapper).Namespace + ".Configuration.py");
         }
 
-        public static string FormatCommandArguments(string bootstrapFile)
+        public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
         {
             var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.Append($"\"{bootstrapFile}\" \"{encryptionKey}\"");
+            commandArguments.Append($"\"{bootstrapFile}\" {scriptParameters} \"{encryptionKey}\"");
             return commandArguments.ToString();
         }
         
