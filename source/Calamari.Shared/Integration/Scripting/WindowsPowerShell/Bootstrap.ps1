@@ -280,8 +280,10 @@ function New-OctopusArtifact
         Write-Verbose "There is no file at '$fullpath' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time."
         }
 
-        if ($name -eq """")	{
-            $name = [System.IO.Path]::GetFileName($fullpath)
+        if ($name -eq """") {
+            $artifactName = [System.IO.Path]::GetFileName($fullpath)
+        } else {
+            $artifactName = $name
         }
         $servicename = Convert-ServiceMessageValue($name)
 
