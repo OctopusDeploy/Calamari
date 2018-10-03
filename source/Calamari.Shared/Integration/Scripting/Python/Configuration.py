@@ -2,7 +2,18 @@ import base64
 import os.path
 import sys
 import binascii
-from Crypto.Cipher import AES
+
+def install_and_import(module, package):
+    import importlib
+    import subprocess
+    try:
+        printverbose(f"Attempting to import {package}")
+        return importlib.import_module(module)
+    except ModuleNotFoundError:
+        printverbose(f"Attempting to install {package}")
+        subprocess.call([sys.executable, "-m", "pip", "install", package])
+    finally:
+        return importlib.import_module(module)
 
 unpad = lambda s: s[:-s[-1]]
 
@@ -70,5 +81,6 @@ def printwarning(message):
     print(message)
     print("##octopus[stdout-default]")
 
+AES = install_and_import('Crypto.Cipher.AES', 'pycryptodome')
 
 {{VariableDeclarations}}
