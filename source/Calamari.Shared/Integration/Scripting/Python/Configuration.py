@@ -81,6 +81,8 @@ def printwarning(message):
     print(message)
     print("##octopus[stdout-default]")
 
+printverbose(sys.version)
+
 AES = install_and_import('Crypto.Cipher.AES', 'pycryptodome')
 
 {{VariableDeclarations}}
