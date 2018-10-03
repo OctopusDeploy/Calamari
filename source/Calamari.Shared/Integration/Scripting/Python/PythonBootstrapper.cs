@@ -83,15 +83,9 @@ namespace Calamari.Integration.Scripting.Python
 
         public static string FindPythonExecutable()
         {
-            return "python";
-            var myPath = typeof(PythonBootstrapper).Assembly.Location;
-            var parent = Path.GetDirectoryName(myPath);
-            var executable = Path.GetFullPath(Path.Combine(parent, "Python", "python.exe"));
-
-            if (File.Exists(executable))
-                return executable;
-
-            throw new CommandException($"python.exe.exe was not found at '{executable}'");
+            return CalamariEnvironment.IsRunningOnWindows
+                ? "python"
+                : "python3";
         }
 
         static void EnsureValidUnixFile(string scriptFilePath)
