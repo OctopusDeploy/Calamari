@@ -35,8 +35,7 @@
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Versioning" Version="4.1.0" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
-    <PackageReference Include="Octostache" Version="2.1.15" />
-    <PackageReference Include="Octostache" Version="2.1.14" />
+    <PackageReference Include="Octostache" Version="2.2.0" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
@@ -54,6 +53,7 @@
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
     <PackageReference Include="System.IO.Packaging" Version="4.3.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.3.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
     <PackageReference Include="BouncyCastle" Version="1.8.1-octopus" />
@@ -81,6 +81,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
+    <Reference Include="System.Security" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
     <PackageReference Include="Autofac">

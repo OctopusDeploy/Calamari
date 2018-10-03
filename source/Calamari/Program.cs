@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using Calamari.Commands;
+using Calamari.Deployment;
 using Calamari.Extensions;
 using Calamari.Util.Environments;
 
@@ -75,6 +76,8 @@ namespace Calamari
             Log.Verbose($"Octopus Deploy: Calamari version {typeof(Program).Assembly.GetInformationalVersion()}");
             Log.Verbose($"Environment Information:{Environment.NewLine}" +
                         $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}");
+
+            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
 
             ProxyInitializer.InitializeDefaultProxy();
 

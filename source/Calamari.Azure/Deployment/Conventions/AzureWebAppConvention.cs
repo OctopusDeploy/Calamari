@@ -11,7 +11,6 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Retry;
 using Microsoft.Web.Deployment;
 using Octostache;
 
@@ -55,13 +54,13 @@ namespace Calamari.Azure.Deployment.Conventions
             CalamariVariableDictionary variables,
             SitePublishProfile publishProfile)
         {
-            var retry = GetRetryTracker();
+            var retry = AzureRetryTracker.GetDefaultRetryTracker();
             while (retry.Try())
             {
                 try
                 {
-                    Log.Verbose($"Using site {targetSite.Site}");
-                    Log.Verbose($"Using slot {targetSite.Slot}");
+                    Log.Verbose($"Using site '{targetSite.Site}'");
+                    Log.Verbose($"Using slot '{targetSite.Slot}'");
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
@@ -74,7 +73,6 @@ namespace Calamari.Azure.Deployment.Conventions
                     Log.Info(
                         "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                         changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
-
                     break;
                 }
                 catch (DeploymentDetailedException ex)
@@ -242,17 +240,6 @@ namespace Calamari.Azure.Deployment.Conventions
                     break;
             }
         }
-
-        /// <summary>
-        /// For azure operations, try again after 1s then 2s, 4s etc...
-        /// </summary>
-        private static readonly LimitedExponentialRetryInterval RetryIntervalForAzureOperations = new LimitedExponentialRetryInterval(1000, 30000, 2);
-
-        private static RetryTracker GetRetryTracker()
-        {
-            return new RetryTracker(maxRetries: 3,
-                timeLimit: TimeSpan.MaxValue,
-                retryInterval: RetryIntervalForAzureOperations);
-        }
+        
     }
 }

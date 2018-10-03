@@ -109,18 +109,26 @@ namespace Calamari.Azure.Deployment.Conventions
 
             using (var armClient = createArmClient())
             {
-                var createDeploymentResult = armClient.Deployments.BeginCreateOrUpdate(resourceGroupName, deploymentName,
-                    new Microsoft.Azure.Management.ResourceManager.Models.Deployment
-                    {
-                        Properties = new DeploymentProperties
+                try
+                {
+                    var createDeploymentResult = armClient.Deployments.BeginCreateOrUpdate(resourceGroupName,
+                        deploymentName,
+                        new Microsoft.Azure.Management.ResourceManager.Models.Deployment
                         {
-                            Mode = deploymentMode,
-                            Template = template,
-                            Parameters = parameters
-                        }
-                    });
+                            Properties = new DeploymentProperties
+                            {
+                                Mode = deploymentMode, Template = template, Parameters = parameters
+                            }
+                        });
 
-                Log.Info($"Deployment created: {createDeploymentResult.Id}");
+                    Log.Info($"Deployment created: {createDeploymentResult.Id}");
+                }
+                catch (Microsoft.Rest.Azure.CloudException ex)
+                {
+                    Log.Error("Error submitting deployment");
+                    Log.Error(ex.Message);
+                    LogCloudError(ex.Body, 0);       
+                }
             }
         }
 
@@ -190,7 +198,7 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 if (operation?.Properties == null)
                     continue;
-
+                
                 log.AppendLine($"Resource: {operation.Properties.TargetResource?.ResourceName}");
                 log.AppendLine($"Type: {operation.Properties.TargetResource?.ResourceType}");
                 log.AppendLine($"Timestamp: {operation.Properties.Timestamp?.ToLocalTime():s}");
@@ -217,6 +225,35 @@ namespace Calamari.Azure.Deployment.Conventions
             foreach (var output in outputs)
             {
                 Log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
+            }
+        }
+
+        static void LogCloudError(Microsoft.Rest.Azure.CloudError error, int count)
+        {
+            if (count > 5)
+            {
+                return;
+            }
+
+            if (error != null)
+            {   
+                string indent = new string(' ', count * 4);
+                if (!string.IsNullOrEmpty(error.Message))
+                {
+                    Log.Error($"{indent}Message: {error.Message}"); 
+                }
+                if (!string.IsNullOrEmpty(error.Code))
+                {
+                    Log.Error($"{indent}Code: {error.Code}"); 
+                }
+                if (!string.IsNullOrEmpty(error.Target))
+                {
+                    Log.Error($"{indent}Target: {error.Target}"); 
+                }
+                foreach (var errorDetail in error.Details)
+                {
+                    LogCloudError(errorDetail, ++count);
+                }
             }
         }
     }
