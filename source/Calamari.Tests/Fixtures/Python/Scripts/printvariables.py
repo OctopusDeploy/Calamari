@@ -1,4 +1,4 @@
-print(f"V1={octopusvariables['Variable1']}")
-print(f"V2={octopusvariables['Variable2']}")
-print(f"V3={octopusvariables['Variable3']}")
-print(f"Foo_bar={octopusvariables['Foo_bar']}")
+print("V1={}".format(octopusvariables['Variable1']))
+print("V2={}".format(octopusvariables['Variable2']))
+print("V3={}".format(octopusvariables['Variable3']))
+print("Foo_bar={}".format(octopusvariables['Foo_bar']))

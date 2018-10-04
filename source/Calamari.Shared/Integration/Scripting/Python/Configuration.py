@@ -7,10 +7,10 @@ def install_and_import(module, package):
     import importlib
     import subprocess
     try:
-        printverbose(f"Attempting to import {package}")
+        printverbose("Attempting to import {}".format(package))
         return importlib.import_module(module)
     except ModuleNotFoundError:
-        printverbose(f"Attempting to install {package}")
+        printverbose("Attempting to install {}".format(package))
         subprocess.call([sys.executable, "-m", "pip", "install", package])
     finally:
         return importlib.import_module(module)
