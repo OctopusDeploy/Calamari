@@ -9,7 +9,7 @@ def install_and_import(module, package):
     try:
         printverbose("Attempting to import {}".format(package))
         return importlib.import_module(module)
-    except ModuleNotFoundError:
+    except:
         printverbose("Attempting to install {}".format(package))
         subprocess.call([sys.executable, "-m", "pip", "install", package])
     finally:
