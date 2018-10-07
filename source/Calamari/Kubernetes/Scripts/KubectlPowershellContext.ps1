@@ -48,6 +48,12 @@ function SetupContext {
 	if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
         $K8S_SkipTlsVerification = $false;
     }
+
+	& $Kubectl_Exe version --client=true
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "Could not execute $Kubectl_Exe. Make sure kubectl is on the PATH."
+		Exit 1
+	}
 	
 	& $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
     & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace

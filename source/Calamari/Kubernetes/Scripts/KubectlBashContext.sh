@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 Octopus_K8S_ClusterUrl=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterUrl")
 Octopus_K8S_Namespace=$(get_octopusvariable "Octopus.Action.Kubernetes.Namespace")
@@ -31,12 +31,12 @@ function get_kubectl {
 
 function setup_context {
   if [[ -z $Octopus_K8S_ClusterUrl ]]; then
-    echo >&2  "Kubernetes cluster URL is missing"
+    echo >&2 "Kubernetes cluster URL is missing"
     exit 1
   fi
 
   if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert ]]; then
-    echo >&2  "Kubernetes account type or certificate is missing"
+    echo >&2 "Kubernetes account type or certificate is missing"
     exit 1
   fi
 
@@ -47,6 +47,12 @@ function setup_context {
 
   if [[ -z $Octopus_K8S_SkipTlsVerification ]]; then
     Octopus_K8S_SkipTlsVerification=true
+  fi
+
+  kubectl version --client=true
+  if [[ $? -ne 0 ]]; then
+	echo 2> "Could not execute ${Octopus_K8S_KubectlExe}. Make sure kubectl is on the PATH."
+	exit 1
   fi
 
   kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
@@ -124,8 +130,6 @@ function setup_context {
     echo >&2 "The account $Octopus_AccountType is currently not valid for kubectl contexts"
     exit 1
   fi
-
-
 }
 
 function configure_kubectl_path {
