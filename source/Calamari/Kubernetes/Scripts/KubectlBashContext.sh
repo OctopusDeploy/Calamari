@@ -14,7 +14,8 @@ Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.Ce
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
-		echo >&2 "The executable $1 does not exist, or is not on the path"
+		echo >&2 "The executable $1 does not exist, or is not on the PATH."
+		echo >&2 "See https://g.octopushq.com/KubernetesTarget for more information."
 		exit 1
 	fi
 }
@@ -51,7 +52,8 @@ function setup_context {
 
   kubectl version --client=true
   if [[ $? -ne 0 ]]; then
-	echo 2> "Could not execute ${Octopus_K8S_KubectlExe}. Make sure kubectl is on the PATH."
+	echo 2> "Could not find ${Octopus_K8S_KubectlExe}. Make sure kubectl is on the PATH."
+	echo 2> "See https://g.octopushq.com/KubernetesTarget for more information."
 	exit 1
   fi
 
