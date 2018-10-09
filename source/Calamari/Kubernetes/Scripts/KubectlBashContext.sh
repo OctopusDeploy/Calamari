@@ -115,7 +115,7 @@ function setup_context {
 		echo "  user:" >> $KUBECONFIG
 		echo "    exec:" >> $KUBECONFIG
 		echo "      apiVersion: client.authentication.k8s.io/v1alpha1" >> $KUBECONFIG
-		echo "      command: heptio-authenticator-aws" >> $KUBECONFIG
+		echo "      command: aws-iam-authenticator" >> $KUBECONFIG
 		echo "      args:" >> $KUBECONFIG
 		echo "        - \"token\"" >> $KUBECONFIG
 		echo "        - \"-i\"" >> $KUBECONFIG

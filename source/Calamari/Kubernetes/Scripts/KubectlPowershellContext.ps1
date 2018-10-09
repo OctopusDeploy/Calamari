@@ -122,7 +122,7 @@ function SetupContext {
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "  user:`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "    exec:`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      apiVersion: client.authentication.k8s.io/v1alpha1`n"
-			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      command: heptio-authenticator-aws`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      command: aws-iam-authenticator`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      args:`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"token`"`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"-i`"`n"
