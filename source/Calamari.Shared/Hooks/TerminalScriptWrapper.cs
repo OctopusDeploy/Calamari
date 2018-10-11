@@ -14,6 +14,8 @@ namespace Calamari.Hooks
 
         public bool Enabled { get; } = true;
 
+        public int Priority => ScriptWrapperPriorities.TerminalScriptPriority;
+
         public IScriptWrapper NextWrapper
         {
             get => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");

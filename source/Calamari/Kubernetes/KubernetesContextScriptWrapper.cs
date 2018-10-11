@@ -23,6 +23,8 @@ namespace Calamari.Kubernetes
             this.variables = variables;
         }
 
+        public int Priority => ScriptWrapperPriorities.ToolConfigPriority;
+
         public bool Enabled => !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, ""));
         public IScriptWrapper NextWrapper { get; set; }
 
