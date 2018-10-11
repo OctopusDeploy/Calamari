@@ -30,7 +30,7 @@ $K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
 $Kubectl_Exe=GetKubectl
 
 function SetupContext {	
-	if([string]::IsNullOrEmpty($K8S_ClusterUrl)){
+	if($K8S_AccountType -ne "AzureServicePrincipal" -and [string]::IsNullOrEmpty($K8S_ClusterUrl)){
 		Write-Error "Kubernetes cluster URL is missing"
 		Exit 1
 	}
@@ -51,9 +51,10 @@ function SetupContext {
 
 	# When using an Azure account, use the az command line tool to build the
 	# kubeconfig file.
-	if($K8S_AccountType -eq "AzureServicePrincipal") {
+	if($K8S_AccountType -eq "AzureServicePrincipal") {		
 		$K8S_Azure_Resource_Group=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterResourceGroup"]
 		$K8S_Azure_Cluster=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterName"]
+		Write-Host "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $K8S_Namespace) using a AzureServicePrincipal"
 		& az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG
 		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
 	} else {
