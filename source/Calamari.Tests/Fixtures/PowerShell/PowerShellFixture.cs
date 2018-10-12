@@ -21,6 +21,12 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [TestFixture]
     public class PowerShellFixture : CalamariFixture
     {
+        [TearDown]
+        public void Teardown()
+        {
+            ResetProxyEnvironmentVariables();
+        }
+
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         [TestCase("2", "PSVersion                      2.0")]
