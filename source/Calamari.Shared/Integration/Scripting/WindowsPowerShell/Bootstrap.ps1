@@ -240,17 +240,45 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
-function New-OctopusKubernetesTarget([string]$name, [string]$clusterUrl, [string]$namespace, [string]$octopusAccountIdOrName, [string]$octopusProxyIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
+function New-OctopusKubernetesTarget(
+	[string]$name, 
+	[string]$clusterUrl, 
+	[string]$clusterName, 
+	[string]$clusterResourceGroup, 
+	[string]$namespace, 
+	[string]$skipTlsVerification, 
+	[string]$octopusAccountIdOrName,
+	[string]$octopusClientCertificateIdOrName, 
+	[string]$octopusServerCertificateIdOrName,
+	[string]$octopusRoles, 
+	[string]$octopusDefaultWorkerPoolIdOrName, 
+	[switch]$updateIfExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$clusterName = Convert-ToServiceMessageParameter -name "clusterName" -value $clusterName 
+	$clusterResourceGroup = Convert-ToServiceMessageParameter -name "clusterResourceGroup" -value $clusterResourceGroup
+	$octopusClientCertificateIdOrName = Convert-ToServiceMessageParameter -name "clientCertificate" -value $octopusClientCertificateIdOrName
+	$octopusServerCertificateIdOrName = Convert-ToServiceMessageParameter -name "serverCertificate" -value $octopusServerCertificateIdOrName
 	$clusterUrl = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
 	$namespace = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
-	$octopusProxyIdOrName = Convert-ToServiceMessageParameter -name "proxy" -value $octopusProxyIdOrName
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
+	$octopusDefaultWorkerPoolIdOrName = Convert-ToServiceMessageParameter -name "defaultWorkerPool" -value $octopusDefaultWorkerPoolIdOrName
+	$skipTlsVerification = Convert-ToServiceMessageParameter -name "skipTlsVerification" -value $skipTlsVerification	
 
-	$parameters = $name, $clusterUrl, $namespace, $octopusAccountIdOrName, $octopusProxyIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
+	$parameters = $name, `
+		$clusterUrl, `
+		$clusterName, `
+		$clusterResourceGroup, `
+		$octopusDefaultWorkerPoolIdOrName, `
+		$octopusClientCertificateIdOrName, `
+		$octopusServerCertificateIdOrName, `
+		$namespace, `
+		$octopusAccountIdOrName, `
+		$octopusRoles, `
+		$skipTlsVerification, `
+		$updateIfExistingParameter -join ' '
 
 	Write-Host "##octopus[create-kubernetestarget $($parameters)]"
 }
