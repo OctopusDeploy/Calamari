@@ -159,6 +159,17 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
+function New-OctopusTokenAccount([string]$name, [string]$token, [switch]$updateIfExisting) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+ 	$token = Convert-ToServiceMessageParameter -name "token" -value $token 	
+	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
+
+	$parameters = $name, $token, $updateIfExistingParameter -join ' '
+ 	
+    Write-Host "##octopus[create-tokenaccount $($parameters)]"
+}
+
 function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscriptionId, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateIfExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
