@@ -185,7 +185,7 @@ function New-OctopusUserPassAccount([string]$name, [string]$username, [string]$p
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
  	$username = Convert-ToServiceMessageParameter -name "username" -value $username
-	$password = Convert-ToServiceMessageParameter -name "username" -value $password
+	$password = Convert-ToServiceMessageParameter -name "password" -value $password
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $username, $password, $updateIfExistingParameter -join ' '
