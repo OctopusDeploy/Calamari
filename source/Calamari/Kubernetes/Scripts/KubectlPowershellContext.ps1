@@ -10,7 +10,7 @@ function GetKubectl() {
 	} else {
 		$Custom_Exe_Exists = Test-Path $Kubectl_Exe -PathType Leaf
 		if(-not $Custom_Exe_Exists) {
-			Write-Error "The custom kubectl location of $Kubectl_Exe does not exist"
+			Write-Error "The custom kubectl location of $Kubectl_Exe does not exist. See https://g.octopushq.com/KubernetesTarget for more information."
 			Exit 1
 		}
 	}
@@ -48,6 +48,11 @@ function SetupContext {
 	if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
         $K8S_SkipTlsVerification = $false;
     }
+
+	if ((Get-Command $Kubectl_Exe -ErrorAction SilentlyContinue) -eq $null) {
+		Write-Error "Could not find $Kubectl_Exe. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information."
+		Exit 1
+	}
 
 	# When using an Azure account, use the az command line tool to build the
 	# kubeconfig file.
