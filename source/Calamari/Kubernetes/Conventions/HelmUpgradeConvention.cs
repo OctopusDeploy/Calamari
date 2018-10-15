@@ -218,20 +218,17 @@ namespace Calamari.Kubernetes.Conventions
         {
             fileName = null;
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
-            var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(variables);
-            if (values.Keys.Any())
+            var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(variables);
+
+            if (!values.Any())
             {
-                fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
-                using (var outputFile = new StreamWriter(fileName, false))
-                {
-                    foreach (var kvp in values)
-                    {
-                        outputFile.WriteLine($"{kvp.Key}: \"{kvp.Value}\"");
-                    }
-                }
-                return true;
+                return false;
             }
-            return false;
+            
+            fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
+            File.WriteAllText(fileName, RawValuesToYamlConverter.Convert(values));
+            return true;
+
         }
     }
 }

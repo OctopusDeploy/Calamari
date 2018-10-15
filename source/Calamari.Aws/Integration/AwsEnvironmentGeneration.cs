@@ -231,6 +231,7 @@ namespace Calamari.Aws.Integration
             }
         }
 
+        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
         public bool Enabled { get; } = true;
         public IScriptWrapper NextWrapper { get; set; }
 

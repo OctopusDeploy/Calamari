@@ -30,7 +30,7 @@ $K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
 $Kubectl_Exe=GetKubectl
 
 function SetupContext {	
-	if([string]::IsNullOrEmpty($K8S_ClusterUrl)){
+	if($K8S_AccountType -ne "AzureServicePrincipal" -and [string]::IsNullOrEmpty($K8S_ClusterUrl)){
 		Write-Error "Kubernetes cluster URL is missing"
 		Exit 1
 	}
@@ -53,83 +53,93 @@ function SetupContext {
 		Write-Error "Could not find $Kubectl_Exe. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information."
 		Exit 1
 	}
-	
-	& $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
-    & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
-    & $Kubectl_Exe config use-context octocontext
 
-	if(-not [string]::IsNullOrEmpty($K8S_Client_Cert)) {
-		if ([string]::IsNullOrEmpty($K8S_Client_Cert_Pem)) {
-			Write-Error "Kubernetes client certificate does not include the certificate data"
-			Exit 1
+	# When using an Azure account, use the az command line tool to build the
+	# kubeconfig file.
+	if($K8S_AccountType -eq "AzureServicePrincipal") {		
+		$K8S_Azure_Resource_Group=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterResourceGroup"]
+		$K8S_Azure_Cluster=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterName"]
+		Write-Host "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $K8S_Namespace) using a AzureServicePrincipal"
+		& az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG
+		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
+	} else {
+		& $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
+		& $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
+		& $Kubectl_Exe config use-context octocontext
+
+		if(-not [string]::IsNullOrEmpty($K8S_Client_Cert)) {
+			if ([string]::IsNullOrEmpty($K8S_Client_Cert_Pem)) {
+				Write-Error "Kubernetes client certificate does not include the certificate data"
+				Exit 1
+			}
+
+			if ([string]::IsNullOrEmpty($K8S_Client_Cert_Key)) {
+				Write-Error "Kubernetes client certificate does not include the private key data"
+				Exit 1
+			}
+
+			& $Kubectl_Exe config set users.octouser.client-certificate-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Pem)))
+			& $Kubectl_Exe config set users.octouser.client-key-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Key)))
 		}
 
-		if ([string]::IsNullOrEmpty($K8S_Client_Cert_Key)) {
-			Write-Error "Kubernetes client certificate does not include the private key data"
-			Exit 1
+		if(-not [string]::IsNullOrEmpty($K8S_Server_Cert)) {
+			if ([string]::IsNullOrEmpty($K8S_Server_Cert_Pem)) {
+				Write-Error "Kubernetes server certificate does not include the certificate data"
+				Exit 1
+			}
+
+			# Inline the certificate as base64 encoded data
+			& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Server_Cert_Pem)))
+		}
+		else {
+			& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification
 		}
 
-		& $Kubectl_Exe config set users.octouser.client-certificate-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Pem)))
-		& $Kubectl_Exe config set users.octouser.client-key-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Key)))
-	}
+		if($K8S_AccountType -eq "Token") {
+			Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using a Token"
+			$K8S_Token=$OctopusParameters["Octopus.Account.Token"]
+			if([string]::IsNullOrEmpty($K8S_Token)) {
+				Write-Error "Kubernetes authentication Token is missing"
+				Exit 1
+			}
 
-	if(-not [string]::IsNullOrEmpty($K8S_Server_Cert)) {
-		if ([string]::IsNullOrEmpty($K8S_Server_Cert_Pem)) {
-			Write-Error "Kubernetes server certificate does not include the certificate data"
-			Exit 1
-		}
-
-		# Inline the certificate as base64 encoded data
-		& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Server_Cert_Pem)))
-	}
-	else {
-		& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification
-	}
-
-    if($K8S_AccountType -eq "Token") {
-        Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using a Token"
-		$K8S_Token=$OctopusParameters["Octopus.Account.Token"]
-		if([string]::IsNullOrEmpty($K8S_Token)) {
-			Write-Error "Kubernetes authentication Token is missing"
-			Exit 1
-		}
-
-        & $Kubectl_Exe config set-credentials octouser --token=$K8S_Token
-    } elseif($K8S_AccountType -eq "UsernamePassword") {
-		$K8S_Username=$OctopusParameters["Octopus.Account.Username"]
-        Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using Username $K8S_Username"
-        & $Kubectl_Exe config set-credentials octouser --username=$K8S_Username --password=$($OctopusParameters["Octopus.Account.Password"])
-    } elseif($K8S_AccountType -eq "AmazonWebServicesAccount") {
-		# kubectl doesn't yet support exec authentication
-		# https://github.com/kubernetes/kubernetes/issues/64751
-		# so build this manually
-		$K8S_ClusterName=$OctopusParameters["Octopus.Action.Kubernetes.ClusterName"]
-        Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using EKS cluster name $K8S_ClusterName"
+			& $Kubectl_Exe config set-credentials octouser --token=$K8S_Token
+		} elseif($K8S_AccountType -eq "UsernamePassword") {
+			$K8S_Username=$OctopusParameters["Octopus.Account.Username"]
+			Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using Username $K8S_Username"
+			& $Kubectl_Exe config set-credentials octouser --username=$K8S_Username --password=$($OctopusParameters["Octopus.Account.Password"])
+		} elseif($K8S_AccountType -eq "AmazonWebServicesAccount") {
+			# kubectl doesn't yet support exec authentication
+			# https://github.com/kubernetes/kubernetes/issues/64751
+			# so build this manually
+			$K8S_ClusterName=$OctopusParameters["Octopus.Action.Kubernetes.EksClusterName"]
+			Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using EKS cluster name $K8S_ClusterName"
 		
-		# The call to set-cluster above will create a file with empty users. We need to call
-		# set-cluster first, because if we try to add the exec user first, set-cluster will
-		# delete those settings. So we now delete the users line (the last line of the yaml file)
-		# and add our own.
+			# The call to set-cluster above will create a file with empty users. We need to call
+			# set-cluster first, because if we try to add the exec user first, set-cluster will
+			# delete those settings. So we now delete the users line (the last line of the yaml file)
+			# and add our own.
 
-		(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
+			(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
 
-		# https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "users:`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "- name: octouser`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "  user:`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "    exec:`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      apiVersion: client.authentication.k8s.io/v1alpha1`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      command: heptio-authenticator-aws`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      args:`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"token`"`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"-i`"`n"
-		Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"$K8S_ClusterName`""        
-    }	
-	elseif ([string]::IsNullOrEmpty($K8S_Client_Cert)) {
+			# https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "users:`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "- name: octouser`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "  user:`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "    exec:`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      apiVersion: client.authentication.k8s.io/v1alpha1`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      command: aws-iam-authenticator`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      args:`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"token`"`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"-i`"`n"
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"$K8S_ClusterName`""        
+		}	
+		elseif ([string]::IsNullOrEmpty($K8S_Client_Cert)) {
 
-		Write-Error "Account Type $K8S_AccountType is currently not valid for kubectl contexts"
-		Exit 1
-	}     
+			Write-Error "Account Type $K8S_AccountType is currently not valid for kubectl contexts"
+			Exit 1
+		}  
+	}
 }
 
 function ConfigureKubeCtlPath {

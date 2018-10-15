@@ -36,6 +36,8 @@ namespace Calamari.Azure.Integration
             this.variables = variables;
         }
 
+        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
+
         public bool Enabled => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
                                string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
 

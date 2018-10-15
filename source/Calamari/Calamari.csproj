@@ -36,6 +36,7 @@
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="4.2.1" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
