@@ -176,7 +176,7 @@ function New-OctopusAwsAccount([string]$secretKey, [string]$accessKey, [switch]$
  	$accessKey = Convert-ToServiceMessageParameter -name "accessKey" -value $accessKey 	
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
-	$parameters = $name, $token, $updateIfExistingParameter -join ' '
+	$parameters = $name, $secretKey, $accessKey, $updateIfExistingParameter -join ' '
  	
     Write-Host "##octopus[create-awsaccount $($parameters)]"
 }
