@@ -170,7 +170,7 @@ function New-OctopusTokenAccount([string]$name, [string]$token, [switch]$updateI
     Write-Host "##octopus[create-tokenaccount $($parameters)]"
 }
 
-function New-OctopusAwsAccount([string]$secretKey, [string]$accessKey, [switch]$updateIfExisting) 
+function New-OctopusAwsAccount([string]$name, [string]$secretKey, [string]$accessKey, [switch]$updateIfExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
 	$secretKey = Convert-ToServiceMessageParameter -name "secretKey" -value $secretKey 
