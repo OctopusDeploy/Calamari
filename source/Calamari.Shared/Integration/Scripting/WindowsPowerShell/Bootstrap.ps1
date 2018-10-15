@@ -172,6 +172,7 @@ function New-OctopusTokenAccount([string]$name, [string]$token, [switch]$updateI
 
 function New-OctopusAwsAccount([string]$secretKey, [string]$accessKey, [switch]$updateIfExisting) 
 {
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
 	$secretKey = Convert-ToServiceMessageParameter -name "secretKey" -value $secretKey 
  	$accessKey = Convert-ToServiceMessageParameter -name "accessKey" -value $accessKey 	
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
