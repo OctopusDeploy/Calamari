@@ -146,7 +146,7 @@ if ($IsUpgrade -and $AppExists)
         # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
-        
+
     if ($CopyPackageTimeoutSec) {
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
@@ -174,11 +174,12 @@ else
     if ($DeployOnly) {
         $Action = "Register"
     }
-    
+
     $parameters = @{
         ApplicationPackagePath =  $ApplicationPackagePath
         ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
         Action = $Action
+        UnregisterUnusedVersions = $UnregisterUnusedApplicationVersionsAfterUpgrade
         ApplicationParameter = $ApplicationParameter
         OverwriteBehavior = $OverwriteBehavior
         SkipPackageValidation = $SkipPackageValidation
@@ -191,12 +192,12 @@ else
     if ($RegisterApplicationTypeTimeoutSec) {
         Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
         if (!$timeoutParamMissing) {
-            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec    
+            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
         } else {
             Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
         }
     }
-        
+
     Write-Verbose "Calling Publish-NewServiceFabricApplication"
     Write-Verbose "Parameters: "
     Write-Verbose $($parameters | Out-String)
