@@ -179,6 +179,7 @@ else
         ApplicationPackagePath =  $ApplicationPackagePath
         ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
         Action = $Action
+        UnregisterUnusedVersions = $UnregisterUnusedApplicationVersionsAfterUpgrade
         ApplicationParameter = $ApplicationParameter
         OverwriteBehavior = $OverwriteBehavior
         SkipPackageValidation = $SkipPackageValidation
