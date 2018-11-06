@@ -44,7 +44,7 @@ namespace Calamari.Integration.Scripting.Bash
                 writer.Flush();
             }
 
-            //File.SetAttributes(configurationFile, FileAttributes.Hidden);
+            File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
 

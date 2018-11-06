@@ -64,7 +64,7 @@ function decode_octopusvariablename
 }
 
 #	---------------------------------------------------------------------------
-# Function for declaring array of encoded octopus variable names
+# Function for declaring array of octopus variable names
 #	---------------------------------------------------------------------------
 function declare_variablenames
 {

@@ -4,9 +4,6 @@
 		Could not locate ...\packages.config. Ensure that this project has Microsoft.Bcl.Build installed and packages.config is located next to the project file.
 	 -->
   <PropertyGroup>
-    <DefaultItemExcludes>.git\**;$(DefaultItemExcludes)</DefaultItemExcludes>
-  </PropertyGroup>
-  <PropertyGroup>
     <SkipValidatePackageReferences>true</SkipValidatePackageReferences>
   </PropertyGroup>
   <PropertyGroup>
@@ -156,9 +153,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="AWS\S3\Package2\Wild\Things\TextFile2.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Bash\Scripts\enumerate-variables.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Java\Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
