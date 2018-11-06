@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Deployment.Features;
 using Calamari.Integration.FileSystem;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Integration.Nginx
@@ -189,9 +191,9 @@ server {{
         private static string GetLocationDirectives(string directivesString, string reverseProxyDirectivesString)
         {
             if (string.IsNullOrEmpty(directivesString) && string.IsNullOrEmpty(reverseProxyDirectivesString)) return string.Empty;
-            
-            IEnumerable<dynamic> directives = JObject.Parse(directivesString);
-            IEnumerable<dynamic> reverseProxyDirectives = JObject.Parse(reverseProxyDirectivesString);
+
+            var directives = ParseJson(directivesString);
+            var reverseProxyDirectives = ParseJson(reverseProxyDirectivesString);
             var allDirectives = directives.Concat(reverseProxyDirectives.Where(rpd => directives.All(d => !string.Equals(rpd.Name, d.Name, StringComparison.OrdinalIgnoreCase)))).ToList();
             return !allDirectives.Any()
                 ? string.Empty
@@ -202,8 +204,8 @@ server {{
         {
             if (string.IsNullOrEmpty(reverseProxyHeadersString) && string.IsNullOrEmpty(headersString)) return string.Empty;
 
-            IEnumerable<dynamic> headers = JObject.Parse(headersString);
-            IEnumerable<dynamic> reverseProxyHeaders = JObject.Parse(reverseProxyHeadersString);
+            var headers = ParseJson(headersString);
+            var reverseProxyHeaders = ParseJson(reverseProxyHeadersString);
             var allHeaders = headers.Concat(reverseProxyHeaders.Where(rph => headers.All(h => !string.Equals(rph.Name, h.Name, StringComparison.OrdinalIgnoreCase)))).ToList();
             return !allHeaders.Any()
                 ? string.Empty
@@ -215,6 +217,20 @@ server {{
         {
             serverBindingDirectives.Add(new KeyValuePair<string, string>(key, value));
         }
+        
+        static IEnumerable<dynamic> ParseJson(string json)
+        {
+            try
+            {
+                IEnumerable<dynamic> items = JObject.Parse(json);
+                return items;
+            }
+            catch
+            {
+                return new List<dynamic>();
+            }
+        }
+
     }
 
     public class Binding
