@@ -61,7 +61,7 @@ namespace Calamari.Integration.Scripting.Bash
         }
         static IEnumerable<string> GetVariableNamesDeclaration(CalamariVariableDictionary variables)
         {
-            return variables.GetNames().Select(variable => $"\"{variable}\"");
+            return variables.GetNames().Select(variable => $"\"{variable}\" ");
         }
 
         static string DecryptValueCommand(string value)

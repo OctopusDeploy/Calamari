@@ -129,7 +129,27 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput(@"VariableName1");
             output.AssertOutput(@"VariableName 2");
             output.AssertOutput(@"VariableName3");
-            output.AssertOutput(@"VariableName  '4'");
+            output.AssertOutput(@"VariableName '4'");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldBeAbleToEnumerateVariableValues()
+        {
+            var (output, _) = RunScript("enumerate-variables.sh", new Dictionary<string, string>()
+            {
+                ["VariableName1"] = "Value 1",
+                ["VariableName 2"] = "Value 2",
+                ["VariableName3"] = "Value 3",
+                ["VariableName '4'"] = "Value 4"
+            });
+
+            output.AssertSuccess();
+            output.AssertOutput(@"VariableName1 = Value 1");
+            output.AssertOutput(@"VariableName 2 = Value 2");
+            output.AssertOutput(@"VariableName3 = Value 3");
+            output.AssertOutput(@"VariableName '4' = Value 4");
         }
 
         [Test]
