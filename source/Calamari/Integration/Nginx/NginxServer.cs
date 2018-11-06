@@ -180,31 +180,35 @@ server {{
             return
                 $@"
     location {location.Path} {{
-{GetLocationDirectives(location.Directives)}
-{GetLocationHeaders(location.Headers)}
+{GetLocationDirectives(location.Directives, location.ReverseProxyDirectives)}
+{GetLocationHeaders(location.Headers, location.ReverseProxyHeaders)}
     }}
 ";
         }
 
-        private static string GetLocationDirectives(string directivesString)
+        private static string GetLocationDirectives(string directivesString, string reverseProxyDirectivesString)
         {
-            if (string.IsNullOrEmpty(directivesString)) return string.Empty;
+            if (string.IsNullOrEmpty(directivesString) && string.IsNullOrEmpty(reverseProxyDirectivesString)) return string.Empty;
             
             IEnumerable<dynamic> directives = JObject.Parse(directivesString);
-            return !directives.Any()
+            IEnumerable<dynamic> reverseProxyDirectives = JObject.Parse(reverseProxyDirectivesString);
+            var allDirectives = directives.Concat(reverseProxyDirectives.Where(rpd => directives.All(d => !string.Equals(rpd.Name, d.Name, StringComparison.OrdinalIgnoreCase)))).ToList();
+            return !allDirectives.Any()
                 ? string.Empty
-                : string.Join(Environment.NewLine, directives.Select(d => $"        {d.Name} {d.Value};"));
+                : string.Join(Environment.NewLine, allDirectives.Select(d => $"        {d.Name} {d.Value};"));
         }
 
-        private static string GetLocationHeaders(string headersString)
+        private static string GetLocationHeaders(string headersString, string reverseProxyHeadersString)
         {
-            if (string.IsNullOrEmpty(headersString)) return string.Empty;
-            
+            if (string.IsNullOrEmpty(reverseProxyHeadersString) && string.IsNullOrEmpty(headersString)) return string.Empty;
+
             IEnumerable<dynamic> headers = JObject.Parse(headersString);
-            return !headers.Any()
+            IEnumerable<dynamic> reverseProxyHeaders = JObject.Parse(reverseProxyHeadersString);
+            var allHeaders = headers.Concat(reverseProxyHeaders.Where(rph => headers.All(h => !string.Equals(rph.Name, h.Name, StringComparison.OrdinalIgnoreCase)))).ToList();
+            return !allHeaders.Any()
                 ? string.Empty
                 : string.Join(Environment.NewLine,
-                    headers.Select(h => $"        {NginxDirectives.Location.Proxy.SetHeader} {h.Name} {h.Value};"));
+                    allHeaders.Select(h => $"        {NginxDirectives.Location.Proxy.SetHeader} {h.Name} {h.Value};"));
         }
 
         private void AddServerBindingDirective(string key, string value)
@@ -230,5 +234,7 @@ server {{
         public string Path { get; set; }
         public string Directives { get; set; }
         public string Headers { get; set; }
+        public string ReverseProxyHeaders { get; set; }
+        public string ReverseProxyDirectives { get; set; }
     }
 }
