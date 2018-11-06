@@ -54,6 +54,14 @@ function get_octopusvariable
 }
 
 #	---------------------------------------------------------------------------
+# Function for declaring array of octopus variable names
+#	---------------------------------------------------------------------------
+function declare_variablenames
+{
+ export OCTOPUS_VARIABLENAMES=(#### VariableNamesArrayDeclarations ####)
+}
+
+#	---------------------------------------------------------------------------
 # Function for failing a step with an optional message
 #   Accepts 2 arguments:
 #     string: value of the name of the octopus variable
@@ -216,3 +224,4 @@ function setup_proxy_configuration
 
 log_environment_information
 setup_proxy_configuration
+declare_variablenames

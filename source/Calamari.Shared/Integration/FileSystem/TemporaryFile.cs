@@ -48,7 +48,7 @@ namespace Calamari.Integration.FileSystem
         }
         public void Dispose()
         {
-            fileSystem.DeleteFile(filePath, FailureOptions.IgnoreFailure);
+            //fileSystem.DeleteFile(filePath, FailureOptions.IgnoreFailure);
         }
     }
 }

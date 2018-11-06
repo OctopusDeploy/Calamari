@@ -115,6 +115,26 @@ namespace Calamari.Tests.Fixtures.Bash
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldListVariablenames()
+        {
+            var (output, _) = RunScript("list-variable-names.sh", new Dictionary<string, string>()
+            {
+                ["VariableName1"] = "1",
+                ["VariableName 2"] = "2",
+                ["VariableName3"] = "3",
+                ["VariableName '4'"] = "4"
+            });
+
+            output.AssertSuccess();
+            output.AssertOutput(@"VariableName1");
+            output.AssertOutput(@"VariableName 2");
+            output.AssertOutput(@"VariableName3");
+            output.AssertOutput(@"VariableName  '4'");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldNotFailOnStdErr()
         {
             var (output, _) = RunScript("stderr.sh");

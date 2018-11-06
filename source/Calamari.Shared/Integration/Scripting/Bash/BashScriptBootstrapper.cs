@@ -35,6 +35,7 @@ namespace Calamari.Integration.Scripting.Bash
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariableSwitchConditions(variables)));
+            builder.Replace("#### VariableNamesArrayDeclarations ####", string.Join("\\"+Environment.NewLine, GetVariableNamesDeclaration(variables)));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -43,7 +44,7 @@ namespace Calamari.Integration.Scripting.Bash
                 writer.Flush();
             }
 
-            File.SetAttributes(configurationFile, FileAttributes.Hidden);
+            //File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
 
@@ -57,6 +58,10 @@ namespace Calamari.Integration.Scripting.Bash
 
                 return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable), variableValue);
             });
+        }
+        static IEnumerable<string> GetVariableNamesDeclaration(CalamariVariableDictionary variables)
+        {
+            return variables.GetNames().Select(variable => $"\"{variable}\"");
         }
 
         static string DecryptValueCommand(string value)
