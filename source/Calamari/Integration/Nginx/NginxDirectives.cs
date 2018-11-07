@@ -24,6 +24,7 @@ namespace Calamari.Integration.Nginx
         {
             public static class Proxy
             {
+                public static string Url = "proxy_pass";
                 public static string SetHeader = "proxy_set_header";
             }
         }

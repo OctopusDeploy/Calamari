@@ -182,6 +182,7 @@ server {{
             return
                 $@"
     location {location.Path} {{
+{(!string.IsNullOrEmpty(location.ReverseProxyUrl) ? $"        {NginxDirectives.Location.Proxy.Url} {location.ReverseProxyUrl};" : "")}
 {GetLocationDirectives(location.Directives, location.ReverseProxyDirectives)}
 {GetLocationHeaders(location.Headers, location.ReverseProxyHeaders)}
     }}
@@ -263,6 +264,7 @@ server {{
     public class Location
     {
         public string Path { get; set; }
+        public string ReverseProxyUrl { get; set; }
         public string Directives { get; set; }
         public string Headers { get; set; }
         public string ReverseProxyHeaders { get; set; }
