@@ -157,7 +157,7 @@ get_kubectl
 configure_kubectl_path
 setup_context
 create_namespace
-echo $KUBECONFIG
+cat $KUBECONFIG
 echo "##octopus[stdout-verbose]"
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
 echo "##octopus[stdout-default]"
