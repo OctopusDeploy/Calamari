@@ -194,7 +194,7 @@ server {{
 
             var directives = ParseJson(directivesString);
             var reverseProxyDirectives = ParseJson(reverseProxyDirectivesString);
-            var allDirectives = directives.Concat(reverseProxyDirectives.Where(rpd => directives.All(d => !string.Equals(rpd.Name, d.Name, StringComparison.OrdinalIgnoreCase)))).ToList();
+            var allDirectives = CombineItems(directives.ToList(), reverseProxyDirectives.ToList());
             return !allDirectives.Any()
                 ? string.Empty
                 : string.Join(Environment.NewLine, allDirectives.Select(d => $"        {d.Name} {d.Value};"));
@@ -202,11 +202,11 @@ server {{
 
         private static string GetLocationHeaders(string headersString, string reverseProxyHeadersString)
         {
-            if (string.IsNullOrEmpty(reverseProxyHeadersString) && string.IsNullOrEmpty(headersString)) return string.Empty;
+            if (string.IsNullOrEmpty(headersString) && string.IsNullOrEmpty(reverseProxyHeadersString)) return string.Empty;
 
             var headers = ParseJson(headersString);
             var reverseProxyHeaders = ParseJson(reverseProxyHeadersString);
-            var allHeaders = headers.Concat(reverseProxyHeaders.Where(rph => headers.All(h => !string.Equals(rph.Name, h.Name, StringComparison.OrdinalIgnoreCase)))).ToList();
+            var allHeaders = CombineItems(headers.ToList(), reverseProxyHeaders.ToList());
             return !allHeaders.Any()
                 ? string.Empty
                 : string.Join(Environment.NewLine,
@@ -216,6 +216,21 @@ server {{
         private void AddServerBindingDirective(string key, string value)
         {
             serverBindingDirectives.Add(new KeyValuePair<string, string>(key, value));
+        }
+
+        static List<dynamic> CombineItems(List<dynamic> items1, List<dynamic> items2)
+        {
+            if (!items1.Any()) return items2;
+            
+            foreach (var item in items2)
+            {
+                if (items1.All(i => !string.Equals(i.Name, item.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    items1.Add(item);
+                }
+            }
+
+            return items1;
         }
         
         static IEnumerable<dynamic> ParseJson(string json)
