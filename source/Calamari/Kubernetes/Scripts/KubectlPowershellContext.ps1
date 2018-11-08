@@ -183,8 +183,9 @@ Write-Host "##octopus[stdout-verbose]"
 ConfigureKubeCtlPath
 SetupContext
 CreateNamespace
+echo "##octopus[stdout-verbose]"
 Get-Content $env:KUBECONFIG
-Write-Host "##octopus[stdout-default]"
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
+echo "##octopus[stdout-default]"
 
 Invoke-Expression ". `"$OctopusKubernetesTargetScript`" $OctopusKubernetesTargetScriptParameters"
