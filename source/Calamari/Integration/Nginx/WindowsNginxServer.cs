@@ -6,10 +6,5 @@
         {
             throw new System.NotImplementedException();
         }
-
-        protected override string GetSslCertRootDirectory()
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

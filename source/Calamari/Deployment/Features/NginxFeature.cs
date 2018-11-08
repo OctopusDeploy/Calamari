@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
 using Calamari.Integration.Processes;
 using Newtonsoft.Json;
@@ -39,7 +40,9 @@ namespace Calamari.Deployment.Features
             nginxServer.BuildConfiguration();
 
             Log.Verbose("Saving nginx configuration");
-            nginxServer.SaveConfiguration();
+            var tempDirectory = CalamariPhysicalFileSystem.GetPhysicalFileSystem().CreateTemporaryDirectory();
+            variables.Set("OctopusNginxFeatureTempDirectory", tempDirectory);
+            nginxServer.SaveConfiguration(tempDirectory);
         }
 
         IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> GetSslCertificates(IEnumerable<Binding> enabledBindings, CalamariVariableDictionary variables)

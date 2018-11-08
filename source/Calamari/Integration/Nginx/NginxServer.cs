@@ -16,12 +16,14 @@ namespace Calamari.Integration.Nginx
         private readonly List<KeyValuePair<string, string>> serverBindingDirectives =
             new List<KeyValuePair<string, string>>();
 
+        private readonly string TempConfigRootDirectory = "conf";
+        private readonly string TempSslRootDirectory = "ssl";
+
         private bool useHostName;
         private string hostName;
         private readonly IDictionary<string, string> additionalLocations = new Dictionary<string, string>();
         private readonly IDictionary<string, string> sslCerts = new Dictionary<string, string>();
         private string virtualServerName;
-        private string virtualServerConfigRoot;
         private dynamic rootLocation;
 
         private string virtualServerConfig;
@@ -37,7 +39,6 @@ namespace Calamari.Integration.Nginx
         public NginxServer WithVirtualServerName(string name)
         {
             virtualServerName = name;
-            virtualServerConfigRoot = $"{GetConfigRootDirectory()}/{name}.conf.d";
             return this;
         }
 
@@ -62,7 +63,7 @@ namespace Calamari.Integration.Nginx
                             continue;
                         }
 
-                        var certificateRootPath = Path.Combine(GetSslCertRootDirectory(),
+                        var certificateRootPath = Path.Combine(TempSslRootDirectory,
                             fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName));
 
                         certificatePath = Path.Combine(certificateRootPath,
@@ -118,7 +119,7 @@ namespace Calamari.Integration.Nginx
             foreach (var location in locations)
             {
                 var locationConfig = GetLocationConfig(location);
-                var locationConfFile = Path.Combine(virtualServerConfigRoot,
+                var locationConfFile = Path.Combine(TempConfigRootDirectory, $"{virtualServerName}.conf.d",
                     $"location.{(location.Path).Trim('/')}.conf");
 
                 additionalLocations.Add(locationConfFile, locationConfig);
@@ -141,32 +142,33 @@ namespace Calamari.Integration.Nginx
 server {{
 {string.Join(Environment.NewLine, serverBindingDirectives.Select(binding => $"    {binding.Key} {binding.Value};"))}
 {(useHostName ? $"    {NginxDirectives.Server.HostName} {hostName};" : "")}
-{(additionalLocations.Any() ? $"    {NginxDirectives.Include} {virtualServerConfigRoot}/location.*.conf;" : "")}
+{(additionalLocations.Any() ? $"    {NginxDirectives.Include} {GetConfigRootDirectory()}/{virtualServerName}.conf.d/location.*.conf;" : "")}
 {GetLocationConfig(rootLocation)}
 }}
 ";
         }
 
-        public void SaveConfiguration()
+        public void SaveConfiguration(string tempDirectory)
         {
             foreach (var sslCert in sslCerts)
             {
-                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(sslCert.Key));
-                fileSystem.OverwriteFile(sslCert.Key, sslCert.Value);
+                var sslCertPath = Path.Combine(tempDirectory, sslCert.Key);
+                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(sslCertPath));
+                fileSystem.OverwriteFile(sslCertPath, sslCert.Value);
             }
 
             foreach (var additionalLocation in additionalLocations)
             {
-                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(additionalLocation.Key));
-                fileSystem.OverwriteFile(additionalLocation.Key, additionalLocation.Value);
+                var locationConfPath = Path.Combine(tempDirectory, additionalLocation.Key);
+                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(locationConfPath));
+                fileSystem.OverwriteFile(locationConfPath, additionalLocation.Value);
             }
 
-            var virtualServerConfFile = Path.Combine(GetConfigRootDirectory(), $"{virtualServerName}.conf");
+            var virtualServerConfFile = Path.Combine(tempDirectory, TempConfigRootDirectory, $"{virtualServerName}.conf");
             fileSystem.OverwriteFile(virtualServerConfFile, virtualServerConfig);
         }
 
         protected abstract string GetConfigRootDirectory();
-        protected abstract string GetSslCertRootDirectory();
 
         private string GetListenValue(string ipAddress, string port, bool isHttps = false)
         {
