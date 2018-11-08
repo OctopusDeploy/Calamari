@@ -6,10 +6,10 @@ Octopus_K8S_SkipTlsVerification=$(get_octopusvariable "Octopus.Action.Kubernetes
 Octopus_AccountType=$(get_octopusvariable "Octopus.Account.AccountType")
 Octopus_K8S_KubectlExe=$(get_octopusvariable "Octopus.Action.Kubernetes.CustomKubectlExecutable")
 Octopus_K8S_Client_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.ClientCertificate")
-Octopus_K8S_Client_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.CertificatePem")
-Octopus_K8S_Client_Cert_Key=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPem")
+Octopus_K8S_Client_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.CertificatePemBase64")
+Octopus_K8S_Client_Cert_Key=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64")
 Octopus_K8S_Server_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthority")
-Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePem")
+Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePemBase64")
 
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
@@ -72,11 +72,8 @@ function setup_context {
   	  exit 1
 	fi
 
-	Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 -w0)
-	Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 -w0)
-
-	kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem_Encoded"
-	kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key_Encoded"
+	kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem"
+	kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key"
   fi
 
   if [[ ! -z $Octopus_K8S_Server_Cert ]]; then
@@ -85,8 +82,7 @@ function setup_context {
 	  exit 1
 	fi
 
-	Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 -w0)
-	kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
+	kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem"
   else
 	kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
   fi
@@ -152,7 +148,6 @@ function create_namespace {
 }
 
 echo "##octopus[stdout-verbose]"
-check_app_exists base64
 get_kubectl
 configure_kubectl_path
 setup_context
