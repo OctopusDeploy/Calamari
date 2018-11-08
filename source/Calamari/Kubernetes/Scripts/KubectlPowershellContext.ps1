@@ -23,10 +23,10 @@ $K8S_SkipTlsVerification=$OctopusParameters["Octopus.Action.Kubernetes.SkipTlsVe
 $K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]	
 $K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
 $K8S_Client_Cert = $OctopusParameters["Octopus.Action.Kubernetes.ClientCertificate"]
-$K8S_Client_Cert_Pem = $OctopusParameters["$($K8S_Client_Cert).CertificatePemBase64"]
-$K8S_Client_Cert_Key = $OctopusParameters["$($K8S_Client_Cert).PrivateKeyPemBase64"]
+$K8S_Client_Cert_Pem = $OctopusParameters["$($K8S_Client_Cert).CertificatePem"]
+$K8S_Client_Cert_Key = $OctopusParameters["$($K8S_Client_Cert).PrivateKeyPem"]
 $K8S_Server_Cert = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuthority"]
-$K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePemBase64"]
+$K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
 $Kubectl_Exe=GetKubectl
 
 function SetupContext {	
@@ -78,8 +78,14 @@ function SetupContext {
 				Exit 1
 			}
 
-			& $Kubectl_Exe config set users.octouser.client-certificate-datat $K8S_Client_Cert_Pem))
-			& $Kubectl_Exe config set users.octouser.client-key-data $K8S_Client_Cert_Key))
+			$K8S_Client_Cert_Key_Encoded = $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Key)))
+			$K8S_Client_Cert_Pem_Encoded = $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Pem)))
+
+			# Don't leak the private key in the logs
+			Set-OctopusVariable -name "$($K8S_Client_Cert).PrivateKeyPemBase64" -value $K8S_Client_Cert_Key_Encoded -sensitive
+
+			& $Kubectl_Exe config set users.octouser.client-certificate-data $K8S_Client_Cert_Pem_Encoded
+			& $Kubectl_Exe config set users.octouser.client-key-data $K8S_Client_Cert_Key_Encoded
 		}
 
 		if(-not [string]::IsNullOrEmpty($K8S_Server_Cert)) {
@@ -89,7 +95,7 @@ function SetupContext {
 			}
 
 			# Inline the certificate as base64 encoded data
-			& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $K8S_Server_Cert_Pem))
+			& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Server_Cert_Pem)))
 		}
 		else {
 			& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification
@@ -177,8 +183,8 @@ Write-Host "##octopus[stdout-verbose]"
 ConfigureKubeCtlPath
 SetupContext
 CreateNamespace
-Get-Content $env:KUBECONFIG
 Write-Host "##octopus[stdout-default]"
+Get-Content $env:KUBECONFIG
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 
 Invoke-Expression ". `"$OctopusKubernetesTargetScript`" $OctopusKubernetesTargetScriptParameters"
