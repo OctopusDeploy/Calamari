@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Calamari.Deployment.Features;
 using Calamari.Integration.FileSystem;
 using Newtonsoft.Json;
@@ -116,16 +117,27 @@ namespace Calamari.Integration.Nginx
         {
             if (!locations.Any()) return this;
 
+            var locationIndex = 0;
             foreach (var location in locations)
             {
                 var locationConfig = GetLocationConfig(location);
+                var sanitizedLocationName = SanitizeLocationName(location.Path, locationIndex.ToString());
                 var locationConfFile = Path.Combine(TempConfigRootDirectory, $"{virtualServerName}.conf.d",
-                    $"location.{(location.Path).Trim('/')}.conf");
+                    $"location.{sanitizedLocationName}.conf");
 
                 additionalLocations.Add(locationConfFile, locationConfig);
+                locationIndex++;
             }
 
             return this;
+        }
+
+        private string SanitizeLocationName(string locationPath, string defaultValue)
+        {
+            var match = Regex.Match(locationPath, "[a-zA-Z0-9/]+");
+            return match.Success 
+                ? match.Value.Replace("/", "_").Trim('_') 
+                : defaultValue;
         }
 
         public NginxServer WithRootLocation(Location location)
