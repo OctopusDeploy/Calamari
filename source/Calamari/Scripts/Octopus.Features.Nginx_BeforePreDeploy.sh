@@ -12,7 +12,9 @@ function check_user_has_sudo_access_without_password_prompt {
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
-		fail_step "The executable $1 does not exist, or is not on the path"
+		echo >&2 "The executable $1 does not exist, or is not on the path"
+		echo >&2 "See https://g.octopus.hq.com/NginxInstall from more information"
+		exit 1
 	fi
 }
 
