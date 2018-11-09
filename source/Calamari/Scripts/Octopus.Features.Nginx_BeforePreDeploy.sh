@@ -3,8 +3,8 @@
 function check_user_has_sudo_access_without_password_prompt {
     sudo -n cp --help > /dev/null 2>&1 && sudo -n rm --help > /dev/null 2>&1 && sudo -n nginx -h > /dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        echo >&2 "User requires 'sudo' access without password to the 'cp', 'rm' and 'nginx' commands."
-        echo >&2 "See https://g.octopushq.com/NginxPermissions for more information."
+        echo >&2 "User requires 'sudo' access without password to the 'cp', 'mv', 'rm' and 'nginx' commands."
+        echo >&2 "See https://g.octopushq.com/NginxUserPermissions for more information."
         exit 1
     fi
 }
