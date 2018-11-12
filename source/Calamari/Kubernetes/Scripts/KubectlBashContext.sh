@@ -75,6 +75,8 @@ function setup_context {
 	Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 -w0)
 	Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 -w0)
 
+	set_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64" $Octopus_K8S_Client_Cert_Key_Encoded -sensitive
+
 	kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem_Encoded"
 	kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key_Encoded"
   fi
@@ -157,8 +159,8 @@ get_kubectl
 configure_kubectl_path
 setup_context
 create_namespace
-echo $KUBECONFIG
 echo "##octopus[stdout-verbose]"
+cat $KUBECONFIG
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
 echo "##octopus[stdout-default]"
 
