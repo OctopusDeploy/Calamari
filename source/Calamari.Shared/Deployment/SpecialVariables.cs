@@ -244,6 +244,7 @@ namespace Calamari.Deployment
             {
                 public static readonly string ConnectionEndpoint = "Octopus.Action.ServiceFabric.ConnectionEndpoint";
                 public static readonly string SecurityMode = "Octopus.Action.ServiceFabric.SecurityMode";
+                public static readonly string ClusterSpn = "Octopus.Action.ServiceFabric.ClusterSpn";
                 public static readonly string ServerCertThumbprint = "Octopus.Action.ServiceFabric.ServerCertThumbprint";
                 public static readonly string ClientCertVariable = "Octopus.Action.ServiceFabric.ClientCertVariable";
                 public static readonly string CertificateFindType = "Octopus.Action.ServiceFabric.CertificateFindType";

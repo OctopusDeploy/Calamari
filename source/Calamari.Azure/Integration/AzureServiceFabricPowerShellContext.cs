@@ -69,6 +69,7 @@ namespace Calamari.Azure.Integration
             // Set output variables for our script to access.
             SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint), variables);
             SetOutputVariable("OctopusFabricSecurityMode", variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode), variables);
+            SetOutputVariable("OctopusFabricClusterSpn", variables.Get(SpecialVariables.Action.ServiceFabric.ClusterSpn), variables);
             SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint), variables);
             SetOutputVariable("OctopusFabricClientCertThumbprint", clientCertThumbprint, variables);
             SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindType, "FindByThumbprint"), variables);

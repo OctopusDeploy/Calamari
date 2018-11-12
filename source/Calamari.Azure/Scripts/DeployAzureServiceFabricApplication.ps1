@@ -27,7 +27,7 @@
 ##   SecurityToken                                    // A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
 ##   CopyPackageTimeoutSec                            // Timeout in seconds for copying application package to image store.
 ##   RegisterApplicationTypeTimeoutSec                // Timeout in seconds for registering application type
-##   
+##
 ## --------------------------------------------------------------------------------------
 ##   Examples:
 ##
@@ -123,7 +123,7 @@ $ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
 $manifestXml = [Xml] (Get-Content $ManifestFilePath)
 $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
 $AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName }) -ne $null
- 
+
 if ($IsUpgrade -and $AppExists)
 {
     $Action = "RegisterAndUpgrade"
@@ -146,7 +146,7 @@ if ($IsUpgrade -and $AppExists)
         # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
-        
+
     if ($CopyPackageTimeoutSec) {
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
@@ -174,7 +174,7 @@ else
     if ($DeployOnly) {
         $Action = "Register"
     }
-    
+
     $parameters = @{
         ApplicationPackagePath =  $ApplicationPackagePath
         ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
@@ -191,7 +191,7 @@ else
     if ($RegisterApplicationTypeTimeoutSec) {
         Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
         if (!$timeoutParamMissing) {
-            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec    
+            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
         } else {
             Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
         }

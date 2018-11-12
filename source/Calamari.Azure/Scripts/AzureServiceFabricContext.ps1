@@ -3,12 +3,13 @@
 ## 
 ## This script is used to establish a connection to the Azure Service Fabric cluster
 ##
-## The script is passed the following parameters. 
+## The script is passed the following parameters.
 ##
 ##   OctopusFabricTargetScript
 ##   OctopusFabricTargetScriptParameters
 ##   OctopusFabricConnectionEndpoint                         // The connection endpoint
 ##   OctopusFabricSecurityMode                               // The security mode used to connect to the cluster
+##   OctopusFabricClusterSpn                                 // Specifies the cluster security principal name to use for Windows credential
 ##   OctopusFabricServerCertThumbprint                       // The server certificate thumbprint
 ##   OctopusFabricClientCertThumbprint                       // The client certificate thumbprint
 ##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
@@ -200,6 +201,9 @@ Execute-WithRetry {
         Write-Verbose "Connecting to Service Fabric using AD security."
 
         $ClusterConnectionParameters["WindowsCredential"] = $true
+        if (![string]::IsNullOrEmpty($OctopusFabricClusterSpn)) {
+            $ClusterConnectionParameters["ClusterSpn"] = $OctopusFabricClusterSpn
+        }
 
     } Else {
         # Unsecure
