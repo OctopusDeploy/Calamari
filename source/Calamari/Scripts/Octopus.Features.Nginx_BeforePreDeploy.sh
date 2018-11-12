@@ -4,6 +4,7 @@
 requiredCommandsToCheck="cp --help
 mv --help
 rm --help
+systemctl --help
 nginx -h"
 
 function check_user_has_sudo_access_without_password_to_command {
