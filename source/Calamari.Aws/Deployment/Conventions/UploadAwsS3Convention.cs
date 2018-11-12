@@ -170,45 +170,38 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Multi file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
-
-            var files = fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, selection.Pattern).ToList();
+            
+            var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
+         
+           // var (pattern, outputPattern) = ParseMultiFileSelectionPattern(selection.Pattern);
+            
+            //var files = fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, pattern).ToList();
             if (!files.Any())
             {
                 Log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
                 yield break;
             }
 
-            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files.");
+            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
             var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
             
             new SubstituteInFilesConvention(fileSystem, fileSubstituter,
                     _ => substitutionPatterns.Any(),
                     _ => substitutionPatterns)
                 .Install(deployment);
-
-            var patternSegments = selection.Pattern.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var baseDir = deployment.StagingDirectory;
-
-            foreach (var segment in patternSegments)
-            {
-                var newBaseDir = Path.Combine(baseDir, segment);
-                if (!fileSystem.DirectoryExists(newBaseDir))
-                {
-                    break;
-                }
-
-                baseDir = newBaseDir;
-            }
-
+            
+            //var strategy = GetMultifileBucketKeyStrategy(outputPattern);
+            
             foreach (var matchedFile in files)
             {
-                yield return CreateRequest(matchedFile, GetBucketKey(baseDir, matchedFile, new S3MultiFileSelectionBucketKeyAdapter(selection)), selection)
-                    .Tee(x => LogPutObjectRequest(matchedFile, x))
+                
+                yield return CreateRequest(matchedFile.FilePath, () => $"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath.Replace("\\","/")}", selection)
+                    .Tee(x => LogPutObjectRequest(matchedFile.FilePath, x))
                     //We only warn on multi file uploads 
                     .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));
             }
         }
-
+      
         /// <summary>
         /// Uploads a single file with the given properties
         /// </summary>
@@ -283,28 +276,17 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        private static Func<string> GetBucketKey(string baseDir, string filePath, IHaveBucketKeyBehaviour behaviour)
+        public static Func<string> GetBucketKey(string baseDir, string filePath, IHaveBucketKeyBehaviour behaviour)
         {
             switch (behaviour.BucketKeyBehaviour)
             {
                 case BucketKeyBehaviourType.Custom:
                     return () => behaviour.BucketKey;
                 case BucketKeyBehaviourType.Filename:
-                    return () => $"{behaviour.BucketKeyPrefix}{ConvertToRelativeUri(filePath, baseDir)}";
+                    return () => $"{behaviour.BucketKeyPrefix}{filePath.AsRelativePathFrom(baseDir)}";
                 default:
                     throw new NotImplementedException();
             }
-        }
-
-        private static string ConvertToRelativeUri(string filePath, string baseDir)
-        {
-            var uri = new Uri(filePath);
-            if (!baseDir.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                baseDir += Path.DirectorySeparatorChar.ToString();
-            }
-            var baseUri = new Uri(baseDir);
-            return baseUri.MakeRelativeUri(uri).ToString();
         }
 
         /// <summary>
