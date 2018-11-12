@@ -30,7 +30,7 @@ namespace Calamari.Util
             return !source.EndsWith(suffix) ? $"{source}{suffix}" : source;
         }
 
-        public static string EnsurePreix(this string source, string prefix)
+        public static string EnsurePrefix(this string source, string prefix)
         {
             return !source.StartsWith(prefix) ? $"{prefix}{source}" : source;
         }

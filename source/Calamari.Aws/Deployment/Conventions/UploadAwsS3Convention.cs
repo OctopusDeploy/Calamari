@@ -195,7 +195,7 @@ namespace Calamari.Aws.Deployment.Conventions
             foreach (var matchedFile in files)
             {
                 
-                yield return CreateRequest(matchedFile.FilePath, () => $"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath.Replace("\\","/")}", selection)
+                yield return CreateRequest(matchedFile.FilePath, () => $"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath}", selection)
                     .Tee(x => LogPutObjectRequest(matchedFile.FilePath, x))
                     //We only warn on multi file uploads 
                     .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));
