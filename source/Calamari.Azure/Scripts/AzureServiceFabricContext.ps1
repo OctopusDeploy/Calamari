@@ -9,7 +9,7 @@
 ##   OctopusFabricTargetScriptParameters
 ##   OctopusFabricConnectionEndpoint                         // The connection endpoint
 ##   OctopusFabricSecurityMode                               // The security mode used to connect to the cluster
-##   OctopusFabricClusterSpn                                 // Specifies the cluster security principal name to use for Windows credential
+##   OctopusFabricClusterSpn                                 // The cluster security principal name to use for Windows credential
 ##   OctopusFabricServerCertThumbprint                       // The server certificate thumbprint
 ##   OctopusFabricClientCertThumbprint                       // The client certificate thumbprint
 ##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
