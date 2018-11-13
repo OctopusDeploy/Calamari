@@ -173,9 +173,6 @@ namespace Calamari.Aws.Deployment.Conventions
             
             var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
          
-           // var (pattern, outputPattern) = ParseMultiFileSelectionPattern(selection.Pattern);
-            
-            //var files = fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, pattern).ToList();
             if (!files.Any())
             {
                 Log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
@@ -189,8 +186,6 @@ namespace Calamari.Aws.Deployment.Conventions
                     _ => substitutionPatterns.Any(),
                     _ => substitutionPatterns)
                 .Install(deployment);
-            
-            //var strategy = GetMultifileBucketKeyStrategy(outputPattern);
             
             foreach (var matchedFile in files)
             {
