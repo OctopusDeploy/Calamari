@@ -90,7 +90,7 @@ let setSensitiveVariable name value =
     let content = sprintf "name='%s' value='%s' sensitive='%s'" encodedName encodedValue (encode "True")
     writeServiceMessage "setVariable" content
 
-let createArtifact path fileName =
+let createArtifact (path: String, fileName: Option<String>) =
     let plainFileName = match fileName with
                             | Some value -> value
                             | None -> System.IO.Path.GetFileName(path)
