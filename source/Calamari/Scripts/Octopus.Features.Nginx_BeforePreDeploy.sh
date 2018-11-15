@@ -22,7 +22,7 @@ function check_user_has_sudo_access_without_password_to_required_commands {
     for cmd in "${cmdArr[@]}"
     do
         check_user_has_sudo_access_without_password_to_command ${cmd}
-    done
+    done || exit $?
     
     if [[ $failedSudoCheck -ne 0 ]]; then
         echo >&2 "User does not have the required 'sudo' access without password."
