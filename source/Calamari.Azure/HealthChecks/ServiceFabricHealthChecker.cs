@@ -63,7 +63,7 @@ namespace Calamari.Azure.HealthChecks
                         var clientCertThumbprint = variables.Get(clientCertVariable + ".Thumbprint");
                         var commonName = variables.Get(clientCertVariable + ".SubjectCommonName");
 
-                        certificateStore.GetOrAdd(variables, clientCertVariable, false, certificateStoreName, certificateStoreLocation);
+                        certificateStore.GetOrAdd(variables, clientCertVariable, certificateStoreName, certificateStoreLocation);
 
                         var xc = GetCredentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
                         try

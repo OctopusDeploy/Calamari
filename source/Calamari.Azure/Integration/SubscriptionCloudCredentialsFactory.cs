@@ -21,7 +21,7 @@ namespace Calamari.Azure.Integration
             var certificateThumbprint = variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint);
             var certificateBytes = Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes));
 
-            var certificate = certificateStore.GetOrAdd(certificateThumbprint, certificateBytes, false);
+            var certificate = certificateStore.GetOrAdd(certificateThumbprint, certificateBytes);
             return new CertificateCloudCredentials(subscriptionId, certificate);
         }
     }
