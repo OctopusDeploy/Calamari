@@ -21,7 +21,7 @@ function check_user_has_sudo_access_without_password_to_required_commands {
     failedSudoCheck=0
     for cmd in "${cmdArr[@]}"
     do
-        check_user_has_sudo_access_to_command ${cmd}
+        check_user_has_sudo_access_without_password_to_command ${cmd}
     done
     
     if [[ $failedSudoCheck -ne 0 ]]; then
