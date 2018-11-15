@@ -42,7 +42,7 @@ namespace Calamari.Deployment.Conventions
             if (!string.IsNullOrWhiteSpace(storeNameVariableName) && Enum.TryParse(variables.Get(storeNameVariableName, StoreName.My.ToString()), out StoreName storeNameOverride))
                 storeName = storeNameOverride;
 
-            certificateStore.GetOrAdd(variables, certificateVariable, storeName, storeLocation);
+            certificateStore.GetOrAdd(variables, certificateVariable, false, storeName, storeLocation);
         }
     }
 }

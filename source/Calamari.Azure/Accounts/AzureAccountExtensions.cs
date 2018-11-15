@@ -10,7 +10,7 @@ namespace Calamari.Azure.Accounts
     {
         static SubscriptionCloudCredentials Credentials(this AzureAccount account, ICertificateStore certificateStore)
         {
-            var certificate = certificateStore.GetOrAdd(account.CertificateThumbprint, account.CertificateBytes);
+            var certificate = certificateStore.GetOrAdd(account.CertificateThumbprint, account.CertificateBytes, false);
             return new CertificateCloudCredentials(account.SubscriptionNumber, certificate);
         }
 

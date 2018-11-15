@@ -105,7 +105,7 @@ namespace Calamari.Azure.Integration
             var azureCertificate = certificateStore.GetOrAdd(
                 variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
                 Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
-                StoreName.My);
+                StoreName.My, false);
 
             variables.Set("OctopusAzureCertificateFileName", certificateFilePath);
             variables.Set("OctopusAzureCertificatePassword", certificatePassword);
