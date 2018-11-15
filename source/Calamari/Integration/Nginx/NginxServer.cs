@@ -147,14 +147,15 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public void BuildConfiguration()
+        public void BuildConfiguration(string customNginxConfigRoot)
         {
+            var nginxConfigRootDirectory = customNginxConfigRoot ?? GetConfigRootDirectory();
             virtualServerConfig =
                 $@"
 server {{
 {string.Join(Environment.NewLine, serverBindingDirectives.Select(binding => $"    {binding.Key} {binding.Value};"))}
 {(useHostName ? $"    {NginxDirectives.Server.HostName} {hostName};" : "")}
-{(additionalLocations.Any() ? $"    {NginxDirectives.Include} {GetConfigRootDirectory()}/{virtualServerName}.conf.d/location.*.conf;" : "")}
+{(additionalLocations.Any() ? $"    {NginxDirectives.Include} {nginxConfigRootDirectory}/{virtualServerName}.conf.d/location.*.conf;" : "")}
 {GetLocationConfig(rootLocation)}
 }}
 ";

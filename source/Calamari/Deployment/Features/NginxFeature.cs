@@ -37,7 +37,8 @@ namespace Calamari.Deployment.Features
                 .WithAdditionalLocations(additionalLocations);
 
             Log.Verbose("Building nginx configuration");
-            nginxServer.BuildConfiguration();
+            var customNginxConfRoot = variables.Get(SpecialVariables.Action.Nginx.ConfigRoot);
+            nginxServer.BuildConfiguration(customNginxConfRoot);
 
             Log.Verbose("Saving nginx configuration");
             var tempDirectory = CalamariPhysicalFileSystem.GetPhysicalFileSystem().CreateTemporaryDirectory();

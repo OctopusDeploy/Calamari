@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Scripting;
+﻿using System.ComponentModel;
+using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment
 {
@@ -415,6 +416,8 @@ namespace Calamari.Deployment
 
             public static class Nginx
             {
+                public static readonly string ConfigRoot = "Octopus.Action.Nginx.ConfigurationsDirectory";
+                
                 public static class Server
                 {
                     public static readonly string HostName = "Octopus.Action.Nginx.Server.HostName";
