@@ -176,8 +176,9 @@ server {{
                 fileSystem.OverwriteFile(locationConfPath, additionalLocation.Value);
             }
 
-            var virtualServerConfFile = Path.Combine(tempDirectory, TempConfigRootDirectory, $"{virtualServerName}.conf");
-            fileSystem.OverwriteFile(virtualServerConfFile, virtualServerConfig);
+            var virtualServerConfPath = Path.Combine(tempDirectory, TempConfigRootDirectory, $"{virtualServerName}.conf");
+            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(virtualServerConfPath));
+            fileSystem.OverwriteFile(virtualServerConfPath, virtualServerConfig);
         }
 
         protected abstract string GetConfigRootDirectory();
