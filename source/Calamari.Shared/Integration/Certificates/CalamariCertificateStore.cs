@@ -15,14 +15,12 @@ namespace Calamari.Integration.Certificates
     {
         public X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes)
         {
-            var bytesText = Convert.ToBase64String(bytes);
-            return GetOrAdd(thumbprint, bytesText, null, new X509Store("Octopus", StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, bytes, null, new X509Store("Octopus", StoreLocation.CurrentUser));
         }
 
         public X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, StoreName storeName)
         {
-            var bytesText = Convert.ToBase64String(bytes);
-            return GetOrAdd(thumbprint, bytesText, null, new X509Store(storeName, StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, bytes, null, new X509Store(storeName, StoreLocation.CurrentUser));
         }
 
         public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
@@ -34,11 +32,11 @@ namespace Calamari.Integration.Certificates
 
         public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
-            var pfxBytesText = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}");
+            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
             var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
             var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
 
-            return GetOrAdd(thumbprint, pfxBytesText, password, new X509Store(storeName, storeLocation));
+            return GetOrAdd(thumbprint, pfxBytes, password, new X509Store(storeName, storeLocation));
         }
 
         #region TODO: Review - Has issues with mgt certs
@@ -98,7 +96,7 @@ namespace Calamari.Integration.Certificates
 
         #endregion
 
-        static X509Certificate2 GetOrAdd(string thumbprint, string bytes, string password, X509Store store)
+        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, X509Store store)
         {
             store.Open(OpenFlags.ReadWrite);
 
@@ -116,12 +114,10 @@ namespace Calamari.Integration.Certificates
                 }
 
                 Log.Verbose("Loading certificate from disk");
-                var raw = Convert.FromBase64String(bytes);
                 var file = Path.Combine(Path.GetTempPath(), "Octo-" + Guid.NewGuid());
-
                 try
                 {
-                    File.WriteAllBytes(file, raw);
+                    File.WriteAllBytes(file, bytes);
 
                     var certificate = LoadCertificateWithPrivateKey(file, password);
                     if (CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(certificate) == false)
