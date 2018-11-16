@@ -27,7 +27,7 @@
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(RuntimeIdentifier)' != 'win-x64' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' AND '$(RuntimeIdentifier)' != 'win-x64' ">
     <DefineConstants>$(DefineConstants);NGINX_SUPPORT</DefineConstants>
   </PropertyGroup>
   <!-- 
