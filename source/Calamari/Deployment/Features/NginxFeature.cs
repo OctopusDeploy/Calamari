@@ -28,11 +28,12 @@ namespace Calamari.Deployment.Features
 
             var enabledBindings = GetEnabledBindings(variables).ToList();
             var sslCertificates = GetSslCertificates(enabledBindings, variables);
+            var customNginxSslRoot = variables.Get(SpecialVariables.Action.Nginx.SslRoot);
             
             nginxServer
                 .WithVirtualServerName(variables.Get(SpecialVariables.Package.NuGetPackageId))
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))
-                .WithServerBindings(enabledBindings, sslCertificates)
+                .WithServerBindings(enabledBindings, sslCertificates, customNginxSslRoot)
                 .WithRootLocation(rootLocation)
                 .WithAdditionalLocations(additionalLocations);
 

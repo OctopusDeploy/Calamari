@@ -2,7 +2,12 @@
 {
     public class WindowsNginxServer : NginxServer
     {
-        protected override string GetConfigRootDirectory()
+        public override string GetConfigRootDirectory()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override string GetSslRootDirectory()
         {
             throw new System.NotImplementedException();
         }

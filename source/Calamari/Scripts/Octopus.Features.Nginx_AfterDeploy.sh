@@ -9,8 +9,7 @@ trap 'echo "Removing temporary folder ${nginxTempDir}..." && sudo rm -rf $nginxT
 
 nginxConfRoot=${nginxConfDir:-/etc/nginx/conf.d}
 echo "Copying $nginxTempDir/conf/* to $nginxConfRoot..."
-nginxConfDir=${nginxConfDir:-/etc/nginx/conf.d}
-sudo cp -R $nginxTempDir/conf/* $nginxConfDir -f
+sudo cp -R $nginxTempDir/conf/* $nginxConfRoot -f
 
 if [ -d "$nginxTempDir/ssl" ]; then
     nginxSslDir=$(get_octopusvariable "Octopus.Action.Nginx.CertificatesDirectory")

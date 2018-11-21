@@ -417,6 +417,7 @@ namespace Calamari.Deployment
             public static class Nginx
             {
                 public static readonly string ConfigRoot = "Octopus.Action.Nginx.ConfigurationsDirectory";
+                public static readonly string SslRoot = "Octopus.Action.Nginx.CertificatesDirectory";
                 
                 public static class Server
                 {

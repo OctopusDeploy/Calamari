@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Calamari.Deployment.Features;
 using Calamari.Integration.FileSystem;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Integration.Nginx
@@ -43,7 +41,7 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public NginxServer WithServerBindings(IEnumerable<Binding> bindings, IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> certificates)
+        public NginxServer WithServerBindings(IEnumerable<Binding> bindings, IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> certificates, string customSslCertRoot = null)
         {
             foreach (var binding in bindings)
             {
@@ -64,18 +62,24 @@ namespace Calamari.Integration.Nginx
                             continue;
                         }
 
-                        var certificateRootPath = Path.Combine(TempSslRootDirectory,
-                            fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName));
+                        var sanitizedSubjectCommonName =
+                            fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName);
+                        
+                        var certificateFileName = $"{sanitizedSubjectCommonName}.crt";
+                        var certificateKeyFileName = $"{sanitizedSubjectCommonName}.key";
 
-                        certificatePath = Path.Combine(certificateRootPath,
-                            $"{fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName)}.crt");
+                        var certificateTempRootPath = Path.Combine(TempSslRootDirectory, sanitizedSubjectCommonName);
+                        sslCerts.Add(
+                            Path.Combine(certificateTempRootPath, certificateFileName),
+                            certificate.CertificatePem);
+                        sslCerts.Add(
+                            Path.Combine(certificateTempRootPath, certificateKeyFileName),
+                            certificate.PrivateKeyPem);
 
-                        certificateKeyPath = Path.Combine(certificateRootPath,
-                            $"{fileSystem.RemoveInvalidFileNameChars(certificate.SubjectCommonName)}.key");
-
-                        sslCerts.Add(certificatePath, certificate.CertificatePem);
-
-                        sslCerts.Add(certificateKeyPath, certificate.PrivateKeyPem);
+                        var sslRootPath = customSslCertRoot ?? GetSslRootDirectory();
+                        var certificateRootPath = Path.Combine(sslRootPath, sanitizedSubjectCommonName);
+                        certificatePath = Path.Combine(certificateRootPath, certificateFileName);
+                        certificateKeyPath = Path.Combine(certificateRootPath, certificateKeyFileName);
                     }
 
                     AddServerBindingDirective(NginxDirectives.Server.Listen,
@@ -90,7 +94,9 @@ namespace Calamari.Integration.Nginx
                     var securityProtocols = binding.SecurityProtocols;
                     if (securityProtocols != null && securityProtocols.Any())
                     {
-                        AddServerBindingDirective(NginxDirectives.Server.SecurityProtocols, string.Join(" ", binding.SecurityProtocols));
+                        AddServerBindingDirective(
+                            NginxDirectives.Server.SecurityProtocols,
+                            string.Join(" ", binding.SecurityProtocols));
                     }
 
 //                    if (!string.IsNullOrWhiteSpace((string) binding.ciphers))
@@ -147,11 +153,10 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public void BuildConfiguration(string customNginxConfigRoot)
+        public void BuildConfiguration(string customNginxConfigRoot = null)
         {
             var nginxConfigRootDirectory = customNginxConfigRoot ?? GetConfigRootDirectory();
-            virtualServerConfig =
-                $@"
+            virtualServerConfig = $@"
 server {{
 {string.Join(Environment.NewLine, serverBindingDirectives.Select(binding => $"    {binding.Key} {binding.Value};"))}
 {(useHostName ? $"    {NginxDirectives.Server.HostName} {hostName};" : "")}
@@ -174,15 +179,21 @@ server {{
             {
                 var locationConfPath = Path.Combine(tempDirectory, additionalLocation.Key);
                 fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(locationConfPath));
-                fileSystem.OverwriteFile(locationConfPath, additionalLocation.Value);
+                fileSystem.OverwriteFile(locationConfPath, RemoveEmptyLines(additionalLocation.Value));
             }
 
             var virtualServerConfPath = Path.Combine(tempDirectory, TempConfigRootDirectory, $"{virtualServerName}.conf");
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(virtualServerConfPath));
-            fileSystem.OverwriteFile(virtualServerConfPath, virtualServerConfig);
+            fileSystem.OverwriteFile(virtualServerConfPath, RemoveEmptyLines(virtualServerConfig));
         }
 
-        protected abstract string GetConfigRootDirectory();
+        string RemoveEmptyLines(string text)
+        {
+            return Regex.Replace(text, @"^\s*$\n|\r$", string.Empty, RegexOptions.Multiline).TrimEnd();
+        }
+
+        public abstract string GetConfigRootDirectory();
+        public abstract string GetSslRootDirectory();
 
         private string GetListenValue(string ipAddress, string port, bool isHttps = false)
         {
@@ -195,8 +206,7 @@ server {{
 
         private string GetLocationConfig(Location location)
         {
-            return
-                $@"
+            return $@"
     location {location.Path} {{
 {(!string.IsNullOrEmpty(location.ReverseProxyUrl) ? $"        {NginxDirectives.Location.Proxy.Url} {location.ReverseProxyUrl};" : "")}
 {GetLocationDirectives(location.Directives, location.ReverseProxyDirectives)}

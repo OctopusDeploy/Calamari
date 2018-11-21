@@ -162,6 +162,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Fixtures\Nginx\Approved" />
+  </ItemGroup>
   <Target Name="CopyTools" AfterTargets="Build">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />

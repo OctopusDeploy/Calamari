@@ -1,11 +1,13 @@
 #!/bin/bash
 
 # Enter any commands that are required by the NGINX feature in a way the program doesn't do anything, like displaying the commands help
-requiredCommandsToCheck="cp --help
+requiredCommandsToCheck="
+cp --help
 mv --help
 rm --help
 systemctl --help
-nginx -h"
+nginx -h
+"
 
 function check_user_has_sudo_access_without_password_to_command {
     sudo -n $1 $2 > /dev/null 2>&1
