@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Nginx
     [TestFixture]
     [Category(TestEnvironment.CompatibleOS.Nix)]
     [Category(TestEnvironment.CompatibleOS.Mac)]
-    public class NginxFeature
+    public class NginxFixture
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         private NginxServer nginxServer;
