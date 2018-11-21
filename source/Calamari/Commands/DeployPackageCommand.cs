@@ -70,9 +70,11 @@ namespace Calamari.Commands
             var iis = new InternetInformationServer();
             featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(), new IisWebSiteAfterPostDeployFeature() });
 #endif
-#if NGINX_SUPPORT
-            featureClasses.Add(new NginxFeature());
-#endif
+            if (!CalamariEnvironment.IsRunningOnWindows)
+            {
+                featureClasses.Add(new NginxFeature());
+            }
+
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);

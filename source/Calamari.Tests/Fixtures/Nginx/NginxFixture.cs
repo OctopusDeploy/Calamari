@@ -1,4 +1,3 @@
-#if NGINX_SUPPORT
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -180,4 +179,3 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
     }
 }
-#endif

@@ -2,5 +2,7 @@
 
 nginxTempDir=$(get_octopusvariable "OctopusNginxFeatureTempDirectory")
 
-echo "Removing temporary folder ${nginxTempDir}..."
-sudo rm -rf $nginxTempDir
+if [ -d "${nginxTempDir}" ]; then
+    echo "Removing temporary folder ${nginxTempDir}..."
+    sudo rm -rf $nginxTempDir
+fi
