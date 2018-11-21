@@ -4,7 +4,7 @@ using System.Net.Sockets;
 
 namespace Calamari.Integration.Proxies
 {
-    public class ProxyInitializer
+    public static class ProxyInitializer
     {
         public static void InitializeDefaultProxy()
         {
@@ -20,7 +20,7 @@ namespace Calamari.Integration.Proxies
                 var proxy = useSystemProxy
                     ? WebRequest.GetSystemWebProxy()
                     : new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri);
-
+                
                 var useDefaultCredentials = string.IsNullOrWhiteSpace(proxyUsername);
 
                 proxy.Credentials = useDefaultCredentials

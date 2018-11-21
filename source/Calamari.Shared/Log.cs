@@ -2,7 +2,6 @@
 using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
-using Calamari.Util;
 using Octopus.Versioning;
 using Octostache;
 
@@ -114,6 +113,11 @@ namespace Calamari
             Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
 
             variables?.SetOutputVariable(name, value);
+        }
+
+        public static void NewOctopusArtifact(string fullPath, string name, long fileLength)
+        {
+            Info($"##octopus[createArtifact path=\"{ConvertServiceMessageValue(fullPath)}\" name=\"{ConvertServiceMessageValue(name)}\" length=\"{ConvertServiceMessageValue(fileLength.ToString())}\"]");
         }
 
         static string ConvertServiceMessageValue(string value)
