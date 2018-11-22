@@ -172,7 +172,10 @@
     <None Update="Terraform\WithVariablesSubstitution\example.tf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Terraform\WithVariablesSubstitution\example.tfvars">
+    <None Update="Terraform\WithVariablesSubstitution\terraform.tfvars">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Terraform\WithVariablesSubstitution\example.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Terraform\WithVariables\example.tfvars">

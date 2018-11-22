@@ -72,17 +72,22 @@ namespace Calamari.Tests.Terraform
         {
             ExecuteAndReturnLogOutput<ApplyCommand>(_ =>
                 {
-                    _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                    _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.txt");
+                    _.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "example.txt");
                     _.Set("Octopus.Action.StepName", "Step Name");
                     _.Set("Should_Be_Substituted", "Hello World");
-                }, "WithVariables")
-                .Should().Contain("Octopus.Action[\"Step Name\"].Output.TerraformValueOutputs[\"my_output\"]' with the value only of 'Hello World'");
+                    _.Set("Should_Be_Substituted_in_txt", "Hello World from text");
+                }, "WithVariablesSubstitution")
+                .Should()
+                .Contain("Octopus.Action[\"Step Name\"].Output.TerraformValueOutputs[\"my_output\"]' with the value only of 'Hello World'")
+                .And
+                .Contain("Octopus.Action[\"Step Name\"].Output.TerraformValueOutputs[\"my_output_from_txt_file\"]' with the value only of 'Hello World from text'");
         }
 
         [Test]
         [TestCase(typeof(PlanCommand))]
         [TestCase(typeof(DestroyPlanCommand))]
-        public void SubstituteOctopusVariables(Type commandType)
+        public void TerraformPlanOutput(Type commandType)
         {
             ExecuteAndReturnLogOutput(commandType, _ =>
                 {

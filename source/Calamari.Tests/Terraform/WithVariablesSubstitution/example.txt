@@ -1,0 +1,1 @@
+my_var_txt = "#{Should_Be_Substituted_in_txt}"
