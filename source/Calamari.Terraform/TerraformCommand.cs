@@ -35,13 +35,13 @@ namespace Calamari.Terraform
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
             
-            if (string.IsNullOrEmpty(packageFile))
+            if (!string.IsNullOrEmpty(packageFile))
             {
-                throw new CommandException($"No package file was specified. Please provide `{SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath}` variable");
+                if (!fileSystem.FileExists(packageFile))
+                {
+                    throw new CommandException("Could not find package file: " + packageFile);
+                }
             }
-
-            if (!fileSystem.FileExists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);
 
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);

@@ -26,10 +26,10 @@ namespace Calamari.Terraform
 
         public void Install(RunningDeployment deployment)
         {
-            var additionalFileSubstitution =
-                deployment.Variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
+            var variables = deployment.Variables;
+            var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
 
-            deployment.Variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
+            variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
                 (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
 
             var substitutionPatterns = (DefaultTerraformFileSubstitution +
@@ -43,11 +43,34 @@ namespace Calamari.Terraform
                     _ => substitutionPatterns)
                 .Install(deployment);
 
+            var environmentVariables = new StringDictionary();
 
-            var awsEnvironmentGeneration = new AwsEnvironmentGeneration(deployment.Variables);
-            var azureEnvironmentVariables = AzureEnvironmentVariables(deployment.Variables);
+            var oldAccountStyle = variables.Get(TerraformSpecialVariables.Action.Terraform.ManagedAccountDeprecatedUsedOnlyForAWS);
+            var managedAccounts = variables.GetStrings(TerraformSpecialVariables.Action.Terraform.ManagedAccounts, ',');
 
-            Execute(deployment, awsEnvironmentGeneration.EnvironmentVars.MergeDictionaries(azureEnvironmentVariables));
+            if (oldAccountStyle != null)
+            {
+                if (managedAccounts.Contains(oldAccountStyle))
+                {
+                    managedAccounts.Add(oldAccountStyle);
+                }
+            }
+
+            foreach (var managedAccount in managedAccounts)
+            {
+                switch (managedAccount)
+                {
+                    case "AWS":
+                        var awsEnvironmentGeneration = new AwsEnvironmentGeneration(variables);
+                        environmentVariables = environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
+                        break;
+                    case "Azure":
+                        environmentVariables = environmentVariables.MergeDictionaries(AzureEnvironmentVariables(variables));
+                        break;
+                }
+            }
+
+            Execute(deployment, environmentVariables);
         }
 
         // We not referencing the Azure project because we want to be multi-platform 

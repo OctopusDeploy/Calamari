@@ -15,7 +15,7 @@ namespace Calamari.Terraform
         {
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment))
             {
-                cli.ExecuteCommand($"destroy -force -no-color -input=false {cli.TerraformVariableFiles} {cli.ActionParams}", environmentVariables);
+                cli.ExecuteCommand($"destroy -force -no-color {cli.TerraformVariableFiles} {cli.ActionParams}", environmentVariables);
             }
         }
     }

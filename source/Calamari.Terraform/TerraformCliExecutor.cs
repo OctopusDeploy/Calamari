@@ -26,7 +26,7 @@ namespace Calamari.Terraform
             this.deployment = deployment;
 
             var variables = deployment.Variables;
-            TemplateDirectory = variables.Get(TerraformSpecialVariables.Action.Terraform.TemplateDirectory);
+            TemplateDirectory = variables.Get(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, deployment.CurrentDirectory);
             Workspace = variables.Get(TerraformSpecialVariables.Action.Terraform.Workspace);
             InitParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             ActionParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams);
@@ -60,7 +60,7 @@ namespace Calamari.Terraform
 
         public string ExecuteCommand(string arguments, StringDictionary environmentVariables)
         {
-            var commandResult = ExecuteCommandInternal(arguments, environmentVariables, out var result);
+            var commandResult = ExecuteCommandInternal(arguments, out var result, environmentVariables);
 
             commandResult.VerifySuccess();
 
@@ -69,23 +69,9 @@ namespace Calamari.Terraform
 
         public int ExecuteCommand(string arguments, StringDictionary environmentVariables, out string result)
         {
-            var commandResult = ExecuteCommandInternal(arguments, environmentVariables, out result);
+            var commandResult = ExecuteCommandInternal(arguments, out result, environmentVariables);
 
             return commandResult.ExitCode;
-        }
-
-        public CommandResult ExecuteCommandInternal(string arguments, StringDictionary environmentVariables, out string result)
-        {
-            var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                arguments, TemplateDirectory, defaultEnvironmentVariables.MergeDictionaries(environmentVariables));
-
-            var commandOutput = new CaptureOutput();
-            var cmd = new CommandLineRunner(commandOutput);
-            var commandResult = cmd.Execute(commandLineInvocation);
-
-            result = String.Join(Environment.NewLine, commandOutput.Infos);
-
-            return commandResult;
         }
 
         public void Dispose()
@@ -99,45 +85,47 @@ namespace Calamari.Terraform
             }
         }
 
-        void InitialisePlugins()
+        CommandResult ExecuteCommandInternal(string arguments, out string result, StringDictionary environmentVariables = null)
         {
             var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                $"init -no-color -input=false -get-plugins={AllowPluginDownloads.ToString().ToLower()} {InitParams}"
-                , TemplateDirectory, defaultEnvironmentVariables);
+                arguments, TemplateDirectory, environmentVariables == null 
+                    ? defaultEnvironmentVariables
+                    : defaultEnvironmentVariables.MergeDictionaries(environmentVariables));
 
             var commandOutput = new CaptureOutput();
             var cmd = new CommandLineRunner(commandOutput);
-            cmd.Execute(commandLineInvocation).VerifySuccess();
+            var commandResult = cmd.Execute(commandLineInvocation);
+
+            Log.Info(commandLineInvocation.ToString());
+
+            result = String.Join("\n", commandOutput.Infos);
+
+            return commandResult;
+        }
+
+        void InitialisePlugins()
+        {
+            ExecuteCommandInternal(
+                $"init -no-color -get-plugins={AllowPluginDownloads.ToString().ToLower()} {InitParams}", out _).VerifySuccess();
         }
 
         void InitialiseWorkspace()
         {
             if (!String.IsNullOrWhiteSpace(Workspace))
             {
-                var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                    "workspace list"
-                    , TemplateDirectory, defaultEnvironmentVariables);
-                var commandOutput =  new CaptureOutput();
-                var cmd = new CommandLineRunner(commandOutput);
-                cmd.Execute(commandLineInvocation).VerifySuccess();
-
-                foreach (var line in commandOutput.Infos)
+                ExecuteCommandInternal("workspace list", out var results).VerifySuccess();
+                
+                foreach (var line in results.Split('\n'))
                 {
                     var workspaceName = line.Trim('*', ' ');
                     if (workspaceName.Equals(Workspace))
                     {
-                        commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                            $"workspace select {Workspace}"
-                            , TemplateDirectory, defaultEnvironmentVariables);
-                        cmd.Execute(commandLineInvocation).VerifySuccess();
+                        ExecuteCommandInternal($"workspace select {Workspace}", out _).VerifySuccess();
                         return;
                     }
                 }
 
-                commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                    $"workspace new {Workspace}"
-                    , TemplateDirectory, defaultEnvironmentVariables);
-                cmd.Execute(commandLineInvocation).VerifySuccess();
+                ExecuteCommandInternal($"workspace new {Workspace}", out _).VerifySuccess();
             }
         }
 
@@ -178,7 +166,7 @@ namespace Calamari.Terraform
             deployment.Variables
                 .Get(TerraformSpecialVariables.Action.Terraform.VarFiles)
                 ?.Map(var => Regex.Split(var, "\r?\n"))
-                .Select(var => $"-var-file=\'{var}\'")
+                .Select(var => $"-var-file=\"{var}\"")
                 .ToList()
                 .Map(list => string.Join(" ", list));
 
@@ -189,6 +177,7 @@ namespace Calamari.Terraform
             defaultEnvironmentVariables.Add("TF_IN_AUTOMATION", "1");
             defaultEnvironmentVariables.Add("TF_LOG", "TRACE");
             defaultEnvironmentVariables.Add("TF_LOG_PATH", logPath);
+            defaultEnvironmentVariables.Add("TF_INPUT", "0");
 
             var pluginDir = deployment.Variables.Get("Octopus.Action.Terraform.PluginsDirectory");
             if(string.IsNullOrEmpty(pluginDir))
