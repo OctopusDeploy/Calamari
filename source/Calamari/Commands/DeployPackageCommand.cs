@@ -12,6 +12,7 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.JsonVariables;
+using Calamari.Integration.Nginx;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
@@ -72,7 +73,7 @@ namespace Calamari.Commands
 #endif
             if (!CalamariEnvironment.IsRunningOnWindows)
             {
-                featureClasses.Add(new NginxFeature());
+                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect()));
             }
 
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));

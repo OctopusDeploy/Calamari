@@ -1,9 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Assent;
+using Calamari.Deployment;
+using Calamari.Deployment.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
+using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using NSubstitute;
@@ -25,6 +29,8 @@ namespace Calamari.Tests.Fixtures.Nginx
 
         readonly string httpAndHttpsBindings = "[{\"protocol\":\"http\",\"port\":\"80\",\"ipAddress\":\"*\",\"certificateLocation\":null,\"certificateKeyLocation\":null,\"securityProtocols\":null,\"enabled\":true},{\"protocol\":\"https\",\"port\":\"443\",\"ipAddress\":\"*\",\"certificateLocation\":\"/etc/ssl/nginxsample/certificate.crt\",\"certificateKeyLocation\":\"/etc/ssl/nginxsample/certificate.key\",\"securityProtocols\":null,\"enabled\":true}]";
         readonly string httpAndHttpsBindingWithCertificateVariable = "[{\"protocol\":\"http\",\"port\":\"80\",\"ipAddress\":\"*\",\"certificateLocation\":null,\"certificateKeyLocation\":null,\"securityProtocols\":null,\"enabled\":true},{\"protocol\":\"https\",\"port\":\"443\",\"ipAddress\":\"*\",\"certificateLocation\":null,\"certificateKeyLocation\":null,\"securityProtocols\":null,\"enabled\":true,\"thumbprint\":null,\"certificateVariable\":\"NginxSampleWebAppCertificate\"}]";
+
+        readonly string staticContentAndReverseProxyLocations = "[{\"path\":\"/\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"},{\"path\":\"/api/\",\"directives\":\"\",\"headers\":\"\",\"reverseProxy\":\"True\",\"reverseProxyUrl\":\"http://localhost:5000\",\"reverseProxyHeaders\":\"{\\\"Upgrade\\\":\\\"$http_upgrade\\\",\\\"Connection\\\":\\\"keep-alive\\\",\\\"Host\\\":\\\"$host\\\",\\\"X-Forwarded-For\\\":\\\"$proxy_add_x_forwarded_for\\\",\\\"X-Forwarded-Proto\\\":\\\"$scheme\\\"}\",\"reverseProxyDirectives\":\"{\\\"proxy_http_version\\\":\\\"1.1\\\",\\\"proxy_cache_bypass\\\":\\\"$http_upgrade\\\"}\"}]";
 
         [SetUp]
         public void SetUp()
@@ -91,7 +97,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         {
             var locations =
                 JsonConvert.DeserializeObject<IEnumerable<Location>>(
-                    "[{\"path\":\"/\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"},{\"path\":\"/api/\",\"directives\":\"\",\"headers\":\"\",\"reverseProxy\":\"True\",\"reverseProxyUrl\":\"http://localhost:5000\",\"reverseProxyHeaders\":\"{\\\"Upgrade\\\":\\\"$http_upgrade\\\",\\\"Connection\\\":\\\"keep-alive\\\",\\\"Host\\\":\\\"$host\\\",\\\"X-Forwarded-For\\\":\\\"$proxy_add_x_forwarded_for\\\",\\\"X-Forwarded-Proto\\\":\\\"$scheme\\\"}\",\"reverseProxyDirectives\":\"{\\\"proxy_http_version\\\":\\\"1.1\\\",\\\"proxy_cache_bypass\\\":\\\"$http_upgrade\\\"}\"}]"
+                    staticContentAndReverseProxyLocations
                 ).ToList();
             
             var virtualServerName = "StaticContent";
@@ -176,6 +182,37 @@ namespace Calamari.Tests.Fixtures.Nginx
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
             this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ExecuteWorks()
+        {
+            var packageId = "NginxSampleWebApp";
+            var confDirectory = "conf";
+            
+            var deployment = new RunningDeployment($"C:\\{packageId}.zip", new CalamariVariableDictionary());
+            deployment.Variables.Set(SpecialVariables.Package.NuGetPackageId, packageId);
+            deployment.Variables.Set(SpecialVariables.Package.Output.InstallationDirectoryPath, $"/var/www/{packageId}");
+            deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Bindings, httpOnlyBinding);
+            deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Locations, staticContentAndReverseProxyLocations);
+            deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.HostName, "www.nginxsampleweb.app");
+
+            new NginxFeature(nginxServer).Execute(deployment);
+
+            var nginxTempDirectory = deployment.Variables.Get("OctopusNginxFeatureTempDirectory");
+            Assert.That(nginxTempDirectory, Is.Not.Empty);
+            
+            var tempConfPath = Path.Combine(nginxTempDirectory, confDirectory);
+            Assert.IsTrue(Directory.Exists(tempConfPath));
+            
+            var rootConf = Path.Combine(tempConfPath, $"{packageId}.conf");
+            Assert.IsTrue(File.Exists(rootConf));
+            
+            var apiConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", $"location.api.conf");
+            Assert.IsTrue(File.Exists(apiConf));
+            
+            this.Assent(File.ReadAllText(rootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
+            this.Assent(File.ReadAllText(apiConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.apiLocation");
         }
     }
 }

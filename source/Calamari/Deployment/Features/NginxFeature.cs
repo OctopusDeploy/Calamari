@@ -17,11 +17,16 @@ namespace Calamari.Deployment.Features
         public string Name => "Octopus.Features.Nginx";
         public string DeploymentStage => DeploymentStages.AfterDeploy;
 
+        readonly NginxServer nginxServer;
+
+        public NginxFeature(NginxServer nginxServer)
+        {
+            this.nginxServer = nginxServer;
+        }
+        
         public void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-
-            var nginxServer = NginxServer.AutoDetect();
 
             var (rootLocation, additionalLocations) = GetLocations(variables);
             if (rootLocation == null) throw new NginxMissingRootLocationException();
