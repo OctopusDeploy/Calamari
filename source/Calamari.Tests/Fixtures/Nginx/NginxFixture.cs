@@ -17,8 +17,7 @@ namespace Calamari.Tests.Fixtures.Nginx
 {
     [TestFixture]
     [Category(TestEnvironment.CompatibleOS.Nix)]
-    [Category(TestEnvironment.CompatibleOS.Mac)]
-    public class NginxFixture
+    public class NginxFixture : CalamariFixture
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         private NginxServer nginxServer;
@@ -136,6 +135,8 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
 
         [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
         public void SetupReverseProxyWithSslSite()
         {
             var locations =
