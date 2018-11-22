@@ -162,40 +162,5 @@ namespace Calamari.Tests.Terraform
         {
             return ExecuteAndReturnLogOutput(typeof(T), populateVariables, folderName);
         }
-
-        [Test]
-        public void AWS()
-        {
-            using (var currentDirectory = TemporaryDirectory.Create())
-            {
-                var variablesFile = Path.GetTempFileName();
-                var variables = new VariableDictionary();
-                variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-                variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_Calamari_Access"));
-                variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
-                variables.Set(TerraformSpecialVariables.Calamari.TerraformCliPath, TestEnvironment.GetTestPath("Terraform"));
-                variables.Set(SpecialVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
-                variables.Set(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
-                    TestEnvironment.GetTestPath("Terraform", "contentFiles", "any", "win", "terraform.exe"));
-                variables.Set(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams, "-var my_var=\"Hello world\"");
-                variables.Set("Octopus.Action.StepName", "Step Name");
-
-                var terraformFiles = TestEnvironment.GetTestPath("Terraform", "Example1");
-                foreach (var file in Directory.EnumerateFiles(terraformFiles))
-                {
-                    File.Copy(file, Path.Combine(currentDirectory.DirectoryPath, Path.GetFileName(file)));
-                }
-
-                variables.Save(variablesFile);
-
-                using (new TemporaryFile(variablesFile))
-                {
-                    var command = new PlanCommand();
-                    var result = command.Execute(new[] {"--variables", $"{variablesFile}",});
-
-                    result.Should().Be(0);
-                }
-            }
-        }
     }
 }
