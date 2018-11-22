@@ -2,7 +2,7 @@
 
 namespace Calamari.Terraform
 {
-    [Command("destroy-terraform", Description = "Plans the creation of a Terraform deployment")]
+    [Command("destroy-terraform", Description = "Destroys Terraform resources")]
     public class DestroyCommand : TerraformCommand
     {
         public DestroyCommand(): base((fileSystem, substituter) =>  new DestroyTerraformConvention(fileSystem, substituter))

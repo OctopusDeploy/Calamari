@@ -2,7 +2,7 @@
 
 namespace Calamari.Terraform
 {
-    [Command("apply-terraform", Description = "Plans the creation of a Terraform deployment")]
+    [Command("apply-terraform", Description = "Applies a Terraform template")]
     public class ApplyCommand : TerraformCommand
     {
         public ApplyCommand(): base((fileSystem, substituter) =>  new ApplyTerraformConvention(fileSystem, substituter))
