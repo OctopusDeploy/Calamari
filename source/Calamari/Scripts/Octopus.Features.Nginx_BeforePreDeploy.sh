@@ -5,7 +5,6 @@ requiredCommandsToCheck="
 cp --help
 mv --help
 rm --help
-systemctl --help
 nginx -h
 "
 
