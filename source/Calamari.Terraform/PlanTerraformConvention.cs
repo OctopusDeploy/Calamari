@@ -17,7 +17,7 @@ namespace Calamari.Terraform
             string results;
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment))
             {
-                results = cli.ExecuteCommand($"plan -no-color {cli.TerraformVariableFiles} {cli.ActionParams}", environmentVariables);
+                results = cli.ExecuteCommand(environmentVariables, "plan", "-no-color", cli.TerraformVariableFiles, cli.ActionParams);
             }
 
             Log.Info(

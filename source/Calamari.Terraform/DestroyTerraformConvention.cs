@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Collections.Specialized;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
@@ -15,7 +16,8 @@ namespace Calamari.Terraform
         {
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment))
             {
-                cli.ExecuteCommand($"destroy -force -no-color {cli.TerraformVariableFiles} {cli.ActionParams}", environmentVariables);
+                cli.ExecuteCommand(environmentVariables, "destroy", "-force", "-no-color", cli.TerraformVariableFiles,
+                    cli.ActionParams);
             }
         }
     }

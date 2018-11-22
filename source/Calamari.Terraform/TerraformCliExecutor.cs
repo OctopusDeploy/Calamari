@@ -58,18 +58,18 @@ namespace Calamari.Terraform
             InitialiseWorkspace();
         }
 
-        public string ExecuteCommand(string arguments, StringDictionary environmentVariables)
+        public string ExecuteCommand(StringDictionary environmentVariables, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(arguments, out var result, environmentVariables);
+            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out var result, environmentVariables);
 
             commandResult.VerifySuccess();
 
             return result;
         }
 
-        public int ExecuteCommand(string arguments, StringDictionary environmentVariables, out string result)
+        public int ExecuteCommand(StringDictionary environmentVariables, out string result, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(arguments, out result, environmentVariables);
+            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result, environmentVariables);
 
             return commandResult.ExitCode;
         }
@@ -83,6 +83,11 @@ namespace Calamari.Terraform
                     Log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
                 }
             }
+        }
+
+        static string ToSpaceSeparated(IEnumerable<string> items)
+        {
+            return string.Join(" ", items.Where(_ => !String.IsNullOrEmpty(_)));
         }
 
         CommandResult ExecuteCommandInternal(string arguments, out string result, StringDictionary environmentVariables = null)
@@ -120,12 +125,12 @@ namespace Calamari.Terraform
                     var workspaceName = line.Trim('*', ' ');
                     if (workspaceName.Equals(Workspace))
                     {
-                        ExecuteCommandInternal($"workspace select {Workspace}", out _).VerifySuccess();
+                        ExecuteCommandInternal($"workspace select \"{Workspace}\"", out _).VerifySuccess();
                         return;
                     }
                 }
 
-                ExecuteCommandInternal($"workspace new {Workspace}", out _).VerifySuccess();
+                ExecuteCommandInternal($"workspace new \"{Workspace}\"", out _).VerifySuccess();
             }
         }
 
