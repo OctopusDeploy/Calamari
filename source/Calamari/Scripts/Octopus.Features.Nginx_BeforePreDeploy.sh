@@ -27,7 +27,7 @@ function check_user_has_sudo_access_without_password_to_required_commands {
     
     if [[ $failedSudoCheck -ne 0 ]]; then
         echo >&2 "User does not have the required 'sudo' access without password."
-        echo >&2 "See https://g.octopus.hq.com/NginxInstall from more information"
+        echo >&2 "See https://g.octopushq.com/NginxUserPermissions from more information"
         exit 1
     fi
 }
@@ -36,6 +36,7 @@ function check_app_exists {
 	command -v $1 > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo >&2 "The executable $1 does not exist, or is not on the path"
+        echo >&2 "See https://g.octopushq.com/NginxInstall from more information"
 		exit 1
 	fi
 }
