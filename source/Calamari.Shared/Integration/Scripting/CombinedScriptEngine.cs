@@ -25,7 +25,7 @@ namespace Calamari.Integration.Scripting
         /// because it is the constructor with the most parameters that can be
         /// fulfilled by injection.
         /// </summary>
-        /// <param name="scriptWrapperHooks">The collecton of IScriptWrapper objects available in autofac</param>
+        /// <param name="scriptWrapperHooks">The collection of IScriptWrapper objects available in autofac</param>
         public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
@@ -34,20 +34,21 @@ namespace Calamari.Integration.Scripting
         public ScriptSyntax[] GetSupportedTypes()
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                ? new[] { ScriptSyntax.CSharp, ScriptSyntax.Bash, ScriptSyntax.FSharp }
-                : new[] { ScriptSyntax.CSharp, ScriptSyntax.Powershell, ScriptSyntax.FSharp };
+                ? new[] { ScriptSyntax.Bash, ScriptSyntax.CSharp, ScriptSyntax.FSharp }
+                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp };
         }
 
         public CommandResult Execute(
             Script script,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null) =>
-                BuildWrapperChain(ValidateScriptType(script)).ExecuteScript(
-                    script,
-                    variables,
-                    commandLineRunner,
-                    environmentVars);
+            StringDictionary environmentVars = null)
+        {
+            var syntax = ValidateScriptType(script);
+            return BuildWrapperChain(syntax)
+                .ExecuteScript(script, syntax, variables, commandLineRunner, environmentVars);
+        }
+            
 
 
         /// <summary>
@@ -68,6 +69,12 @@ namespace Calamari.Integration.Scripting
             // get the type of script
             scriptWrapperHooks
                 .Where(hook => hook.Enabled)
+                /*
+                 * Sort the list in descending order of priority to ensure that
+                 * authentication script wrappers are called before any tool
+                 * script wrapper that might rely on the auth having being performed
+                 */
+                .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                 // The last wrapper is always the TerminalScriptWrapper
                 new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptSyntax]),
@@ -75,16 +82,18 @@ namespace Calamari.Integration.Scripting
                 {
                     // the next wrapper is pointed to the current one
                     next.NextWrapper = current;
-                    // the next wrapper is carried across to the next aggregate call
+                    /*
+                     * The next wrapper is carried across to the next aggregate call,
+                     * or is returned as the result of the aggregate call. This means
+                     * the last item in the list is the return value.
+                     */ 
                     return next;
                 });
                  
         
         private ScriptSyntax ValidateScriptType(Script script)
         {
-            var scriptExtension = Path.GetExtension(script.File)?.TrimStart('.');
-            var type = scriptExtension.ToScriptType();
-
+            var type = ScriptTypeExtensions.FileNameToScriptType(script.File);
             if (!GetSupportedTypes().Contains(type))
                 throw new CommandException($"{type} scripts are not supported on this platform");
 

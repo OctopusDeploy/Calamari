@@ -188,4 +188,31 @@ function log_environment_information
 	echo "##octopus[stdout-default]"
 }
 
+function setup_proxy_configuration
+{
+    echo "##octopus[stdout-verbose]"    
+    echo "Configuring proxy"
+    echo "##octopus[stdout-default]"
+    
+    if [ $TentacleProxyHost ] 
+    then
+        proxyHost=$TentacleProxyHost:${TentacleProxyPort:-80}
+        
+        echo "##octopus[stdout-verbose]"
+        echo "Setting HTTP_PROXY to $proxyHost"
+        echo "##octopus[stdout-default]"    
+        if [ $TentacleProxyUsername ]
+        then
+            proxyAuth="$TentacleProxyUsername:$TentacleProxyPassword@"    
+        fi
+        
+        proxyUri="http://$proxyAuth$proxyHost"
+
+        export HTTP_PROXY=${HTTP_PROXY:-$proxyUri}
+        export HTTPS_PROXY=${HTTPS_PROXY:-$proxyUri}
+        export NO_PROXY=${NO_PROXY:-"127.0.0.1,localhost,169.254.169.254"}
+    fi
+}
+
 log_environment_information
+setup_proxy_configuration

@@ -6,23 +6,97 @@ using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
-using Calamari.Util;
+using Calamari.Deployment;
+using Octostache;
 
 namespace Calamari.Integration.Certificates
 {
     public class CalamariCertificateStore : ICertificateStore
     {
-        public X509Certificate2 GetOrAdd(string thumbprint, string bytes)
+        public X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes)
         {
-            return GetOrAdd(thumbprint, bytes, new X509Store("Octopus", StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, bytes, null, new X509Store("Octopus", StoreLocation.CurrentUser));
         }
 
-        public X509Certificate2 GetOrAdd(string thumbprint, string bytes, StoreName storeName)
+        public X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, StoreName storeName)
         {
-            return GetOrAdd(thumbprint, bytes, new X509Store(storeName, StoreLocation.CurrentUser));
+            return GetOrAdd(thumbprint, bytes, null, new X509Store(storeName, StoreLocation.CurrentUser));
         }
 
-        static X509Certificate2 GetOrAdd(string thumbprint, string bytes, X509Store store)
+        public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
+        {
+            var location = (StoreLocation) Enum.Parse(typeof(StoreLocation), storeLocation);
+            var name = (StoreName) Enum.Parse(typeof(StoreName), storeName);
+            return GetOrAdd(variables, certificateVariable, name, location);
+        }
+
+        public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
+        {
+            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
+            var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+            var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
+
+            return GetOrAdd(thumbprint, pfxBytes, password, new X509Store(storeName, storeLocation));
+        }
+
+        #region TODO: Review - Has issues with mgt certs
+
+//        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, string subject, X509Store store, bool privateKeyExportable = false)
+//        {
+//            var certificate = FindCertificateInStore(thumbprint, store);
+//            if (certificate.Some())
+//                return certificate.Value;
+
+//            AddCertificateToStore(bytes, password, subject, store, privateKeyExportable);
+
+//            return FindCertificateInStore(thumbprint, store).Value;
+//        }
+
+//        static Maybe<X509Certificate2> FindCertificateInStore(string thumbprint, X509Store store)
+//        {
+//#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+//            store.Open(OpenFlags.ReadOnly);
+
+//            try
+//            {
+//                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+//                if (found.Count != 0 && found[0].HasPrivateKey)
+//                {
+//                    var certificate = found[0];
+//                    Log.Info($"Located certificate '{certificate.SubjectName.Name}' in Cert:\\{store.Location}\\{store.Name}");
+//                    return certificate.AsSome();
+//                }
+
+//                return Maybe<X509Certificate2>.None;
+//            }
+//            finally
+//            {
+//                store.Close();
+//            }
+//#else
+//            return Maybe<X509Certificate2>.None;
+//#endif
+//        }
+
+//        static void AddCertificateToStore(byte[] certificateBytes, string password, string subject, X509Store store, bool privateKeyExportable)
+//        {
+//#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+//            Log.Info($"Adding certificate '{subject}' into Cert:\\{store.Location}\\{store.Name} {(privateKeyExportable ? " (marked exportable)" : " (not exportable)")}");
+//            try
+//            {
+//                WindowsX509CertificateStore.ImportCertificateToStore(certificateBytes, password, store.Location, store.Name, privateKeyExportable);
+//            }
+//            catch (Exception)
+//            {
+//                Log.Error("Exception while attempting to add certificate to store");
+//                throw;
+//            }
+//#endif
+//        }
+
+        #endregion
+
+        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, X509Store store)
         {
             store.Open(OpenFlags.ReadWrite);
 
@@ -32,7 +106,7 @@ namespace Calamari.Integration.Certificates
                 var certificateFromStore =
                     store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false)
                         .OfType<X509Certificate2>()
-                        .FirstOrDefault(CheckThatCertificateWasLoadedWithPrivateKey);
+                        .FirstOrDefault(CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired);
                 if (certificateFromStore != null)
                 {
                     Log.Verbose("Certificate was found in store");
@@ -40,17 +114,15 @@ namespace Calamari.Integration.Certificates
                 }
 
                 Log.Verbose("Loading certificate from disk");
-                var raw = Convert.FromBase64String(bytes);
                 var file = Path.Combine(Path.GetTempPath(), "Octo-" + Guid.NewGuid());
-
                 try
                 {
-                    File.WriteAllBytes(file, raw);
+                    File.WriteAllBytes(file, bytes);
 
-                    var certificate = LoadCertificateWithPrivateKey(file);
-                    if (CheckThatCertificateWasLoadedWithPrivateKey(certificate) == false)
+                    var certificate = LoadCertificateWithPrivateKey(file, password);
+                    if (CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(certificate) == false)
                     {
-                        certificate = LoadCertificateWithPrivateKey(file);
+                        certificate = LoadCertificateWithPrivateKey(file, password);
                     }
 
                     Log.Info("Adding certificate to store");
@@ -69,17 +141,17 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static X509Certificate2 LoadCertificateWithPrivateKey(string file)
+        static X509Certificate2 LoadCertificateWithPrivateKey(string file, string password)
         {
-            return TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, true)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, true)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, true)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, false)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, false)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false);
+            return TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, true, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, true, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, true, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, false, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, false, password)
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false, password);
         }
 
-        static bool CheckThatCertificateWasLoadedWithPrivateKey(X509Certificate2 certificate)
+        static bool CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(X509Certificate2 certificate)
         {
             try
             {
@@ -90,7 +162,7 @@ namespace Calamari.Integration.Certificates
 
                     try
                     {
-                        string privateKeyPath = CryptUtils.GetKeyFilePath(certificate);
+                        var privateKeyPath = CryptUtils.GetKeyFilePath(certificate);
                         message.AppendLine("The private key file should be located at: " + privateKeyPath);
                         if (!File.Exists(privateKeyPath))
                         {
@@ -141,14 +213,18 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static X509Certificate2 TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey)
+        static X509Certificate2 TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey, string password = null)
         {
             try
             {
-                var cert = new X509Certificate2(file, (string)null, flags);
+                var cert = new X509Certificate2(file, password, flags);
 
+                // ReSharper disable once InvertIf
                 if (!HasPrivateKey(cert) && requirePrivateKey)
+                {
+                    cert.Reset();
                     return null;
+                }
 
                 return cert;
             }
@@ -168,7 +244,7 @@ namespace Calamari.Integration.Certificates
             if (current == null || current.User == null)
                 throw new Exception("There is no current windows identity.");
 
-            DirectoryInfo directoryInfo = new DirectoryInfo(folderPath);
+            var directoryInfo = new DirectoryInfo(folderPath);
             var security = directoryInfo.GetAccessControl();
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             directoryInfo.SetAccessControl(security);
@@ -181,23 +257,23 @@ namespace Calamari.Integration.Certificates
         {
             public static string GetKeyFilePath(X509Certificate2 certificate2)
             {
-                string keyFileName = GetKeyFileName(certificate2);
-                string keyFileDirectory = GetKeyFileDirectory(keyFileName);
+                var keyFileName = GetKeyFileName(certificate2);
+                var keyFileDirectory = GetKeyFileDirectory(keyFileName);
 
                 return Path.Combine(keyFileDirectory, keyFileName);
             }
 
             static string GetKeyFileName(X509Certificate2 cert)
             {
-                IntPtr zero = IntPtr.Zero;
-                bool flag = false;
-                uint dwFlags = 0u;
-                int num = 0;
+                var zero = IntPtr.Zero;
+                var flag = false;
+                const uint dwFlags = 0u;
+                var num = 0;
                 string text = null;
                 if (CryptAcquireCertificatePrivateKey(cert.Handle, dwFlags, IntPtr.Zero, ref zero, ref num, ref flag))
                 {
-                    IntPtr intPtr = IntPtr.Zero;
-                    int num2 = 0;
+                    var intPtr = IntPtr.Zero;
+                    var num2 = 0;
                     try
                     {
                         if (CryptGetProvParam(zero, CryptGetProvParamType.PP_UNIQUE_CONTAINER, IntPtr.Zero, ref num2, 0u))
@@ -232,22 +308,23 @@ namespace Calamari.Integration.Certificates
 
             static string GetKeyFileDirectory(string keyFileName)
             {
-                string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-                string text = Path.Combine(folderPath, "Microsoft", "Crypto", "RSA", "MachineKeys");
-                string[] array = Directory.GetFiles(text, keyFileName);
+                var folderPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                var text = Path.Combine(folderPath, "Microsoft", "Crypto", "RSA", "MachineKeys");
+                var array = Directory.GetFiles(text, keyFileName);
                 string result;
                 if (array.Length <= 0)
                 {
-                    string folderPath2 = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    string path = Path.Combine(folderPath2, "Microsoft", "Crypto", "RSA");
+                    var folderPath2 = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                    var path = Path.Combine(folderPath2, "Microsoft", "Crypto", "RSA");
                     array = Directory.GetDirectories(path);
+                    // ReSharper disable once InvertIf
                     if (array.Length > 0)
                     {
-                        string[] array2 = array;
-                        for (int i = 0; i < array2.Length; i++)
+                        var array2 = array;
+                        foreach (var text2 in array2)
                         {
-                            string text2 = array2[i];
                             array = Directory.GetFiles(text2, keyFileName);
+                            // ReSharper disable once InvertIf
                             if (array.Length != 0)
                             {
                                 result = text2;

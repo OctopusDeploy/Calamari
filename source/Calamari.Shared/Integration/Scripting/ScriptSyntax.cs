@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 
 namespace Calamari.Integration.Scripting
@@ -6,7 +7,7 @@ namespace Calamari.Integration.Scripting
     public enum ScriptSyntax
     {
         [FileExtension("ps1")]
-        Powershell,
+        PowerShell,
 
         [FileExtension("csx")]
         CSharp,
@@ -22,18 +23,19 @@ namespace Calamari.Integration.Scripting
     {
         public static string FileExtension(this ScriptSyntax scriptSyntax)
         {
-            return typeof (ScriptSyntax).GetField(scriptSyntax.ToString())
-                    .GetCustomAttributes(typeof (FileExtensionAttribute), false)
-                    .Select(attr => ((FileExtensionAttribute) attr).Extension)
-                    .FirstOrDefault();
+            return typeof(ScriptSyntax).GetField(scriptSyntax.ToString())
+                .GetCustomAttributes(typeof(FileExtensionAttribute), false)
+                .Select(attr => ((FileExtensionAttribute)attr).Extension)
+                .FirstOrDefault();
         }
 
-        public static ScriptSyntax ToScriptType(this string extension)
+        public static ScriptSyntax FileNameToScriptType(string filename)
         {
-            var scriptTypeField = typeof (ScriptSyntax).GetFields()
+            var extension = Path.GetExtension(filename)?.TrimStart('.');
+            var scriptTypeField = typeof(ScriptSyntax).GetFields()
                 .SingleOrDefault(
-                    field => field.GetCustomAttributes(typeof (FileExtensionAttribute), false)
-                            .Any(attr => ((FileExtensionAttribute) attr).Extension == extension.ToLower()));
+                    field => field.GetCustomAttributes(typeof(FileExtensionAttribute), false)
+                        .Any(attr => ((FileExtensionAttribute)attr).Extension == extension.ToLower()));
 
             if (scriptTypeField != null)
                 return (ScriptSyntax)scriptTypeField.GetValue(null);

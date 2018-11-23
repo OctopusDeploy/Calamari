@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Azure.Accounts;
 using Calamari.Azure.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 using Octostache;
@@ -15,15 +17,22 @@ namespace Calamari.Azure.Deployment.Conventions
 {
     public class ConfigureAzureCloudServiceConvention : IInstallConvention
     {
+        readonly AzureAccount account;
         readonly ICalamariFileSystem fileSystem;
         readonly ISubscriptionCloudCredentialsFactory credentialsFactory;
         readonly IAzureCloudServiceConfigurationRetriever configurationRetriever;
+        private readonly ICertificateStore certificateStore;
 
-        public ConfigureAzureCloudServiceConvention(ICalamariFileSystem fileSystem, ISubscriptionCloudCredentialsFactory subscriptionCloudCredentialsFactory, IAzureCloudServiceConfigurationRetriever configurationRetriever)
+        public ConfigureAzureCloudServiceConvention(AzureAccount account, ICalamariFileSystem fileSystem,
+            ISubscriptionCloudCredentialsFactory subscriptionCloudCredentialsFactory,
+            IAzureCloudServiceConfigurationRetriever configurationRetriever,
+            ICertificateStore certificateStore)
         {
+            this.account = account;
             this.fileSystem = fileSystem;
             this.credentialsFactory = subscriptionCloudCredentialsFactory;
             this.configurationRetriever = configurationRetriever;
+            this.certificateStore = certificateStore;
         }
 
         public void Install(RunningDeployment deployment)
@@ -79,9 +88,8 @@ namespace Calamari.Azure.Deployment.Conventions
             var slot = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), variables.Get(SpecialVariables.Action.Azure.Slot));
 
             var remoteConfigurationFile = configurationRetriever.GetConfiguration(
-                credentialsFactory.GetCredentials(variables.Get(SpecialVariables.Action.Azure.SubscriptionId),
-                    variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                    variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
+                certificateStore,
+                account,
                 serviceName,
                 slot);
 

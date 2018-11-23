@@ -14,17 +14,18 @@ namespace Calamari.Tests.Hooks
         /// This is how we know if this wrapper was called or not
         /// </summary>
         public bool WasCalled { get; private set; } = false;
+        public int Priority => 1;
         public bool Enabled { get; } = true;
         public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(
-            Script script, 
-            CalamariVariableDictionary variables, 
+        public CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
+            CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars)
         {
             WasCalled = true;
-            return NextWrapper.ExecuteScript(script, variables, commandLineRunner, environmentVars);
+            return NextWrapper.ExecuteScript(script, scriptSyntax, variables, commandLineRunner, environmentVars);
         }
     }
 }

@@ -146,7 +146,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     case S3PackageOptions package:
                         yield return UploadUsingPackage(clientFactory, deployment, package);
                         break;
-                    case S3SingleFileSlectionProperties selection:
+                    case S3SingleFileSelectionProperties selection:
                         yield return UploadSingleFileSelection(clientFactory, deployment, selection);
                         break;
                     case S3MultiFileSelectionProperties selection:
@@ -168,46 +168,48 @@ namespace Calamari.Aws.Deployment.Conventions
         private IEnumerable<S3UploadResult> UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
-            Guard.NotNull(selection, "Mutli file selection properties may not be null");
+            Guard.NotNull(selection, "Multi file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
-
-            var files = fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, selection.Pattern).ToList();
+            
+            var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
+         
             if (!files.Any())
             {
                 Log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
                 yield break;
             }
 
-            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files.");
+            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
             var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
             
             new SubstituteInFilesConvention(fileSystem, fileSubstituter,
                     _ => substitutionPatterns.Any(),
                     _ => substitutionPatterns)
                 .Install(deployment);
-
+            
             foreach (var matchedFile in files)
             {
-                yield return CreateRequest(matchedFile, GetBucketKey(fileSystem, matchedFile, new S3MultiFileSelectionBucketKeyAdapter(selection)), selection)
-                    .Tee(x => LogPutObjectRequest(matchedFile, x))
+                
+                yield return CreateRequest(matchedFile.FilePath, () => $"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath}", selection)
+                    .Tee(x => LogPutObjectRequest(matchedFile.FilePath, x))
                     //We only warn on multi file uploads 
                     .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));
             }
         }
-
+      
         /// <summary>
         /// Uploads a single file with the given properties
         /// </summary>
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        public S3UploadResult UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSlectionProperties selection)
+        public S3UploadResult UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Single file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
-            var filePath = Path.Combine(deployment.CurrentDirectory, selection.Path);
+            var filePath = Path.Combine(deployment.StagingDirectory, selection.Path);
 
             if (!fileSystem.FileExists(filePath))
             {
@@ -219,7 +221,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 _ => new List<string>{ filePath })
                 .Install(deployment);
     
-            return CreateRequest(filePath, GetBucketKey(fileSystem, filePath, selection), selection)
+            return CreateRequest(filePath, GetBucketKey(Path.GetDirectoryName(filePath), filePath, selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
                     .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -237,7 +239,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
             return CreateRequest(deployment.PackageFilePath,
-                    GetBucketKey(fileSystem, deployment.PackageFilePath, options), options)
+                    GetBucketKey(Path.GetDirectoryName(deployment.PackageFilePath), deployment.PackageFilePath, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -269,14 +271,14 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        private static Func<string> GetBucketKey(ICalamariFileSystem fileSystem, string filePath, IHaveBucketKeyBehaviour behaviour)
+        public static Func<string> GetBucketKey(string baseDir, string filePath, IHaveBucketKeyBehaviour behaviour)
         {
             switch (behaviour.BucketKeyBehaviour)
             {
                 case BucketKeyBehaviourType.Custom:
                     return () => behaviour.BucketKey;
                 case BucketKeyBehaviourType.Filename:
-                    return () => $"{behaviour.BucketKeyPrefix}{fileSystem.GetFileName(filePath)}";
+                    return () => $"{behaviour.BucketKeyPrefix}{filePath.AsRelativePathFrom(baseDir)}";
                 default:
                     throw new NotImplementedException();
             }

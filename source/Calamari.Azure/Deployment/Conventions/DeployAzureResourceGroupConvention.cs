@@ -22,21 +22,19 @@ namespace Calamari.Azure.Deployment.Conventions
 {
     public class DeployAzureResourceGroupConvention : IInstallConvention
     {
-        private static readonly ITemplateReplacement TemplateReplacement = new TemplateReplacement();
-        
         readonly string templateFile;
         readonly string templateParametersFile;
         private readonly bool filesInPackage;
-        readonly ICalamariFileSystem fileSystem;
+        private readonly TemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
 
         public DeployAzureResourceGroupConvention(string templateFile, string templateParametersFile, bool filesInPackage, 
-            ICalamariFileSystem fileSystem, IResourceGroupTemplateNormalizer parameterNormalizer)
+            TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer)
         {
             this.templateFile = templateFile;
             this.templateParametersFile = templateParametersFile;
             this.filesInPackage = filesInPackage;
-            this.fileSystem = fileSystem;
+            this.templateService = templateService;
             this.parameterNormalizer = parameterNormalizer;
         }
 
@@ -61,9 +59,9 @@ namespace Calamari.Azure.Deployment.Conventions
                     : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = TemplateReplacement.ResolveAndSubstituteFile(fileSystem, templateFile, filesInPackage, variables); 
+            var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackage, variables); 
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile) 
-                ? parameterNormalizer.Normalize(TemplateReplacement.ResolveAndSubstituteFile(fileSystem, templateParametersFile, filesInPackage, variables))
+                ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackage, variables))
                 : null;
 
             Log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
@@ -111,18 +109,26 @@ namespace Calamari.Azure.Deployment.Conventions
 
             using (var armClient = createArmClient())
             {
-                var createDeploymentResult = armClient.Deployments.CreateOrUpdate(resourceGroupName, deploymentName,
-                    new Microsoft.Azure.Management.ResourceManager.Models.Deployment
-                    {
-                        Properties = new DeploymentProperties
+                try
+                {
+                    var createDeploymentResult = armClient.Deployments.BeginCreateOrUpdate(resourceGroupName,
+                        deploymentName,
+                        new Microsoft.Azure.Management.ResourceManager.Models.Deployment
                         {
-                            Mode = deploymentMode,
-                            Template = template,
-                            Parameters = parameters
-                        }
-                    });
+                            Properties = new DeploymentProperties
+                            {
+                                Mode = deploymentMode, Template = template, Parameters = parameters
+                            }
+                        });
 
-                Log.Info($"Deployment created: {createDeploymentResult.Id}");
+                    Log.Info($"Deployment created: {createDeploymentResult.Id}");
+                }
+                catch (Microsoft.Rest.Azure.CloudException ex)
+                {
+                    Log.Error("Error submitting deployment");
+                    Log.Error(ex.Message);
+                    LogCloudError(ex.Body, 0);       
+                }
             }
         }
 
@@ -192,7 +198,7 @@ namespace Calamari.Azure.Deployment.Conventions
             {
                 if (operation?.Properties == null)
                     continue;
-
+                
                 log.AppendLine($"Resource: {operation.Properties.TargetResource?.ResourceName}");
                 log.AppendLine($"Type: {operation.Properties.TargetResource?.ResourceType}");
                 log.AppendLine($"Timestamp: {operation.Properties.Timestamp?.ToLocalTime():s}");
@@ -219,6 +225,35 @@ namespace Calamari.Azure.Deployment.Conventions
             foreach (var output in outputs)
             {
                 Log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
+            }
+        }
+
+        static void LogCloudError(Microsoft.Rest.Azure.CloudError error, int count)
+        {
+            if (count > 5)
+            {
+                return;
+            }
+
+            if (error != null)
+            {   
+                string indent = new string(' ', count * 4);
+                if (!string.IsNullOrEmpty(error.Message))
+                {
+                    Log.Error($"{indent}Message: {error.Message}"); 
+                }
+                if (!string.IsNullOrEmpty(error.Code))
+                {
+                    Log.Error($"{indent}Code: {error.Code}"); 
+                }
+                if (!string.IsNullOrEmpty(error.Target))
+                {
+                    Log.Error($"{indent}Target: {error.Target}"); 
+                }
+                foreach (var errorDetail in error.Details)
+                {
+                    LogCloudError(errorDetail, ++count);
+                }
             }
         }
     }

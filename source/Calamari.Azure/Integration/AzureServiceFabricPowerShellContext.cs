@@ -27,16 +27,18 @@ namespace Calamari.Azure.Integration
             this.variables = variables;
         }
 
+        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
+
         public bool Enabled =>
             !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
 
         public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(
-            Script script,
+        public CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null)
+            StringDictionary environmentVars)
         {
             // We only execute this hook if the connection endpoint has been set
             if (!Enabled)
@@ -81,7 +83,7 @@ namespace Calamari.Azure.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
             }
         }
 

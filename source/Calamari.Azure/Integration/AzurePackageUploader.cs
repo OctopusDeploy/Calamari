@@ -6,10 +6,12 @@ using System.Net;
 using System.Text;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
-using Microsoft.WindowsAzure;
+using Microsoft.Azure;
+using Microsoft.WindowsAzure.Management.Storage;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.Shared.Protocol;
 
 namespace Calamari.Azure.Integration
 {
@@ -24,6 +26,7 @@ namespace Calamari.Azure.Integration
 
             var blobClient = cloudStorage.CreateCloudBlobClient();
             var container = blobClient.GetContainerReference(OctopusPackagesContainerName);
+            
             container.CreateIfNotExists();
 
             var permission = container.GetPermissions();
@@ -105,13 +108,14 @@ namespace Calamari.Azure.Integration
                         packageBlob.PutBlockList(blocklist);
                         break;
                     }
-
+                    
                     var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(id.ToString(CultureInfo.InvariantCulture).PadLeft(30, '0')));
                     packageBlob.PutBlock(blockId, new MemoryStream(data, 0, read, true), null);
                     blocklist.Add(blockId);
 
                     uploadedSoFar += read;
 
+                    Log.ServiceMessages.Progress((int) ((uploadedSoFar * 100)/fileInfo.Length), "Uploading package to blob storage");
                     Log.VerboseFormat("Uploading package to blob storage: {0} of {1}", uploadedSoFar.ToFileSizeString(), fileInfo.Length.ToFileSizeString());
                 }
             }
@@ -121,7 +125,7 @@ namespace Calamari.Azure.Integration
 
         static string GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
         {
-            using (var cloudClient = CloudContext.Clients.CreateStorageManagementClient(credentials,new Uri(serviceManagementEndpoint)))
+            using (var cloudClient = new StorageManagementClient(credentials, new Uri(serviceManagementEndpoint)))
             {
                 var getKeysResponse = cloudClient.StorageAccounts.GetKeys(storageAccountName);
 

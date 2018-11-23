@@ -14,6 +14,8 @@ namespace Calamari.Hooks
 
         public bool Enabled { get; } = true;
 
+        public int Priority => ScriptWrapperPriorities.TerminalScriptPriority;
+
         public IScriptWrapper NextWrapper
         {
             get => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
@@ -25,9 +27,9 @@ namespace Calamari.Hooks
             this.scriptEngine = scriptEngine;
         }
 
-        public CommandResult ExecuteScript(
-            Script script, 
-            CalamariVariableDictionary variables, 
+        public CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
+            CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars) => 
             scriptEngine.Execute(script, variables, commandLineRunner, environmentVars);

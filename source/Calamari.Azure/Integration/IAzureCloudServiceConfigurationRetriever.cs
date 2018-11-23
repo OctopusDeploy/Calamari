@@ -1,11 +1,12 @@
 ﻿using System.Xml.Linq;
-using Microsoft.WindowsAzure;
+using Calamari.Azure.Accounts;
+using Calamari.Integration.Certificates;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 
 namespace Calamari.Azure.Integration
 {
     public interface IAzureCloudServiceConfigurationRetriever
     {
-        XDocument GetConfiguration(SubscriptionCloudCredentials credentials, string serviceName, DeploymentSlot slot);
+        XDocument GetConfiguration(ICertificateStore certificateStore, AzureAccount account, string serviceName, DeploymentSlot slot);
     }
 }

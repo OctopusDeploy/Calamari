@@ -60,8 +60,13 @@ namespace Calamari.Aws.Integration
         {
             account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
-            accessKey = variables.Get(account + ".AccessKey")?.Trim();
-            secretKey = variables.Get(account + ".SecretKey")?.Trim();
+            // When building the context for an AWS step, there will be a variable expanded with the keys
+            accessKey = variables.Get(account + ".AccessKey")?.Trim() ??
+                        // When building a context with an account associated with a target, the keys are under Octopus.Action.Amazon.
+                        // The lack of any keys means we rely on an EC2 instance role.
+                        variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
+            secretKey = variables.Get(account + ".SecretKey")?.Trim() ??
+                        variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleSession = variables.Get("Octopus.Action.Aws.AssumedRoleSession")?.Trim();
@@ -120,9 +125,13 @@ namespace Calamari.Aws.Integration
                     .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
                     // Any response is considered valid
                     .Map(response => true);
+
             }
             catch (AmazonServiceException ex)
             {
+                Log.Error("Error occured while verifying login");
+                Log.Error(ex.Message);
+                Log.Error(ex.StackTrace);
                 // Any exception is considered to be a failed login
                 return false;
             }
@@ -222,17 +231,18 @@ namespace Calamari.Aws.Integration
             }
         }
 
+        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
         public bool Enabled { get; } = true;
         public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(
-            Script script, 
-            CalamariVariableDictionary variables, 
+        public CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
+            CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars)
         {
             return NextWrapper.ExecuteScript(
-                script, 
+                script, scriptSyntax, 
                 variables, 
                 commandLineRunner,
                 environmentVars.MergeDictionaries(EnvironmentVars));

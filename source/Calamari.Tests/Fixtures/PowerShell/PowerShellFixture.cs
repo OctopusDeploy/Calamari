@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using Assent;
 using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using Calamari.Util.Environments;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -17,6 +21,12 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [TestFixture]
     public class PowerShellFixture : CalamariFixture
     {
+        [TearDown]
+        public void Teardown()
+        {
+            ResetProxyEnvironmentVariables();
+        }
+
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         [TestCase("2", "PSVersion                      2.0")]
@@ -104,7 +114,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
             output.AssertSuccess();
-            output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is depricated.");
+            output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
             output.AssertOutput("Hello!");
         }
 
@@ -137,24 +147,29 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldCallHelloWithAdditionalBase64Variable()
+        public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
+            var outputVariablesFile = Path.GetTempFileName();
+            
             var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" } ;
             var serialized = JsonConvert.SerializeObject(variables);
-            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(serialized));
-
-            var (output, _) = RunScript("OuputVariableFromPrevious.ps1", null, new Dictionary<string, string>()
+            var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
+            var encoded = Convert.ToBase64String(bytes);
+            File.WriteAllText(outputVariablesFile, encoded);
+            
+            using (new TemporaryFile(outputVariablesFile))
             {
-                ["base64Variables"] = encoded
-            });
+                var (output, _) = RunScript("OutputVariableFromPrevious.ps1", null,
+                    new Dictionary<string, string>() {["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg=="});
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello Steve");
+                output.AssertSuccess();
+                output.AssertOutput("Hello Steve");
+            }
         }
 
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldConsumeParametersWithQuotesUsingDepricatedArgument()
+        public void ShouldConsumeParametersWithQuotesUsingDeprecatedArgument()
         {
             var (output, _) = RunScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
             {
@@ -483,10 +498,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
-        public void ThrowsExceptionOnNixOrMac()
+        public void PowershellThrowsExceptionOnNixOrMac()
         {
             var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("Powershell scripts are not supported on this platform");
+            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
         }
 
         [Test]
@@ -497,6 +512,152 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("45\r\n226\r\n128\r\n147");
+        }
+
+
+        [Test]
+        public void ShouldAllowPlatformSpecificScriptToExecute()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput(CalamariEnvironment.IsRunningOnWindows ? "Hello Powershell" : "Hello Bash");
+            }
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyConfigured_ShouldSetEnvironmentVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: http://{proxyHost}:{proxyPort}");
+            output.AssertOutputContains($"HTTPS_PROXY: http://{proxyHost}:{proxyPort}");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyWithAuthConfigured_ShouldSetEnvironmentVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            var proxyUsername = "username";
+            var proxyPassword = "password";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", proxyUsername);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", proxyPassword);
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: http://{proxyUsername}:{proxyPassword}@{proxyHost}:{proxyPort}");
+            output.AssertOutputContains($"HTTPS_PROXY: http://{proxyUsername}:{proxyPassword}@{proxyHost}:{proxyPort}");
+        }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyEnvironmentAlreadyConfigured_ShouldSetNotSetVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            var httpProxy = "http://proxy:port";
+            var httpsProxy = "http://proxy2:port";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", httpProxy );
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", httpsProxy );
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: {httpProxy}");
+            output.AssertOutputContains($"HTTPS_PROXY: {httpsProxy}");
+
+            ResetProxyEnvironmentVariables();
+        }
+
+#if NETFX
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxySetToSystem_ShouldSetVariablesCorrectly()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var (output, _) = RunScript("Proxy.ps1");
+            var systemProxyUri = System.Net.WebRequest.GetSystemWebProxy().GetProxy(new Uri(@"https://octopus.com"));
+            if (systemProxyUri.Host == "octopus.com")
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: ");
+                output.AssertOutputContains($"HTTPS_PROXY: ");
+            }
+            else
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+                output.AssertOutputContains($"HTTPS_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+            }
+        }
+#endif
+
+#if NETFX
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ProxyNoConfig_ShouldSetNotSetVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var (output, _) = RunScript("Proxy.ps1");
+            var systemProxyUri = System.Net.WebRequest.GetSystemWebProxy().GetProxy(new Uri(@"http://octopus.com"));
+            if (systemProxyUri.Host == "octopus.com")
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: ");
+                output.AssertOutputContains($"HTTPS_PROXY: ");
+            }
+            else
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+                output.AssertOutputContains($"HTTPS_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+            }
+        }
+#endif
+
+
+        private void ResetProxyEnvironmentVariables()
+        {
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", string.Empty);
         }
     }
 }

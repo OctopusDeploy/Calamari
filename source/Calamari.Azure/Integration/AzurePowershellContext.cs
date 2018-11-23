@@ -36,13 +36,15 @@ namespace Calamari.Azure.Integration
             this.variables = variables;
         }
 
+        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
+
         public bool Enabled => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
                                string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
 
         public IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(
-            Script script,
+        public CommandResult ExecuteScript(Script script,
+            ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars)
@@ -76,14 +78,14 @@ namespace Calamari.Azure.Integration
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
                 {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), variables, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
                 }
             }
         }
@@ -102,7 +104,7 @@ namespace Calamari.Azure.Integration
             var certificatePassword = GenerateCertificatePassword();
             var azureCertificate = certificateStore.GetOrAdd(
                 variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                variables.Get(SpecialVariables.Action.Azure.CertificateBytes),
+                Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                 StoreName.My);
 
             variables.Set("OctopusAzureCertificateFileName", certificateFilePath);

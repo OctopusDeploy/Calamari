@@ -1,4 +1,7 @@
-﻿namespace Calamari.Deployment
+﻿using System.ComponentModel;
+using Calamari.Integration.Scripting;
+
+namespace Calamari.Deployment
 {
     public static class SpecialVariables
     {
@@ -47,6 +50,7 @@
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
         
         public static readonly string CopyWorkingDirectoryIncludingKeyTo = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
+        public static readonly string CalamariWorkingDirectory = "OctopusCalamariWorkingDirectory";
 
         public static class Bootstrapper
         {
@@ -144,6 +148,46 @@
             }
         }
 
+        public static class Packages
+        {
+            public static readonly string PackageCollection = "Octopus.Action.Package";
+
+            public static string PackageId(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageId";
+            }
+
+            public static string PackageVersion(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageVersion";
+            }
+
+            public static string OriginalPath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].OriginalPath";
+            }
+            
+            public static string Extract(string key)
+            {
+                return $"Octopus.Action.Package[{key}].Extract";
+            }
+
+            public static string ExtractedPath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].ExtractedPath";
+            }
+            
+            public static string PackageFileName(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageFileName";
+            }
+
+            public static string PackageFilePath(string key)
+            {
+                return $"Octopus.Action.Package[{key}].PackageFilePath";
+            }
+        }
+
         public static class Vhd
         {
             public static readonly string ApplicationPath = "Octopus.Action.Vhd.ApplicationPath";
@@ -169,6 +213,8 @@
             public const string Vhd = "Octopus.Features.Vhd";
             public const string ConfigurationTransforms = "Octopus.Features.ConfigurationTransforms";
         }
+
+     
 
         public static class Action
         {
@@ -243,6 +289,7 @@
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
+                public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
                 public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";
                 public static readonly string AppOffline = "Octopus.Action.Azure.AppOffline";
                 public static readonly string PreserveAppData = "Octopus.Action.Azure.PreserveAppData";
@@ -312,6 +359,22 @@
                 public static readonly string ScriptFileName = "Octopus.Action.Script.ScriptFileName";
                 public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
                 public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
+                public static readonly string ExitCode = "Octopus.Action.Script.ExitCode";
+
+                public static string ScriptBodyBySyntax(ScriptSyntax syntax)
+                {
+                    return $"Octopus.Action.Script.ScriptBody[{syntax.ToString()}]";
+                }
+            }
+            
+            public static class CustomScripts
+            {
+                public static readonly string Prefix = "Octopus.Action.CustomScripts.";
+
+                public static string GetCustomScriptStage(string deploymentStage, ScriptSyntax scriptSyntax)
+                {
+                    return $"{Prefix}{deploymentStage}.{scriptSyntax.FileExtension()}";
+                }
             }
 
             public static class Java
@@ -350,11 +413,25 @@
                     public static readonly string ServerType = "WildFly.Deploy.ServerType";
                 }
             }
+
+            public static class Nginx
+            {
+                public static readonly string ConfigRoot = "Octopus.Action.Nginx.ConfigurationsDirectory";
+                public static readonly string SslRoot = "Octopus.Action.Nginx.CertificatesDirectory";
+                
+                public static class Server
+                {
+                    public static readonly string HostName = "Octopus.Action.Nginx.Server.HostName";
+                    public static readonly string Bindings = "Octopus.Action.Nginx.Server.Bindings";
+                    public static readonly string Locations = "Octopus.Action.Nginx.Server.Locations";
+                }
+            }
         }
 
         public static class Machine
         {
             public const string Name = "Octopus.Machine.Name";
+            public const string DeploymentTargetType = "Octopus.Machine.DeploymentTargetType";
         }
 
         public static class Account

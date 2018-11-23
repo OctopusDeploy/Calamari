@@ -11,7 +11,7 @@ namespace Calamari.Aws.Serialization
         static readonly IDictionary<S3FileSelectionTypes, Type> SelectionTypeMappings =
             new Dictionary<S3FileSelectionTypes, Type>
             {
-                {S3FileSelectionTypes.SingleFile, typeof(S3SingleFileSlectionProperties)},
+                {S3FileSelectionTypes.SingleFile, typeof(S3SingleFileSelectionProperties)},
                 {S3FileSelectionTypes.MultipleFiles, typeof(S3MultiFileSelectionProperties)}
             };
 

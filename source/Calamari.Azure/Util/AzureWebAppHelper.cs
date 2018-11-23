@@ -1,24 +1,35 @@
 ﻿using System;
+using Calamari.Azure.Integration.Websites.Publishing;
 
 namespace Calamari.Azure.Util
 {
     public static class AzureWebAppHelper
     {
-        public static string ConvertLegacyAzureWebAppSlotNames(string siteName)
+        public static AzureTargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string slotName)
         {
-            if (!siteName.EndsWith(")")) return siteName;
+            AzureTargetSite targetSite = new AzureTargetSite {RawSite = siteAndMaybeSlotName};
 
-            // This is an older site that was established with the legacy Azure site and slot names, convert to new "/" style.
-            var finalSiteName = siteName.Trim().Replace("(", "/").Replace(")", "");
-            Log.Verbose($"Converting legacy siteName {siteName} to use the new style expected by Azure SDK {finalSiteName}");
-            return finalSiteName;
-        }
+            if (siteAndMaybeSlotName.Contains("("))
+            {
+                // legacy site and slot "site(slot)"
+                var parenthesesIndex = siteAndMaybeSlotName.IndexOf("(", StringComparison.Ordinal);
+                targetSite.Site = siteAndMaybeSlotName.Substring(0, parenthesesIndex).Trim();
+                targetSite.Slot = siteAndMaybeSlotName.Substring(parenthesesIndex + 1).Replace(")", string.Empty).Trim();
+                return targetSite;
+            }
 
-        public static string GetSiteNameFromSiteAndSlotName(string siteAndSlotName)
-        {
-            var currentSiteAndSlotName = ConvertLegacyAzureWebAppSlotNames(siteAndSlotName);
-            var slashIndex = currentSiteAndSlotName.IndexOf("/", StringComparison.Ordinal);
-            return slashIndex == -1 ? currentSiteAndSlotName : currentSiteAndSlotName.Substring(0, slashIndex);
+            if (siteAndMaybeSlotName.Contains("/"))
+            {
+                // "site/slot"
+                var slashIndex = siteAndMaybeSlotName.IndexOf("/", StringComparison.Ordinal);
+                targetSite.Site = siteAndMaybeSlotName.Substring(0, slashIndex).Trim();
+                targetSite.Slot = siteAndMaybeSlotName.Substring(slashIndex + 1).Trim();
+                return targetSite;
+            }
+
+            targetSite.Site = siteAndMaybeSlotName;
+            targetSite.Slot = slotName;
+            return targetSite;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using Microsoft.WindowsAzure;
+using Microsoft.Azure;
 
 namespace Calamari.Azure.Integration
 {
