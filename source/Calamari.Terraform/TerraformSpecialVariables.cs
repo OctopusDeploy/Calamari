@@ -22,8 +22,8 @@
             {           
                 public const string Template = "Octopus.Action.Terraform.Template";
                 public const string TemplateParameters = "Octopus.Action.Terraform.TemplateParameters";
-                public const string ManagedAccountDeprecatedUsedOnlyForAWS = "Octopus.Action.Terraform.ManagedAccount";                                
-                public const string ManagedAccounts = "Octopus.Action.Terraform.ManagedAccounts";                                
+                public const string AWSManagedAccount = "Octopus.Action.Terraform.ManagedAccount";                                
+                public const string AzureManagedAccount = "Octopus.Action.Terraform.ManagedAccount.Azure";                                
                 public const string AllowPluginDownloads = "Octopus.Action.Terraform.AllowPluginDownloads";                                
                 public const string PluginsDirectory = "Octopus.Action.Terraform.PluginsDirectory";
                 public const string TemplateDirectory = "Octopus.Action.Terraform.TemplateDirectory";

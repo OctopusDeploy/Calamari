@@ -45,29 +45,18 @@ namespace Calamari.Terraform
 
             var environmentVariables = new StringDictionary();
 
-            var oldAccountStyle = variables.Get(TerraformSpecialVariables.Action.Terraform.ManagedAccountDeprecatedUsedOnlyForAWS);
-            var managedAccounts = variables.GetStrings(TerraformSpecialVariables.Action.Terraform.ManagedAccounts, ',');
+            var useAWSAccount = variables.Get(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "None") == "AWS";
+            var useAzureAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount);
 
-            if (oldAccountStyle != null)
+            if (useAWSAccount)
             {
-                if (managedAccounts.Contains(oldAccountStyle))
-                {
-                    managedAccounts.Add(oldAccountStyle);
-                }
+                var awsEnvironmentGeneration = new AwsEnvironmentGeneration(variables);
+                environmentVariables = environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
             }
 
-            foreach (var managedAccount in managedAccounts)
+            if (useAzureAccount)
             {
-                switch (managedAccount)
-                {
-                    case "AWS":
-                        var awsEnvironmentGeneration = new AwsEnvironmentGeneration(variables);
-                        environmentVariables = environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
-                        break;
-                    case "Azure":
-                        environmentVariables = environmentVariables.MergeDictionaries(AzureEnvironmentVariables(variables));
-                        break;
-                }
+                environmentVariables = environmentVariables.MergeDictionaries(AzureEnvironmentVariables(variables));
             }
 
             Execute(deployment, environmentVariables);
@@ -97,8 +86,8 @@ namespace Calamari.Terraform
             {
                 {"ARM_SUBSCRIPTION_ID", variables.Get(SpecialVariables.Action.Azure.SubscriptionId)},
                 {"ARM_CLIENT_ID", variables.Get(SpecialVariables.Action.Azure.ClientId)},
-                {"ARM_CLIENT_SECRET", variables.Get(SpecialVariables.Action.Azure.TenantId)},
-                {"ARM_TENANT_ID", variables.Get(SpecialVariables.Action.Azure.Password)},
+                {"ARM_CLIENT_SECRET", variables.Get(SpecialVariables.Action.Azure.Password)},
+                {"ARM_TENANT_ID", variables.Get(SpecialVariables.Action.Azure.TenantId)},
                 {"ARM_ENVIRONMENT", environmentName}
             };
 

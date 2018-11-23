@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -116,6 +117,69 @@ namespace Calamari.Tests.Terraform
                 .Should().Contain("SubFolder\\example.tf");
         }
 
+        [Test]
+        public void AzureIntegration()
+        {
+            void PopulateVariables(VariableDictionary _)
+            {
+                _.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
+                _.Set(SpecialVariables.Action.Azure.SubscriptionId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_SubscriptionId"));
+                _.Set(SpecialVariables.Action.Azure.TenantId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_TenantId"));
+                _.Set(SpecialVariables.Action.Azure.ClientId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId"));
+                _.Set(SpecialVariables.Action.Azure.Password, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
+                _.Set("Hello", "Hello World from Azure");
+                _.Set(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, true.ToString());
+            }
+
+            ExecuteAndReturnLogOutput<PlanCommand>(PopulateVariables, "Azure")
+                .Should().Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
+
+            ExecuteAndReturnLogOutput<ApplyCommand>(PopulateVariables, "Azure")
+                .Should().Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'http://terraformtestaccount.blob.core.windows.net/terraformtestcontainer/test.txt'");
+
+            string fileData;
+            using (var client = new WebClient())
+            {
+                fileData = client.DownloadString("http://terraformtestaccount.blob.core.windows.net/terraformtestcontainer/test.txt");
+            }
+
+            fileData.Should().Be("Hello World from Azure");
+
+            ExecuteAndReturnLogOutput<DestroyCommand>(PopulateVariables, "Azure")
+                .Should().Contain("destroy -force -no-color");
+        }
+
+        [Test]
+        public void AWSIntegration()
+        {
+            void PopulateVariables(VariableDictionary _)
+            {
+                _.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
+                _.Set("Octopus.Action.Amazon.AccessKey", Environment.GetEnvironmentVariable("AWS.E2E.AccessKeyId"));
+                _.Set("Octopus.Action.Amazon.SecretKey", Environment.GetEnvironmentVariable("AWS.E2E.SecretKeyId"));
+                _.Set("Octopus.Action.Aws.Region", "ap-southeast-1");
+                _.Set("Hello", "Hello World from AWS");
+                _.Set(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
+            }
+
+            ExecuteAndReturnLogOutput<PlanCommand>(PopulateVariables, "AWS")
+                .Should().Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
+
+            ExecuteAndReturnLogOutput<ApplyCommand>(PopulateVariables, "AWS")
+                .Should().Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'https://cfe2e-terraformtestbucket.s3.amazonaws.com/test.txt'");
+
+            string fileData;
+            using (var client = new WebClient())
+            {
+                fileData = client.DownloadString("https://cfe2e-terraformtestbucket.s3.amazonaws.com/test.txt");
+            }
+
+            fileData.Should().Be("Hello World from AWS");
+
+            ExecuteAndReturnLogOutput<DestroyCommand>(PopulateVariables, "AWS")
+                .Should().Contain("destroy -force -no-color");
+        }
+
         string ExecuteAndReturnLogOutput(Type commandType, Action<VariableDictionary> populateVariables, string folderName)
         {
             void Copy(string sourcePath, string destinationPath)
@@ -159,7 +223,11 @@ namespace Calamari.Tests.Terraform
                     result.Should().Be(0);
                 }
 
-                return sb.ToString();
+                var output = sb.ToString();
+
+                Console.WriteLine(output);
+
+                return output;
             }
         }
 
