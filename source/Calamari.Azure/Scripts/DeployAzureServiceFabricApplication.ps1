@@ -125,7 +125,7 @@ $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
 $AppTypeVersion = $manifestXml.ApplicationManifest.ApplicationTypeVersion
 $AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.ApplicationParameterFile
 $AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
- 
+
 if ($IsUpgrade -and $AppExists)
 {
     $Action = "RegisterAndUpgrade"
@@ -176,14 +176,13 @@ else
     if ($DeployOnly) {
         $Action = "Register"
     }
-	
-	#If type exists and the versions matches only create the application
-	$TypeExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
-	if ($TypeExists) 
-	{
-		$Action = "Create"
-	}
     
+    #If type exists and the versions matches only create the application
+    $TypeExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
+    if ($TypeExists) {
+        $Action = "Create"
+    }
+
     $parameters = @{
         ApplicationPackagePath =  $ApplicationPackagePath
         ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
@@ -200,12 +199,12 @@ else
     if ($RegisterApplicationTypeTimeoutSec) {
         Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
         if (!$timeoutParamMissing) {
-            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec    
+            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
         } else {
             Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
         }
     }
-        
+
     Write-Verbose "Calling Publish-NewServiceFabricApplication"
     Write-Verbose "Parameters: "
     Write-Verbose $($parameters | Out-String)
