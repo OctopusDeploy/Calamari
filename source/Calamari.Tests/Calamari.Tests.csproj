@@ -175,6 +175,9 @@
     <None Update="Terraform\Azure\test.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Terraform\PlanDetailedExitCode\example.tf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Terraform\TemplateDirectory\SubFolder\example.tf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

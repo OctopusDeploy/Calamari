@@ -8,8 +8,11 @@ namespace Calamari.Terraform
 {
     public class PlanTerraformConvention : TerraformConvention
     {
-        public PlanTerraformConvention(ICalamariFileSystem fileSystem, IFileSubstituter fileSubstituter) : base(fileSystem, fileSubstituter)
+        private readonly string extraParameter;
+
+        public PlanTerraformConvention(ICalamariFileSystem fileSystem, IFileSubstituter fileSubstituter, string extraParameter = "") : base(fileSystem, fileSubstituter)
         {
+            this.extraParameter = extraParameter;
         }
 
         protected override void Execute(RunningDeployment deployment, StringDictionary environmentVariables)
@@ -17,7 +20,16 @@ namespace Calamari.Terraform
             string results;
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment))
             {
-                results = cli.ExecuteCommand(environmentVariables, "plan", "-no-color", cli.TerraformVariableFiles, cli.ActionParams);
+                var resultCode = cli.ExecuteCommand(environmentVariables, out results, out var commandResult, "plan", "-no-color", "-detailed-exitcode", extraParameter, cli.TerraformVariableFiles, cli.ActionParams);
+
+                if (resultCode == 1)
+                {
+                    commandResult.VerifySuccess();
+                }
+
+                Log.Info(
+                    $"Saving variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.{TerraformSpecialVariables.Action.Terraform.PlanDetailedExitCode}' with the detailed exit code of the plan, with value '{resultCode}'.");
+                Log.SetOutputVariable(TerraformSpecialVariables.Action.Terraform.PlanDetailedExitCode, resultCode.ToString());
             }
 
             Log.Info(

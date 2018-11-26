@@ -35,6 +35,7 @@
                 public const string AdditionalActionParams = "Octopus.Action.Terraform.AdditionalActionParams";
                 public const string VarFiles = "Octopus.Action.Terraform.VarFiles";                
                 public const string PlanOutput = "TerraformPlanOutput";                
+                public const string PlanDetailedExitCode = "TerraformPlanDetailedExitCode";                
             }
         }
 

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using Calamari.Commands.Support;
@@ -180,7 +182,32 @@ namespace Calamari.Tests.Terraform
                 .Should().Contain("destroy -force -no-color");
         }
 
+
+        [Test]
+        public void PlanDetailedExitCode()
+        {
+            var outputs = ExecuteAndReturnLogOutput(_ => { }, "PlanDetailedExitCode", typeof(PlanCommand), typeof(ApplyCommand),
+                typeof(PlanCommand)).GetEnumerator();
+
+            outputs.MoveNext();
+            outputs.Current.Should()
+                .Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformPlanDetailedExitCode' with the detailed exit code of the plan, with value '2'");
+
+            outputs.MoveNext();
+            outputs.Current.Should()
+                .Contain("apply -no-color -auto-approve");
+
+            outputs.MoveNext();
+            outputs.Current.Should()
+                .Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformPlanDetailedExitCode' with the detailed exit code of the plan, with value '0'");
+        }
+
         string ExecuteAndReturnLogOutput(Type commandType, Action<VariableDictionary> populateVariables, string folderName)
+        {
+            return ExecuteAndReturnLogOutput(populateVariables, folderName, commandType).Single();
+        }
+
+        IEnumerable<string> ExecuteAndReturnLogOutput(Action<VariableDictionary> populateVariables, string folderName, params Type[] commandTypes)
         {
             void Copy(string sourcePath, string destinationPath)
             {
@@ -212,22 +239,25 @@ namespace Calamari.Tests.Terraform
 
                 variables.Save(variablesFile);
 
-                var sb = new StringBuilder();
-                Log.StdOut = new IndentedTextWriter(new StringWriter(sb));
-
                 using (new TemporaryFile(variablesFile))
                 {
-                    var command = (ICommand)Activator.CreateInstance(commandType);
-                    var result = command.Execute(new[] {"--variables", $"{variablesFile}",});
+                    foreach (var commandType in commandTypes)
+                    {
+                        var sb = new StringBuilder();
+                        Log.StdOut = new IndentedTextWriter(new StringWriter(sb));
 
-                    result.Should().Be(0);
+                        var command = (ICommand) Activator.CreateInstance(commandType);
+                        var result = command.Execute(new[] {"--variables", $"{variablesFile}"});
+
+                        result.Should().Be(0);
+
+                        var output = sb.ToString();
+
+                        Console.WriteLine(output);
+
+                        yield return output;
+                    }
                 }
-
-                var output = sb.ToString();
-
-                Console.WriteLine(output);
-
-                return output;
             }
         }
 

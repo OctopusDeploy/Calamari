@@ -74,6 +74,13 @@ namespace Calamari.Terraform
             return commandResult.ExitCode;
         }
 
+        public int ExecuteCommand(StringDictionary environmentVariables, out string result, out CommandResult commandResult, params string[] arguments)
+        {
+            commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result, environmentVariables);
+
+            return commandResult.ExitCode;
+        }
+
         public void Dispose()
         {
             if (AttachLogFile)
