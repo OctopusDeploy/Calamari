@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net452;netstandard2.0;net40</TargetFrameworks>
+    <TargetFrameworks>net452;netcoreapp2.0;net40</TargetFrameworks>
     <OutputType>Library</OutputType>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Shared</AssemblyName>
@@ -27,7 +27,7 @@
     <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
@@ -38,13 +38,10 @@
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Autofac">
-      <Version>4.8.0</Version>
-    </PackageReference>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
+    <PackageReference Include="Autofac" version="4.8.0" />
     <PackageReference Include="NuGet.Commands" Version="3.5.0" />
     <PackageReference Include="Markdown" Version="2.1.0" />
-    <PackageReference Include="NuGet.Protocol.Core.v3" Version="3.5.0" />
     <PackageReference Include="Octopus.Web.XmlTransform" Version="1.0.0-ci0018" />
     <PackageReference Include="Sprache" Version="2.1.0" />
     <PackageReference Include="System.Threading.AccessControl" Version="4.3.0" />
@@ -83,14 +80,10 @@
     <Reference Include="System.Security" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-    <PackageReference Include="Autofac">
-      <Version>3.5.2</Version>
-    </PackageReference>
+    <PackageReference Include="Autofac" version="3.5.2" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
-    <PackageReference Include="Autofac">
-      <Version>4.8.0</Version>
-    </PackageReference>
+    <PackageReference Include="Autofac" version="4.8.0" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Integration\Packages\Download\Scripts\*.*" />
