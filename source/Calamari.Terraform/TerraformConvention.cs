@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Threading.Tasks;
 using Calamari.Aws.Integration;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -26,6 +27,11 @@ namespace Calamari.Terraform
 
         public void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        async Task InstallAsync(RunningDeployment deployment)
+        {
             var variables = deployment.Variables;
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
 
@@ -50,7 +56,7 @@ namespace Calamari.Terraform
 
             if (useAWSAccount)
             {
-                var awsEnvironmentGeneration = new AwsEnvironmentGeneration(variables);
+                var awsEnvironmentGeneration = await AwsEnvironmentGeneration.Create(variables).ConfigureAwait(false);
                 environmentVariables = environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
             }
 
