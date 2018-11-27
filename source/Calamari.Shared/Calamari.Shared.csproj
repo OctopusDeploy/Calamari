@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net452;netstandard2.0;net40</TargetFrameworks>
     <OutputType>Library</OutputType>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Shared</AssemblyName>
