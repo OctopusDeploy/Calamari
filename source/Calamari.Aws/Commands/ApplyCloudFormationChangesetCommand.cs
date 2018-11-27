@@ -44,7 +44,7 @@ namespace Calamari.Aws.Commands
                 throw new CommandException("Could not find variables file: " + variablesFile);
             
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-            var environment = new AwsEnvironmentGeneration(variables);
+            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
             var stackEventLogger = new StackEventLogger(new LogWrapper());
 
             IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);

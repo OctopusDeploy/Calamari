@@ -52,7 +52,7 @@ namespace Calamari.Aws.Commands
 
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
-            var environment = new AwsEnvironmentGeneration(variables);
+            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
             var substituter = new FileSubstituter(fileSystem);
             var targetType = GetTargetMode(targetMode);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();

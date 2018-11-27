@@ -2,7 +2,6 @@
 using Amazon;
 using Amazon.Runtime;
 using System.Net;
-using Calamari.Hooks;
 
 namespace Calamari.Aws.Integration
 {
