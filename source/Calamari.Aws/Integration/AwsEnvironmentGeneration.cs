@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
@@ -48,9 +49,9 @@ namespace Calamari.Aws.Integration
                 {
                     envVars = new StringDictionary();
                     PopulateCommonSettings(envVars);
-                    PopulateSuppliedKeys(envVars);
+                    PopulateSuppliedKeys(envVars).GetAwaiter().GetResult();
                     PopulateKeysFromInstanceRole(envVars);
-                    AssumeRole(envVars);
+                    AssumeRole(envVars).GetAwaiter().GetResult();
                 }                
                 return envVars;
             }
@@ -116,15 +117,12 @@ namespace Calamari.Aws.Integration
         /// Verify that we can login with the supplied credentials
         /// </summary>
         /// <returns>true if login succeeds, false otherwise</returns>
-        public bool VerifyLogin()
+        public async Task<bool> VerifyLogin()
         {
             try
             {
-                return new AmazonSecurityTokenServiceClient(AwsCredentials)
-                    // Client becomes the response of the API call
-                    .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
-                    // Any response is considered valid
-                    .Map(response => true);
+                await new AmazonSecurityTokenServiceClient(AwsCredentials).GetCallerIdentityAsync(new GetCallerIdentityRequest());
+                return true;
 
             }
             catch (AmazonServiceException ex)
@@ -150,13 +148,13 @@ namespace Calamari.Aws.Integration
         /// If the keys were explicitly supplied, use them directly
         /// </summary>
         /// <exception cref="LoginException">The supplied keys were not valid</exception>
-        void PopulateSuppliedKeys(StringDictionary envVars)
+        async Task PopulateSuppliedKeys(StringDictionary envVars)
         {
             if (!String.IsNullOrEmpty(accessKey))
             {
                 envVars["AWS_ACCESS_KEY_ID"] = accessKey;
                 envVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
-                if (!VerifyLogin())
+                if (!await VerifyLogin())
                 {
                     throw new LoginException("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
                                              "Please check the keys assigned to the Amazon Web Services Account associated with this step. " +
@@ -211,19 +209,17 @@ namespace Calamari.Aws.Integration
         /// <summary>
         /// If we assume a secondary role, do it here
         /// </summary>
-        void AssumeRole(StringDictionary envVars)
+        async Task AssumeRole(StringDictionary envVars)
         {
             if ("True".Equals(assumeRole, StringComparison.InvariantCultureIgnoreCase))
             {
-                var credentials = new AmazonSecurityTokenServiceClient(AwsCredentials)
-                    // Client becomes the response of the API call
-                    .Map(client => client.AssumeRole(new AssumeRoleRequest
-                    {
-                        RoleArn = assumeRoleArn,
-                        RoleSessionName = assumeRoleSession
-                    }))
-                    // Get the credentials details from the response
-                    .Map(response => response.Credentials);
+               var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
+               var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest
+                   {
+                       RoleArn = assumeRoleArn,
+                       RoleSessionName = assumeRoleSession
+                   })
+               ).Credentials;
 
                 envVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
                 envVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
@@ -48,6 +49,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public override void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        private async Task InstallAsync(RunningDeployment deployment)
+        {
             var stack = stackProvider(deployment);
             Guard.NotNull(stack, "The provided stack may not be null");
             
@@ -59,30 +65,30 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                var status = clientFactory.StackExists(stack, StackStatus.DoesNotExist);
-
-                CreateChangesetRequest(
-                    status,
-                    name,
-                    stack,
-                    roleArnProvider?.Invoke(deployment),
-                    template,
-                    Capabilities
-                )
-                .Map(CreateChangeSet)
-                .Tee(WaitForChangesetCompletion)
-                .Tee(ApplyVariables(deployment.Variables));
+                var status = await clientFactory.StackExistsAsync(stack, StackStatus.DoesNotExist);
+                var changeset = await CreateChangeSet(
+                    CreateChangesetRequest(
+                        status,
+                        name,
+                        stack,
+                        roleArnProvider?.Invoke(deployment),
+                        template,
+                        Capabilities
+                    )
+                );
+                await WaitForChangesetCompletion(changeset);
+                ApplyVariables(deployment.Variables)(changeset);
             }
             catch (AmazonServiceException exception)
             {
-                HandleAmazonServiceException(exception);
+                LogAmazonServiceException(exception);
                 throw;
             }
         }
 
-        private void WaitForChangesetCompletion(RunningChangeSet result)
+        private async Task WaitForChangesetCompletion(RunningChangeSet result)
         {
-            clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
+            await clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
         }
 
         private Action<RunningChangeSet> ApplyVariables(CalamariVariableDictionary variables)
@@ -109,28 +115,19 @@ namespace Calamari.Aws.Deployment.Conventions
             };
         }
 
-        private RunningChangeSet CreateChangeSet(CreateChangeSetRequest request)
+        private async Task<RunningChangeSet> CreateChangeSet(CreateChangeSetRequest request)
         {
             try
             {
-                return clientFactory.CreateChangeSet(request)
+                return (await clientFactory.CreateChangeSetAsync(request))
                     .Map(x => new RunningChangeSet(new StackArn(x.StackId), new ChangeSetArn(x.Id)));
             }
-            catch (AmazonCloudFormationException ex)
+            catch (AmazonCloudFormationException ex) when(ex.ErrorCode == "AccessDenied")
             {
-                if (ex.ErrorCode == "AccessDenied")
-                {
-                    throw new PermissionException(
-                        @"AWS-CLOUDFORMATION-ERROR-0017: The AWS account used to perform the operation does not have " +
-                        "the required permissions to create the change set.\n" +
-                        ex.Message + "\n" +
-                        "For more information visit the [octopus docs](https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0017)");
-                }
-                
-                throw new UnknownException(
-                    "AWS-CLOUDFORMATION-ERROR-0018: An unrecognised exception was thrown while creating the CloudFormation change set.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0018",
-                    ex);
+                throw new PermissionException(
+                    @"The AWS account used to perform the operation does not have the required permissions to create the change set.\n" +
+                    "Please ensure the current user has the cloudformation:CreateChangeSet permission.\n" +
+                    ex.Message + "\n", ex);
             }
         }
     }
