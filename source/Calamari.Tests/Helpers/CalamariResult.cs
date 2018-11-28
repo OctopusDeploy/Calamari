@@ -31,7 +31,7 @@ namespace Calamari.Tests.Helpers
         public void AssertSuccess()
         {
             var capturedErrors = string.Join(Environment.NewLine, captured.Errors);
-            Assert.That(ExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0{0}{0}Output:{0}{1}", Environment.NewLine, capturedErrors));
+            Assert.That(ExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0, instead returned {2}{0}{0}Output:{0}{1}", Environment.NewLine, capturedErrors, ExitCode));
         }
 
         public void AssertFailure()

@@ -22,6 +22,18 @@ namespace Calamari.Integration.Scripting.Python
             var executable = PythonBootstrapper.FindPythonExecutable();
             var workingDirectory = Path.GetDirectoryName(script.File);
 
+            var dependencyInstallerFile = PythonBootstrapper.PrepareDependencyInstaller(workingDirectory);
+            var dependencyInstallerArguments = PythonBootstrapper.FormatCommandArguments(dependencyInstallerFile, string.Empty);
+            using (new TemporaryFile(dependencyInstallerFile))
+            {
+                var result = commandLineRunner.Execute(new CommandLineInvocation(executable, dependencyInstallerArguments,
+                    workingDirectory,
+                    environmentVars));
+
+                if (result.ExitCode != 0)
+                    return result;
+            }
+
             var configurationFile = PythonBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var bootstrapFile = PythonBootstrapper.PrepareBootstrapFile(script, workingDirectory, configurationFile);
             var arguments = PythonBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);

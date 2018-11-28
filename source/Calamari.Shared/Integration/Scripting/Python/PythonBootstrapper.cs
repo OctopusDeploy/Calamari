@@ -16,12 +16,14 @@ namespace Calamari.Integration.Scripting.Python
         const string WindowsNewLine = "\r\n";
 
         static readonly string ConfigurationScriptTemplate;
+        static readonly string InstallDependenciesScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
 
         static PythonBootstrapper()
         {
             ConfigurationScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PythonBootstrapper).Namespace + ".Configuration.py");
+            InstallDependenciesScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PythonBootstrapper).Namespace + ".InstallDependencies.py");
         }
 
         public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
@@ -111,6 +113,23 @@ namespace Calamari.Integration.Scripting.Python
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             EnsureValidUnixFile(script.File);
             return bootstrapFile;
+        }
+
+        public static string PrepareDependencyInstaller(string workingDirectory)
+        {
+            var dependencyInstallerFile = Path.Combine(workingDirectory, "InstallDependencies." + Guid.NewGuid().ToString().Substring(10) + ".py");
+
+            var builder = new StringBuilder(InstallDependenciesScriptTemplate);
+
+            using (var file = new FileStream(dependencyInstallerFile, FileMode.CreateNew, FileAccess.Write))
+            using (var writer = new StreamWriter(file, Encoding.ASCII))
+            {
+                writer.Write(builder.Replace(WindowsNewLine, Environment.NewLine));
+                writer.Flush();
+            }
+
+            File.SetAttributes(dependencyInstallerFile, FileAttributes.Hidden);
+            return dependencyInstallerFile;
         }
     }
 }
