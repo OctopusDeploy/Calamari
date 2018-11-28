@@ -1,11 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <!--
-		Fixes this error:
-		Could not locate ...\packages.config. Ensure that this project has Microsoft.Bcl.Build installed and packages.config is located next to the project file.
-	 -->
-  <PropertyGroup>
-    <SkipValidatePackageReferences>true</SkipValidatePackageReferences>
-  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
