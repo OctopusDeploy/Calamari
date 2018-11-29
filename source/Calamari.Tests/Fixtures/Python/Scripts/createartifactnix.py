@@ -1,0 +1,1 @@
+createartifact(".\\file.txt")

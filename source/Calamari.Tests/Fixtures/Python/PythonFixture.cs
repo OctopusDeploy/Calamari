@@ -61,12 +61,24 @@ namespace Calamari.Tests.Fixtures.Python
         }
         
         [Test]
-        public void ShouldWriteServiceMessageForArtifacts()
+        [Category(TestEnvironment.CompatibleOS.Windows)]
+        public void ShouldWriteServiceMessageForArtifactsOnWindows()
         {
-            var (output, _) = RunScript("createartifact.py");
+            var (output, _) = RunScript("createartifactwin.py");
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
         }
+
+        [Test]
+        [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Category(TestEnvironment.CompatibleOS.Mac)]
+        public void ShouldWriteServiceMessageForArtifactsOnNix()
+        {
+            var (output, _) = RunScript("createartifactnix.py");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[createArtifact path='QzpcUHJvZ3JhbSBGaWxlc1xKZXRCcmFpbnNcSmV0QnJhaW5zIFJpZGVyIDIwMTguMi4xXGxpYlxSZVNoYXJwZXJIb3N0XGZpbGUudHh0' name='ZmlsZS50eHQ=' length='MA==']");
+        }
+
 
         [Test]
         public void ShouldCaptureAllOutput()
