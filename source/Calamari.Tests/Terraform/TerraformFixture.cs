@@ -44,9 +44,9 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
-        [TestCase(typeof(PlanCommand), "plan -no-color -var my_var=\"Hello world\"")]
+        [TestCase(typeof(PlanCommand), "plan -no-color -detailed-exitcode -var my_var=\"Hello world\"")]
         [TestCase(typeof(ApplyCommand), "apply -no-color -auto-approve -var my_var=\"Hello world\"")]
-        [TestCase(typeof(DestroyPlanCommand), "plan -destroy -no-color -var my_var=\"Hello world\"")]
+        [TestCase(typeof(DestroyPlanCommand), "plan -no-color -detailed-exitcode -destroy -var my_var=\"Hello world\"")]
         [TestCase(typeof(DestroyCommand), "destroy -force -no-color -var my_var=\"Hello world\"")]
         public void AdditionalActionParams(Type commandType, string expected)
         {
@@ -58,9 +58,9 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
-        [TestCase(typeof(PlanCommand), "plan -no-color -var-file=\"example.tfvars\"")]
+        [TestCase(typeof(PlanCommand), "plan -no-color -detailed-exitcode -var-file=\"example.tfvars\"")]
         [TestCase(typeof(ApplyCommand), "apply -no-color -auto-approve -var-file=\"example.tfvars\"")]
-        [TestCase(typeof(DestroyPlanCommand), "plan -destroy -no-color -var-file=\"example.tfvars\"")]
+        [TestCase(typeof(DestroyPlanCommand), "plan -no-color -detailed-exitcode -destroy -var-file=\"example.tfvars\"")]
         [TestCase(typeof(DestroyCommand), "destroy -force -no-color -var-file=\"example.tfvars\"")]
         public void VarFiles(Type commandType, string actual)
         {
@@ -123,6 +123,8 @@ namespace Calamari.Tests.Terraform
         [Test]
         public void AzureIntegration()
         {
+            var bucketName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+
             void PopulateVariables(VariableDictionary _)
             {
                 _.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
@@ -131,6 +133,8 @@ namespace Calamari.Tests.Terraform
                 _.Set(SpecialVariables.Action.Azure.ClientId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId"));
                 _.Set(SpecialVariables.Action.Azure.Password, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
                 _.Set("Hello", "Hello World from Azure");
+                _.Set("bucket_name", bucketName);
+                _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Set(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, true.ToString());
             }
 
@@ -138,12 +142,12 @@ namespace Calamari.Tests.Terraform
                 .Should().Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
 
             ExecuteAndReturnLogOutput<ApplyCommand>(PopulateVariables, "Azure")
-                .Should().Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'http://terraformtestaccount.blob.core.windows.net/terraformtestcontainer/test.txt'");
+                .Should().Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'http://terraformtestaccount.blob.core.windows.net/{bucketName}/test.txt'");
 
             string fileData;
             using (var client = new WebClient())
             {
-                fileData = client.DownloadString("http://terraformtestaccount.blob.core.windows.net/terraformtestcontainer/test.txt");
+                fileData = client.DownloadString($"http://terraformtestaccount.blob.core.windows.net/{bucketName}/test.txt");
             }
 
             fileData.Should().Be("Hello World from Azure");
@@ -155,6 +159,8 @@ namespace Calamari.Tests.Terraform
         [Test]
         public void AWSIntegration()
         {
+            var bucketName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+
             void PopulateVariables(VariableDictionary _)
             {
                 _.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
@@ -162,25 +168,33 @@ namespace Calamari.Tests.Terraform
                 _.Set("Octopus.Action.Amazon.SecretKey", Environment.GetEnvironmentVariable("AWS.E2E.SecretKeyId"));
                 _.Set("Octopus.Action.Aws.Region", "ap-southeast-1");
                 _.Set("Hello", "Hello World from AWS");
+                _.Set("bucket_name", bucketName);
+                _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Set(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
             }
 
-            ExecuteAndReturnLogOutput<PlanCommand>(PopulateVariables, "AWS")
-                .Should().Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
+            var outputs = ExecuteAndReturnLogOutput(PopulateVariables, "AWS", typeof(PlanCommand), typeof(ApplyCommand),
+                typeof(DestroyCommand)).GetEnumerator();
 
-            ExecuteAndReturnLogOutput<ApplyCommand>(PopulateVariables, "AWS")
-                .Should().Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'https://cfe2e-terraformtestbucket.s3.amazonaws.com/test.txt'");
+            outputs.MoveNext();
+            outputs.Current.Should()
+                .Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
+
+            outputs.MoveNext();
+            outputs.Current.Should()
+                .Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'https://{bucketName}.s3.amazonaws.com/test.txt'");
 
             string fileData;
             using (var client = new WebClient())
             {
-                fileData = client.DownloadString("https://cfe2e-terraformtestbucket.s3.amazonaws.com/test.txt");
+                fileData = client.DownloadString($"https://{bucketName}.s3.amazonaws.com/test.txt");
             }
 
             fileData.Should().Be("Hello World from AWS");
 
-            ExecuteAndReturnLogOutput<DestroyCommand>(PopulateVariables, "AWS")
-                .Should().Contain("destroy -force -no-color");
+            outputs.MoveNext();
+            outputs.Current.Should()
+                .Contain("destroy -force -no-color");
         }
 
 

@@ -1,3 +1,7 @@
+variable "bucket_name" {
+  description = "the bucket name to use"
+}
+
 resource "azurerm_resource_group" "resgrp" {
   name     = "terraformtestrg"
   location = "AustraliaSouthEast"
@@ -13,7 +17,7 @@ resource "azurerm_storage_account" "storageaccount" {
 }
 
 resource "azurerm_storage_container" "blobstorage" {
-  name                  = "terraformtestcontainer"
+  name                  = "${var.bucket_name}"
   resource_group_name   = "${azurerm_resource_group.resgrp.name}"
   storage_account_name  = "${azurerm_storage_account.storageaccount.name}"
   container_access_type = "blob"

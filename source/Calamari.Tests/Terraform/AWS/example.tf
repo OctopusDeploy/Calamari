@@ -4,8 +4,12 @@ provider "aws" {
   }
 }
 
+variable "bucket_name" {
+  description = "the bucket name to use"
+}
+
 resource "aws_s3_bucket" "mybucket" {
-  bucket = "cfe2e-terraformtestbucket"
+  bucket = "${var.bucket_name}"
   acl    = "private"
   cors_rule {
     allowed_headers = ["*"]
