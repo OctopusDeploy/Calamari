@@ -1,1 +1,1 @@
-createartifact(".\\file.txt")
+createartifact("./file.txt")
