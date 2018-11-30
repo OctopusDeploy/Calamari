@@ -1,4 +1,9 @@
-﻿
+﻿command -v "helm" &>/dev/null
+if [[ $? != 0 ]]; then
+    echo >&2 "The helm client tool does not appear to be available on the current path. See http://g.octopushq.com/HelmLimitations for more details."
+    deps=1;
+fi
+
 username=$(get_octopusvariable "Username")
 password=$(get_octopusvariable "Password")
 url=$(get_octopusvariable "Url")

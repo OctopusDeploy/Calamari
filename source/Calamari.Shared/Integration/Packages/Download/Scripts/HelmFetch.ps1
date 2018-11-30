@@ -1,6 +1,12 @@
 #Ideally this single line would replace everything below ... But there appears to be a bug somewhere
 #helm fetch --repo $Url --username $Username --password $Password --version $version --destination $TempStaging $package
 
+if (!$(Get-Command helm -errorAction SilentlyContinue))
+{
+    Write-Error "The helm client tool does not appear to be available on the current path.`nSee http://g.octopushq.com/HelmLimitations for more details."
+    Exit 1
+}
+
 $TempHelmHome = $((Resolve-Path .\).Path) +"\helm"
 $TempStaging = $((Resolve-Path .\).Path) +"\staging"
 
@@ -31,6 +37,3 @@ if(!$?) {
 Write-Host "Fetching Chart"
 Write-Verbose "helm fetch --home $TempHelmHome --version $Version --destination $TempStaging $TempRepoName/$Package"
 helm fetch --home $TempHelmHome --version $Version --destination $TempStaging $TempRepoName/$Package
-
-#$files=(Get-ChildItem "$TempStaging/*");
-#Set-OctopusVariable -name "PackageFile" -value $files[0].FullName;

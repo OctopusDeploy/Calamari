@@ -7,7 +7,7 @@ namespace Calamari.Integration.FileSystem
 {
     public interface IFile
     {
-        void Copy(string temporaryReplacement, string originalFile, bool b);
+        void Copy(string temporaryReplacement, string originalFile, bool overwrite);
         void Delete(string path);
         bool Exists(string path);
         byte[] ReadAllBytes(string path);

@@ -1,16 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Net;
-using Autofac;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
 using  Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
 using Octostache;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -25,12 +22,10 @@ namespace Calamari.Tests.KubernetesFixtures
         private VariableDictionary Variables { get; set; }
         private string StagingDirectory { get; set; }
         private static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
-
-        readonly WebClient myWebClient = new WebClient();
         
         private static readonly string
             ConfigMapName =
-                "mychart-configmap-" + ReleaseName; //Might clash with concurrent exections. Should make this dynamic
+                "mychart-configmap-" + ReleaseName;
 
         private const string Namespace = "calamari-testing";
         private const string ChartPackageName = "mychart-0.3.7.tgz";
@@ -185,8 +180,11 @@ namespace Calamari.Tests.KubernetesFixtures
             var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{platformFile}.tgz");
             using (new TemporaryFile(fileName))
             {
-                myWebClient.DownloadFile($"https://storage.googleapis.com/kubernetes-helm/helm-v{version}-{platformFile}.tar.gz", fileName);
-                
+                using (var myWebClient = new WebClient())
+                {
+                    myWebClient.DownloadFile($"https://storage.googleapis.com/kubernetes-helm/helm-v{version}-{platformFile}.tar.gz", fileName);
+                }
+
                 var customHelmExePackageId = Kubernetes.SpecialVariables.Helm.Packages.CustomHelmExePackageKey;
                 Variables.Set(SpecialVariables.Packages.OriginalPath(customHelmExePackageId), fileName);
                 Variables.Set(SpecialVariables.Packages.Extract(customHelmExePackageId), "True");

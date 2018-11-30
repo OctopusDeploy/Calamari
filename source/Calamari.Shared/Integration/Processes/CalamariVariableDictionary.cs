@@ -63,7 +63,7 @@ namespace Calamari.Integration.Processes
                     }
 
                 }
-                catch (JsonReaderException e)
+                catch (JsonReaderException)
                 {
                     throw new CommandException("Unable to parse output variables as valid JSON.");
                 }

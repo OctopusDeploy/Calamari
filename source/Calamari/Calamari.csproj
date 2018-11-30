@@ -7,7 +7,7 @@
     <PackageId>Calamari</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
     <Authors>Octopus Deploy</Authors>
     <Copyright>Octopus Deploy Pty Ltd</Copyright>
     <PackageTags>tool</PackageTags>
@@ -40,7 +40,7 @@
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-    <PackageReference Include="Octopus.Versioning" Version="4.1.0" />
+    <PackageReference Include="Octopus.Versioning" Version="4.1.3" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
