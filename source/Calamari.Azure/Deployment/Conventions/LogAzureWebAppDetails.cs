@@ -53,7 +53,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 
                 string portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
 
-                LogLink("Link to resource in Azure Portal", portalUri);
+                LogLink("View in Azure Portal", portalUri);
             }
 
         }
