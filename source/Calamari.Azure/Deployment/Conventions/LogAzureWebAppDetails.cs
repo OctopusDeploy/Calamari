@@ -34,26 +34,28 @@ namespace Calamari.Azure.Deployment.Conventions
             var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
             var account = AccountFactory.Create(variables);
 
-            if (account is AzureServicePrincipalAccount)
+            if (account is AzureServicePrincipalAccount servicePrincipalAccount)
             {
-                var servicePrincipalAccount = account as AzureServicePrincipalAccount;
                 var client = servicePrincipalAccount.CreateWebSiteManagementClient();
-                var site = client.WebApps.Get(resourceGroupName, siteAndSlotName);
-                var portalUrl = GetAzurePortalUrl(azureEnvironment);
-                
-                Log.Info($"Default Host Name: {site.DefaultHostName}");
-                Log.Info($"Application state: {site.State}");
-                Log.Info("Links:");
-                LogLink($"https://{site.DefaultHostName}");
-
-                if (!site.HttpsOnly.HasValue || site.HttpsOnly == false)
+                var site = client?.WebApps.Get(resourceGroupName, siteAndSlotName);
+                if (site != null)
                 {
-                    LogLink($"http://{site.DefaultHostName}");
-                }
-                
-                string portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
+                    var portalUrl = GetAzurePortalUrl(azureEnvironment);
 
-                LogLink("View in Azure Portal", portalUri);
+                    Log.Info($"Default Host Name: {site.DefaultHostName}");
+                    Log.Info($"Application state: {site.State}");
+                    Log.Info("Links:");
+                    LogLink($"https://{site.DefaultHostName}");
+
+                    if (!site.HttpsOnly.HasValue || site.HttpsOnly == false)
+                    {
+                        LogLink($"http://{site.DefaultHostName}");
+                    }
+
+                    string portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
+
+                    LogLink("View in Azure Portal", portalUri);
+                }
             }
 
         }
@@ -75,7 +77,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 return PortalLinks[environment];
             }
 
-            return PortalLinks.First().Value;
+            return PortalLinks["AzureGlobalCloud"];
         }
     }
 }
