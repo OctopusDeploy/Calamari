@@ -26,38 +26,44 @@ namespace Calamari.Azure.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var variables = deployment.Variables;
-            var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
-            var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-            var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
-            var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
-            var account = AccountFactory.Create(variables);
-
-            if (account is AzureServicePrincipalAccount servicePrincipalAccount)
+            try
             {
-                var client = servicePrincipalAccount.CreateWebSiteManagementClient();
-                var site = client?.WebApps.Get(resourceGroupName, siteAndSlotName);
-                if (site != null)
+                var variables = deployment.Variables;
+                var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
+                var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+                var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
+                var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
+                var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
+                var account = AccountFactory.Create(variables);
+
+                if (account is AzureServicePrincipalAccount servicePrincipalAccount)
                 {
-                    var portalUrl = GetAzurePortalUrl(azureEnvironment);
-
-                    Log.Info($"Default Host Name: {site.DefaultHostName}");
-                    Log.Info($"Application state: {site.State}");
-                    Log.Info("Links:");
-                    LogLink($"https://{site.DefaultHostName}");
-
-                    if (!site.HttpsOnly.HasValue || site.HttpsOnly == false)
+                    var client = servicePrincipalAccount.CreateWebSiteManagementClient();
+                    var site = client?.WebApps.Get(resourceGroupName, siteAndSlotName);
+                    if (site != null)
                     {
-                        LogLink($"http://{site.DefaultHostName}");
+                        var portalUrl = GetAzurePortalUrl(azureEnvironment);
+
+                        Log.Info($"Default Host Name: {site.DefaultHostName}");
+                        Log.Info($"Application state: {site.State}");
+                        Log.Info("Links:");
+                        LogLink($"https://{site.DefaultHostName}");
+
+                        if (!site.HttpsOnly.HasValue || site.HttpsOnly == false)
+                        {
+                            LogLink($"http://{site.DefaultHostName}");
+                        }
+
+                        string portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
+
+                        LogLink("View in Azure Portal", portalUri);
                     }
-
-                    string portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
-
-                    LogLink("View in Azure Portal", portalUri);
                 }
             }
-
+            catch
+            {
+                // do nothing
+            }
         }
 
         public void LogLink(string uri)
