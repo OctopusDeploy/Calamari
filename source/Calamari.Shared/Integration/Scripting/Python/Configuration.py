@@ -2,7 +2,7 @@ import base64
 import os.path
 import sys
 import binascii
-import Crypto.Cipher.AES 
+from Crypto.Cipher import AES 
 
 unpad = lambda s: s[:-s[-1]]
 
@@ -16,7 +16,7 @@ def decrypt(encrypted, iv):
     key = sys.argv[len(sys.argv) - 1]
     key = binascii.unhexlify(key)
     iv = binascii.unhexlify(iv)
-    cipher = Crypto.Cipher.AES.new(key, Crypto.Cipher.AES.MODE_CBC, iv)
+    cipher = AES.new(key, AES.MODE_CBC, iv)
     decrypted = unpad(cipher.decrypt(base64.b64decode(encrypted)))
     return decrypted.decode('utf-8')
 

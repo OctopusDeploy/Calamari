@@ -79,6 +79,7 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("##octopus[createArtifact path='L29wdC9UZWFtQ2l0eS9CdWlsZEFnZW50L3dvcmsvZTBjZWZiZWQ0YWQxMTgxMi9zb3VyY2UvQ2FsYW1hcmkuVGVzdHMvYmluL0RlYnVnL25ldGNvcmVhcHAyLjAvRml4dHVyZXMvUGFja2FnZURvd25sb2FkL2ZpbGUudHh0' name='ZmlsZS50eHQ=' length='MA==']");
         }
 
+
         [Test]
         public void ShouldCaptureAllOutput()
         {
