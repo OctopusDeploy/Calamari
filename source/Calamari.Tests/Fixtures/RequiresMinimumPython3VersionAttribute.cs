@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting.Python;
 using Calamari.Integration.ServiceMessages;
@@ -40,6 +41,7 @@ namespace Calamari.Tests.Fixtures
 
         public ActionTargets Targets { get; set; }
 
+        static readonly Regex PythonVersionFinder = new Regex(@"Python (\d*)\.(\d*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         static Maybe<Version> GetPython3Version()
         {
             var executable = PythonBootstrapper.FindPythonExecutable();
@@ -54,8 +56,14 @@ namespace Calamari.Tests.Fixtures
             if (result.ExitCode != 0)
                 return Maybe<Version>.None;
 
-            var resultVersionString = capture.AllMessages.Single().Replace("Python ", "");
-            return Version.Parse(resultVersionString).AsSome();
+            var allCapturedMessages = capture.AllMessages.Aggregate((a, b) => $"{a}, {b}");
+            var pythonVersionMatch = PythonVersionFinder.Match(allCapturedMessages);
+            if (!pythonVersionMatch.Success)
+                return Maybe<Version>.None;
+
+            var major = pythonVersionMatch.Groups[1].Value;
+            var minor = pythonVersionMatch.Groups[2].Value;
+            return new Version(int.Parse(major), int.Parse(minor)).AsSome();
         }
     }
 }
