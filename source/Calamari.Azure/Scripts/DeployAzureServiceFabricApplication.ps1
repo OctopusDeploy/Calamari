@@ -1,4 +1,4 @@
-﻿## Octopus Azure Service Fabric Application script, version 1.0
+## Octopus Azure Service Fabric Application script, version 1.0
 ## --------------------------------------------------------------------------------------
 ##
 ## This script is used to control how we deploy packages to Azure Service Fabric applications to a cluster. 
@@ -122,8 +122,10 @@ $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDepl
 $ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
 $manifestXml = [Xml] (Get-Content $ManifestFilePath)
 $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
-$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName }) -ne $null
- 
+$AppTypeVersion = $manifestXml.ApplicationManifest.ApplicationTypeVersion
+$AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.ApplicationParameterFile
+$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
+
 if ($IsUpgrade -and $AppExists)
 {
     $Action = "RegisterAndUpgrade"
@@ -175,6 +177,12 @@ else
         $Action = "Register"
     }
     
+    #If type exists and the versions matches only create the application
+    $TypeExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
+    if ($TypeExists) {
+        $Action = "Create"
+    }
+
     $parameters = @{
         ApplicationPackagePath =  $ApplicationPackagePath
         ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
@@ -191,12 +199,12 @@ else
     if ($RegisterApplicationTypeTimeoutSec) {
         Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
         if (!$timeoutParamMissing) {
-            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec    
+            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
         } else {
             Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
         }
     }
-        
+
     Write-Verbose "Calling Publish-NewServiceFabricApplication"
     Write-Verbose "Parameters: "
     Write-Verbose $($parameters | Out-String)

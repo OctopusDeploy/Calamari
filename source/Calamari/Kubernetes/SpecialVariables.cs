@@ -9,6 +9,8 @@ namespace Calamari.Kubernetes
     public static class SpecialVariables
     {
         public const string ClusterUrl = "Octopus.Action.Kubernetes.ClusterUrl";
+        public const string AksClusterName = "Octopus.Action.Kubernetes.AksClusterName";
+        public const string EksClusterName = "Octopus.Action.Kubernetes.EksClusterName";
         public const string Namespace = "Octopus.Action.Kubernetes.Namespace";
         public const string SkipTlsVerification = "Octopus.Action.Kubernetes.SkipTlsVerification";
 

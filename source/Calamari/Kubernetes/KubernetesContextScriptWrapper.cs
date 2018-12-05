@@ -23,7 +23,14 @@ namespace Calamari.Kubernetes
             this.variables = variables;
         }
 
-        public bool Enabled => !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, ""));
+        public int Priority => ScriptWrapperPriorities.ToolConfigPriority;
+
+        /// <summary>
+        /// One of these fields must be present for a k8s step
+        /// </summary>
+        public bool Enabled => !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
+                               !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName, "")) ||
+                               !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, ""));
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,

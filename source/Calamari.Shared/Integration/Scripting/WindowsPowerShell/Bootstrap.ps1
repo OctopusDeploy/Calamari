@@ -159,6 +159,41 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
+function New-OctopusTokenAccount([string]$name, [string]$token, [switch]$updateIfExisting) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+ 	$token = Convert-ToServiceMessageParameter -name "token" -value $token 	
+	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
+
+	$parameters = $name, $token, $updateIfExistingParameter -join ' '
+ 	
+    Write-Host "##octopus[create-tokenaccount $($parameters)]"
+}
+
+function New-OctopusAwsAccount([string]$name, [string]$secretKey, [string]$accessKey, [switch]$updateIfExisting) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$secretKey = Convert-ToServiceMessageParameter -name "secretKey" -value $secretKey 
+ 	$accessKey = Convert-ToServiceMessageParameter -name "accessKey" -value $accessKey 	
+	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
+
+	$parameters = $name, $secretKey, $accessKey, $updateIfExistingParameter -join ' '
+ 	
+    Write-Host "##octopus[create-awsaccount $($parameters)]"
+}
+
+function New-OctopusUserPassAccount([string]$name, [string]$username, [string]$password, [switch]$updateIfExisting) 
+{
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+ 	$username = Convert-ToServiceMessageParameter -name "username" -value $username
+	$password = Convert-ToServiceMessageParameter -name "password" -value $password
+	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
+
+	$parameters = $name, $username, $password, $updateIfExistingParameter -join ' '
+ 	
+    Write-Host "##octopus[create-userpassaccount $($parameters)]"
+}
+
 function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscriptionId, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateIfExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
@@ -240,17 +275,45 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
-function New-OctopusKubernetesTarget([string]$name, [string]$clusterUrl, [string]$namespace, [string]$octopusAccountIdOrName, [string]$octopusProxyIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
+function New-OctopusKubernetesTarget(
+	[string]$name, 
+	[string]$clusterUrl, 
+	[string]$clusterName, 
+	[string]$clusterResourceGroup, 
+	[string]$namespace, 
+	[string]$skipTlsVerification, 
+	[string]$octopusAccountIdOrName,
+	[string]$octopusClientCertificateIdOrName, 
+	[string]$octopusServerCertificateIdOrName,
+	[string]$octopusRoles, 
+	[string]$octopusDefaultWorkerPoolIdOrName, 
+	[switch]$updateIfExisting) 
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$clusterName = Convert-ToServiceMessageParameter -name "clusterName" -value $clusterName 
+	$clusterResourceGroup = Convert-ToServiceMessageParameter -name "clusterResourceGroup" -value $clusterResourceGroup
+	$octopusClientCertificateIdOrName = Convert-ToServiceMessageParameter -name "clientCertificate" -value $octopusClientCertificateIdOrName
+	$octopusServerCertificateIdOrName = Convert-ToServiceMessageParameter -name "serverCertificate" -value $octopusServerCertificateIdOrName
 	$clusterUrl = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
 	$namespace = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
-	$octopusProxyIdOrName = Convert-ToServiceMessageParameter -name "proxy" -value $octopusProxyIdOrName
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
+	$octopusDefaultWorkerPoolIdOrName = Convert-ToServiceMessageParameter -name "defaultWorkerPool" -value $octopusDefaultWorkerPoolIdOrName
+	$skipTlsVerification = Convert-ToServiceMessageParameter -name "skipTlsVerification" -value $skipTlsVerification	
 
-	$parameters = $name, $clusterUrl, $namespace, $octopusAccountIdOrName, $octopusProxyIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
+	$parameters = $name, `
+		$clusterUrl, `
+		$clusterName, `
+		$clusterResourceGroup, `
+		$octopusDefaultWorkerPoolIdOrName, `
+		$octopusClientCertificateIdOrName, `
+		$octopusServerCertificateIdOrName, `
+		$namespace, `
+		$octopusAccountIdOrName, `
+		$octopusRoles, `
+		$skipTlsVerification, `
+		$updateIfExistingParameter -join ' '
 
 	Write-Host "##octopus[create-kubernetestarget $($parameters)]"
 }
@@ -395,6 +458,39 @@ function Decrypt-Variables($iv, $Encrypted)
 	return $parameters
 }
 
+function Set-ProxyEnvironmentVariables ([string] $proxyHost, [int] $proxyPort, [string] $proxyUsername, [string] $proxyPassword) {
+	$proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
+	if (![string]::IsNullOrEmpty($proxyUsername)) {
+		Add-Type -AssemblyName System.Web
+		$proxyUri = "http://$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
+	}
+	
+	if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+		$env:HTTP_PROXY = "$proxyUri"
+	}
+	
+	if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
+		$env:HTTPS_PROXY = "$proxyUri"
+	}
+	
+	if([string]::IsNullOrEmpty($env:NO_PROXY)) {
+		$env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
+	}
+}
+
+function Set-ProxyEnvironmentVariablesFromSystemProxy([string] $proxyUsername, [string] $proxyPassword) {
+	$testUri = New-Object Uri("https://octopus.com")
+	$systemProxy = [System.Net.WebRequest]::GetSystemWebProxy().GetProxy($testUri)
+	if ($systemProxy.Host -ne "octopus.com") {
+		Set-ProxyEnvironmentVariables -proxyHost $systemProxy.Host -proxyPort $systemProxy.Port -proxyUsername $proxyUsername -proxyPassword $proxyPassword
+	}
+}
+
+function Get-ProxyUri ([string] $proxyHost, [int] $proxyPort) {
+	$uri = "http://${proxyHost}:$proxyPort"
+	return New-Object Uri($uri)
+}
+
 function Initialize-ProxySettings() 
 {
 	$proxyUsername = $env:TentacleProxyUsername
@@ -403,27 +499,16 @@ function Initialize-ProxySettings()
 	[int]$proxyPort = $env:TentacleProxyPort
 	
 	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost) 
-	
 	if($useSystemProxy)
 	{
 		$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+		Set-ProxyEnvironmentVariablesFromSystemProxy -proxyUsername $proxyUsername -proxyPassword $proxyPassword
 	}	
 	else
 	{
-		$proxyUri = [System.Uri]"http://${proxyHost}:$proxyPort"
+		$proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
 		$proxy = New-Object System.Net.WebProxy($proxyUri)
-        
-        if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-            $env:HTTP_PROXY = "$proxyUri"
-        }
-    
-        if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
-            $env:HTTPS_PROXY = "$proxyUri"
-        }
-
-        if([string]::IsNullOrEmpty($env:NO_PROXY)) {
-            $env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
-        }
+		Set-ProxyEnvironmentVariables -proxyHost $proxyHost -proxyPort $proxyPort -proxyUsername $proxyUsername -proxyPassword $proxyPassword
 	}
 
 	if ([string]::IsNullOrEmpty($proxyUsername)) 
@@ -440,20 +525,6 @@ function Initialize-ProxySettings()
 	else 
 	{
 		$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
-
-        Add-Type -AssemblyName System.Web
-        $proxyUrl = "$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
-        if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-            $env:HTTP_PROXY = "$proxyUri"
-        }
-    
-        if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
-            $env:HTTPS_PROXY = "$proxyUri"
-        }
-
-        if([string]::IsNullOrEmpty($env:NO_PROXY)) {
-            $env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
-        }
 	}
 
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy

@@ -14,7 +14,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/OctopusDeploy/Calamari/</RepositoryUrl>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
     <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
@@ -57,8 +57,7 @@
     <PackageReference Include="Microsoft.WindowsAzure.Management.WebSites" Version="5.0.0-prerelease" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="Octopus.Dependencies.AzureBinaries" Version="2.9.0" />
-    <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="5.4.0" />
-    <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="5.7.0" />
+    <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.11.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="System.Spatial" Version="5.8.3" />
     <PackageReference Include="WindowsAzure.Storage" Version="4.3.0" />

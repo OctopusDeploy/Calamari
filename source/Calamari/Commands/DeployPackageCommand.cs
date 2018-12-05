@@ -12,6 +12,7 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.JsonVariables;
+using Calamari.Integration.Nginx;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
@@ -70,6 +71,11 @@ namespace Calamari.Commands
             var iis = new InternetInformationServer();
             featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(), new IisWebSiteAfterPostDeployFeature() });
 #endif
+            if (!CalamariEnvironment.IsRunningOnWindows)
+            {
+                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect()));
+            }
+
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
