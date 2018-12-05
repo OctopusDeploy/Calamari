@@ -40,8 +40,6 @@
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-    <PackageReference Include="Octopus.Versioning" Version="4.1.0" />
-    <PackageReference Include="pythonx86" Version="3.7.0" />
     <PackageReference Include="Octopus.Versioning" Version="4.1.3" />
     <PackageReference Include="ScriptCS" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.15.2" />
@@ -86,28 +84,21 @@
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
       <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'pythonx86'">
-      <Output TaskParameter="Include" ItemName="pythonx86Ref" />
-    </CreateItem>
     <PropertyGroup>
       <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
       <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-      <pythonx86>@(pythonx86Ref->'%(ResolvedPath)')/tools/*.*</pythonx86>
     </PropertyGroup>
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
-      <PythonFiles Include="$(pythonx86)" />
     </ItemGroup>
   </Target>
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
-    <Copy SourceFiles="@(PythonFiles)" DestinationFolder="$(OutDir)/Python/" />
   </Target>
   <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
-    <Copy SourceFiles="@(PythonFiles)" DestinationFolder="$(PublishDir)/Python/" />
   </Target>
 </Project>
