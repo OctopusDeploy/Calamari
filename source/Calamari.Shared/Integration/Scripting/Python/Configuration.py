@@ -37,9 +37,9 @@ def createartifact(path, fileName = None):
     if fileName is None:
         fileName = os.path.basename(path)
 
-    serviceFileName = encode(fileName);
+    serviceFileName = encode(fileName)
 
-    length = str(os.stat(path).st_size()) if os.path.isfile(path) else "0"
+    length = str(os.stat(path).st_size) if os.path.isfile(path) else "0"
     length = encode(length)
 
     path = os.path.abspath(path)
