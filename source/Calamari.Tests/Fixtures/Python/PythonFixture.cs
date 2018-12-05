@@ -7,7 +7,7 @@ namespace Calamari.Tests.Fixtures.Python
 {
     public class PythonFixture : CalamariFixture
     {
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("hello.py");
@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("Hello");
         }
 
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         public void ShouldPrintVariables()
         {
             var (output, _) = RunScript("printvariables.py", new Dictionary<string, string>
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("Foo_bar=Hello");
         }
 
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         public void ShouldPrintSensitiveVariables()
         {
             var (output, _) = RunScript("printvariables.py", new Dictionary<string, string>
@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("V1=Secret");
         }
 
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         public void ShouldSetVariables()
         {
             var (output, variables) = RunScript("setvariable.py");
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Python
             Assert.AreEqual("World!", variables.Get("TestA"));
         }
         
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         [Category(TestEnvironment.CompatibleOS.Windows)]
         public void ShouldWriteServiceMessageForArtifactsOnWindows()
         {
@@ -69,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
         }
 
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         [Category(TestEnvironment.CompatibleOS.Nix)]
         [Category(TestEnvironment.CompatibleOS.Mac)]
         public void ShouldWriteServiceMessageForArtifactsOnNix()
@@ -80,7 +80,7 @@ namespace Calamari.Tests.Fixtures.Python
         }
 
 
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         public void ShouldCaptureAllOutput()
         {
             var (output, _) = RunScript("output.py");
@@ -90,7 +90,7 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertOutput("Hello warning!");
         }
 
-        [Test]
+        [Test, RequiresMinimumPython3Version(4)]
         public void ShouldConsumeParameters()
         {
             var (output, _) = RunScript("parameters.py", new Dictionary<string, string>
@@ -100,6 +100,5 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertSuccess();
             output.AssertOutput("Parameters parameter1 parameter2");
         }
-
     }
 }
