@@ -9,7 +9,7 @@ def install_missing_dependency(module, package):
         printverbose("{} was found".format(package))
     except:
         printverbose("Did not find dependency, attempting to install {} for the current user using pip".format(package))
-        subprocess.call([sys.executable, "-m", "pip", "install", package, "--user", "--disable-pip-version-check"])
+        subprocess.call([sys.executable, "-m", "pip", "install", package, "--user"])
 
 def printverbose(message):
     print("##octopus[stdout-verbose]")
