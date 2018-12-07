@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,15 +15,13 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Microsoft.Rest.TransientFaultHandling;
-using Newtonsoft.Json.Linq;
 using NuGet;
-using Octopus.CoreUtilities;
 
 namespace Calamari.Azure.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {
-        public static SitePublishProfile GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
+        public static WebDeployPublishSettings GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
         {
             if (account.ResourceManagementEndpointBaseUri != DefaultVariables.ResourceManagementEndpoint)
                 Log.Info("Using override for resource management endpoint - {0}", account.ResourceManagementEndpointBaseUri);
@@ -40,7 +38,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
             })
             using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
             {
-                webSiteClient.SetRetryPolicy(new Microsoft.Rest.TransientFaultHandling.RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
+                webSiteClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                 resourcesClient.HttpClient.BaseAddress = baseUri;
 
@@ -66,82 +64,41 @@ namespace Calamari.Azure.Integration.Websites.Publishing
 
                 // We allow the slot to be defined on both the target directly (which will come through on the matchingSite.Name) or on the 
                 // step for backwards compatibility with older Azure steps.
-                
-                var siteAndSlotPath = matchingSite.Name;
                 if (azureTargetSite.HasSlot)
                 {
                     Log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
-                    siteAndSlotPath = $"{matchingSite.Name}/slots/{azureTargetSite.Slot}";
                 }
                 
-                var profile = GetWebdeployPublishProfile(webSiteClient, resourceGroupName, matchingSite.Name, azureTargetSite.HasSlot ? azureTargetSite.Slot : null).GetAwaiter().GetResult();
-
-                if (profile.Some()) return profile.Value;
-                
-                // Once we know the Resource Group, we have to POST a request to the URI below to retrieve the publishing credentials
-                var publishSettingsUri = new Uri(resourcesClient.BaseUri,
-                    $"/subscriptions/{account.SubscriptionNumber}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteAndSlotPath}/config/publishingCredentials/list?api-version=2016-08-01");
-                Log.Verbose($"Falling back to retrieving publishing profile from scm endpoint {publishSettingsUri}");
-
-                return GetPublishProfileFromScmEndpoint(resourcesClient, publishSettingsUri);
+                return GetWebdeployPublishProfile(webSiteClient, resourceGroupName, matchingSite.Name, azureTargetSite.HasSlot ? azureTargetSite.Slot : null).GetAwaiter().GetResult();
             }
         }
 
-        private static SitePublishProfile GetPublishProfileFromScmEndpoint(ResourceManagementClient resourcesClient, Uri publishSettingsUri)
-        {
-            SitePublishProfile publishProperties = null;
-            var request = new HttpRequestMessage { Method = HttpMethod.Post, RequestUri = publishSettingsUri };
-            // Add the authentication headers
-            var requestTask = resourcesClient.Credentials.ProcessHttpRequestAsync(request, new CancellationToken())
-                .ContinueWith(authResult => resourcesClient.HttpClient.SendAsync(request), TaskContinuationOptions.NotOnFaulted)
-                .ContinueWith(publishSettingsResponse =>
-                {
-                    var result = publishSettingsResponse.Result.Result;
-                    if (!result.IsSuccessStatusCode)
-                    {
-                        Log.Error($"Retrieving publishing credentials failed. Publish-settings URI: {publishSettingsUri}");
-                        throw new Exception($"Retrieving publishing credentials failed with HTTP status {(int)result.StatusCode} - {result.ReasonPhrase}");
-                    }
-
-                    dynamic response = JObject.Parse(result.Content.AsString());
-                    string publishUserName = response.properties.publishingUserName;
-                    string publishPassword = response.properties.publishingPassword;
-                    string scmUri = response.properties.scmUri;
-                    Log.Verbose($"Retrieved publishing profile. URI: {scmUri}  UserName: {publishUserName}");
-                    publishProperties = new SitePublishProfile(publishUserName, publishPassword, new Uri(scmUri));
-                        
-                }, TaskContinuationOptions.NotOnFaulted);
-
-            requestTask.Wait();
-            return publishProperties;
-        }
-
-        private static Task<Maybe<SitePublishProfile>> GetWebdeployPublishProfile(WebSiteManagementClient webSiteClient, string resourceGroupName, string site, string slot = null)
+        private static async Task<WebDeployPublishSettings> GetWebdeployPublishProfile(WebSiteManagementClient webSiteClient, string resourceGroupName, string site, string slot = null)
         {
             var options = new CsmPublishingProfileOptions {Format = "WebDeploy"};
-            return (
-                slot == null
-                    ? webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroupName, site, options)
-                    : webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroupName, site, options, slot)
-            ).ContinueWith(stream =>
+            var stream = await (slot == null
+                ? webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroupName, site, options)
+                : webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroupName, site, options,
+                    slot)
+            );
+            
+            var document = XDocument.Parse(stream.ReadToEnd());
+
+            var profile = (from el in document.Descendants("publishProfile")
+                where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy", StringComparison.OrdinalIgnoreCase) == 0
+                select new {
+                    PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
+                    Username = el.Attribute("userName")?.Value,
+                    Password = el.Attribute("userPWD")?.Value,
+                    Site = el.Attribute("msdeploySite")?.Value
+                }).FirstOrDefault();
+
+            if (profile == null)
             {
-                var document = XDocument.Parse(stream.Result.ReadToEnd());
+                throw new Exception("Failed to retreive publishing profile.");
+            }
 
-                var profile = (from el in document.Descendants("publishProfile")
-                    where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy", StringComparison.OrdinalIgnoreCase) == 0
-                    select new {
-                        PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
-                        Username = el.Attribute("userName")?.Value,
-                        Password = el.Attribute("userPWD")?.Value
-                    }).FirstOrDefault();
-
-                if (profile == null)
-                {
-                    Log.Error($"Failed to retreive publishing profile.");
-                }
-
-                return profile.ToMaybe().Select(x => new SitePublishProfile(x.Username, x.Password, new Uri(x.PublishUrl)));
-            });
+            return new WebDeployPublishSettings(profile.Site, new SitePublishProfile(profile.Username, profile.Password, new Uri(profile.PublishUrl)));
         }
 
         private static Site FindSiteByNameWithRetry(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite,

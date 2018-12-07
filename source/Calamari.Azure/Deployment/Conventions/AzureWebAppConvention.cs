@@ -36,13 +36,13 @@ namespace Calamari.Azure.Deployment.Conventions
                 : string.Empty;
             Log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
-            var publishProfile = GetPublishProfile(variables);
+            var publishSettings = GetPublishProfile(variables);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
             try
             {
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
-                DeployToAzure(deployment, targetSite, variables, publishProfile);
+                DeployToAzure(deployment, targetSite, variables, publishSettings);
             }
             finally
             {
@@ -52,7 +52,7 @@ namespace Calamari.Azure.Deployment.Conventions
 
         private static void DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite,
             CalamariVariableDictionary variables,
-            SitePublishProfile publishProfile)
+            WebDeployPublishSettings publishSettings)
         {
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
             while (retry.Try())
@@ -66,7 +66,7 @@ namespace Calamari.Azure.Deployment.Conventions
                         .SyncTo(
                             "contentPath",
                             BuildPath(targetSite, variables),
-                            DeploymentOptions(targetSite, publishProfile),
+                            DeploymentOptions(publishSettings),
                             DeploymentSyncOptions(variables)
                         );
 
@@ -111,7 +111,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return false;
         }
 
-        private static SitePublishProfile GetPublishProfile(VariableDictionary variables)
+        private static WebDeployPublishSettings GetPublishProfile(VariableDictionary variables)
         {
             var account = AccountFactory.Create(variables);
 
@@ -128,7 +128,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
             else if (account is AzureAccount azureAccount)
             {
-                return ServiceManagementPublishProfileProvider.GetPublishProperties(azureAccount, targetSite);
+                return new WebDeployPublishSettings(targetSite.Site, ServiceManagementPublishProfileProvider.GetPublishProperties(azureAccount, targetSite));
             }
 
             throw new CommandException("Account type must be either Azure Management Certificate or Azure Service Principal");
@@ -142,8 +142,11 @@ namespace Calamari.Azure.Deployment.Conventions
                 : site.Site;
         }
 
-        private static DeploymentBaseOptions DeploymentOptions(AzureTargetSite targetSite, SitePublishProfile publishProfile)
+        private static DeploymentBaseOptions DeploymentOptions(WebDeployPublishSettings settings)
         {
+            var publishProfile = settings.PublishProfile;
+            var deploySite = settings.DeploymentSite;
+            
             var options = new DeploymentBaseOptions
             {
                 AuthenticationType = "Basic",
@@ -153,7 +156,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 UserName = publishProfile.UserName,
                 Password = publishProfile.Password,
                 UserAgent = "OctopusDeploy/1.0",
-                ComputerName = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={targetSite.Site}").ToString()
+                ComputerName = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={deploySite}").ToString()
             };
             options.Trace += (sender, eventArgs) => LogDeploymentEvent(eventArgs);
 
