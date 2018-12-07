@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -121,7 +122,7 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
-        public void AzureIntegration()
+        public async Task AzureIntegration()
         {
             var bucketName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
@@ -145,9 +146,9 @@ namespace Calamari.Tests.Terraform
                 .Should().Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'http://terraformtestaccount.blob.core.windows.net/{bucketName}/test.txt'");
 
             string fileData;
-            using (var client = new WebClient())
+            using (var client = new HttpClient())
             {
-                fileData = client.DownloadString($"http://terraformtestaccount.blob.core.windows.net/{bucketName}/test.txt");
+                fileData = await client.GetStringAsync($"http://terraformtestaccount.blob.core.windows.net/{bucketName}/test.txt").ConfigureAwait(false);
             }
 
             fileData.Should().Be("Hello World from Azure");
@@ -157,7 +158,7 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
-        public void AWSIntegration()
+        public async Task AWSIntegration()
         {
             var bucketName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
@@ -185,9 +186,9 @@ namespace Calamari.Tests.Terraform
                 .Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'https://{bucketName}.s3.amazonaws.com/test.txt'");
 
             string fileData;
-            using (var client = new WebClient())
+            using (var client = new HttpClient())
             {
-                fileData = client.DownloadString($"https://{bucketName}.s3.amazonaws.com/test.txt");
+                fileData = await client.GetStringAsync($"https://{bucketName}.s3.amazonaws.com/test.txt").ConfigureAwait(false);
             }
 
             fileData.Should().Be("Hello World from AWS");

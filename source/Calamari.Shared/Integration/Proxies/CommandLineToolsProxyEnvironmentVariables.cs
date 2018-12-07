@@ -31,9 +31,10 @@ namespace Calamari.Integration.Proxies
 
         void SetProxyEnvironmentVariablesFromSystemProxy(string proxyUsername, string proxyPassword)
         {
+            #if !NETSTANDARD2_0
             try
             {
-                var testUri = WebRequest.GetSystemWebProxy().GetProxy(new Uri("https://octopus.com"));
+                var testUri = WebRequest.DefaultWebProxy.GetProxy(new Uri("https://octopus.com"));
                 if (testUri.Host != "octopus.com")
                 {
                     SetProxyEnvironmentVariables(testUri.Host, testUri.Port, proxyUsername, proxyPassword);
@@ -43,6 +44,7 @@ namespace Calamari.Integration.Proxies
             {
                 Log.Error("Failed to get the system proxy settings. Calamari will not use any proxy settings.");
             }
+            #endif
         }
 
         void SetProxyEnvironmentVariables(string host, int port, string proxyUsername, string proxyPassword)
