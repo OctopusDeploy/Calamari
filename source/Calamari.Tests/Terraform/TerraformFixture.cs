@@ -1,5 +1,4 @@
-﻿#if NET452
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,6 +16,7 @@ using Octostache;
 namespace Calamari.Tests.Terraform
 {
     [TestFixture]
+    [Category(TestEnvironment.CompatibleOS.Windows)]
     public class TerraformFixture
     {
         [Test]
@@ -282,4 +282,3 @@ namespace Calamari.Tests.Terraform
         }
     }
 }
-#endif
