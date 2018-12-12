@@ -96,9 +96,29 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             extractor.Extract(fileName, targetDir, true);
             var textFileName = Path.Combine(targetDir, "package", "services", "metadata", "core-properties", "8e89f0a759d94c1aaab0626891f7b81f.psmdcp");
+            var octopusMetadataFileName = Path.Combine(targetDir, "octopus.metadata");
             Assert.That(File.Exists(textFileName), Is.False, $"The file '{Path.GetFileName(textFileName)}' should not have been extracted.");
+            Assert.That(File.Exists(octopusMetadataFileName), Is.False, $"The file '{Path.GetFileName(octopusMetadataFileName)}' should not have been extracted.");
         }
+        
+        [Test]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz")]
+        [TestCase(typeof(TarPackageExtractor), "tar")]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2")]
+        [TestCase(typeof(ZipPackageExtractor), "zip")]
+        [TestCase(typeof(NupkgExtractor), "nupkg")]
+        public void ExtractDoesNotExtractOctopusMetadata(Type extractorType, string extension)
+        {
+            var fileName = GetFileName(extension);
 
+            var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
+            var targetDir = GetTargetDir(extractorType, fileName);
+
+            extractor.Extract(fileName, targetDir, true);
+            var octopusMetadataFileName = Path.Combine(targetDir, "octopus.metadata");
+            Assert.That(File.Exists(octopusMetadataFileName), Is.False, $"The file '{Path.GetFileName(octopusMetadataFileName)}' should not have been extracted.");
+        }
+        
         [Test]
         [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", true)]
         [TestCase(typeof(TarPackageExtractor), "tar", true)]
