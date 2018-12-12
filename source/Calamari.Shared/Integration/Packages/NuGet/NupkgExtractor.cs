@@ -123,7 +123,8 @@ namespace Calamari.Integration.Packages.NuGet
             "package/services/metadata/",
             @"_rels\",
             @"package\services\metadata\",
-            "[Content_Types].xml"
+            "[Content_Types].xml",
+            "octopus.metadata"
         };
 
         const string ExcludeExtension = ".nupkg.sha512";

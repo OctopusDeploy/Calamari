@@ -20,6 +20,8 @@ namespace Calamari.Integration.Packages
             {
                 foreach (var entry in archive.Entries)
                 {
+                    if (IsExcludedPath(entry.Key)) continue;
+                    
                     ProcessEvent(ref filesExtracted, entry, suppressNestedScriptWarning);
                     entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
                 }

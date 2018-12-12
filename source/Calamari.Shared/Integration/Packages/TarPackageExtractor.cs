@@ -22,6 +22,8 @@ namespace Calamari.Integration.Packages
                     {
                         while (reader.MoveToNextEntry())
                         {
+                            if (IsExcludedPath(reader.Entry.Key)) continue;
+                            
                             ProcessEvent(ref files, reader.Entry, suppressNestedScriptWarning);
                             reader.WriteEntryToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
                         }
