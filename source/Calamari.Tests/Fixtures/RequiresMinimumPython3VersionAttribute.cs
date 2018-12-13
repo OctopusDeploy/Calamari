@@ -27,11 +27,11 @@ namespace Calamari.Tests.Fixtures
             var python3Version = GetPython3Version();
             if (python3Version.None())
             {
-                Assert.Ignore("Requires Python3 to be installed");
+                Assert.Inconclusive("Requires Python3 to be installed");
             }
             if (python3Version.Value < new Version(Major, minor))
             {
-                Assert.Ignore($"Requires Python3 {Major}.{minor}");
+                Assert.Inconclusive($"Requires Python3 {Major}.{minor}");
             }
         }
 
