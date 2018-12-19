@@ -144,7 +144,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
+            Assert.AreEqual("I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
         
         [Test]
@@ -158,7 +158,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
+            Assert.AreEqual("I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
         
         [Test]
@@ -185,7 +185,6 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
         
-        
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -197,7 +196,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
-        }        
+        }
 
         [Test]
         [RequiresNonFreeBSDPlatform]
