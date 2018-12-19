@@ -10,9 +10,9 @@ namespace Calamari.Hooks
     /// </summary>
     public class TerminalScriptWrapper : IScriptWrapper
     {
-        private readonly IScriptEngine scriptEngine;
+        readonly IScriptEngine scriptEngine;
 
-        public bool Enabled { get; } = true;
+        public bool IsEnabled(ScriptSyntax syntax) => true;
 
         public int Priority => ScriptWrapperPriorities.TerminalScriptPriority;
 

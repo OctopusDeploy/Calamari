@@ -68,7 +68,7 @@ namespace Calamari.Integration.Scripting
         IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax) =>
             // get the type of script
             scriptWrapperHooks
-                .Where(hook => hook.Enabled)
+                .Where(hook => hook.IsEnabled(scriptSyntax))
                 /*
                  * Sort the list in descending order of priority to ensure that
                  * authentication script wrappers are called before any tool
