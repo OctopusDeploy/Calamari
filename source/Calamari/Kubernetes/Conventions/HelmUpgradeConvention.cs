@@ -165,6 +165,15 @@ namespace Calamari.Kubernetes.Conventions
                     var version = variables.Get(Deployment.SpecialVariables.Packages.PackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
                     var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
+
+                    if (!files.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory 
+                    {
+                        Log.Verbose($"Unable to find values files at path `{providedPath}`. " +
+                                    $"Chart package contains root directory with chart name, so looking for values in there.");
+                        var chartRelativePath = Path.Combine(fileSystem.RemoveInvalidFileNameChars(packageId), relativePath);
+                        files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
+                    }
+
                     if (!files.Any())
                     {
                         throw new CommandException($"Unable to find file `{providedPath}` for package {packageId} v{version}");

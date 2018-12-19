@@ -50,6 +50,9 @@ namespace Calamari.Tests.KubernetesFixtures
             //Chart Pckage
             Variables.Set(SpecialVariables.Package.NuGetPackageId, "mychart");
             Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "0.3.7");
+            Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.NuGetPackageId}}}");
+            Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.NuGetPackageVersion}}}");
+            
 
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
@@ -130,6 +133,33 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
         
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void ValuesFromChartPackage_NewValuesUsed()
+        {
+            //Additional Package
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), Path.Combine("mychart","secondary.Development.yaml"));
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
+        }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void ValuesFromChartPackageWithoutSubDirectory_NewValuesUsed()
+        {
+            //Additional Package
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), "secondary.Development.yaml");
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
+        }
         
         [Test]
         [RequiresNonFreeBSDPlatform]
