@@ -54,6 +54,11 @@ namespace Calamari.Deployment.Journal
 
             foreach (var packageReferenceName in variables.GetIndexes(SpecialVariables.Packages.PackageCollection))
             {
+                if (string.IsNullOrEmpty(packageReferenceName) && variables.IsSet(SpecialVariables.Package.NuGetPackageId))
+                {
+                    continue;
+                }
+
                 yield return new DeployedPackage(
                     variables.Get(SpecialVariables.Packages.PackageId(packageReferenceName)),
                     variables.Get(SpecialVariables.Packages.PackageVersion(packageReferenceName)),
