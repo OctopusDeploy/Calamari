@@ -167,7 +167,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
-        }        
+        }
 
         [Test]
         [RequiresNonFreeBSDPlatform]
@@ -199,6 +199,22 @@ namespace Calamari.Tests.KubernetesFixtures
                 result.AssertSuccess();
                 result.AssertOutput("Using custom helm executable at");
             }
+        }
+        
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void TillerNamespace_CannotFindIfRandomNamespaceUsed()
+        {   
+            // We are basically just testing here that setting the tiller namespace does put the param into the cmd
+            Variables.Set(Kubernetes.SpecialVariables.Helm.TillerNamespace, "random-foobar");
+
+            var result = DeployPackage();
+            
+            result.AssertFailure();
+            result.AssertOutput("Error: could not find tiller");
         }
 
         void AddPostDeployMessageCheckAndCleanup()
