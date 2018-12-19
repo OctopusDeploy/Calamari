@@ -21,6 +21,7 @@ namespace Calamari.Kubernetes
             public const string YamlValues = "Octopus.Action.Helm.YamlValues";
             public const string ResetValues = "Octopus.Action.Helm.ResetValues";
             public const string CustomHelmExecutable = "Octopus.Action.Helm.CustomHelmExecutable";
+            public const string Timeout = "Octopus.Action.Helm.Timeout";
             public const string TillerNamespace = "Octopus.Action.Helm.TillerNamespace";
             public const string TillerTimeout = "Octopus.Action.Helm.TillerTimeout";
             

@@ -139,6 +139,19 @@ namespace Calamari.Kubernetes.Conventions
                 sb.Append($" --tiller-namespace \"{deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace)}\"");
             }
         }
+        
+        private static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
+        {
+            if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
+            
+            var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
+            if (!int.TryParse(timeout, out _))
+            {
+                throw new CommandException($"Timeout period is not a valid integer: {timeout}");
+            }
+
+            sb.Append($" --timeout \"{timeout}\"");
+        }
 
         private static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
         {
