@@ -144,7 +144,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
+            Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
         
         [Test]
@@ -158,7 +158,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
+            Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
         
         [Test]
