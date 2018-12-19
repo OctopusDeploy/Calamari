@@ -64,6 +64,7 @@ namespace Calamari.Kubernetes.Conventions
             SetResetValuesParameter(deployment, sb);
             SetTillerTimeoutParameter(deployment, sb);
             SetTillerNamespaceParameter(deployment, sb);
+            SetTimeoutParameter(deployment, sb);
             SetValuesParameters(deployment, sb);
             sb.Append($" \"{releaseName}\" \"{packagePath}\"");
 
