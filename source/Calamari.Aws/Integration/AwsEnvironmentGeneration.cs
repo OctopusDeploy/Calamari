@@ -232,7 +232,7 @@ namespace Calamari.Aws.Integration
         }
 
         public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
-        public bool Enabled { get; } = true;
+        public bool IsEnabled(ScriptSyntax scriptSyntax) => true;
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,
