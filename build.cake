@@ -126,7 +126,7 @@ Task("Pack")
     {
 		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp2.0", nugetVersion, rid);
 		var zipName = $"Calamari.Tests.netcoreapp2.{rid}.{nugetVersion}.zip";
-		Zip(Path.combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
+		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }
 });
 
