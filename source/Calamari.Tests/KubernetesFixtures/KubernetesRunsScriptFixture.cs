@@ -8,34 +8,56 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Kubernetes;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
     public class KubernetesContextScriptWrapperFixture
     {
-        private static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
+        static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
         static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
-        
+
+        [Test]
+        [TestCase("Url", "", "", ScriptSyntax.PowerShell, true)]
+        [TestCase("", "Name", "", ScriptSyntax.PowerShell, true)]
+        [TestCase("", "", "Name", ScriptSyntax.PowerShell, true)]
+        [TestCase("Url", "", "", ScriptSyntax.Bash, true)]
+        [TestCase("", "", "", ScriptSyntax.PowerShell, false)]
+        [TestCase("Url", "", "", ScriptSyntax.FSharp, false)]
+        public void ShouldBeEnabled(string clusterUrl, string aksClusterName, string eksClusterName, ScriptSyntax syntax, bool expected)
+        {
+            var variables = new CalamariVariableDictionary
+            {
+                {SpecialVariables.ClusterUrl, clusterUrl},
+                {SpecialVariables.AksClusterName, aksClusterName},
+                {SpecialVariables.EksClusterName, eksClusterName}
+            };
+            var target = new KubernetesContextScriptWrapper(variables);
+            var actual = target.IsEnabled(syntax);
+            actual.Should().Be(expected);
+        }
+
         [Test]
         [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void PowershellKubeCtlScripts()
         {
             var wrapper = new KubernetesContextScriptWrapper(new CalamariVariableDictionary());
             TestScript(wrapper, "Test-Script.ps1");
         }
-        
+
         [Test]
         [Category(TestEnvironment.CompatibleOS.Nix)]
+        [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void BashKubeCtlScripts()
         {
             var wrapper = new KubernetesContextScriptWrapper(new CalamariVariableDictionary());
             TestScript(wrapper, "Test-Script.sh");
         }
 
-        private void TestScript(IScriptWrapper wrapper, string scriptName)
+        void TestScript(IScriptWrapper wrapper, string scriptName)
         {
             using (var dir = TemporaryDirectory.Create())
             using (var temp = new TemporaryFile(Path.Combine(dir.DirectoryPath, scriptName)))
@@ -55,7 +77,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        private CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName, CalamariVariableDictionary variables)
+        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName, CalamariVariableDictionary variables)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(capture);

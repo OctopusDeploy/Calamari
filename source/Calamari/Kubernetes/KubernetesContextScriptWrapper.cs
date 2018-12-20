@@ -31,9 +31,9 @@ namespace Calamari.Kubernetes
         /// <summary>
         /// One of these fields must be present for a k8s step
         /// </summary>
-        public bool IsEnabled(ScriptSyntax syntax) => !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
+        public bool IsEnabled(ScriptSyntax syntax) => (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
                                !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName, "")) ||
-                               !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, "")) &&
+                               !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, ""))) &&
                                 supportedScriptSyntax.Contains(syntax);
 
         public IScriptWrapper NextWrapper { get; set; }
