@@ -10,7 +10,7 @@ using Assent.Reporters.DiffPrograms;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.Windows)]
     public class DeployWindowsServiceArgumentsFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => "DumpArgs";

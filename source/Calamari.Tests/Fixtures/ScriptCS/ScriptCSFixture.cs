@@ -10,7 +10,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
     [TestFixture]
-    [Category(TestEnvironment.ScriptingSupport.ScriptCS)]
+    [Category(TestCategory.ScriptingSupport.ScriptCS)]
     public class ScriptCSFixture : CalamariFixture
     {
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]

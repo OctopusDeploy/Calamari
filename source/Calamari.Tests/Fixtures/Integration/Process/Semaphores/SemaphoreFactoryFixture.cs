@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 
 #if NETFX
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ReturnsSystemSemaphoreManagerForWindows()
         {
             if (!CalamariEnvironment.IsRunningOnWindows)
