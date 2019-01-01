@@ -15,7 +15,7 @@ namespace Calamari.Tests.Hooks
         /// </summary>
         public bool WasCalled { get; private set; } = false;
         public int Priority => 1;
-        public bool Enabled { get; } = true;
+        public bool IsEnabled(ScriptSyntax scriptSyntax) => true;
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,

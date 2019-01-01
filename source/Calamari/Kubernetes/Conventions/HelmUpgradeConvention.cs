@@ -58,22 +58,37 @@ namespace Calamari.Kubernetes.Conventions
             var packagePath = GetChartLocation(deployment);
             
             var sb = new StringBuilder();
-            
+
+            SetExecutable(deployment, sb);
+            sb.Append($" upgrade --install");
+            SetResetValuesParameter(deployment, sb);
+            SetTillerTimeoutParameter(deployment, sb);
+            SetTillerNamespaceParameter(deployment, sb);
+            SetTimeoutParameter(deployment, sb);
+            SetValuesParameters(deployment, sb);
+            sb.Append($" \"{releaseName}\" \"{packagePath}\"");
+
+            Log.Verbose(sb.ToString());
+            return sb.ToString();
+        }
+
+        private void SetExecutable(RunningDeployment deployment, StringBuilder sb)
+        {
             var helmExecutable = deployment.Variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
             if (!string.IsNullOrWhiteSpace(helmExecutable))
             {
-                
                 if (deployment.Variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
-                    .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
+                        .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
                 {
                     helmExecutable = Path.Combine(SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable);
-                    Log.Info($"Using custom helm executable at {helmExecutable} from inside package. Full path at {Path.GetFullPath(helmExecutable)}");
+                    Log.Info(
+                        $"Using custom helm executable at {helmExecutable} from inside package. Full path at {Path.GetFullPath(helmExecutable)}");
                 }
                 else
                 {
                     Log.Info($"Using custom helm executable at {helmExecutable}");
                 }
-                
+
                 var scriptType = scriptEngine.GetSupportedTypes();
                 if (scriptType.Contains(ScriptSyntax.PowerShell))
                 {
@@ -83,26 +98,25 @@ namespace Calamari.Kubernetes.Conventions
                 {
                     sb.Append($"chmod +x \"{helmExecutable}\"\n");
                 }
-                
+
                 sb.Append($"\"{helmExecutable}\"");
             }
             else
             {
                 sb.Append("helm");
             }
-            
-            sb.Append($" upgrade");
+        }
 
+        private static void SetResetValuesParameter(RunningDeployment deployment, StringBuilder sb)
+        {
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
             {
                 sb.Append(" --reset-values");
             }
+        }
 
-            /*if (deployment.Variables.GetFlag(SpecialVariables.Helm.Install, true))
-            {*/
-            sb.Append(" --install");
-            /*}*/
-
+        private void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
+        {
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
                 sb.Append($" --values \"{additionalValuesFile}\"");
@@ -112,27 +126,51 @@ namespace Calamari.Kubernetes.Conventions
             {
                 sb.Append($" --values \"{rawValuesFile}\"");
             }
-            
+
             if (TryGenerateVariablesFile(deployment, out var valuesFile))
             {
                 sb.Append($" --values \"{valuesFile}\"");
             }
+        }
 
-            sb.Append($" \"{releaseName}\" \"{packagePath}\"");
+        private static void SetTillerNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
+        {
+            if (deployment.Variables.IsSet(SpecialVariables.Helm.TillerNamespace))
+            {
+                sb.Append($" --tiller-namespace \"{deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace)}\"");
+            }
+        }
+        
+        private static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
+        {
+            if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
+            
+            var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
+            if (!int.TryParse(timeout, out _))
+            {
+                throw new CommandException($"Timeout period is not a valid integer: {timeout}");
+            }
 
-            Log.Verbose(sb.ToString());
-            return sb.ToString();
+            sb.Append($" --timeout \"{timeout}\"");
+        }
+
+        private static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
+        {
+            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
+            
+            var tillerTimeout = deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout);
+            if (!int.TryParse(tillerTimeout, out _))
+            {
+                throw new CommandException($"Tiller timeout period is not a valid integer: {tillerTimeout}");
+            }
+
+            sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
         }
 
         private string SyntaxSpecificFileName(RunningDeployment deployment)
         {
             var scriptType = scriptEngine.GetSupportedTypes();
-            if (scriptType.Contains(ScriptSyntax.PowerShell))
-            {
-                return Path.Combine(deployment.CurrentDirectory, "Calamari.HelmUpgrade.ps1");
-            }
-            
-            return Path.Combine(deployment.CurrentDirectory, "Calamari.HelmUpgrade.sh");
+            return Path.Combine(deployment.CurrentDirectory, scriptType.Contains(ScriptSyntax.PowerShell) ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
 
         private static string GetReleaseName(CalamariVariableDictionary variables)
