@@ -66,6 +66,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void Upgrade_Succeeds()
         {
             var result = DeployPackage();
@@ -85,6 +86,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void NoValues_EmbededValuesUsed()
         {
             var result = DeployPackage();
@@ -98,6 +100,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void ExplicitValues_NewValuesUsed()
         {
             //Helm Config
@@ -112,6 +115,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void ValuesFromPackage_NewValuesUsed()
         {
             //Additional Package
@@ -133,6 +137,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void ValuesFromPackageAndExplicit_ExplicitTakesPrecedence()
         {
             //Helm Config (lets make sure Explicit values take precedence
@@ -158,6 +163,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void ValuesFromRawYaml_ValuesAdded()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.YamlValues, "\"SpecialMessage\": \"YAML\"");
@@ -171,6 +177,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void CustomDownloadedHelmExe_RelativePath()
         {   
             var version = "2.9.1";
@@ -203,6 +210,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.ExternalDependencyRequirement)]
         public void TillerNamespace_CannotFindIfRandomNamespaceUsed()
         {   
             // We're basically just testing here that setting the tiller namespace does put the param into the cmd
