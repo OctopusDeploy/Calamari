@@ -18,6 +18,6 @@ namespace Calamari.Tests.Helpers
             public const string Mac = "macOS";
         }
         
-        public const string ExternalDependencyRequirement = "ExternalDependencyRequirement";
+        public const string PlatformAgnostic = "PlatformAgnostic";
     }
 }
