@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -38,7 +39,9 @@ namespace Calamari.Deployment.Conventions
         {
             var variables = deployment.Variables;
             
-            var packageReferenceNames = variables.GetIndexes(SpecialVariables.Packages.PackageCollection);
+            // No need to check for "default" package since it gets extracted in the current directory in previous step.
+            var packageReferenceNames = variables.GetIndexes(SpecialVariables.Packages.PackageCollection)
+                .Where(i => !string.IsNullOrEmpty(i));
 
             foreach (var packageReferenceName in packageReferenceNames)
             {
