@@ -32,6 +32,8 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
+            Log.Verbose($"Installing package to custom directory {customInstallationDirectory}");
+
             if (!string.IsNullOrEmpty(errorString))
             {
                 throw new CommandException(
