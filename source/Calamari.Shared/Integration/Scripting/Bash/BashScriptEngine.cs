@@ -1,34 +1,31 @@
 ﻿using System.Collections.Specialized;
 using System.IO;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.Bash
 {
-    public class BashScriptEngine : IScriptEngine
+    public class BashScriptEngine : ScriptEngine
     {
-        public ScriptSyntax[] GetSupportedTypes()
+        public override ScriptSyntax[] GetSupportedTypes()
         {
             return new[] {ScriptSyntax.Bash};
         }
 
-        public CommandResult Execute(
-            Script script, 
-            CalamariVariableDictionary variables, 
-            ICommandLineRunner commandLineRunner,
+        protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
             StringDictionary environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var boostrapFile = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory);
+            var bootstrapFile = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory);
 
-            using (new TemporaryFile(configurationFile))
-            using (new TemporaryFile(boostrapFile))
-            {
-                return commandLineRunner.Execute(new CommandLineInvocation(
+            return new ScriptExecution(
+                new CommandLineInvocation(
                     BashScriptBootstrapper.FindBashExecutable(),
-                    BashScriptBootstrapper.FormatCommandArguments(boostrapFile), workingDirectory, environmentVars));
-            }
+                    BashScriptBootstrapper.FormatCommandArguments(bootstrapFile), workingDirectory, environmentVars),
+                new[] {bootstrapFile, configurationFile}
+            );
         }
     }
 }
