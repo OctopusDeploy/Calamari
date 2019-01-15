@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using Assent;
-using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using Calamari.Util.Environments;
@@ -28,9 +24,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [Platform]
         [Category(TestCategory.CompatibleOS.Windows)]
-        [TestCase("2", "PSVersion                      2.0")]
-        [TestCase("2.0", "PSVersion                      2.0")]
+        [TestCase("2", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2")]
+        [TestCase("2.0", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2")]
         public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
         {
             var variablesFile = Path.GetTempFileName();
