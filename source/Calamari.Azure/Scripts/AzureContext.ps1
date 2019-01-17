@@ -66,6 +66,10 @@ Execute-WithRetry{
             # Authenticate via Service Principal
             $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
             $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+
+            # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
+            Disable-AzureRMContextAutosave -Scope Process
+
             $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
             if (!$AzureEnvironment) {
                 Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
