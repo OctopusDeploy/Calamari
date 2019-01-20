@@ -16,7 +16,7 @@ using Calamari.Tests.Helpers;
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsX509CertificateStoreFixture
     {
         [Test]

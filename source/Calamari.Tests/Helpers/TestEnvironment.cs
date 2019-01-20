@@ -26,22 +26,6 @@ namespace Calamari.Tests.Helpers
         {
             return Path.Combine(Path.GetPathRoot(CurrentWorkingDirectory), Path.Combine(paths));
         }
-
-        public static class CompatibleOS
-        {
-            public const string Nix = "Nix";
-
-            public const string Windows = "Windows";
-
-            public const string Mac = "macOS";
-        }
-
-        public static class ScriptingSupport
-        {
-            public const string FSharp = "fsharp";
-
-            public const string ScriptCS = "scriptcs";
-        }
     }
 }
 

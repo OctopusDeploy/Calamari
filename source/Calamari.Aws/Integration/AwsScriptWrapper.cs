@@ -8,7 +8,7 @@ namespace Calamari.Aws.Integration
     public class AwsScriptWrapper : IScriptWrapper
     {
         public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
-        public bool Enabled { get; } = true;
+        bool IScriptWrapper.IsEnabled(ScriptSyntax syntax) => true;
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,

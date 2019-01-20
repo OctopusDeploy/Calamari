@@ -5,31 +5,26 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
-    public class ScriptCSScriptEngine : IScriptEngine
+    public class ScriptCSScriptEngine : ScriptEngine
     {
-        public ScriptSyntax[] GetSupportedTypes()
+        public override ScriptSyntax[] GetSupportedTypes()
         {
             return new[] {ScriptSyntax.CSharp};
         }
 
-        public CommandResult Execute(
-            Script script, 
-            CalamariVariableDictionary variables, 
-            ICommandLineRunner commandLineRunner,
+        protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
             StringDictionary environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-
             var executable = ScriptCSBootstrapper.FindExecutable();
             var configurationFile = ScriptCSBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var boostrapFile = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory);
-            var arguments = ScriptCSBootstrapper.FormatCommandArguments(boostrapFile, script.Parameters);
+            var bootstrapFile = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory);
+            var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
-            using (new TemporaryFile(configurationFile))
-            using (new TemporaryFile(boostrapFile))
-            {
-                return commandLineRunner.Execute(new CommandLineInvocation(executable, arguments, workingDirectory, environmentVars));
-            }
+            return new ScriptExecution(
+                new CommandLineInvocation(executable, arguments, workingDirectory, environmentVars),
+                new[] {bootstrapFile, configurationFile}
+            );
         }
     }
 }

@@ -8,7 +8,6 @@ using Calamari.Azure.Integration.CloudServicePackage.ManifestSchema;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes.Semaphores;
 using Calamari.Util;
 
 namespace Calamari.Azure.Deployment.Conventions
@@ -16,12 +15,10 @@ namespace Calamari.Azure.Deployment.Conventions
     public class RePackageCloudServiceConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
-        private readonly ISemaphoreFactory semaphoreFactory;
 
-        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
+        public RePackageCloudServiceConvention(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.semaphoreFactory = semaphoreFactory;
         }
 
         public void Install(RunningDeployment deployment)
@@ -34,9 +31,8 @@ namespace Calamari.Azure.Deployment.Conventions
             var originalPackagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             var newPackagePath = Path.Combine(Path.GetDirectoryName(originalPackagePath), Path.GetFileNameWithoutExtension(originalPackagePath) + "_repacked.cspkg");
 
-            using (semaphoreFactory.Acquire("Calamari - multi threaded packaging causes IsolatedStorage errors", "Waiting to re-package"))
-            using (var originalPackage = Package.Open(originalPackagePath, FileMode.Open))
-            using (var newPackage = Package.Open(newPackagePath, FileMode.CreateNew))
+            using (var originalPackage = Package.Open(originalPackagePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var newPackage = Package.Open(newPackagePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
             {
                 try
                 {
@@ -143,7 +139,7 @@ namespace Calamari.Azure.Deployment.Conventions
                 var part =
                     package.CreatePart(
                         PackUriHelper.CreatePartUri(partUri), System.Net.Mime.MediaTypeNames.Application.Octet, CompressionOption.Maximum);
-
+                
                 using (var partStream = part.GetStream())
                 using (var fileStream = fileSystem.OpenFile(file, FileMode.Open))
                 {

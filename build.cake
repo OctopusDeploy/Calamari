@@ -120,6 +120,14 @@ Task("Pack")
     {
         DoPackage("Calamari", "netcoreapp2.0", nugetVersion, rid);
     }
+	
+	// Create a Zip for each runtime for testing
+	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
+    {
+		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp2.0", nugetVersion, rid);
+		var zipName = $"Calamari.Tests.netcoreapp2.{rid}.{nugetVersion}.zip";
+		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
+    }
 });
 
 Task("CopyToLocalPackages")
@@ -131,6 +139,31 @@ Task("CopyToLocalPackages")
     CreateDirectory(localPackagesDir);
     CopyFiles(Path.Combine(artifactsDir, $"Calamari.*.nupkg"), localPackagesDir);
 });
+
+private string DoPublish(string project, string framework, string version, string runtimeId = null) {
+	var projectDir = Path.Combine("./source", project);
+	var publishedTo = Path.Combine(publishDir, project, framework);
+   
+   var publishSettings = new DotNetCorePublishSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = publishedTo,
+        Framework = framework,
+		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
+    };
+	
+	 if (!string.IsNullOrEmpty(runtimeId))
+    {
+        publishSettings.OutputDirectory = Path.Combine(publishedTo, runtimeId);
+        // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
+        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable") ? runtimeId : null;
+    }
+	DotNetCorePublish(projectDir, publishSettings);
+
+	SignBinaries(publishSettings.OutputDirectory.FullPath);
+	return publishedTo;
+}
+
 
 private void DoPackage(string project, string framework, string version, string runtimeId = null)
 {
