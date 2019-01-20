@@ -1,11 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <!--
-		Fixes this error:
-		Could not locate ...\packages.config. Ensure that this project has Microsoft.Bcl.Build installed and packages.config is located next to the project file.
-	 -->
-  <PropertyGroup>
-    <SkipValidatePackageReferences>true</SkipValidatePackageReferences>
-  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -39,6 +32,7 @@
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' ">
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />

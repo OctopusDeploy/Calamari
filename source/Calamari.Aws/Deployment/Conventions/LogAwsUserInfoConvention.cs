@@ -1,10 +1,13 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Integration;
+using Calamari.Aws.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Octopus.CoreUtilities.Extensions;
@@ -26,37 +29,36 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        private async Task InstallAsync(RunningDeployment deployment)
+        {
             Guard.NotNull(deployment, "deployment can not be null");
+            Func<IAmazonSecurityTokenService> stsClientFactory = () => ClientHelpers.CreateSecurityTokenServiceClient(awsEnvironmentGeneration);
+            Func<IAmazonIdentityManagementService> identityManagementClientFactory = () =>
+                ClientHelpers.CreateIdentityManagementServiceClient(awsEnvironmentGeneration);
+            
 
             if (deployment.Variables.IsSet(SpecialVariables.Action.Aws.AssumeRoleARN) ||
                 !deployment.Variables.IsSet(SpecialVariables.Action.Aws.AccountId) ||
                 !deployment.Variables.IsSet(deployment.Variables.Get(SpecialVariables.Action.Aws.AccountId) +
                                             ".AccessKey"))
             {
-                WriteRoleInfo();
+                await WriteRoleInfo(stsClientFactory);
             }
             else
             {
-                WriteUseInfo();
+                await WriteUseInfo(identityManagementClientFactory);
             }
         }
 
-        private void WriteUseInfo()
+        private async Task WriteUseInfo(Func<IAmazonIdentityManagementService> clientFactory)
         {
             try
             {
-                new AmazonIdentityManagementServiceClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonIdentityManagementServiceConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
-                    // The client becomes the API response
-                    .Map(client => client.GetUser(new GetUserRequest()))
-                    // Log the details of the response
-                    .Tee(response => Log.Info($"Running the step as the AWS user {response.User.UserName}"));
+                var result = await clientFactory().GetUserAsync(new GetUserRequest());
+                Log.Info($"Running the step as the AWS user {result.User.UserName}");
             }
             catch (AmazonServiceException)
             {
@@ -64,20 +66,11 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private void WriteRoleInfo()
+        private async Task WriteRoleInfo(Func<IAmazonSecurityTokenService> clientFactory)
         {
             try
             {
-                new AmazonSecurityTokenServiceClient(awsEnvironmentGeneration.AwsCredentials,
-                        new AmazonSecurityTokenServiceConfig
-                        {
-                            RegionEndpoint = awsEnvironmentGeneration.AwsRegion,
-                            ProxyPort = awsEnvironmentGeneration.ProxyPort,
-                            ProxyCredentials = awsEnvironmentGeneration.ProxyCredentials,
-                            ProxyHost = awsEnvironmentGeneration.ProxyHost
-                        })
-                    // Client becomes the response of the API call
-                    .Map(client => client.GetCallerIdentity(new GetCallerIdentityRequest()))
+                (await clientFactory().GetCallerIdentityAsync(new GetCallerIdentityRequest()))
                     // The response is narrowed to the Aen
                     .Map(response => response.Arn)
                     // Try and match the response to get just the role
