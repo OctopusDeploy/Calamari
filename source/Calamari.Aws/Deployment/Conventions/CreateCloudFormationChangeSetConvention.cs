@@ -86,9 +86,9 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private async Task WaitForChangesetCompletion(RunningChangeSet result)
+        private Task WaitForChangesetCompletion(RunningChangeSet result)
         {
-            await clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
+            return clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
         }
 
         private Action<RunningChangeSet> ApplyVariables(CalamariVariableDictionary variables)

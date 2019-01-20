@@ -107,18 +107,18 @@ namespace Calamari.Aws.Deployment.Conventions
             Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{name}]\"");
         }
 
-        protected async Task<Stack> QueryStackAsync(Func<IAmazonCloudFormation> clientFactory, StackArn stack)
+        protected Task<Stack> QueryStackAsync(Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
             try
             {
-                return await clientFactory.DescribeStackAsync(stack);
+                return clientFactory.DescribeStackAsync(stack);
             }
             catch (AmazonServiceException ex) when (ex.ErrorCode == "AccessDenied")
             {
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to describe the CloudFormation stack. " +
                     "This means that the step is not able to generate any output variables.\n " +
-                    "Please ensure the current account has permission to perfrom action 'cloudformation:DescribeStacks'.\n" +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeStacks'.\n" +
                     ex.Message + "\n" +
                     ex);
             }
