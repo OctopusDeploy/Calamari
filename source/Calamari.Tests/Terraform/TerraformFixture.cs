@@ -17,7 +17,7 @@ using Octostache;
 namespace Calamari.Tests.Terraform
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.Windows)]
     public class TerraformFixture
     {
         [Test]
