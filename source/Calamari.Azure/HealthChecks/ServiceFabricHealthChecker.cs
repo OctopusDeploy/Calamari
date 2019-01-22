@@ -100,6 +100,14 @@ namespace Calamari.Azure.HealthChecks
                         };
                         break;
                     }
+                case AzureServiceFabricSecurityMode.SecureAD:
+                    {
+                        log.Info("Connecting with Secure Azure Active Directory");
+                        log.Verbose("Using the service account of the octopus service as windows credentials");
+                        var windowsCredentials = new WindowsCredentials();
+                        fabricClient = new FabricClient(windowsCredentials, connectionEndpoint);
+                        break;
+                    }
                 default:
                     {
                         log.Info("Connecting unsecurely");
