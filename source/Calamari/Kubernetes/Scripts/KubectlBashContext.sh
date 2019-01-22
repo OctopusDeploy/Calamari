@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 Octopus_K8S_ClusterUrl=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterUrl")
 Octopus_K8S_Namespace=$(get_octopusvariable "Octopus.Action.Kubernetes.Namespace")
@@ -14,7 +14,8 @@ Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.Ce
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
-		echo >&2 "The executable $1 does not exist, or is not on the path"
+		echo >&2 "The executable $1 does not exist, or is not on the PATH."
+		echo >&2 "See https://g.octopushq.com/KubernetesTarget for more information."
 		exit 1
 	fi
 }
@@ -31,12 +32,12 @@ function get_kubectl {
 
 function setup_context {
   if [[ -z $Octopus_K8S_ClusterUrl ]]; then
-    echo >&2  "Kubernetes cluster URL is missing"
+    echo >&2 "Kubernetes cluster URL is missing"
     exit 1
   fi
 
   if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert ]]; then
-    echo >&2  "Kubernetes account type or certificate is missing"
+    echo >&2 "Kubernetes account type or certificate is missing"
     exit 1
   fi
 
@@ -47,6 +48,13 @@ function setup_context {
 
   if [[ -z $Octopus_K8S_SkipTlsVerification ]]; then
     Octopus_K8S_SkipTlsVerification=true
+  fi
+
+  kubectl version --client=true
+  if [[ $? -ne 0 ]]; then
+	echo 2> "Could not find ${Octopus_K8S_KubectlExe}. Make sure kubectl is on the PATH."
+	echo 2> "See https://g.octopushq.com/KubernetesTarget for more information."
+	exit 1
   fi
 
   kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
@@ -66,6 +74,8 @@ function setup_context {
 
 	Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 -w0)
 	Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 -w0)
+
+	set_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64" $Octopus_K8S_Client_Cert_Key_Encoded -sensitive
 
 	kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem_Encoded"
 	kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key_Encoded"
@@ -115,7 +125,7 @@ function setup_context {
 		echo "  user:" >> $KUBECONFIG
 		echo "    exec:" >> $KUBECONFIG
 		echo "      apiVersion: client.authentication.k8s.io/v1alpha1" >> $KUBECONFIG
-		echo "      command: heptio-authenticator-aws" >> $KUBECONFIG
+		echo "      command: aws-iam-authenticator" >> $KUBECONFIG
 		echo "      args:" >> $KUBECONFIG
 		echo "        - \"token\"" >> $KUBECONFIG
 		echo "        - \"-i\"" >> $KUBECONFIG
@@ -124,8 +134,6 @@ function setup_context {
     echo >&2 "The account $Octopus_AccountType is currently not valid for kubectl contexts"
     exit 1
   fi
-
-
 }
 
 function configure_kubectl_path {
@@ -151,8 +159,8 @@ get_kubectl
 configure_kubectl_path
 setup_context
 create_namespace
-echo $KUBECONFIG
 echo "##octopus[stdout-verbose]"
+cat $KUBECONFIG
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
 echo "##octopus[stdout-default]"
 

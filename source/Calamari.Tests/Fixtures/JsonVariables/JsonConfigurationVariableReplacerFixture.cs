@@ -233,6 +233,36 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
             AssertJsonEquivalent(replaced, expected);
         }
+        
+        [Test]
+        public void ShouldReplacePropertyOfAnElementInArray()
+        {
+            const string expected =
+                "{" +
+                "  \"MyMessage\": \"Hello world\"," +
+                "  \"EmailSettings\": {" +
+                "    \"SmtpPort\": 23," +
+                "    \"UseProxy\": false," +
+                "    \"SmtpHost\": \"localhost\"," +
+                "    \"DefaultRecipients\": [" +
+                "        { " +
+                "            \"Email\":\"paul@octopus.com\"," +
+                "            \"Name\": \"Paul\"" +
+                "        }," +
+                "        { " +
+                "            \"Email\":\"henrik@octopus.com\"," +
+                "            \"Name\": \"Mike\"" +
+                "        }" +
+                "    ]" +
+                "  }" +
+                "}";
+
+            var variables = new VariableDictionary();
+            variables.Set("EmailSettings:DefaultRecipients:1:Email", "henrik@octopus.com");
+
+            var replaced = Replace(variables, existingFile: "appsettings.object-array.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
 
         [Test]
         public void ShouldReplaceEntireArray()

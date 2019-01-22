@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -79,6 +80,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        private async Task InstallAsync(RunningDeployment deployment)
+        {
             //The bucket should exist at this point
             Guard.NotNull(deployment, "deployment can not be null");
 
@@ -92,12 +98,12 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                UploadAll(options, Factory, deployment).Tee(responses =>
+                (await UploadAll(options, Factory, deployment)).Tee(responses =>
                 {
                     SetOutputVariables(deployment, responses);
                 });
             }
-             catch (AmazonS3Exception exception)
+            catch (AmazonS3Exception exception)
             {
                 if (exception.ErrorCode == "AccessDenied")
                 {
@@ -137,26 +143,26 @@ namespace Calamari.Aws.Deployment.Conventions
             Log.Warn(message);
         }
 
-        private IEnumerable<S3UploadResult> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
+        private async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
         {
+            var result = new List<S3UploadResult>();
             foreach (var option in options)
             {
                 switch (option)
                 {
                     case S3PackageOptions package:
-                        yield return UploadUsingPackage(clientFactory, deployment, package);
+                        result.Add(await UploadUsingPackage(clientFactory, deployment, package));
                         break;
                     case S3SingleFileSelectionProperties selection:
-                        yield return UploadSingleFileSelection(clientFactory, deployment, selection);
+                        result.Add(await UploadSingleFileSelection(clientFactory, deployment, selection));
                         break;
                     case S3MultiFileSelectionProperties selection:
-                        foreach (var response in UploadMultiFileSelection(clientFactory, deployment, selection))
-                        {
-                            yield return response;
-                        }
+                        result.AddRange(await UploadMultiFileSelection(clientFactory, deployment, selection));
                         break;
                 }
             }
+
+            return result;
         }
 
         /// <summary>
@@ -165,57 +171,47 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        private IEnumerable<S3UploadResult> UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
+        private async Task<IEnumerable<S3UploadResult>> UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Multi file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
-
-            var files = fileSystem.EnumerateFilesWithGlob(deployment.StagingDirectory, selection.Pattern).ToList();
+            var results = new List<S3UploadResult>();
+            
+            var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
+         
             if (!files.Any())
             {
                 Log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
-                yield break;
+                return results;
             }
 
-            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files.");
+            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
             var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
             
             new SubstituteInFilesConvention(fileSystem, fileSubstituter,
                     _ => substitutionPatterns.Any(),
                     _ => substitutionPatterns)
                 .Install(deployment);
-
-            var patternSegments = selection.Pattern.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var baseDir = deployment.StagingDirectory;
-
-            foreach (var segment in patternSegments)
-            {
-                var newBaseDir = Path.Combine(baseDir, segment);
-                if (!fileSystem.DirectoryExists(newBaseDir))
-                {
-                    break;
-                }
-
-                baseDir = newBaseDir;
-            }
-
+            
             foreach (var matchedFile in files)
             {
-                yield return CreateRequest(matchedFile, GetBucketKey(baseDir, matchedFile, new S3MultiFileSelectionBucketKeyAdapter(selection)), selection)
-                    .Tee(x => LogPutObjectRequest(matchedFile, x))
-                    //We only warn on multi file uploads 
-                    .Map(x => HandleUploadRequest(clientFactory(), x, WarnAndIgnoreException));
+                var request = CreateRequest(matchedFile.FilePath,() => $"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath}", selection);
+                LogPutObjectRequest(matchedFile.FilePath, request);
+    
+                results.Add(await HandleUploadRequest(clientFactory(), request, WarnAndIgnoreException));
             }
+            
+            return results;
         }
-
+      
         /// <summary>
         /// Uploads a single file with the given properties
         /// </summary>
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        public S3UploadResult UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSelectionProperties selection)
+        public Task<S3UploadResult> UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Single file selection properties may not be null");
@@ -244,7 +240,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="options"></param>
-        public S3UploadResult UploadUsingPackage(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3PackageOptions options)
+        public Task<S3UploadResult> UploadUsingPackage(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3PackageOptions options)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(options, "Package options may not be null");
@@ -283,28 +279,17 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        private static Func<string> GetBucketKey(string baseDir, string filePath, IHaveBucketKeyBehaviour behaviour)
+        public static Func<string> GetBucketKey(string baseDir, string filePath, IHaveBucketKeyBehaviour behaviour)
         {
             switch (behaviour.BucketKeyBehaviour)
             {
                 case BucketKeyBehaviourType.Custom:
                     return () => behaviour.BucketKey;
                 case BucketKeyBehaviourType.Filename:
-                    return () => $"{behaviour.BucketKeyPrefix}{ConvertToRelativeUri(filePath, baseDir)}";
+                    return () => $"{behaviour.BucketKeyPrefix}{filePath.AsRelativePathFrom(baseDir)}";
                 default:
                     throw new NotImplementedException();
             }
-        }
-
-        private static string ConvertToRelativeUri(string filePath, string baseDir)
-        {
-            var uri = new Uri(filePath);
-            if (!baseDir.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                baseDir += Path.DirectorySeparatorChar.ToString();
-            }
-            var baseUri = new Uri(baseDir);
-            return baseUri.MakeRelativeUri(uri).ToString();
         }
 
         /// <summary>
@@ -338,27 +323,33 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="client">The client to use</param>
         /// <param name="request">The request to send</param>
         /// <param name="errorAction">Action to take on per file error</param>
-        private S3UploadResult HandleUploadRequest(AmazonS3Client client, PutObjectRequest request, Action<AmazonS3Exception, string> errorAction)
+        private async Task<S3UploadResult> HandleUploadRequest(AmazonS3Client client, PutObjectRequest request, Action<AmazonS3Exception, string> errorAction)
         {
             try
             {
-                if (!ShouldUpload(client, request))
+                if (!await ShouldUpload(client, request))
                 {
                     Log.Verbose(
                         $"Object key {request.Key} exists for bucket {request.BucketName} with same content hash. Skipping upload.");
                     return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
                 }
 
-                return new S3UploadResult(request, Maybe<PutObjectResponse>.Some(client.PutObject(request)));
+                return new S3UploadResult(request, Maybe<PutObjectResponse>.Some(await client.PutObjectAsync(request)));
             }
             catch (AmazonS3Exception ex)
             {
+                var permissions = new List<string> {"s3:PutObject"};
+                if (request.TagSet.Count > 0)
+                {
+                    permissions.Add("s3:PutObjectTagging");
+                    permissions.Add("s3:PutObjectVersionTagging");
+                }
+                
                 if (ex.ErrorCode == "AccessDenied")
                     throw new PermissionException(
-                        "AWS-S3-ERROR-0002: The AWS account used to perform the operation does not have " +
-                        "the required permissions to upload to the bucket.\n" +
-                        ex.Message + "\n" +
-                        "For more information visit https://g.octopushq.com/AwsS3Upload#aws-s3-error-0002");
+                        "The AWS account used to perform the operation does not have the required permissions to upload to the bucket.\n" +
+                        $"Please ensure the current account has permission to perform action(s) {string.Join(", ", permissions)}'.\n" +
+                        ex.Message + "\n");
 
                 if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
                 perFileUploadErrors[ex.ErrorCode](request, ex).Tee((message) => errorAction(ex, message));
@@ -366,8 +357,10 @@ namespace Calamari.Aws.Deployment.Conventions
             }
             catch (ArgumentException exception)
             {
-                throw new AmazonFileUploadException($"AWS-S3-ERROR-0003: An error occurred uploading file with bucket key {request.Key} possibly due to metadata.\n" +
-                                                    "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n"), exception);
+                throw new AmazonFileUploadException($"An error occurred uploading file with bucket key {request.Key} possibly due to metadata. Metadata keys must be valid HTTP header values. \n" +
+                                                    "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n") + "\n" +
+                                                    "Please see the [AWS documentation](https://g.octopushq.com/AwsS3UsingMetadata) for more information."
+                    , exception);
             }
         }
 
@@ -377,7 +370,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="client"></param>
         /// <param name="request"></param>
         /// <returns></returns>
-        private bool ShouldUpload(AmazonS3Client client, PutObjectRequest request)
+        private async Task<bool> ShouldUpload(AmazonS3Client client, PutObjectRequest request)
         {
             //This isn't ideal, however the AWS SDK doesn't really provide any means to check the existence of an object.
             try
@@ -385,7 +378,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 if (!md5HashSupported)
                     return true;
 
-                var metadata = client.GetObjectMetadata(request.BucketName, request.Key);
+                var metadata = await client.GetObjectMetadataAsync(request.BucketName, request.Key);
                 return !metadata.GetEtag().IsSameAsRequestMd5Digest(request);
             }
             catch (AmazonServiceException exception)
@@ -413,7 +406,7 @@ namespace Calamari.Aws.Deployment.Conventions
              .Map(stream => new StreamReader(stream).ReadToEnd())
              .Map(message => "An exception was thrown while contacting the AWS API.\n" + message)
              ?? "An exception was thrown while contacting the AWS API.")
-                .Tee(message => DisplayWarning("AWS-S3-ERROR-0001", message));
+                .Tee(Log.Warn);
         }
     }
  }

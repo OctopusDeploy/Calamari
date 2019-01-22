@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPhysicalFileSystemFixture
     {
         [Test]

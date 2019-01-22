@@ -104,7 +104,10 @@ namespace Calamari.Integration.Scripting.ScriptCS
                 return "null;";
 
             var bytes = Encoding.UTF8.GetBytes(value);
-            return string.Format("System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{0}\"))", Convert.ToBase64String(bytes));
+            // We used to call System.Text.Encoding.UTF8.GetString(bytes) here, but on mono 5.10 and newer mono throws `The method or operation is not implemented.' (mono 5.8 work).
+            // So, now we call System.Text.Encoding.UTF8.GetString(bytes, start, length) which has been tested and confirmed working on mono 5.8 and also 5.10 and newer.
+            // See https://github.com/OctopusDeploy/Issues/issues/4404
+            return $"System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{Convert.ToBase64String(bytes)}\"), 0, {bytes.Length})";
         }
 
         static string EncryptVariable(string value)

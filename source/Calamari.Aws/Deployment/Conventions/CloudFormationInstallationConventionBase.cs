@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
@@ -7,7 +8,6 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
-using Microsoft.Data.OData.Query.SemanticAst;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -29,7 +29,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// the log.
         /// </summary>
         /// <param name="exception">The exception</param>
-        protected void HandleAmazonServiceException(AmazonServiceException exception)
+        protected void LogAmazonServiceException(AmazonServiceException exception)
         {
             exception.GetWebExceptionMessage()
                 .Tee(message => DisplayWarning("AWS-CLOUDFORMATION-ERROR-0014", message));
@@ -47,7 +47,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
             catch (AmazonServiceException exception)
             {
-                HandleAmazonServiceException(exception);
+                LogAmazonServiceException(exception);
                 throw;
             }
         }
@@ -89,9 +89,9 @@ namespace Calamari.Aws.Deployment.Conventions
                 try
                 {
                     Logger.Log(@event);
-                    Logger.LogRollbackError(@event, x => 
-                        WithAmazonServiceExceptionHandling(() => clientFactory.GetLastStackEvent(stack, x)), 
-                        expectSuccess, 
+                    Logger.LogRollbackError(@event, x =>
+                            WithAmazonServiceExceptionHandling(() => clientFactory.GetLastStackEvent(stack, x).GetAwaiter().GetResult()),
+                        expectSuccess,
                         missingIsFailure);
                 }
                 catch (PermissionException exception)
@@ -107,29 +107,24 @@ namespace Calamari.Aws.Deployment.Conventions
             Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{name}]\"");
         }
 
-        protected Stack QueryStack(Func<IAmazonCloudFormation> clientFactory, StackArn stack)
+        protected Task<Stack> QueryStackAsync(Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
             try
             {
-                return clientFactory.DescribeStack(stack);
+                return clientFactory.DescribeStackAsync(stack);
+            }
+            catch (AmazonServiceException ex) when (ex.ErrorCode == "AccessDenied")
+            {
+                throw new PermissionException(
+                    "The AWS account used to perform the operation does not have the required permissions to describe the CloudFormation stack. " +
+                    "This means that the step is not able to generate any output variables.\n " +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeStacks'.\n" +
+                    ex.Message + "\n" +
+                    ex);
             }
             catch (AmazonServiceException ex)
             {
-                if (ex.ErrorCode == "AccessDenied")
-                {
-                    throw new PermissionException(
-                        "AWS-CLOUDFORMATION-ERROR-0004: The AWS account used to perform the operation does not have " +
-                        "the required permissions to describe the CloudFormation stack. " +
-                        "This means that the step is not able to generate any output variables.\n" +
-                        ex.Message + "\n" +
-                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0004",
-                        ex);
-                }
-
-                throw new UnknownException(
-                    "AWS-CLOUDFORMATION-ERROR-0005: An unrecognised exception was thrown while querying the CloudFormation stacks.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0005",
-                    ex);
+                throw new Exception("An unrecognised exception was thrown while querying the CloudFormation stacks.", ex);
             }
         }
     }

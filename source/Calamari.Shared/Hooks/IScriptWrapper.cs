@@ -10,10 +10,16 @@ namespace Calamari.Hooks
     public interface IScriptWrapper
     {
         /// <summary>
+        /// The priority of the wrapper. Higher priority scripts are
+        /// run first.
+        /// </summary>
+        int Priority { get; }
+
+        /// <summary>
         /// true if this wrapper is enabled, and false otherwise. If
         /// Enabled is false, this wrapper is not used during execution.
         /// </summary>
-        bool Enabled { get; }
+        bool IsEnabled(ScriptSyntax syntax);
 
         /// <summary>
         /// The next wrapper to call. IScriptWrapper objects essentially form
@@ -31,6 +37,5 @@ namespace Calamari.Hooks
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             StringDictionary environmentVars);
-
     }
 }

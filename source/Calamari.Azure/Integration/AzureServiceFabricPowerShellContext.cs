@@ -10,6 +10,7 @@ using Octostache;
 using System;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace Calamari.Azure.Integration
@@ -18,7 +19,9 @@ namespace Calamari.Azure.Integration
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
-        private readonly CalamariVariableDictionary variables;
+        readonly CalamariVariableDictionary variables;
+
+        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell};
 
         public AzureServiceFabricPowerShellContext(CalamariVariableDictionary variables)
         {
@@ -27,8 +30,11 @@ namespace Calamari.Azure.Integration
             this.variables = variables;
         }
 
-        public bool Enabled =>
-            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
+        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
+
+        public bool IsEnabled(ScriptSyntax syntax) =>
+            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) &&
+            supportedScriptSyntax.Contains(syntax);
 
         public IScriptWrapper NextWrapper { get; set; }
 
@@ -39,7 +45,7 @@ namespace Calamari.Azure.Integration
             StringDictionary environmentVars)
         {
             // We only execute this hook if the connection endpoint has been set
-            if (!Enabled)
+            if (!IsEnabled(scriptSyntax))
             {
                 throw new InvalidOperationException(
                     "This script wrapper hook is not enabled, and should not have been run");

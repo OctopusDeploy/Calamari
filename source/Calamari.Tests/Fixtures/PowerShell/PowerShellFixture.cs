@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
-using Assent;
-using Assent.Namers;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using Calamari.Util.Environments;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -18,10 +17,18 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [TestFixture]
     public class PowerShellFixture : CalamariFixture
     {
+        [TearDown]
+        public void Teardown()
+        {
+            ResetProxyEnvironmentVariables();
+        }
+
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
-        [TestCase("2", "PSVersion                      2.0")]
-        [TestCase("2.0", "PSVersion                      2.0")]
+        [Platform]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
+        [TestCase("2", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
+        [TestCase("2.0", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
         public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
         {
             var variablesFile = Path.GetTempFileName();
@@ -45,7 +52,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         [TestCase("true", true)]
         [TestCase("false", false)]
         [TestCase("", false)]
@@ -76,7 +83,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
             var (output, _) = RunScript("Profile.ps1", new Dictionary<string, string>()
@@ -87,7 +94,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("Hello.ps1");
@@ -97,7 +104,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldLogWarningIfScriptArgumentUsed()
         {
             var output = Invoke(Calamari()
@@ -110,7 +117,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldRetrieveCustomReturnValue()
         {
             var (output, _) = RunScript("Exit2.ps1");
@@ -120,7 +127,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var variablesFile = Path.GetTempFileName();
@@ -137,24 +144,29 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
-        public void ShouldCallHelloWithAdditionalBase64Variable()
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
+            var outputVariablesFile = Path.GetTempFileName();
+            
             var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" } ;
             var serialized = JsonConvert.SerializeObject(variables);
-            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(serialized));
-
-            var (output, _) = RunScript("OuputVariableFromPrevious.ps1", null, new Dictionary<string, string>()
+            var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
+            var encoded = Convert.ToBase64String(bytes);
+            File.WriteAllText(outputVariablesFile, encoded);
+            
+            using (new TemporaryFile(outputVariablesFile))
             {
-                ["base64Variables"] = encoded
-            });
+                var (output, _) = RunScript("OutputVariableFromPrevious.ps1", null,
+                    new Dictionary<string, string>() {["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg=="});
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello Steve");
+                output.AssertSuccess();
+                output.AssertOutput("Hello Steve");
+            }
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldConsumeParametersWithQuotesUsingDeprecatedArgument()
         {
             var (output, _) = RunScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
@@ -166,7 +178,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("Parameters.ps1", new Dictionary<string, string>()
@@ -178,7 +190,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCaptureAllOutput()
         {
             var (output, _) = RunScript("Output.ps1");
@@ -192,7 +204,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldWriteServiceMessageForArtifacts()
         {
             var (output, _) = RunScript("CanCreateArtifact.ps1");
@@ -202,7 +214,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
             var (output, _) = RunScript("WarningForMissingArtifact.ps1");
@@ -213,7 +225,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldAllowDotSourcing()
         {
             var output = Invoke(Calamari()
@@ -225,7 +237,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetVariables()
         {
             var (output, variables) = RunScript("CanSetVariable.ps1");
@@ -235,7 +247,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetSensitiveVariables()
         {
             var (output, variables) = RunScript("CanSetVariable.ps1");
@@ -245,7 +257,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetActionIndexedOutputVariables()
         {
             var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
@@ -256,7 +268,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetMachineIndexedOutputVariables()
         {
             var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
@@ -269,7 +281,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailOnInvalid()
         {
             var (output, _) = RunScript("Invalid.ps1");
@@ -278,7 +290,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailOnInvalidSyntax()
         {
             var (output, _) = RunScript("InvalidSyntax.ps1");
@@ -287,7 +299,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldPrintVariables()
         {
             var (output, _) = RunScript("PrintVariables.ps1", new Dictionary<string, string>
@@ -310,7 +322,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSupportModulesInVariables()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>
@@ -327,7 +339,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldShowFriendlyErrorWithInvalidSyntaxInScriptModule()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
@@ -340,7 +352,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailIfAModuleHasASyntaxError()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
@@ -352,7 +364,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotSubstituteVariablesInNonPackagedScript()
         {
             // Use a temp file for the script to avoid mutating the script file for other tests
@@ -379,7 +391,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Description("Proves packaged scripts can have variables substituted into them before running")]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSubstituteVariablesInPackagedScripts()
         {
             var variablesFile = Path.GetTempFileName();
@@ -405,7 +417,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldPing()
         {
             var (output, _) = RunScript("Ping.ps1");
@@ -414,7 +426,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsSingleQuote()
         {
             var output = Invoke(Calamari()
@@ -426,7 +438,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsDollar()
         {
             var output = Invoke(Calamari()
@@ -438,7 +450,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotFailOnStdErr()
         {
             var (output, _) = RunScript("stderr.ps1");
@@ -448,7 +460,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
@@ -459,7 +471,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldPassOnStdInfoWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("Hello.ps1", new Dictionary<string, string>()
@@ -470,7 +482,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotDoubleReplaceVariables()
         {
             var (output, _) = RunScript("DontDoubleReplace.ps1", new Dictionary<string, string>()
@@ -482,8 +494,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void PowershellThrowsExceptionOnNixOrMac()
         {
             var (output, _) = RunScript("Hello.ps1");
@@ -491,7 +503,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void CharacterWithBomMarkCorrectlyEncoded()
         {
             var (output, _) = RunScript("ScriptWithBOM.ps1");
@@ -521,6 +533,129 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertSuccess();
                 output.AssertOutput(CalamariEnvironment.IsRunningOnWindows ? "Hello Powershell" : "Hello Bash");
             }
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ProxyConfigured_ShouldSetEnvironmentVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: http://{proxyHost}:{proxyPort}");
+            output.AssertOutputContains($"HTTPS_PROXY: http://{proxyHost}:{proxyPort}");
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ProxyWithAuthConfigured_ShouldSetEnvironmentVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            var proxyUsername = "username";
+            var proxyPassword = "password";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", proxyUsername);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", proxyPassword);
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: http://{proxyUsername}:{proxyPassword}@{proxyHost}:{proxyPort}");
+            output.AssertOutputContains($"HTTPS_PROXY: http://{proxyUsername}:{proxyPassword}@{proxyHost}:{proxyPort}");
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ProxyEnvironmentAlreadyConfigured_ShouldSetNotSetVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var proxyHost = "hostname";
+            var proxyPort = "3456";
+            var httpProxy = "http://proxy:port";
+            var httpsProxy = "http://proxy2:port";
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", httpProxy );
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", httpsProxy );
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertOutputContains($"HTTP_PROXY: {httpProxy}");
+            output.AssertOutputContains($"HTTPS_PROXY: {httpsProxy}");
+
+            ResetProxyEnvironmentVariables();
+        }
+
+#if NETFX
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ProxySetToSystem_ShouldSetVariablesCorrectly()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var (output, _) = RunScript("Proxy.ps1");
+            var systemProxyUri = System.Net.WebRequest.GetSystemWebProxy().GetProxy(new Uri(@"https://octopus.com"));
+            if (systemProxyUri.Host == "octopus.com")
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: ");
+                output.AssertOutputContains($"HTTPS_PROXY: ");
+            }
+            else
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+                output.AssertOutputContains($"HTTPS_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+            }
+        }
+#endif
+
+#if NETFX
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ProxyNoConfig_ShouldSetNotSetVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            var (output, _) = RunScript("Proxy.ps1");
+            var systemProxyUri = System.Net.WebRequest.GetSystemWebProxy().GetProxy(new Uri(@"http://octopus.com"));
+            if (systemProxyUri.Host == "octopus.com")
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: ");
+                output.AssertOutputContains($"HTTPS_PROXY: ");
+            }
+            else
+            {
+                output.AssertSuccess();
+                output.AssertOutputContains($"HTTP_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+                output.AssertOutputContains($"HTTPS_PROXY: http://{systemProxyUri.Host}:{systemProxyUri.Port}");
+            }
+        }
+#endif
+
+
+        private void ResetProxyEnvironmentVariables()
+        {
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", string.Empty);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Scripting;
+﻿using System.ComponentModel;
+using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment
 {
@@ -410,6 +411,19 @@ namespace Calamari.Deployment
                     public static readonly string EnabledServerGroup = "WildFly.Deploy.EnabledServerGroup";
                     public static readonly string DisabledServerGroup = "WildFly.Deploy.DisabledServerGroup";
                     public static readonly string ServerType = "WildFly.Deploy.ServerType";
+                }
+            }
+
+            public static class Nginx
+            {
+                public static readonly string ConfigRoot = "Octopus.Action.Nginx.ConfigurationsDirectory";
+                public static readonly string SslRoot = "Octopus.Action.Nginx.CertificatesDirectory";
+                
+                public static class Server
+                {
+                    public static readonly string HostName = "Octopus.Action.Nginx.Server.HostName";
+                    public static readonly string Bindings = "Octopus.Action.Nginx.Server.Bindings";
+                    public static readonly string Locations = "Octopus.Action.Nginx.Server.Locations";
                 }
             }
         }

@@ -140,6 +140,13 @@ namespace Calamari.Tests.Helpers
             Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 
+        public void AssertOutputContains(string expected)
+        {
+            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+
+            Assert.That(allOutput.Contains(expected));
+        }
+
         public void AssertOutputMatches(string regex)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);

@@ -25,7 +25,7 @@ namespace Calamari.Integration.Scripting
         /// because it is the constructor with the most parameters that can be
         /// fulfilled by injection.
         /// </summary>
-        /// <param name="scriptWrapperHooks">The collecton of IScriptWrapper objects available in autofac</param>
+        /// <param name="scriptWrapperHooks">The collection of IScriptWrapper objects available in autofac</param>
         public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
@@ -68,7 +68,13 @@ namespace Calamari.Integration.Scripting
         IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax) =>
             // get the type of script
             scriptWrapperHooks
-                .Where(hook => hook.Enabled)
+                .Where(hook => hook.IsEnabled(scriptSyntax))
+                /*
+                 * Sort the list in descending order of priority to ensure that
+                 * authentication script wrappers are called before any tool
+                 * script wrapper that might rely on the auth having being performed
+                 */
+                .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                 // The last wrapper is always the TerminalScriptWrapper
                 new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptSyntax]),
@@ -76,7 +82,11 @@ namespace Calamari.Integration.Scripting
                 {
                     // the next wrapper is pointed to the current one
                     next.NextWrapper = current;
-                    // the next wrapper is carried across to the next aggregate call
+                    /*
+                     * The next wrapper is carried across to the next aggregate call,
+                     * or is returned as the result of the aggregate call. This means
+                     * the last item in the list is the return value.
+                     */ 
                     return next;
                 });
                  

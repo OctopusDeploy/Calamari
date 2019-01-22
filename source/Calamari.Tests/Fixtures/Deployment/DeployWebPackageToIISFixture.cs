@@ -66,7 +66,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDeployAsWebSite()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -106,7 +106,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDeployAsVirtualDirectory()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1083);
@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDeployNewVersion()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1083);
@@ -161,7 +161,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotAllowMissingParentSegments()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1084);
@@ -183,7 +183,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotAllowMissingWebSiteForVirtualFolders()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
@@ -201,7 +201,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDeployAsWebApplication()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1085);
@@ -238,7 +238,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDetectAttemptedConversionFromVirtualDirectoryToWebApplication()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, $"/{uniqueValue}", ".", 1086);
@@ -263,7 +263,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDeployWhenVirtualPathAlreadyExistsAndPointsToPhysicalDirectory()
         {
             var webSitePhysicalPath = Path.Combine(Path.GetTempPath(), uniqueValue);
@@ -293,7 +293,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsVariable()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -337,7 +337,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFindAndUseExistingCertificateInStoreIfPresent()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -380,7 +380,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsThumbprint()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -417,7 +417,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test] // https://github.com/OctopusDeploy/Issues/issues/3378
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotFailIfDisabledBindingUsesUnavailableCertificateVariable()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";

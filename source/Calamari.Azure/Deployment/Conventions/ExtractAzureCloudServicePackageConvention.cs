@@ -27,7 +27,7 @@ namespace Calamari.Azure.Deployment.Conventions
 
             var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             Log.VerboseFormat("Extracting Cloud Service package: '{0}'", packagePath);
-            using (var package = Package.Open(packagePath, FileMode.Open))
+            using (var package = Package.Open(packagePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var manifest = AzureCloudServiceConventions.ReadPackageManifest(package);
                 var workingDirectory = deployment.CurrentDirectory;

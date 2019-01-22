@@ -18,7 +18,7 @@ namespace Calamari.Deployment.Journal
         /// Conditionally Write To Journal if there were packages that may need to be cleaned up during retention
         /// </summary>
         /// <param name="deployment"></param>
-        /// <param name="wasSuccessful">Was the command successful. Ususally ExitCode == 0</param>
+        /// <param name="wasSuccessful">Was the command successful. Usually ExitCode == 0</param>
         /// <param name="packageFile">Since package references can still be passed by the command line this needs to be provided here.
         /// Can remove once we obtain all references through variables</param>
         public void AddJournalEntry(RunningDeployment deployment, bool wasSuccessful, string packageFile = null)
