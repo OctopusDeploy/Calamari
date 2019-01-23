@@ -23,8 +23,6 @@ namespace Calamari.Tests.Terraform
     [RequiresNonFreeBSDPlatform]
     [RequiresNon32BitWindows]
     [RequiresNonMac]
-    [Category(TestCategory.CompatibleOS.Nix)]
-    [Category(TestCategory.CompatibleOS.Windows)]
     public class TerraformFixture
     {
         private string customTerraformExecutable;
