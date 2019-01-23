@@ -2,23 +2,19 @@ using System;
 using Calamari.Integration.Scripting;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 
 namespace Calamari.Tests.Fixtures
 {
-    public class RequiresNonFreeBSDPlatformAttribute : TestAttribute, ITestAction
+    public class RequiresNonFreeBSDPlatformAttribute : NUnitAttribute, IApplyToTest
     {
-        public void BeforeTest(ITest testDetails)
+        public void ApplyToTest(Test test)
         {
             if (ScriptingEnvironment.IsRunningOnMono() && (Environment.GetEnvironmentVariable("TEAMCITY_BUILDCONF_NAME")?.Contains("FreeBSD") ?? false))
             {
-                Assert.Ignore($"This test does not run on FreeBSD");
+                test.RunState = RunState.Skipped;
+                test.Properties.Set(PropertyNames.SkipReason, "This test does not run on FreeBSD");
             }
         }
-
-        public void AfterTest(ITest testDetails)
-        {
-        }
-
-        public ActionTargets Targets { get; set; }
     }
 }

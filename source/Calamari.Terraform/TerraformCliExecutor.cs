@@ -191,10 +191,10 @@ namespace Calamari.Terraform
             defaultEnvironmentVariables.Add("TF_LOG_PATH", logPath);
             defaultEnvironmentVariables.Add("TF_INPUT", "0");
 
-            var pluginDir = deployment.Variables.Get("Octopus.Action.Terraform.PluginsDirectory");
+            var pluginDir = deployment.Variables.Get(TerraformSpecialVariables.Action.Terraform.PluginsDirectory);
             if(string.IsNullOrEmpty(pluginDir))
             {
-                var cliPath = deployment.Variables.Get("Octopus.Calamari.TerraformCliPath");
+                var cliPath = deployment.Variables.Get(TerraformSpecialVariables.Calamari.TerraformCliPath);
                 pluginDir = Path.Combine(cliPath, "contentFiles\\any\\win\\plugins");
             }
 

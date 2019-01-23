@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -9,17 +10,72 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Terraform;
+using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
+using Newtonsoft.Json.Linq;
 
 namespace Calamari.Tests.Terraform
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [RequiresNonFreeBSDPlatform]
+    [RequiresNon32BitWindows]
+    [RequiresNonMac]
+    [Category(TestCategory.PlatformAgnostic)]
     public class TerraformFixture
     {
+        private string customTerraformExecutable;
+
+        [OneTimeSetUp]
+        public async Task InstallTools()
+        {
+            var destinationDirectoryName = TestEnvironment.GetTestPath("TerraformCLIPath");
+
+            if (Directory.Exists(destinationDirectoryName))
+            {
+                var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                if (path != null)
+                {
+                    customTerraformExecutable = path;
+                    Console.WriteLine($"Using existing terraform located in {customTerraformExecutable}");
+                    return;
+                }
+            }
+
+            Console.WriteLine("Downloading terraform cli...");
+            using (var client = new HttpClient())
+            {
+                var json = await client.GetStringAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
+
+                var parsedJson = JObject.Parse(json);
+
+                var downloadBaseUrl = parsedJson["current_download_url"].Value<string>();
+                var currentVersion = parsedJson["current_version"].Value<string>();
+                var fileName = $"terraform_{currentVersion}_windows_amd64.zip";
+
+                if (CalamariEnvironment.IsRunningOnNix)
+                {
+                    fileName = $"terraform_{currentVersion}_linux_amd64.zip";
+                }
+                var zipPath = Path.Combine(Path.GetTempPath(), fileName);
+                using (new TemporaryFile(zipPath))
+                {
+                    using (var fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    using (var stream = await client.GetStreamAsync($"{downloadBaseUrl}{fileName}"))
+                    {
+                        await stream.CopyToAsync(fileStream);
+                    }
+
+                    ZipFile.ExtractToDirectory(zipPath, destinationDirectoryName);
+                }
+
+                customTerraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
+            }
+        }
+
         [Test]
         public void ExtraInitParametersAreSet()
         {
@@ -174,48 +230,48 @@ namespace Calamari.Tests.Terraform
                 _.Set(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
             }
 
-            var outputs = ExecuteAndReturnLogOutput(PopulateVariables, "AWS", typeof(PlanCommand), typeof(ApplyCommand),
-                typeof(DestroyCommand)).GetEnumerator();
-
-            outputs.MoveNext();
-            outputs.Current.Should()
-                .Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
-
-            outputs.MoveNext();
-            outputs.Current.Should()
-                .Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'https://{bucketName}.s3.amazonaws.com/test.txt'");
-
-            string fileData;
-            using (var client = new HttpClient())
+            using (var outputs = ExecuteAndReturnLogOutput(PopulateVariables, "AWS", typeof(PlanCommand), typeof(ApplyCommand), typeof(DestroyCommand)).GetEnumerator())
             {
-                fileData = await client.GetStringAsync($"https://{bucketName}.s3.amazonaws.com/test.txt").ConfigureAwait(false);
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
+
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'https://{bucketName}.s3.amazonaws.com/test.txt'");
+
+                string fileData;
+                using (var client = new HttpClient())
+                {
+                    fileData = await client.GetStringAsync($"https://{bucketName}.s3.amazonaws.com/test.txt").ConfigureAwait(false);
+                }
+
+                fileData.Should().Be("Hello World from AWS");
+
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain("destroy -force -no-color");
             }
-
-            fileData.Should().Be("Hello World from AWS");
-
-            outputs.MoveNext();
-            outputs.Current.Should()
-                .Contain("destroy -force -no-color");
         }
 
 
         [Test]
         public void PlanDetailedExitCode()
         {
-            var outputs = ExecuteAndReturnLogOutput(_ => { }, "PlanDetailedExitCode", typeof(PlanCommand), typeof(ApplyCommand),
-                typeof(PlanCommand)).GetEnumerator();
+            using (var outputs = ExecuteAndReturnLogOutput(_ => { }, "PlanDetailedExitCode", typeof(PlanCommand), typeof(ApplyCommand), typeof(PlanCommand)).GetEnumerator())
+            {
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformPlanDetailedExitCode' with the detailed exit code of the plan, with value '2'");
 
-            outputs.MoveNext();
-            outputs.Current.Should()
-                .Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformPlanDetailedExitCode' with the detailed exit code of the plan, with value '2'");
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain("apply -no-color -auto-approve");
 
-            outputs.MoveNext();
-            outputs.Current.Should()
-                .Contain("apply -no-color -auto-approve");
-
-            outputs.MoveNext();
-            outputs.Current.Should()
-                .Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformPlanDetailedExitCode' with the detailed exit code of the plan, with value '0'");
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain("Saving variable 'Octopus.Action[\"\"].Output.TerraformPlanDetailedExitCode' with the detailed exit code of the plan, with value '0'");
+            }
         }
 
         string ExecuteAndReturnLogOutput(Type commandType, Action<VariableDictionary> populateVariables, string folderName)
@@ -242,10 +298,9 @@ namespace Calamari.Tests.Terraform
             {
                 var variablesFile = Path.GetTempFileName();
                 var variables = new VariableDictionary();
-                variables.Set(TerraformSpecialVariables.Calamari.TerraformCliPath, TestEnvironment.GetTestPath("Terraform"));
+                variables.Set(TerraformSpecialVariables.Calamari.TerraformCliPath, Path.GetDirectoryName(customTerraformExecutable));
                 variables.Set(SpecialVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
-                variables.Set(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
-                    TestEnvironment.GetTestPath("Terraform", "contentFiles", "any", "win", "terraform.exe"));
+                variables.Set(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable, customTerraformExecutable);
 
                 populateVariables(variables);
 

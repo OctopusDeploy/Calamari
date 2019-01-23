@@ -1,27 +1,11 @@
 ﻿namespace Calamari.Terraform
 {
     public static class TerraformSpecialVariables
-    {
-        public const string TerraformScript = "octopus-terraform.ps1";
-        public const string HclTemplateFile = "template.tf";
-        public const string JsonTemplateFile = "template.tf.json";
-        public const string JsonVariablesFile = "terraform.tfvars.json";
-        public const string HclVariablesFile = "terraform.tfvars";
-        public const string AwsAccount = "AWS";
-        
+    {       
         public static class Action
         {
-            public static class SubstituteInFiles
-            {
-                public const string Enabled = "Octopus.Action.SubstituteInFiles.Enabled";
-                public const string Targets = "Octopus.Action.SubstituteInFiles.TargetFiles";
-                public const string EnableNoMatchWarning = "Octopus.Action.SubstituteInFiles.EnableNoMatchWarning";
-            }
-            
             public static class Terraform
             {           
-                public const string Template = "Octopus.Action.Terraform.Template";
-                public const string TemplateParameters = "Octopus.Action.Terraform.TemplateParameters";
                 public const string AWSManagedAccount = "Octopus.Action.Terraform.ManagedAccount";                                
                 public const string AzureManagedAccount = "Octopus.Action.Terraform.ManagedAccount.Azure";                                
                 public const string AllowPluginDownloads = "Octopus.Action.Terraform.AllowPluginDownloads";                                

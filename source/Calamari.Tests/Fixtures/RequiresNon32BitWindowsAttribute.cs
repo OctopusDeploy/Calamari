@@ -1,23 +1,19 @@
 using System;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 
 namespace Calamari.Tests.Fixtures
 {
-    public class RequiresNon32BitWindowsAttribute : TestAttribute, ITestAction
+    public class RequiresNon32BitWindowsAttribute : NUnitAttribute, IApplyToTest
     {
-        public void BeforeTest(ITest testDetails)
+        public void ApplyToTest(Test test)
         {
             if (CalamariEnvironment.IsRunningOnWindows && !Environment.Is64BitOperatingSystem)
             {
-                Assert.Ignore($"This test does not run on 32Bit Windows");
+                test.RunState = RunState.Skipped;
+                test.Properties.Set(PropertyNames.SkipReason, "This test does not run on 32Bit Windows");
             }
         }
-
-        public void AfterTest(ITest testDetails)
-        {
-        }
-
-        public ActionTargets Targets { get; set; }
     }
 }

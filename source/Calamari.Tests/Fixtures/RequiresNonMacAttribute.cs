@@ -1,22 +1,18 @@
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 
 namespace Calamari.Tests.Fixtures
 {
-    public class RequiresNonMacAttribute : TestAttribute, ITestAction
+    public class RequiresNonMacAttribute : NUnitAttribute, IApplyToTest
     {
-        public void BeforeTest(ITest testDetails)
+        public void ApplyToTest(Test test)
         {
             if (CalamariEnvironment.IsRunningOnMac)
             {
-                Assert.Ignore($"This test does not run on MacOS");
+                test.RunState = RunState.Skipped;
+                test.Properties.Set(PropertyNames.SkipReason, "This test does not run on MacOS");
             }
         }
-
-        public void AfterTest(ITest testDetails)
-        {
-        }
-
-        public ActionTargets Targets { get; set; }
     }
 }
