@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,6 +24,8 @@ namespace Calamari.Tests.Terraform
     [RequiresNonFreeBSDPlatform]
     [RequiresNon32BitWindows]
     [RequiresNonMac]
+    [RequiresNonMono]
+    [Category(TestCategory.CompatibleOS.Windows)]
     public class TerraformFixture
     {
         private string customTerraformExecutable;
@@ -44,6 +47,7 @@ namespace Calamari.Tests.Terraform
             }
 
             Console.WriteLine("Downloading terraform cli...");
+
             using (var client = new HttpClient())
             {
                 var json = await client.GetStringAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
