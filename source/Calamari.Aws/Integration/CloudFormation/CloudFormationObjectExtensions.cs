@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -37,9 +36,8 @@ namespace Calamari.Aws.Integration.CloudFormation
                 "CREATE_FAILED"
             };
         
-        /// <summary>
         /// Some statuses indicate that the only way forward is to delete the stack and try again.
-        /// Here are some of the explainations of the stack states from the docs.
+        /// Here are some of the explanations of the stack states from the docs.
         /// 
         /// CREATE_FAILED: Unsuccessful creation of one or more stacks. View the stack events to see any associated error
         /// messages. Possible reasons for a failed creation include insufficient permissions to work with all resources
@@ -100,7 +98,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                     return result;
                 }
 
-                Thread.Sleep(waitPeriod);
+                await Task.Delay(waitPeriod);
             }
         }
 
@@ -127,7 +125,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to query the current state of the CloudFormation stack. " +
                     "This step will complete without waiting for the stack to complete, and will not fail if the stack finishes in an error state.\n " +
-                    "Please ensure the current account has permission to perfrom action 'cloudformation:DescribeStackEvents'" +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeStackEvents'" +
                     ex.Message);
             }
             catch (AmazonCloudFormationException)
@@ -224,18 +222,18 @@ namespace Calamari.Aws.Integration.CloudFormation
 
             do
             {
-                Thread.Sleep(waitPeriod);
+                await Task.Delay(waitPeriod);
                 var @event = await clientFactory.GetLastStackEvent(stack, filter);
                 action?.Invoke(@event);
             } while (await clientFactory.StackExistsAsync(stack, StackStatus.Completed) == StackStatus.InProgress);
         }
                 
         /// <summary>
-        /// Check the stack event status to detemrine whether it was successful.
+        /// Check the stack event status to determine whether it was successful.
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
         /// </summary>
         /// <param name="status">The status to check</param>
-        /// <returns>true if the status indcates a failed create or update, and false otherwise</returns>
+        /// <returns>true if the status indicates a failed create or update, and false otherwise</returns>
         public static Maybe<bool> MaybeIndicatesSuccess(this StackEvent status)
         {
             return status.ToMaybe().Select(x => !UnsuccessfulStackEvents.Contains(x.ResourceStatus.Value));
@@ -247,20 +245,20 @@ namespace Calamari.Aws.Integration.CloudFormation
             return UnrecoverableStackStatuses.Contains(status.ResourceStatus.Value);
         }
 
-        public static async Task<DeleteStackResponse> DeleteStackAsync(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
+        public static Task<DeleteStackResponse> DeleteStackAsync(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
             Guard.NotNull(clientFactory, "clientFactory should not be null");
             Guard.NotNull(stack, "Stack should not be null");
 
             try
             {
-                return await clientFactory().DeleteStackAsync(new DeleteStackRequest {StackName = stack.Value});
+                return clientFactory().DeleteStackAsync(new DeleteStackRequest {StackName = stack.Value});
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to delete the stack.\n" +
-                    "Please ensure the current account has permission to perfrom action 'cloudformation:DeleteStack'.\n" +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DeleteStack'.\n" +
                     ex.Message
                 );
             }
@@ -278,7 +276,7 @@ namespace Calamari.Aws.Integration.CloudFormation
             {
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to create the stack.\n"+
-                    "Please ensure the current account has permission to perfrom action 'cloudformation:CreateStack'.\n" +
+                    "Please ensure the current account has permission to perform action 'cloudformation:CreateStack'.\n" +
                     ex.Message
                 );
             }

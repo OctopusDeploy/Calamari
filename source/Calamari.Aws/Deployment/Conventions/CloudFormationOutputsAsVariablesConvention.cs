@@ -92,7 +92,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 }
 
                 // Wait for a bit for and try again
-                Thread.Sleep(waitPeriod);
+                await Task.Delay(waitPeriod);
             }
         }
     }
