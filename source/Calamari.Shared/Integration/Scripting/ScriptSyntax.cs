@@ -16,7 +16,10 @@ namespace Calamari.Integration.Scripting
         Bash,
 
         [FileExtension("fsx")]
-        FSharp
+        FSharp,
+        
+        [FileExtension("py")]
+        Python
     }
 
     public static class ScriptTypeExtensions

@@ -1,7 +1,6 @@
 using System;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Calamari.Integration.Scripting.ScriptCS;
 
 namespace Calamari.Integration.Scripting
 {
@@ -35,7 +34,7 @@ namespace Calamari.Integration.Scripting
             if (match == null || !match.Success || string.IsNullOrEmpty(match.Value))
                 throw new MonoVersionCanNotBeDeterminedException($"Display name does not seem to include version number. Retrieved value: {displayName}.");
 
-            return Version.Parse(match.Value);           
+            return Version.Parse(match.Value);
         }
     }
 }
