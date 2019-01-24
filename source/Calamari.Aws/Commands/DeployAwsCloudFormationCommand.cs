@@ -65,7 +65,7 @@ namespace Calamari.Aws.Commands
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
-            var environment = new AwsEnvironmentGeneration(variables);
+            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
             var templateResolver = new TemplateResolver(fileSystem);
 
             IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);

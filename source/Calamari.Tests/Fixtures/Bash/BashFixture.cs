@@ -12,8 +12,8 @@ namespace Calamari.Tests.Fixtures.Bash
     public class BashFixture : CalamariFixture
     {
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldPrintEncodedVariable()
         {
             var (output, _) = RunScript("print-encoded-variable.sh");
@@ -23,8 +23,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
         
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldPrintSensitiveVariable()
         {
             var (output, _) = RunScript("print-sensitive-variable.sh");
@@ -34,8 +34,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldCreateArtifact()
         {
             var (output, _) = RunScript("create-artifact.sh");
@@ -45,8 +45,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>()
@@ -57,8 +57,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -76,8 +76,8 @@ namespace Calamari.Tests.Fixtures.Bash
 
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -89,8 +89,8 @@ namespace Calamari.Tests.Fixtures.Bash
 
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldCallHelloWithNullVariable()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -101,8 +101,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldCallHelloWithNullSensitiveVariable()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -113,8 +113,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldNotFailOnStdErr()
         {
             var (output, _) = RunScript("stderr.sh");
@@ -124,8 +124,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShoulFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.sh", new Dictionary<string, string>()
@@ -136,7 +136,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ThrowsExceptionOnWindows()
         {
             var (output, _) = RunScript("print-encoded-variable.sh");

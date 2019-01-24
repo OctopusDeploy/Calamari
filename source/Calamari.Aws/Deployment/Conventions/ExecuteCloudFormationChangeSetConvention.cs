@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
@@ -38,13 +39,18 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public override void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        private async Task InstallAsync(RunningDeployment deployment)
+        {
             var stack = stackProvider(deployment);
             var changeSet = changeSetProvider(deployment);
 
             Guard.NotNull(stack, "The provided stack identifer or name may not be null");
             Guard.NotNull(changeSet, "The provided change set identifier or name may not be null");
 
-            var result = ExecuteChangeset(clientFactory, stack, changeSet);
+            var result = await ExecuteChangeset(clientFactory, stack, changeSet);
 
             if (result.None())
             {
@@ -54,18 +60,18 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (waitForComplete)
             {
-                WithAmazonServiceExceptionHandling(() =>
+                await WithAmazonServiceExceptionHandling(() =>
                     clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack))
                 );
             }
         }
 
-        private Maybe<RunningChangeSet> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
+        private async Task<Maybe<RunningChangeSet>> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
             ChangeSetArn changeSet)
         {
             try
             {
-                var changes = factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod,
+                var changes = await factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod,
                     new RunningChangeSet(stack, changeSet));
 
                 if (changes.Status == ChangeSetStatus.FAILED &&
@@ -73,7 +79,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
                     //We don't need the failed changeset to hang around if there are no changes
-                    factory().DeleteChangeSet(new DeleteChangeSetRequest
+                    await factory().DeleteChangeSetAsync(new DeleteChangeSetRequest
                     {
                         ChangeSetName = changeSet.Value,
                         StackName = stack.Value
@@ -84,11 +90,10 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 if (changes.Status == ChangeSetStatus.FAILED)
                 {
-                    throw new UnknownException($"AWS-CLOUDFORMATION-ERROR-0019: The changeset failed to create.\n{changes.StatusReason}");
+                    throw new UnknownException($"The changeset failed to create.\n{changes.StatusReason}");
                 }
 
-
-                factory().ExecuteChangeSet(new ExecuteChangeSetRequest
+                await factory().ExecuteChangeSetAsync(new ExecuteChangeSetRequest
                 {
                     ChangeSetName = changeSet.Value,
                     StackName = stack.Value
@@ -96,25 +101,16 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 return new RunningChangeSet(stack, changeSet).AsSome();
             }
-            catch (AmazonCloudFormationException exception)
+            catch (AmazonCloudFormationException exception) when (exception.ErrorCode == "AccessDenied")
             {
-                if (exception.ErrorCode == "AccessDenied")
-                {
-                    throw new PermissionException(
-                        "AWS-CLOUDFORMATION-ERROR-0011: The AWS account used to perform the operation does not have " +
-                        "the required permissions to update the stack.\n" +
-                        exception.Message + "\n" +
-                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011");
-                }
-
-                throw new UnknownException(
-                    "AWS-CLOUDFORMATION-ERROR-0011: An unrecognised exception was thrown while updating a CloudFormation stack.\n" +
-                    "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0011",
-                    exception);
+                throw new PermissionException(
+                    "The AWS account used to perform the operation does not have the required permission to execute the changeset.\n" +
+                    "Please ensure the current account has permission to perfrom action 'cloudformation:ExecuteChangeSet'.\n" +
+                    exception.Message + "\n");
             }
             catch (AmazonServiceException exception)
             {
-                HandleAmazonServiceException(exception);
+                LogAmazonServiceException(exception);
                 throw;
             }
         }

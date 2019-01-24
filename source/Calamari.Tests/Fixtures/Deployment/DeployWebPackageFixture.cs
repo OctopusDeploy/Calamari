@@ -44,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDeployPackageOnWindows()
         {
             var result = DeployPackage();
@@ -57,8 +57,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldDeployPackageOnMacOrNix()
         {
             var result = DeployPackage();
@@ -133,8 +133,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [Category(TestEnvironment.ScriptingSupport.FSharp)]
-        [Category(TestEnvironment.ScriptingSupport.ScriptCS)]
+        [Category(TestCategory.ScriptingSupport.FSharp)]
+        [Category(TestCategory.ScriptingSupport.ScriptCS)]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldInvokeDeployFailedOnError()
         {
@@ -188,7 +188,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
 #if IIS_SUPPORT
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldModifyIisWebsiteRoot()
         {
             // If the 'UpdateIisWebsite' variable is set, the website root will be updated

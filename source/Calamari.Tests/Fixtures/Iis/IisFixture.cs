@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Iis
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.Windows)]
     public class IisFixture
     {
         readonly WebServerSupport webServer = WebServerSupport.AutoDetect();

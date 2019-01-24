@@ -3,22 +3,18 @@ using System.IO;
 using System.Linq;
 using System.Security;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
-    public class PowerShellScriptEngine : IScriptEngine
+    public class PowerShellScriptEngine : ScriptEngine
     {
-        public ScriptSyntax[] GetSupportedTypes()
+        public override ScriptSyntax[] GetSupportedTypes()
         {
             return new[] {ScriptSyntax.PowerShell};
         }
 
-        public CommandResult Execute(
-            Script script, 
-            CalamariVariableDictionary variables, 
-            ICommandLineRunner commandLineRunner,
+        protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
             StringDictionary environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
@@ -26,30 +22,22 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var executable = PowerShellBootstrapper.PathToPowerShellExecutable();
             var bootstrapFile = PowerShellBootstrapper.PrepareBootstrapFile(script, variables);
             var debuggingBootstrapFile = PowerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
-            var arguments = PowerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
+            var arguments =
+                PowerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
 
             var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
             var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));
 
-            using (new TemporaryFile(bootstrapFile))
-            {
-                using (new TemporaryFile(debuggingBootstrapFile))
-                {
-                    var invocation = new CommandLineInvocation(
-                        executable, 
-                        arguments, 
-                        workingDirectory, 
-                        environmentVars, 
-                        userName, 
-                        password);
-                    var result = commandLineRunner.Execute(invocation);
-
-                    if (variables.IsSet(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo))
-                        CopyWorkingDirectory(variables, workingDirectory, arguments);
-                    
-                    return result;
-                }
-            }
+            return new ScriptExecution(
+                new CommandLineInvocation(
+                    executable,
+                    arguments,
+                    workingDirectory,
+                    environmentVars,
+                    userName,
+                    password),
+                new[] {bootstrapFile, debuggingBootstrapFile}
+            );
         }
 
         static SecureString ToSecureString(string unsecureString)
@@ -61,30 +49,6 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 s.AppendChar(c);
                 return s;
             });
-        }
-        
-        
-        static void CopyWorkingDirectory(CalamariVariableDictionary variables, string workingDirectory, string arguments)
-        {
-            var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            var copyToParent = Path.Combine(
-                variables.Get(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Project.Name, "Non-Project")),
-                variables.Get(SpecialVariables.Deployment.Id, "Non-Deployment"),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Action.Name, "Non-Action"))
-            );
-
-            string copyTo;
-            var n = 1;
-            do
-            {
-                copyTo = Path.Combine(copyToParent, $"{n++}");
-            } while (Directory.Exists(copyTo));
-
-            fs.CopyDirectory(workingDirectory, copyTo);
-            File.WriteAllText(Path.Combine(copyTo, "PowershellArguments.txt"), arguments);
-            File.WriteAllText(Path.Combine(copyTo, "CopiedFromDirectory.txt"), workingDirectory);
         }
     }
 }

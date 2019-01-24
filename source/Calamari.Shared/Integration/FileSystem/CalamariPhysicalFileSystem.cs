@@ -471,7 +471,7 @@ namespace Calamari.Integration.FileSystem
 
         public string RemoveInvalidFileNameChars(string path)
         {
-            if (string.IsNullOrEmpty(path)) return null;
+            if (string.IsNullOrEmpty(path)) return path;
             var invalidPathChars = Path.GetInvalidPathChars();
             var invalidFileChars = Path.GetInvalidFileNameChars();
 

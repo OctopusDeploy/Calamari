@@ -16,7 +16,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Nginx
 {
     [TestFixture]
-    [Category(TestEnvironment.CompatibleOS.Nix)]
+    [Category(TestCategory.CompatibleOS.Nix)]
     public class NginxFixture : CalamariFixture
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -135,8 +135,8 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
 
         [Test]
-        [Category(TestEnvironment.CompatibleOS.Nix)]
-        [Category(TestEnvironment.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
         public void SetupReverseProxyWithSslSite()
         {
             var locations =

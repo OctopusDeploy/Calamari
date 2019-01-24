@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
@@ -39,28 +40,33 @@ namespace Calamari.Aws.Deployment.Conventions
         
         public override void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        private Task InstallAsync(RunningDeployment deployment)
+        {
             Guard.NotNull(deployment, "Deployment must not be null");
             var stack = stackProvider(deployment);
             
             Guard.NotNull(stack, "The provided stack may not be null.");
             
-            GetAndPipeOutputVariablesWithRetry(() => 
-                WithAmazonServiceExceptionHandling(() => QueryStack(clientFactory, stack).ToMaybe()), 
+            return GetAndPipeOutputVariablesWithRetry(() => 
+                    WithAmazonServiceExceptionHandling(async () => (await QueryStackAsync(clientFactory, stack)).ToMaybe()), 
                 deployment.Variables, 
                 true, 
                 CloudFormationDefaults.RetryCount, 
                 CloudFormationDefaults.StatusWaitPeriod);
         }
       
-        public (IReadOnlyList<VariableOutput> result, bool success) GetOutputVariables(
-            Func<Maybe<Stack>> query)
+        public async Task<(IReadOnlyList<VariableOutput> result, bool success)> GetOutputVariables(
+            Func<Task<Maybe<Stack>>> query)
         {
             Guard.NotNull(query, "Query for stack may not be null");
 
             List<VariableOutput> ConvertStackOutputs(Stack stack) =>
                 stack.Outputs.Select(p => new VariableOutput(p.OutputKey, p.OutputValue)).ToList();
 
-            return query().Select(ConvertStackOutputs)
+            return (await query()).Select(ConvertStackOutputs)
                 .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: hasOutputs() || result.Some()));
         }
 
@@ -74,11 +80,11 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        public void GetAndPipeOutputVariablesWithRetry(Func<Maybe<Stack>> query, CalamariVariableDictionary variables, bool wait, int retryCount, TimeSpan waitPeriod)
+        public async Task GetAndPipeOutputVariablesWithRetry(Func<Task<Maybe<Stack>>> query, CalamariVariableDictionary variables, bool wait, int retryCount, TimeSpan waitPeriod)
         {
             for (var retry = 0; retry < retryCount; ++retry)
             {
-                var (result, success) = GetOutputVariables(query);
+                var (result, success) = await GetOutputVariables(query);
                 if (success || !wait)
                 {
                     PipeOutputs(result, variables);
@@ -86,7 +92,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 }
 
                 // Wait for a bit for and try again
-                Thread.Sleep(waitPeriod);
+                await Task.Delay(waitPeriod);
             }
         }
     }

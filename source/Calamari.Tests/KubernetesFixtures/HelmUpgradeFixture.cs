@@ -23,9 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures
         private string StagingDirectory { get; set; }
         private static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
         
-        private static readonly string
-            ConfigMapName =
-                "mychart-configmap-" + ReleaseName;
+        private static readonly string ConfigMapName = "mychart-configmap-" + ReleaseName;
 
         private const string Namespace = "calamari-testing";
         private const string ChartPackageName = "mychart-0.3.7.tgz";
@@ -50,6 +48,9 @@ namespace Calamari.Tests.KubernetesFixtures
             //Chart Pckage
             Variables.Set(SpecialVariables.Package.NuGetPackageId, "mychart");
             Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "0.3.7");
+            Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.NuGetPackageId}}}");
+            Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.NuGetPackageVersion}}}");
+            
 
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
@@ -68,6 +69,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void Upgrade_Succeeds()
         {
             var result = DeployPackage();
@@ -87,6 +89,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void NoValues_EmbededValuesUsed()
         {
             var result = DeployPackage();
@@ -100,6 +103,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void ExplicitValues_NewValuesUsed()
         {
             //Helm Config
@@ -114,6 +118,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromPackage_NewValuesUsed()
         {
             //Additional Package
@@ -130,11 +135,39 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
         
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        public void ValuesFromChartPackage_NewValuesUsed()
+        {
+            //Additional Package
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), Path.Combine("mychart","secondary.Development.yaml"));
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
+        }
         
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        public void ValuesFromChartPackageWithoutSubDirectory_NewValuesUsed()
+        {
+            //Additional Package
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), "secondary.Development.yaml");
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
+        }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromPackageAndExplicit_ExplicitTakesPrecedence()
         {
             //Helm Config (lets make sure Explicit values take precedence
@@ -155,11 +188,11 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
         
-        
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromRawYaml_ValuesAdded()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.YamlValues, "\"SpecialMessage\": \"YAML\"");
@@ -167,12 +200,13 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
-        }        
+        }
 
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void CustomDownloadedHelmExe_RelativePath()
         {   
             var version = "2.9.1";
@@ -199,6 +233,22 @@ namespace Calamari.Tests.KubernetesFixtures
                 result.AssertSuccess();
                 result.AssertOutput("Using custom helm executable at");
             }
+        }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void TillerNamespace_CannotFindIfRandomNamespaceUsed()
+        {   
+            // We're basically just testing here that setting the tiller namespace does put the param into the cmd
+            Variables.Set(Kubernetes.SpecialVariables.Helm.TillerNamespace, "random-foobar");
+
+            var result = DeployPackage();
+            
+            result.AssertFailure();
+            result.AssertErrorOutput("Error: could not find tiller");
         }
 
         void AddPostDeployMessageCheckAndCleanup()
