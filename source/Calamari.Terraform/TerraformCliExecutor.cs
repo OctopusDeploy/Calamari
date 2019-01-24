@@ -24,15 +24,14 @@ namespace Calamari.Terraform
         {
             this.fileSystem = fileSystem;
             this.deployment = deployment;
-
+            
             var variables = deployment.Variables;
             TemplateDirectory = variables.Get(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, deployment.CurrentDirectory);
             Workspace = variables.Get(TerraformSpecialVariables.Action.Terraform.Workspace);
             InitParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             ActionParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams);
-            TerraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable)
-                .Map(path => String.IsNullOrWhiteSpace(path) ? Path.Combine(deployment.CurrentDirectory, "terraform.exe") : path);
-            
+            TerraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable) ??
+                                  $"terraform{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : String.Empty)}";
             AllowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
             AttachLogFile = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AttachLogFile);
             TerraformVariableFiles = GenerateVarFiles();
@@ -191,14 +190,17 @@ namespace Calamari.Terraform
             defaultEnvironmentVariables.Add("TF_LOG_PATH", logPath);
             defaultEnvironmentVariables.Add("TF_INPUT", "0");
 
-            var pluginDir = deployment.Variables.Get(TerraformSpecialVariables.Action.Terraform.PluginsDirectory);
-            if(string.IsNullOrEmpty(pluginDir))
+            var customPluginDir = deployment.Variables.Get(TerraformSpecialVariables.Action.Terraform.PluginsDirectory);
+            var pluginsPath = Path.Combine(deployment.CurrentDirectory, "terraformplugins");
+
+            fileSystem.EnsureDirectoryExists(pluginsPath);
+
+            if(!string.IsNullOrEmpty(customPluginDir))
             {
-                var cliPath = deployment.Variables.Get(TerraformSpecialVariables.Calamari.TerraformCliPath);
-                pluginDir = Path.Combine(cliPath, "contentFiles\\any\\win\\plugins");
+                fileSystem.CopyDirectory(customPluginDir, pluginsPath);
             }
 
-            defaultEnvironmentVariables.Add("TF_PLUGIN_CACHE_DIR", pluginDir);
+            defaultEnvironmentVariables.Add("TF_PLUGIN_CACHE_DIR", pluginsPath);
         }
     }
 }
