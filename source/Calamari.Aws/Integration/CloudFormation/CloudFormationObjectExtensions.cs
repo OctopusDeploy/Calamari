@@ -19,7 +19,7 @@ namespace Calamari.Aws.Integration.CloudFormation
     {
         private static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
-            "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"
+            "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"
         };
 
         // These status indicate that an update or create was not successful.
