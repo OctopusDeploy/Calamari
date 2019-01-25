@@ -250,10 +250,28 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertFailure();
             result.AssertErrorOutput("Error: could not find tiller");
         }
-
-        void AddPostDeployMessageCheckAndCleanup()
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void Namespace_Override_Used()
         {
-            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + Namespace +" -o jsonpath=\"{.data.myvalue}\"";
+            const string @namespace = "calamari-testing-foo"; 
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Namespace, @namespace);
+            AddPostDeployMessageCheckAndCleanup(@namespace); 
+            
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
+        }
+
+        void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null)
+        {
+            var @namespace = explicitNamespace ?? Namespace; 
+            
+            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
             var script = "set_octopusvariable Message \"$("+ kubectlCmd +")\"\nhelm delete "+ ReleaseName +" --purge";
             if (CalamariEnvironment.IsRunningOnWindows)
