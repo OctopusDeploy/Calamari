@@ -17,6 +17,7 @@ namespace Calamari.Kubernetes
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
+            public const string Namespace = "Octopus.Action.Helm.Namespace";
             public const string KeyValues = "Octopus.Action.Helm.KeyValues";
             public const string YamlValues = "Octopus.Action.Helm.YamlValues";
             public const string ResetValues = "Octopus.Action.Helm.ResetValues";
