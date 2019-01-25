@@ -8,7 +8,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octostache;
 using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -42,7 +42,7 @@ namespace Calamari.Azure.Integration
             ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+            Dictionary<string, string> environmentVars)
         {
             // We only execute this hook if the connection endpoint has been set
             if (!IsEnabled(scriptSyntax))

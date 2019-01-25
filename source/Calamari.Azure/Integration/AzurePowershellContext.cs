@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -12,7 +12,6 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.WindowsPowerShell;
 using Octostache;
 
 namespace Calamari.Azure.Integration
@@ -51,7 +50,7 @@ namespace Calamari.Azure.Integration
             ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+            Dictionary<string, string> environmentVars)
         {
             // Only run this hook if we have an azure account
             if (!IsEnabled(scriptSyntax))

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -12,7 +11,7 @@ namespace Calamari.Integration.Scripting
         public abstract ScriptSyntax[] GetSupportedTypes();
 
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null)
+            Dictionary<string, string> environmentVars = null)
         {
             var prepared = PrepareExecution(script, variables, environmentVars);
 
@@ -37,7 +36,7 @@ namespace Calamari.Integration.Scripting
         }
 
         protected abstract ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
-             StringDictionary environmentVars = null);
+            Dictionary<string, string> environmentVars = null);
         
         static void CopyWorkingDirectory(CalamariVariableDictionary variables, string workingDirectory, string arguments)
         {

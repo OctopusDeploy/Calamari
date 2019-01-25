@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
@@ -82,7 +82,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(capture);
             wrapper.NextWrapper = new TerminalScriptWrapper(new PowerShellScriptEngine());
-            var result = wrapper.ExecuteScript(new Script(scriptName), ScriptSyntax.PowerShell, variables, runner, new StringDictionary());
+            var result = wrapper.ExecuteScript(new Script(scriptName), ScriptSyntax.PowerShell, variables, runner, new Dictionary<string, string>());
             //var result = psse.Execute(new Script(scriptName), variables, runner);
             return new CalamariResult(result.ExitCode, capture);
         }

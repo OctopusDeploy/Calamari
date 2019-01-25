@@ -1,6 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -51,7 +51,7 @@ namespace Calamari.Integration.Processes
             string executable, 
             string arguments, 
             string workingDirectory, 
-            StringDictionary environmentVars, 
+            Dictionary<string, string> environmentVars, 
             Action<string> output, 
             Action<string> error)
         {
@@ -62,7 +62,7 @@ namespace Calamari.Integration.Processes
             string executable, 
             string arguments, 
             string workingDirectory,
-            StringDictionary environmentVars,
+            Dictionary<string, string> environmentVars,
             string userName,             
             SecureString password, 
             Action<string> output, 

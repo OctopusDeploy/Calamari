@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 
@@ -36,6 +36,6 @@ namespace Calamari.Hooks
             ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars);
+            Dictionary<string, string> environmentVars);
     }
 }

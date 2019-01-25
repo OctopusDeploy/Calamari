@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
+using Calamari.Extensions;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -15,15 +16,16 @@ namespace Calamari.Aws.Integration
             ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+            Dictionary<string, string> environmentVars)
         {
             var awsEnvironmentVars = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult().EnvironmentVars;
+            awsEnvironmentVars.MergeDictionaries(environmentVars);
 
             return NextWrapper.ExecuteScript(
                 script, scriptSyntax, 
                 variables, 
                 commandLineRunner,
-                environmentVars.MergeDictionaries(awsEnvironmentVars));
+                awsEnvironmentVars);
         }
     }
 }

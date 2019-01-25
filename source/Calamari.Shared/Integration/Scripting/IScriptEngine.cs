@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting
@@ -10,6 +10,6 @@ namespace Calamari.Integration.Scripting
             Script script, 
             CalamariVariableDictionary variables, 
             ICommandLineRunner commandLineRunner, 
-            StringDictionary environmentVars = null);
+            Dictionary<string, string> environmentVars = null);
     }
 }

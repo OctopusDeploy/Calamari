@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -42,7 +42,7 @@ namespace Calamari.Kubernetes
             ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+            Dictionary<string, string> environmentVars)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 

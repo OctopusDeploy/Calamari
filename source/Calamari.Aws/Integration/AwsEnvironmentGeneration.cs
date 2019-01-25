@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -48,7 +48,7 @@ namespace Calamari.Aws.Integration
             await AssumeRole();
         }
 
-        public StringDictionary EnvironmentVars { get; } = new StringDictionary();
+        public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
         private AwsEnvironmentGeneration(CalamariVariableDictionary variables)
         {

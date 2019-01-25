@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Security;
-using Calamari.Util;
 
 namespace Calamari.Integration.Processes
 {
@@ -9,7 +8,7 @@ namespace Calamari.Integration.Processes
     {
         readonly string workingDirectory;
 
-        public CommandLineInvocation(string executable, string arguments, StringDictionary environmentVars = null)
+        public CommandLineInvocation(string executable, string arguments, Dictionary<string, string> environmentVars = null)
         {
             Executable = executable;
             Arguments = arguments;
@@ -20,7 +19,7 @@ namespace Calamari.Integration.Processes
             string executable, 
             string arguments, 
             string workingDirectory, 
-            StringDictionary environmentVars = null, 
+            Dictionary<string, string> environmentVars = null, 
             string userName = null, 
             SecureString password = null)
             : this(executable, arguments, environmentVars)
@@ -38,7 +37,7 @@ namespace Calamari.Integration.Processes
 
         public SecureString Password { get; }
         
-        public StringDictionary EnvironmentVars { get; }
+        public Dictionary<string, string> EnvironmentVars { get; }
 
         /// <summary>
         /// The initial working-directory for the invocation.

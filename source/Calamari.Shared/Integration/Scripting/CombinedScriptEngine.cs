@@ -2,8 +2,6 @@
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
 
 namespace Calamari.Integration.Scripting
@@ -42,7 +40,7 @@ namespace Calamari.Integration.Scripting
             Script script,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null)
+            Dictionary<string, string> environmentVars = null)
         {
             var syntax = ValidateScriptType(script);
             return BuildWrapperChain(syntax)
