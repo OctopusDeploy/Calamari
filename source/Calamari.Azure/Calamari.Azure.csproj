@@ -40,6 +40,10 @@
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="1.6.0-preview" />
     <PackageReference Include="Microsoft.Azure.Management.Storage" Version="6.5.0-preview" />
     <PackageReference Include="Microsoft.Azure.Management.Websites" Version="1.7.1-preview" />
+    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.10" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.10" />

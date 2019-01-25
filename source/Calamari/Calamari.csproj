@@ -39,6 +39,10 @@
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="YamlDotNet" Version="4.2.1" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="OctoDiff" Version="1.1.2" />
