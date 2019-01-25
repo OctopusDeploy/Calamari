@@ -16,13 +16,13 @@ namespace Calamari.Aws.Deployment.Conventions
 {
     public class LogAwsUserInfoConvention: IInstallConvention
     {
-        private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
+        private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
         /// <summary>
         /// Matches ARNs like arn:aws:iam::123456789:role/AWSTestRole and extracts the name as group 1 
         /// </summary>
         private static readonly Regex ArnNameRe = new Regex("^.*?/(.+)$");
 
-        public LogAwsUserInfoConvention(IAwsEnvironmentGeneration awsEnvironmentGeneration)
+        public LogAwsUserInfoConvention(AwsEnvironmentGeneration awsEnvironmentGeneration)
         {
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
         }

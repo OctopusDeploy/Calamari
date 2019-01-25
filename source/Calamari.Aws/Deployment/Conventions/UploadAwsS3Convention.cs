@@ -25,7 +25,7 @@ namespace Calamari.Aws.Deployment.Conventions
     public class UploadAwsS3Convention : IInstallConvention
     {
         private readonly ICalamariFileSystem fileSystem;
-        private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
+        private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
         private readonly string bucket;
         private readonly S3TargetMode targetMode;
         private readonly IProvideS3TargetOptions optionsProvider;
@@ -35,7 +35,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
         
         public UploadAwsS3Convention(ICalamariFileSystem fileSystem,
-            IAwsEnvironmentGeneration awsEnvironmentGeneration,
+            AwsEnvironmentGeneration awsEnvironmentGeneration,
             string bucket,
             S3TargetMode targetMode,
             IProvideS3TargetOptions optionsProvider,

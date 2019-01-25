@@ -39,7 +39,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly string stackName;
         private readonly bool disableRollback;
         private readonly List<string> capabilities = new List<string>();
-        private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
+        private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
 
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
@@ -51,7 +51,7 @@ namespace Calamari.Aws.Deployment.Conventions
             string stackName,
             string iamCapabilities,
             bool disableRollback,
-            IAwsEnvironmentGeneration awsEnvironmentGeneration): base(logger)
+            AwsEnvironmentGeneration awsEnvironmentGeneration): base(logger)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;

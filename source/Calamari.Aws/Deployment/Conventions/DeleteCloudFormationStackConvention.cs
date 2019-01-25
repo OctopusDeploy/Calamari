@@ -17,11 +17,11 @@ namespace Calamari.Aws.Deployment.Conventions
     {
         private readonly Func<IAmazonCloudFormation> clientFactory;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
-        private readonly IAwsEnvironmentGeneration environment;
+        private readonly AwsEnvironmentGeneration environment;
         private readonly bool waitForComplete;
 
         public DeleteCloudFormationStackConvention(
-            IAwsEnvironmentGeneration environment,
+            AwsEnvironmentGeneration environment,
             StackEventLogger logger,
             Func<IAmazonCloudFormation> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider,
