@@ -1,1 +1,1 @@
-failstep("Custom failure message")
+failstep()

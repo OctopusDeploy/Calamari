@@ -50,7 +50,7 @@ def createartifact(path, fileName = None):
     print("##octopus[stdout-default]");
     print("##octopus[createArtifact path='{0}' name='{1}' length='{2}']".format(servicepath, serviceFileName, length))
 
-def failstep(message):
+def failstep(message=None):
     if message is not None:
         encodedMessage = encode(message)
         print("##octopus[resultMessage message='{}']".format(encodedMessage))

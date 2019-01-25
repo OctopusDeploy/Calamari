@@ -101,9 +101,17 @@ namespace Calamari.Tests.Fixtures.Python
         }
 
         [Test, RequiresMinimumPython3Version(4)]
-        public void ShouldFailStepWithCustomMessage()
+        public void ShouldFailStep()
         {
             var (output, _) = RunScript("failstep.py");
+
+            output.AssertFailure();
+        }
+
+        [Test, RequiresMinimumPython3Version(4)]
+        public void ShouldFailStepWithCustomMessage()
+        {
+            var (output, _) = RunScript("failstepwithmessage.py");
 
             output.AssertFailure();
             output.AssertOutput("##octopus[resultMessage message='Q3VzdG9tIGZhaWx1cmUgbWVzc2FnZQ==']");
