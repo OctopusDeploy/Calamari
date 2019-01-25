@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
-using Calamari.Hooks;
+using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
@@ -17,7 +16,7 @@ namespace Calamari.Terraform
     {
         private readonly ICalamariFileSystem fileSystem;
         private readonly RunningDeployment deployment;
-        private StringDictionary defaultEnvironmentVariables;
+        private Dictionary<string, string> defaultEnvironmentVariables;
         private readonly string logPath;
 
         public TerraformCLIExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment)
@@ -57,7 +56,7 @@ namespace Calamari.Terraform
             InitialiseWorkspace();
         }
 
-        public string ExecuteCommand(StringDictionary environmentVariables, params string[] arguments)
+        public string ExecuteCommand(Dictionary<string, string> environmentVariables, params string[] arguments)
         {
             var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out var result, environmentVariables);
 
@@ -66,14 +65,14 @@ namespace Calamari.Terraform
             return result;
         }
 
-        public int ExecuteCommand(StringDictionary environmentVariables, out string result, params string[] arguments)
+        public int ExecuteCommand(Dictionary<string, string> environmentVariables, out string result, params string[] arguments)
         {
             var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result, environmentVariables);
 
             return commandResult.ExitCode;
         }
 
-        public int ExecuteCommand(StringDictionary environmentVariables, out string result, out CommandResult commandResult, params string[] arguments)
+        public int ExecuteCommand(Dictionary<string, string> environmentVariables, out string result, out CommandResult commandResult, params string[] arguments)
         {
             commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result, environmentVariables);
 
@@ -96,12 +95,16 @@ namespace Calamari.Terraform
             return string.Join(" ", items.Where(_ => !String.IsNullOrEmpty(_)));
         }
 
-        CommandResult ExecuteCommandInternal(string arguments, out string result, StringDictionary environmentVariables = null)
+        CommandResult ExecuteCommandInternal(string arguments, out string result, Dictionary<string, string> environmentVariables = null)
         {
+            var environmentVar = defaultEnvironmentVariables;
+            if (environmentVariables != null)
+            {
+                environmentVar.MergeDictionaries(environmentVariables);
+            }
+
             var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                arguments, TemplateDirectory, environmentVariables == null 
-                    ? defaultEnvironmentVariables
-                    : defaultEnvironmentVariables.MergeDictionaries(environmentVariables));
+                arguments, TemplateDirectory, environmentVar);
 
             var commandOutput = new CaptureOutput();
             var cmd = new CommandLineRunner(commandOutput);

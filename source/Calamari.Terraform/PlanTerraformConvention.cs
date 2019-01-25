@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
@@ -15,7 +15,7 @@ namespace Calamari.Terraform
             this.extraParameter = extraParameter;
         }
 
-        protected override void Execute(RunningDeployment deployment, StringDictionary environmentVariables)
+        protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             string results;
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment))

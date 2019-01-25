@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.Aws.Integration;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Hooks;
+using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 using Octostache;
@@ -23,7 +23,7 @@ namespace Calamari.Terraform
             this.fileSubstituter = fileSubstituter;
         }
 
-        protected abstract void Execute(RunningDeployment deployment, StringDictionary environmentVariables);
+        protected abstract void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables);
 
         public void Install(RunningDeployment deployment)
         {
@@ -49,27 +49,26 @@ namespace Calamari.Terraform
                     _ => substitutionPatterns)
                 .Install(deployment);
 
-            var environmentVariables = new StringDictionary();
-
+            var environmentVariables = new Dictionary<string, string>();
             var useAWSAccount = variables.Get(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "None") == "AWS";
             var useAzureAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount);
 
             if (useAWSAccount)
             {
                 var awsEnvironmentGeneration = await AwsEnvironmentGeneration.Create(variables).ConfigureAwait(false);
-                environmentVariables = environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
+                environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
             }
 
             if (useAzureAccount)
             {
-                environmentVariables = environmentVariables.MergeDictionaries(AzureEnvironmentVariables(variables));
+                environmentVariables.MergeDictionaries(AzureEnvironmentVariables(variables));
             }
 
             Execute(deployment, environmentVariables);
         }
 
         // We not referencing the Azure project because we want to be multi-platform 
-        static StringDictionary AzureEnvironmentVariables(VariableDictionary variables)
+        static Dictionary<string, string> AzureEnvironmentVariables(VariableDictionary variables)
         {
             string AzureEnvironment(string s)
             {
@@ -88,12 +87,18 @@ namespace Calamari.Terraform
 
             var environmentName = AzureEnvironment(variables.Get(SpecialVariables.Action.Azure.Environment));
 
-            var env = new StringDictionary
+            var account = variables.Get(SpecialVariables.Action.Azure.AccountVariable)?.Trim();
+            var subscriptionId = variables.Get($"{account}.SubscriptionNumber")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.SubscriptionId)?.Trim();
+            var clientId = variables.Get($"{account}.Client")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.ClientId)?.Trim();
+            var clientSecret = variables.Get($"{account}.Password")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.Password)?.Trim();
+            var tenantId = variables.Get($"{account}.TenantId")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.TenantId)?.Trim();
+            
+            var env = new Dictionary<string, string>
             {
-                {"ARM_SUBSCRIPTION_ID", variables.Get(SpecialVariables.Action.Azure.SubscriptionId)},
-                {"ARM_CLIENT_ID", variables.Get(SpecialVariables.Action.Azure.ClientId)},
-                {"ARM_CLIENT_SECRET", variables.Get(SpecialVariables.Action.Azure.Password)},
-                {"ARM_TENANT_ID", variables.Get(SpecialVariables.Action.Azure.TenantId)},
+                {"ARM_SUBSCRIPTION_ID", subscriptionId},
+                {"ARM_CLIENT_ID", clientId},
+                {"ARM_CLIENT_SECRET", clientSecret},
+                {"ARM_TENANT_ID", tenantId},
                 {"ARM_ENVIRONMENT", environmentName}
             };
 

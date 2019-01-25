@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
@@ -27,7 +27,7 @@ namespace Calamari.Integration.Proxies
             }
         }
 
-        public StringDictionary EnvironmentVariables { get; } = new StringDictionary();
+        public Dictionary<string, string> EnvironmentVariables { get; } = new Dictionary<string, string>();
 
         void SetProxyEnvironmentVariablesFromSystemProxy(string proxyUsername, string proxyPassword)
         {
