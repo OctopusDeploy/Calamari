@@ -21,7 +21,9 @@ namespace Calamari.Integration.Iis
             // http://support.microsoft.com/kb/224609
             // http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
 
+#pragma warning disable DE0009 // API is deprecated
             if (Environment.OSVersion.Version.Major < 6)
+#pragma warning restore DE0009 // API is deprecated
             {
                 return new WebServerSixSupport();
             }

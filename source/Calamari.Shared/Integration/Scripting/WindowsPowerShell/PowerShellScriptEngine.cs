@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
@@ -15,7 +15,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
 
         protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
-            StringDictionary environmentVars = null)
+            Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 

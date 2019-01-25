@@ -22,17 +22,17 @@ namespace Calamari.Tests.Fixtures.Commands
 
         private string Extensions = "--extensions=Calamari.Aws,Calamari.Tests";
 
-        private string Script = GetFixtureResouce("Scripts", "awsscript.ps1");
+        private string Script = GetFixtureResource("Scripts", "awsscript.ps1");
 
         private string[] Args => new[] {"run-test-script", "--script=" + Script, Extensions};
 
-        private static string GetFixtureResouce(params string[] paths)
+        private static string GetFixtureResource(params string[] paths)
         {
             var type = typeof(ScriptRunningTest);
-            return GetFixtureResouce(type, paths);
+            return GetFixtureResource(type, paths);
         }
 
-        private static string GetFixtureResouce(Type type, params string[] paths)
+        private static string GetFixtureResource(Type type, params string[] paths)
         {
             var path = type.Namespace.Replace("Calamari.Tests.", String.Empty);
             path = path.Replace('.', Path.DirectorySeparatorChar);

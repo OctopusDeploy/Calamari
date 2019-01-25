@@ -1,8 +1,7 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting.Bash;
 
 namespace Calamari.Integration.Scripting.Python
 {
@@ -17,7 +16,7 @@ namespace Calamari.Integration.Scripting.Python
             Script script,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars = null)
+            Dictionary<string, string> environmentVars = null)
         {
             var executable = PythonBootstrapper.FindPythonExecutable();
             var workingDirectory = Path.GetDirectoryName(script.File);

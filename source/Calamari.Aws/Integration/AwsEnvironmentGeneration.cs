@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections.Specialized;
-using System.IO;
+using System.Collections.Generic;
 using System.Net;
-using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
-using Calamari.Aws.Exceptions;
 using Calamari.Integration.Processes;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
@@ -19,7 +17,7 @@ namespace Calamari.Aws.Integration
     /// This service is used to generate the appropriate environment variables required to authentication
     /// custom scripts and the C# AWS SDK code exposed as Calamari commands that interact with AWS.
     /// </summary>
-    public class AwsEnvironmentGeneration : IAwsEnvironmentGeneration
+    public class AwsEnvironmentGeneration
     {
         private const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
         private const string TentacleProxyHost = "TentacleProxyHost";
@@ -50,7 +48,7 @@ namespace Calamari.Aws.Integration
             await AssumeRole();
         }
 
-        public StringDictionary EnvironmentVars { get; } = new StringDictionary();
+        public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
         private AwsEnvironmentGeneration(CalamariVariableDictionary variables)
         {
@@ -152,7 +150,7 @@ namespace Calamari.Aws.Integration
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
                 if (!await VerifyLogin())
                 {
-                    throw new LoginException("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
+                    throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
                                              "Please check the keys assigned to the Amazon Web Services Account associated with this step. " +
                                              "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005");
                 }
@@ -169,13 +167,10 @@ namespace Calamari.Aws.Integration
             {
                 try
                 {
-                    var request = WebRequest.Create(RoleUri);
                     string payload;
-
-                    using (var response = await request.GetResponseAsync())
-                    using (var streamReader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                    using (var client = new HttpClient())
                     {
-                        payload = await streamReader.ReadToEndAsync();
+                        payload = await client.GetStringAsync(RoleUri);
                     }
 
                     dynamic instanceRoleKeys = JsonConvert.DeserializeObject(payload);
@@ -189,7 +184,7 @@ namespace Calamari.Aws.Integration
                     // This was either a generic error accessing the metadata URI, or accessing the
                     // dynamic properties resulted in an error (which means the response was not
                     // in the expected format).
-                    throw new LoginException(
+                    throw new Exception(
                         $"AWS-LOGIN-ERROR-0003: Failed to access the role information under {RoleUri}, " +
                         "or failed to parse the response. This may be because the instance does not have " +
                         "a role assigned to it. " +

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -8,7 +8,6 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Util.Environments;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
@@ -69,7 +68,7 @@ namespace Calamari.Integration.Packages.Download
                         ["Url"] = feedUri.ToString(),
                         ["Package"] = packageId,
                     }, commandLineRunner,
-                    new StringDictionary());
+                    new Dictionary<string, string>());
                 if (!result.HasErrors)
                 {
                     var localDownloadName =

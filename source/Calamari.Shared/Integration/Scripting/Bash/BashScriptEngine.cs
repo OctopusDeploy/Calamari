@@ -1,7 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
 using System.IO;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.Bash
@@ -14,7 +12,7 @@ namespace Calamari.Integration.Scripting.Bash
         }
 
         protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
-            StringDictionary environmentVars = null)
+            Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);

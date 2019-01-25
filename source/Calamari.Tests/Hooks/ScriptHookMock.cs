@@ -1,7 +1,7 @@
-﻿using Calamari.Hooks;
+﻿using System.Collections.Generic;
+using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using System.Collections.Specialized;
 
 namespace Calamari.Tests.Hooks
 {
@@ -22,7 +22,7 @@ namespace Calamari.Tests.Hooks
             ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars)
+            Dictionary<string, string> environmentVars)
         {
             WasCalled = true;
             return NextWrapper.ExecuteScript(script, scriptSyntax, variables, commandLineRunner, environmentVars);

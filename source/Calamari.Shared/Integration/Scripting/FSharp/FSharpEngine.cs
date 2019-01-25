@@ -1,6 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
 using System.IO;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.FSharp
@@ -13,7 +12,7 @@ namespace Calamari.Integration.Scripting.FSharp
         }
 
         protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
-            StringDictionary environmentVars = null)
+            Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var executable = FSharpBootstrapper.FindExecutable();

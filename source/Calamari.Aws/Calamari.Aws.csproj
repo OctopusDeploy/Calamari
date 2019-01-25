@@ -28,6 +28,10 @@
     <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.8.1" />
     <PackageReference Include="AWSSDK.S3" Version="3.3.28" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
+    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />

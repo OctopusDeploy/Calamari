@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using System.Collections.Specialized;
 
 namespace Calamari.Hooks
 {
@@ -31,7 +31,7 @@ namespace Calamari.Hooks
             ScriptSyntax scriptSyntax,
             CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
-            StringDictionary environmentVars) => 
+            Dictionary<string, string> environmentVars) => 
             scriptEngine.Execute(script, variables, commandLineRunner, environmentVars);
     }
 }

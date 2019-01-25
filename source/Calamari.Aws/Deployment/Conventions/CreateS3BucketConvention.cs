@@ -11,10 +11,10 @@ namespace Calamari.Aws.Deployment.Conventions
 {
     public class CreateS3BucketConvention: IInstallConvention
     {
-        private readonly IAwsEnvironmentGeneration awsEnvironmentGeneration;
+        private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
         private readonly Func<RunningDeployment, string> bucketFactory;
 
-        public CreateS3BucketConvention(IAwsEnvironmentGeneration awsEnvironmentGeneration, Func<RunningDeployment, string> bucketFactory)
+        public CreateS3BucketConvention(AwsEnvironmentGeneration awsEnvironmentGeneration, Func<RunningDeployment, string> bucketFactory)
         {
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
             this.bucketFactory = bucketFactory;
