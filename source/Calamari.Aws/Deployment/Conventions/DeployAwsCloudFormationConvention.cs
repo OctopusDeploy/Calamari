@@ -49,7 +49,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Func<RunningDeployment, string> roleArnProvider,
             bool waitForComplete,
             string stackName,
-            string iamCapabilities,
+            IEnumerable<string> iamCapabilities,
             bool disableRollback,
             AwsEnvironmentGeneration awsEnvironmentGeneration): base(logger)
         {
@@ -63,10 +63,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.disableRollback = disableRollback;
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
-            if (iamCapabilities.IsKnownIamCapability())
-            {
-                capabilities.Add(iamCapabilities);
-            }
+            capabilities.AddRange(iamCapabilities.Where(x => x.IsKnownIamCapability()));
         }
 
         public override void Install(RunningDeployment deployment)

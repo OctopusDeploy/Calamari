@@ -16,6 +16,8 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.Util;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Commands
@@ -31,7 +33,6 @@ namespace Calamari.Aws.Commands
         private string templateParameterFile;
         private bool waitForComplete;
         private string stackName;
-        private string iamCapabilities;
         private bool disableRollback;
 
         public DeployCloudFormationCommand()
@@ -48,7 +49,6 @@ namespace Calamari.Aws.Commands
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", 
                 v => waitForComplete = !bool.FalseString.Equals(v, StringComparison.InvariantCultureIgnoreCase)); //True by default
             Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
-            Options.Add("iamCapabilities=", "CAPABILITY_IAM if the stack requires IAM capabilities, or CAPABILITY_NAMED_IAM if the stack requires named IAM caoabilities.", v => iamCapabilities = v);
             Options.Add("disableRollback=", "True to disable the CloudFormation stack rollback on failure, and False otherwise.", 
                 v => disableRollback = bool.TrueString.Equals(v, StringComparison.InvariantCultureIgnoreCase)); //False by default
         }
@@ -72,6 +72,7 @@ namespace Calamari.Aws.Commands
             StackArn StackProvider (RunningDeployment x) => new StackArn(stackName);
             ChangeSetArn ChangesetProvider (RunningDeployment x) => new ChangeSetArn(x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
             string RoleArnProvider (RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
+            var iamCapabilities = JsonConvert.DeserializeObject<List<string>>(variables.Get(AwsSpecialVariables.IamCapabilities, "[]"));
 
             CloudFormationTemplate TemplateFactory()
             {

@@ -29,7 +29,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Func<RunningDeployment, StackArn> stackProvider,
             Func<RunningDeployment, string> roleArnProvider,
             Func<CloudFormationTemplate> templateFactory,
-            string iamCapabilities
+            IEnumerable<string> iamCapabilities
         ) : base(logger)
         {
             Guard.NotNull(stackProvider, "Stack provider should not be null");
@@ -41,10 +41,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.stackProvider = stackProvider;
             this.roleArnProvider = roleArnProvider;
             this.templateFactory = templateFactory;
-            if (iamCapabilities.IsKnownIamCapability())
-            {
-                Capabilities.Add(iamCapabilities);
-            }
+            Capabilities.AddRange(iamCapabilities.Where(x => x.IsKnownIamCapability()));
         }
 
         public override void Install(RunningDeployment deployment)
