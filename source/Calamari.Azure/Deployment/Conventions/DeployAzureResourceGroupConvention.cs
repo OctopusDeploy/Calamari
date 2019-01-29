@@ -127,7 +127,8 @@ namespace Calamari.Azure.Deployment.Conventions
                 {
                     Log.Error("Error submitting deployment");
                     Log.Error(ex.Message);
-                    LogCloudError(ex.Body, 0);       
+                    LogCloudError(ex.Body, 0);
+                    throw;
                 }
             }
         }
@@ -152,7 +153,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     var deployment = armClient.Deployments.Get(resourceGroupName, deploymentName);
                     if (deployment.Properties == null)
                     {
-                        Log.Verbose($"Failed to find deployment.Properties");
+                        Log.Verbose("Failed to find deployment.Properties");
                         return;
                     }
 
