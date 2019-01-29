@@ -9,11 +9,9 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Util;
-using Newtonsoft.Json;
-using Octostache;
+ using Newtonsoft.Json;
 
-namespace Calamari.Kubernetes.Conventions
+ namespace Calamari.Kubernetes.Conventions
 {
     public class HelmUpgradeConvention: IInstallConvention
     {
@@ -61,6 +59,7 @@ namespace Calamari.Kubernetes.Conventions
 
             SetExecutable(deployment, sb);
             sb.Append($" upgrade --install");
+            SetNamespaceParameter(deployment, sb);
             SetResetValuesParameter(deployment, sb);
             SetTillerTimeoutParameter(deployment, sb);
             SetTillerNamespaceParameter(deployment, sb);
@@ -104,6 +103,15 @@ namespace Calamari.Kubernetes.Conventions
             else
             {
                 sb.Append("helm");
+            }
+        }
+
+        private static void SetNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
+        {
+            var @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
+            if (!string.IsNullOrWhiteSpace(@namespace))
+            {
+                sb.Append($" --namespace \"{@namespace}\"");
             }
         }
 
