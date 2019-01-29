@@ -63,7 +63,8 @@ namespace Calamari.Aws.Deployment.Conventions
             this.disableRollback = disableRollback;
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
-            capabilities.AddRange(iamCapabilities.Where(x => x.IsKnownIamCapability()));
+            var (validCapabilities, _) = ExcludeAndLogUnknownIamCapabilities(iamCapabilities);
+            capabilities.AddRange(validCapabilities);
         }
 
         public override void Install(RunningDeployment deployment)

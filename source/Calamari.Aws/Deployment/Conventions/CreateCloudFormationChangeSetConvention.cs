@@ -41,7 +41,9 @@ namespace Calamari.Aws.Deployment.Conventions
             this.stackProvider = stackProvider;
             this.roleArnProvider = roleArnProvider;
             this.templateFactory = templateFactory;
-            Capabilities.AddRange(iamCapabilities.Where(x => x.IsKnownIamCapability()));
+            var (validCapabilities, _) = ExcludeAndLogUnknownIamCapabilities(iamCapabilities);
+       
+            Capabilities.AddRange(validCapabilities);
         }
 
         public override void Install(RunningDeployment deployment)
