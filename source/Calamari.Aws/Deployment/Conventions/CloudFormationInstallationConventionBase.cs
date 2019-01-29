@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -99,6 +101,32 @@ namespace Calamari.Aws.Deployment.Conventions
                     Log.Warn(exception.Message);
                 }
             };
+        }
+
+        public static (IList<string> valid, IList<string> excluded) ExcludeUnknownIamCapabilities(
+            IEnumerable<string> capabilities)
+        {
+            return capabilities.Aggregate((new List<string>(), new List<string>()), (prev, current) =>
+            {
+                var (valid, excluded) = prev;
+
+                if (current.IsKnownIamCapability())
+                    valid.Add(current);
+                else
+                    excluded.Add(current);
+
+                return prev;
+            });
+        }
+
+        public static (IList<string> valid, IList<string> excluded) ExcludeAndLogUnknownIamCapabilities(IEnumerable<string> values)
+        {
+            var (valid, excluded) = ExcludeUnknownIamCapabilities(values);
+            if (excluded.Count > 0)
+            {
+                Log.Warn($"The following unknown IAM Capabilities have been removed: {String.Join(", ", excluded)}");
+            }
+            return (valid, excluded);
         }
 
         protected void SetOutputVariable(CalamariVariableDictionary variables, string name, string value)
