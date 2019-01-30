@@ -170,7 +170,9 @@ namespace Calamari.Aws.Integration
                     string payload;
                     using (var client = new HttpClient())
                     {
-                        payload = await client.GetStringAsync(RoleUri);
+                        var instanceRole = await client.GetStringAsync(RoleUri);
+
+                        payload = await client.GetStringAsync($"{RoleUri}{instanceRole}");
                     }
 
                     dynamic instanceRoleKeys = JsonConvert.DeserializeObject(payload);
