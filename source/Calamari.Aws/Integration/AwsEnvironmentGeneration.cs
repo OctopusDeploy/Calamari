@@ -152,7 +152,7 @@ namespace Calamari.Aws.Integration
                 {
                     throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
                                              "Please check the keys assigned to the Amazon Web Services Account associated with this step. " +
-                                             "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005");
+                                             $"For more information visit {Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005")}");
                 }
             }
         }
@@ -190,7 +190,7 @@ namespace Calamari.Aws.Integration
                         $"AWS-LOGIN-ERROR-0003: Failed to access the role information under {RoleUri}, " +
                         "or failed to parse the response. This may be because the instance does not have " +
                         "a role assigned to it. " +
-                        "For more information visit https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003", ex);
+                        $"For more information visit {Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003")}", ex);
                 }
             }
         }

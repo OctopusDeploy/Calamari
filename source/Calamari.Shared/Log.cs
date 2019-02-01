@@ -164,6 +164,16 @@ namespace Calamari
             }
         }
 
+        public static void LogLink(string uri, string description = null)
+        {
+            Info(Link(uri, description));
+        }
+
+        public static string Link(string uri, string description = null)
+        {
+            return $"[{description ?? uri}]({uri})";
+        }
+
         public static void ErrorFormat(string messageFormat, params object[] args)
         {
             Error(string.Format(messageFormat, args));

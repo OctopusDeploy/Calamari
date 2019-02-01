@@ -57,7 +57,7 @@ namespace Calamari.Integration.Packages
                 return extractor;
             
             throw new FileFormatException(supportLinkGenerator.GenerateSupportMessage(
-                $"This step supports packages with the following extenions: {Extractors.SelectMany(e => e.Extensions).Distinct().Aggregate((result, e) => result + ", " + e)}.\n" +
+                $"This step supports packages with the following extensions: {Extractors.SelectMany(e => e.Extensions).Distinct().Aggregate((result, e) => result + ", " + e)}.\n" +
                 $"The supplied package has the extension \"{file.Extension}\" which is not supported.",
                 "JAVA-DEPLOY-ERROR-0001"));
         }
