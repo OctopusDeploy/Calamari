@@ -570,6 +570,23 @@ function Import-CalamariModules() {
 	}
 }
 
+function ConvertTo-QuotedString([string]$arg){
+	"`"$arg`""
+}
+
+function ConvertTo-ConsoleEscapedArgument([string]$arg){
+    ## For all ", double the number of \ immediately preceding the "
+    $arg = $arg -replace "(\\+)+`"",'$1$1"'
+
+    ## Add a single \ preceding all "
+    $arg = $arg.Replace("`"", "\`"");
+
+    ## if string ends with \, double the number of all ending \  
+    $arg = $arg -replace "(\\+)+$",'$1$1"'
+    
+    return $arg
+}
+
 Log-VersionTable
 
 # -----------------------------------------------------------------
