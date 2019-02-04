@@ -85,14 +85,6 @@ Execute-WithRetry{
 
             If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
                 try {
-                    $badCharsRegex = '.*[&|].*'
-                    $passwordContainsBadChars = $OctopusAzureADPassword -match $badCharsRegex
-                    $userNameContainsBadChars = $OctopusAzureADClientId -match $badCharsRegex
-                    if ($passwordContainsBadChars -or $userNameContainsBadChars) {
-                        Write-Warning 'The Azure Account credentials contains either a | or a & character. This can cause issues with the azure CLI invocation and should be avoided.'
-                        throw 'Invalid characters were passed into azure login credentials'
-                    }
-                
                     # authenticate with the Azure CLI
                     Write-Host "##octopus[stdout-verbose]"
                 
@@ -101,11 +93,17 @@ Execute-WithRetry{
 
                     $previousErrorAction = $ErrorActionPreference
                     $ErrorActionPreference = "Continue"
+
                     az cloud set --name $OctopusAzureEnvironment 2>$null 3>$null 
                     $ErrorActionPreference = $previousErrorAction
                     
                     Write-Host "Azure CLI: Authenticating with Service Principal"
-                    az login --service-principal -u "$OctopusAzureADClientId" -p "$OctopusAzureADPassword" --tenant $OctopusAzureADTenantId 
+
+					$loginArgs = @();
+					$loginArgs += @("-u", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))); 
+					$loginArgs += @("-p", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
+					$loginArgs += @("--tenant", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId))));
+                    az login --service-principal $loginArgs
         
                     Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
                     az account set --subscription $OctopusAzureSubscriptionId
