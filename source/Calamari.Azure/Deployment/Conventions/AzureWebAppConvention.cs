@@ -104,7 +104,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     return true;
                 case SslPolicyErrors.RemoteCertificateNameMismatch:
                     Log.Error(
-                        "A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in https://g.octopushq.com/CertificateMismatch.");
+                        $"A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in {Log.Link("https://g.octopushq.com/CertificateMismatch")}.");
                     break;
             }
 

@@ -50,7 +50,7 @@ namespace Calamari.Azure.HealthChecks
 
         void ConfirmWebAppExists(AzureAccount certificateAccount, string resourceGroupName, string siteName)
         {
-            log.Warn("Azure have announced they will be retiring Service Management API support on June 30th 2018. Please switch to using Service Principals for your Octopus Azure accounts https://g.octopushq.com/AzureServicePrincipalAccount");
+            log.Warn($"Azure have announced they will be retiring Service Management API support on June 30th 2018. Please switch to using Service Principals for your Octopus Azure accounts {Log.Link("https://g.octopushq.com/AzureServicePrincipalAccount")}");
             using (var azureClient = certificateAccount.CreateWebSiteManagementClient(certificateStore))
             {
                 var response = azureClient.WebSpaces.List();

@@ -112,7 +112,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 }
 
                 throw new UnknownException(
-                    $"An unrecognised {exception.ErrorCode} error was thrown while uploading to bucket {bucket}");
+                    $"An unrecognized {exception.ErrorCode} error was thrown while uploading to bucket {bucket}");
             }
             catch (AmazonServiceException exception)
             {
@@ -303,20 +303,6 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
-        /// Display an warning message to the user
-        /// </summary>
-        /// <param name="errorCode">The error message code</param>
-        /// <param name="message">The error message body</param>
-        /// <returns>true if it was displayed, and false otherwise</returns>
-        private static void DisplayWarning(string errorCode, string message)
-        {
-            Log.Warn(
-                errorCode + ": " + message + "\n" +
-                "For more information visit https://g.octopushq.com/AwsS3Upload#" +
-                errorCode.ToLower());
-        }
-
-        /// <summary>
         /// Handle the file upload request throwing exceptions only on errors from AWS which is critical enough to fail
         /// the entire deployment i.e. access denied while per file errors will result in warnings.
         /// </summary>
@@ -359,7 +345,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 throw new AmazonFileUploadException($"An error occurred uploading file with bucket key {request.Key} possibly due to metadata. Metadata keys must be valid HTTP header values. \n" +
                                                     "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n") + "\n" +
-                                                    "Please see the [AWS documentation](https://g.octopushq.com/AwsS3UsingMetadata) for more information."
+                                                    $"Please see the {Log.Link("https://g.octopushq.com/AwsS3UsingMetadata", "AWS documentation")} for more information."
                     , exception);
             }
         }
