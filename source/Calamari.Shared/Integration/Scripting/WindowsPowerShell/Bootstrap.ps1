@@ -40,7 +40,7 @@ function SafelyLog-EnvironmentVars
 	{
 		$operatingSystem = [System.Environment]::OSVersion.ToString()
 		Write-Host "  OperatingSystem: $($operatingSystem)"
-		
+
 		$osBitVersion = If ([System.Environment]::Is64BitOperatingSystem) {"x64"} Else {"x86"}
 		Write-Host "  OsBitVersion: $($osBitVersion)"
 
@@ -71,7 +71,7 @@ function SafelyLog-PathVars
 
 		$currentLocation = Get-Location
 		Write-Host "  CurrentLocation: $($currentLocation)"
-		
+
 		$tempPath = [System.IO.Path]::GetTempPath()
 		Write-Host "  TempDirectory: $($tempPath)"
 	}
@@ -114,7 +114,7 @@ function SafelyLog-ComputerInfoVars
 
 function Import-ScriptModule([string]$moduleName, [string]$moduleFilePath)
 {
-	Try 
+	Try
 	{
 		Write-Verbose "Importing Script Module '$moduleName' from '$moduleFilePath'"
 		Import-Module -DisableNameChecking $moduleFilePath
@@ -126,7 +126,7 @@ function Import-ScriptModule([string]$moduleName, [string]$moduleFilePath)
 	}
 	Finally
 	{
-		# Once we've loaded (or failed to load) the script module, 
+		# Once we've loaded (or failed to load) the script module,
 		# delete the script module file from the filesystem
 		# https://github.com/OctopusDeploy/Issues/issues/3895
 		Remove-Item $moduleFilePath -Force -ErrorAction SilentlyContinue
@@ -139,7 +139,7 @@ function Convert-ServiceMessageValue([string]$value)
 	return [Convert]::ToBase64String($valueBytes)
 }
 
-function Set-OctopusVariable([string]$name, [string]$value, [switch]$sensitive) 
+function Set-OctopusVariable([string]$name, [string]$value, [switch]$sensitive)
 {
 	$name = Convert-ServiceMessageValue($name)
 	$value = Convert-ServiceMessageValue($value)
@@ -159,44 +159,44 @@ function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 	return $param
 }
 
-function New-OctopusTokenAccount([string]$name, [string]$token, [switch]$updateIfExisting) 
+function New-OctopusTokenAccount([string]$name, [string]$token, [switch]$updateIfExisting)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
- 	$token = Convert-ToServiceMessageParameter -name "token" -value $token 	
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
+ 	$token = Convert-ToServiceMessageParameter -name "token" -value $token
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $token, $updateIfExistingParameter -join ' '
- 	
+
     Write-Host "##octopus[create-tokenaccount $($parameters)]"
 }
 
-function New-OctopusAwsAccount([string]$name, [string]$secretKey, [string]$accessKey, [switch]$updateIfExisting) 
+function New-OctopusAwsAccount([string]$name, [string]$secretKey, [string]$accessKey, [switch]$updateIfExisting)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
-	$secretKey = Convert-ToServiceMessageParameter -name "secretKey" -value $secretKey 
- 	$accessKey = Convert-ToServiceMessageParameter -name "accessKey" -value $accessKey 	
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
+	$secretKey = Convert-ToServiceMessageParameter -name "secretKey" -value $secretKey
+ 	$accessKey = Convert-ToServiceMessageParameter -name "accessKey" -value $accessKey
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $secretKey, $accessKey, $updateIfExistingParameter -join ' '
- 	
+
     Write-Host "##octopus[create-awsaccount $($parameters)]"
 }
 
-function New-OctopusUserPassAccount([string]$name, [string]$username, [string]$password, [switch]$updateIfExisting) 
+function New-OctopusUserPassAccount([string]$name, [string]$username, [string]$password, [switch]$updateIfExisting)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
  	$username = Convert-ToServiceMessageParameter -name "username" -value $username
 	$password = Convert-ToServiceMessageParameter -name "password" -value $password
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $username, $password, $updateIfExistingParameter -join ' '
- 	
+
     Write-Host "##octopus[create-userpassaccount $($parameters)]"
 }
 
-function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscriptionId, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateIfExisting) 
+function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscriptionId, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateIfExisting)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
  	$azureSubscription = Convert-ToServiceMessageParameter -name "azSubscriptionId" -value $azureSubscriptionId
  	$azureApplicationId = Convert-ToServiceMessageParameter -name "azApplicationId" -value $azureApplicationId
  	$azureTenantId = Convert-ToServiceMessageParameter -name "azTenantId" -value $azureTenantId
@@ -213,13 +213,13 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
 		$azureResourceManagementBaseUri = Convert-ToServiceMessageParameter -name "azResourceManagementBaseUri" -value $azureResourceManagementBaseUri
 		$parameters = $parameters, $azureEnvironment, $azureBaseUri, $azureResourceManagementBaseUri -join ' '
 	}
- 	
+
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting, [string]$azureWebAppSlot) 
+function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting, [string]$azureWebAppSlot)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
  	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
     $azureWebAppSlot = Convert-ToServiceMessageParameter -name "webAppSlot" -value $azureWebAppSlot
     $azureResourceGroupName = Convert-ToServiceMessageParameter -name "resourceGroupName" -value $azureResourceGroupName
@@ -232,9 +232,9 @@ function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [stri
     Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
 }
 
-function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
+function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles, [switch]$updateIfExisting)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
 	$azureConnectionEndpoint = Convert-ToServiceMessageParameter -name "connectionEndpoint" -value $azureConnectionEndpoint
 	$azureSecurityMode = Convert-ToServiceMessageParameter -name "securityMode" -value $azureSecurityMode
 	$azureCertificateThumbprint = Convert-ToServiceMessageParameter -name "certificateThumbprint" -value $azureCertificateThumbprint
@@ -251,9 +251,9 @@ function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnec
 	Write-Host "##octopus[create-azureservicefabrictarget $($parameters)]"
 }
 
-function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudServiceName, [string]$azureStorageAccount, [string]$azureDeploymentSlot, [string]$swap, [string]$instanceCount, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting) 
+function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudServiceName, [string]$azureStorageAccount, [string]$azureDeploymentSlot, [string]$swap, [string]$instanceCount, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
 	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "azureCloudServiceName" -value $azureCloudServiceName
 	$azureStorageAccount = Convert-ToServiceMessageParameter -name "azureStorageAccount" -value $azureStorageAccount
 	$azureDeploymentSlot = Convert-ToServiceMessageParameter -name "azureDeploymentSlot" -value $azureDeploymentSlot
@@ -276,21 +276,21 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 }
 
 function New-OctopusKubernetesTarget(
-	[string]$name, 
-	[string]$clusterUrl, 
-	[string]$clusterName, 
-	[string]$clusterResourceGroup, 
-	[string]$namespace, 
-	[string]$skipTlsVerification, 
+	[string]$name,
+	[string]$clusterUrl,
+	[string]$clusterName,
+	[string]$clusterResourceGroup,
+	[string]$namespace,
+	[string]$skipTlsVerification,
 	[string]$octopusAccountIdOrName,
-	[string]$octopusClientCertificateIdOrName, 
+	[string]$octopusClientCertificateIdOrName,
 	[string]$octopusServerCertificateIdOrName,
-	[string]$octopusRoles, 
-	[string]$octopusDefaultWorkerPoolIdOrName, 
-	[switch]$updateIfExisting) 
+	[string]$octopusRoles,
+	[string]$octopusDefaultWorkerPoolIdOrName,
+	[switch]$updateIfExisting)
 {
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name 
-	$clusterName = Convert-ToServiceMessageParameter -name "clusterName" -value $clusterName 
+	$name = Convert-ToServiceMessageParameter -name "name" -value $name
+	$clusterName = Convert-ToServiceMessageParameter -name "clusterName" -value $clusterName
 	$clusterResourceGroup = Convert-ToServiceMessageParameter -name "clusterResourceGroup" -value $clusterResourceGroup
 	$octopusClientCertificateIdOrName = Convert-ToServiceMessageParameter -name "clientCertificate" -value $octopusClientCertificateIdOrName
 	$octopusServerCertificateIdOrName = Convert-ToServiceMessageParameter -name "serverCertificate" -value $octopusServerCertificateIdOrName
@@ -300,7 +300,7 @@ function New-OctopusKubernetesTarget(
 	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 	$octopusDefaultWorkerPoolIdOrName = Convert-ToServiceMessageParameter -name "defaultWorkerPool" -value $octopusDefaultWorkerPoolIdOrName
-	$skipTlsVerification = Convert-ToServiceMessageParameter -name "skipTlsVerification" -value $skipTlsVerification	
+	$skipTlsVerification = Convert-ToServiceMessageParameter -name "skipTlsVerification" -value $skipTlsVerification
 
 	$parameters = $name, `
 		$clusterUrl, `
@@ -334,7 +334,7 @@ function New-OctopusArtifact
     param(
         [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [Alias('path')]
-        [string]$fullpath, 
+        [string]$fullpath,
         [string]$name=""""
     )
     process
@@ -402,11 +402,11 @@ function Write-Warning()
 	Write-Host "##octopus[stdout-default]"
 }
 
-function Decrypt-Variables($iv, $Encrypted) 
+function Decrypt-Variables($iv, $Encrypted)
 {
     function ConvertFromBase64String($str)
     {
-        # "nul" is a special string used by Calamari to represent null. "null" is not used as it is a valid Base64 string. 
+        # "nul" is a special string used by Calamari to represent null. "null" is not used as it is a valid Base64 string.
         if($str -eq "nul")
         {
             return $null;
@@ -438,13 +438,13 @@ function Decrypt-Variables($iv, $Encrypted)
 	$algorithm.IV =[System.Convert]::FromBase64String($iv)
 	$decryptor = [System.Security.Cryptography.ICryptoTransform]$algorithm.CreateDecryptor()
 
-	$memoryStream = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted)) 
-	$cryptoStream = new-Object Security.Cryptography.CryptoStream $memoryStream,$decryptor,"Read" 
-	$streamReader = new-Object IO.StreamReader $cryptoStream 
+	$memoryStream = new-Object IO.MemoryStream @(,[System.Convert]::FromBase64String($Encrypted))
+	$cryptoStream = new-Object Security.Cryptography.CryptoStream $memoryStream,$decryptor,"Read"
+	$streamReader = new-Object IO.StreamReader $cryptoStream
 	while($streamReader.EndOfStream -eq $false)
     {
         $parts = $streamReader.ReadLine().Split("$")
-        # The seemingly superfluous '-as' below was for PowerShell 2.0.  Without it, a cast exception was thrown when trying to add the object to a generic collection. 
+        # The seemingly superfluous '-as' below was for PowerShell 2.0.  Without it, a cast exception was thrown when trying to add the object to a generic collection.
         $parameters[(ConvertFromBase64String $parts[0])] = ConvertFromBase64String $parts[1] -as [string]
     }
 	$streamReader.Dispose() | Out-Null
@@ -454,7 +454,7 @@ function Decrypt-Variables($iv, $Encrypted)
 	# RijndaelManaged/RijndaelManagedTransform implemented IDiposable explicitly
 	[System.IDisposable].GetMethod("Dispose").Invoke($decryptor, @()) | Out-Null
 	[System.IDisposable].GetMethod("Dispose").Invoke($algorithm, @()) | Out-Null
-	
+
 	return $parameters
 }
 
@@ -464,15 +464,15 @@ function Set-ProxyEnvironmentVariables ([string] $proxyHost, [int] $proxyPort, [
 		Add-Type -AssemblyName System.Web
 		$proxyUri = "http://$( [System.Web.HttpUtility]::UrlEncode($proxyUsername) ):$( [System.Web.HttpUtility]::UrlEncode($proxyPassword) )@$( $proxyHost ):$( $proxyPort )"
 	}
-	
+
 	if([string]::IsNullOrEmpty($env:HTTP_PROXY)) {
 		$env:HTTP_PROXY = "$proxyUri"
 	}
-	
+
 	if([string]::IsNullOrEmpty($env:HTTPS_PROXY)) {
 		$env:HTTPS_PROXY = "$proxyUri"
 	}
-	
+
 	if([string]::IsNullOrEmpty($env:NO_PROXY)) {
 		$env:NO_PROXY="127.0.0.1,localhost,169.254.169.254"
 	}
@@ -491,19 +491,19 @@ function Get-ProxyUri ([string] $proxyHost, [int] $proxyPort) {
 	return New-Object Uri($uri)
 }
 
-function Initialize-ProxySettings() 
+function Initialize-ProxySettings()
 {
 	$proxyUsername = $env:TentacleProxyUsername
 	$proxyPassword = $env:TentacleProxyPassword
 	$proxyHost = $env:TentacleProxyHost
 	[int]$proxyPort = $env:TentacleProxyPort
-	
-	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost) 
+
+	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost)
 	if($useSystemProxy)
 	{
 		$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
 		Set-ProxyEnvironmentVariablesFromSystemProxy -proxyUsername $proxyUsername -proxyPassword $proxyPassword
-	}	
+	}
 	else
 	{
 		$proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
@@ -511,7 +511,7 @@ function Initialize-ProxySettings()
 		Set-ProxyEnvironmentVariables -proxyHost $proxyHost -proxyPort $proxyPort -proxyUsername $proxyUsername -proxyPassword $proxyPassword
 	}
 
-	if ([string]::IsNullOrEmpty($proxyUsername)) 
+	if ([string]::IsNullOrEmpty($proxyUsername))
 	{
 		if($useSystemProxy)
 		{
@@ -522,7 +522,7 @@ function Initialize-ProxySettings()
 			$proxy.Credentials = New-Object System.Net.NetworkCredential("","")
 		}
 	}
-	else 
+	else
 	{
 		$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 	}
@@ -581,9 +581,22 @@ function ConvertTo-ConsoleEscapedArgument([string]$arg){
     ## Add a single \ preceding all "
     $arg = $arg.Replace("`"", "\`"");
 
-    ## if string ends with \, double the number of all ending \  
+    ## if string ends with \, double the number of all ending \
     $arg = $arg -replace "(\\+)+$",'$1$1"'
-    
+
+    return $arg
+}
+
+function ConvertTo-PowershellEscapedArgument([string]$arg){
+	## Escape all ` with another ` (this is needed so PS does not get confused with variables)
+    $arg = $arg.Replace("``", "````");
+
+	## Escape all [ with a ` (this is needed so PS does not get confused with variables)
+    $arg = $arg.Replace("[", "``[");
+
+    ## Escape all $ with a ` (this is needed so PS does not get confused with variables)
+    $arg = $arg.Replace("$", "`$");
+
     return $arg
 }
 
@@ -629,7 +642,7 @@ Import-CalamariModules
 # Ensure we exit with whatever exit code the last exe used
 # -----------------------------------------------------------------
 
-if ((test-path variable:global:lastexitcode)) 
+if ((test-path variable:global:lastexitcode))
 {
-	exit $LastExitCode 
+	exit $LastExitCode
 }
