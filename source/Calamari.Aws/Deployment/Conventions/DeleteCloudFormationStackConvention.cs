@@ -52,7 +52,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (await clientFactory.StackExistsAsync(stack, StackStatus.Completed) != StackStatus.DoesNotExist)
             {
-                DeleteCloudFormation(stack);
+                await DeleteCloudFormation(stack);
                 Log.Info($"Deleted stack called {stack.Value} in region {environment.AwsRegion.SystemName}");
             }
             else
@@ -71,10 +71,10 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private void DeleteCloudFormation(StackArn stack)
+        private Task DeleteCloudFormation(StackArn stack)
         {
             Guard.NotNull(stack, "Stack must not be null");
-            WithAmazonServiceExceptionHandling(async () => await clientFactory.DeleteStackAsync(stack));
+            return WithAmazonServiceExceptionHandling(async () => await clientFactory.DeleteStackAsync(stack));
         }
     }
 }

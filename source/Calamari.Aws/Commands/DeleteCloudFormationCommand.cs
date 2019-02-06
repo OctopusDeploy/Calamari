@@ -39,6 +39,7 @@ namespace Calamari.Aws.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
+            Debugger.Launch();
             Options.Parse(commandLineArguments);
 
             if (variablesFile != null && !File.Exists(variablesFile))
