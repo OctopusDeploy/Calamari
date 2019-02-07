@@ -8,6 +8,8 @@ namespace Calamari.Aws.Deployment
 {
     public static class AwsSpecialVariables
     {
+        public const string IamCapabilities = "Octopus.Action.Aws.IamCapabilities";
+
         public static class S3
         {
             public const string FileSelections = "Octopus.Action.Aws.S3.FileSelections";
