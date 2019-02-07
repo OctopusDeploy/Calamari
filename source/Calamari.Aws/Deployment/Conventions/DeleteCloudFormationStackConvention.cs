@@ -74,7 +74,10 @@ namespace Calamari.Aws.Deployment.Conventions
         private Task DeleteCloudFormation(StackArn stack)
         {
             Guard.NotNull(stack, "Stack must not be null");
-            return WithAmazonServiceExceptionHandling(async () => await clientFactory.DeleteStackAsync(stack));
+            return WithAmazonServiceExceptionHandling(async () =>
+            {
+                await clientFactory.DeleteStackAsync(stack);
+            });
         }
     }
 }
