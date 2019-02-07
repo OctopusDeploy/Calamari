@@ -139,6 +139,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromChartPackage_NewValuesUsed()
         {
             //Additional Package
@@ -153,6 +154,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromChartPackageWithoutSubDirectory_NewValuesUsed()
         {
             //Additional Package
