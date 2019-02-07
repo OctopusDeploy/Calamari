@@ -3,40 +3,9 @@
 ## --------------------------------------------------------------------------------------
 
 $isEnabled = $OctopusParameters["Octopus.Action.WindowsService.CreateOrUpdateService"]
-if (!$isEnabled -or ![Bool]::Parse($isEnabled)) 
+if (!$isEnabled -or ![Bool]::Parse($isEnabled))
 {
     exit 0
-}
-
-function WrapInQuotes([string]$arg){
-	"`"$arg`""
-}
-
-function EscapeArgumentForPS([string]$arg){
-    
-	## Escape all ` with another ` (this is needed so PS does not get confused with variables)
-    $arg = $arg.Replace("``", "````");
-
-	## Escape all [ with a ` (this is needed so PS does not get confused with variables)
-    $arg = $arg.Replace("[", "``[");
-
-    ## Escape all $ with a ` (this is needed so PS does not get confused with variables)
-    $arg = $arg.Replace("$", "`$");
-
-    return $arg
-}
-
-function EscapeArgumentForConsole([string]$arg){
-    ## For all ", double the number of \ immediately preceding the "
-    $arg = $arg -replace "(\\+)+`"",'$1$1"'
-
-    ## Add a single \ preceding all "
-    $arg = $arg.Replace("`"", "\`"");
-
-    ## if string ends with \, double the number of all ending \  
-    $arg = $arg -replace "(\\+)+$",'$1$1"'
-    
-    return $arg
 }
 
 $serviceName = $OctopusParameters["Octopus.Action.WindowsService.ServiceName"]
@@ -69,58 +38,58 @@ if (!$serviceName)
 }
 
 # Items in the fullArgumentsArray are automatically surrounded by quote when passed to the sc.exe command below
-# We need to escape any existing quotes that may exist 
+# We need to escape any existing quotes that may exist
 
-if ($arguments) 
+if ($arguments)
 {
-	$binPath = (EscapeArgumentForConsole ((WrapInQuotes $fullPath) + " $arguments")) # An extra set of escaped quotes added around the exe	
+	$binPath = (ConvertTo-ConsoleEscapedArgument ((ConvertTo-QuotedString $fullPath) + " $arguments")) # An extra set of escaped quotes added around the exe
 }
 else
 {
-    $binPath = (EscapeArgumentForConsole ((WrapInQuotes $fullPath) + " "))
+    $binPath = (ConvertTo-ConsoleEscapedArgument ((ConvertTo-QuotedString $fullPath) + " "))
 }
 
-$fullArguments = @((WrapInQuotes (EscapeArgumentForConsole $serviceName)), "binPath=", $binPath)
-if ($displayName) 
+$fullArguments = @((ConvertTo-QuotedString (ConvertTo-ConsoleEscapedArgument $serviceName)), "binPath=", $binPath)
+if ($displayName)
 {
-	$fullArguments += @("DisplayName=", (EscapeArgumentForConsole $displayName))
+	$fullArguments += @("DisplayName=", (ConvertTo-ConsoleEscapedArgument $displayName))
 }
 
 if(!$dependencies)
 {
 	$dependencies = "/"
 }
-$fullArguments += @("depend=", (WrapInQuotes (EscapeArgumentForConsole $dependencies)))
+$fullArguments += @("depend=", (ConvertTo-QuotedString (ConvertTo-ConsoleEscapedArgument $dependencies)))
 
-if ($startMode -and ($startMode -ne 'unchanged')) 
+if ($startMode -and ($startMode -ne 'unchanged'))
 {
-	$fullArguments += @("start=", (WrapInQuotes $startMode))
+	$fullArguments += @("start=", (ConvertTo-QuotedString $startMode))
 }
 
 $fullArgumentsSafeForConsole = $fullArguments
-if ($serviceAccount -ne "_CUSTOM") 
+if ($serviceAccount -ne "_CUSTOM")
 {
-	if ($serviceAccount) 
+	if ($serviceAccount)
 	{
-		$fullArguments += @("obj=", (WrapInQuotes $serviceAccount))
-	}	
+		$fullArguments += @("obj=", (ConvertTo-QuotedString $serviceAccount))
+	}
 	$fullArgumentsSafeForConsole = $fullArguments
 }
-else 
+else
 {
-	if ($customAccountName) 
+	if ($customAccountName)
 	{
-		$fullArguments += @("obj=", (WrapInQuotes $customAccountName))
-	}	
+		$fullArguments += @("obj=", (ConvertTo-QuotedString $customAccountName))
+	}
 	$fullArgumentsSafeForConsole = $fullArguments
-	if ($customAccountPassword) 
+	if ($customAccountPassword)
 	{
-		$fullArguments += @("password=", (EscapeArgumentForConsole $customAccountPassword))
+		$fullArguments += @("password=", (ConvertTo-ConsoleEscapedArgument $customAccountPassword))
 		$fullArgumentsSafeForConsole += "password= `"************`""
 	}
 }
 
-$psServiceName = (EscapeArgumentForPS $serviceName)
+$psServiceName = (ConvertTo-PowershellEscapedArgument $serviceName)
 
 $service = Get-Service $psServiceName -ErrorAction SilentlyContinue
 
@@ -151,7 +120,7 @@ else
 			$service.WaitForStatus('Stopped', '00:00:30')
 		}
 
-		If ($service.Status -ne 'Stopped') 
+		If ($service.Status -ne 'Stopped')
 		{
 			Write-Warning "Service $serviceName did not stop within 30 seconds"
 		} Else {
@@ -161,16 +130,16 @@ else
 
 	Write-Host "sc.exe config $fullArgumentsSafeForConsole"
 	& "sc.exe" config ($fullArguments)
-	
+
 	if ($LastExitCode -ne 0) {
 		throw "sc.exe config failed with exit code: $LastExitCode"
 	}
 }
 
-if ($description) 
+if ($description)
 {
 	Write-Host "Updating the service description"
-	$fullArguments = @((WrapInQuotes(EscapeArgumentForConsole $serviceName)), (EscapeArgumentForConsole $description))
+	$fullArguments = @((ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument $serviceName)), (ConvertTo-ConsoleEscapedArgument $description))
 	& "sc.exe" description ($fullArguments)
 	if ($LastExitCode -ne 0) {
 		throw "sc.exe description failed with exit code: $LastExitCode"
@@ -201,7 +170,7 @@ else
 		$service.WaitForStatus('Running', '00:00:30')
 	}
 
-	If ($service.Status -ne 'Running') 
+	If ($service.Status -ne 'Running')
 	{
 		Write-Warning "Service $serviceName did not start within 30 seconds"
 	} Else {
