@@ -39,70 +39,13 @@ namespace Calamari.Integration.Certificates
             return GetOrAdd(thumbprint, pfxBytes, password, new X509Store(storeName, storeLocation));
         }
 
-        #region TODO: Review - Has issues with mgt certs
-
-//        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, string subject, X509Store store, bool privateKeyExportable = false)
-//        {
-//            var certificate = FindCertificateInStore(thumbprint, store);
-//            if (certificate.Some())
-//                return certificate.Value;
-
-//            AddCertificateToStore(bytes, password, subject, store, privateKeyExportable);
-
-//            return FindCertificateInStore(thumbprint, store).Value;
-//        }
-
-//        static Maybe<X509Certificate2> FindCertificateInStore(string thumbprint, X509Store store)
-//        {
-//#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-//            store.Open(OpenFlags.ReadOnly);
-
-//            try
-//            {
-//                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-//                if (found.Count != 0 && found[0].HasPrivateKey)
-//                {
-//                    var certificate = found[0];
-//                    Log.Info($"Located certificate '{certificate.SubjectName.Name}' in Cert:\\{store.Location}\\{store.Name}");
-//                    return certificate.AsSome();
-//                }
-
-//                return Maybe<X509Certificate2>.None;
-//            }
-//            finally
-//            {
-//                store.Close();
-//            }
-//#else
-//            return Maybe<X509Certificate2>.None;
-//#endif
-//        }
-
-//        static void AddCertificateToStore(byte[] certificateBytes, string password, string subject, X509Store store, bool privateKeyExportable)
-//        {
-//#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-//            Log.Info($"Adding certificate '{subject}' into Cert:\\{store.Location}\\{store.Name} {(privateKeyExportable ? " (marked exportable)" : " (not exportable)")}");
-//            try
-//            {
-//                WindowsX509CertificateStore.ImportCertificateToStore(certificateBytes, password, store.Location, store.Name, privateKeyExportable);
-//            }
-//            catch (Exception)
-//            {
-//                Log.Error("Exception while attempting to add certificate to store");
-//                throw;
-//            }
-//#endif
-//        }
-
-        #endregion
-
         static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, X509Store store)
         {
             store.Open(OpenFlags.ReadWrite);
 
             try
             {
-                Log.Verbose("Loading certificate with thumbprint: " + thumbprint);
+                Log.Verbose($"Loading certificate with thumbprint: {thumbprint}");
                 var certificateFromStore =
                     store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false)
                         .OfType<X509Certificate2>()
@@ -159,17 +102,18 @@ namespace Calamari.Integration.Certificates
                 {
                     var message = new StringBuilder();
                     message.AppendFormat("The X509 certificate {0} was loaded but the private key was not loaded.", certificate.Subject).AppendLine();
+                    var logAsWarning = false;
 
                     try
                     {
                         var privateKeyPath = CryptUtils.GetKeyFilePath(certificate);
-                        message.AppendLine("The private key file should be located at: " + privateKeyPath);
+                        message.AppendLine($"The private key file should be located at {privateKeyPath}");
                         if (!File.Exists(privateKeyPath))
                         {
                             message.AppendLine("However, the current user does not appear to be able to access the private key file, or it does not exist.");
                         }
 
-                        message.AppendLine("Attempting to grant the user " + Environment.UserDomainName + "\\" + Environment.UserName + " access to the certificate private key directory.");
+                        message.AppendLine($"Attempting to grant the user {Environment.UserDomainName}\\{Environment.UserName} access to the certificate private key directory.");
 
                         try
                         {
@@ -179,15 +123,26 @@ namespace Calamari.Integration.Certificates
                         }
                         catch (Exception ex)
                         {
-                            message.AppendLine("Unable to grant the current user read access to the private key: " + ex.Message);
+                            logAsWarning = true;
+                            message.AppendLine($"Unable to grant the current user read access to the private key: {ex.Message}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        message.AppendLine("Furthermore, the private key file could not be located: " + ex.Message);
+                        logAsWarning = true;
+                        message.AppendLine($"Furthermore, the private key file could not be located: {ex.Message}");
                     }
 
-                    Log.Warn(message.ToString().Trim());
+                    var logMessage = message.ToString().Trim();
+
+                    if (logAsWarning)
+                    {
+                        Log.Warn(logMessage);
+                    }
+                    else
+                    {
+                        Log.Info(logMessage);
+                    }
 
                     return false;
                 }
