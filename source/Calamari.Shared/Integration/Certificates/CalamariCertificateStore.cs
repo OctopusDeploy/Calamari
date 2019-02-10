@@ -254,9 +254,10 @@ namespace Calamari.Integration.Certificates
                         }
                     }
                 }
+                
                 if (text == null)
                 {
-                    throw new InvalidOperationException("Unable to obtain private key file name");
+                    throw new InvalidOperationException($"Unable to obtain private key file name, error code: {Marshal.GetLastWin32Error()}");
                 }
                 return text;
             }
