@@ -750,12 +750,17 @@ if ($deployAsWebSite)
 	}
 
 	if($startWebSite -eq $true) {
+		if ($wsbindings.Count -eq 0) {
+			Write-Warning "The deployment has been configured to start the web site $webSiteName but no bindings are enabled."
+		}
 		# Start Website
 		Execute-WithRetry { 
 			$state = Get-WebsiteState $webSiteName
 			if ($state.Value -eq "Stopped") {
 				Write-Host "Web site is stopped. Attempting to start..."
 				Start-Website $webSiteName
+			} elseif ($state -eq "Undefined") {
+				Write-Warning "Unable to retrieve the state of the web site $webSiteName. The web site will not be started. This is commonly caused by an invalid web site configuration."
 			}
 		} -noLock $true
 	}
