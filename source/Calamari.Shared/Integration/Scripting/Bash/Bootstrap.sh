@@ -55,14 +55,13 @@ function get_octopusvariable
 
 #	---------------------------------------------------------------------------
 # Function for failing a step with an optional message
-#   Accepts 2 arguments:
-#     string: value of the name of the octopus variable
-#     string: value of the value of the octopus variable
+#   Accepts 1 argument:
+#     string: reason for failing
 #	---------------------------------------------------------------------------
 function fail_step
 {
 
-	if [ -n "$1" ]
+	if [ ! -z "${1:-}" ]
 	then
 		echo "##octopus[resultMessage message='$(encode_servicemessagevalue "$1")']"
 	fi
@@ -72,9 +71,10 @@ function fail_step
 
 #	---------------------------------------------------------------------------
 # Function for setting an octopus variable
-#   Accepts 2 arguments:
+#   Accepts 3 arguments:
 #     string: value of the name of the octopus variable
 #     string: value of the value of the octopus variable
+#     string: optional '-sensitive' to make variable sensitive
 #	---------------------------------------------------------------------------
 function set_octopusvariable
 {
@@ -90,7 +90,7 @@ function set_octopusvariable
 		MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
 	fi
 	
-	if [ "$3" = "-sensitive" ]
+	if [ ! -z "${3:-}" ] && [ "$3" = "-sensitive" ]
 	then
 		MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
 	fi
