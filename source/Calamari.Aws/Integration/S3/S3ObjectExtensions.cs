@@ -14,6 +14,17 @@ namespace Calamari.Aws.Integration.S3
 {
     public static class S3ObjectExtensions
     {
+        private static readonly HashSet<string> SupportedSpecialHeaders = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "Cache-Control",
+            "Content-Disposition",
+            "Content-Encoding",
+            "Expect",
+            "Expires",
+            "x-amz-website​-redirect-location",
+            "x-amz-object-lock-mode",
+        };
+
         public static List<Tag> ToTagSet(this IEnumerable<KeyValuePair<string, string>> source)
         {
             return source?.Select(x => new Tag {Key = x.Key.Trim(), Value = x.Value?.Trim()}).ToList() ?? new List<Tag>();
@@ -25,7 +36,15 @@ namespace Calamari.Aws.Integration.S3
             {
                 foreach (var item in source)
                 {
-                    x.Metadata.Add(item.Key.Trim(), item.Value?.Trim());
+                    var key = item.Key.Trim();
+                    if (!SupportedSpecialHeaders.Contains(key))
+                    {
+                        x.Metadata.Add(key, item.Value?.Trim());
+                    }
+                    else
+                    {
+                        x.Headers[key] = item.Value?.Trim();
+                    }
                 }
             });
         }
