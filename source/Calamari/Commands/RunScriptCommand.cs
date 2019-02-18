@@ -25,14 +25,14 @@ namespace Calamari.Commands
     [Command("run-script", Description = "Invokes a script")]
     public class RunScriptCommand : Command
     {
-        private static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
-        private string scriptFileArg;
-        private string packageFile;
-        private string scriptParametersArg;
-        private readonly IDeploymentJournalWriter deploymentJournalWriter;
-        private readonly CalamariVariableDictionary variables;
-        private readonly CombinedScriptEngine scriptEngine;
-        private IFileSubstituter fileSubstituter; 
+        static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
+        string scriptFileArg;
+        string packageFile;
+        string scriptParametersArg;
+        readonly IDeploymentJournalWriter deploymentJournalWriter;
+        readonly CalamariVariableDictionary variables;
+        readonly CombinedScriptEngine scriptEngine;
+        IFileSubstituter fileSubstituter; 
 
         public RunScriptCommand(
             IDeploymentJournalWriter deploymentJournalWriter,
