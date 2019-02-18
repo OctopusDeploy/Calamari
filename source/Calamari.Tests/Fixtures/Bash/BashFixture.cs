@@ -1,10 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Bash
 {
@@ -142,6 +139,17 @@ namespace Calamari.Tests.Fixtures.Bash
             var (output, _) = RunScript("print-encoded-variable.sh");
 
             output.AssertErrorOutput("Bash scripts are not supported on this platform");
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
+        public void ShouldSupportStrictVariableUnset()
+        {
+            var (output, _) = RunScript("strict-mode.sh");
+
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==']");
         }
     }
 }
