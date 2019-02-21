@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -316,7 +317,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 if (!await ShouldUpload(client, request))
                 {
                     Log.Verbose(
-                        $"Object key {request.Key} exists for bucket {request.BucketName} with same content hash. Skipping upload.");
+                        $"Object key {request.Key} exists for bucket {request.BucketName} with same content hash and metadata. Skipping upload.");
                     return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
                 }
 
@@ -365,7 +366,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     return true;
 
                 var metadata = await client.GetObjectMetadataAsync(request.BucketName, request.Key);
-                return !metadata.GetEtag().IsSameAsRequestMd5Digest(request);
+                return !metadata.GetEtag().IsSameAsRequestMd5Digest(request) || !S3ObjectExtensions.MetadataEq(request.ToCombinedMetadata(), metadata.ToCombinedMetadata());
             }
             catch (AmazonServiceException exception)
             {
@@ -377,6 +378,8 @@ namespace Calamari.Aws.Deployment.Conventions
                 throw;
             }
         }
+
+ 
 
 
         /// <summary>
