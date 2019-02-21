@@ -43,23 +43,12 @@ namespace Calamari.Aws.Integration.S3
 
         public static bool MetadataEq(IDictionary<string, string> next, IDictionary<string, string> current)
         {
-            var allKeys = next.Keys.Union(current.Keys).Distinct();
-            var keysInBoth = new List<string>();
-            var missingKeys = new List<string>();
-            
-            foreach (var key in allKeys)
-            {
-                if (next.ContainsKey(key) && current.ContainsKey(key))
-                {
-                    keysInBoth.Add(key);
-                }
-                else
-                {
-                    missingKeys.Add(key);
-                }
-            }
+            var allKeys = next.Keys.Union(current.Keys).Distinct().ToList();
+            var keysInBoth = allKeys.Where(key => next.ContainsKey(key) && current.ContainsKey(key)).ToList();
+            var missingKeys = allKeys.Except(keysInBoth).ToList();
+            var differentValues = keysInBoth.Where(key => string.Compare(next[key], current[key], StringComparison.CurrentCultureIgnoreCase) != 0).ToList();
 
-            return missingKeys.Count == 0 && keysInBoth.All(x => string.Compare(next[x], current[x], StringComparison.CurrentCultureIgnoreCase) == 0);
+            return missingKeys.Count == 0 && differentValues.Count == 0;
         }
 
         public static bool HasSameMetadata(this PutObjectRequest request, GetObjectMetadataResponse response)
