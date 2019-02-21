@@ -1,4 +1,24 @@
 ﻿## --------------------------------------------------------------------------------------
+## Functions
+## --------------------------------------------------------------------------------------
+
+function Start-ServiceInternal($serviceName) {
+	Write-Host "Starting the $serviceName service"
+
+	Execute-WithRetry {
+		Start-Service $psServiceName
+		$service.WaitForStatus('Running', '00:00:30')
+	}
+
+	If ($service.Status -ne 'Running')
+	{
+		Write-Warning "Service $serviceName did not start within 30 seconds"
+	} Else {
+		Write-Host "Service $serviceName running"
+	}
+}
+
+## --------------------------------------------------------------------------------------
 ## Configuration
 ## --------------------------------------------------------------------------------------
 
@@ -18,6 +38,7 @@ $customAccountName = $OctopusParameters["Octopus.Action.WindowsService.CustomAcc
 $customAccountPassword = $OctopusParameters["Octopus.Action.WindowsService.CustomAccountPassword"]
 $dependencies = $OctopusParameters["Octopus.Action.WindowsService.Dependencies"]
 $description = $OctopusParameters["Octopus.Action.WindowsService.Description"]
+$desiredStatus = $OctopusParameters["Octopus.Action.WindowsService.DesiredStatus"]
 
 ## --------------------------------------------------------------------------------------
 ## Run
@@ -92,6 +113,8 @@ else
 $psServiceName = (ConvertTo-PowershellEscapedArgument $serviceName)
 
 $service = Get-Service $psServiceName -ErrorAction SilentlyContinue
+# The default status to apply to a new service
+$status = [System.ServiceProcess.ServiceControllerStatus]::Stopped
 
 if (!$service)
 {
@@ -109,6 +132,9 @@ if (!$service)
 else
 {
 	Write-Host "The $serviceName service already exists, it will be reconfigured."
+
+    # Make a note of the existing status
+    $status = $service.Status
 
 	If ($service.Status -ne 'Stopped')
 	{
@@ -146,34 +172,49 @@ if ($description)
 	}
 }
 
-$wmiServiceName = $serviceName -replace "'", "\'"
-$status = Get-WMIObject win32_service -filter ("name='" + $wmiServiceName + "'") -computer "." | select -expand startMode
+<#
+    Previously the service was only started based on the start mode. This meant that a start mode of "Unchanged" or
+    "Manual" left the service unstarted. This was limiting as an "Unchanged" service would always be left stopped, 
+    even if it was running earlier.
+    
+    Now the status of the service can be specifically defined. If it is defined, we will start the service based
+    on the new setting. If it is not defined, we fall back to the original behaviour which started services based
+    on the start mode.
+#>
+if ($desiredStatus -eq "Stopped" -or $startMode -eq "disabled") {
+    Write-Host "Leaving the $serviceName service stopped"
+} elseif ($desiredStatus -eq "Started") {
+    Start-ServiceInternal $serviceName
+} elseif($desiredStatus -eq "Unchanged") {
+    # Services that were running or starting are started again after the deployment
+    if ($status -eq "Running" -or $status -eq "StartPending") {
+        Start-ServiceInternal $serviceName
+    } else {
+        # There are a lot of other possible states (https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontrollerstatus?view=netframework-4.7.2)
+        # We assume they all mean the service should not be started
+        Write-Host "Leaving the $serviceName service stopped"
+    }
+} else {
+    # This is the fallback for any steps that don't define a desired status (which is every step before the new
+    # desired status option was added). It retains the old behaviour of starting services based on the start mode.
 
-if ($startMode -eq "unchanged")
-{
-	Write-Host "The $serviceName service start mode is set to unchanged, so it won't be started. You will need to start the service manually."
-}
-elseif ($status -eq "Disabled")
-{
-	Write-Host "The $serviceName service is disabled, so it won't be started."
-}
-elseif ($startMode -eq "demand")
-{
-	Write-Host "The $serviceName service is set to 'Manual' start-up, so Octopus won't start it here."
-}
-else
-{
-	Write-Host "Starting the $serviceName service"
-
-	Execute-WithRetry {
-		Start-Service $psServiceName
-		$service.WaitForStatus('Running', '00:00:30')
-	}
-
-	If ($service.Status -ne 'Running')
-	{
-		Write-Warning "Service $serviceName did not start within 30 seconds"
-	} Else {
-		Write-Host "Service $serviceName running"
-	}
+    $wmiServiceName = $serviceName -replace "'", "\'"
+    $currentStartMode = Get-WMIObject win32_service -filter ("name='" + $wmiServiceName + "'") -computer "." | select -expand startMode
+    
+    if ($startMode -eq "unchanged")
+    {
+        Write-Host "The $serviceName service start mode is set to unchanged, so it won't be started. You will need to start the service manually."
+    }
+    elseif ($currentStartMode -eq "Disabled")
+    {
+        Write-Host "The $serviceName service is disabled, so it won't be started."
+    }
+    elseif ($startMode -eq "demand")
+    {
+        Write-Host "The $serviceName service is set to 'Manual' start-up, so Octopus won't start it here."
+    }
+    else
+    {
+        Start-ServiceInternal $serviceName
+    }
 }
