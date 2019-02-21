@@ -44,9 +44,22 @@ namespace Calamari.Aws.Integration.S3
         public static bool MetadataEq(IDictionary<string, string> next, IDictionary<string, string> current)
         {
             var allKeys = next.Keys.Union(current.Keys).Distinct();
-            var (filtered, excluded) = SelectWithExclusions(allKeys, (val) => next.ContainsKey(val) && current.ContainsKey(val));
+            var keysInBoth = new List<string>();
+            var missingKeys = new List<string>();
+            
+            foreach (var key in allKeys)
+            {
+                if (next.ContainsKey(key) && current.ContainsKey(key))
+                {
+                    keysInBoth.Add(key);
+                }
+                else
+                {
+                    missingKeys.Add(key);
+                }
+            }
 
-            return excluded.Count == 0 && filtered.All(x => string.Compare(next[x], current[x], StringComparison.CurrentCultureIgnoreCase) == 0);
+            return missingKeys.Count == 0 && keysInBoth.All(x => string.Compare(next[x], current[x], StringComparison.CurrentCultureIgnoreCase) == 0);
         }
 
         public static IDictionary<string, string> ToDictionary(this MetadataCollection collection)
@@ -79,21 +92,6 @@ namespace Calamari.Aws.Integration.S3
         public static IDictionary<string, string> ToCombinedMetadata(this GetObjectMetadataResponse response)
         {
             return GetCombinedMetadata(response.Headers, response.Metadata);
-        }
-
-        private static (IList<T> filtered, IList<T> excluded) SelectWithExclusions<T>(this IEnumerable<T> values, Func<T, bool> predicate)
-        {
-            return values.Aggregate((new List<T>(), new List<T>()), (prev, current) =>
-            {
-                var (valid, excluded) = prev;
-
-                if (predicate(current))
-                    valid.Add(current);
-                else
-                    excluded.Add(current);
-
-                return prev;
-            });
         }
 
         public static List<Tag> ToTagSet(this IEnumerable<KeyValuePair<string, string>> source)
