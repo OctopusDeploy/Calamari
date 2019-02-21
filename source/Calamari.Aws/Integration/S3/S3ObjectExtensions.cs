@@ -36,6 +36,11 @@ namespace Calamari.Aws.Integration.S3
             return values;
         }
 
+        public static IEnumerable<string> GetKnownSpecialHeaderKeys()
+        {
+            return SupportedSpecialHeaders.Keys;
+        }
+
         public static bool MetadataEq(IDictionary<string, string> next, IDictionary<string, string> current)
         {
             var allKeys = next.Keys.Union(current.Keys).Distinct();
@@ -49,7 +54,7 @@ namespace Calamari.Aws.Integration.S3
             return collection.Keys.ToDictionary(key => key, key => collection[key]);
         }
 
-        private static IDictionary<string, string> GetCombinedMetadata(HeadersCollection headers, MetadataCollection metadata)
+        public static IDictionary<string, string> GetCombinedMetadata(HeadersCollection headers, MetadataCollection metadata)
         {
             var result = new Dictionary<string, string>();
 
