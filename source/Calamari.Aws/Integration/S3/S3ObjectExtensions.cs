@@ -3,20 +3,18 @@
 using System.Linq;
 using Amazon.S3.Model;
 ﻿using System;
- using System.Diagnostics;
- using System.IO;
- using System.Security.Cryptography;
- using System.Text;
- using Calamari.Integration.FileSystem;
+using System.Security.Cryptography;
+using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
- using Tag = Amazon.S3.Model.Tag;
+using Tag = Amazon.S3.Model.Tag;
 
 namespace Calamari.Aws.Integration.S3
 {
     public static class S3ObjectExtensions
     {
+        //Special headers as per AWS docs - https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUT.html
         private static readonly IDictionary<string, Func<HeadersCollection, string>> SupportedSpecialHeaders =
             new Dictionary<string, Func<HeadersCollection, string>>(StringComparer.InvariantCultureIgnoreCase)
                 .WithHeaderFrom("Cache-Control", headers => headers.CacheControl)
@@ -76,21 +74,6 @@ namespace Calamari.Aws.Integration.S3
         public static IDictionary<string, string> ToCombinedMetadata(this GetObjectMetadataResponse response)
         {
             return GetCombinedMetadata(response.Headers, response.Metadata);
-        }
-
-        public static string GetMetadataHash(HeadersCollection collection, IDictionary<string, string> metadata)
-        {
-            var all = string.Join(string.Empty,
-                collection.Keys.Where(SupportedSpecialHeaders.ContainsKey)
-                    .OrderBy(x => x)
-                    .Select(x => $"{x}:{SupportedSpecialHeaders[x](collection)}"),
-                metadata.Keys.OrderBy(x => x)
-                    .Select(x => $"{x}:{metadata[x]}"));
-
-            var stream = new MemoryStream(Encoding.UTF8.GetBytes(all));
-
-            var bytes = HashCalculator.Hash(stream, MD5.Create);
-            return Encoding.UTF8.GetString(bytes);
         }
 
         private static (IList<T> filtered, IList<T> excluded) SelectWithExclusions<T>(this IEnumerable<T> values, Func<T, bool> predicate)
