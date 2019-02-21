@@ -39,6 +39,7 @@ $customAccountPassword = $OctopusParameters["Octopus.Action.WindowsService.Custo
 $dependencies = $OctopusParameters["Octopus.Action.WindowsService.Dependencies"]
 $description = $OctopusParameters["Octopus.Action.WindowsService.Description"]
 $desiredStatus = $OctopusParameters["Octopus.Action.WindowsService.DesiredStatus"]
+$status = $OctopusParameters["Octopus.Action.WindowsService.Status"]
 
 ## --------------------------------------------------------------------------------------
 ## Run
@@ -113,8 +114,6 @@ else
 $psServiceName = (ConvertTo-PowershellEscapedArgument $serviceName)
 
 $service = Get-Service $psServiceName -ErrorAction SilentlyContinue
-# The default status to apply to a new service
-$status = [System.ServiceProcess.ServiceControllerStatus]::Stopped
 
 if (!$service)
 {
@@ -132,9 +131,6 @@ if (!$service)
 else
 {
 	Write-Host "The $serviceName service already exists, it will be reconfigured."
-
-    # Make a note of the existing status
-    $status = $service.Status
 
 	If ($service.Status -ne 'Stopped')
 	{
@@ -185,7 +181,7 @@ if ($desiredStatus -eq "Stopped" -or $startMode -eq "disabled") {
     Write-Host "Leaving the $serviceName service stopped"
 } elseif ($desiredStatus -eq "Started") {
     Start-ServiceInternal $serviceName
-} elseif($desiredStatus -eq "Unchanged") {
+} elseif ($desiredStatus -eq "Unchanged") {
     # Services that were running or starting are started again after the deployment
     if ($status -eq "Running" -or $status -eq "StartPending") {
         Start-ServiceInternal $serviceName

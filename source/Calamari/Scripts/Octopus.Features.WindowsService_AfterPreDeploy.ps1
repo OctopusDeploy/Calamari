@@ -34,11 +34,14 @@ $service = Get-Service $serviceName -ErrorAction SilentlyContinue
 if (!$service)
 {
     Write-Host "The $serviceName service does not exist yet"
+    Set-OctopusVariable -name "Octopus.Action.WindowsService.Status" -value "Stopped"
 }
 else
 {
     Write-Host "The $serviceName service already exists; it will be stopped"
     Write-Host "Stopping the $serviceName service"
+    
+    Set-OctopusVariable -name "Octopus.Action.WindowsService.Status" -value $service.Status
 
 	Execute-WithRetry {
 		Stop-Service $serviceName -Force
