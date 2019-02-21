@@ -365,8 +365,8 @@ namespace Calamari.Aws.Deployment.Conventions
                 if (!md5HashSupported)
                     return true;
 
-                var metadata = await client.GetObjectMetadataAsync(request.BucketName, request.Key);
-                return !metadata.GetEtag().IsSameAsRequestMd5Digest(request) || !S3ObjectExtensions.MetadataEq(request.ToCombinedMetadata(), metadata.ToCombinedMetadata());
+                var metadataResponse = await client.GetObjectMetadataAsync(request.BucketName, request.Key);
+                return !metadataResponse.GetEtag().IsSameAsRequestMd5Digest(request) || !request.HasSameMetadata(metadataResponse);
             }
             catch (AmazonServiceException exception)
             {

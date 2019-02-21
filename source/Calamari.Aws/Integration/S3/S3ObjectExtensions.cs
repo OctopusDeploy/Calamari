@@ -62,6 +62,11 @@ namespace Calamari.Aws.Integration.S3
             return missingKeys.Count == 0 && keysInBoth.All(x => string.Compare(next[x], current[x], StringComparison.CurrentCultureIgnoreCase) == 0);
         }
 
+        public static bool HasSameMetadata(this PutObjectRequest request, GetObjectMetadataResponse response)
+        {
+            return MetadataEq(request.ToCombinedMetadata(), response.ToCombinedMetadata());
+        }
+
         public static IDictionary<string, string> ToDictionary(this MetadataCollection collection)
         {
             return collection.Keys.ToDictionary(key => key, key => collection[key]);
