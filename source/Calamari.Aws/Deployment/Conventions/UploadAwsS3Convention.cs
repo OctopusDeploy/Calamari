@@ -379,9 +379,6 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
- 
-
-
         /// <summary>
         /// The AmazonServiceException can hold additional information that is useful to include in
         /// the log.
