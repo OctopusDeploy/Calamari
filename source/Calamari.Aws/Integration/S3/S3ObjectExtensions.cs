@@ -4,16 +4,90 @@ using System.Linq;
 using Amazon.S3.Model;
 ﻿using System;
 using System.Security.Cryptography;
- using Calamari.Integration.FileSystem;
+using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
- using Tag = Amazon.S3.Model.Tag;
+using Tag = Amazon.S3.Model.Tag;
 
 namespace Calamari.Aws.Integration.S3
 {
     public static class S3ObjectExtensions
     {
+        //Special headers as per AWS docs - https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUT.html
+        private static readonly IDictionary<string, Func<HeadersCollection, string>> SupportedSpecialHeaders =
+            new Dictionary<string, Func<HeadersCollection, string>>(StringComparer.InvariantCultureIgnoreCase)
+                .WithHeaderFrom("Cache-Control", headers => headers.CacheControl)
+                .WithHeaderFrom("Content-Disposition", headers => headers.ContentDisposition)
+                .WithHeaderFrom("Content-Encoding", headers => headers.ContentEncoding)
+                .WithHeaderFrom("Expires")
+                .WithHeaderFrom("x-amz-website​-redirect-location")
+                .WithHeaderFrom("x-amz-object-lock-mode");
+
+        private static T WithHeaderFrom<T>(this T values, string key) where T : IDictionary<string, Func<HeadersCollection, string>>
+        {
+            values.Add(key, (headers) => headers[key]);
+            return values;
+        }
+
+        private static T WithHeaderFrom<T>(this T values, string key, Func<HeadersCollection, string> accessor) where T : IDictionary<string, Func<HeadersCollection, string>>
+        {
+            values.Add(key, accessor);
+            return values;
+        }
+
+        public static IEnumerable<string> GetKnownSpecialHeaderKeys()
+        {
+            return SupportedSpecialHeaders.Keys;
+        }
+
+        public static bool MetadataEq(IDictionary<string, string> next, IDictionary<string, string> current)
+        {
+            var allKeys = next.Keys.Union(current.Keys).Distinct().ToList();
+            var keysInBoth = allKeys.Where(key => next.ContainsKey(key) && current.ContainsKey(key)).ToList();
+            var missingKeys = allKeys.Except(keysInBoth).ToList();
+            var differentValues = keysInBoth.Where(key => string.Compare(next[key], current[key], StringComparison.CurrentCultureIgnoreCase) != 0).ToList();
+
+            return missingKeys.Count == 0 && differentValues.Count == 0;
+        }
+
+        public static bool HasSameMetadata(this PutObjectRequest request, GetObjectMetadataResponse response)
+        {
+            return MetadataEq(request.ToCombinedMetadata(), response.ToCombinedMetadata());
+        }
+
+        public static IDictionary<string, string> ToDictionary(this MetadataCollection collection)
+        {
+            return collection.Keys.ToDictionary(key => key, key => collection[key]);
+        }
+
+        public static IDictionary<string, string> GetCombinedMetadata(HeadersCollection headers, MetadataCollection metadata)
+        {
+            var result = new Dictionary<string, string>();
+
+            foreach (var key in headers.Keys.Where(SupportedSpecialHeaders.ContainsKey))
+            {
+                result.Add(key, SupportedSpecialHeaders[key](headers));
+            }
+
+            foreach (var key in metadata.Keys)
+            {
+                result.Add(key, metadata[key]);
+            }
+
+            return result;
+        }
+
+        public static IDictionary<string, string> ToCombinedMetadata(this PutObjectRequest request)
+        {
+            return GetCombinedMetadata(request.Headers, request.Metadata);
+        }
+
+        public static IDictionary<string, string> ToCombinedMetadata(this GetObjectMetadataResponse response)
+        {
+            return GetCombinedMetadata(response.Headers, response.Metadata);
+        }
+
         public static List<Tag> ToTagSet(this IEnumerable<KeyValuePair<string, string>> source)
         {
             return source?.Select(x => new Tag {Key = x.Key.Trim(), Value = x.Value?.Trim()}).ToList() ?? new List<Tag>();
@@ -25,7 +99,15 @@ namespace Calamari.Aws.Integration.S3
             {
                 foreach (var item in source)
                 {
-                    x.Metadata.Add(item.Key.Trim(), item.Value?.Trim());
+                    var key = item.Key.Trim();
+                    if (!SupportedSpecialHeaders.ContainsKey(key))
+                    {
+                        x.Metadata.Add(key, item.Value?.Trim());
+                    }
+                    else
+                    {
+                        x.Headers[key] = item.Value?.Trim();
+                    }
                 }
             });
         }
