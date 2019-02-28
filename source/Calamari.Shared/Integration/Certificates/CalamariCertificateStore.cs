@@ -49,7 +49,7 @@ namespace Calamari.Integration.Certificates
                 var certificateFromStore =
                     store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false)
                         .OfType<X509Certificate2>()
-                        .FirstOrDefault(CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired);
+                        .FirstOrDefault(cert => CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(cert, false));
                 if (certificateFromStore != null)
                 {
                     Log.Verbose("Certificate was found in store");
@@ -94,7 +94,7 @@ namespace Calamari.Integration.Certificates
                 ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false, password);
         }
 
-        static bool CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(X509Certificate2 certificate)
+        static bool CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(X509Certificate2 certificate, bool log = true)
         {
             try
             {
@@ -102,7 +102,6 @@ namespace Calamari.Integration.Certificates
                 {
                     var message = new StringBuilder();
                     message.AppendFormat("The X509 certificate {0} was loaded but the private key was not loaded.", certificate.Subject).AppendLine();
-                    var logAsWarning = false;
 
                     try
                     {
@@ -123,23 +122,17 @@ namespace Calamari.Integration.Certificates
                         }
                         catch (Exception ex)
                         {
-                            logAsWarning = true;
                             message.AppendLine($"Unable to grant the current user read access to the private key: {ex.Message}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        logAsWarning = true;
                         message.AppendLine($"Furthermore, the private key file could not be located: {ex.Message}");
                     }
 
                     var logMessage = message.ToString().Trim();
 
-                    if (logAsWarning)
-                    {
-                        Log.Warn(logMessage);
-                    }
-                    else
+                    if (log)
                     {
                         Log.Info(logMessage);
                     }
