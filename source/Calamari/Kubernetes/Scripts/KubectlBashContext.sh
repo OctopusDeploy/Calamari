@@ -19,6 +19,14 @@ function check_app_exists {
 		exit 1
 	fi
 }
+function test_aws_authenticator {
+	command -v aws-iam-authenticator > /dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo >&2 "The aws-iam-authenticator executable could not be found on the path. See https://g.octopushq.com/KubernetesAWSTarget for more information."
+		exit 1
+	fi
+}
+
 
 function get_kubectl {
   if [[ -z $Octopus_K8S_KubectlExe ]]; then
@@ -106,6 +114,9 @@ function setup_context {
     echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using $Octopus_K8S_Username"
     kubectl config set-credentials octouser --username=$Octopus_K8S_Username --password=$(get_octopusvariable "Octopus.Account.Password")
   elif [[ "$Octopus_AccountType" == "AmazonWebServicesAccount" ]]; then
+        # Make sure the aws authenticator exists
+        test_aws_authenticator
+        
         # kubectl doesn't yet support exec authentication
 		# https://github.com/kubernetes/kubernetes/issues/64751
 		# so build this manually
