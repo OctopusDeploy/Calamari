@@ -240,7 +240,8 @@ private bool HasAuthenticodeSignature(FilePath fileInfo)
     {
         X509Certificate.CreateFromSignedFile(fileInfo.FullPath);
         return true;
-    } catch
+    }
+    catch
     {
         return false;
     }
