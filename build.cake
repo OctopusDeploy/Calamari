@@ -5,7 +5,8 @@
 
 using Path = System.IO.Path;
 using System.Xml;
-
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -210,20 +211,37 @@ private void SignBinaries(string outputDirectory)
 {
     Information($"Signing binaries in {outputDirectory}");
 
-	var files = GetFiles(outputDirectory + "/Calamari.exe");
-    files.Add(GetFiles(outputDirectory + "/Calamari.dll"));
-
+    // check that any unsigned executables or libraries get signed, to play nice with security scanning tools
+    // refer: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1551655877004400
+    
+     var unsignedExecutablesAndLibraries = 
+         GetFiles(outputDirectory + "/*.exe")
+         .Union(GetFiles(outputDirectory + "/*.dll"))
+         .Where(f => !HasAuthenticodeSignature(f));
 
     var signTool = MakeAbsolute(File("./certificates/signtool.exe"));
     Information($"Using signtool in {signTool}");
 
-	Sign(files, new SignToolSignSettings {
+	Sign(unsignedExecutablesAndLibraries, new SignToolSignSettings {
 			ToolPath = signTool,
             TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
             CertPath = signingCertificatePath,
             Password = signingCertificatePassword
     });
 
+}
+// note: Doesn't check if existing signatures are valid, only that one exists 
+// source: https://blogs.msdn.microsoft.com/windowsmobile/2006/05/17/programmatically-checking-the-authenticode-signature-on-a-file/
+private bool HasAuthenticodeSignature(FilePath fileInfo)
+{
+    try
+    {
+        X509Certificate.CreateFromSignedFile(fileInfo.FullPath);
+        return true;
+    } catch
+    {
+        return false;
+    }
 }
 
 // Returns the runtime identifiers from the project file
