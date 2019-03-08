@@ -213,8 +213,9 @@ private void SignBinaries(string outputDirectory)
 
     // check that any unsigned libraries get signed, to play nice with security scanning tools
     // refer: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1551655877004400
-    // note: "we are signing dll's we have written (& some we don't own),
-    // but we are asserting that they are distributed by us, and are not altered after this step
+    // note: we are signing both dll's we have written & some we haven't, not because we are
+    //       claiming we own them, but rather asserting that they are distributed by us, and
+    //       have not been subsequently altered
     
      var unsignedExecutablesAndLibraries = 
          GetFiles(outputDirectory + "/*.exe")
