@@ -234,11 +234,11 @@ private void SignBinaries(string outputDirectory)
 }
 // note: Doesn't check if existing signatures are valid, only that one exists 
 // source: https://blogs.msdn.microsoft.com/windowsmobile/2006/05/17/programmatically-checking-the-authenticode-signature-on-a-file/
-private bool HasAuthenticodeSignature(FilePath fileInfo)
+private bool HasAuthenticodeSignature(FilePath filePath)
 {
     try
     {
-        X509Certificate.CreateFromSignedFile(fileInfo.FullPath);
+        X509Certificate.CreateFromSignedFile(filePath.FullPath);
         return true;
     }
     catch
