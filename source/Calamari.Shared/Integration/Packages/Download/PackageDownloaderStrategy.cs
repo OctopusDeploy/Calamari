@@ -47,7 +47,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new GitHubPackageDownloader();
                     break;
                 case FeedType.Helm :
-                    downloader = new HelmChartPackageDownloader(engine, fileSystem, commandLineRunner);
+                    downloader = new HelmChartPackageDownloader(fileSystem);
                     break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");

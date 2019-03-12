@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Reflection;
-using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
@@ -16,15 +11,11 @@ namespace Calamari.Integration.Packages.Download
     {
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string Extension = ".tgz";
-        private readonly IScriptEngine scriptEngine;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly ICommandLineRunner commandLineRunner;
 
-        public HelmChartPackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public HelmChartPackageDownloader(ICalamariFileSystem fileSystem)
         {
-            this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
-            this.commandLineRunner = commandLineRunner;
         }
         
         public PackagePhysicalFileMetadata DownloadPackage(string packageId, IVersion version, string feedId, Uri feedUri,
@@ -46,41 +37,85 @@ namespace Calamari.Integration.Packages.Download
             
             return DownloadChart(packageId, version, feedUri, feedCredentials, cacheDirectory);
         }
+        
+        const string TempRepoName = "octopusfeed";
 
         private PackagePhysicalFileMetadata DownloadChart(string packageId, IVersion version, Uri feedUri,
             ICredentials feedCredentials, string cacheDirectory)
         {
             var cred = feedCredentials.GetCredential(feedUri, "basic");
 
-            var syntax = new[] {ScriptSyntax.PowerShell, ScriptSyntax.Bash}.First(syntx =>
-                scriptEngine.GetSupportedTypes().Contains(syntx));
-
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             using (new TemporaryDirectory(tempDirectory))
             {
-                var file = GetFetchScript(tempDirectory, syntax);
-                var result = scriptEngine.Execute(new Script(file), new CalamariVariableDictionary()
-                    {
-                        ["Password"] = cred.Password,
-                        ["Username"] = cred.UserName,
-                        ["Version"] = version.OriginalString,
-                        ["Url"] = feedUri.ToString(),
-                        ["Package"] = packageId,
-                    }, commandLineRunner,
-                    new Dictionary<string, string>());
-                if (!result.HasErrors)
+                
+                var homeDir = Path.Combine(tempDirectory, "helm");
+                if (!Directory.Exists(homeDir))
                 {
-                    var localDownloadName =
-                        Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
-
-                    var packageFile = fileSystem.EnumerateFiles(Path.Combine(tempDirectory, "staging")).First();
-                    fileSystem.MoveFile(packageFile, localDownloadName);
-                    return PackagePhysicalFileMetadata.Build(localDownloadName);
+                    Directory.CreateDirectory(homeDir);
                 }
-                else
+                var stagingDir = Path.Combine(tempDirectory, "staging");
+                if (!Directory.Exists(stagingDir))
                 {
-                    throw new Exception("Unable to download chart");
+                    Directory.CreateDirectory(stagingDir);
+                }
+
+                var log = new LogWrapper();
+                Invoke( $"init --home \"{homeDir}\" --client-only", tempDirectory, log);
+                Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {feedUri.ToString()}", tempDirectory, log);
+                Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}", tempDirectory, log);
+                
+                var localDownloadName =
+                    Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
+
+                fileSystem.MoveFile(Directory.GetFiles(stagingDir)[0], localDownloadName);
+                return PackagePhysicalFileMetadata.Build(localDownloadName);
+            }
+        }
+        
+        
+        public void Invoke(string args, string dir, ILog log)
+        {
+            var info = new ProcessStartInfo("helm", args)
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = dir,
+                CreateNoWindow = true
+            };
+
+            var sw = Stopwatch.StartNew();
+            var timeout = TimeSpan.FromSeconds(30);
+            using (var server = Process.Start(info))
+            {
+                while (!server.WaitForExit(10000) && sw.Elapsed < timeout)
+                {
+                    log.Warn($"Still waiting for {info.FileName} {info.Arguments} [PID:{server.Id}] to exit after waiting {sw.Elapsed}...");
+                }
+
+                var stdout = server.StandardOutput.ReadToEnd();
+                if (!string.IsNullOrWhiteSpace(stdout))
+                {
+                    log.Verbose(stdout);
+                }
+
+                var stderr = server.StandardError.ReadToEnd();
+                if (!string.IsNullOrWhiteSpace(stderr))
+                {
+                    log.Error(stderr);
+                }
+
+                if (!server.HasExited)
+                {
+                    server.Kill();
+                    throw new InvalidOperationException($"Helm failed to download the chart in an appropriate period of time ({timeout.TotalSeconds} sec). Please try again or check your connection.");
+                }
+
+                if (server.ExitCode != 0)
+                {
+                    throw new InvalidOperationException($"Helm failed to download the chart (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
                 }
             }
         }
@@ -104,29 +139,6 @@ namespace Calamari.Integration.Packages.Download
             }
 
             return null;
-        }
-        
-        
-        string GetFetchScript(string workingDirectory, ScriptSyntax syntax)
-        {
-            AssemblyEmbeddedResources embeddedResources = new AssemblyEmbeddedResources();
-            string contextFile;
-            switch (syntax)
-            {
-                case ScriptSyntax.Bash:
-                    contextFile = "helmFetch.sh";
-                    break;
-                case ScriptSyntax.PowerShell:
-                    contextFile = "HelmFetch.ps1";
-                    break;
-                default:
-                    throw new InvalidOperationException("No kubernetes context wrapper exists for "+ syntax);
-            }
-            
-            var k8sContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
-            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Integration.Packages.Download.Scripts.{contextFile}");
-            fileSystem.OverwriteFile(k8sContextScriptFile, contextScript);
-            return k8sContextScriptFile;
         }
     }
 }
