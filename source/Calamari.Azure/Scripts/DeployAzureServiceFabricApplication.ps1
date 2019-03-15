@@ -178,8 +178,8 @@ else
     }
     
     #If type exists and the versions matches only create the application
-    $TypeExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
-    if ($TypeExists) {
+    $TypeAndVersionExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion -and $_.ApplicationName -ne $AppName }) -ne $null
+    if ($TypeAndVersionExists) {
         $Action = "Create"
     }
 
