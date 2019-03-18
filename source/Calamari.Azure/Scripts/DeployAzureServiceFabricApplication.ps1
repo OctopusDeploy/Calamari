@@ -124,74 +124,32 @@ $manifestXml = [Xml] (Get-Content $ManifestFilePath)
 $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
 $AppTypeVersion = $manifestXml.ApplicationManifest.ApplicationTypeVersion
 $AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.ApplicationParameterFile
-$AppExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
+$AppTypeAndNameExists =  (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
+$AppTypeAndNameAndVersionExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion}) -ne $null
+$TypeAndVersionExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
+$requiresRegister = $false
 
-if ($IsUpgrade -and $AppExists)
-{
-    $Action = "RegisterAndUpgrade"
-    if ($DeployOnly) {
-        $Action = "Register"
-    }
+Write-Verbose "App Type Name And Version Exists: $TypeAndVersionExists"
+Write-Verbose "Application Type and Name Exists: $AppTypeAndNameExists"
+Write-Verbose "Application Type and Name and Version Exists: $AppTypeAndNameAndVersionExists"
 
-    $parameters = @{
-        ApplicationPackagePath =  $ApplicationPackagePath
-        ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
-        Action = $Action
-        UnregisterUnusedVersions = $UnregisterUnusedApplicationVersionsAfterUpgrade
-        ApplicationParameter = $ApplicationParameter
-        SkipPackageValidation = $SkipPackageValidation
-    }
+Write-Verbose "Application Type Name: $AppTypeName"
+Write-Verbose "Application Type Version: $AppTypeVersion"
+Write-Verbose "Application Name: $AppName"
+Write-Verbose "Is Upgrade: $IsUpgrade"
+Write-Verbose "Found Application: '$AppTypeName' with version '$AppTypeVersion'"
 
-    $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
-
-    if ($OverrideUpgradeBehavior -eq 'ForceUpgrade') {
-        # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
-        $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
-    }
-        
-    if ($CopyPackageTimeoutSec) {
-        $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
-    }
-
-    if ($RegisterApplicationTypeTimeoutSec) {
-        Get-Help Publish-UpgradedServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
-        if (!$timeoutParamMissing) {
-            $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
-        } else {
-            Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
-        }
-    }
-
-    Write-Verbose "Calling Publish-UpgradedServiceFabricApplication"
-    Write-Verbose "Parameters: "
-    Write-Verbose $($parameters | Out-String)
-    Write-Verbose "Upgrade parameters: "
-    Write-Verbose $($UpgradeParameters | Out-String)
-
-    Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
+$parameters = @{
+    ApplicationPackagePath =  $ApplicationPackagePath
+    ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
+    ApplicationParameter = $ApplicationParameter
+    SkipPackageValidation = $SkipPackageValidation
 }
-else
-{
-    $Action = "RegisterAndCreate"
-    if ($DeployOnly) {
-        $Action = "Register"
-    }
-    
-    #If type exists and the versions matches only create the application
-    $TypeAndVersionExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion -and $_.ApplicationName -ne $AppName }) -ne $null
-    if ($TypeAndVersionExists) {
-        $Action = "Create"
-    }
 
-    $parameters = @{
-        ApplicationPackagePath =  $ApplicationPackagePath
-        ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
-        Action = $Action
-        ApplicationParameter = $ApplicationParameter
-        OverwriteBehavior = $OverwriteBehavior
-        SkipPackageValidation = $SkipPackageValidation
-    }
+Write-Verbose "Parameters: "
+Write-Verbose $($parameters | Out-String)
 
+if (-not $TypeAndVersionExists) {
     if ($CopyPackageTimeoutSec) {
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
@@ -205,9 +163,40 @@ else
         }
     }
 
-    Write-Verbose "Calling Publish-NewServiceFabricApplication"
-    Write-Verbose "Parameters: "
-    Write-Verbose $($parameters | Out-String)
+    #Write-Host "Performing '$($parameters.Action)' action"
+    #Publish-UpgradeServiceFabricApplication @parameters -ErrorAction Stop
+    $requiresRegister = $true
+}
 
+if ($AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists )
+{
+    if($requiresRegister){
+        $parameters.Action = "RegisterAndUpgrade"
+    }else {
+        $parameters.Action = "Upgrade"
+    }
+    
+    $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
+    
+    if ($UpgradeParameters -eq $null){
+        $UpgradeParameters = @{ UnmonitoredAuto = $true }
+    }
+
+    if ($OverrideUpgradeBehavior -eq 'ForceUpgrade') {
+        # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
+        $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
+    }
+    
+    Write-Host "Performing '$($parameters.Action)' action"
+    Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
+}else {
+    if ($requiresRegister -or $AppTypeAndNameAndVersionExists) {
+        $parameters.Action = "RegisterAndCreate"
+    }else {
+        $parameters.Action = "Create"
+    }
+   
+    $parameters.OverwriteBehavior = $OverwriteBehavior
+    Write-Host "Performing '$($parameters.Action)' action"
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
 }
