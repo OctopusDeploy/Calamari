@@ -114,8 +114,6 @@ $ModuleFolderPath = (Get-ItemProperty -Path $RegKey -Name FabricSDKPSModulePath)
 Write-Verbose "Importing ServiceFabricSDK modules from $($ModuleFolderPath)"
 Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
 
-$IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
-
 # check if this application exists or not
 $ManifestFilePath = "$ApplicationPackagePath\ApplicationManifest.xml"
 $manifestXml = [Xml] (Get-Content $ManifestFilePath)
@@ -125,23 +123,23 @@ $AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.Appli
 $AppTypeAndNameExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName })
 $AppTypeAndNameAndVersionExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion})
 $AppTypeAndVersionExists = $null -ne (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object { $_.ApplicationTypeVersion -eq $AppTypeVersion })
+$ForceUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and -not  $OverrideUpgradeBehavior -eq 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
 $requiresRegister = $false
 
 Write-Verbose "App Type Name And Version Exists: $AppTypeAndVersionExists"
 Write-Verbose "Application Type and Name Exists: $AppTypeAndNameExists"
 Write-Verbose "Application Type and Name and Version Exists: $AppTypeAndNameAndVersionExists"
-
 Write-Verbose "Application Type Name: $AppTypeName"
 Write-Verbose "Application Type Version: $AppTypeVersion"
 Write-Verbose "Application Name: $AppName"
-Write-Verbose "Is Upgrade: $IsUpgrade"
+Write-Verbose "Force Upgrade based on Override upgrade behavior '$OverrideUpgradeBehavior': $ForceUpgrade"
 Write-Verbose "Found Application: '$AppTypeName' with version '$AppTypeVersion'"
 
 $parameters = @{
     ApplicationPackagePath       = $ApplicationPackagePath
     ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
     ApplicationParameter         = $ApplicationParameter
-    SkipPackageValidation        = $SkipPackageValidation
+    ErrorAction                  = 'Stop'
 }
 
 Write-Verbose "Parameters: "
@@ -165,8 +163,11 @@ if (-not $AppTypeAndVersionExists) {
     $requiresRegister = $true
 }
 
-if ($AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists) {
-    if ($requiresRegister) {
+if ($AppTypeAndNameExists -and (-not $AppTypeAndNameAndVersionExists) -or $ForceUpgrade) {
+    if ($DeployOnly) {
+        $parameters.Action = "Register"
+    }
+    elseif ($requiresRegister) {
         $parameters.Action = "RegisterAndUpgrade"
     }
     else {
@@ -184,11 +185,17 @@ if ($AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists) {
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
 
+    $parameters.UnregisterUnusedVersions = $UnregisterUnusedApplicationVersionsAfterUpgrade
+    $parameters.UpgradeParameters = $UpgradeParameters
+
     Write-Host "Performing '$($parameters.Action)' action"
-    Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
+    Publish-UpgradedServiceFabricApplication @parameters
 }
 else {
-    if ($requiresRegister -or $AppTypeAndNameAndVersionExists) {
+    if ($DeployOnly) {
+        $parameters.Action = "Register"
+    }
+    elseif ($requiresRegister -or $AppTypeAndNameAndVersionExists) {
         $parameters.Action = "RegisterAndCreate"
     }
     else {
@@ -196,6 +203,8 @@ else {
     }
 
     $parameters.OverwriteBehavior = $OverwriteBehavior
+    $parameters.SkipPackageValidation = $SkipPackageValidation
+
     Write-Host "Performing '$($parameters.Action)' action"
-    Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
+    Publish-NewServiceFabricApplication @parameters
 }
