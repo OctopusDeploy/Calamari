@@ -126,10 +126,10 @@ $AppTypeVersion = $manifestXml.ApplicationManifest.ApplicationTypeVersion
 $AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.ApplicationParameterFile
 $AppTypeAndNameExists =  (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
 $AppTypeAndNameAndVersionExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion}) -ne $null
-$TypeAndVersionExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
+$AppTypeAndVersionExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
 $requiresRegister = $false
 
-Write-Verbose "App Type Name And Version Exists: $TypeAndVersionExists"
+Write-Verbose "App Type Name And Version Exists: $AppTypeAndVersionExists"
 Write-Verbose "Application Type and Name Exists: $AppTypeAndNameExists"
 Write-Verbose "Application Type and Name and Version Exists: $AppTypeAndNameAndVersionExists"
 
@@ -149,7 +149,7 @@ $parameters = @{
 Write-Verbose "Parameters: "
 Write-Verbose $($parameters | Out-String)
 
-if (-not $TypeAndVersionExists) {
+if (-not $AppTypeAndVersionExists) {
     if ($CopyPackageTimeoutSec) {
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
     }
@@ -162,9 +162,7 @@ if (-not $TypeAndVersionExists) {
             Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
         }
     }
-
-    #Write-Host "Performing '$($parameters.Action)' action"
-    #Publish-UpgradeServiceFabricApplication @parameters -ErrorAction Stop
+    
     $requiresRegister = $true
 }
 
