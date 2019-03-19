@@ -1,18 +1,18 @@
 ## Octopus Azure Service Fabric Application script, version 1.0
 ## --------------------------------------------------------------------------------------
 ##
-## This script is used to control how we deploy packages to Azure Service Fabric applications to a cluster. 
+## This script is used to control how we deploy packages to Azure Service Fabric applications to a cluster.
 ##
 ## This is a modified version of the Visual Studio's Service Fabric 'Deploy-FabricApplication.ps1' file. This
 ## version includes automatic support for 'fresh install vs upgrade' scenarios. Thx to Colin Dembovsky at
-## http://colinsalmcorner.com/post/continuous-deployment-of-service-fabric-apps-using-vsts-or-tfs for posting 
+## http://colinsalmcorner.com/post/continuous-deployment-of-service-fabric-apps-using-vsts-or-tfs for posting
 ## about this.
 ##
 ## If you want to customize the Azure deployment process, simply copy this script into
-## your deployment package as DeployToServiceFabric.ps1. Octopus will invoke it instead of the default 
-## script. 
+## your deployment package as DeployToServiceFabric.ps1. Octopus will invoke it instead of the default
+## script.
 ##
-## The script will be passed the following parameters in addition to the normal Octopus 
+## The script will be passed the following parameters in addition to the normal Octopus
 ## variables passed to any PowerShell script.
 ##
 ##   PublishProfileFile                               // Path to the file containing the publish profile.
@@ -27,16 +27,16 @@
 ##   SecurityToken                                    // A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
 ##   CopyPackageTimeoutSec                            // Timeout in seconds for copying application package to image store.
 ##   RegisterApplicationTypeTimeoutSec                // Timeout in seconds for registering application type
-##   
+##
 ## --------------------------------------------------------------------------------------
 ##   Examples:
 ##
 ##   Deploy the application using the default package location for a Debug build.
 ##   . Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug'
-##   
+##
 ##   Deploy the application but do not create the application instance.
 ##   . Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -DoNotCreateApplication
-##   
+##
 ##   Deploy the application by providing values for parameters that are defined in the application manifest.
 ##   . Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -ApplicationParameter @{CustomParameter1='MyValue'; CustomParameter2='MyValue'}
 ## --------------------------------------------------------------------------------------
@@ -50,8 +50,7 @@ $SkipPackageValidation = [System.Convert]::ToBoolean($SkipPackageValidation)
 $CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
 $RegisterApplicationTypeTimeoutSec = [System.Convert]::ToInt32($RegisterApplicationTypeTimeoutSec)
 
-function Read-XmlElementAsHashtable
-{
+function Read-XmlElementAsHashtable {
     Param (
         [System.Xml.XmlElement]
         $Element
@@ -59,25 +58,24 @@ function Read-XmlElementAsHashtable
 
     $hashtable = @{}
     if ($Element.Attributes) {
-        $Element.Attributes | 
+        $Element.Attributes |
             ForEach-Object {
-                $boolVal = $null
-                if ([bool]::TryParse($_.Value, [ref]$boolVal)) {
-                    $hashtable[$_.Name] = $boolVal
-                }
-                else {
-                    $hashtable[$_.Name] = $_.Value
-                }
+            $boolVal = $null
+            if ([bool]::TryParse($_.Value, [ref]$boolVal)) {
+                $hashtable[$_.Name] = $boolVal
             }
+            else {
+                $hashtable[$_.Name] = $_.Value
+            }
+        }
     }
 
     return $hashtable
 }
 
-function Read-PublishProfile
-{
+function Read-PublishProfile {
     Param (
-        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [ValidateScript( {Test-Path $_ -PathType Leaf})]
         [String]
         $PublishProfileFile
     )
@@ -124,9 +122,9 @@ $manifestXml = [Xml] (Get-Content $ManifestFilePath)
 $AppTypeName = $manifestXml.ApplicationManifest.ApplicationTypeName
 $AppTypeVersion = $manifestXml.ApplicationManifest.ApplicationTypeVersion
 $AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.ApplicationParameterFile
-$AppTypeAndNameExists =  (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName }) -ne $null
-$AppTypeAndNameAndVersionExists = (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion}) -ne $null
-$AppTypeAndVersionExists = (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object  { $_.ApplicationTypeVersion -eq $AppTypeVersion }) -ne $null
+$AppTypeAndNameExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName })
+$AppTypeAndNameAndVersionExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion})
+$AppTypeAndVersionExists = $null -ne (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object { $_.ApplicationTypeVersion -eq $AppTypeVersion })
 $requiresRegister = $false
 
 Write-Verbose "App Type Name And Version Exists: $AppTypeAndVersionExists"
@@ -140,10 +138,10 @@ Write-Verbose "Is Upgrade: $IsUpgrade"
 Write-Verbose "Found Application: '$AppTypeName' with version '$AppTypeVersion'"
 
 $parameters = @{
-    ApplicationPackagePath =  $ApplicationPackagePath
+    ApplicationPackagePath       = $ApplicationPackagePath
     ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
-    ApplicationParameter = $ApplicationParameter
-    SkipPackageValidation = $SkipPackageValidation
+    ApplicationParameter         = $ApplicationParameter
+    SkipPackageValidation        = $SkipPackageValidation
 }
 
 Write-Verbose "Parameters: "
@@ -158,25 +156,26 @@ if (-not $AppTypeAndVersionExists) {
         Get-Help Publish-NewServiceFabricApplication -Parameter RegisterApplicationTypeTimeoutSec -ErrorVariable timeoutParamMissing -ErrorAction SilentlyContinue | Out-Null
         if (!$timeoutParamMissing) {
             $parameters.RegisterApplicationTypeTimeoutSec = $RegisterApplicationTypeTimeoutSec
-        } else {
+        }
+        else {
             Write-Warning "A value was supplied for RegisterApplicationTypeTimeoutSec but the current Service Fabric SDK doesn't support it."
         }
     }
-    
+
     $requiresRegister = $true
 }
 
-if ($AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists )
-{
-    if($requiresRegister){
+if ($AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists) {
+    if ($requiresRegister) {
         $parameters.Action = "RegisterAndUpgrade"
-    }else {
+    }
+    else {
         $parameters.Action = "Upgrade"
     }
-    
+
     $UpgradeParameters = $publishProfile.UpgradeDeployment.Parameters
-    
-    if ($UpgradeParameters -eq $null){
+
+    if ($null -eq $UpgradeParameters) {
         $UpgradeParameters = @{ UnmonitoredAuto = $true }
     }
 
@@ -184,16 +183,18 @@ if ($AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists )
         # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
-    
+
     Write-Host "Performing '$($parameters.Action)' action"
     Publish-UpgradedServiceFabricApplication @parameters -UpgradeParameters $UpgradeParameters -ErrorAction Stop
-}else {
+}
+else {
     if ($requiresRegister -or $AppTypeAndNameAndVersionExists) {
         $parameters.Action = "RegisterAndCreate"
-    }else {
+    }
+    else {
         $parameters.Action = "Create"
     }
-   
+
     $parameters.OverwriteBehavior = $OverwriteBehavior
     Write-Host "Performing '$($parameters.Action)' action"
     Publish-NewServiceFabricApplication @parameters -ErrorAction Stop
