@@ -45,7 +45,6 @@
 # Parse our Octopus string output variables into valid types (for the calls to Azure PowerShell cmdlets).
 $DeployOnly = [System.Convert]::ToBoolean($DeployOnly)
 $UnregisterUnusedApplicationVersionsAfterUpgrade = [System.Convert]::ToBoolean($UnregisterUnusedApplicationVersionsAfterUpgrade)
-$UseExistingClusterConnection = [System.Convert]::ToBoolean($UseExistingClusterConnection)
 $SkipPackageValidation = [System.Convert]::ToBoolean($SkipPackageValidation)
 $CopyPackageTimeoutSec = [System.Convert]::ToInt32($CopyPackageTimeoutSec)
 $RegisterApplicationTypeTimeoutSec = [System.Convert]::ToInt32($RegisterApplicationTypeTimeoutSec)
