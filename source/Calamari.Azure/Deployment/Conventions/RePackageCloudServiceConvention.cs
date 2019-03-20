@@ -146,7 +146,7 @@ namespace Calamari.Azure.Deployment.Conventions
                     fileStream.CopyTo(partStream);
                     partStream.Flush();
                     fileStream.Position = 0;
-                    var hashAlgorithm = SHA256.Create();
+                    var hashAlgorithm = SHA256.Create("SHA256");
                     hashAlgorithm.ComputeHash(fileStream);
                     manifest.Contents.Add(new ContentDefinition
                     {
