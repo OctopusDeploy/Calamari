@@ -61,6 +61,7 @@ using Calamari.Integration.Scripting;
             sb.Append($" upgrade --install");
             SetNamespaceParameter(deployment, sb);
             SetResetValuesParameter(deployment, sb);
+            SetRecreatePodsParameter(deployment, sb);
             SetTillerTimeoutParameter(deployment, sb);
             SetTillerNamespaceParameter(deployment, sb);
             SetTimeoutParameter(deployment, sb);
@@ -120,6 +121,14 @@ using Calamari.Integration.Scripting;
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
             {
                 sb.Append(" --reset-values");
+            }
+        }
+
+        private static void SetRecreatePodsParameter(RunningDeployment deployment, StringBuilder sb)
+        {
+            if (deployment.Variables.GetFlag(SpecialVariables.Helm.RecreatePods, true))
+            {
+                sb.Append(" --recreate-pods");
             }
         }
 
