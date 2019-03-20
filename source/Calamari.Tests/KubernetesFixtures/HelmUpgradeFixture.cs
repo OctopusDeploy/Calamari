@@ -276,14 +276,22 @@ namespace Calamari.Tests.KubernetesFixtures
         public void AdditionalArgumentsPassed()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
+            AddPostDeployMessageCheckAndCleanup(explicitNamespace: null, dryRun: true);
 
             var result = DeployPackage();
             result.AssertSuccess();
             result.AssertOutputMatches("helm upgrade (.*) --dry-run");
         }
 
-        void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null)
+        void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false)
         {
+            if (dryRun)
+            {
+                // If it's a dry-run we can't fetch the ConfigMap and there's nothing to clean-up
+                Variables.Set(SpecialVariables.Package.EnabledFeatures, "");
+                return;
+            }
+            
             var @namespace = explicitNamespace ?? Namespace; 
             
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
