@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Security.Cryptography;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Extensions;
@@ -30,6 +31,7 @@ namespace Calamari
 
         static int Main(string[] args)
         {
+            CryptoConfig.AddAlgorithm(typeof(SHA256CryptoServiceProvider), "SHA256");
             EnableAllSecurityProtocols();
             using (var container = BuildContainer(args))
             {
