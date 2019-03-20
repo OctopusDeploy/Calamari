@@ -15,18 +15,18 @@ namespace Calamari.Tests.KubernetesFixtures
     [TestFixture]
     public class HelmUpgradeFixture : CalamariFixture
     {
-        private static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
-        private static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
+        static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
+        static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
 
-        private ICalamariFileSystem FileSystem { get; set; }
-        private VariableDictionary Variables { get; set; }
-        private string StagingDirectory { get; set; }
-        private static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
-        
-        private static readonly string ConfigMapName = "mychart-configmap-" + ReleaseName;
+        ICalamariFileSystem FileSystem { get; set; }
+        VariableDictionary Variables { get; set; }
+        string StagingDirectory { get; set; }
+        static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
 
-        private const string Namespace = "calamari-testing";
-        private const string ChartPackageName = "mychart-0.3.7.tgz";
+        static readonly string ConfigMapName = "mychart-configmap-" + ReleaseName;
+
+        const string Namespace = "calamari-testing";
+        const string ChartPackageName = "mychart-0.3.7.tgz";
 
 
         [SetUp]
@@ -51,7 +51,6 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.NuGetPackageId}}}");
             Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.NuGetPackageVersion}}}");
             
-
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
 
@@ -267,6 +266,20 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMacAttribute]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void AdditionalArgumentsPassed()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            result.AssertOutputMatches("helm upgrade (.*) --dry-run");
         }
 
         void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null)
