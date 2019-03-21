@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Calamari.Kubernetes
+﻿namespace Calamari.Kubernetes
 {
     public static class SpecialVariables
     {
@@ -21,6 +15,7 @@ namespace Calamari.Kubernetes
             public const string KeyValues = "Octopus.Action.Helm.KeyValues";
             public const string YamlValues = "Octopus.Action.Helm.YamlValues";
             public const string ResetValues = "Octopus.Action.Helm.ResetValues";
+            public const string AdditionalArguments = "Octopus.Action.Helm.AdditionalArgs";
             public const string CustomHelmExecutable = "Octopus.Action.Helm.CustomHelmExecutable";
             public const string Timeout = "Octopus.Action.Helm.Timeout";
             public const string TillerNamespace = "Octopus.Action.Helm.TillerNamespace";
