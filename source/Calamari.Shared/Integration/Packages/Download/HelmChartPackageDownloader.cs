@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Octopus.Versioning;
 
@@ -40,7 +41,7 @@ namespace Calamari.Integration.Packages.Download
         
         const string TempRepoName = "octopusfeed";
 
-        private PackagePhysicalFileMetadata DownloadChart(string packageId, IVersion version, Uri feedUri,
+        PackagePhysicalFileMetadata DownloadChart(string packageId, IVersion version, Uri feedUri,
             ICredentials feedCredentials, string cacheDirectory)
         {
             var cred = feedCredentials.GetCredential(feedUri, "basic");
@@ -75,7 +76,7 @@ namespace Calamari.Integration.Packages.Download
         }
         
         
-        public void Invoke(string args, string dir, ILog log)
+        void Invoke(string args, string dir, ILog log)
         {
             var info = new ProcessStartInfo("helm", args)
             {
@@ -110,12 +111,12 @@ namespace Calamari.Integration.Packages.Download
                 if (!server.HasExited)
                 {
                     server.Kill();
-                    throw new InvalidOperationException($"Helm failed to download the chart in an appropriate period of time ({timeout.TotalSeconds} sec). Please try again or check your connection.");
+                    throw new CommandException($"Helm failed to download the chart in an appropriate period of time ({timeout.TotalSeconds} sec). Please try again or check your connection.");
                 }
 
                 if (server.ExitCode != 0)
                 {
-                    throw new InvalidOperationException($"Helm failed to download the chart (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
+                    throw new CommandException($"Helm failed to download the chart (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
                 }
             }
         }
