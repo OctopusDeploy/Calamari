@@ -62,7 +62,7 @@ namespace Calamari.Integration.Packages.Download
                     ["Image"] = fullImageName,
                     ["FeedUri"] = feed
                 }, commandLineRunner, environmentVariables);
-            if (result.HasErrors)
+            if (result.ExitCode != 0)
                 throw new CommandException("Unable to pull Docker image");
         }
 
