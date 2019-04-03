@@ -31,7 +31,12 @@ namespace Calamari
 
         static int Main(string[] args)
         {
-            CryptoConfig.AddAlgorithm(typeof(SHA256CryptoServiceProvider), "SHA256");
+            //sanity checking the builds
+            var cryptoProviderType = typeof(SHA256CryptoServiceProvider);
+            if(cryptoProviderType == null)
+                throw new Exception("SHA256CryptoServiceProvider isn't here");
+                
+            CryptoConfig.AddAlgorithm(cryptoProviderType, "SHA256");
             EnableAllSecurityProtocols();
             using (var container = BuildContainer(args))
             {
