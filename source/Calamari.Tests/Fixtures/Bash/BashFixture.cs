@@ -9,8 +9,8 @@ namespace Calamari.Tests.Fixtures.Bash
     public class BashFixture : CalamariFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        //[Category(TestCategory.CompatibleOS.Nix)]
+        //[Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldPrintEncodedVariable()
         {
             var (output, _) = RunScript("print-encoded-variable.sh");
@@ -20,8 +20,6 @@ namespace Calamari.Tests.Fixtures.Bash
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldPrintSensitiveVariable()
         {
             var (output, _) = RunScript("print-sensitive-variable.sh");

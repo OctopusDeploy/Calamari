@@ -114,7 +114,7 @@ namespace Calamari.Tests.Helpers
 
                 cmdBase = (additionalParameters ?? new Dictionary<string, string>()).Aggregate(cmdBase, (cmd, param) => cmd.Argument(param.Key, param.Value));
 
-                var output = Invoke(cmdBase, variables);
+                var output = InvokeInProcess(cmdBase, variables);
 
                 return (output, variables);
 

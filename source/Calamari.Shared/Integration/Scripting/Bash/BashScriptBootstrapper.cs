@@ -25,7 +25,7 @@ namespace Calamari.Integration.Scripting.Bash
         {
             var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("\"{0}\" \"{1}\"", bootstrapFile, encryptionKey);
+            commandArguments.AppendFormat("\"./{0}\" \"{1}\"", Path.GetFileName(bootstrapFile), encryptionKey);
             return commandArguments.ToString();
         }
         
@@ -34,12 +34,12 @@ namespace Calamari.Integration.Scripting.Bash
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariableSwitchConditions(variables)));
+            builder.Replace("#### VariableDeclarations ####", string.Join("\n", GetVariableSwitchConditions(variables)));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
             {
-                writer.Write(builder.Replace(WindowsNewLine, Environment.NewLine));
+                writer.Write(builder.Replace(WindowsNewLine, "\n"));
                 writer.Flush();
             }
 
@@ -55,7 +55,7 @@ namespace Calamari.Integration.Scripting.Bash
                     ? DecryptValueCommand(variables.Get(variable))
                     : string.Format("decode_servicemessagevalue \"{0}\"", EncodeValue(variables.Get(variable)));
 
-                return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable), variableValue);
+                return string.Format("    \"{1}\"){0}   {2}   ;;{0}", "\n", EncodeValue(variable), variableValue);
             });
         }
 
@@ -88,7 +88,7 @@ namespace Calamari.Integration.Scripting.Bash
         static void EnsureValidUnixFile(string scriptFilePath)
         {
             var text = File.ReadAllText(scriptFilePath);
-            text = text.Replace(WindowsNewLine, Environment.NewLine);
+            text = text.Replace(WindowsNewLine, "\n");
             File.WriteAllText(scriptFilePath, text);
         }
 
@@ -99,10 +99,10 @@ namespace Calamari.Integration.Scripting.Bash
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
             {
-                writer.NewLine = Environment.NewLine;
+                writer.NewLine = "\n";
                 writer.WriteLine("#!/bin/bash");
-                writer.WriteLine("source \"" + configurationFile.Replace("\\", "\\\\") + "\"");
-                writer.WriteLine("source \"" + script.File.Replace("\\", "\\\\") + "\" " + script.Parameters);
+                writer.WriteLine("source \"./" + Path.GetFileName(configurationFile) + "\" ");
+                writer.WriteLine("source \"./" + Path.GetFileName(script.File) + "\" " + script.Parameters);
                 writer.Flush();
             }
 

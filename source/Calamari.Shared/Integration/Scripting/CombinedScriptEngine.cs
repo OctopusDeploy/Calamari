@@ -33,7 +33,7 @@ namespace Calamari.Integration.Scripting
         {
             return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 ? new[] { ScriptSyntax.Bash, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python }
-                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
+                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python, ScriptSyntax.Bash };
         }
 
         public CommandResult Execute(
