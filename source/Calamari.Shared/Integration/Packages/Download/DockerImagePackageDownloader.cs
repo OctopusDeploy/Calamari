@@ -78,9 +78,18 @@ namespace Calamari.Integration.Packages.Download
             }
 
             var parts = details.Split(' ');
+            var hash = parts[0];
+
+            // Be more defensive trying to parse the image size.
+            // We dont tend to use this property for docker atm anyway so it seems reasonable to ignore if it cant be loaded.
+            if (!long.TryParse(parts[1], out var size))
+            {
+                size = 0;
+                Log.Verbose($"Unable to parse image size. ({parts[0]})");
+            }
 
 
-            return (parts[0], long.Parse(parts[1]));
+            return (hash, size);
         }
 
 
