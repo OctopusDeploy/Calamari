@@ -445,7 +445,7 @@ if ($deployAsWebSite)
 
 		if ($binding.certificateVariable) {
 			$bindingObj.certificateVariable = $binding.certificateVariable.Trim();
-		} elseif ($binding.thumbprint){
+		} elseif ($binding.thumbprint -and ($null -ne $binding.thumbprint)){
 			$bindingObj.thumbprint=$binding.thumbprint.Trim();
 		}
 
@@ -467,9 +467,11 @@ if ($deployAsWebSite)
 		# in the deployment process
 		if ($_.certificateVariable) {
 			$sslCertificateThumbprint = $OctopusParameters[$_.certificateVariable + ".Thumbprint"]
-		} else {
+		} elseif ($_.thumbprint){
 			# Otherwise, the certificate thumbprint was supplied directly in the binding
 			$sslCertificateThumbprint = $_.thumbprint.Trim()
+		} else {
+			throw "Cannot configure a https binding when neither certificate thumbprint nor certificate variable is not supplied on the binding.";
 		}
 
 		Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
