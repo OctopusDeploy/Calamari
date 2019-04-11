@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.FileSystem;
+﻿using System;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment;
