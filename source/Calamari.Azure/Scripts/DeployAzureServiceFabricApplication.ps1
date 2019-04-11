@@ -141,9 +141,6 @@ $parameters = @{
     ErrorAction                  = 'Stop'
 }
 
-Write-Verbose "Parameters: "
-Write-Verbose $($parameters | Out-String)
-
 if (-not $AppTypeAndVersionExists) {
     if ($CopyPackageTimeoutSec) {
         $parameters.CopyPackageTimeoutSec = $CopyPackageTimeoutSec
@@ -188,6 +185,8 @@ if ($AppTypeAndNameExists -and (-not $AppTypeAndNameAndVersionExists) -or $Force
     $parameters.UpgradeParameters = $UpgradeParameters
 
     Write-Host "Performing '$($parameters.Action)' action"
+    Write-Verbose "Parameters: "
+    Write-Verbose $($parameters | Out-String)
     Publish-UpgradedServiceFabricApplication @parameters
 }
 else {
@@ -205,5 +204,7 @@ else {
     $parameters.SkipPackageValidation = $SkipPackageValidation
 
     Write-Host "Performing '$($parameters.Action)' action"
+    Write-Verbose "Parameters: "
+    Write-Verbose $($parameters | Out-String)
     Publish-NewServiceFabricApplication @parameters
 }
