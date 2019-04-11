@@ -7,6 +7,7 @@
         Docker,
         Maven,
         GitHub,
-        Helm
+        Helm,
+        AwsElasticContainerRegistry,
     }
 }

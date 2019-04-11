@@ -49,6 +49,10 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.Helm :
                     downloader = new HelmChartPackageDownloader(fileSystem);
                     break;
+                case FeedType.Docker :
+                case FeedType.AwsElasticContainerRegistry :
+                    downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner);
+                    break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }

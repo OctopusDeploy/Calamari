@@ -11,13 +11,13 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
  using Newtonsoft.Json;
 
- namespace Calamari.Kubernetes.Conventions
+namespace Calamari.Kubernetes.Conventions
 {
     public class HelmUpgradeConvention: IInstallConvention
     {
-        private readonly IScriptEngine scriptEngine;
-        private readonly ICommandLineRunner commandLineRunner;
-        private readonly ICalamariFileSystem fileSystem;
+        readonly IScriptEngine scriptEngine;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly ICalamariFileSystem fileSystem;
 
         public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
         {
@@ -50,7 +50,7 @@ using Calamari.Integration.Scripting;
             }
         }
 
-        private string BuildHelmCommand(RunningDeployment deployment)
+        string BuildHelmCommand(RunningDeployment deployment)
         {
             var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
@@ -65,13 +65,14 @@ using Calamari.Integration.Scripting;
             SetTillerNamespaceParameter(deployment, sb);
             SetTimeoutParameter(deployment, sb);
             SetValuesParameters(deployment, sb);
+            SetAdditionalArguments(deployment, sb);
             sb.Append($" \"{releaseName}\" \"{packagePath}\"");
 
             Log.Verbose(sb.ToString());
             return sb.ToString();
         }
 
-        private void SetExecutable(RunningDeployment deployment, StringBuilder sb)
+        void SetExecutable(RunningDeployment deployment, StringBuilder sb)
         {
             var helmExecutable = deployment.Variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
             if (!string.IsNullOrWhiteSpace(helmExecutable))
@@ -106,7 +107,7 @@ using Calamari.Integration.Scripting;
             }
         }
 
-        private static void SetNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
+        static void SetNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
         {
             var @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
             if (!string.IsNullOrWhiteSpace(@namespace))
@@ -115,7 +116,7 @@ using Calamari.Integration.Scripting;
             }
         }
 
-        private static void SetResetValuesParameter(RunningDeployment deployment, StringBuilder sb)
+        static void SetResetValuesParameter(RunningDeployment deployment, StringBuilder sb)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
             {
@@ -123,7 +124,7 @@ using Calamari.Integration.Scripting;
             }
         }
 
-        private void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
+        void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
         {
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
@@ -141,15 +142,25 @@ using Calamari.Integration.Scripting;
             }
         }
 
-        private static void SetTillerNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
+        void SetAdditionalArguments(RunningDeployment deployment, StringBuilder sb)
+        {
+            var additionalArguments = deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments);
+
+            if (!string.IsNullOrWhiteSpace(additionalArguments))
+            {
+                sb.Append($" {additionalArguments}");
+            }
+        }
+
+        static void SetTillerNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
         {
             if (deployment.Variables.IsSet(SpecialVariables.Helm.TillerNamespace))
             {
                 sb.Append($" --tiller-namespace \"{deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace)}\"");
             }
         }
-        
-        private static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
+
+        static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
         {
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
             
@@ -162,7 +173,7 @@ using Calamari.Integration.Scripting;
             sb.Append($" --timeout \"{timeout}\"");
         }
 
-        private static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
+        static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
         {
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
             
@@ -175,13 +186,13 @@ using Calamari.Integration.Scripting;
             sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
         }
 
-        private string SyntaxSpecificFileName(RunningDeployment deployment)
+        string SyntaxSpecificFileName(RunningDeployment deployment)
         {
             var scriptType = scriptEngine.GetSupportedTypes();
             return Path.Combine(deployment.CurrentDirectory, scriptType.Contains(ScriptSyntax.PowerShell) ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
 
-        private static string GetReleaseName(CalamariVariableDictionary variables)
+        static string GetReleaseName(CalamariVariableDictionary variables)
         {
             var validChars = new Regex("[^a-zA-Z0-9-]");
             var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
@@ -196,7 +207,7 @@ using Calamari.Integration.Scripting;
             return releaseName;
         }
 
-        private IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
+        IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
             var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
@@ -235,7 +246,7 @@ using Calamari.Integration.Scripting;
             }
         }
 
-        private string GetChartLocation(RunningDeployment deployment)
+        string GetChartLocation(RunningDeployment deployment)
         {
             var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
             
@@ -255,7 +266,7 @@ using Calamari.Integration.Scripting;
             return packagePath;
         }
 
-        private static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
+        static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var yaml = deployment.Variables.Get(SpecialVariables.Helm.YamlValues);
@@ -268,8 +279,8 @@ using Calamari.Integration.Scripting;
 
             return false;
         }
-        
-        private static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
+
+        static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
