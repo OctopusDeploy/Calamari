@@ -42,36 +42,35 @@ namespace Calamari.Integration.Packages.Download
             var fullImageName = $"{feed}/{packageId}:{version}";
             var (username, password) = ExtractCredentials(feedCredentials, feedUri);
             
-            var tempDirectory = fileSystem.CreateTemporaryDirectory();
-            using (new TemporaryDirectory(tempDirectory))
+            PerformPull(username, password, fullImageName, feed);
+            var (hash, size) = GetImageDetails(fullImageName);
+            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), fullImageName, hash, size );
+        }
+
+        void PerformPull(string username, string password, string fullImageName, string feed)
+        {
+            var file = GetFetchScript(scriptEngine);
+            using (new TemporaryFile(file))
             {
-                PerformPull(tempDirectory, username, password, fullImageName, feed);
-                var (hash, size) = GetImageDetails(fullImageName, tempDirectory);
-                return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), fullImageName, hash, size );
+                var result = scriptEngine.Execute(new Script(file),
+                    new CalamariVariableDictionary()
+                    {
+                        ["DockerUsername"] = username,
+                        ["DockerPassword"] = password,
+                        ["Image"] = fullImageName,
+                        ["FeedUri"] = feed
+                    }, commandLineRunner, environmentVariables);
+                if (result.ExitCode != 0)
+                    throw new CommandException("Unable to pull Docker image");
             }
         }
 
-        void PerformPull(string tempDirectory, string username, string password, string fullImageName, string feed)
-        {
-            var file = GetFetchScript(tempDirectory, scriptEngine);
-            var result = scriptEngine.Execute(new Script(file),
-                new CalamariVariableDictionary()
-                {
-                    ["DockerUsername"] = username,
-                    ["DockerPassword"] = password,
-                    ["Image"] = fullImageName,
-                    ["FeedUri"] = feed
-                }, commandLineRunner, environmentVariables);
-            if (result.ExitCode != 0)
-                throw new CommandException("Unable to pull Docker image");
-        }
-
-        (string hash, long size) GetImageDetails(string fullImageName, string tempDirectory)
+        (string hash, long size) GetImageDetails(string fullImageName)
         {
             var details = "";
             var result2 = SilentProcessRunner.ExecuteCommand("docker",
                 "inspect --format=\"{{.Id}} {{.Size}}\" " + fullImageName,
-                tempDirectory, environmentVariables, (stdout) => { details = stdout; }, Log.Error);
+                ".", environmentVariables, (stdout) => { details = stdout; }, Log.Error);
             if (result2.ExitCode != 0)
             {
                 throw new CommandException("Unable to determine acquired docker image hash");
@@ -104,7 +103,7 @@ namespace Calamari.Integration.Packages.Download
         }
         
         
-        string GetFetchScript(string workingDirectory, IScriptEngine scriptEngine)
+        string GetFetchScript(IScriptEngine scriptEngine)
         {
             var syntax = new[] {ScriptSyntax.PowerShell, ScriptSyntax.Bash}
                 .First(syntx => scriptEngine.GetSupportedTypes().Contains(syntx));
@@ -122,7 +121,7 @@ namespace Calamari.Integration.Packages.Download
                     throw new InvalidOperationException("No kubernetes context wrapper exists for "+ syntax);
             }
             
-            var scriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
+            var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
             var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Integration.Packages.Download.Scripts.{contextFile}");
             fileSystem.OverwriteFile(scriptFile, contextScript);
             return scriptFile;
