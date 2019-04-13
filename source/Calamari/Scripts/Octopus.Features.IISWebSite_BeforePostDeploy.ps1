@@ -471,10 +471,11 @@ if ($deployAsWebSite)
 			# Otherwise, the certificate thumbprint was supplied directly in the binding
 			$sslCertificateThumbprint = $_.thumbprint.Trim()
 		} else {
-			throw "Cannot configure a https binding when neither certificate thumbprint nor certificate variable is not supplied on the binding.";
+			write-error "Cannot configure a https binding when neither certificate thumbprint nor certificate variable is not supplied on the binding.";
+			exit 1
 		}
 
-		Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
+		Write-Host "Finding SSL certificate with thumbprint $sslC\ertificateThumbprint"
 	
 		$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
 		if (! $certificate) 
