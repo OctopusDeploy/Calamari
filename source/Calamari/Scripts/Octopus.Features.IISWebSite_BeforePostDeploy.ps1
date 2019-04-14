@@ -471,7 +471,7 @@ if ($deployAsWebSite)
 			# Otherwise, the certificate thumbprint was supplied directly in the binding
 			$sslCertificateThumbprint = $_.thumbprint.Trim()
 		} else {
-			write-error "Cannot configure a https binding when neither certificate thumbprint nor certificate variable is not supplied on the binding.";
+			[Console]::Error.WriteLine("Cannot configure a https binding when neither certificate thumbprint nor certificate variable is not supplied on the binding.")
 			exit 1
 		}
 
