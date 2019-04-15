@@ -471,11 +471,11 @@ if ($deployAsWebSite)
 			# Otherwise, the certificate thumbprint was supplied directly in the binding
 			$sslCertificateThumbprint = $_.thumbprint.Trim()
 		} else {
-			[Console]::Error.WriteLine("Cannot configure a https binding when neither certificate thumbprint nor certificate variable is not supplied on the binding.")
+			[Console]::Error.WriteLine("To configure an HTTPS binding please choose a certificate which is managed by Octopus, or provide the thumbprint for a certificate which is already available in the Machine certificate store.")
 			exit 1
 		}
 
-		Write-Host "Finding SSL certificate with thumbprint $sslC\ertificateThumbprint"
+		Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
 	
 		$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
 		if (! $certificate) 
