@@ -100,17 +100,19 @@ namespace Calamari
             }
         }
 
-        public static void SetOutputVariable(string name, string value)
+        public static void SetOutputVariable(string name, string value, bool isSensitive = false)
         {
-            SetOutputVariable(name, value, null);
+            SetOutputVariable(name, value, null, isSensitive);
         }
 
-        public static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        public static void SetOutputVariable(string name, string value, VariableDictionary variables, bool isSensitive = false)
         {
             Guard.NotNull(name, "name can not be null");
             Guard.NotNull(value, "value can not be null");
 
-            Info($"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
+            Info(isSensitive
+                ? $"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\" sensitive=\"{ConvertServiceMessageValue(Boolean.TrueString)}\"]"
+                : $"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
 
             variables?.SetOutputVariable(name, value);
         }

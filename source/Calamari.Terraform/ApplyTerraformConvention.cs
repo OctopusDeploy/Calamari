@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
@@ -38,16 +39,18 @@ namespace Calamari.Terraform
 
                 foreach (var (name, token) in OutputVariables(result))
                 {
+                    Boolean.TryParse(token.SelectToken("sensitive")?.ToString(), out var isSensitive);
+
                     var json = token.ToString();
                     Log.Info(
-                        $"Saving variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformJsonOutputs[\"{name}\"]' with the value only of '{json}'");
-                    Log.SetOutputVariable($"TerraformJsonOutputs[{name}]", json);
+                        $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformJsonOutputs[\"{name}\"]' with the value only of '{json}'");
+                    Log.SetOutputVariable($"TerraformJsonOutputs[{name}]", json, isSensitive);
                     var value = token.SelectToken("value")?.ToString();
                     if (value != null)
                     {
                         Log.Info(
-                            $"Saving variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformValueOutputs[\"{name}\"]' with the value only of '{value}'");
-                        Log.SetOutputVariable($"TerraformValueOutputs[{name}]", value);
+                            $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformValueOutputs[\"{name}\"]' with the value only of '{value}'");
+                        Log.SetOutputVariable($"TerraformValueOutputs[{name}]", value, isSensitive);
                     }
                 }
             }

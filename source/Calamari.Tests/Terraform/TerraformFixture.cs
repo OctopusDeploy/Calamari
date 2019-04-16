@@ -131,6 +131,13 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
+        public void WithOutputSensitiveVariables()
+        {
+            ExecuteAndReturnLogOutput<ApplyCommand>(_ => { }, "WithOutputSensitiveVariables")
+                .Should().Contain("sensitive=\"");
+        }
+
+        [Test]
         public void OutputAndSubstituteOctopusVariables()
         {
             ExecuteAndReturnLogOutput<ApplyCommand>(_ =>
