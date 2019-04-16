@@ -34,9 +34,10 @@ namespace Calamari.Terraform
         {
             var variables = deployment.Variables;
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
+            var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
 
             variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
-                (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
+                !String.IsNullOrEmpty(enableNoMatchWarning) ? enableNoMatchWarning : (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
 
             var substitutionPatterns = (DefaultTerraformFileSubstitution +
                                         (string.IsNullOrWhiteSpace(additionalFileSubstitution)
