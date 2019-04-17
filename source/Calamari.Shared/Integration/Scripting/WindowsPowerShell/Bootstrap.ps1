@@ -422,15 +422,14 @@ function Write-Warning()
 	[CmdletBinding()]
 	param([Parameter(ValueFromPipeline=$true)][string]$message)
 
-	begin {
-		if ($WarningPreference -eq 'SilentlyContinue') {
-			return
-		}
-	}
+	begin {}
 	process {
-		Write-Host "##octopus[stdout-warning]"
-		Write-Host $message
-		Write-Host "##octopus[stdout-default]"
+		if($WarningPreference -ne 'SilentlyContinue')
+		{
+			Write-Host "##octopus[stdout-warning]"
+			Write-Host $message
+			Write-Host "##octopus[stdout-default]"
+		}
 	}
     end{}
 }
