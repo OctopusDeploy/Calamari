@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment.Features.Java
@@ -25,29 +26,17 @@ namespace Calamari.Deployment.Features.Java
                 return;
 
             // Environment variables are used to pass parameters to the Java library
-            SetEnvironmentVariable("OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", 
-                deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath));
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Name", 
-                variables.Get(SpecialVariables.Action.Java.Tomcat.DeployName));             
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Controller", 
-                variables.Get(SpecialVariables.Action.Java.Tomcat.Controller));
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_User", 
-                variables.Get(SpecialVariables.Action.Java.Tomcat.User));
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Password", 
-                variables.Get(SpecialVariables.Action.Java.Tomcat.Password));
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Enabled", 
-                variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled));
-            SetEnvironmentVariable("OctopusEnvironment_Tomcat_Deploy_Version",
-                variables.Get(SpecialVariables.Action.Java.Tomcat.Version));
-
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
-            runJava("com.octopus.calamari.tomcat.TomcatDeploy");
-        }
-
-        static void SetEnvironmentVariable(string name, string value)
-        {
-            Log.Verbose($"Setting environment variable: {name} = '{value}'");
-            Environment.SetEnvironmentVariable(name, value);
+            runJava("com.octopus.calamari.tomcat.TomcatDeploy", new Dictionary<string, string>()
+            {
+                {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath)},
+                {"OctopusEnvironment_Tomcat_Deploy_Name", variables.Get(SpecialVariables.Action.Java.Tomcat.DeployName)},
+                {"OctopusEnvironment_Tomcat_Deploy_Controller", variables.Get(SpecialVariables.Action.Java.Tomcat.Controller)},
+                {"OctopusEnvironment_Tomcat_Deploy_User", variables.Get(SpecialVariables.Action.Java.Tomcat.User)},
+                {"OctopusEnvironment_Tomcat_Deploy_Password", variables.Get(SpecialVariables.Action.Java.Tomcat.Password)},
+                {"OctopusEnvironment_Tomcat_Deploy_Enabled", variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled)},
+                {"OctopusEnvironment_Tomcat_Deploy_Version", variables.Get(SpecialVariables.Action.Java.Tomcat.Version)},
+            });
         }
     }
 }

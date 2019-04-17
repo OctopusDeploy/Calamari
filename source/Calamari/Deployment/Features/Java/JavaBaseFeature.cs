@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Integration.Processes;
 
@@ -21,7 +22,7 @@ namespace Calamari.Deployment.Features.Java
         /// <summary>
         /// Execute java running the Octopus Deploy Java library
         /// </summary>
-        protected void runJava(string mainClass)
+        protected void runJava(string mainClass, Dictionary<string,string> environmentVariables)
         {           
             /*
                 The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
@@ -37,7 +38,9 @@ namespace Calamari.Deployment.Features.Java
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 Path.Combine(javaBin, "java"), 
                 $"-cp calamari.jar {mainClass}",
-                Path.Combine(javaLib, "contentFiles", "any", "any")));
+                Path.Combine(javaLib, "contentFiles", "any", "any"),
+                environmentVariables));
+            
             result.VerifySuccess();
         }
     }
