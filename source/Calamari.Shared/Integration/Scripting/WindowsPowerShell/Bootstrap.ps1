@@ -363,43 +363,76 @@ function New-OctopusArtifact
     }
 }
 
-function Write-Debug([string]$message)
+function Write-Debug
 {
-	Write-Verbose $message
+	[CmdletBinding()]
+	param([Parameter(ValueFromPipeline=$true)][string]$message)
+
+	begin {}
+	process {
+		Write-Verbose $message
+	}
+	end {}
 }
 
-function Write-Verbose([string]$message)
+function Write-Verbose
 {
-	Write-Host "##octopus[stdout-verbose]"
-	Write-Host $message
-	Write-Host "##octopus[stdout-default]"
+	[CmdletBinding()]
+	param([Parameter(ValueFromPipeline=$true)][string]$message)
+
+	begin {}
+	process {
+		Write-Host "##octopus[stdout-verbose]"
+		Write-Host $message
+		Write-Host "##octopus[stdout-default]"
+	}
+	end {}
 }
 
-function Write-Highlight([string]$message)
+function Write-Highlight
 {
-	Write-Host "##octopus[stdout-highlight]"
-	Write-Host $message
-	Write-Host "##octopus[stdout-default]"
+	[CmdletBinding()]
+	param([Parameter(ValueFromPipeline=$true)][string]$message)
+
+	begin {}
+	process {
+		Write-Host "##octopus[stdout-highlight]"
+		Write-Host $message
+		Write-Host "##octopus[stdout-default]"
+	}
+	end {}
 }
 
-function Write-Wait([string]$message)
+function Write-Wait
 {
-	Write-Host "##octopus[stdout-wait]"
-	Write-Host $message
-	Write-Host "##octopus[stdout-default]"
+    [CmdletBinding()]
+    param([Parameter(ValueFromPipeline=$true)][string]$message)
+
+	begin {}
+	process {
+		Write-Host "##octopus[stdout-wait]"
+		Write-Host $message
+		Write-Host "##octopus[stdout-default]"
+	}
+	end {}
 }
 
 function Write-Warning()
 {
 	[CmdletBinding()]
-	param([string]$message)
+	param([Parameter(ValueFromPipeline=$true)][string]$message)
 
-	if ($WarningPreference -eq 'SilentlyContinue') {
-		return
+	begin {
+		if ($WarningPreference -eq 'SilentlyContinue') {
+			return
+		}
 	}
-	Write-Host "##octopus[stdout-warning]"
-	Write-Host $message
-	Write-Host "##octopus[stdout-default]"
+	process {
+		Write-Host "##octopus[stdout-warning]"
+		Write-Host $message
+		Write-Host "##octopus[stdout-default]"
+	}
+    end{}
 }
 
 function Decrypt-Variables($iv, $Encrypted)
