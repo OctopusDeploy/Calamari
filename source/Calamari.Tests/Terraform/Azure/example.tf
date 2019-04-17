@@ -6,13 +6,17 @@ variable "app_name" {
   description = "The name of the app"
 }
 
+variable "random" {
+  description = "A random value"
+}
+
 resource "azurerm_resource_group" "resgrp" {
-  name     = "terraformtestrg"
+  name     = "terraformtestrg${var.random}"
   location = "AustraliaSouthEast"
 }
 
 resource "azurerm_app_service_plan" "service_plan" {
-  name                = "terraform_test_service_plan"
+  name                = "terraform_test_service_plan${var.random}"
   location            = "${azurerm_resource_group.resgrp.location}"
   resource_group_name = "${azurerm_resource_group.resgrp.name}"
 

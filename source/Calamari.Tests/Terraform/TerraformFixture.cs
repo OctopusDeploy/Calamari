@@ -190,7 +190,8 @@ namespace Calamari.Tests.Terraform
         [Test]
         public async Task AzureIntegration()
         {
-            var appName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+            var random = Guid.NewGuid().ToString("N").Substring(0, 6);
+            var appName = $"cfe2e-{random}";
 
             void PopulateVariables(VariableDictionary _)
             {
@@ -199,6 +200,7 @@ namespace Calamari.Tests.Terraform
                 _.Set(SpecialVariables.Action.Azure.ClientId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId"));
                 _.Set(SpecialVariables.Action.Azure.Password, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
                 _.Set("app_name", appName);
+                _.Set("random", random);
                 _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Set(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
             }
