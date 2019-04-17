@@ -23,9 +23,19 @@ var localPackagesDir = "../LocalPackages";
 var sourceFolder = "./source/";
 var artifactsDir = "./artifacts";
 var publishDir = "./publish";
-
+var signToolPath = MakeAbsolute(File("./certificates/signtool.exe"));
 GitVersion gitVersionInfo;
 string nugetVersion;
+
+// From time to time the timestamping services go offline, let's try a few of them so our builds are more resilient
+var timestampUrls = new string[]
+{
+    "http://timestamp.globalsign.com/scripts/timestamp.dll",
+    "http://www.startssl.com/timestamp",
+    "http://timestamp.comodoca.com/rfc3161", 
+    "http://timestamp.verisign.com/scripts/timstamp.dll",
+    "http://tsa.starfieldtech.com"
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
@@ -135,7 +145,6 @@ Task("CopyToLocalPackages")
     .WithCriteria(BuildSystem.IsLocalBuild)
     .IsDependentOn("Pack")
     .Does(() =>
-
 {
     CreateDirectory(localPackagesDir);
     CopyFiles(Path.Combine(artifactsDir, $"Calamari.*.nupkg"), localPackagesDir);
@@ -161,7 +170,7 @@ private string DoPublish(string project, string framework, string version, strin
     }
 	DotNetCorePublish(projectDir, publishSettings);
 
-	SignBinaries(publishSettings.OutputDirectory.FullPath);
+	SignAndTimestampBinaries(publishSettings.OutputDirectory.FullPath);
 	return publishedTo;
 }
 
@@ -200,14 +209,14 @@ private void DoPackage(string project, string framework, string version, string 
 
     DotNetCorePublish(projectDir, publishSettings);
 
-    SignBinaries(publishSettings.OutputDirectory.FullPath);
+    SignAndTimestampBinaries(publishSettings.OutputDirectory.FullPath);
 
     var nuspec = $"{publishedTo}/{packageId}.nuspec";
     CopyFile($"{projectDir}/{project}.nuspec", nuspec);
     NuGetPack(nuspec, nugetPackSettings);
 }
 
-private void SignBinaries(string outputDirectory)
+private void SignAndTimestampBinaries(string outputDirectory)
 {
     Information($"Signing binaries in {outputDirectory}");
 
@@ -220,18 +229,12 @@ private void SignBinaries(string outputDirectory)
      var unsignedExecutablesAndLibraries = 
          GetFiles(outputDirectory + "/*.exe")
          .Union(GetFiles(outputDirectory + "/*.dll"))
-         .Where(f => !HasAuthenticodeSignature(f));
+         .Where(f => !HasAuthenticodeSignature(f))
+         .ToArray();
 
-    var signTool = MakeAbsolute(File("./certificates/signtool.exe"));
-    Information($"Using signtool in {signTool}");
-
-	Sign(unsignedExecutablesAndLibraries, new SignToolSignSettings {
-			ToolPath = signTool,
-            TimeStampUri = new Uri("http://timestamp.globalsign.com/scripts/timestamp.dll"),
-            CertPath = signingCertificatePath,
-            Password = signingCertificatePassword
-    });
-
+    Information($"Using signtool in {signToolPath}");
+    SignFiles(unsignedExecutablesAndLibraries, signingCertificatePath, signingCertificatePassword);
+    TimeStampFiles(unsignedExecutablesAndLibraries);
 }
 // note: Doesn't check if existing signatures are valid, only that one exists 
 // source: https://blogs.msdn.microsoft.com/windowsmobile/2006/05/17/programmatically-checking-the-authenticode-signature-on-a-file/
@@ -246,6 +249,103 @@ private bool HasAuthenticodeSignature(FilePath filePath)
     {
         return false;
     }
+}
+
+void SignFiles(IEnumerable<FilePath> files, FilePath certificatePath, string certificatePassword, string display = "", string displayUrl = "")
+{
+    if (!FileExists(signToolPath))
+    {
+        throw new Exception($"The signing tool was expected to be at the path '{signToolPath}' but wasn't available.");
+    }
+
+    if (!FileExists(certificatePath))
+        throw new Exception($"The code-signing certificate was not found at {certificatePath}.");
+    
+    Information($"Signing {files.Count()} files using certificate at '{certificatePath}'...");
+
+    var signArguments = new ProcessArgumentBuilder()
+        .Append("sign")
+        .Append("/fd SHA256")
+        .Append("/f").AppendQuoted(certificatePath.FullPath)
+        .Append($"/p").AppendQuotedSecret(certificatePassword);
+
+    if (!string.IsNullOrWhiteSpace(display))
+    {
+        signArguments
+            .Append("/d").AppendQuoted(display)
+            .Append("/du").AppendQuoted(displayUrl);
+    }
+
+    foreach (var file in files)
+    {
+        signArguments.AppendQuoted(file.FullPath);
+    }
+
+    Information($"Executing: {signToolPath} {signArguments.RenderSafe()}");
+    var exitCode = StartProcess(signToolPath, new ProcessSettings
+    {
+        Arguments = signArguments
+    });
+
+    if (exitCode != 0)
+    {
+        throw new Exception($"Signing files failed with the exit code {exitCode}. Look for 'SignTool Error' in the logs.");
+    }
+
+    Information($"Finished signing {files.Count()} files.");
+}
+
+private void TimeStampFiles(IEnumerable<FilePath> files)
+{
+    if (!FileExists(signToolPath))
+    {
+        throw new Exception($"The signing tool was expected to be at the path '{signToolPath}' but wasn't available.");
+    }
+
+    Information($"Timestamping {files.Count()} files...");
+
+    var timestamped = false;
+    foreach (var url in timestampUrls)
+    {
+        var timestampArguments = new ProcessArgumentBuilder()
+            .Append($"timestamp")
+            .Append("/tr").AppendQuoted(url);
+        foreach (var file in files)
+        {
+            timestampArguments.AppendQuoted(file.FullPath);
+        }
+
+        try
+        {
+            Information($"Executing: {signToolPath} {timestampArguments.RenderSafe()}");
+            var exitCode = StartProcess(signToolPath, new ProcessSettings
+            {
+                Arguments = timestampArguments
+            });
+
+            if (exitCode == 0)
+            {
+                timestamped = true;
+                break;
+            }
+            else
+            {
+                throw new Exception($"Timestamping files failed with the exit code {exitCode}. Look for 'SignTool Error' in the logs.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Warning(ex.Message);
+            Warning($"Failed to timestamp files using {url}. Maybe we can try another timestamp service...");
+        }
+    }
+
+    if (!timestamped)
+    {
+        throw new Exception($"Failed to timestamp files even after we tried all of the timestamp services we use.");
+    }
+
+    Information($"Finished timestamping {files.Count()} files.");
 }
 
 // Returns the runtime identifiers from the project file
