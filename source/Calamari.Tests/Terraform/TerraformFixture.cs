@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -189,37 +190,43 @@ namespace Calamari.Tests.Terraform
         [Test]
         public async Task AzureIntegration()
         {
-            var bucketName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+            var appName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
             void PopulateVariables(VariableDictionary _)
             {
-                _.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
                 _.Set(SpecialVariables.Action.Azure.SubscriptionId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_SubscriptionId"));
                 _.Set(SpecialVariables.Action.Azure.TenantId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_TenantId"));
                 _.Set(SpecialVariables.Action.Azure.ClientId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId"));
                 _.Set(SpecialVariables.Action.Azure.Password, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
-                _.Set("Hello", "Hello World from Azure");
-                _.Set("bucket_name", bucketName);
+                _.Set("app_name", appName);
                 _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
-                _.Set(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, true.ToString());
+                _.Set(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
             }
 
-            ExecuteAndReturnLogOutput<PlanCommand>(PopulateVariables, "Azure")
-                .Should().Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
-
-            ExecuteAndReturnLogOutput<ApplyCommand>(PopulateVariables, "Azure")
-                .Should().Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of 'http://terraformtestaccount.blob.core.windows.net/{bucketName}/test.txt'");
-
-            string fileData;
-            using (var client = new HttpClient())
+            using (var outputs = ExecuteAndReturnLogOutput(PopulateVariables, "Azure", typeof(PlanCommand),
+                typeof(ApplyCommand), typeof(DestroyCommand)).GetEnumerator())
             {
-                fileData = await client.GetStringAsync($"http://terraformtestaccount.blob.core.windows.net/{bucketName}/test.txt").ConfigureAwait(false);
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain("Octopus.Action[\"\"].Output.TerraformPlanOutput");
+
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain($"Saving variable 'Octopus.Action[\"\"].Output.TerraformValueOutputs[\"url\"]' with the value only of '{appName}.azurewebsites.net'");
+
+                using (var client = new HttpClient())
+                {
+                    using (var responseMessage =
+                        await client.GetAsync($"https://{appName}.azurewebsites.net").ConfigureAwait(false))
+                    {
+                        Assert.AreEqual(HttpStatusCode.Forbidden, responseMessage.StatusCode);
+                    }
+                }
+
+                outputs.MoveNext();
+                outputs.Current.Should()
+                    .Contain("destroy -force -no-color");
             }
-
-            fileData.Should().Be("Hello World from Azure");
-
-            ExecuteAndReturnLogOutput<DestroyCommand>(PopulateVariables, "Azure")
-                .Should().Contain("destroy -force -no-color");
         }
 
         [Test]

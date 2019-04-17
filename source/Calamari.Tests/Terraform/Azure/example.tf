@@ -1,5 +1,9 @@
-variable "bucket_name" {
-  description = "the bucket name to use"
+provider "azurerm" {
+  version = "=1.24.0"
+}
+
+variable "app_name" {
+  description = "The name of the app"
 }
 
 resource "azurerm_resource_group" "resgrp" {
@@ -7,32 +11,33 @@ resource "azurerm_resource_group" "resgrp" {
   location = "AustraliaSouthEast"
 }
 
-resource "azurerm_storage_account" "storageaccount" {
-  name                     = "terraformtestaccount"
-  resource_group_name      = "${azurerm_resource_group.resgrp.name}"
-  location                 = "${azurerm_resource_group.resgrp.location}"
-  account_tier             = "Standard"
-  account_kind			   = "BlobStorage"
-  account_replication_type = "LRS"
+resource "azurerm_app_service_plan" "service_plan" {
+  name                = "terraform_test_service_plan"
+  location            = "${azurerm_resource_group.resgrp.location}"
+  resource_group_name = "${azurerm_resource_group.resgrp.name}"
+
+  sku {
+    tier = "Standard"
+    size = "S1"
+  }
 }
 
-resource "azurerm_storage_container" "blobstorage" {
-  name                  = "${var.bucket_name}"
-  resource_group_name   = "${azurerm_resource_group.resgrp.name}"
-  storage_account_name  = "${azurerm_storage_account.storageaccount.name}"
-  container_access_type = "blob"
-}
+resource "azurerm_app_service" "web_app" {
+  name                = "${var.app_name}"
+  location            = "${azurerm_resource_group.resgrp.location}"
+  resource_group_name = "${azurerm_resource_group.resgrp.name}"
+  app_service_plan_id = "${azurerm_app_service_plan.service_plan.id}"
 
-resource "azurerm_storage_blob" "blobobject" {
-  depends_on             = ["azurerm_storage_container.blobstorage"]
-  name                   = "test.txt"
-  resource_group_name    = "${azurerm_resource_group.resgrp.name}"
-  storage_account_name   = "${azurerm_storage_account.storageaccount.name}"
-  storage_container_name = "${azurerm_storage_container.blobstorage.name}"
-  type                   = "block"
-  source                 = "test.txt"
+  site_config {
+    dotnet_framework_version = "v4.0"
+    scm_type                 = "LocalGit"
+  }
+
+  app_settings = {
+    "SOME_KEY" = "some-value"
+  }
 }
 
 output "url" {
-  value = "http://${azurerm_storage_account.storageaccount.name}.blob.core.windows.net/${azurerm_storage_container.blobstorage.name}/${azurerm_storage_blob.blobobject.name}"
+  value = "${azurerm_app_service.web_app.default_site_hostname}"
 }

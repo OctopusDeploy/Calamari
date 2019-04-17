@@ -1,1 +1,1 @@
-bucket_name = "#{bucket_name}"
+app_name = "#{app_name}"
