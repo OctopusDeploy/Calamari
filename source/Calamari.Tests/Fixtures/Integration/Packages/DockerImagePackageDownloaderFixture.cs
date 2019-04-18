@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -17,7 +18,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string AuthFeedUri =   "https://octopusdeploy-docker.jfrog.io";
         static readonly string FeedUsername = "e2e-reader";
         static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.HelmPassword);
-        private static string home = Path.GetTempPath();
+        static string home = Path.GetTempPath();
+        
+        static readonly string DockerHubFeedUri = "https://index.docker.io";
+        static readonly string DockerTestUsername = "octopustestaccount";
+        static readonly string DockerTestPassword = ExternalVariables.Get(ExternalVariable.DockerReaderPassword);
         
         [OneTimeSetUp]
         public void TestFixtureSetUp()
@@ -38,11 +43,32 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage("alpine", 
                 new SemanticVersion("3.6.5"), "docker-feed", 
-                new Uri("https://index.docker.io"), null, true, 1,
+                new Uri(DockerHubFeedUri), null, true, 1,
                 TimeSpan.FromSeconds(3));
             
             Assert.AreEqual("alpine", pkg.PackageId);
             Assert.AreEqual(new SemanticVersion("3.6.5"), pkg.Version);
+        }
+        
+        [Test]
+        [RequiresDockerInstalledAttribute]
+        public void DockerHubWithCredentials_Loads()
+        {
+            var privateImage = "octopusdeploy/private-alpine";
+            var version =  new SemanticVersion("1.0.0");
+
+            var downloader = GetDownloader();
+            var pkg = downloader.DownloadPackage(privateImage, 
+                version, 
+                "docker-feed", 
+                new Uri(DockerHubFeedUri),
+                new NetworkCredential(DockerTestUsername, DockerTestPassword), 
+                true, 
+                1,
+                TimeSpan.FromSeconds(3));
+            
+            Assert.AreEqual(privateImage, pkg.PackageId);
+            Assert.AreEqual(version, pkg.Version);
         }
         
         [Test]
@@ -74,9 +100,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             StringAssert.Contains("Unable to pull Docker image", exception.Message);
         }
-                
-   
-
 
         DockerImagePackageDownloader GetDownloader()
         {

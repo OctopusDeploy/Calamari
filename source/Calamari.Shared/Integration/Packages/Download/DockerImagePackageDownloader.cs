@@ -20,6 +20,7 @@ namespace Calamari.Integration.Packages.Download
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
         readonly Dictionary<string, string> environmentVariables = new Dictionary<string, string>()
@@ -38,13 +39,33 @@ namespace Calamari.Integration.Packages.Download
             ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
         {
             //Always try re-pull image, docker engine can take care of the rest
-            var feed = feedUri.Port == 443 ? feedUri.Host : $"{feedUri.Host}:{feedUri.Port}";
-            var fullImageName = $"{feed}/{packageId}:{version}";
+            var feedHost = GetFeedHost(feedUri);
+            var fullImageName =  GetFullImageName(packageId, version, feedUri, feedHost);
             var (username, password) = ExtractCredentials(feedCredentials, feedUri);
             
-            PerformPull(username, password, fullImageName, feed);
+            PerformPull(username, password, fullImageName, feedHost);
             var (hash, size) = GetImageDetails(fullImageName);
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), fullImageName, hash, size );
+        }
+
+        static string GetFullImageName(string packageId, IVersion version, Uri feedUri, string feedHost)
+        {
+            return feedUri.Host.Equals(DockerHubRegistry) ?  $"{packageId}:{version}" : $"{feedHost}/{packageId}:{version}";
+        }
+
+        static string GetFeedHost(Uri feedUri)
+        {
+            if (feedUri.Host.Equals(DockerHubRegistry))
+            {
+                return string.Empty;
+            }
+
+            if (feedUri.Port == 443)
+            {
+                return feedUri.Host;
+            }
+
+            return $"{feedUri.Host}:{feedUri.Port}";
         }
 
         void PerformPull(string username, string password, string fullImageName, string feed)

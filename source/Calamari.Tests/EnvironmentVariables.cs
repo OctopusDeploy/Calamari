@@ -36,7 +36,11 @@ namespace Calamari.Tests
         KubernetesClusterUrl,
         
         [EnvironmentVariable("Helm_OctopusAPITester_Password", "Helm Password for https://octopusdeploy.jfrog.io")]
-        HelmPassword
+        HelmPassword,
+        
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "Password for DockerHub Test reader account")]
+        DockerReaderPassword
+        
     }
 
     public static class ExternalVariables
