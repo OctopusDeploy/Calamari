@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Integration.Packages.Java
 {
@@ -14,21 +13,20 @@ namespace Calamari.Integration.Packages.Java
     public class JarTool
     {
         readonly ICommandLineRunner commandLineRunner;
-        readonly ICalamariFileSystem fileSystem;
-        private readonly ICommandOutput commandOutput;
-        private readonly string toolsPath;
+        readonly ICommandOutput commandOutput;
+        readonly string toolsPath;
 
-        public JarTool(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, ICalamariFileSystem fileSystem)
+        public JarTool(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, VariableDictionary variables)
         {
             this.commandLineRunner = commandLineRunner;
-            this.fileSystem = fileSystem;
             this.commandOutput = commandOutput;
 
             /*
                 The precondition script will also set the location of the java libray files
             */
+            
             toolsPath = Path.Combine(
-                Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaLibraryEnvVar) ?? "",
+                variables?.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar,"") ?? "",
                 "contentFiles",
                 "any",
                 "any",
@@ -40,29 +38,17 @@ namespace Calamari.Integration.Packages.Java
             try
             {
                 var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
-                var manifestExists = File.Exists(manifestPath);
+                var args = File.Exists(manifestPath)
+                    ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
+                    : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
 
-                /*
-                     The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
-                     on where it found the java executable based on the JAVA_HOME environment
-                     variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
-                     found java on the path.
-                 */
-                var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
-                var createJarCommand = new CommandLineInvocation(
-                    Path.Combine(javaBin, "java"),
-                    manifestExists ?
-                        $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ." :
-                        $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .",
-                    contentsDirectory);
-
+                var createJarCommand = new CommandLineInvocation(JavaRuntime.CmdPath, args, contentsDirectory);
                 Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
 
                 /*
                      All extraction messages should be verbose
                  */
                 commandOutput.WriteInfo("##octopus[stdout-verbose]");
-
                 var result = commandLineRunner.Execute(createJarCommand);
                 result.VerifySuccess();
             }
@@ -78,13 +64,6 @@ namespace Calamari.Integration.Packages.Java
         /// <returns>Count of files extracted</returns>
         public int ExtractJar(string jarPath, string targetDirectory)
         {
-            /*
-                 The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
-                 on where it found the java executable based on the JAVA_HOME environment
-                 variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
-                 found java on the path.
-             */
-            var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
 
             try
             {
@@ -94,10 +73,10 @@ namespace Calamari.Integration.Packages.Java
                 commandOutput.WriteInfo("##octopus[stdout-verbose]");
 
                 /*
-                    Start by verifiying the archive is valid.
+                    Start by verifying the archive is valid.
                 */
                 commandLineRunner.Execute(new CommandLineInvocation(
-                    Path.Combine(javaBin, "java"),
+                    JavaRuntime.CmdPath,
                     $"-cp \"{toolsPath}\" sun.tools.jar.Main tf \"{jarPath}\"",
                     targetDirectory)).VerifySuccess();
 
@@ -105,7 +84,7 @@ namespace Calamari.Integration.Packages.Java
                     If it is valid, go ahead an extract it
                 */
                 var extractJarCommand = new CommandLineInvocation(
-                    Path.Combine(javaBin, "java"),
+                    JavaRuntime.CmdPath,
                     $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\"",
                     targetDirectory);
 
@@ -142,40 +121,6 @@ namespace Calamari.Integration.Packages.Java
             }
 
             return count;
-        }
-
-        /// <summary>
-        /// Extracts the contents of the JAR's manifest file
-        /// </summary>
-        public string ExtractManifest(string jarPath)
-        {
-            const string manifestJarPath = "META-INF/MANIFEST.MF";
-
-            var tempDirectory = fileSystem.CreateTemporaryDirectory();
-
-            var extractJarCommand =
-                new CommandLineInvocation("java", $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\" \"{manifestJarPath}\"", tempDirectory);
-
-            try
-            {
-                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{manifestJarPath}'");
-                var result = commandLineRunner.Execute(extractJarCommand);
-                result.VerifySuccess();
-
-                // Ensure our slashes point in the correct direction
-                var extractedManifestPathComponents = new List<string> { tempDirectory };
-                extractedManifestPathComponents.AddRange(manifestJarPath.Split('/'));
-
-                return File.ReadAllText(Path.Combine(extractedManifestPathComponents.ToArray()));
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error invoking '{extractJarCommand}'", ex);
-            }
-            finally
-            {
-                fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
-            }
         }
     }
 }

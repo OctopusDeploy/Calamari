@@ -111,5 +111,8 @@
     <EmbeddedResource Include="Integration\Scripting\Python\InstallDependencies.py" />
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
+    <None Update="javatest.jar">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

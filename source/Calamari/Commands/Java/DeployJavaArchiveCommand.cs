@@ -44,7 +44,8 @@ namespace Calamari.Commands.Java
             Options.Parse(commandLineArguments);
 
             Guard.NotNullOrWhiteSpace(archiveFile, "No archive file was specified. Please pass --archive YourPackage.jar");
-
+            JavaRuntime.VerifyExists();
+            
             if (!File.Exists(archiveFile))
                 throw new CommandException("Could not find archive file: " + archiveFile);
 
@@ -53,7 +54,6 @@ namespace Calamari.Commands.Java
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
-
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var substituter = new FileSubstituter(fileSystem);
@@ -61,13 +61,16 @@ namespace Calamari.Commands.Java
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));
             var commandLineRunner = new CommandLineRunner(commandOutput);
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var packageExtractor = new JavaPackageExtractor(commandLineRunner, commandOutput, fileSystem);
+            var jarTools = new JarTool(commandLineRunner, commandOutput,  variables);
+            var packageExtractor = new JavaPackageExtractor(jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();
-
+            var javaRunner = new JavaRunner(commandLineRunner, variables);
+            
+            
             var featureClasses = new List<IFeature>
             {
-                new TomcatFeature(commandLineRunner),
-                new WildflyFeature(commandLineRunner)
+                new TomcatFeature(javaRunner),
+                new WildflyFeature(javaRunner)
             };
 
             var deployExploded = variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
@@ -90,7 +93,7 @@ namespace Calamari.Commands.Java
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
-                new RePackArchiveConvention(fileSystem, commandOutput, commandLineRunner),                
+                new RePackArchiveConvention(fileSystem, jarTools),                
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),

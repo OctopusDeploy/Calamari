@@ -84,6 +84,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  
   <Target Name="GetToolFiles">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />

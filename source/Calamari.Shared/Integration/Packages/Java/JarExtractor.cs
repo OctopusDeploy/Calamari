@@ -1,5 +1,6 @@
 ﻿using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Octostache;
 
 namespace Calamari.Integration.Packages.Java
 {
@@ -8,10 +9,9 @@ namespace Calamari.Integration.Packages.Java
         public static readonly string[] EXTENSIONS = {".jar", ".war", ".ear", ".rar", ".zip"};
         readonly JarTool jarTool;
 
-        public JarExtractor(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput,
-            ICalamariFileSystem fileSystem)
+        public JarExtractor(JarTool jarTool)
         {
-            jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
+            this.jarTool = jarTool;
         }
 
         public override string[] Extensions => EXTENSIONS;

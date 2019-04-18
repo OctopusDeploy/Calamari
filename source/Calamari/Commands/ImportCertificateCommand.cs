@@ -104,7 +104,7 @@ namespace Calamari.Commands
             // causing JSON parsing to fail.
 
             // So, we get the raw text
-            var raw = variables.GetRaw(SpecialVariables.Action.Certificate.PrivateKeyAccessRules);
+            var raw = variables.GetRaw(SpecialVariables.Certificate.PrivateKeyAccessRules);
 
             if (string.IsNullOrWhiteSpace(raw))
                 return new List<PrivateKeyAccessRule>();
