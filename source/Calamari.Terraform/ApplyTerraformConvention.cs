@@ -42,15 +42,15 @@ namespace Calamari.Terraform
                     Boolean.TryParse(token.SelectToken("sensitive")?.ToString(), out var isSensitive);
 
                     var json = token.ToString();
+                    Log.SetOutputVariable($"TerraformJsonOutputs[{name}]", json, isSensitive);
                     Log.Info(
                         $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformJsonOutputs[\"{name}\"]' with the value only of '{json}'");
-                    Log.SetOutputVariable($"TerraformJsonOutputs[{name}]", json, isSensitive);
                     var value = token.SelectToken("value")?.ToString();
                     if (value != null)
                     {
+                        Log.SetOutputVariable($"TerraformValueOutputs[{name}]", value, isSensitive);
                         Log.Info(
                             $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformValueOutputs[\"{name}\"]' with the value only of '{value}'");
-                        Log.SetOutputVariable($"TerraformValueOutputs[{name}]", value, isSensitive);
                     }
                 }
             }
