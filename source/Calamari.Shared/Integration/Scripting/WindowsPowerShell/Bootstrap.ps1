@@ -380,13 +380,15 @@ function Write-Verbose
 	[CmdletBinding()]
 	param([Parameter(ValueFromPipeline=$true)][string]$message)
 
-	begin {}
-	process {
+	begin {
 		Write-Host "##octopus[stdout-verbose]"
+	}
+	process {
 		Write-Host $message
+	}
+	end {
 		Write-Host "##octopus[stdout-default]"
 	}
-	end {}
 }
 
 function Write-Highlight
@@ -394,13 +396,15 @@ function Write-Highlight
 	[CmdletBinding()]
 	param([Parameter(ValueFromPipeline=$true)][string]$message)
 
-	begin {}
-	process {
+	begin {
 		Write-Host "##octopus[stdout-highlight]"
+	}
+	process {
 		Write-Host $message
+	}
+	end {
 		Write-Host "##octopus[stdout-default]"
 	}
-	end {}
 }
 
 function Write-Wait
@@ -408,13 +412,15 @@ function Write-Wait
     [CmdletBinding()]
     param([Parameter(ValueFromPipeline=$true)][string]$message)
 
-	begin {}
-	process {
+	begin {
 		Write-Host "##octopus[stdout-wait]"
+	}
+	process {
 		Write-Host $message
+	}
+	end {
 		Write-Host "##octopus[stdout-default]"
 	}
-	end {}
 }
 
 function Write-Warning()
@@ -422,16 +428,18 @@ function Write-Warning()
 	[CmdletBinding()]
 	param([Parameter(ValueFromPipeline=$true)][string]$message)
 
-	begin {}
+	begin {
+		Write-Host "##octopus[stdout-warning]"
+	}
 	process {
 		if($WarningPreference -ne 'SilentlyContinue')
 		{
-			Write-Host "##octopus[stdout-warning]"
 			Write-Host $message
-			Write-Host "##octopus[stdout-default]"
 		}
 	}
-    end{}
+    end {
+		Write-Host "##octopus[stdout-default]"
+	}
 }
 
 function Decrypt-Variables($iv, $Encrypted)
