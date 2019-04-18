@@ -18,9 +18,9 @@ namespace Calamari.Terraform
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             string results;
-            using (var cli = new TerraformCLIExecutor(fileSystem, deployment))
+            using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
             {
-                var resultCode = cli.ExecuteCommand(environmentVariables, out results, out var commandResult, "plan", "-no-color", "-detailed-exitcode", extraParameter, cli.TerraformVariableFiles, cli.ActionParams);
+                var resultCode = cli.ExecuteCommand(out results, out var commandResult, "plan", "-no-color", "-detailed-exitcode", extraParameter, cli.TerraformVariableFiles, cli.ActionParams);
 
                 if (resultCode == 1)
                 {

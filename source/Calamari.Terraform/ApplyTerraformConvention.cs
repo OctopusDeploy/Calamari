@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Terraform
@@ -26,13 +25,13 @@ namespace Calamari.Terraform
                 }
             }
 
-            using (var cli = new TerraformCLIExecutor(fileSystem, deployment))
+            using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
             {
-                cli.ExecuteCommand(environmentVariables, "apply", "-no-color", "-auto-approve",
+                cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);
 
                 // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.8
-                var exitCode = cli.ExecuteCommand(environmentVariables, out var result, "output", "-no-color", "-json");
+                var exitCode = cli.ExecuteCommand(out var result, "output", "-no-color", "-json");
                 if (exitCode != 0)
                 {
                     return;

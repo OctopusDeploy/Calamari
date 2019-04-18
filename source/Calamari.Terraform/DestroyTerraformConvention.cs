@@ -14,9 +14,9 @@ namespace Calamari.Terraform
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            using (var cli = new TerraformCLIExecutor(fileSystem, deployment))
+            using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
             {
-                cli.ExecuteCommand(environmentVariables, "destroy", "-force", "-no-color", cli.TerraformVariableFiles,
+                cli.ExecuteCommand("destroy", "-force", "-no-color", cli.TerraformVariableFiles,
                     cli.ActionParams);
             }
         }
