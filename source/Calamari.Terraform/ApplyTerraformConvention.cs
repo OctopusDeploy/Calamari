@@ -44,7 +44,7 @@ namespace Calamari.Terraform
                     var json = token.ToString();
                     Log.SetOutputVariable($"TerraformJsonOutputs[{name}]", json, isSensitive);
                     Log.Info(
-                        $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformJsonOutputs[\"{name}\"]' with the value only of '{json}'");
+                        $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformJsonOutputs[\"{name}\"]' with the JSON value only of '{json}'");
                     var value = token.SelectToken("value")?.ToString();
                     if (value != null)
                     {
