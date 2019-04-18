@@ -351,7 +351,6 @@ namespace Calamari.Deployment
                 public static readonly string StoreLocation = "Octopus.Action.Certificate.StoreLocation";
                 public static readonly string StoreName = "Octopus.Action.Certificate.StoreName";
                 public static readonly string StoreUser = "Octopus.Action.Certificate.StoreUser";
-                public static readonly string PrivateKeyAccessRules = "Octopus.Action.Certificate.PrivateKeyAccessRules";
             }
 
             public static class Script
@@ -382,11 +381,11 @@ namespace Calamari.Deployment
             public static class Java
             {
                 public static readonly string JavaLibraryEnvVar = "JavaIntegrationLibraryPackagePath";
-                public static readonly string JavaBinEnvVar = "OctopusEnvironment_Java_Bin";
-                
-                public static readonly string JavaArchiveExtractionDisabled = "Octopus.Action.Java.JavaArchiveExtractionDisabled";
 
-                public static readonly string DeployExploded = "Octopus.Action.JavaArchive.DeployExploded"; 
+                public static readonly string JavaArchiveExtractionDisabled =
+                    "Octopus.Action.Java.JavaArchiveExtractionDisabled";
+
+                public static readonly string DeployExploded = "Octopus.Action.JavaArchive.DeployExploded";
 
                 public static class Tomcat
                 {
@@ -397,9 +396,34 @@ namespace Calamari.Deployment
                     public static readonly string Password = "Tomcat.Deploy.Password";
                     public static readonly string Enabled = "Tomcat.Deploy.Enabled";
                     public static readonly string Version = "Tomcat.Deploy.Version";
+                    public static readonly string StateActionTypeName = "Octopus.TomcatState";
                 }
-                
-                public static class Wildfly
+
+                public static class TomcatDeployCertificate
+                {
+                    public static readonly string CertificateActionTypeName = "Octopus.TomcatDeployCertificate";
+                    public static readonly string CatalinaHome = "Tomcat.Certificate.CatalinaHome";
+                    public static readonly string CatalinaBase = "Tomcat.Certificate.CatalinaBase";
+                    public static readonly string Implementation = "Tomcat.Certificate.Implementation";
+                    public static readonly string PrivateKeyFilename = "Tomcat.Certificate.PrivateKeyFilename";
+                    public static readonly string PublicKeyFilename = "Tomcat.Certificate.PublicKeyFilename";
+                    public static readonly string Service = "Tomcat.Certificate.Service";
+                    public static readonly string Port = "Tomcat.Certificate.Port";
+                    public static readonly string Hostname = "Tomcat.Certificate.Hostname";
+                    public static readonly string Default = "Tomcat.Certificate.Default";
+                }
+
+                public static class JavaKeystore
+                {
+                    public static readonly string CertificateActionTypeName = "Octopus.JavaDeployCertificate";
+                    public static readonly string Variable = "Java.Certificate.Variable";
+                    public static readonly string Password = "Java.Certificate.Password";
+                    public static readonly string KeystoreFilename = "Java.Certificate.KeystoreFilename";
+                    public static readonly string KeystoreAlias = "Java.Certificate.KeystoreAlias";
+                }
+
+
+                public static class WildFly
                 {
                     public static readonly string Feature = "Octopus.Features.WildflyDeployCLI";
                     public static readonly string StateFeature = "Octopus.Features.WildflyStateCLI";
@@ -413,6 +437,17 @@ namespace Calamari.Deployment
                     public static readonly string EnabledServerGroup = "WildFly.Deploy.EnabledServerGroup";
                     public static readonly string DisabledServerGroup = "WildFly.Deploy.DisabledServerGroup";
                     public static readonly string ServerType = "WildFly.Deploy.ServerType";
+                    public static readonly string DeployActionTypeName = "Octopus.WildFlyDeploy";
+                    public static readonly string CertificateActionTypeName = "Octopus.WildFlyCertificateDeploy";
+                    public static readonly string StateActionTypeName = "Octopus.WildFlyState";
+                    public static readonly string CertificateProfiles = "WildFly.Deploy.CertificateProfiles";
+                    public static readonly string DeployCertificate = "WildFly.Deploy.DeployCertificate";
+                    public static readonly string CertificateRelativeTo = "WildFly.Deploy.CertificateRelativeTo";
+                    public static readonly string HTTPSPortBindingName = "WildFly.Deploy.HTTPSPortBindingName";
+                    public static readonly string SecurityRealmName = "WildFly.Deploy.SecurityRealmName";
+                    public static readonly string ElytronKeystoreName = "WildFly.Deploy.ElytronKeystoreName";
+                    public static readonly string ElytronKeymanagerName = "WildFly.Deploy.ElytronKeymanagerName";
+                    public static readonly string ElytronSSLContextName = "WildFly.Deploy.ElytronSSLContextName";
                 }
             }
 
@@ -458,6 +493,35 @@ namespace Calamari.Deployment
                 public static readonly string Pfx = "Pfx";
                 public static readonly string Password = "Password";
                 public static readonly string Subject = "Subject";
+            }
+            
+            public static readonly string PrivateKeyAccessRules =
+                "Octopus.Action.Certificate.PrivateKeyAccessRules";
+
+
+            public static string Name(string variableName)
+            {
+                return $"{variableName}.Name";
+            }
+
+            public static string CertificatePem(string variableName)
+            {
+                return $"{variableName}.CertificatePem";
+            }
+
+            public static string PrivateKey(string variableName)
+            {
+                return $"{variableName}.PrivateKey";
+            }
+
+            public static string PrivateKeyPem(string variableName)
+            {
+                return $"{variableName}.PrivateKeyPem";
+            }
+
+            public static string Subject(string variableName)
+            {
+                return $"{variableName}.Subject";
             }
         }
     }

@@ -4,11 +4,13 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment.Features.Java
 {
-    public class TomcatFeature : JavaBaseFeature, IFeature
+    public class TomcatFeature : IFeature
     {
-        public TomcatFeature(ICommandLineRunner commandLineRunner)
-            : base(commandLineRunner)
+        readonly JavaRunner javaRunner;
+
+        public TomcatFeature(JavaRunner javaRunner)
         {
+            this.javaRunner = javaRunner;
         }
 
         public string Name => SpecialVariables.Action.Java.Tomcat.Feature;
@@ -27,7 +29,7 @@ namespace Calamari.Deployment.Features.Java
 
             // Environment variables are used to pass parameters to the Java library
             Log.Verbose("Invoking java.exe to perform Tomcat integration");
-            runJava("com.octopus.calamari.tomcat.TomcatDeploy", new Dictionary<string, string>()
+            javaRunner.Run("com.octopus.calamari.tomcat.TomcatDeploy", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath)},
                 {"OctopusEnvironment_Tomcat_Deploy_Name", variables.Get(SpecialVariables.Action.Java.Tomcat.DeployName)},
