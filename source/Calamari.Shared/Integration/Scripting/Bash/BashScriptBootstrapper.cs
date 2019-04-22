@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Octostache;
 
 namespace Calamari.Integration.Scripting.Bash
 {
@@ -15,6 +18,7 @@ namespace Calamari.Integration.Scripting.Bash
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static BashScriptBootstrapper()
         {
@@ -92,9 +96,10 @@ namespace Calamari.Integration.Scripting.Bash
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static string PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory)
+        public static string PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory, VariableDictionary variables)
         {            
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory);
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -102,6 +107,8 @@ namespace Calamari.Integration.Scripting.Bash
                 writer.NewLine = Environment.NewLine;
                 writer.WriteLine("#!/bin/bash");
                 writer.WriteLine("source \"" + configurationFile.Replace("\\", "\\\\") + "\"");
+                foreach(var scriptModulePath in scriptModulePaths)
+                    writer.WriteLine("source \"" + scriptModulePath.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("source \"" + script.File.Replace("\\", "\\\\") + "\" " + script.Parameters);
                 writer.Flush();
             }
@@ -109,6 +116,22 @@ namespace Calamari.Integration.Scripting.Bash
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             EnsureValidUnixFile(script.File);
             return bootstrapFile;
+        }
+        
+        static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
+        {
+            foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
+            {
+                if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.Bash) {
+                    var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var moduleFileName = $"{name}.sh";
+                    var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
+                    Encoding utf8WithoutBom = new UTF8Encoding(false);
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), utf8WithoutBom);
+                    EnsureValidUnixFile(moduleFilePath);
+                    yield return moduleFilePath;
+                }
+            }
         }
     }
 }

@@ -179,12 +179,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
-                var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
-                var moduleFileName = $"{name}.psm1";
-                var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
-                CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
-                output.AppendLine($"Import-ScriptModule '{SpecialVariables.GetLibraryScriptModuleName(variableName).EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
-                output.AppendLine();
+                if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.PowerShell) {
+                    var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var moduleFileName = $"{name}.psm1";
+                    var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
+                    output.AppendLine($"Import-ScriptModule '{SpecialVariables.GetLibraryScriptModuleName(variableName).EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
+                    output.AppendLine();
+                }
             }
         }
 

@@ -16,7 +16,7 @@ namespace Calamari.Integration.Scripting.Bash
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var bootstrapFile = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory);
+            var bootstrapFile = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory, variables);
 
             return new ScriptExecution(
                 new CommandLineInvocation(

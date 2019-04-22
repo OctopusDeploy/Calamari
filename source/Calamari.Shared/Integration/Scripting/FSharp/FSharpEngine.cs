@@ -17,7 +17,7 @@ namespace Calamari.Integration.Scripting.FSharp
             var workingDirectory = Path.GetDirectoryName(script.File);
             var executable = FSharpBootstrapper.FindExecutable();
             var configurationFile = FSharpBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var bootstrapFile = FSharpBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory);
+            var bootstrapFile = FSharpBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = FSharpBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             return new ScriptExecution(
