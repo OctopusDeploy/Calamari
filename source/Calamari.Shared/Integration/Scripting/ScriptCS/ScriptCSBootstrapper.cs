@@ -81,9 +81,11 @@ namespace Calamari.Integration.Scripting.ScriptCS
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.CSharp) {
-                    var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
+                    var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
                     var moduleFileName = $"{name}.csx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
+                    Log.VerboseFormat("Writing script module '{0}' as c# module {1}. This module will be automatically imported - functions and classes will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return moduleFileName;
                 }

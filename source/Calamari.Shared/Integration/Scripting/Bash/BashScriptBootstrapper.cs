@@ -123,9 +123,11 @@ namespace Calamari.Integration.Scripting.Bash
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.Bash) {
-                    var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
+                    var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
                     var moduleFileName = $"{name}.sh";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
+                    Log.VerboseFormat("Writing script module '{0}' as bash script {1}. This script will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
                     Encoding utf8WithoutBom = new UTF8Encoding(false);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), utf8WithoutBom);
                     EnsureValidUnixFile(moduleFilePath);

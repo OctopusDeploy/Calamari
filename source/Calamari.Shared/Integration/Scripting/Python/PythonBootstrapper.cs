@@ -126,9 +126,10 @@ namespace Calamari.Integration.Scripting.Python
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.Python) {
-                    var name = new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray());
+                    var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
+                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.py";
-                    Log.VerboseFormat("Writing script module as python module {0}. This module will be automatically imported - functions are available as '{1}.MyFunction()' etc.", moduleFileName, name);
+                    Log.VerboseFormat("Writing script module '{0}' as python module {1}. Import this module via 'import {2}' - functions will be available as '{2}.MyFunction()' etc.", libraryScriptModuleName, moduleFileName, name);
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return name;
