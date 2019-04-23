@@ -103,13 +103,15 @@ namespace Calamari.Integration.Scripting.Python
         public static string PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, VariableDictionary variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
-            PrepareScriptModules(variables, workingDirectory);
+            var scriptModules = PrepareScriptModules(variables, workingDirectory);
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.WriteLine("from runpy import run_path");
                 writer.WriteLine("configuration = run_path(\"" + configurationFile.Replace("\\", "\\\\") + "\")");
+                foreach(var scriptModule in scriptModules)
+                    writer.WriteLine($"import {scriptModule}");
                 writer.WriteLine("run_path(\"" + script.File.Replace("\\", "\\\\") + "\", configuration)");
                 writer.Flush();
             }
@@ -119,15 +121,17 @@ namespace Calamari.Integration.Scripting.Python
             return bootstrapFile;
         }
         
-        static void PrepareScriptModules(VariableDictionary variables, string workingDirectory)
+        static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.Python) {
                     var name = new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.py";
+                    Log.VerboseFormat("Writing script module as python module {0}. This module will be automatically imported - functions are available as '{1}.MyFunction()' etc.", moduleFileName, name);
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
+                    yield return name;
                 }
             }
         }
