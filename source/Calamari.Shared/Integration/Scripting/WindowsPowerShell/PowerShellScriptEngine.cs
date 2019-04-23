@@ -14,7 +14,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return new[] {ScriptSyntax.PowerShell};
         }
 
-        protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
+        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, CalamariVariableDictionary variables,
             Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
@@ -28,7 +28,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
             var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));
 
-            return new ScriptExecution(
+            yield return new ScriptExecution(
                 new CommandLineInvocation(
                     executable,
                     arguments,
