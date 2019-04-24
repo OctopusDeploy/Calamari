@@ -19,8 +19,9 @@ namespace Calamari.Terraform
             string results;
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
             {
-                var resultCode = cli.ExecuteCommand(out results, out var commandResult, "plan", "-no-color", "-detailed-exitcode", extraParameter, cli.TerraformVariableFiles, cli.ActionParams);
-
+                var commandResult = cli.ExecuteCommand(out results, "plan", "-no-color", "-detailed-exitcode", extraParameter, cli.TerraformVariableFiles, cli.ActionParams);
+                var resultCode = commandResult.ExitCode;
+                
                 if (resultCode == 1)
                 {
                     commandResult.VerifySuccess();

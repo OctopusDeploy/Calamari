@@ -68,18 +68,11 @@ namespace Calamari.Terraform
             return result;
         }
 
-        public int ExecuteCommand(out string result, params string[] arguments)
+        public CommandResult ExecuteCommand(out string result, params string[] arguments)
         {
             var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result);
 
-            return commandResult.ExitCode;
-        }
-
-        public int ExecuteCommand(out string result, out CommandResult commandResult, params string[] arguments)
-        {
-            commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result);
-
-            return commandResult.ExitCode;
+            return commandResult;
         }
 
         public void Dispose()

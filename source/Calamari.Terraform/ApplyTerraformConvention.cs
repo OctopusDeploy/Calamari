@@ -14,24 +14,13 @@ namespace Calamari.Terraform
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            IEnumerable<(string, JToken)> OutputVariables(string result)
-            {
-                var jObj = JObject.Parse(result);
-
-                foreach (var property in jObj.Properties())
-                {
-                    yield return (property.Name, property.Value);
-                }
-            }
-
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
             {
                 cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);
 
                 // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.8
-                var exitCode = cli.ExecuteCommand(out var result, "output", "-no-color", "-json");
-                if (exitCode != 0)
+                if (cli.ExecuteCommand(out var result, "output", "-no-color", "-json").ExitCode != 0)
                 {
                     return;
                 }
@@ -57,6 +46,16 @@ namespace Calamari.Terraform
                             $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformValueOutputs[\"{name}\"]' with the value only of '{value}'");
                     }
                 }
+            }
+        }
+
+        IEnumerable<(string, JToken)> OutputVariables(string result)
+        {
+            var jObj = JObject.Parse(result);
+
+            foreach (var property in jObj.Properties())
+            {
+                yield return (property.Name, property.Value);
             }
         }
     }
