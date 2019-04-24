@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
@@ -27,12 +28,12 @@ namespace Calamari.Integration.Scripting.Python
 
             var configurationFile = PythonBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
 
-            var bootstrapFile = PythonBootstrapper.PrepareBootstrapFile(script, workingDirectory, configurationFile, variables);
+            var (bootstrapFile, otherTemporaryFiles) = PythonBootstrapper.PrepareBootstrapFile(script, workingDirectory, configurationFile, variables);
             var arguments = PythonBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             yield return new ScriptExecution(
                 new CommandLineInvocation(executable, arguments, workingDirectory, environmentVars),
-                new[] {configurationFile, bootstrapFile});
+                    otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile}));
         }
     }
 }

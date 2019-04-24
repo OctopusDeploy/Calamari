@@ -20,10 +20,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var workingDirectory = Path.GetDirectoryName(script.File);
 
             var executable = PowerShellBootstrapper.PathToPowerShellExecutable();
-            var bootstrapFile = PowerShellBootstrapper.PrepareBootstrapFile(script, variables);
+            var (bootstrapFile, otherTemporaryFiles) = PowerShellBootstrapper.PrepareBootstrapFile(script, variables);
             var debuggingBootstrapFile = PowerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
-            var arguments =
-                PowerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
+            var arguments = PowerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
 
             var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
             var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));
@@ -36,7 +35,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     environmentVars,
                     userName,
                     password),
-                new[] {bootstrapFile, debuggingBootstrapFile}
+                otherTemporaryFiles.Concat(new[] {bootstrapFile, debuggingBootstrapFile})
             );
         }
 

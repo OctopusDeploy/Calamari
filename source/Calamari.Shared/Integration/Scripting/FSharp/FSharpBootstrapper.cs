@@ -48,7 +48,7 @@ namespace Calamari.Integration.Scripting.FSharp
             return commandArguments.ToString();
         }
 
-        public static string PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, VariableDictionary variables)
+        public static (string bootstrapFile, IEnumerable<string> temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, VariableDictionary variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory);
@@ -67,7 +67,7 @@ namespace Calamari.Integration.Scripting.FSharp
             }
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
-            return bootstrapFile;
+            return (bootstrapFile, scriptModulePaths);
         }
         
         static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)

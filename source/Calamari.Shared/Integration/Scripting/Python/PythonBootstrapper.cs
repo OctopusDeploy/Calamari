@@ -100,17 +100,17 @@ namespace Calamari.Integration.Scripting.Python
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static string PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, VariableDictionary variables)
+        public static (string bootstrapFile, IEnumerable<string> temporaryFiles) PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, VariableDictionary variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
-            var scriptModules = PrepareScriptModules(variables, workingDirectory);
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory);
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.WriteLine("from runpy import run_path");
                 writer.WriteLine("configuration = run_path(\"" + configurationFile.Replace("\\", "\\\\") + "\")");
-                foreach(var scriptModule in scriptModules)
+                foreach(var scriptModule in scriptModulePaths)
                     writer.WriteLine($"import {scriptModule}");
                 writer.WriteLine("run_path(\"" + script.File.Replace("\\", "\\\\") + "\", configuration)");
                 writer.Flush();
@@ -118,7 +118,7 @@ namespace Calamari.Integration.Scripting.Python
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             EnsureValidUnixFile(script.File);
-            return bootstrapFile;
+            return (bootstrapFile, scriptModulePaths);
         }
         
         static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
