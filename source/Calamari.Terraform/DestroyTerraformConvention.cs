@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Terraform
 {
     public class DestroyTerraformConvention : TerraformConvention
     {
-        public DestroyTerraformConvention(ICalamariFileSystem fileSystem, IFileSubstituter fileSubstituter) : base(fileSystem, fileSubstituter)
+        public DestroyTerraformConvention(ICalamariFileSystem fileSystem) : base(fileSystem)
         {
         }
 

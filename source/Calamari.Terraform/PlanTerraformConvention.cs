@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Terraform
 {
@@ -10,7 +9,7 @@ namespace Calamari.Terraform
     {
         private readonly string extraParameter;
 
-        public PlanTerraformConvention(ICalamariFileSystem fileSystem, IFileSubstituter fileSubstituter, string extraParameter = "") : base(fileSystem, fileSubstituter)
+        public PlanTerraformConvention(ICalamariFileSystem fileSystem, string extraParameter = "") : base(fileSystem)
         {
             this.extraParameter = extraParameter;
         }

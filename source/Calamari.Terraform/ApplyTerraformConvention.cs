@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Terraform
 {
     public class ApplyTerraformConvention : TerraformConvention
     {
-        public ApplyTerraformConvention(ICalamariFileSystem fileSystem, IFileSubstituter fileSubstituter) : base(fileSystem, fileSubstituter)
+        public ApplyTerraformConvention(ICalamariFileSystem fileSystem) : base(fileSystem)
         {
         }
 

@@ -6,7 +6,6 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 using Octostache;
 
 namespace Calamari.Terraform
@@ -14,13 +13,10 @@ namespace Calamari.Terraform
     public abstract class TerraformConvention : IInstallConvention
     {
         protected readonly ICalamariFileSystem fileSystem;
-        private readonly IFileSubstituter fileSubstituter;
-        const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
 
-        public TerraformConvention(ICalamariFileSystem fileSystem,  IFileSubstituter fileSubstituter)
+        public TerraformConvention(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.fileSubstituter = fileSubstituter;
         }
 
         protected abstract void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables);
@@ -33,23 +29,6 @@ namespace Calamari.Terraform
         async Task InstallAsync(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
-            var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
-
-            variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
-                !String.IsNullOrEmpty(enableNoMatchWarning) ? enableNoMatchWarning : (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
-
-            var substitutionPatterns = (DefaultTerraformFileSubstitution +
-                                        (string.IsNullOrWhiteSpace(additionalFileSubstitution)
-                                            ? String.Empty
-                                            : "\n" + additionalFileSubstitution))
-                .Split(new[] {"\r", "\n"}, StringSplitOptions.RemoveEmptyEntries);
-
-            new SubstituteInFilesConvention(fileSystem, fileSubstituter,
-                    _ => true,
-                    _ => substitutionPatterns)
-                .Install(deployment);
-
             var environmentVariables = new Dictionary<string, string>();
             var useAWSAccount = variables.Get(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "None") == "AWS";
             var useAzureAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount);

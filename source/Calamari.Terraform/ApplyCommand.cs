@@ -5,7 +5,7 @@ namespace Calamari.Terraform
     [Command("apply-terraform", Description = "Applies a Terraform template")]
     public class ApplyCommand : TerraformCommand
     {
-        public ApplyCommand(): base((fileSystem, substituter) =>  new ApplyTerraformConvention(fileSystem, substituter))
+        public ApplyCommand(): base(fileSystem =>  new ApplyTerraformConvention(fileSystem))
         {
         }
     }

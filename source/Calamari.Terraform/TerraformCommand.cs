@@ -13,13 +13,16 @@ namespace Calamari.Terraform
 {
     public abstract class TerraformCommand : Command
     {
-        private readonly Func<ICalamariFileSystem, IFileSubstituter, IConvention> step;
+        const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
+
+        private readonly Func<ICalamariFileSystem, IConvention> step;
         private string variablesFile;
         private string sensitiveVariablesFile;
         private string sensitiveVariablesPassword;
         private string packageFile;
 
-        protected TerraformCommand(Func<ICalamariFileSystem, IFileSubstituter, IConvention> step)
+
+        protected TerraformCommand(Func<ICalamariFileSystem, IConvention> step)
         {
             this.step = step;
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
@@ -47,13 +50,21 @@ namespace Calamari.Terraform
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
             var substituter = new FileSubstituter(fileSystem);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
+            var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
+
+            variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
+                !String.IsNullOrEmpty(enableNoMatchWarning) ? enableNoMatchWarning : (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
 
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => packageFile != null),
-                step(fileSystem, substituter)
+                new SubstituteInFilesConvention(fileSystem, substituter,
+                    _ => true,
+                    _ => FileTargetFactory(additionalFileSubstitution)),
+                step(fileSystem)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
@@ -61,6 +72,16 @@ namespace Calamari.Terraform
 
             conventionRunner.RunConventions();
             return 0;
+        }
+
+
+        static string[] FileTargetFactory(string additionalFileSubstitution)
+        {
+            return (DefaultTerraformFileSubstitution +
+                                        (string.IsNullOrWhiteSpace(additionalFileSubstitution)
+                                            ? String.Empty
+                                            : "\n" + additionalFileSubstitution))
+                .Split(new[] {"\r", "\n"}, StringSplitOptions.RemoveEmptyEntries);
         }
     }
 }
