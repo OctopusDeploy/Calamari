@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Retry;
 using Calamari.Terraform;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
@@ -33,6 +34,60 @@ namespace Calamari.Tests.Terraform
         [OneTimeSetUp]
         public async Task InstallTools()
         {
+            async Task DownloadCli(string destination)
+            {
+                Console.WriteLine("Downloading terraform cli...");
+                var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
+                while (retry.Try())
+                {
+                    try
+                    {
+                        using (var client = new HttpClient())
+                        {
+                            var json = await client.GetStringAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
+
+                            var parsedJson = JObject.Parse(json);
+
+                            var downloadBaseUrl = parsedJson["current_download_url"].Value<string>();
+                            var currentVersion = parsedJson["current_version"].Value<string>();
+                            var fileName = $"terraform_{currentVersion}_windows_amd64.zip";
+
+                            if (CalamariEnvironment.IsRunningOnNix)
+                            {
+                                fileName = $"terraform_{currentVersion}_linux_amd64.zip";
+                            }
+
+                            var zipPath = Path.Combine(Path.GetTempPath(), fileName);
+                            using (new TemporaryFile(zipPath))
+                            {
+                                using (var fileStream =
+                                    new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                                using (var stream = await client.GetStreamAsync($"{downloadBaseUrl}{fileName}"))
+                                {
+                                    await stream.CopyToAsync(fileStream);
+                                }
+
+                                ZipFile.ExtractToDirectory(zipPath, destination);
+                            }
+                        }
+
+                        customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault();
+                        Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
+
+                        break;
+                    }
+                    catch
+                    {
+                        if (!retry.CanRetry())
+                        {
+                            throw;
+                        }
+
+                        await Task.Delay(retry.Sleep());
+                    }
+                }
+            }
+
             var destinationDirectoryName = TestEnvironment.GetTestPath("TerraformCLIPath");
 
             if (Directory.Exists(destinationDirectoryName))
@@ -46,37 +101,7 @@ namespace Calamari.Tests.Terraform
                 }
             }
 
-            Console.WriteLine("Downloading terraform cli...");
-
-            using (var client = new HttpClient())
-            {
-                var json = await client.GetStringAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
-
-                var parsedJson = JObject.Parse(json);
-
-                var downloadBaseUrl = parsedJson["current_download_url"].Value<string>();
-                var currentVersion = parsedJson["current_version"].Value<string>();
-                var fileName = $"terraform_{currentVersion}_windows_amd64.zip";
-
-                if (CalamariEnvironment.IsRunningOnNix)
-                {
-                    fileName = $"terraform_{currentVersion}_linux_amd64.zip";
-                }
-                var zipPath = Path.Combine(Path.GetTempPath(), fileName);
-                using (new TemporaryFile(zipPath))
-                {
-                    using (var fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                    using (var stream = await client.GetStreamAsync($"{downloadBaseUrl}{fileName}"))
-                    {
-                        await stream.CopyToAsync(fileStream);
-                    }
-
-                    ZipFile.ExtractToDirectory(zipPath, destinationDirectoryName);
-                }
-
-                customTerraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
-            }
+            await DownloadCli(destinationDirectoryName);
         }
 
         [Test]
