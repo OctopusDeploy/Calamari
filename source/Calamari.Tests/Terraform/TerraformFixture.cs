@@ -220,10 +220,10 @@ namespace Calamari.Tests.Terraform
 
             void PopulateVariables(VariableDictionary _)
             {
-                _.Set(SpecialVariables.Action.Azure.SubscriptionId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_SubscriptionId"));
-                _.Set(SpecialVariables.Action.Azure.TenantId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_TenantId"));
-                _.Set(SpecialVariables.Action.Azure.ClientId, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId"));
-                _.Set(SpecialVariables.Action.Azure.Password, Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
+                _.Set(SpecialVariables.Action.Azure.SubscriptionId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
+                _.Set(SpecialVariables.Action.Azure.TenantId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
+                _.Set(SpecialVariables.Action.Azure.ClientId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
+                _.Set(SpecialVariables.Action.Azure.Password, ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
                 _.Set("app_name", appName);
                 _.Set("random", random);
                 _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
@@ -264,8 +264,8 @@ namespace Calamari.Tests.Terraform
             void PopulateVariables(VariableDictionary _)
             {
                 _.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
-                _.Set("Octopus.Action.Amazon.AccessKey", Environment.GetEnvironmentVariable("AWS.E2E.AccessKeyId"));
-                _.Set("Octopus.Action.Amazon.SecretKey", Environment.GetEnvironmentVariable("AWS.E2E.SecretKeyId"));
+                _.Set("Octopus.Action.Amazon.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
+                _.Set("Octopus.Action.Amazon.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
                 _.Set("Octopus.Action.Aws.Region", "ap-southeast-1");
                 _.Set("Hello", "Hello World from AWS");
                 _.Set("bucket_name", bucketName);
@@ -296,7 +296,6 @@ namespace Calamari.Tests.Terraform
                     .Contain("destroy -force -no-color");
             }
         }
-
 
         [Test]
         public void PlanDetailedExitCode()
