@@ -104,7 +104,7 @@ namespace Calamari
 
         static bool IsVersionCommand(string[] args)
         {
-            return args.Length > 0 && args[0].ToLower() == "version" || args[0].ToLower() == "--version";
+            return args.Length > 0 && (args[0].ToLower() == "version" || args[0].ToLower() == "--version");
         }
 
         private int PrintHelp(string action)
