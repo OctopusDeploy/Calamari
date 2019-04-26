@@ -48,10 +48,10 @@ namespace Calamari.Integration.Scripting.FSharp
             return commandArguments.ToString();
         }
 
-        public static (string bootstrapFile, IEnumerable<string> temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, VariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, VariableDictionary variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
-            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory);
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))

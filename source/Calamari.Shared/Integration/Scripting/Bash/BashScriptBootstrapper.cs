@@ -96,10 +96,10 @@ namespace Calamari.Integration.Scripting.Bash
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static (string bootstrapFile, IEnumerable<string> temporaryFiles) PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory, VariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory, VariableDictionary variables)
         {            
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
-            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory);
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))

@@ -90,7 +90,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return true;
         }
 
-        public static (string bootstrapFile, IEnumerable<string> temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);

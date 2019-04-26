@@ -100,10 +100,10 @@ namespace Calamari.Integration.Scripting.Python
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static (string bootstrapFile, IEnumerable<string> temporaryFiles) PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, VariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, VariableDictionary variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
-            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory);
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -127,7 +127,7 @@ namespace Calamari.Integration.Scripting.Python
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.Python) {
                     var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
-                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
+                    var name = new string(libraryScriptModuleName.Where(x => char.IsLetterOrDigit(x) || x == '_').ToArray());
                     var moduleFileName = $"{name}.py";
                     Log.VerboseFormat("Writing script module '{0}' as python module {1}. Import this module via 'import {2}' - functions will be available as '{2}.MyFunction()' etc.", libraryScriptModuleName, moduleFileName, name);
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
