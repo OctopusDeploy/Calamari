@@ -75,7 +75,7 @@ namespace Calamari
         {
             if(IsVersionCommand(args))
             {
-                Console.Write(typeof(Program).Assembly.GetInformationalVersion());
+                Console.Write($"Octopus Deploy: Calamari version {typeof(Program).Assembly.GetInformationalVersion()}");
                 return 0;
             }
                 
@@ -104,7 +104,7 @@ namespace Calamari
 
         static bool IsVersionCommand(string[] args)
         {
-            return args.Any() && args[0].ToLower() == "version" || args[0].ToLower() == "--version";
+            return args.Length > 0 && args[0].ToLower() == "version" || args[0].ToLower() == "--version";
         }
 
         private int PrintHelp(string action)
