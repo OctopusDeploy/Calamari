@@ -52,11 +52,11 @@ namespace Calamari.Terraform
                 TemplateDirectory = templateDirectoryTemp;
             }
 
-            InitialiseTerraformEnvironmentVariables();
+            InitializeTerraformEnvironmentVariables();
 
-            InitialisePlugins();
+            InitializePlugins();
 
-            InitialiseWorkspace();
+            InitializeWorkspace();
         }
 
         public string ExecuteCommand(params string[] arguments)
@@ -113,13 +113,13 @@ namespace Calamari.Terraform
             return commandResult;
         }
 
-        void InitialisePlugins()
+        void InitializePlugins()
         {
             ExecuteCommandInternal(
                 $"init -no-color -get-plugins={AllowPluginDownloads.ToString().ToLower()} {InitParams}", out _).VerifySuccess();
         }
 
-        void InitialiseWorkspace()
+        void InitializeWorkspace()
         {
             if (!String.IsNullOrWhiteSpace(Workspace))
             {
@@ -180,7 +180,7 @@ namespace Calamari.Terraform
                 .ToList()
                 .Map(list => string.Join(" ", list));
 
-        void InitialiseTerraformEnvironmentVariables()
+        void InitializeTerraformEnvironmentVariables()
         {
             defaultEnvironmentVariables = new CommandLineToolsProxyEnvironmentVariables().EnvironmentVariables;
 
