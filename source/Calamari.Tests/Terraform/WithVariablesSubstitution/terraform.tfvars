@@ -1,0 +1,1 @@
+my_var = "#{Should_Be_Substituted}"
