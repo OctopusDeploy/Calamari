@@ -65,8 +65,6 @@ namespace Calamari.Integration.Scripting.ScriptCS
             using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.WriteLine("#load \"" + configurationFile.Replace("\\", "\\\\") + "\"");
-                foreach(var scriptModulePath in scriptModulePaths)
-                    writer.WriteLine("#load \"" + scriptModulePath.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("#load \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
                     
                 writer.Flush();
@@ -82,10 +80,10 @@ namespace Calamari.Integration.Scripting.ScriptCS
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.CSharp) {
                     var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
-                    var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.csx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
-                    Log.VerboseFormat("Writing script module '{0}' as c# module {1}. This module will be automatically imported - functions and classes will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
+                    Log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return moduleFileName;
                 }

@@ -57,9 +57,6 @@ namespace Calamari.Integration.Scripting.FSharp
             using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.WriteLine("#load \"" + configurationFile.Replace("\\", "\\\\") + "\"");
-                foreach(var scriptModulePath in scriptModulePaths)
-                    writer.WriteLine("#load \"" + scriptModulePath.Replace("\\", "\\\\") + "\"");
-                
                 writer.WriteLine("open Octopus");
                 writer.WriteLine("Octopus.initializeProxy()");
                 writer.WriteLine("#load \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
@@ -76,10 +73,10 @@ namespace Calamari.Integration.Scripting.FSharp
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.FSharp) {
                     var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
-                    var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.fsx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
-                    Log.VerboseFormat("Writing script module '{0}' as f# module {1}. This module will be automatically imported - functions and classes will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
+                    Log.VerboseFormat("Writing script module '{0}' as f# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return moduleFileName;
                 }

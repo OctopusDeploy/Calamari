@@ -107,8 +107,6 @@ namespace Calamari.Integration.Scripting.Bash
                 writer.NewLine = Environment.NewLine;
                 writer.WriteLine("#!/bin/bash");
                 writer.WriteLine("source \"" + configurationFile.Replace("\\", "\\\\") + "\"");
-                foreach(var scriptModulePath in scriptModulePaths)
-                    writer.WriteLine("source \"" + scriptModulePath.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("source \"" + script.File.Replace("\\", "\\\\") + "\" " + script.Parameters);
                 writer.Flush();
             }
@@ -124,10 +122,10 @@ namespace Calamari.Integration.Scripting.Bash
             {
                 if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.Bash) {
                     var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
-                    var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.sh";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
-                    Log.VerboseFormat("Writing script module '{0}' as bash script {1}. This script will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
+                    Log.VerboseFormat("Writing script module '{0}' as bash script {1}. Import this via `source {1}`.", libraryScriptModuleName, moduleFileName, name);
                     Encoding utf8WithoutBom = new UTF8Encoding(false);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), utf8WithoutBom);
                     EnsureValidUnixFile(moduleFilePath);

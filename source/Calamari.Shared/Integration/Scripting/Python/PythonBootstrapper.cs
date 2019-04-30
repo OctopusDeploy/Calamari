@@ -110,8 +110,6 @@ namespace Calamari.Integration.Scripting.Python
             {
                 writer.WriteLine("from runpy import run_path");
                 writer.WriteLine("configuration = run_path(\"" + configurationFile.Replace("\\", "\\\\") + "\")");
-                foreach(var scriptModule in scriptModulePaths)
-                    writer.WriteLine($"import {scriptModule}");
                 writer.WriteLine("run_path(\"" + script.File.Replace("\\", "\\\\") + "\", configuration)");
                 writer.Flush();
             }
@@ -129,7 +127,7 @@ namespace Calamari.Integration.Scripting.Python
                     var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
                     var name = new string(libraryScriptModuleName.Where(x => char.IsLetterOrDigit(x) || x == '_').ToArray());
                     var moduleFileName = $"{name}.py";
-                    Log.VerboseFormat("Writing script module '{0}' as python module {1}. Import this module via 'import {2}' - functions will be available as '{2}.MyFunction()' etc.", libraryScriptModuleName, moduleFileName, name);
+                    Log.VerboseFormat("Writing script module '{0}' as python module {1}. Import this module via `import {2}`.", libraryScriptModuleName, moduleFileName, name);
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return name;
