@@ -76,7 +76,7 @@ namespace Calamari.Integration.Scripting.FSharp
                     var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.fsx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
-                    Log.VerboseFormat("Writing script module '{0}' as f# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
+                    Log.VerboseFormat("Writing script module '{0}' as f# module {1}. Import this module via `#load \"{1}\"`.", libraryScriptModuleName, moduleFileName, name);
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return moduleFileName;
                 }
