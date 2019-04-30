@@ -41,6 +41,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             InstallAsync(deployment).GetAwaiter().GetResult();
         }
+ 
 
         private async Task InstallAsync(RunningDeployment deployment)
         {
@@ -49,15 +50,22 @@ namespace Calamari.Aws.Deployment.Conventions
 
             Guard.NotNull(stack, "The provided stack identifer or name may not be null");
             Guard.NotNull(changeSet, "The provided change set identifier or name may not be null");
-
-            var result = await ExecuteChangeset(clientFactory, stack, changeSet);
-
-            if (result.None())
+            
+            var response = await clientFactory.DescribeChangeSetAsync(stack, changeSet);
+            if (response.Changes.Count == 0)
             {
+                await clientFactory().DeleteChangeSetAsync(new DeleteChangeSetRequest
+                {
+                    ChangeSetName = changeSet.Value,
+                    StackName = stack.Value
+                });
+                
                 Log.Info("No changes changes are to be performed.");
                 return;
             }
 
+            await ExecuteChangeset(clientFactory, stack, changeSet);
+            
             if (waitForComplete)
             {
                 await WithAmazonServiceExceptionHandling(() =>
@@ -66,7 +74,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private async Task<Maybe<RunningChangeSet>> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
+        private async Task<RunningChangeSet> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
             ChangeSetArn changeSet)
         {
             try
@@ -74,19 +82,6 @@ namespace Calamari.Aws.Deployment.Conventions
                 var changes = await factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod,
                     new RunningChangeSet(stack, changeSet));
 
-                if (changes.Status == ChangeSetStatus.FAILED &&
-                    string.Compare(changes.StatusReason, "No updates are to be performed.",
-                        StringComparison.InvariantCultureIgnoreCase) == 0)
-                {
-                    //We don't need the failed changeset to hang around if there are no changes
-                    await factory().DeleteChangeSetAsync(new DeleteChangeSetRequest
-                    {
-                        ChangeSetName = changeSet.Value,
-                        StackName = stack.Value
-                    });
-
-                    return Maybe<RunningChangeSet>.None;
-                }
 
                 if (changes.Status == ChangeSetStatus.FAILED)
                 {
@@ -99,7 +94,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     StackName = stack.Value
                 });
 
-                return new RunningChangeSet(stack, changeSet).AsSome();
+                return new RunningChangeSet(stack, changeSet);
             }
             catch (AmazonCloudFormationException exception) when (exception.ErrorCode == "AccessDenied")
             {
