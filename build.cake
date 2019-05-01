@@ -2,6 +2,7 @@
 // TOOLS
 //////////////////////////////////////////////////////////////////////
 #tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0012"
+#addin "nuget:?package=Cake.Incubator&version=5.0.1"
 
 using Path = System.IO.Path;
 using System.Xml;
@@ -227,10 +228,11 @@ private void SignAndTimestampBinaries(string outputDirectory)
     //       have not been subsequently altered
     
      var unsignedExecutablesAndLibraries = 
-         GetFiles(outputDirectory + "/Calamari*.exe")
-         .Union(GetFiles(outputDirectory + "/Calamari*.dll"))
-         .Union(GetFiles(outputDirectory + "/Octo*.exe"))
-         .Union(GetFiles(outputDirectory + "/Octo*.dll"))
+         GetFiles(
+            outputDirectory + "/Calamari*.exe",
+            outputDirectory + "/Calamari*.dll",
+            outputDirectory + "/Octo*.exe",
+            outputDirectory + "/Octo*.dll")
          .Where(f => !HasAuthenticodeSignature(f))
          .ToArray();
 
