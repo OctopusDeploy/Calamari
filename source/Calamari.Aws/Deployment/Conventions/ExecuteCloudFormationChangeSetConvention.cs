@@ -59,8 +59,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     ChangeSetName = changeSet.Value,
                     StackName = stack.Value
                 });
-                
-                Log.Info("No changes changes are to be performed.");
+
+                Log.Info("No changes need to be performed.");
                 return;
             }
 
