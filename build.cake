@@ -227,8 +227,10 @@ private void SignAndTimestampBinaries(string outputDirectory)
     //       have not been subsequently altered
     
      var unsignedExecutablesAndLibraries = 
-         GetFiles(outputDirectory + "/*.exe")
-         .Union(GetFiles(outputDirectory + "/*.dll"))
+         GetFiles(outputDirectory + "/Calamari*.exe")
+         .Union(GetFiles(outputDirectory + "/Calamari*.dll"))
+         .Union(GetFiles(outputDirectory + "/Octo*.exe"))
+         .Union(GetFiles(outputDirectory + "/Octo*.dll"))
          .Where(f => !HasAuthenticodeSignature(f))
          .ToArray();
 
