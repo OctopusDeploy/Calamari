@@ -78,7 +78,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
-                if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.CSharp) {
+                if (SpecialVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp) {
                     var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
                     var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.csx";

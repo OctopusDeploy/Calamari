@@ -18,7 +18,7 @@ namespace Calamari.Deployment
             return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');
         }
 
-        public static ScriptSyntax GetLibraryScriptModuleLangauge(VariableDictionary variables, string variableName)
+        public static ScriptSyntax GetLibraryScriptModuleLanguage(VariableDictionary variables, string variableName)
         {
             var expectedName = variableName.Replace("Octopus.Script.Module[", "Octopus.Script.Module.Language[");
             var syntaxVariable = variables.GetNames().FirstOrDefault(x => x == expectedName);

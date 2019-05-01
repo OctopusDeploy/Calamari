@@ -183,7 +183,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var scriptModules = new List<string>();
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
-                if (SpecialVariables.GetLibraryScriptModuleLangauge(variables, variableName) == ScriptSyntax.PowerShell) {
+                if (SpecialVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.PowerShell) {
                     var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
                     var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
                     var moduleFileName = $"{name}.psm1";
