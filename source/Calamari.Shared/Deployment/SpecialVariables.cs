@@ -293,6 +293,8 @@ namespace Calamari.Deployment
             {
                 public static readonly string UseBundledAzurePowerShellModules = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
 
+                public static readonly string AccountVariable = "Octopus.Action.AzureAccount.Variable";
+
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
                 public static readonly string ClientId = "Octopus.Action.Azure.ClientId";
                 public static readonly string TenantId = "Octopus.Action.Azure.TenantId";

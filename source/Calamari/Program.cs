@@ -73,6 +73,12 @@ namespace Calamari
 
         public int Execute(string[] args)
         {
+            if(IsVersionCommand(args))
+            {
+                Console.Write($"Calamari version: {typeof(Program).Assembly.GetInformationalVersion()}");
+                return 0;
+            }
+                
             Log.Verbose($"Octopus Deploy: Calamari version {typeof(Program).Assembly.GetInformationalVersion()}");
             Log.Verbose($"Environment Information:{Environment.NewLine}" +
                         $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}");
@@ -94,6 +100,11 @@ namespace Calamari
             {
                 return ConsoleFormatter.PrintError(ex);
             }
+        }
+
+        static bool IsVersionCommand(string[] args)
+        {
+            return args.Length > 0 && (args[0].ToLower() == "version" || args[0].ToLower() == "--version");
         }
 
         private int PrintHelp(string action)

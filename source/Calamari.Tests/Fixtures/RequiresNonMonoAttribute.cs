@@ -4,14 +4,14 @@ using NUnit.Framework.Internal;
 
 namespace Calamari.Tests.Fixtures
 {
-    public class RequiresNonMacAttribute : NUnitAttribute, IApplyToTest
+    public class RequiresNonMonoAttribute : NUnitAttribute, IApplyToTest
     {
         public void ApplyToTest(Test test)
         {
-            if (CalamariEnvironment.IsRunningOnMac)
+            if (CalamariEnvironment.IsRunningOnMono)
             {
                 test.RunState = RunState.Skipped;
-                test.Properties.Set(PropertyNames.SkipReason, "This test does not run on MacOS");
+                test.Properties.Set(PropertyNames.SkipReason, "This test does not run on Mono");
             }
         }
     }
