@@ -180,6 +180,9 @@
     <None Update="Terraform\PlanDetailedExitCode\example.tf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Terraform\Simple\backend.tfvars">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Terraform\TemplateDirectory\SubFolder\example.tf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
