@@ -105,7 +105,7 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
-        [TestCase("-backend-config='backend.tfvars'", TestName = "Using single quotes")]
+        [TestCase("-backend-config='backend.tfvars'", TestName = "Using single quotes", IncludePlatform = "WIN")]
         [TestCase("-backend-config=\"backend.tfvars\"", TestName = "Using double quotes")]
         [TestCase("--backend-config=backend.tfvars", TestName = "Using no quotes, this one needs to use -- for the argument!")]
         public void ExtraInitParametersAreSet(string additionalParams)
@@ -212,7 +212,7 @@ namespace Calamari.Tests.Terraform
                 {
                     _.Set(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, "SubFolder");
                 }, "TemplateDirectory")
-                .Should().Contain("SubFolder\\example.tf");
+                .Should().Contain($"SubFolder{Path.DirectorySeparatorChar}example.tf");
         }
 
         [Test]
