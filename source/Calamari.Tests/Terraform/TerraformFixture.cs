@@ -105,11 +105,14 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
-        public void ExtraInitParametersAreSet()
+        [TestCase("-backend-config='backend.tfvars'", TestName = "Using single quotes")]
+        [TestCase("-backend-config=\"backend.tfvars\"", TestName = "Using double quotes")]
+        [TestCase("--backend-config=backend.tfvars", TestName = "Using no quotes, this one needs to use -- for the argument!")]
+        public void ExtraInitParametersAreSet(string additionalParams)
         {
             ExecuteAndReturnLogOutput<PlanCommand>(_ =>
-                    _.Set(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, "-upgrade"), "Simple")
-                .Should().Contain("init -no-color -get-plugins=true -upgrade");
+                    _.Set(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams), "Simple")
+                .Should().Contain($"init -no-color -get-plugins=true {additionalParams}");
         }
 
         [Test]
