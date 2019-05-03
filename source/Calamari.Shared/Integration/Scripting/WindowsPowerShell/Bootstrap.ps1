@@ -124,13 +124,6 @@ function Import-ScriptModule([string]$moduleName, [string]$moduleFilePath)
 		Write-Warning "Failed to import Script Module '$moduleName'"
 		Throw
 	}
-	Finally
-	{
-		# Once we've loaded (or failed to load) the script module,
-		# delete the script module file from the filesystem
-		# https://github.com/OctopusDeploy/Issues/issues/3895
-		Remove-Item $moduleFilePath -Force -ErrorAction SilentlyContinue
-	}
 }
 
 function Convert-ServiceMessageValue([string]$value)
