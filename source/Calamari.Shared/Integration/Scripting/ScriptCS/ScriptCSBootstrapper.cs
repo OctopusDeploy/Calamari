@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
-using System.Reflection;
+using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
+using Octostache;
 
 namespace Calamari.Integration.Scripting.ScriptCS
 {
@@ -13,6 +17,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static ScriptCSBootstrapper()
         {
@@ -51,20 +56,38 @@ namespace Calamari.Integration.Scripting.ScriptCS
                                    .Trim();
         }
 
-        public static string PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, VariableDictionary variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
-
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
+            
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.WriteLine("#load \"" + configurationFile.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("#load \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
+                    
                 writer.Flush();
             }
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
-            return bootstrapFile;
+            return (bootstrapFile, scriptModulePaths);
+        }
+
+        static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
+        {
+            foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
+            {
+                if (SpecialVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp) {
+                    var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
+                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
+                    var moduleFileName = $"{name}.csx";
+                    var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
+                    Log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
+                    yield return moduleFileName;
+                }
+            }
         }
 
         public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)

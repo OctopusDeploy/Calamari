@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.Bash
@@ -11,18 +12,18 @@ namespace Calamari.Integration.Scripting.Bash
             return new[] {ScriptSyntax.Bash};
         }
 
-        protected override ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
+        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, CalamariVariableDictionary variables,
             Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var bootstrapFile = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory);
+            var (bootstrapFile, otherTemporaryFiles) = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory, variables);
 
-            return new ScriptExecution(
+            yield return new ScriptExecution(
                 new CommandLineInvocation(
                     BashScriptBootstrapper.FindBashExecutable(),
                     BashScriptBootstrapper.FormatCommandArguments(bootstrapFile), workingDirectory, environmentVars),
-                new[] {bootstrapFile, configurationFile}
+                    otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile})
             );
         }
     }

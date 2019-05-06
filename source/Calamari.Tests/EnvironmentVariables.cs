@@ -15,6 +15,12 @@ namespace Calamari.Tests
         [EnvironmentVariable("SSH_OctopusAPITester_PrivateKey", "SSH - OctopusAPITester")]
         SshPrivateKey,
 
+        [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "Azure - OctopusAPITester")]
+        AzureSubscriptionId,
+
+        [EnvironmentVariable("Azure_OctopusAPITester_TenantId", "Azure - OctopusAPITester")]
+        AzureSubscriptionTenantId,
+
         [EnvironmentVariable("Azure_OctopusAPITester_Password", "Azure - OctopusAPITester")]
         AzureSubscriptionPassword,
 
@@ -27,8 +33,6 @@ namespace Calamari.Tests
         [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account")]
         GitHubPassword,
         
-        
-        
         [EnvironmentVariable("K8S_OctopusAPITester_Token", "GKS Kubernetes API Test Cluster Token")]
         KubernetesClusterToken,
         
@@ -39,8 +43,13 @@ namespace Calamari.Tests
         HelmPassword,
         
         [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "Password for DockerHub Test reader account")]
-        DockerReaderPassword
-        
+        DockerReaderPassword,
+
+        [EnvironmentVariable("AWS.E2E.AccessKeyId", "AWS E2E Test User Keys")]
+        AwsCloudFormationAndS3AccessKey,
+
+        [EnvironmentVariable("AWS.E2E.SecretKeyId", "AWS E2E Test User Keys")]
+        AwsCloudFormationAndS3SecretKey
     }
 
     public static class ExternalVariables

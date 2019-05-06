@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
+using Octostache;
 
 namespace Calamari.Integration.Scripting.Bash
 {
@@ -15,6 +18,7 @@ namespace Calamari.Integration.Scripting.Bash
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static BashScriptBootstrapper()
         {
@@ -92,9 +96,10 @@ namespace Calamari.Integration.Scripting.Bash
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static string PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory, VariableDictionary variables)
         {            
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -108,7 +113,25 @@ namespace Calamari.Integration.Scripting.Bash
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             EnsureValidUnixFile(script.File);
-            return bootstrapFile;
+            return (bootstrapFile, scriptModulePaths);
+        }
+        
+        static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
+        {
+            foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
+            {
+                if (SpecialVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Bash) {
+                    var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
+                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
+                    var moduleFileName = $"{name}.sh";
+                    var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
+                    Log.VerboseFormat("Writing script module '{0}' as bash script {1}. Import this via `source {1}`.", libraryScriptModuleName, moduleFileName, name);
+                    Encoding utf8WithoutBom = new UTF8Encoding(false);
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), utf8WithoutBom);
+                    EnsureValidUnixFile(moduleFilePath);
+                    yield return moduleFilePath;
+                }
+            }
         }
     }
 }

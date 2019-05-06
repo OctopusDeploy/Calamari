@@ -34,8 +34,10 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+    <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+    <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup>
@@ -67,8 +69,6 @@
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' ">
-  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'net452' ">
     <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
@@ -93,6 +93,8 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''"/>
   <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
+  
+  <Target Name="GetToolFiles">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
     </CreateItem>

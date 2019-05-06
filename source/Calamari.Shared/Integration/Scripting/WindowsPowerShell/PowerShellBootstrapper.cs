@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -89,12 +90,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return true;
         }
 
-        public static string PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
             var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
             var variableString = GetEncryptedVariablesString(variables);
+
+            var (scriptModulePaths, scriptModuleDeclarations) = DeclareScriptModules(variables, parent);
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("{{TargetScriptFile}}", script.File.EscapeSingleQuotedString())
@@ -102,15 +105,15 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 .Replace("{{EncryptedVariablesString}}", variableString.encrypted)
                 .Replace("{{VariablesIV}}", variableString.iv)
                 .Replace("{{LocalVariableDeclarations}}", DeclareLocalVariables(variables))
-                .Replace("{{ScriptModules}}", DeclareScriptModules(variables, parent));
+                .Replace("{{ScriptModules}}", scriptModuleDeclarations);
 
             builder = SetupDebugBreakpoints(builder, variables);
 
             CalamariFileSystem.OverwriteFile(bootstrapFile, builder.ToString(), new UTF8Encoding(true));
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
-            return bootstrapFile;
-        }
+            return (bootstrapFile, scriptModulePaths);
+    }
 
         private static StringBuilder SetupDebugBreakpoints(StringBuilder builder, CalamariVariableDictionary variables)
         {
@@ -166,26 +169,34 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
 
 
-        static string DeclareScriptModules(CalamariVariableDictionary variables, string parentDirectory)
+        static (string[] scriptModulePaths, string scriptModuleDeclarations) DeclareScriptModules(CalamariVariableDictionary variables, string parentDirectory)
         {
             var output = new StringBuilder();
 
-            WriteScriptModules(variables, parentDirectory, output);
+            var scriptModules = WriteScriptModules(variables, parentDirectory, output);
 
-            return output.ToString();
+            return (scriptModules, output.ToString());
         }
 
-        static void WriteScriptModules(VariableDictionary variables, string parentDirectory, StringBuilder output)
+        static string[] WriteScriptModules(VariableDictionary variables, string parentDirectory, StringBuilder output)
         {
+            var scriptModules = new List<string>();
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
-                var name = "Library_" + new string(SpecialVariables.GetLibraryScriptModuleName(variableName).Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
-                var moduleFileName = $"{name}.psm1";
-                var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
-                CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
-                output.AppendLine($"Import-ScriptModule '{SpecialVariables.GetLibraryScriptModuleName(variableName).EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
-                output.AppendLine();
+                if (SpecialVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.PowerShell) {
+                    var libraryScriptModuleName = SpecialVariables.GetLibraryScriptModuleName(variableName);
+                    var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var moduleFileName = $"{name}.psm1";
+                    var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
+                    Log.VerboseFormat("Writing script module '{0}' as PowerShell module {1}. This module will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
+                    output.AppendLine($"Import-ScriptModule '{libraryScriptModuleName.EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
+                    output.AppendLine();
+                    scriptModules.Add(moduleFilePath);
+                }
             }
+
+            return scriptModules.ToArray();
         }
 
         static (string encrypted, string iv) GetEncryptedVariablesString(CalamariVariableDictionary variables)

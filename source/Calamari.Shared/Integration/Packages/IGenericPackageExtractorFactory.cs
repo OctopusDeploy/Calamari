@@ -1,4 +1,6 @@
 ﻿using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages.Java;
+using Octostache;
 
 namespace Calamari.Integration.Packages
 {
@@ -22,6 +24,6 @@ namespace Calamari.Integration.Packages
         /// A GenericPackageExtractor that processes the "standard" package types, along with
         /// Java packages.
         /// </returns>
-        GenericPackageExtractor createJavaGenericPackageExtractor(ICalamariFileSystem fileSystem);
+        GenericPackageExtractor createJavaGenericPackageExtractor(JarTool jarTool);
     }
 }
