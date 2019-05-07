@@ -7,11 +7,7 @@ namespace Calamari.Integration.Packages.Java
 {
     public static class JavaRuntime
     {
-        static string GetExecutingDirectory()
-        {
-            var location = new Uri(typeof(JavaRuntime).Assembly.CodeBase);
-            return Path.GetDirectoryName(location.AbsolutePath);
-        }
+        static string ExecutingDirectory => Path.GetDirectoryName(typeof(JavaRuntime).Assembly.Location);
 
         public static string CmdPath
         {
@@ -25,7 +21,7 @@ namespace Calamari.Integration.Packages.Java
         public static void VerifyExists()
         {
             var MinimumJavaVersion = "1.8";
-            var jarFile = Path.Combine(GetExecutingDirectory(), "javatest.jar");
+            var jarFile = Path.Combine(ExecutingDirectory, "javatest.jar");
             var silentProcessResult = SilentProcessRunner.ExecuteCommand(CmdPath,
                 $"-jar \"{jarFile}\" {MinimumJavaVersion}", ".", Console.WriteLine, (i) => Console.Error.WriteLine(i));
 
