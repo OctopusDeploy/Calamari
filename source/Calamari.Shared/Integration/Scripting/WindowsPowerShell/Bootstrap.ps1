@@ -326,6 +326,7 @@ function New-OctopusArtifact
     [CmdletBinding()]
     param(
         [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [Alias('fullname')]
         [Alias('path')]
         [string]$fullpath,
         [string]$name=""""
