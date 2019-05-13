@@ -19,8 +19,8 @@ namespace Calamari.Deployment.Features.Java.Actions
                 {"OctopusEnvironment_Java_Certificate_Password", variables.Get(SpecialVariables.Action.Java.JavaKeystore.Password)},                               
                 {"OctopusEnvironment_Java_Certificate_KeystoreFilename", variables.Get(SpecialVariables.Action.Java.JavaKeystore.KeystoreFilename)},
                 {"OctopusEnvironment_Java_Certificate_KeystoreAlias", variables.Get(SpecialVariables.Action.Java.JavaKeystore.KeystoreAlias)},
-                {"OctopusEnvironment_Java_Certificate_Private_Key", variables.Get(SpecialVariables.Certificate.CertificatePem(certificateId))},
-                {"OctopusEnvironment_Java_Certificate_Public_Key", variables.Get(SpecialVariables.Certificate.PrivateKeyPem(certificateId))},
+                {"OctopusEnvironment_Java_Certificate_Private_Key", variables.Get(SpecialVariables.Certificate.PrivateKeyPem(certificateId))},
+                {"OctopusEnvironment_Java_Certificate_Public_Key", variables.Get(SpecialVariables.Certificate.CertificatePem(certificateId))},
                 {"OctopusEnvironment_Java_Certificate_Public_Key_Subject", variables.Get(SpecialVariables.Certificate.Subject(certificateId))},
             };
             runner.Run("com.octopus.calamari.keystore.KeystoreConfig", envVariables);
