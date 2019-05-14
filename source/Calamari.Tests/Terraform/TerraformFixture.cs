@@ -105,7 +105,6 @@ namespace Calamari.Tests.Terraform
         }
 
         [Test]
-        [TestCase("-backend-config='backend.tfvars'", TestName = "Using single quotes", IncludePlatform = "WIN")]
         [TestCase("-backend-config=\"backend.tfvars\"", TestName = "Using double quotes")]
         [TestCase("--backend-config=backend.tfvars", TestName = "Using no quotes, this one needs to use -- for the argument!")]
         public void ExtraInitParametersAreSet(string additionalParams)

@@ -2,14 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
-using Calamari.Integration.Scripting.WindowsPowerShell;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Terraform
@@ -21,7 +19,7 @@ namespace Calamari.Terraform
         readonly Dictionary<string, string> environmentVariables;
         private Dictionary<string, string> defaultEnvironmentVariables;
         private readonly string logPath;
-
+        
         public TerraformCLIExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment,
             Dictionary<string, string> environmentVariables)
         {
@@ -106,24 +104,9 @@ namespace Calamari.Terraform
 
             var commandOutput = new CaptureOutput();
             var cmd = new CommandLineRunner(commandOutput);
-#if NET452
-            var usePsEngine = true;
-#else
-            var usePsEngine = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#endif
-
+            
             Log.Info(commandLineInvocation.ToString());
-
-            if (usePsEngine)
-            {
-                var psFilePath = Path.Combine(TemplateDirectory, $"{Path.GetRandomFileName()}.ps1");
-                File.WriteAllText(psFilePath, $"{TerraformExecutable} {arguments}");
-
-                var args = PowerShellBootstrapper.FormatCommandArguments(psFilePath, psFilePath, new CalamariVariableDictionary());
-                commandLineInvocation = new CommandLineInvocation(PowerShellBootstrapper.PathToPowerShellExecutable(),
-                    args, TemplateDirectory, environmentVar);
-            }
-
+            
             var commandResult = cmd.Execute(commandLineInvocation);
             
             result = String.Join("\n", commandOutput.Infos);
