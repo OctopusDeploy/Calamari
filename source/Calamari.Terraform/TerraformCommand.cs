@@ -51,7 +51,7 @@ namespace Calamari.Terraform
             var substituter = new FileSubstituter(fileSystem);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
-            var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution);
+            var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution, true);
             var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
 
             variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
