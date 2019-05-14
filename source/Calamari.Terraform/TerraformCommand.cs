@@ -51,6 +51,7 @@ namespace Calamari.Terraform
             var substituter = new FileSubstituter(fileSystem);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
+            var disableAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.DisableAutomaticFileSubstitution);
             var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
 
             variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
@@ -63,7 +64,7 @@ namespace Calamari.Terraform
                 new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => packageFile != null),
                 new SubstituteInFilesConvention(fileSystem, substituter,
                     _ => true,
-                    _ => FileTargetFactory(additionalFileSubstitution)),
+                    _ => FileTargetFactory(disableAutomaticFileSubstitution ? string.Empty : DefaultTerraformFileSubstitution, additionalFileSubstitution)),
                 step(fileSystem)
             };
 
@@ -75,9 +76,9 @@ namespace Calamari.Terraform
         }
 
 
-        static string[] FileTargetFactory(string additionalFileSubstitution)
+        static string[] FileTargetFactory(string defaultFileSubstitution, string additionalFileSubstitution)
         {
-            return (DefaultTerraformFileSubstitution +
+            return (defaultFileSubstitution +
                                         (string.IsNullOrWhiteSpace(additionalFileSubstitution)
                                             ? String.Empty
                                             : "\n" + additionalFileSubstitution))

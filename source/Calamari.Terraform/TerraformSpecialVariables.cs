@@ -12,6 +12,7 @@
                 public const string PluginsDirectory = "Octopus.Action.Terraform.PluginsDirectory";
                 public const string TemplateDirectory = "Octopus.Action.Terraform.TemplateDirectory";
                 public const string FileSubstitution = "Octopus.Action.Terraform.FileSubstitution";
+                public const string DisableAutomaticFileSubstitution = "Octopus.Action.Terraform.DisableAutomaticFileSubstitution";
                 public const string Workspace = "Octopus.Action.Terraform.Workspace";
                 public const string CustomTerraformExecutable = "Octopus.Action.Terraform.CustomTerraformExecutable";
                 public const string AttachLogFile = "Octopus.Action.Terraform.AttachLogFile";
