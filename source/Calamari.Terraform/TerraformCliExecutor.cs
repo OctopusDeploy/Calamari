@@ -38,7 +38,7 @@ namespace Calamari.Terraform
             AllowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
             AttachLogFile = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AttachLogFile);
             TerraformVariableFiles = GenerateVarFiles();
-
+            
             logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
             crashLogPath = Path.Combine(deployment.CurrentDirectory, "crash.log");
 
@@ -53,7 +53,7 @@ namespace Calamari.Terraform
 
                 TemplateDirectory = templateDirectoryTemp;
             }
-
+            
             InitializeTerraformEnvironmentVariables();
 
             InitializePlugins();
@@ -61,13 +61,12 @@ namespace Calamari.Terraform
             InitializeWorkspace();
         }
 
-        public string ExecuteCommand(params string[] arguments)
+        public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out var result);
+            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out _);
 
             commandResult.VerifySuccess();
-
-            return result;
+            return commandResult;
         }
 
         public CommandResult ExecuteCommand(out string result, params string[] arguments)
@@ -109,7 +108,7 @@ namespace Calamari.Terraform
             var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
                 arguments, TemplateDirectory, environmentVar);
 
-            var commandOutput = new CaptureOutput();
+            var commandOutput = new CaptureOutput(new ConsoleCommandOutput());
             var cmd = new CommandLineRunner(commandOutput);
             
             Log.Info(commandLineInvocation.ToString());
@@ -149,15 +148,23 @@ namespace Calamari.Terraform
 
         class CaptureOutput : ICommandOutput
         {
+            readonly ICommandOutput decorated;
+
+            public CaptureOutput(ICommandOutput decorated)
+            {
+                this.decorated = decorated;
+            }
             public List<string> Infos { get; } = new List<string>();
 
             public void WriteInfo(string line)
             {
                 Infos.Add(line);
+                decorated.WriteInfo(line);
             }
 
             public void WriteError(string line)
             {
+                decorated.WriteError(line);
             }
         }
 
