@@ -19,6 +19,7 @@ namespace Calamari.Terraform
         readonly Dictionary<string, string> environmentVariables;
         private Dictionary<string, string> defaultEnvironmentVariables;
         private readonly string logPath;
+        readonly string crashLogPath;
         
         public TerraformCLIExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment,
             Dictionary<string, string> environmentVariables)
@@ -39,6 +40,7 @@ namespace Calamari.Terraform
             TerraformVariableFiles = GenerateVarFiles();
 
             logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
+            crashLogPath = Path.Combine(deployment.CurrentDirectory, "crash.log");
 
             if (!String.IsNullOrEmpty(TemplateDirectory))
             {
@@ -82,6 +84,11 @@ namespace Calamari.Terraform
                 if (fileSystem.FileExists(logPath))
                 {
                     Log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
+                }
+                
+                if (fileSystem.FileExists(crashLogPath))
+                {
+                    Log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
                 }
             }
         }
