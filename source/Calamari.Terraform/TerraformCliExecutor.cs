@@ -2,14 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
-using Calamari.Integration.Scripting.WindowsPowerShell;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Terraform
@@ -21,7 +19,8 @@ namespace Calamari.Terraform
         readonly Dictionary<string, string> environmentVariables;
         private Dictionary<string, string> defaultEnvironmentVariables;
         private readonly string logPath;
-
+        readonly string crashLogPath;
+        
         public TerraformCLIExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment,
             Dictionary<string, string> environmentVariables)
         {
@@ -39,8 +38,9 @@ namespace Calamari.Terraform
             AllowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
             AttachLogFile = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AttachLogFile);
             TerraformVariableFiles = GenerateVarFiles();
-
+            
             logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
+            crashLogPath = Path.Combine(deployment.CurrentDirectory, "crash.log");
 
             if (!String.IsNullOrEmpty(TemplateDirectory))
             {
@@ -61,13 +61,12 @@ namespace Calamari.Terraform
             InitializeWorkspace();
         }
 
-        public string ExecuteCommand(params string[] arguments)
+        public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out var result);
+            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out _);
 
             commandResult.VerifySuccess();
-
-            return result;
+            return commandResult;
         }
 
         public CommandResult ExecuteCommand(out string result, params string[] arguments)
@@ -84,6 +83,13 @@ namespace Calamari.Terraform
                 if (fileSystem.FileExists(logPath))
                 {
                     Log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
+                }
+                
+                //When terraform crashes, the information would be contained in the crash.log file. We should attach this since
+                //we don't want to blow that information away in case it provides something relevant https://www.terraform.io/docs/internals/debugging.html#interpreting-a-crash-log
+                if (fileSystem.FileExists(crashLogPath))
+                {
+                    Log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
                 }
             }
         }
@@ -104,26 +110,11 @@ namespace Calamari.Terraform
             var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
                 arguments, TemplateDirectory, environmentVar);
 
-            var commandOutput = new CaptureOutput();
+            var commandOutput = new CaptureOutput(new ConsoleCommandOutput());
             var cmd = new CommandLineRunner(commandOutput);
-#if NET452
-            var usePsEngine = true;
-#else
-            var usePsEngine = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#endif
-
+            
             Log.Info(commandLineInvocation.ToString());
-
-            if (usePsEngine)
-            {
-                var psFilePath = Path.Combine(TemplateDirectory, $"{Path.GetRandomFileName()}.ps1");
-                File.WriteAllText(psFilePath, $"{TerraformExecutable} {arguments}");
-
-                var args = PowerShellBootstrapper.FormatCommandArguments(psFilePath, psFilePath, new CalamariVariableDictionary());
-                commandLineInvocation = new CommandLineInvocation(PowerShellBootstrapper.PathToPowerShellExecutable(),
-                    args, TemplateDirectory, environmentVar);
-            }
-
+            
             var commandResult = cmd.Execute(commandLineInvocation);
             
             result = String.Join("\n", commandOutput.Infos);
@@ -159,15 +150,23 @@ namespace Calamari.Terraform
 
         class CaptureOutput : ICommandOutput
         {
+            readonly ICommandOutput decorated;
+
+            public CaptureOutput(ICommandOutput decorated)
+            {
+                this.decorated = decorated;
+            }
             public List<string> Infos { get; } = new List<string>();
 
             public void WriteInfo(string line)
             {
                 Infos.Add(line);
+                decorated.WriteInfo(line);
             }
 
             public void WriteError(string line)
             {
+                decorated.WriteError(line);
             }
         }
 
