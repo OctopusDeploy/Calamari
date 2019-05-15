@@ -53,7 +53,7 @@ namespace Calamari.Terraform
 
                 TemplateDirectory = templateDirectoryTemp;
             }
-            
+
             InitializeTerraformEnvironmentVariables();
 
             InitializePlugins();
@@ -85,6 +85,8 @@ namespace Calamari.Terraform
                     Log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
                 }
                 
+                //When terraform crashes, the information would be contained in the crash.log file. We should attach this since
+                //we don't want to blow that information away in case it provides something relevant https://www.terraform.io/docs/internals/debugging.html#interpreting-a-crash-log
                 if (fileSystem.FileExists(crashLogPath))
                 {
                     Log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
