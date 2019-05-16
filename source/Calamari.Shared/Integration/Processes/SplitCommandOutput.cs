@@ -25,4 +25,15 @@ namespace Calamari.Integration.Processes
             foreach (var output in outputs) output.WriteError(line);
         }
     }
+
+    public class IgnoreCommandOutput : ICommandOutput
+    {
+        public void WriteInfo(string line)
+        {
+        }
+
+        public void WriteError(string line)
+        {
+        }
+    }
 }
