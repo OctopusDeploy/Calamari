@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Terraform
@@ -20,7 +21,8 @@ namespace Calamari.Terraform
                     cli.TerraformVariableFiles, cli.ActionParams);
 
                 // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.8
-                if (cli.ExecuteCommand(out var result, "output", "-no-color", "-json").ExitCode != 0)
+                // Please note that we really don't want to log the following command output as it can contain sensitive variables etc. hence the IgnoreCommandOutput()
+                if (cli.ExecuteCommand(out var result, new IgnoreCommandOutput(), "output", "-no-color", "-json").ExitCode != 0)
                 {
                     return;
                 }

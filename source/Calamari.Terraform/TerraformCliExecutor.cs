@@ -76,6 +76,13 @@ namespace Calamari.Terraform
             return commandResult;
         }
 
+        public CommandResult ExecuteCommand(out string result, ICommandOutput output, params string[] arguments)
+        {
+            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result, output);
+
+            return commandResult;
+        }
+
         public void Dispose()
         {
             if (AttachLogFile)
@@ -99,7 +106,7 @@ namespace Calamari.Terraform
             return string.Join(" ", items.Where(_ => !String.IsNullOrEmpty(_)));
         }
 
-        CommandResult ExecuteCommandInternal(string arguments, out string result)
+        CommandResult ExecuteCommandInternal(string arguments, out string result, ICommandOutput output = null)
         {
             var environmentVar = defaultEnvironmentVariables;
             if (environmentVariables != null)
@@ -109,8 +116,8 @@ namespace Calamari.Terraform
 
             var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
                 arguments, TemplateDirectory, environmentVar);
-
-            var commandOutput = new CaptureOutput(new ConsoleCommandOutput());
+            
+            var commandOutput = new CaptureOutput(output ?? new ConsoleCommandOutput());
             var cmd = new CommandLineRunner(commandOutput);
             
             Log.Info(commandLineInvocation.ToString());
