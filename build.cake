@@ -2,6 +2,7 @@
 // TOOLS
 //////////////////////////////////////////////////////////////////////
 #tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0012"
+#addin "nuget:?package=Cake.Incubator&version=5.0.1"
 
 using Path = System.IO.Path;
 using System.Xml;
@@ -220,15 +221,15 @@ private void SignAndTimestampBinaries(string outputDirectory)
 {
     Information($"Signing binaries in {outputDirectory}");
 
-    // check that any unsigned libraries get signed, to play nice with security scanning tools
+    // check that any unsigned libraries, that Octopus Deploy authors, get signed to play nice with security scanning tools
     // refer: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1551655877004400
-    // note: we are signing both dll's we have written & some we haven't, not because we are
-    //       claiming we own them, but rather asserting that they are distributed by us, and
-    //       have not been subsequently altered
-    
+    // decision re: no signing everything: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1557938890227100
      var unsignedExecutablesAndLibraries = 
-         GetFiles(outputDirectory + "/*.exe")
-         .Union(GetFiles(outputDirectory + "/*.dll"))
+         GetFiles(
+            outputDirectory + "/Calamari*.exe",
+            outputDirectory + "/Calamari*.dll",
+            outputDirectory + "/Octo*.exe",
+            outputDirectory + "/Octo*.dll")
          .Where(f => !HasAuthenticodeSignature(f))
          .ToArray();
 
