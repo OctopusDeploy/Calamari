@@ -223,7 +223,7 @@ private void SignAndTimestampBinaries(string outputDirectory)
 
     // check that any unsigned libraries, that Octopus Deploy authors, get signed to play nice with security scanning tools
     // refer: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1551655877004400
-    
+    // decision re: no signing everything: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1557938890227100
      var unsignedExecutablesAndLibraries = 
          GetFiles(
             outputDirectory + "/Calamari*.exe",
