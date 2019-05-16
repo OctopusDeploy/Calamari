@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Aws", "Calamari.Aw
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Shared", "Calamari.Shared\Calamari.Shared.csproj", "{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{F634A32F-D489-4DB0-A238-BE9218C27E39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F634A32F-D489-4DB0-A238-BE9218C27E39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F634A32F-D489-4DB0-A238-BE9218C27E39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F634A32F-D489-4DB0-A238-BE9218C27E39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F634A32F-D489-4DB0-A238-BE9218C27E39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

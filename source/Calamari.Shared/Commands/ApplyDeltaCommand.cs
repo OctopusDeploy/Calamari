@@ -20,7 +20,6 @@ namespace Calamari.Commands
         string newFileName;
         bool showProgress;
         bool skipVerification;
-        private readonly PackageStore packageStore;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public ApplyDeltaCommand()
@@ -34,8 +33,6 @@ namespace Calamari.Commands
                 "Skip checking whether the basis file is the same as the file used to produce the signature that created the delta.",
                 v => skipVerification = true);
 
-            packageStore = new PackageStore(
-                new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(fileSystem));
         }
         public override int Execute(string[] commandLineArguments)
         {
@@ -47,7 +44,7 @@ namespace Calamari.Commands
             try
             {
                 ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
-                fileSystem.EnsureDiskHasEnoughFreeSpace(packageStore.GetPackagesDirectory());
+                fileSystem.EnsureDiskHasEnoughFreeSpace(PackageStore.GetPackagesDirectory());
 
                 var tempNewFilePath = newFilePath + ".partial";
 #if USE_OCTODIFF_EXE
@@ -118,7 +115,7 @@ namespace Calamari.Commands
 
             // Probably dont need to do this since the server appends a guid in the name... maybe it was originall put here in the name of safety?
             var newPackageDetails = PackageName.FromFile(newFileName);
-            newFilePath = Path.Combine(packageStore.GetPackagesDirectory(), PackageName.ToCachedFileName(newPackageDetails.PackageId, newPackageDetails.Version, newPackageDetails.Extension));
+            newFilePath = Path.Combine(PackageStore.GetPackagesDirectory(), PackageName.ToCachedFileName(newPackageDetails.PackageId, newPackageDetails.Version, newPackageDetails.Extension));
             var hash = HashCalculator.Hash(basisFileName);
             if (hash != fileHash)
             {

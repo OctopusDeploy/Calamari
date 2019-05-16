@@ -11,9 +11,9 @@ namespace Calamari.Integration.FileSystem
     {
         private readonly IPackageExtractor packageExtractorFactory;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        readonly string rootDirectory = Path.Combine(TentacleHome, "Files");
+        static readonly string RootDirectory = Path.Combine(TentacleHome, "Files");
 
-        private static string TentacleHome
+        static string TentacleHome
         {
             get
             {
@@ -31,14 +31,14 @@ namespace Calamari.Integration.FileSystem
             this.packageExtractorFactory = packageExtractorFactory;
         }
 
-        public string GetPackagesDirectory()
+        public static string GetPackagesDirectory()
         {
-            return rootDirectory;
+            return RootDirectory;
         }
 
         public PackagePhysicalFileMetadata GetPackage(string packageId, IVersion version, string hash)
         {
-            fileSystem.EnsureDirectoryExists(rootDirectory);
+            fileSystem.EnsureDirectoryExists(RootDirectory);
             foreach (var file in PackageFiles(packageId, version))
             {
                 var packageNameMetadata = PackageMetadata(file);
@@ -60,13 +60,13 @@ namespace Calamari.Integration.FileSystem
 
         private IEnumerable<string> PackageFiles(string packageId, IVersion version = null)
         {
-            return fileSystem.EnumerateFilesRecursively(rootDirectory, 
+            return fileSystem.EnumerateFilesRecursively(RootDirectory, 
                 PackageName.ToSearchPatterns(packageId, version, packageExtractorFactory.Extensions));
         }
 
         public IEnumerable<PackagePhysicalFileMetadata> GetNearestPackages(string packageId, IVersion version, int take = 5)
         {
-            fileSystem.EnsureDirectoryExists(rootDirectory);
+            fileSystem.EnsureDirectoryExists(RootDirectory);
 
             var zipPackages =
                 from filePath in PackageFiles(packageId)

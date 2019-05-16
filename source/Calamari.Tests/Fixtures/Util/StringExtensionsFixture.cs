@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Util
         public void NullValueShouldThrowException()
         {
             Action action = () => "foo".ContainsIgnoreCase(null);
-            action.ShouldThrow<ArgumentNullException>();
+            action.Should().Throw<ArgumentNullException>();
         }
     }
 }

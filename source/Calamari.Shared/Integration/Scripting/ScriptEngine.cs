@@ -15,27 +15,35 @@ namespace Calamari.Integration.Scripting
         {
             var prepared = PrepareExecution(script, variables, environmentVars);
 
-            if (variables.IsSet(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo))
+            CommandResult result = null;
+            foreach (var execution in prepared)
             {
-                CopyWorkingDirectory(variables, prepared.CommandLineInvocation.WorkingDirectory,
-                    prepared.CommandLineInvocation.Arguments);
-            }
-
-            try
-            {
-                return commandLineRunner.Execute(prepared.CommandLineInvocation);
-            }
-            finally
-            {
-                foreach (var temporaryFile in prepared.TemporaryFiles)
+                if (variables.IsSet(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo))
                 {
-                    var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-                    fileSystem.DeleteFile(temporaryFile, FailureOptions.IgnoreFailure);
+                    CopyWorkingDirectory(variables, execution.CommandLineInvocation.WorkingDirectory,
+                        execution.CommandLineInvocation.Arguments);
+                }
+
+                try
+                {
+                    result = commandLineRunner.Execute(execution.CommandLineInvocation);
+                    if (result.ExitCode != 0)
+                        return result;
+                }
+                finally
+                {
+                    foreach (var temporaryFile in execution.TemporaryFiles)
+                    {
+                        var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+                        fileSystem.DeleteFile(temporaryFile, FailureOptions.IgnoreFailure);
+                    }
                 }
             }
+
+            return result;
         }
 
-        protected abstract ScriptExecution PrepareExecution(Script script, CalamariVariableDictionary variables,
+        protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script, CalamariVariableDictionary variables,
             Dictionary<string, string> environmentVars = null);
         
         static void CopyWorkingDirectory(CalamariVariableDictionary variables, string workingDirectory, string arguments)

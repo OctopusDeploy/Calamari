@@ -5,8 +5,6 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
-using Calamari.Integration.Processes;
-using Octopus.Versioning;
 
 namespace Calamari.Java.Deployment.Conventions
 {
@@ -17,11 +15,10 @@ namespace Calamari.Java.Deployment.Conventions
 
         public RePackArchiveConvention(
             ICalamariFileSystem fileSystem,
-            ICommandOutput commandOutput,
-            ICommandLineRunner commandLineRunner)
+            JarTool jarTool)
         {
             this.fileSystem = fileSystem;
-            this.jarTool = new JarTool(commandLineRunner, commandOutput, fileSystem);
+            this.jarTool = jarTool;
         }
 
         public void Install(RunningDeployment deployment)

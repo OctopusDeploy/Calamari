@@ -4,15 +4,16 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment.Features.Java
 {
-    public class WildflyFeature : JavaBaseFeature, IFeature
+    public class WildflyFeature : IFeature
     {
-        public WildflyFeature(ICommandLineRunner commandLineRunner)
-            : base(commandLineRunner)
-        {
+        readonly JavaRunner javaRunner;
 
+        public WildflyFeature(JavaRunner javaRunner)
+        {
+            this.javaRunner = javaRunner;
         }
 
-        public string Name => SpecialVariables.Action.Java.Wildfly.Feature;
+        public string Name => SpecialVariables.Action.Java.WildFly.Feature;
 
         public string DeploymentStage => DeploymentStages.BeforeDeploy; 
 
@@ -22,24 +23,24 @@ namespace Calamari.Deployment.Features.Java
 
             // Octopus.Features.WildflyDeployCLI was set to True previously,
             // but now we rely on the feature being enabled
-            if (!(variables.GetFlag(SpecialVariables.Action.Java.Wildfly.Feature) ||
-                  (variables.Get(SpecialVariables.Package.EnabledFeatures) ?? "").Contains(SpecialVariables.Action.Java.Wildfly.Feature)))
+            if (!(variables.GetFlag(SpecialVariables.Action.Java.WildFly.Feature) ||
+                  (variables.Get(SpecialVariables.Package.EnabledFeatures) ?? "").Contains(SpecialVariables.Action.Java.WildFly.Feature)))
                 return;
 
             // Environment variables are used to pass parameters to the Java library
             Log.Verbose("Invoking java.exe to perform WildFly integration");
-            runJava("com.octopus.calamari.wildfly.WildflyDeploy", new Dictionary<string, string>()
+            javaRunner.Run("com.octopus.calamari.wildfly.WildflyDeploy", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath)},
-                {"OctopusEnvironment_WildFly_Deploy_Name", variables.Get(SpecialVariables.Action.Java.Wildfly.Controller)},
-                {"OctopusEnvironment_WildFly_Deploy_User", variables.Get(SpecialVariables.Action.Java.Wildfly.User)},
-                {"OctopusEnvironment_WildFly_Deploy_Password", variables.Get(SpecialVariables.Action.Java.Wildfly.Password)},
-                {"OctopusEnvironment_WildFly_Deploy_Enabled", variables.Get(SpecialVariables.Action.Java.Wildfly.Enabled)},
-                {"OctopusEnvironment_WildFly_Deploy_Port", variables.Get(SpecialVariables.Action.Java.Wildfly.Port)},
-                {"OctopusEnvironment_WildFly_Deploy_Protocol", variables.Get(SpecialVariables.Action.Java.Wildfly.Protocol)},
-                {"OctopusEnvironment_WildFly_Deploy_EnabledServerGroup", variables.Get(SpecialVariables.Action.Java.Wildfly.EnabledServerGroup)},
-                {"OctopusEnvironment_WildFly_Deploy_DisabledServerGroup", variables.Get(SpecialVariables.Action.Java.Wildfly.DisabledServerGroup)},
-                {"OctopusEnvironment_WildFly_Deploy_ServerType", variables.Get(SpecialVariables.Action.Java.Wildfly.ServerType)}
+                {"OctopusEnvironment_WildFly_Deploy_Name", variables.Get(SpecialVariables.Action.Java.WildFly.Controller)},
+                {"OctopusEnvironment_WildFly_Deploy_User", variables.Get(SpecialVariables.Action.Java.WildFly.User)},
+                {"OctopusEnvironment_WildFly_Deploy_Password", variables.Get(SpecialVariables.Action.Java.WildFly.Password)},
+                {"OctopusEnvironment_WildFly_Deploy_Enabled", variables.Get(SpecialVariables.Action.Java.WildFly.Enabled)},
+                {"OctopusEnvironment_WildFly_Deploy_Port", variables.Get(SpecialVariables.Action.Java.WildFly.Port)},
+                {"OctopusEnvironment_WildFly_Deploy_Protocol", variables.Get(SpecialVariables.Action.Java.WildFly.Protocol)},
+                {"OctopusEnvironment_WildFly_Deploy_EnabledServerGroup", variables.Get(SpecialVariables.Action.Java.WildFly.EnabledServerGroup)},
+                {"OctopusEnvironment_WildFly_Deploy_DisabledServerGroup", variables.Get(SpecialVariables.Action.Java.WildFly.DisabledServerGroup)},
+                {"OctopusEnvironment_WildFly_Deploy_ServerType", variables.Get(SpecialVariables.Action.Java.WildFly.ServerType)}
             });
         }
     }

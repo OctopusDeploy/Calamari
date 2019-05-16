@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
+using Calamari.Util;
+using Octostache;
 
 namespace Calamari.Deployment.Features.Java
 {
@@ -9,34 +12,25 @@ namespace Calamari.Deployment.Features.Java
     /// A base class for features that run Java against the Octopus Deploy 
     /// Java library
     /// </summary>
-    public abstract class JavaBaseFeature
+    public class JavaRunner
     {
-        
-        private readonly ICommandLineRunner commandLineRunner;
-        
-        protected JavaBaseFeature(ICommandLineRunner commandLineRunner)
+        readonly ICommandLineRunner commandLineRunner;
+        readonly VariableDictionary variables;
+
+        public JavaRunner(ICommandLineRunner commandLineRunner, VariableDictionary variables)
         {
             this.commandLineRunner = commandLineRunner;
+            this.variables = variables;
         }
         
         /// <summary>
         /// Execute java running the Octopus Deploy Java library
         /// </summary>
-        protected void runJava(string mainClass, Dictionary<string,string> environmentVariables)
+        public void Run(string mainClass, Dictionary<string,string> environmentVariables)
         {           
-            /*
-                The precondition script will set the OctopusEnvironment_Java_Bin environment variable based
-                on where it found the java executable based on the JAVA_HOME environment
-                variable. If OctopusEnvironment_Java_Bin is empty or null, it means that the precondition
-                found java on the path.
-            */
-            var javaBin = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaBinEnvVar) ?? "";
-            /*
-                The precondition script will also set the location of the calamari.jar file
-            */
-            var javaLib = Environment.GetEnvironmentVariable(SpecialVariables.Action.Java.JavaLibraryEnvVar) ?? "";
+            var javaLib = variables.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar, "");
             var result = commandLineRunner.Execute(new CommandLineInvocation(
-                Path.Combine(javaBin, "java"), 
+                JavaRuntime.CmdPath, 
                 $"-cp calamari.jar {mainClass}",
                 Path.Combine(javaLib, "contentFiles", "any", "any"),
                 environmentVariables));
@@ -44,4 +38,5 @@ namespace Calamari.Deployment.Features.Java
             result.VerifySuccess();
         }
     }
+    
 }

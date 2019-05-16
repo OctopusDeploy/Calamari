@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Certificates
                 {""Identity"": ""#{UserName}"", ""Access"": ""FullControl""}
             ]";
             variables.Set("UserName", "AmericanEagles\\RogerRamjet");
-            variables.Set(SpecialVariables.Action.Certificate.PrivateKeyAccessRules, json);
+            variables.Set(SpecialVariables.Certificate.PrivateKeyAccessRules, json);
 
             var result = ImportCertificateCommand.GetPrivateKeyAccessRules(variables).ToList();
 
