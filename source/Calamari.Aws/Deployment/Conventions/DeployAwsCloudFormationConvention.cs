@@ -152,7 +152,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return WithAmazonServiceExceptionHandling(async () =>
             {
-                var result = await clientFactory.CreateStackAsync(new CreateStackRequest
+                var stackId = await clientFactory.CreateStackAsync(new CreateStackRequest
                     {
                         StackName = stackName,
                         TemplateBody = template.Content,
@@ -162,8 +162,8 @@ namespace Calamari.Aws.Deployment.Conventions
                         RoleARN = roleArnProvider(deployment)
                     });
                     
-                    Log.Info("Created stack with id {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
-                return result;
+                    Log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
+                return stackId;
             });
         }
 
