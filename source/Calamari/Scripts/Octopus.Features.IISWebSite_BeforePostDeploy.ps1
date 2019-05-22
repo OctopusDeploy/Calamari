@@ -436,7 +436,7 @@ if ($deployAsWebSite)
 		$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
 
 		$bindingObj = @{
-			protocol=$binding.protocol;
+			protocol=(($binding.protocol, "http") -ne $null)[0].ToLower();
 			ipAddress=$bindingIpAddress;
 			port=$binding.port;
 			host=$binding.host;
