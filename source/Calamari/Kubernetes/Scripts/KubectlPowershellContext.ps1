@@ -188,7 +188,7 @@ Write-Host "##octopus[stdout-verbose]"
 ConfigureKubeCtlPath
 SetupContext
 CreateNamespace
-if ($K8S_OutputKubeConfig == $true) {
+if ($K8S_OutputKubeConfig -eq $true) {
 	Get-Content $env:KUBECONFIG
 }
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
