@@ -672,6 +672,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", string.Empty);
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", string.Empty);
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", string.Empty);
+            EnvironmentHelper.SetEnvironmentVariable("NO_PROXY", string.Empty);
         }
     }
 }
