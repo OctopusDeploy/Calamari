@@ -62,7 +62,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
-            if(executeWithoutProfile != null)
+            if (executeWithoutProfile != null)
                 variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, executeWithoutProfile);
             variables.Save(variablesFile);
 
@@ -87,7 +87,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
             var (output, _) = RunScript("Profile.ps1", new Dictionary<string, string>()
-                {[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile] = "true"});
+            { [SpecialVariables.Action.PowerShell.ExecuteWithoutProfile] = "true" });
 
             output.AssertSuccess();
             output.AssertOutput("-NoProfile");
@@ -137,7 +137,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
 
             var (output, _) = RunScript("HelloWithVariable.ps1", new Dictionary<string, string>()
-                {["Name"] = "NameToEncrypt"}, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+            { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
@@ -148,17 +148,17 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
             var outputVariablesFile = Path.GetTempFileName();
-            
-            var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" } ;
+
+            var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" };
             var serialized = JsonConvert.SerializeObject(variables);
             var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
             var encoded = Convert.ToBase64String(bytes);
             File.WriteAllText(outputVariablesFile, encoded);
-            
+
             using (new TemporaryFile(outputVariablesFile))
             {
                 var (output, _) = RunScript("OutputVariableFromPrevious.ps1", null,
-                    new Dictionary<string, string>() {["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg=="});
+                    new Dictionary<string, string>() { ["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg==" });
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello Steve");
@@ -343,7 +343,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldShowFriendlyErrorWithInvalidSyntaxInScriptModule()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
-                {["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }"});
+            { ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }" });
 
             output.AssertFailure();
             output.AssertOutput("Failed to import Script Module 'Foo'");
@@ -356,7 +356,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldFailIfAModuleHasASyntaxError()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
-                {["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }"});
+            { ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }" });
 
             output.AssertFailure();
             output.AssertErrorOutput("ParserError", true);
@@ -464,7 +464,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
-                {["Octopus.Action.FailScriptOnErrorOutput"] = "True"});
+            { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
 
             output.AssertFailure();
             output.AssertErrorOutput("error");
@@ -475,7 +475,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldPassOnStdInfoWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("Hello.ps1", new Dictionary<string, string>()
-                {["Octopus.Action.FailScriptOnErrorOutput"] = "True"});
+            { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
@@ -486,7 +486,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldNotDoubleReplaceVariables()
         {
             var (output, _) = RunScript("DontDoubleReplace.ps1", new Dictionary<string, string>()
-                { ["Octopus.Machine.Name"] = "Foo" });
+            { ["Octopus.Machine.Name"] = "Foo" });
 
             output.AssertSuccess();
             output.AssertOutput("The  Octopus variable for machine name is #{Octopus.Machine.Name}");
@@ -533,6 +533,23 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertSuccess();
                 output.AssertOutput(CalamariEnvironment.IsRunningOnWindows ? "Hello Powershell" : "Hello Bash");
             }
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ProxyNotSet_ShouldNotSetEnvironmentVariables()
+        {
+            ResetProxyEnvironmentVariables();
+
+            EnvironmentHelper.SetEnvironmentVariable("TentacleUseDefaultProxy", false.ToString());
+            EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", "");
+
+            var (output, _) = RunScript("Proxy.ps1");
+
+            output.AssertSuccess();
+            output.AssertNoOutput($"Setting Proxy Environment Variables");
+            output.AssertOutputContains($"HTTP_PROXY: ");
+            output.AssertOutputContains($"HTTPS_PROXY: ");
         }
 
         [Test]
@@ -587,8 +604,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var httpsProxy = "http://proxy2:port";
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", proxyHost);
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", proxyPort);
-            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", httpProxy );
-            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", httpsProxy );
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", httpProxy);
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", httpsProxy);
 
             var (output, _) = RunScript("Proxy.ps1");
 
@@ -650,12 +667,11 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         private void ResetProxyEnvironmentVariables()
         {
+            EnvironmentHelper.SetEnvironmentVariable("TentacleUseDefaultProxy", string.Empty);
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", string.Empty);
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPort", string.Empty);
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyUsername", string.Empty);
             EnvironmentHelper.SetEnvironmentVariable("TentacleProxyPassword", string.Empty);
-            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", string.Empty);
-            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", string.Empty);
         }
     }
 }
