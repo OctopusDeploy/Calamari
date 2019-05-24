@@ -23,7 +23,7 @@ namespace Calamari.Integration.Scripting.Python
             var dependencyInstallerArguments = PythonBootstrapper.FormatCommandArguments(dependencyInstallerFile, string.Empty);
 
             yield return new ScriptExecution(
-                new CommandLineInvocation(executable, dependencyInstallerArguments, workingDirectory, environmentVars),
+                new CommandLineInvocation(executable, dependencyInstallerArguments, workingDirectory, environmentVars, isolate: true),
                 new [] { dependencyInstallerFile});
 
             var configurationFile = PythonBootstrapper.PrepareConfigurationFile(workingDirectory, variables);

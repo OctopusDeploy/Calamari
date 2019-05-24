@@ -8,11 +8,12 @@ namespace Calamari.Integration.Processes
     {
         readonly string workingDirectory;
 
-        public CommandLineInvocation(string executable, string arguments, Dictionary<string, string> environmentVars = null)
+        public CommandLineInvocation(string executable, string arguments, Dictionary<string, string> environmentVars = null, bool isolate = false)
         {
             Executable = executable;
             Arguments = arguments;
             EnvironmentVars = environmentVars;
+            Isolate = isolate;
         }
 
         public CommandLineInvocation(
@@ -21,8 +22,9 @@ namespace Calamari.Integration.Processes
             string workingDirectory, 
             Dictionary<string, string> environmentVars = null, 
             string userName = null, 
-            SecureString password = null)
-            : this(executable, arguments, environmentVars)
+            SecureString password = null,
+            bool isolate = false)
+            : this(executable, arguments, environmentVars, isolate)
         {
             this.workingDirectory = workingDirectory;
             UserName = userName;
@@ -38,6 +40,7 @@ namespace Calamari.Integration.Processes
         public SecureString Password { get; }
         
         public Dictionary<string, string> EnvironmentVars { get; }
+        public bool Isolate { get; }
 
         /// <summary>
         /// The initial working-directory for the invocation.
