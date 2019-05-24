@@ -29,7 +29,7 @@ namespace Calamari.Integration.Scripting
                 {
                     if (execution.CommandLineInvocation.Isolate)
                     {
-                        using (var syncMutex = new Mutex(true, "PythonSynchronizeInitialization",
+                        using (var syncMutex = new Mutex(true, "CalamariSynchronizeProcess",
                             out var mutexWasCreated))
                         {
                             if (!mutexWasCreated)
