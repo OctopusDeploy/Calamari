@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -26,7 +27,25 @@ namespace Calamari.Integration.Scripting
 
                 try
                 {
-                    result = commandLineRunner.Execute(execution.CommandLineInvocation);
+                    if (execution.CommandLineInvocation.Isolate)
+                    {
+                        using (var syncMutex = new Mutex(true, "PythonSynchronizeInitialization",
+                            out var mutexWasCreated))
+                        {
+                            if (!mutexWasCreated)
+                            {
+                                syncMutex.WaitOne();
+                                continue;
+                            }
+
+                            result = commandLineRunner.Execute(execution.CommandLineInvocation);
+                        }
+                    }
+                    else
+                    {
+                        result = commandLineRunner.Execute(execution.CommandLineInvocation);
+                    }
+
                     if (result.ExitCode != 0)
                         return result;
                 }
