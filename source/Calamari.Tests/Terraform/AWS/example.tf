@@ -11,15 +11,15 @@ variable "bucket_name" {
 resource "aws_s3_bucket" "mybucket" {
   bucket = "${var.bucket_name}"
   acl    = "private"
+  tags = {
+      Name        = "My bucket"
+      Environment = "Dev"
+  }
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET","PUT","HEAD","DELETE","POST"]
     allowed_origins = ["*"]
     max_age_seconds = 3000
-  }
-  tags {
-    Name        = "My bucket"
-    Environment = "Dev"
   }
 }
 
