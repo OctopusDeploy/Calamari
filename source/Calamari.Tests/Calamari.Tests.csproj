@@ -207,6 +207,9 @@
     <None Update="Terraform\WithVariables\example.tf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Terraform\AdditionalParams\example.tf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Fixtures\Nginx\Approved" />
@@ -218,7 +221,7 @@
     Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we 
     define a new empty target if it's not already defined to keep it happy.
   -->
-  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''"/>
+  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />

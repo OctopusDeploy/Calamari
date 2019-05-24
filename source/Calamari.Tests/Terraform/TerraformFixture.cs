@@ -140,7 +140,7 @@ namespace Calamari.Tests.Terraform
             ExecuteAndReturnLogOutput(commandType, _ =>
                 {
                     _.Set(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams, "-var my_var=\"Hello world\"");
-                }, "Simple")
+                }, "AdditionalParams")
                 .Should().Contain(expected);
         }
 
