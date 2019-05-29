@@ -7,6 +7,7 @@
         public const string EksClusterName = "Octopus.Action.Kubernetes.EksClusterName";
         public const string Namespace = "Octopus.Action.Kubernetes.Namespace";
         public const string SkipTlsVerification = "Octopus.Action.Kubernetes.SkipTlsVerification";
+        public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
 
         public static class Helm
         {
@@ -20,7 +21,7 @@
             public const string Timeout = "Octopus.Action.Helm.Timeout";
             public const string TillerNamespace = "Octopus.Action.Helm.TillerNamespace";
             public const string TillerTimeout = "Octopus.Action.Helm.TillerTimeout";
-            
+
             public static class Packages
             {
                 public const string CustomHelmExePackageKey = "HelmExe";
