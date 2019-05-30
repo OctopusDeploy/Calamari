@@ -53,8 +53,10 @@ namespace Calamari.Commands
             Log.Info("Deploying package:    " + packageFile);
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            Log.Verbose("Building Variables");
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            Log.Verbose("Built Variables");
 
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);

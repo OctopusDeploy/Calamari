@@ -55,6 +55,7 @@ namespace Calamari.Deployment
         {
             foreach (var convention in conventions.OfType<IInstallConvention>())
             {
+                Log.Verbose("Running convention: " + convention.GetType().Name);
                 convention.Install(deployment);
 
                 if (deployment.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
@@ -68,6 +69,7 @@ namespace Calamari.Deployment
         {
             foreach (var convention in conventions.OfType<IRollbackConvention>())
             {
+                Log.Verbose("Running convention: " + convention.GetType().Name);
                 convention.Rollback(deployment);
             }
         }
@@ -80,6 +82,7 @@ namespace Calamari.Deployment
                 {
                     break;
                 }
+                Log.Verbose("Running convention: " + convention.GetType().Name);
 
                 convention.Cleanup(deployment);
             }
