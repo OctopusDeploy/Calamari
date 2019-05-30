@@ -20,7 +20,8 @@ function GetKubectl() {
 $K8S_ClusterUrl=$OctopusParameters["Octopus.Action.Kubernetes.ClusterUrl"]
 $K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
 $K8S_SkipTlsVerification=$OctopusParameters["Octopus.Action.Kubernetes.SkipTlsVerification"]
-$K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]	
+$K8S_OutputKubeConfig=$OctopusParameters["Octopus.Action.Kubernetes.OutputKubeConfig"]
+$K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]
 $K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
 $K8S_Client_Cert = $OctopusParameters["Octopus.Action.Kubernetes.ClientCertificate"]
 $K8S_Client_Cert_Pem = $OctopusParameters["$($K8S_Client_Cert).CertificatePem"]
@@ -29,7 +30,7 @@ $K8S_Server_Cert = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuth
 $K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
 $Kubectl_Exe=GetKubectl
 
-function SetupContext {	
+function SetupContext {
 	if($K8S_AccountType -ne "AzureServicePrincipal" -and [string]::IsNullOrEmpty($K8S_ClusterUrl)){
 		Write-Error "Kubernetes cluster URL is missing"
 		Exit 1
@@ -49,6 +50,10 @@ function SetupContext {
         $K8S_SkipTlsVerification = $false;
     }
 
+	if([string]::IsNullOrEmpty($K8S_OutputKubeConfig)) {
+		$K8S_OutputKubeConfig = $false;
+	}
+
 	if ((Get-Command $Kubectl_Exe -ErrorAction SilentlyContinue) -eq $null) {
 		Write-Error "Could not find $Kubectl_Exe. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information."
 		Exit 1
@@ -56,7 +61,7 @@ function SetupContext {
 
 	# When using an Azure account, use the az command line tool to build the
 	# kubeconfig file.
-	if($K8S_AccountType -eq "AzureServicePrincipal") {		
+	if($K8S_AccountType -eq "AzureServicePrincipal") {
 		$K8S_Azure_Resource_Group=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterResourceGroup"]
 		$K8S_Azure_Cluster=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterName"]
 		Write-Host "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $K8S_Namespace) using a AzureServicePrincipal"
@@ -120,7 +125,7 @@ function SetupContext {
 			# so build this manually
 			$K8S_ClusterName=$OctopusParameters["Octopus.Action.Kubernetes.EksClusterName"]
 			Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using EKS cluster name $K8S_ClusterName"
-		
+
 			# The call to set-cluster above will create a file with empty users. We need to call
 			# set-cluster first, because if we try to add the exec user first, set-cluster will
 			# delete those settings. So we now delete the users line (the last line of the yaml file)
@@ -138,13 +143,13 @@ function SetupContext {
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "      args:`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"token`"`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"-i`"`n"
-			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"$K8S_ClusterName`""        
-		}	
+			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"$K8S_ClusterName`""
+		}
 		elseif ([string]::IsNullOrEmpty($K8S_Client_Cert)) {
 
 			Write-Error "Account Type $K8S_AccountType is currently not valid for kubectl contexts"
 			Exit 1
-		}  
+		}
 	}
 }
 
@@ -155,7 +160,7 @@ function ConfigureKubeCtlPath {
 
 function CreateNamespace {
 	if (-not [string]::IsNullOrEmpty($K8S_Namespace)) {
-		
+
 		try
 		{
 			# We need to continue if "kubectl get namespace" fails
@@ -183,8 +188,10 @@ Write-Host "##octopus[stdout-verbose]"
 ConfigureKubeCtlPath
 SetupContext
 CreateNamespace
-echo "##octopus[stdout-verbose]"
-Get-Content $env:KUBECONFIG
+if ($K8S_OutputKubeConfig -eq $true) {
+	echo "##octopus[stdout-verbose]"
+	Get-Content $env:KUBECONFIG
+}
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 echo "##octopus[stdout-default]"
 

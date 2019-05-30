@@ -3,6 +3,7 @@
 Octopus_K8S_ClusterUrl=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterUrl")
 Octopus_K8S_Namespace=$(get_octopusvariable "Octopus.Action.Kubernetes.Namespace")
 Octopus_K8S_SkipTlsVerification=$(get_octopusvariable "Octopus.Action.Kubernetes.SkipTlsVerification")
+Octopus_K8S_OutputKubeConfig=$(get_octopusvariable "Octopus.Action.Kubernetes.OutputKubeConfig")
 Octopus_AccountType=$(get_octopusvariable "Octopus.Account.AccountType")
 Octopus_K8S_KubectlExe=$(get_octopusvariable "Octopus.Action.Kubernetes.CustomKubectlExecutable")
 Octopus_K8S_Client_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.ClientCertificate")
@@ -48,6 +49,10 @@ function setup_context {
 
   if [[ -z $Octopus_K8S_SkipTlsVerification ]]; then
     Octopus_K8S_SkipTlsVerification=true
+  fi
+
+  if [[ -z $Octopus_K8S_OutputKubeConfig ]]; then
+	Octopus_K8S_OutputKubeConfig=false
   fi
 
   kubectl version --client=true
@@ -111,7 +116,7 @@ function setup_context {
 		# so build this manually
 		Octopus_K8S_ClusterName=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterName")
         echo "Creating kubectl context to $K8S_ClusterUrl using EKS cluster name $K8S_ClusterName"
-		
+
 		# The call to set-cluster above will create a file with empty users. We need to call
 		# set-cluster first, because if we try to add the exec user first, set-cluster will
 		# delete those settings. So we now delete the users line (the last line of the yaml file)
@@ -143,13 +148,13 @@ function configure_kubectl_path {
 
 function create_namespace {
 	if [[ -n "$Octopus_K8S_Namespace" ]]; then
-		kubectl get namespace $Octopus_K8S_Namespace > /dev/null 2>&1 
+		kubectl get namespace $Octopus_K8S_Namespace > /dev/null 2>&1
 		if [[ $? -ne 0 ]]; then
 			echo "##octopus[stdout-default]"
 			kubectl create namespace $Octopus_K8S_Namespace
 			echo "##octopus[stdout-verbose]"
 		fi
-		
+
 	fi
 }
 
@@ -159,8 +164,10 @@ get_kubectl
 configure_kubectl_path
 setup_context
 create_namespace
-echo "##octopus[stdout-verbose]"
-cat $KUBECONFIG
+if [[ "$Octopus_K8S_OutputKubeConfig" = true ]]; then
+	echo "##octopus[stdout-verbose]"
+	cat $KUBECONFIG
+fi
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
 echo "##octopus[stdout-default]"
 
