@@ -122,7 +122,7 @@ namespace Calamari
             //https://central.sonatype.org/articles/2018/May/04/discontinue-support-for-tlsv11-and-below/
 
             var securityProcotolTypes =
-#if !NETCOREAPP2_0
+#if !NETCOREAPP2_2
                 SecurityProtocolType.Ssl3 |
 #endif
                 SecurityProtocolType.Tls;
