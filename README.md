@@ -1,5 +1,5 @@
 Calamari is the command-line tool invoked by Tentacle during a deployment. It knows how to extract and install NuGet packages, run the Deploy.ps1 etc. conventions, modify configuration files, and all the other things that happen during an deployment.
-
+ 
 ## Building
 
 You will need the .NET Core SDK `1.0.0-preview2-003133`, downloadable from https://github.com/dotnet/core/blob/master/release-notes/download-archives/1.0.1-preview2-download.md
