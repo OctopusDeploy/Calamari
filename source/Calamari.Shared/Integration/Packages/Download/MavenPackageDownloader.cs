@@ -204,7 +204,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
 
-            var errors = new ConcurrentDictionary<string, string>();
+            var errors = new ConcurrentBag<string>();
             var fileChecks = JarExtractor.EXTENSIONS
                 .Union(AdditionalExtensions)
                 .AsParallel()
@@ -213,7 +213,7 @@ namespace Calamari.Integration.Packages.Download
                     var packageId = new MavenPackageID(mavenPackageId.Group, mavenPackageId.Artifact,
                         mavenPackageId.Version, Regex.Replace(extension, "^\\.", ""));
                     var result = MavenPackageExists(packageId, feedUri, feedCredentials, snapshotMetadata);
-                    errors[result.ErrorMsg] = result.ErrorMsg;
+                    errors.Add(result.ErrorMsg);
                     return new
                     {
                         result.Found,
@@ -228,7 +228,7 @@ namespace Calamari.Integration.Packages.Download
                 return firstFound.MavenPackageId;
             }
 
-            throw new MavenDownloadException($"Failed to find the Maven artifact.\r\nReceived Error(s):\r\n{string.Join("\r\n", errors.Values.ToList())}");
+            throw new MavenDownloadException($"Failed to find the Maven artifact.\r\nReceived Error(s):\r\n{string.Join("\r\n", errors.Distinct().ToList())}");
         }
 
         /// <summary>
