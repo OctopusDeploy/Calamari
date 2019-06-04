@@ -224,6 +224,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         [TestCase("foo.bar.config => Foo.Config", "foo.config", "foo.bar.config")]
         public void CaseSensitiveOnNix(string pattern, string from, string to)
         {
+            if (!CalamariEnvironment.IsRunningOnNix)
+                Assert.Ignore("This test is designed to run on *nix");
+
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, pattern);
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
