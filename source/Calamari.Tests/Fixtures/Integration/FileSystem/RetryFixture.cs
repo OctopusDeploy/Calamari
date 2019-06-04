@@ -1,5 +1,6 @@
 ﻿using System;
 using Calamari.Integration.Retry;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
@@ -44,6 +45,41 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             Assert.NotNull(caught);
             Assert.AreEqual(retries, retried);
+        }
+
+        [Test]
+        public void ShouldTryOnceAfterMaxIsReachedAndResetting()
+        {
+            var cnt = 0;
+            var subject = new RetryTracker(20, null, new LinearRetryInterval(TimeSpan.Zero));
+            while (subject.Try())
+                cnt++;
+
+            cnt.Should().Be(21);
+            
+            subject.Reset();
+
+            cnt = 0;
+            while (subject.Try())
+                cnt++;
+
+            cnt.Should().Be(1);
+        }
+        
+        [Test]
+        public void ShouldTryToLimitAfterMaxIsNotReachedAndResetting()
+        {
+            var cnt = 0;
+            var subject = new RetryTracker(20, null, new LinearRetryInterval(TimeSpan.Zero));
+            subject.Try();
+            
+            subject.Reset();
+
+            cnt = 0;
+            while (subject.Try())
+                cnt++;
+
+            cnt.Should().Be(21);
         }
     }
 }

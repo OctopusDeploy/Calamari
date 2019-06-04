@@ -42,7 +42,7 @@ namespace Calamari.Integration.FileSystem
         protected static RetryTracker GetRetryTracker()
         {
             return new RetryTracker(maxRetries:10000, 
-                timeLimit: TimeSpan.FromMinutes(1), 
+                timeLimit: TimeSpan.FromMinutes(0.2), 
                 retryInterval: RetryIntervalForFileOperations);
         }
 
@@ -68,20 +68,19 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        public void DeleteFile(string path)
-        {
-            DeleteFile(path, FailureOptions.ThrowOnFailure);
-        }
 
-        public virtual void DeleteFile(string path, FailureOptions options)
+        public virtual void DeleteFile(string path, FailureOptions options = FailureOptions.ThrowOnFailure, RetryTracker retry = null, CancellationToken? cancel = null)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
+            
+            retry = retry ?? GetRetryTracker();
+            cancel = cancel ?? CancellationToken.None;
 
-            var retry = GetRetryTracker();
-
+            retry.Reset();
             while (retry.Try())
             {
+                cancel.Value.ThrowIfCancellationRequested();
                 try
                 {
                     if (File.Exists(path))
@@ -401,7 +400,7 @@ namespace Calamari.Integration.FileSystem
             PurgeDirectory(targetDirectory, check, options, CancellationToken.None);
         }
 
-        void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options, CancellationToken cancel, bool includeTarget = false)
+        void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options, CancellationToken cancel, bool includeTarget = false, RetryTracker retry = null)
         {
             exclude = exclude?? (fi => false);
 
@@ -409,6 +408,8 @@ namespace Calamari.Integration.FileSystem
             {
                 return;
             }
+
+            retry = retry ?? GetRetryTracker();
 
             foreach (var file in EnumerateFiles(targetDirectory))
             {
@@ -420,7 +421,7 @@ namespace Calamari.Integration.FileSystem
                     continue;
                 }
 
-                DeleteFile(file, options);
+                DeleteFile(file, options, retry, cancel);
             }
 
             foreach (var directory in EnumerateDirectories(targetDirectory))
@@ -440,7 +441,7 @@ namespace Calamari.Integration.FileSystem
                 }
                 else
                 {
-                    PurgeDirectory(directory, exclude, options, cancel, includeTarget: true);
+                    PurgeDirectory(directory, exclude, options, cancel, true, retry);
                 }
             }
 
