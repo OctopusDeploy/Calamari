@@ -219,7 +219,6 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         [Test]
         [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
         [TestCase("bar.blah => *.Bar.Blah", "xyz.bar.blah", "bar.blah")]
         [TestCase("*.Bar.Blah => bar.blah", "bar.blah", "xyz.bar.blah")]
         [TestCase("foo.bar.config => Foo.Config", "foo.config", "foo.bar.config")]
