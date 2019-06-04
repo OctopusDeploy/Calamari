@@ -125,18 +125,18 @@ Task("Pack")
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
-    DoPackage("Calamari", "netcoreapp2.0", nugetVersion, "portable");
+    DoPackage("Calamari", "netcoreapp2.2", nugetVersion, "portable");
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
-        DoPackage("Calamari", "netcoreapp2.0", nugetVersion, rid);
+        DoPackage("Calamari", "netcoreapp2.2", nugetVersion, rid);
     }
 	
 	// Create a Zip for each runtime for testing
 	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
     {
-		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp2.0", nugetVersion, rid);
+		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp2.2", nugetVersion, rid);
 		var zipName = $"Calamari.Tests.netcoreapp2.{rid}.{nugetVersion}.zip";
 		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }

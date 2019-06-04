@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -205,7 +204,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
 
-            var errors = new HashSet<string>();
+            var errors = new ConcurrentBag<string>();
             var fileChecks = JarExtractor.EXTENSIONS
                 .Union(AdditionalExtensions)
                 .AsParallel()
@@ -229,7 +228,7 @@ namespace Calamari.Integration.Packages.Download
                 return firstFound.MavenPackageId;
             }
 
-            throw new MavenDownloadException($"Failed to find the Maven artifact.\r\nRecieved Error(s):\r\n{string.Join("\r\n", errors.ToList())}");
+            throw new MavenDownloadException($"Failed to find the Maven artifact.\r\nReceived Error(s):\r\n{string.Join("\r\n", errors.Distinct().ToList())}");
         }
 
         /// <summary>

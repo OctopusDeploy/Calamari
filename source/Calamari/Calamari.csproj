@@ -18,13 +18,13 @@
     <Product>Calamari</Product>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
-    <TargetFrameworks>netcoreapp2.0;net452;net40</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.2;net452;net40</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">
     <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
   </PropertyGroup>
   <!--
@@ -36,7 +36,7 @@
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">
     <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
@@ -69,7 +69,7 @@
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2' OR '$(TargetFramework)' == 'net452' ">
     <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
