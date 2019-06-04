@@ -39,10 +39,10 @@ namespace Calamari.Integration.FileSystem
         /// Windows services can hang on to files for ~30s after the service has stopped as background
         /// threads shutdown or are killed for not shutting down in a timely fashion
         /// </remarks>
-        protected static RetryTracker GetRetryTracker()
+        protected static RetryTracker GetFileOperationRetryTracker()
         {
             return new RetryTracker(maxRetries:10000, 
-                timeLimit: TimeSpan.FromMinutes(0.2), 
+                timeLimit: TimeSpan.FromMinutes(1), 
                 retryInterval: RetryIntervalForFileOperations);
         }
 
@@ -74,7 +74,7 @@ namespace Calamari.Integration.FileSystem
             if (string.IsNullOrWhiteSpace(path))
                 return;
             
-            retry = retry ?? GetRetryTracker();
+            retry = retry ?? GetFileOperationRetryTracker();
             cancel = cancel ?? CancellationToken.None;
 
             retry.Reset();
@@ -124,7 +124,7 @@ namespace Calamari.Integration.FileSystem
             if (string.IsNullOrWhiteSpace(path))
                 return;
 
-            var retry = GetRetryTracker();
+            var retry = GetFileOperationRetryTracker();
             while (retry.Try())
             {
                 try
@@ -161,7 +161,7 @@ namespace Calamari.Integration.FileSystem
 
         void EnsureDirectoryDeleted(string path, FailureOptions failureOptions)
         {
-            var retry = GetRetryTracker(); 
+            var retry = GetFileOperationRetryTracker(); 
 
             while (retry.Try())
             {
@@ -409,7 +409,7 @@ namespace Calamari.Integration.FileSystem
                 return;
             }
 
-            retry = retry ?? GetRetryTracker();
+            retry = retry ?? GetFileOperationRetryTracker();
 
             foreach (var file in EnumerateFiles(targetDirectory))
             {
@@ -546,7 +546,7 @@ namespace Calamari.Integration.FileSystem
 
         private static void RetryTrackerFileAction(Action fileAction, string target, string action)
         {
-            var retry = GetRetryTracker();
+            var retry = GetFileOperationRetryTracker();
             while (retry.Try())
             {
                 try
