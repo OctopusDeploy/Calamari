@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using Calamari.Integration.Retry;
 
 namespace Calamari.Integration.FileSystem
 {
@@ -11,8 +12,7 @@ namespace Calamari.Integration.FileSystem
         bool FileExists(string path);
         bool DirectoryExists(string path);
         bool DirectoryIsEmpty(string path);
-        void DeleteFile(string path);
-        void DeleteFile(string path, FailureOptions options);
+        void DeleteFile(string path, FailureOptions options = FailureOptions.ThrowOnFailure, RetryTracker retry = null, CancellationToken? cancel = null);
         void DeleteDirectory(string path);
         void DeleteDirectory(string path, FailureOptions options);
         IEnumerable<string> EnumerateDirectories(string parentDirectoryPath);

@@ -22,11 +22,11 @@ namespace Calamari.Integration.Retry
             this.multiplier = multiplier;
         }
 
-        public override int GetInterval(int retryCount)
+        public override TimeSpan GetInterval(int retryCount)
         {
             double delayTime = retryInterval * Math.Pow(multiplier, retryCount);
-            if (delayTime > maxInterval) return maxInterval;
-            return (int)delayTime;
+            if (delayTime > maxInterval) return TimeSpan.FromMilliseconds(maxInterval);
+            return TimeSpan.FromMilliseconds((int) delayTime);
         }
     }
 }

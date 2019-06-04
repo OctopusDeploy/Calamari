@@ -14,9 +14,9 @@ namespace Calamari.Integration.Retry
             this.retryInterval = retryInterval;
         }
 
-        public override int GetInterval(int retryCount)
+        public override TimeSpan GetInterval(int retryCount)
         {
-            return (int)retryInterval.TotalMilliseconds * retryCount;
+            return TimeSpan.FromMilliseconds((int) retryInterval.TotalMilliseconds * retryCount);
         }
     }
 }

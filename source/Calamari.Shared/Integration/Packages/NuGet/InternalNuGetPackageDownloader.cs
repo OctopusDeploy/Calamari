@@ -65,7 +65,7 @@ namespace Calamari.Integration.Packages.NuGet
 
                     if (retry.CanRetry())
                     {
-                        var wait = TimeSpan.FromMilliseconds(retry.Sleep());
+                        var wait = retry.Sleep();
                         Log.Verbose($"Going to wait {wait.TotalSeconds}s before attempting the download from the external feed again.");
                         Thread.Sleep(wait);
                     }

@@ -25,17 +25,19 @@ namespace Calamari.Integration.Retry
     {
         readonly int? maxRetries;
         readonly TimeSpan? timeLimit;
-        readonly Lazy<Stopwatch> stopWatch = new Lazy<Stopwatch>(Stopwatch.StartNew);
+        readonly Stopwatch stopWatch = new Stopwatch();
         readonly RetryInterval retryInterval;
 
         public bool ThrowOnFailure { get; private set; }
 
         int currentTry = 0;
+        bool shortCircuit;
         TimeSpan lastTry = TimeSpan.Zero;
+        TimeSpan nextWarning = TimeSpan.Zero;
 
         public int CurrentTry { get { return currentTry; } }
 
-        public TimeSpan TotalElapsed => stopWatch.Value.Elapsed;
+        public TimeSpan TotalElapsed => stopWatch.Elapsed;
 
         public RetryTracker(int? maxRetries, TimeSpan? timeLimit, RetryInterval retryInterval, bool throwOnFailure = true)
         {
@@ -48,37 +50,49 @@ namespace Calamari.Integration.Retry
 
         public bool Try()
         {
+            stopWatch.Start();
             var canRetry = CanRetry();
             currentTry++;
-            lastTry = stopWatch.Value.Elapsed;
+            lastTry = stopWatch.Elapsed;
             return canRetry;
         }
 
-        public int Sleep()
+        public TimeSpan Sleep()
         {
             return retryInterval.GetInterval(currentTry);
         }
 
         public bool CanRetry()
         {
-            bool noRetry = (maxRetries.HasValue && currentTry > maxRetries.Value) ||
-                (timeLimit != null && lastTry.TotalMilliseconds + retryInterval.GetInterval(currentTry) > timeLimit.Value.TotalMilliseconds);
+            bool noRetry = (shortCircuit && currentTry > 0) ||
+                           (maxRetries.HasValue && currentTry > maxRetries.Value) ||
+                           (timeLimit.HasValue && (lastTry + retryInterval.GetInterval(currentTry)) > timeLimit.Value);
             return !noRetry;
         }
 
-        TimeSpan nextWarning = TimeSpan.Zero;
         public bool ShouldLogWarning()
         {
-            var warn = currentTry < 5 || (stopWatch.Value.Elapsed > nextWarning);
+            var warn = currentTry < 5 || (stopWatch.Elapsed > nextWarning);
             if (warn)
             {
-                nextWarning = stopWatch.Value.Elapsed.Add(TimeSpan.FromSeconds(10));
+                nextWarning = stopWatch.Elapsed.Add(TimeSpan.FromSeconds(10));
             }
             return warn;
         }
 
-        public bool IsFirstAttempt { get { return currentTry == 1; } }
-        public bool IsSecondAttempt { get { return currentTry == 2; } }
-        public bool IsNotFirstAttempt { get { return currentTry != 1; } }
+        public bool IsNotFirstAttempt => currentTry != 1;
+
+        /// <summary>
+        /// Resets the tracker to start from the start. Sets the ShortCircuit flag if the maximums were reached.
+        /// DO NOT call from within a RetryTacker.Try loop as otherwise it will never finish
+        /// </summary>
+        public void Reset()
+        {
+            if (!CanRetry())
+                shortCircuit = true;
+
+            stopWatch.Reset();
+            currentTry = 0;
+        }
     }
 }

@@ -135,7 +135,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
                         if (retry.ShouldLogWarning())
                         {
                             Log.Warn(
-                                $"Azure Site query failed to return the resource group, trying again in {retry.Sleep()} ms.");
+                                $"Azure Site query failed to return the resource group, trying again in {retry.Sleep().TotalMilliseconds:n0} ms.");
                         }
 
                         matchingSite = null;
