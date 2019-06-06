@@ -1,10 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Processes.Semaphores;
 
 namespace Calamari.Integration.Scripting
 {
@@ -30,31 +29,10 @@ namespace Calamari.Integration.Scripting
                 {
                     if (execution.CommandLineInvocation.Isolate)
                     {
-                        using (var syncMutex = new Mutex(true, "CalamariSynchronizeProcess",
-                            out var mutexWasCreated))
-                        {
-                            try
-                            {
-                                if (!mutexWasCreated)
-                                {
-                                    try
-                                    {
-                                        syncMutex.WaitOne();
-                                    }
-                                    catch (AbandonedMutexException)
-                                    {
-                                        // We are now the owners of the mutex
-                                        // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                                        // The state of the mutex is set to signaled and the next waiting thread gets ownership.
-                                    }
-                                }
-
-                                result = commandLineRunner.Execute(execution.CommandLineInvocation);
-                            }
-                            finally
-                            {
-                                syncMutex.ReleaseMutex();
-                            }
+                        using (SemaphoreFactory.Get().Acquire("CalamariSynchronizeProcess",
+                            "Waiting for other process to finish executing script"))
+                        { 
+                            result = commandLineRunner.Execute(execution.CommandLineInvocation);
                         }
                     }
                     else
