@@ -42,10 +42,19 @@ namespace Calamari.Integration.Processes.Semaphores
                 semaphore = new Semaphore(1, 1, globalName);
             }
 
-            if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
+            try
             {
-                log.Verbose(waitMessage);
-                semaphore.WaitOne();
+                if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
+                {
+                    log.Verbose(waitMessage);
+                    semaphore.WaitOne();
+                }
+            }
+            catch (AbandonedMutexException)
+            {
+                // We are now the owners of the mutex
+                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
+                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
             }
 
             return new Releaser(() =>
