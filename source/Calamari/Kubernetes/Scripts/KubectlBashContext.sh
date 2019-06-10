@@ -165,7 +165,7 @@ configure_kubectl_path
 setup_context
 create_namespace
 if [[ "$Octopus_K8S_OutputKubeConfig" = true ]]; then
-    cat $KUBECONFIG
+    kubectl config view
 fi
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
 echo "##octopus[stdout-default]"
