@@ -20,6 +20,7 @@ function GetKubectl() {
 $K8S_ClusterUrl=$OctopusParameters["Octopus.Action.Kubernetes.ClusterUrl"]
 $K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
 $K8S_SkipTlsVerification=$OctopusParameters["Octopus.Action.Kubernetes.SkipTlsVerification"]
+$K8S_OutputKubeConfig=$OctopusParameters["Octopus.Action.Kubernetes.OutputKubeConfig"]
 $K8S_AccountType=$OctopusParameters["Octopus.Account.AccountType"]
 $K8S_Namespace=$OctopusParameters["Octopus.Action.Kubernetes.Namespace"]
 $K8S_Client_Cert = $OctopusParameters["Octopus.Action.Kubernetes.ClientCertificate"]
@@ -47,6 +48,10 @@ function SetupContext {
 
 	if([string]::IsNullOrEmpty($K8S_SkipTlsVerification)) {
         $K8S_SkipTlsVerification = $false;
+    }
+
+	if([string]::IsNullOrEmpty($K8S_OutputKubeConfig)) {
+        $K8S_OutputKubeConfig = $false;
     }
 
 	if ((Get-Command $Kubectl_Exe -ErrorAction SilentlyContinue) -eq $null) {
@@ -183,7 +188,9 @@ Write-Host "##octopus[stdout-verbose]"
 ConfigureKubeCtlPath
 SetupContext
 CreateNamespace
-& $Kubectl_Exe config view
+if ($K8S_OutputKubeConfig -eq $true) {
+	& $Kubectl_Exe config view
+}
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 Write-Host "##octopus[stdout-default]"
 
