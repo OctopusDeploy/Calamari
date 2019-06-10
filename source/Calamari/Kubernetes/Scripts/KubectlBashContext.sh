@@ -3,7 +3,6 @@
 Octopus_K8S_ClusterUrl=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterUrl")
 Octopus_K8S_Namespace=$(get_octopusvariable "Octopus.Action.Kubernetes.Namespace")
 Octopus_K8S_SkipTlsVerification=$(get_octopusvariable "Octopus.Action.Kubernetes.SkipTlsVerification")
-Octopus_K8S_OutputKubeConfig=$(get_octopusvariable "Octopus.Action.Kubernetes.OutputKubeConfig")
 Octopus_AccountType=$(get_octopusvariable "Octopus.Account.AccountType")
 Octopus_K8S_KubectlExe=$(get_octopusvariable "Octopus.Action.Kubernetes.CustomKubectlExecutable")
 Octopus_K8S_Client_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.ClientCertificate")
@@ -49,10 +48,6 @@ function setup_context {
 
   if [[ -z $Octopus_K8S_SkipTlsVerification ]]; then
     Octopus_K8S_SkipTlsVerification=true
-  fi
-
-  if [[ -z $Octopus_K8S_OutputKubeConfig ]]; then
-    Octopus_K8S_OutputKubeConfig=false
   fi
 
   kubectl version --client=true
@@ -164,9 +159,7 @@ get_kubectl
 configure_kubectl_path
 setup_context
 create_namespace
-if [[ "$Octopus_K8S_OutputKubeConfig" = true ]]; then
-    kubectl config view
-fi
+kubectl config view
 echo "Invoking target script \"$(get_octopusvariable "OctopusKubernetesTargetScript")\" with $(get_octopusvariable "OctopusKubernetesTargetScriptParameters") parameters"
 echo "##octopus[stdout-default]"
 
