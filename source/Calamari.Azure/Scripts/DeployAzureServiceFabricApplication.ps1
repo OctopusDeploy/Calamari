@@ -122,7 +122,9 @@ $AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.Appli
 $AppTypeAndNameExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName })
 $AppTypeAndNameAndVersionExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion})
 $AppTypeAndVersionExists = $null -ne (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object { $_.ApplicationTypeVersion -eq $AppTypeVersion })
-$ForceUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and -not  $OverrideUpgradeBehavior -eq 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
+$UpgradeEnabledInProfile = $publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled
+$UpgradeEnabled = $UpgradeEnabledInProfile -and -not $OverrideUpgradeBehavior -eq 'VetoUpgrade'
+$ForceUpgrade = $OverrideUpgradeBehavior -eq 'ForceUpgrade'
 $requiresRegister = $false
 
 Write-Verbose "App Type Name And Version Exists: $AppTypeAndVersionExists"
@@ -132,6 +134,7 @@ Write-Verbose "Application Type Name: $AppTypeName"
 Write-Verbose "Application Type Version: $AppTypeVersion"
 Write-Verbose "Application Name: $AppName"
 Write-Verbose "Force Upgrade based on Override upgrade behavior '$OverrideUpgradeBehavior': $ForceUpgrade"
+Write-Verbose "Upgrade enabled in profile: $UpgradeEnabledInProfile"
 Write-Verbose "Found Application: '$AppTypeName' with version '$AppTypeVersion'"
 
 $parameters = @{
@@ -159,7 +162,7 @@ if (-not $AppTypeAndVersionExists) {
     $requiresRegister = $true
 }
 
-if ($AppTypeAndNameExists -and (-not $AppTypeAndNameAndVersionExists) -or $ForceUpgrade) {
+if (($UpgradeEnabled -and $AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists) -or $ForceUpgrade) {
     if ($DeployOnly) {
         $parameters.Action = "Register"
     }
@@ -176,7 +179,7 @@ if ($AppTypeAndNameExists -and (-not $AppTypeAndNameAndVersionExists) -or $Force
         $UpgradeParameters = @{ UnmonitoredAuto = $true }
     }
 
-    if ($OverrideUpgradeBehavior -eq 'ForceUpgrade') {
+    if ($ForceUpgrade) {
         # Warning: Do not alter these upgrade parameters. It will create an inconsistency with Visual Studio's behavior.
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
