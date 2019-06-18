@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment.Conventions;
 using Octostache.Templates;
-using Org.BouncyCastle.Bcpg;
 
 namespace Calamari.Deployment
 {
@@ -31,6 +31,7 @@ namespace Calamari.Deployment
             }
             catch (Exception installException)
             {
+                Debugger.Break();
                 if (installException is CommandException || installException is RecursiveDefinitionException)
                     Console.Error.WriteLine(installException.Message);
                 else
@@ -53,8 +54,9 @@ namespace Calamari.Deployment
                     if (rollbackException is CommandException)
                         Console.Error.WriteLine(rollbackException.Message);
                     else if (rollbackException is RecursiveDefinitionException && rollbackException.Message != installException.Message)
+                        //dont duplicate error messages
                         Console.Error.WriteLine(rollbackException.Message);
-                    else if (!(rollbackException is RecursiveDefinitionException)) //dont duplicate error messages
+                    else if (!(rollbackException is RecursiveDefinitionException))
                         Console.Error.WriteLine(rollbackException);
                 }
                 throw;
