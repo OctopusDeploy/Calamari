@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using Calamari.Util;
+using Octostache.Templates;
 
 namespace Calamari.Commands.Support
 {
@@ -9,7 +10,7 @@ namespace Calamari.Commands.Support
     {
         public static int PrintError(Exception ex)
         {
-            if (ex is CommandException)
+            if (ex is CommandException || ex is RecursiveDefinitionException)
             {
                 Log.Error(ex.Message);
                 return 1;

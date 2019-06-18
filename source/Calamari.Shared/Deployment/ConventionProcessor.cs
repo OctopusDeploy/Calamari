@@ -38,19 +38,31 @@ namespace Calamari.Deployment
                 {
                     Console.Error.WriteLine(ex);
                 }
+
                 Console.Error.WriteLine("Running rollback conventions...");
 
                 deployment.Error(ex);
 
-                // Rollback conventions include tasks like DeployFailed.ps1
-                RunRollbackConventions();
+                try
+                {
 
-                // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
-                RunRollbackCleanup();
+                    // Rollback conventions include tasks like DeployFailed.ps1
+                    RunRollbackConventions();
 
+                    // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
+                    RunRollbackCleanup();
+                }
+                catch (Exception ex2)
+                {
+                    if (ex2 is CommandException || ex2 is RecursiveDefinitionException)
+                        Console.Error.WriteLine(ex2.Message);
+                    else
+                        Console.Error.WriteLine(ex2);
+                }
                 throw;
             }
         }
+        
 
         void RunInstallConventions()
         {
