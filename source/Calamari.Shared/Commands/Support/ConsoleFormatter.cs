@@ -10,10 +10,15 @@ namespace Calamari.Commands.Support
     {
         public static int PrintError(Exception ex)
         {
-            if (ex is CommandException || ex is RecursiveDefinitionException)
+            if (ex is CommandException)
             {
-                Log.Error(ex.Message);
+                Log.Error("X6: " + ex.Message);
                 return 1;
+            }
+            if (ex is RecursiveDefinitionException)
+            {
+                Log.Error("X7: " + ex.Message);
+                return 100;
             }
             if (ex is ReflectionTypeLoadException)
             {
