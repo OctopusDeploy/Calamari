@@ -4,6 +4,7 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Deployment.Conventions;
 using Octostache.Templates;
+using Org.BouncyCastle.Bcpg;
 
 namespace Calamari.Deployment
 {
@@ -28,36 +29,33 @@ namespace Calamari.Deployment
                 // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
                 RunRollbackCleanup();
             }
-            catch (Exception ex)
+            catch (Exception installException)
             {
-                if (ex is CommandException || ex is RecursiveDefinitionException)
-                {
-                    Console.Error.WriteLine(ex.Message);
-                }
+                if (installException is CommandException || installException is RecursiveDefinitionException)
+                    Console.Error.WriteLine(installException.Message);
                 else
-                {
-                    Console.Error.WriteLine(ex);
-                }
+                    Console.Error.WriteLine(installException);
 
                 Console.Error.WriteLine("Running rollback conventions...");
 
-                deployment.Error(ex);
+                deployment.Error(installException);
 
                 try
                 {
-
                     // Rollback conventions include tasks like DeployFailed.ps1
                     RunRollbackConventions();
 
                     // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
                     RunRollbackCleanup();
                 }
-                catch (Exception ex2)
+                catch (Exception rollbackException)
                 {
-                    if (ex2 is CommandException || ex2 is RecursiveDefinitionException)
-                        Console.Error.WriteLine(ex2.Message);
-                    else
-                        Console.Error.WriteLine(ex2);
+                    if (rollbackException is CommandException)
+                        Console.Error.WriteLine(rollbackException.Message);
+                    else if (rollbackException is RecursiveDefinitionException && rollbackException.Message != installException.Message)
+                        Console.Error.WriteLine(rollbackException.Message);
+                    else if (!(rollbackException is RecursiveDefinitionException)) //dont duplicate error messages
+                        Console.Error.WriteLine(rollbackException);
                 }
                 throw;
             }
