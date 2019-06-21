@@ -14,6 +14,7 @@ using Calamari.Tests.Helpers.Certificates;
 using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
+using FluentAssertions;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -133,6 +134,70 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.IsTrue(virtualDirectory.PhysicalPath.Contains("1.0.0"));
         }
 
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldKeepExistingBindingsWhenExistingBindingsIsMerge()
+        {
+            // The variable we are testing
+            Variables["Octopus.Action.IISWebSite.ExistingBindings"] = "merge";
+            
+            const int existingBindingPort = 1083;
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", existingBindingPort);
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = @"[{""protocol"":""http"",""port"":1082,""host"":"""",""thumbprint"":"""",""requireSni"":false,""enabled"":true}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            website.Bindings.Should().Contain(b => b.EndPoint.Port == existingBindingPort, "Existing binding should remain");
+            website.Bindings.Should().Contain(b => b.EndPoint.Port == 1082, "New binding should be added");
+        }
+        
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldRemoveExistingBindingsByDefault()
+        {
+            const int existingBindingPort = 1083;
+            iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", existingBindingPort);
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = @"[{""protocol"":""http"",""port"":1082,""host"":"""",""thumbprint"":"""",""requireSni"":false,""enabled"":true}]";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            website.Bindings.Should().NotContain(b => b.EndPoint.Port == existingBindingPort);
+            website.Bindings.Should().Contain(b => b.EndPoint.Port == 1082);
+        }
+        
         [Test]
         [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldDeployNewVersion()
