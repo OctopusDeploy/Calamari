@@ -31,11 +31,10 @@ namespace Calamari.Deployment
             }
             catch (Exception installException)
             {
-                Debugger.Break();
                 if (installException is CommandException || installException is RecursiveDefinitionException)
-                    Console.Error.WriteLine("X1: " + installException.Message);
+                    Console.Error.WriteLine(installException.Message);
                 else
-                    Console.Error.WriteLine("X2: " + installException);
+                    Console.Error.WriteLine(installException);
 
                 Console.Error.WriteLine("Running rollback conventions...");
 
@@ -52,12 +51,12 @@ namespace Calamari.Deployment
                 catch (Exception rollbackException)
                 {
                     if (rollbackException is CommandException)
-                        Console.Error.WriteLine("X3: " + rollbackException.Message);
+                        Console.Error.WriteLine(rollbackException.Message);
                     else if (rollbackException is RecursiveDefinitionException && rollbackException.Message != installException.Message)
-                        //dont duplicate error messages
-                        Console.Error.WriteLine("X4: " + rollbackException.Message);
+                        //dont duplicate these error messages
+                        Console.Error.WriteLine(rollbackException.Message);
                     else if (!(rollbackException is RecursiveDefinitionException))
-                        Console.Error.WriteLine("X5: " + rollbackException);
+                        Console.Error.WriteLine(rollbackException);
                 }
                 throw;
             }

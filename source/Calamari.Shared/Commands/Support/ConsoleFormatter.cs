@@ -12,13 +12,13 @@ namespace Calamari.Commands.Support
         {
             if (ex is CommandException)
             {
-                Log.Error("X6: " + ex.Message);
+                Log.Error(ex.Message);
                 return 1;
             }
             if (ex is RecursiveDefinitionException)
             {
-                Log.Error("X7: " + ex.Message);
-                return 100;
+                //dont log these - they have already been logged earlier
+                return 101;
             }
             if (ex is ReflectionTypeLoadException)
             {
