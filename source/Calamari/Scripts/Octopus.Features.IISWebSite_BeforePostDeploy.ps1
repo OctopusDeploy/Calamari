@@ -394,6 +394,7 @@ if ($deployAsWebSite)
 	$webSiteName = $OctopusParameters["Octopus.Action.IISWebSite.WebSiteName"]
 	$applicationPoolName = $OctopusParameters["Octopus.Action.IISWebSite.ApplicationPoolName"]
 	$bindingString = $OctopusParameters["Octopus.Action.IISWebSite.Bindings"]
+	$existingBindings = $OctopusParameters["Octopus.Action.IISWebSite.ExistingBindings"]
 	$webRoot =  Determine-Path $OctopusParameters["Octopus.Action.IISWebSite.WebRoot"]
 	$enableWindows = $OctopusParameters["Octopus.Action.IISWebSite.EnableWindowsAuthentication"]
 	$enableBasic = $OctopusParameters["Octopus.Action.IISWebSite.EnableBasicAuthentication"]
@@ -609,6 +610,13 @@ if ($deployAsWebSite)
 	function Get-BindingKey($binding) {
 		return $binding.protocol + "|" + $binding.bindingInformation + "|" + $binding.sslFlags
 	}
+
+    if($existingBindings -eq "Merge") {
+        # Merge existing bindings into the configured collection. This allows the following code to be the same regardless of this options
+        $configuredBindingsLookup = Convert-ToHashTable $wsbindings
+        $existingBindings = Get-ItemProperty $sitePath -name bindings
+        $bindingsToMerge = $existingBindings.Collection | where { $configuredBindingsLookup[(Get-BindingKey $_)] -eq $null } | ForEach-Object { $wsbindings.Add($_) }
+    }
 
 	# Returns $true if existing IIS bindings are as specified in configuration, otherwise $false
 	function Bindings-AreCorrect($existingBindings, $configuredBindings, [System.Collections.ArrayList] $bindingsToRemove) {
