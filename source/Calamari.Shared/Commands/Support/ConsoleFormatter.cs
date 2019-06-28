@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using Calamari.Util;
+using Octostache.Templates;
 
 namespace Calamari.Commands.Support
 {
@@ -13,6 +14,11 @@ namespace Calamari.Commands.Support
             {
                 Log.Error(ex.Message);
                 return 1;
+            }
+            if (ex is RecursiveDefinitionException)
+            {
+                //dont log these - they have already been logged earlier
+                return 101;
             }
             if (ex is ReflectionTypeLoadException)
             {
