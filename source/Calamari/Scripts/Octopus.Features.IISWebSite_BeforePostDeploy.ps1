@@ -25,6 +25,10 @@ try {
 		Write-Error "     You are likely to want more IIS features than just the web server. Run 'Get-WindowsFeature *web*' to see all of the features you can install."
 		exit 1
 	}
+	else {
+		$iisVersion = Get-ItemProperty HKLM:\SOFTWARE\Microsoft\InetStp\  | Select VersionString
+		Write-Verbose "Detected IIS $($iisVersion.VersionString)"
+	}
 } catch {
 	Write-Verbose "Call to `Get-WindowsFeature Web-WebServer` failed."
 	Write-Verbose "Unable to determine if IIS is installed on this server but will optimistically continue."
