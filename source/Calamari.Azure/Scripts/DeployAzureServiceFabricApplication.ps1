@@ -123,7 +123,7 @@ $AppTypeAndNameExists = $null -ne (Get-ServiceFabricApplication | ? { $_.Applica
 $AppTypeAndNameAndVersionExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion})
 $AppTypeAndVersionExists = $null -ne (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object { $_.ApplicationTypeVersion -eq $AppTypeVersion })
 $UpgradeEnabledInProfile = $publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled
-$UpgradeEnabled = $UpgradeEnabledInProfile -and -not $OverrideUpgradeBehavior -eq 'VetoUpgrade'
+$UpgradeEnabled = $UpgradeEnabledInProfile -and -not ($OverrideUpgradeBehavior -eq 'VetoUpgrade')
 $ForceUpgrade = $OverrideUpgradeBehavior -eq 'ForceUpgrade'
 $requiresRegister = $false
 
