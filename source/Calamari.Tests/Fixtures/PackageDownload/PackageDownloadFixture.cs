@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
         static readonly string DownloadPath = TestEnvironment.GetTestPath(TentacleHome, "Files");
 
-        static readonly string PublicFeedUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget";
+        static readonly string PublicFeedUri = "https://packages.octopushq.com/dependencies/nuget/index.json";
         static readonly string NuGetFeedUri = "https://www.nuget.org/api/v2/";
         
         private static readonly string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
