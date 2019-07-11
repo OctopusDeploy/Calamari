@@ -2,7 +2,7 @@ Calamari is the command-line tool invoked by Tentacle during a deployment. It kn
 
 ## Building
 
-You will need the .NET Core SDK `2.0.3`, downloadable from https://github.com/dotnet/core/blob/master/release-notes/download-archives/2.0.3.md
+You will need the .NET Core SDK `2.2`, downloadable from https://dotnet.microsoft.com/download
 
 Run `Build.cmd` to build the solution
   
