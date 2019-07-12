@@ -40,7 +40,8 @@ namespace Calamari.Deployment.Features.Java
                 {"OctopusEnvironment_WildFly_Deploy_Protocol", variables.Get(SpecialVariables.Action.Java.WildFly.Protocol)},
                 {"OctopusEnvironment_WildFly_Deploy_EnabledServerGroup", variables.Get(SpecialVariables.Action.Java.WildFly.EnabledServerGroup)},
                 {"OctopusEnvironment_WildFly_Deploy_DisabledServerGroup", variables.Get(SpecialVariables.Action.Java.WildFly.DisabledServerGroup)},
-                {"OctopusEnvironment_WildFly_Deploy_ServerType", variables.Get(SpecialVariables.Action.Java.WildFly.ServerType)}
+                {"OctopusEnvironment_WildFly_Deploy_ServerType", variables.Get(SpecialVariables.Action.Java.WildFly.ServerType)},
+                {"OctopusEnvironment_WildFly_Deploy_Controller", variables.Get(SpecialVariables.Action.Java.WildFly.Controller)}
             });
         }
     }
