@@ -356,6 +356,21 @@ function New-OctopusArtifact
     }
 }
 
+function Update-Progress
+{
+	[CmdletBinding()]
+	param(
+        [int] $percentage, 
+        [Parameter(ValueFromPipeline=$true)][string]$message
+	)
+
+	process {
+        $convertedPercentage = Convert-ServiceMessageValue($percentage)
+        $convertedMessage = Convert-ServiceMessageValue($message)
+        Write-Host "##octopus[progress percentage='$convertedPercentage' message='$convertedMessage']"
+	}
+}
+
 function Write-Debug
 {
 	[CmdletBinding()]

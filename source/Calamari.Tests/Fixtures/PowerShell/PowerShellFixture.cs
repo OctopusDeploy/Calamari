@@ -212,6 +212,24 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
             //  this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
         }
+        
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldWriteServiceMessageForUpdateProgress()
+        {
+            var (output, _) = RunScript("UpdateProgress.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+        }
+        
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldWriteServiceMessageForUpdateProgressFromPipeline()
+        {
+            var (output, _) = RunScript("UpdateProgressFromPipeline.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+        }
 
         [Test]
         [Category(TestCategory.CompatibleOS.Windows)]

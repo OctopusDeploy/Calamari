@@ -40,6 +40,17 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
         }
+        
+        [Test]
+        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.Mac)]
+        public void ShouldUpdateProgress()
+        {
+            var (output, _) = RunScript("update-progress.sh");
+
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+        }
 
         [Test]
         [Category(TestCategory.CompatibleOS.Nix)]

@@ -171,6 +171,11 @@ public static class Octopus
         Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", servicepath, serviceFileName, length);
     }
     
+    public static void UpdateProgress(int percentage, string message = "")
+    {
+        Console.WriteLine("##octopus[progress percentage='{0}' message='{1}']", EncodeServiceMessageValue(percentage), EncodeServiceMessageValue(message));
+    }
+    
     public static void WriteVerbose(string message)
     {
         Console.WriteLine("##octopus[stdout-verbose]");

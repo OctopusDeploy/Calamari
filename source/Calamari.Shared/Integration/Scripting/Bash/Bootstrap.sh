@@ -132,6 +132,17 @@ function new_octopusartifact
 }
 
 # -----------------------------------------------------------------------------
+# Function to update progress
+#	Accepts 2 arguments:
+#	  int: percentage progress
+#	  string: message to show
+# -----------------------------------------------------------------------------
+function update_progress
+{
+	echo "##octopus[progress percentage='$(encode_servicemessagevalue "$1")' message='$(encode_servicemessagevalue "$2")']"
+}
+
+# -----------------------------------------------------------------------------
 # Functions write a messages as different levels
 # -----------------------------------------------------------------------------
 function write_verbose
