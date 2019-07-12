@@ -32,7 +32,7 @@ namespace Calamari.Deployment.Features.Java
             javaRunner.Run("com.octopus.calamari.wildfly.WildflyDeploy", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath)},
-                {"OctopusEnvironment_WildFly_Deploy_Name", variables.Get(SpecialVariables.Action.Java.WildFly.Controller)},
+                {"OctopusEnvironment_WildFly_Deploy_Name", variables.Get(SpecialVariables.Action.Java.WildFly.DeployName)},
                 {"OctopusEnvironment_WildFly_Deploy_User", variables.Get(SpecialVariables.Action.Java.WildFly.User)},
                 {"OctopusEnvironment_WildFly_Deploy_Password", variables.Get(SpecialVariables.Action.Java.WildFly.Password)},
                 {"OctopusEnvironment_WildFly_Deploy_Enabled", variables.Get(SpecialVariables.Action.Java.WildFly.Enabled)},
