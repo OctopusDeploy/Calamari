@@ -31,7 +31,7 @@ namespace Calamari.Deployment.Features.Java.Actions
                 {"OctopusEnvironment_WildFly_Deploy_SecurityRealmName", variables.Get(SpecialVariables.Action.Java.WildFly.SecurityRealmName)},
                 {"OctopusEnvironment_WildFly_Deploy_ElytronKeystoreName", variables.Get(SpecialVariables.Action.Java.WildFly.ElytronKeystoreName)},
                 {"OctopusEnvironment_WildFly_Deploy_ElytronKeymanagerName", variables.Get(SpecialVariables.Action.Java.WildFly.ElytronKeymanagerName)},
-                {"OctopusEnvironment_WildFly_Deploy_ElytronSSLContextName", variables.Get(SpecialVariables.Action.Java.WildFly.ElytronSSLContextName)},
+                {"OctopusEnvironment_WildFly_Deploy_ElytronSSLContextName", variables.Get(SpecialVariables.Action.Java.WildFly.ElytronSSLContextName)}
             };
 
             if (variables.Get(SpecialVariables.Action.Java.JavaKeystore.Variable) != null)
