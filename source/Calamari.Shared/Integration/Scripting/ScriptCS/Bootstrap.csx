@@ -173,7 +173,7 @@ public static class Octopus
     
     public static void UpdateProgress(int percentage, string message = "")
     {
-        Console.WriteLine("##octopus[progress percentage='{0}' message='{1}']", EncodeServiceMessageValue(percentage), EncodeServiceMessageValue(message));
+        Console.WriteLine("##octopus[progress percentage='{0}' message='{1}']", EncodeServiceMessageValue(percentage.ToString()), EncodeServiceMessageValue(message));
     }
     
     public static void WriteVerbose(string message)
