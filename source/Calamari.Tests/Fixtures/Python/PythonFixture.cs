@@ -78,6 +78,14 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='L2hvbWUvZmlsZS50eHQ=' name='ZmlsZS50eHQ=' length='MA==']");
         }
+        
+        [Test, RequiresMinimumPython3Version(4)]
+        public void ShouldWriteUpdateProgress()
+        {
+            var (output, _) = RunScript("updateprogress.py");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+        }
 
         [Test, RequiresMinimumPython3Version(4)]
         public void ShouldCaptureAllOutput()

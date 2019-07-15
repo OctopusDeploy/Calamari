@@ -106,6 +106,12 @@ let createArtifact (path: String) fileName =
     printfn "Artifact %s will be collected from %s after this step completes" plainFileName path
     printfn "##octopus[stdout-default]"
     writeServiceMessage "createArtifact" content
+
+let updateProgress (percentage: int) message =
+    let encodedMessage = message |> encode
+    let encodedPercentage = percentage.ToString() |> encode
+    let content = sprintf "percentage='%s' message='%s'" encodedPercentage encodedMessage
+    writeServiceMessage "progress" content
     
 let writeVerbose message = 
     printfn "##octopus[stdout-verbose]"

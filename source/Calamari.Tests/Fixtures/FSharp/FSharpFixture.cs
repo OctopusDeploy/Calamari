@@ -23,8 +23,7 @@ namespace Calamari.Tests.Fixtures.FSharp
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldPrintSensitiveVariable()
         {
-            var (output, _) = RunScript("SensitiveOutputVariable.fsx", new Dictionary<string, string>()
-                {["Name"] = null});
+            var (output, _) = RunScript("SensitiveOutputVariable.fsx", new Dictionary<string, string>());
 
             output.AssertSuccess();
             output.AssertOutput(
@@ -34,13 +33,20 @@ namespace Calamari.Tests.Fixtures.FSharp
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCreateArtifact()
         {
-            var (output, _) = RunScript("CreateArtifact.fsx", new Dictionary<string, string>()
-                {["Name"] = null});
+            var (output, _) = RunScript("CreateArtifact.fsx", new Dictionary<string, string>());
 
             output.AssertOutput("##octopus[createArtifact");
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
+        
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        public void ShouldUpdateProgress()
+        {
+            var (output, _) = RunScript("UpdateProgress.fsx", new Dictionary<string, string>());
 
+            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+        }
+        
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHello()
         {
@@ -102,8 +108,7 @@ namespace Calamari.Tests.Fixtures.FSharp
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHelloWithNullVariable()
         {
-            var (output, _) = RunScript("Hello.fsx", new Dictionary<string, string>()
-                {["Name"] = null});
+            var (output, _) = RunScript("Hello.fsx", new Dictionary<string, string>());
 
             output.AssertSuccess();
             output.AssertOutput("Hello ");
@@ -112,8 +117,7 @@ namespace Calamari.Tests.Fixtures.FSharp
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHelloWithNullSensitiveVariable()
         {
-            var (output, _) = RunScript("Hello.fsx", new Dictionary<string, string>()
-                {["Name"] = null}, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+            var (output, _) = RunScript("Hello.fsx", new Dictionary<string, string>(), sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
             output.AssertOutput("Hello ");

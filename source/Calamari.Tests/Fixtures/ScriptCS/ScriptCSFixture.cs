@@ -40,6 +40,15 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("##octopus[createArtifact");
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
+        
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        public void ShouldUpdateProgress()
+        {
+            var (output, _) = RunScript("UpdateProgress.csx");
+
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+        }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
         public void ShouldCallHello()
