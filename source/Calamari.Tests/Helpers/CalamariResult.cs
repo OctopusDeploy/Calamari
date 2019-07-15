@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Assent;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Util;
+using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -144,7 +146,7 @@ namespace Calamari.Tests.Helpers
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput.Contains(expected));
+            allOutput.Should().Contain(expected);
         }
 
         public void AssertOutputMatches(string regex)
@@ -163,8 +165,8 @@ namespace Calamari.Tests.Helpers
 
         public string GetOutputForLineContaining(string expectedOutput)
         {
-            var found = captured.Infos.SingleOrDefault(i => i.IndexOf(expectedOutput, StringComparison.OrdinalIgnoreCase) >= 0);
-            Assert.IsNotNull(found);
+            var found = captured.Infos.SingleOrDefault(i => i.ContainsIgnoreCase(expectedOutput));
+            found.Should().NotBeNull();
             return found;
         }
 
@@ -180,5 +182,14 @@ namespace Calamari.Tests.Helpers
             Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 
+        //Assuming we print properties like:
+        //"name: expectedValue"
+        public void AssertPropertyValue(string name, string expectedValue)
+        {
+            var title = name + ": ";
+            string line = GetOutputForLineContaining(title);
+
+            line.Replace(title, "").Should().Be(expectedValue);
+        }
     }
 }
