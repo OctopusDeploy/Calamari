@@ -10,24 +10,37 @@ namespace Calamari.Integration.Proxies
         {
             try
             {
-                var proxyUsername = Environment.GetEnvironmentVariable("TentacleProxyUsername");
-                var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
-                var proxyHost = Environment.GetEnvironmentVariable("TentacleProxyHost");
-                var proxyPortText = Environment.GetEnvironmentVariable("TentacleProxyPort");
+                bool useDefaultProxy;
+                if (!Boolean.TryParse(Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy),
+                    out useDefaultProxy))
+                    useDefaultProxy = true;
+
+                var proxyUsername = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername);
+                var proxyPassword = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword);
+                var proxyHost = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost);
+                var proxyPortText = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
                 int.TryParse(proxyPortText, out var proxyPort);
 
-                var useSystemProxy = string.IsNullOrWhiteSpace(proxyHost);
-                var proxy = useSystemProxy
-                    ? WebRequest.GetSystemWebProxy()
-                    : new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri);
-                
+                var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
+                var proxy = useCustomProxy
+                    ? new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri)
+                    : useDefaultProxy
+                        ? WebRequest.GetSystemWebProxy()
+                        : new WebProxy();
+
                 var useDefaultCredentials = string.IsNullOrWhiteSpace(proxyUsername);
 
                 proxy.Credentials = useDefaultCredentials
-                    ? useSystemProxy
-                        ? CredentialCache.DefaultNetworkCredentials
-                        : new NetworkCredential()
+                    ? useCustomProxy
+                        ? new NetworkCredential()
+                        : CredentialCache.DefaultNetworkCredentials
                     : new NetworkCredential(proxyUsername, proxyPassword);
+
+                Log.Verbose(useCustomProxy
+                    ? $"Proxy mode: Custom Proxy ({proxyHost}:{proxyPort})"
+                    : useDefaultProxy
+                        ? "Proxy mode: Default proxy"
+                        : "Proxy mode: No Proxy");
 
                 WebRequest.DefaultWebProxy = proxy;
             }
@@ -49,7 +62,7 @@ namespace Calamari.Integration.Proxies
                    at Calamari.Program.Execute(String[] args)
                    at Calamari.Program.Main(String[] args)                 
                  */
-                
+
                 Log.Error("Failed to get the system proxy settings. Calamari will not use any proxy settings.");
             }
         }

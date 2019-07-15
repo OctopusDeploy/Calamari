@@ -1,0 +1,237 @@
+﻿using System;
+using System.Net;
+using Calamari.Integration.Proxies;
+using Calamari.Tests.Helpers;
+using FluentAssertions;
+using NUnit.Framework;
+using SetProxy;
+
+namespace Calamari.Tests.Fixtures.Integration.Proxies
+{
+    [TestFixture]
+    public class ProxyInitializerFixture
+    {
+        const string BadproxyUrl = "http://proxy-initializer-fixture-bad-proxy:1234";
+        const string WebRequestUrl = "http://octopus.com";
+        const string ProxyUserName = "someuser";
+        const string ProxyPassword = "some@://password";
+        string proxyHost;
+        int proxyPort;
+        string proxyUrl;
+
+        IWebProxy defaultWebProxy;
+
+        [SetUp]
+        public void Setup()
+        {
+            defaultWebProxy = WebRequest.DefaultWebProxy;
+
+            proxyHost = "proxy-initializer-fixture-good-proxy";
+            proxyPort = 8888;
+            proxyUrl = $"http://{proxyHost}:{proxyPort}";
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            ResetProxyEnvironmentVariables();
+
+            WebRequest.DefaultWebProxy = defaultWebProxy;
+
+            ResetSystemProxy();
+        }
+
+        //Linux won't have this
+        static void ResetSystemProxy()
+        {
+#if !NETSTANDARD2_0
+            ProxyRoutines.SetProxy(false).Should().BeTrue();
+#endif
+        }
+
+        [Test]
+        [RequiresWindowsServer2012OrAbove]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void Initialize_HasSystemProxy_NoProxy()
+        {
+            ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
+            RunWith(false, "", 80, "", "");
+
+            AssertProxyNotUsed();
+        }
+
+        [Test]
+        [RequiresWindowsServer2012OrAbove]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void Initialize_HasSystemProxy_UseSystemProxy()
+        {
+            ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
+            RunWith(true, "", 80, "", "");
+
+            AssertUnauthenticatedSystemProxyUsed();
+        }
+
+        [Test]
+        [RequiresWindowsServer2012OrAbove]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
+        {
+            ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
+            RunWith(true, "", 80, ProxyUserName, ProxyPassword);
+
+            AssertAuthenticatedProxyUsed();
+        }
+
+        [Test]
+        [RequiresWindowsServer2012OrAbove]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void Initialize_HasSystemProxy_CustomProxy()
+        {
+            ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
+            RunWith(false, proxyHost, proxyPort, "", "");
+
+            AssertUnauthenticatedProxyUsed();
+        }
+
+        [Test]
+        [RequiresWindowsServer2012OrAbove]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void Initialize_HasSystemProxy_CustomProxyWithCredentials()
+        {
+            ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
+            RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword);
+
+            AssertAuthenticatedProxyUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_NoProxy()
+        {
+            RunWith(false, "", 80, "", "");
+
+            AssertProxyNotUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_UseSystemProxy()
+        {
+            RunWith(true, "", 80, "", "");
+
+            AssertProxyNotUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_UseSystemProxyWithCredentials()
+        {
+            RunWith(true, "", 80, ProxyUserName, ProxyPassword);
+
+            AssertProxyNotUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_UseSystemProxy1()
+        {
+            RunWith(true, "", 80, "", "");
+
+            AssertProxyNotUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_UseSystemProxy2()
+        {
+            RunWith(true, "", 80, "", "");
+
+            AssertProxyNotUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_UseSystemProxy3()
+        {
+            RunWith(true, "", 80, "", "");
+
+            AssertProxyNotUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_CustomProxy()
+        {
+            RunWith(false, proxyHost, proxyPort, "", "");
+
+            AssertUnauthenticatedProxyUsed();
+        }
+
+        [Test]
+        public void Initialize_NoSystemProxy_CustomProxyWithCredentials()
+        {
+            RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword);
+
+            AssertAuthenticatedProxyUsed();
+        }
+
+        void RunWith(
+            bool useDefaultProxy,
+            string proxyhost,
+            int proxyPort,
+            string proxyUsername,
+            string proxyPassword)
+        {
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy,
+                useDefaultProxy.ToString());
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, proxyhost);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, proxyPort.ToString());
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, proxyUsername);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, proxyPassword);
+
+            ProxyInitializer.InitializeDefaultProxy();
+        }
+
+        void ResetProxyEnvironmentVariables()
+        {
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, string.Empty);
+        }
+
+        void AssertAuthenticatedProxyUsed()
+        {
+            AssertProxyUsed();
+
+            var credentials = WebRequest.DefaultWebProxy.Credentials.Should().BeOfType<NetworkCredential>().Subject;
+            credentials.UserName.Should().Be(ProxyUserName);
+            credentials.Password.Should().Be(ProxyPassword);
+        }
+
+        void AssertUnauthenticatedProxyUsed()
+        {
+            AssertProxyUsed();
+            var credentials = WebRequest.DefaultWebProxy.Credentials.Should().BeOfType<NetworkCredential>().Subject;
+            credentials.UserName.Should().Be("");
+            credentials.Password.Should().Be("");
+        }
+
+        void AssertUnauthenticatedSystemProxyUsed()
+        {
+            AssertProxyUsed();
+            var credentials = WebRequest.DefaultWebProxy.Credentials.Should().BeAssignableTo<NetworkCredential>()
+                .Subject;
+            credentials.GetType().Name.Should()
+                .Be("SystemNetworkCredential"); //It's internal so we can't access the type
+            credentials.UserName.Should().Be("");
+            credentials.Password.Should().Be("");
+        }
+
+        void AssertProxyUsed()
+        {
+            var uri = new Uri(WebRequestUrl);
+            WebRequest.DefaultWebProxy.GetProxy(uri).Should().Be(new Uri(proxyUrl), "should use the proxy");
+        }
+
+        static void AssertProxyNotUsed()
+        {
+            var uri = new Uri(WebRequestUrl);
+            WebRequest.DefaultWebProxy.GetProxy(uri).Should().Be(uri, "shouldn't use the proxy");
+        }
+    }
+}
