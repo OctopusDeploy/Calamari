@@ -233,6 +233,27 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         [Test]
         [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldWriteServiceMessageForPipedArtifacts()
+        {
+            var path = Path.Combine(Path.GetTempPath(), "CanCreateArtifactPipedTestFile.txt");
+            var base64Path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
+            try
+            {
+                if (!File.Exists(path))
+                    File.WriteAllText(path, "");
+                var (output, _) = RunScript("CanCreateArtifactPiped.ps1");
+                output.AssertSuccess();
+                output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
             var (output, _) = RunScript("WarningForMissingArtifact.ps1");
