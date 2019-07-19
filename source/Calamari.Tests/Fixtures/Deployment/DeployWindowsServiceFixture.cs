@@ -1,5 +1,6 @@
 using System.IO;
 using Calamari.Deployment;
+using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -42,5 +43,26 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.IsTrue(File.Exists(Path.Combine(installDir, $"{ServiceName}.exe")), "Installed in the right location");
         }
 
+        [Test]
+        public void ShouldDeployAndInstallWithCustomUserName()
+        {
+            if (!CalamariEnvironment.IsRunningOnWindows)
+                Assert.Inconclusive("Services are only supported on windows");
+            TestUserPrincipal userPrincipal = null;
+            try
+            {
+                userPrincipal = new TestUserPrincipal("calamari-svc-test")
+                    .EnsureIsMemberOfGroup("Administrators")
+                    .GrantLogonAsAServiceRight();
+                Variables[SpecialVariables.Action.WindowsService.CustomAccountName] = userPrincipal.NTAccountName;
+                Variables[SpecialVariables.Action.WindowsService.CustomAccountPassword] = userPrincipal.Password;
+
+                RunDeployment();
+            }
+            finally
+            {
+                userPrincipal?.Delete();
+            }
+        }
     }
 }

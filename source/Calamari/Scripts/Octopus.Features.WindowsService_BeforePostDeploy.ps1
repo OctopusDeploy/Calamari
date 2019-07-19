@@ -97,19 +97,6 @@ if ($serviceAccount -ne "_CUSTOM")
 	}
 	$fullArgumentsSafeForConsole = $fullArguments
 }
-else
-{
-	if ($customAccountName)
-	{
-		$fullArguments += @("obj=", (ConvertTo-QuotedString $customAccountName))
-	}
-	$fullArgumentsSafeForConsole = $fullArguments
-	if ($customAccountPassword)
-	{
-		$fullArguments += @("password=", (ConvertTo-ConsoleEscapedArgument $customAccountPassword))
-		$fullArgumentsSafeForConsole += "password= `"************`""
-	}
-}
 
 $psServiceName = (ConvertTo-PowershellEscapedArgument $serviceName)
 
@@ -155,6 +142,16 @@ else
 
 	if ($LastExitCode -ne 0) {
 		throw "sc.exe config failed with exit code: $LastExitCode"
+	}
+}
+
+if ($serviceAccount -eq "_CUSTOM") {
+	# dont use sc.exe to set the username / password, as it may be logged to the windows audit log if process creation event logs are enabled 
+	$wmiService = Get-WmiObject win32_service -filter "name='$serviceName'" -computer "."
+	$result = $wmiService.change($null, $null, $null, $null, $null, $null, $customAccountName, $customAccountPassword, $null, $null, $null)
+	if ($result.ReturnValue -ne "0") {
+		#return codes: https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/change-method-in-class-win32-service#return-value
+		throw "Unable to set custom service credentials for service '$serviceName'. Wmi returned $($result.ReturnValue)."
 	}
 }
 
