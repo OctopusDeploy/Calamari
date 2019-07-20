@@ -1,4 +1,5 @@
-﻿#if AWS
+﻿using System.Linq;
+#if AWS
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -105,15 +106,90 @@ namespace Calamari.Tests.AWS
             });
         }
 
+        IDictionary<string, string> specialHeaders = new Dictionary<string, string>()
+        {
+            {"Cache-Control", "max-age=123"},
+            {"Content-Disposition", "some disposition"},
+            {"Content-Encoding", "some-encoding"},
+            {"Content-Type", "some-content"},
+            {"Expires", "2020-01-02T00:00:00.000Z"},
+            {"x-amz-website-redirect-location", "/anotherPage.html"},
+            
+            //Locking requires a bucket with versioning
+//            {"x-amz-object-lock-mode", "GOVERNANCE"},
+//            {"x-amz-object-lock-retain-until-date", DateTime.UtcNow.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffK")},
+//            {"x-amz-object-lock-legal-hold", "OFF"},
+        };
+
+        IDictionary<string, string> userDefinedMetadata = new Dictionary<string, string>()
+        {
+            {"Expect", "some-expect"},
+            {"Content-MD5", "somemd5"},
+            {"Content-Length", "12345"},
+            {"x-amz-tagging", "sometag"},
+            {"x-amz-storage-class", "GLACIER"},
+            {"x-amz-meta", "somemeta"}
+        };
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.Windows)]
+        public void UploadPackageWithMetadata()
+        {
+            var fileSelections = new List<S3FileSelectionProperties>
+            {
+                new S3SingleFileSelectionProperties
+                {
+                    Path = "Extra/JavaScript.js",
+                    Type = S3FileSelectionTypes.SingleFile,
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                    Metadata = specialHeaders.Concat(userDefinedMetadata).ToList(),
+                    Tags = new List<KeyValuePair<string, string>>()
+                    {
+                        new KeyValuePair<string, string>("Environment", "Test")
+                    }
+                }
+            };
+
+            var prefix = Upload("Package1", fileSelections);
+
+            Validate(client =>
+            {
+                var response = client.GetObject(BucketName, $"{prefix}JavaScript.js");
+                var headers = response.Headers;
+                var metadata = response.Metadata;
+
+                foreach (var specialHeader in specialHeaders)
+                {
+                    if (specialHeader.Key == "Expires")
+                    {
+                        //There's a serialization bug in Json.Net that ends up changing the time to local.
+                        //Fix this assertion once that's done.
+                        var expectedDate = DateTime.Parse(specialHeader.Value.TrimEnd('Z')).ToUniversalTime();
+                        response.Expires.Should().Be(expectedDate);
+                    }
+                    else if (specialHeader.Key == "x-amz-website-redirect-location")
+                    {
+                        response.WebsiteRedirectLocation.Should().Be(specialHeader.Value);
+                    }
+                    else
+                        headers[specialHeader.Key].Should().Be(specialHeader.Value);
+                }
+
+                foreach (var userMetadata in userDefinedMetadata)
+                    metadata["x-amz-meta-" + userMetadata.Key.ToLowerInvariant()]
+                        .Should().Be(userMetadata.Value);
+
+                response.TagCount.Should().Be(1);
+            });
+        }
+
         static void Validate(Action<AmazonS3Client> execute)
         {
-            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_Calamari_Access"), Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
-            var config = new AmazonS3Config
-            {
-                AllowAutoRedirect = true,
-                RegionEndpoint = RegionEndpoint.APSoutheast1
-                
-            };
+            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_Calamari_Access"),
+                Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
+            var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.APSoutheast1};
             using (var client = new AmazonS3Client(credentials, config))
             {
                 execute(client);
@@ -122,7 +198,7 @@ namespace Calamari.Tests.AWS
 
         string Upload(string packageName, List<S3FileSelectionProperties> fileSelections)
         {
-            var bucketKeyPrefix = $"test/{Guid.NewGuid():N}/";
+            var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
 
             fileSelections.ForEach(properties =>
             {
@@ -130,6 +206,7 @@ namespace Calamari.Tests.AWS
                 {
                     multiFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
                 }
+
                 if (properties is S3SingleFileSelectionProperties singleFileSelectionProperties)
                 {
                     singleFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
@@ -143,11 +220,13 @@ namespace Calamari.Tests.AWS
             variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_Calamari_Access"));
             variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
             variables.Set("Octopus.Action.Aws.Region", RegionEndpoint.APSoutheast1.SystemName);
-            variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
+            variables.Set(AwsSpecialVariables.S3.FileSelections,
+                JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
             variables.Save(variablesFile);
 
             var packageDirectory = TestEnvironment.GetTestPath("AWS", "S3", packageName);
-            using (var package = new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
+            using (var package =
+                new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
                 var command = new UploadAwsS3Command();

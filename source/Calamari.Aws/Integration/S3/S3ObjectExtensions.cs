@@ -20,10 +20,13 @@ namespace Calamari.Aws.Integration.S3
                 .WithHeaderFrom("Cache-Control", headers => headers.CacheControl)
                 .WithHeaderFrom("Content-Disposition", headers => headers.ContentDisposition)
                 .WithHeaderFrom("Content-Encoding", headers => headers.ContentEncoding)
+                .WithHeaderFrom("Content-Type", headers => headers.ContentType)
                 .WithHeaderFrom("Expires")
-                .WithHeaderFrom("x-amz-website​-redirect-location")
+                .WithHeaderFrom("x-amz-website-redirect-location")
+                .WithHeaderFrom("x-amz-object-lock-retain-until-date")
+                .WithHeaderFrom("x-amz-object-lock-legal-hold")
                 .WithHeaderFrom("x-amz-object-lock-mode");
-
+        
         private static T WithHeaderFrom<T>(this T values, string key) where T : IDictionary<string, Func<HeadersCollection, string>>
         {
             values.Add(key, (headers) => headers[key]);
