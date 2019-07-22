@@ -45,7 +45,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="YamlDotNet" Version="4.2.1" />
+    <PackageReference Include="YamlDotNet" Version="6.1.2" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="Octodiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
@@ -91,7 +91,7 @@
     Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we 
     define a new empty target if it's not already defined to keep it happy.
   -->
-  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''"/>
+  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
