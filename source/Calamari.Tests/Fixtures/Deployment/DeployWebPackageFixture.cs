@@ -61,6 +61,9 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Category(TestCategory.CompatibleOS.Mac)]
         public void ShouldDeployPackageOnMacOrNix()
         {
+            if (!CalamariEnvironment.IsRunningOnMac && !CalamariEnvironment.IsRunningOnNix)
+                Assert.Inconclusive("This test is designed to run on *Nix or Mac.");
+        
             var result = DeployPackage();
             result.AssertSuccess();
 
