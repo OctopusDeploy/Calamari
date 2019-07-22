@@ -16,7 +16,7 @@
     <DefineConstants>$(DefineConstants);NETCORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
@@ -40,6 +40,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
     <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.DirectoryServices.AccountManagement" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />

@@ -346,6 +346,8 @@ namespace Calamari.Deployment
             public class WindowsService
             {
                 public const string Arguments = "Octopus.Action.WindowsService.Arguments";
+                public const string CustomAccountName = "Octopus.Action.WindowsService.CustomAccountName";
+                public const string CustomAccountPassword = "Octopus.Action.WindowsService.CustomAccountPassword";
             }
 
             public static class PowerShell

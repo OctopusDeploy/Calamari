@@ -8,7 +8,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     [Category(TestCategory.CompatibleOS.Windows)]
     public class DeployWindowsServiceWithCustomServiceNameFixture : DeployWindowsServiceAbstractFixture
     {
-        protected override string ServiceName => @"[f`o]o$b[a]r";
+        protected override string ServiceName => @"[f`o]o$b'[a]r";
 
         [Test]
         public void ShouldEscapeBackslashesAndDollarSignsInArgumentsPassedToScExe()
