@@ -147,7 +147,7 @@ else
 
 if ($serviceAccount -eq "_CUSTOM") {
 	# dont use sc.exe to set the username / password, as it may be logged to the windows audit log if process creation event logs are enabled 
-	$wmiService = Get-WmiObject win32_service -filter "name='$serviceName'" -computer "."
+	$wmiService = Get-WmiObject win32_service -filter "name='$($serviceName -replace "'", "\'")'" -computer "."
 	$result = $wmiService.change($null, $null, $null, $null, $null, $null, $customAccountName, $customAccountPassword, $null, $null, $null)
 	if ($result.ReturnValue -ne "0") {
 		#return codes: https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/change-method-in-class-win32-service#return-value
@@ -192,7 +192,7 @@ if ($desiredStatus -eq "Stopped" -or $startMode -eq "disabled") {
     # desired status option was added). It retains the old behaviour of starting services based on the start mode.
 
     $wmiServiceName = $serviceName -replace "'", "\'"
-    $currentStartMode = Get-WMIObject win32_service -filter ("name='" + $wmiServiceName + "'") -computer "." | select -expand startMode
+    $currentStartMode = Get-WMIObject win32_service -filter "name='$($serviceName -replace "'", "\'")'" -computer "." | select -expand startMode
     
     if ($startMode -eq "unchanged")
     {
