@@ -150,8 +150,12 @@ namespace Calamari.Integration.Processes
                         process.BeginErrorReadLine();
 
                         process.WaitForExit();
+                        Log.Verbose("Process has exited");
                         outputWaitHandle.WaitOne();
+                        Log.Verbose("Output has finished");
+                        
                         errorWaitHandle.WaitOne();
+                        Log.Verbose("Error has finished");
 
                         return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString());
                     }

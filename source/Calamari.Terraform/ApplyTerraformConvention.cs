@@ -17,18 +17,26 @@ namespace Calamari.Terraform
         {
             using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
             {
+                Log.Verbose("Running apply");
                 cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);
+
+                Log.Verbose("Running output");
 
                 // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.8
                 // Please note that we really don't want to log the following command output as it can contain sensitive variables etc. hence the IgnoreCommandOutput()
                 if (cli.ExecuteCommand(out var result, new IgnoreCommandOutput(), "output", "-no-color", "-json").ExitCode != 0)
                 {
+                    Log.Verbose("Output failed");
+
                     return;
                 }
 
+                Log.Verbose("Parsing Output");
                 foreach (var (name, token) in OutputVariables(result))
                 {
+                    Log.Verbose($"Parsing Output {name}");
+
                     Boolean.TryParse(token.SelectToken("sensitive")?.ToString(), out var isSensitive);
 
                     var json = token.ToString();

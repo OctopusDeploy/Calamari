@@ -123,7 +123,7 @@ namespace Calamari.Terraform
             Log.Info(commandLineInvocation.ToString());
             
             var commandResult = cmd.Execute(commandLineInvocation);
-            
+            Log.Verbose("Command finished execution");
             result = String.Join("\n", commandOutput.Infos);
 
             return commandResult;
