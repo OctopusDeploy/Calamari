@@ -213,7 +213,6 @@ namespace Calamari.Tests.AWS
                 }
             });
 
-
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
