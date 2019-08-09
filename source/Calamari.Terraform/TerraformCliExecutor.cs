@@ -56,6 +56,8 @@ namespace Calamari.Terraform
 
             InitializeTerraformEnvironmentVariables();
 
+            LogVersion();
+
             InitializePlugins();
 
             InitializeWorkspace();
@@ -133,6 +135,12 @@ namespace Calamari.Terraform
         {
             ExecuteCommandInternal(
                 $"init -no-color -get-plugins={AllowPluginDownloads.ToString().ToLower()} {InitParams}", out _).VerifySuccess();
+        }
+        
+        void LogVersion()
+        {
+            ExecuteCommandInternal($"--version", out _)
+                .VerifySuccess();
         }
 
         void InitializeWorkspace()
