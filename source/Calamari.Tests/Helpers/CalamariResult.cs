@@ -166,7 +166,7 @@ namespace Calamari.Tests.Helpers
         public string GetOutputForLineContaining(string expectedOutput)
         {
             var found = captured.Infos.SingleOrDefault(i => i.ContainsIgnoreCase(expectedOutput));
-            found.Should().NotBeNull();
+            found.Should().NotBeNull($"'{expectedOutput}' should exist");
             return found;
         }
 
@@ -186,7 +186,7 @@ namespace Calamari.Tests.Helpers
         //"name: expectedValue"
         public void AssertPropertyValue(string name, string expectedValue)
         {
-            var title = name + ": ";
+            var title = name + ":";
             string line = GetOutputForLineContaining(title);
 
             line.Replace(title, "").Should().Be(expectedValue);
