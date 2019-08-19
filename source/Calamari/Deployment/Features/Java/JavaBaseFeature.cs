@@ -31,7 +31,7 @@ namespace Calamari.Deployment.Features.Java
             var javaLib = variables.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar, "");
             var result = commandLineRunner.Execute(new CommandLineInvocation(
                 JavaRuntime.CmdPath, 
-                $"-Pjdk.logger.finder.error=QUIET -cp calamari.jar {mainClass}",
+                $"-Djdk.logger.finder.error=QUIET -cp calamari.jar {mainClass}",
                 Path.Combine(javaLib, "contentFiles", "any", "any"),
                 environmentVariables));
             
