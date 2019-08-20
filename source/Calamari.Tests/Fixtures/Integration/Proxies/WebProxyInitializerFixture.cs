@@ -9,6 +9,7 @@ using SetProxy;
 namespace Calamari.Tests.Fixtures.Integration.Proxies
 {
     [TestFixture]
+    [Category(TestCategory.CompatibleOS.Windows)]
     public class ProxyInitializerFixture
     {
         const string BadproxyUrl = "http://proxy-initializer-fixture-bad-proxy:1234";
@@ -24,7 +25,8 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         [SetUp]
         public void Setup()
         {
-            defaultWebProxy = WebRequest.DefaultWebProxy;
+            if (CalamariEnvironment.IsRunningOnWindows)
+                defaultWebProxy = WebRequest.DefaultWebProxy;
 
             proxyHost = "proxy-initializer-fixture-good-proxy";
             proxyPort = 8888;
@@ -36,22 +38,20 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         {
             ResetProxyEnvironmentVariables();
 
-            WebRequest.DefaultWebProxy = defaultWebProxy;
+            if (CalamariEnvironment.IsRunningOnWindows)
+                WebRequest.DefaultWebProxy = defaultWebProxy;
 
             ResetSystemProxy();
         }
 
-        //Linux won't have this
         static void ResetSystemProxy()
         {
-#if !NETSTANDARD2_0
-            ProxyRoutines.SetProxy(false).Should().BeTrue();
-#endif
+            if (CalamariEnvironment.IsRunningOnWindows)
+                ProxyRoutines.SetProxy(false).Should().BeTrue();
         }
 
         [Test]
-        [RequiresWindowsServer2012OrAbove]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [RequiresDotNetFramework]
         public void Initialize_HasSystemProxy_NoProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -61,8 +61,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [RequiresWindowsServer2012OrAbove]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [RequiresDotNetFramework]
         public void Initialize_HasSystemProxy_UseSystemProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -72,8 +71,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [RequiresWindowsServer2012OrAbove]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [RequiresDotNetFramework]
         public void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -83,8 +81,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [RequiresWindowsServer2012OrAbove]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [RequiresDotNetFramework]
         public void Initialize_HasSystemProxy_CustomProxy()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -94,8 +91,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [RequiresWindowsServer2012OrAbove]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [RequiresDotNetFramework]
         public void Initialize_HasSystemProxy_CustomProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -105,6 +101,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [RequiresDotNetFramework]
         public void Initialize_NoSystemProxy_NoProxy()
         {
             RunWith(false, "", 80, "", "");
@@ -113,6 +110,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [RequiresDotNetFramework]
         public void Initialize_NoSystemProxy_UseSystemProxy()
         {
             RunWith(true, "", 80, "", "");
@@ -121,6 +119,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [RequiresDotNetFramework]
         public void Initialize_NoSystemProxy_UseSystemProxyWithCredentials()
         {
             RunWith(true, "", 80, ProxyUserName, ProxyPassword);
@@ -129,30 +128,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        public void Initialize_NoSystemProxy_UseSystemProxy1()
-        {
-            RunWith(true, "", 80, "", "");
-
-            AssertProxyNotUsed();
-        }
-
-        [Test]
-        public void Initialize_NoSystemProxy_UseSystemProxy2()
-        {
-            RunWith(true, "", 80, "", "");
-
-            AssertProxyNotUsed();
-        }
-
-        [Test]
-        public void Initialize_NoSystemProxy_UseSystemProxy3()
-        {
-            RunWith(true, "", 80, "", "");
-
-            AssertProxyNotUsed();
-        }
-
-        [Test]
+        [RequiresDotNetFramework]
         public void Initialize_NoSystemProxy_CustomProxy()
         {
             RunWith(false, proxyHost, proxyPort, "", "");
@@ -161,6 +137,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [RequiresDotNetFramework]
         public void Initialize_NoSystemProxy_CustomProxyWithCredentials()
         {
             RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword);

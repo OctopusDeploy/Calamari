@@ -6,6 +6,15 @@ namespace Calamari.Integration.Scripting
 {
     public class ScriptingEnvironment
     {
+        public static bool IsNetFramework()
+        {
+#if NETFRAMEWORK
+            return true;
+#else
+            return false;
+#endif
+        }
+        
         public static bool IsNet45OrNewer()
         {
             // Class "ReflectionContext" exists from .NET 4.5 onwards.

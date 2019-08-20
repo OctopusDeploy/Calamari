@@ -507,12 +507,6 @@ function Decrypt-Variables($iv, $Encrypted)
 	return $parameters
 }
 
-
-function Get-ProxyUri ([string] $proxyHost, [int] $proxyPort) {
-	$uri = "http://${proxyHost}:$proxyPort"
-	return New-Object Uri($uri)
-}
-
 function Initialize-ProxySettings()
 {
 	$proxyUsername = $env:TentacleProxyUsername
@@ -525,38 +519,49 @@ function Initialize-ProxySettings()
 		$useDefaultProxy = [System.Convert]::ToBoolean($env:TentacleUseDefaultProxy)
 	}
 
+	$useCustomProxy = ![string]::IsNullOrEmpty($proxyHost)
 	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost)
+	$hasCredentials = ![string]::IsNullOrEmpty($proxyUsername)
 
-	if ($useDefaultProxy -or !$useSystemProxy)
+	#custom proxy		
+	if ($useCustomProxy)
 	{
-		if($useSystemProxy)
+		$proxyUri = New-Object Uri("http://${proxyHost}:$proxyPort")
+		$proxy = New-Object System.Net.WebProxy($proxyUri)
+
+		if ($hasCredentials)
 		{
-			$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+			$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)			
 		}
 		else
 		{
-			$proxyUri = Get-ProxyUri -proxyHost $proxyHost -proxyPort $proxyPort
-			$proxy = New-Object System.Net.WebProxy($proxyUri)
+			$proxy.Credentials = New-Object System.Net.NetworkCredential("","")
 		}
-
-		if ([string]::IsNullOrEmpty($proxyUsername))
+	}
+	else
+	{
+		#system proxy		
+		if ($useDefaultProxy)
 		{
-			if($useSystemProxy)
+			$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+
+			if ($hasCredentials)
 			{
-				$proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
+				$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 			}
 			else
 			{
-				$proxy.Credentials = New-Object System.Net.NetworkCredential("","")
+				$proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
 			}
 		}
+		#bypass proxy
 		else
 		{
-			$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
+			$proxy = New-Object System.Net.WebProxy
 		}
-
-		[System.Net.WebRequest]::DefaultWebProxy = $proxy
 	}
+	
+	[System.Net.WebRequest]::DefaultWebProxy = $proxy
 }
 
 function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int] $sleepBetweenFailures = 1) {
