@@ -24,31 +24,12 @@ namespace Calamari.Aws.Integration
         private const string TentacleProxyPort = "TentacleProxyPort";
         private const string TentacleProxyUsername = "TentacleProxyUsername";
         private const string TentacleProxyPassword = "TentacleProxyPassword";
-        private readonly string region;
         private readonly string accessKey;
-        private readonly string secretKey;
         private readonly string assumeRole;
         private readonly string assumeRoleArn;
         private readonly string assumeRoleSession;
-
-        public static async Task<AwsEnvironmentGeneration> Create(CalamariVariableDictionary variables)
-        {
-            var environmentGeneration = new AwsEnvironmentGeneration(variables);
-
-            await environmentGeneration.Initialise();
-
-            return environmentGeneration;
-        }
-
-        async Task Initialise()
-        {
-            PopulateCommonSettings();
-            await PopulateSuppliedKeys();
-            await PopulateKeysFromInstanceRole();
-            await AssumeRole();
-        }
-
-        public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
+        private readonly string region;
+        private readonly string secretKey;
 
         private AwsEnvironmentGeneration(CalamariVariableDictionary variables)
         {
@@ -65,6 +46,8 @@ namespace Calamari.Aws.Integration
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleSession = variables.Get("Octopus.Action.Aws.AssumedRoleSession")?.Trim();
         }
+
+        public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Depending on how we logged in, we might be using a session or basic credentials
@@ -89,8 +72,10 @@ namespace Calamari.Aws.Integration
         }
 
         public RegionEndpoint AwsRegion => RegionEndpoint.GetBySystemName(EnvironmentVars["AWS_REGION"]);
+
         public int ProxyPort => Environment.GetEnvironmentVariable(TentacleProxyPort)?
             .Map(val => Int32.TryParse(val, out var port) ? port : -1) ?? -1;
+
         public string ProxyHost => Environment.GetEnvironmentVariable(TentacleProxyHost);
 
         public ICredentials ProxyCredentials
@@ -104,7 +89,23 @@ namespace Calamari.Aws.Integration
                 return credentials.UserName != null && credentials.Password != null ? credentials : null;
             }
         }
-        
+
+        public static async Task<AwsEnvironmentGeneration> Create(CalamariVariableDictionary variables)
+        {
+            var environmentGeneration = new AwsEnvironmentGeneration(variables);
+
+            await environmentGeneration.Initialise();
+
+            return environmentGeneration;
+        }
+
+        async Task Initialise()
+        {
+            PopulateCommonSettings();
+            await PopulateSuppliedKeys();
+            await PopulateKeysFromInstanceRole();
+            await AssumeRole();
+        }
 
 
         /// <summary>
@@ -115,6 +116,7 @@ namespace Calamari.Aws.Integration
         {
             try
             {
+                Log.Verbose("Verifying the supplied AWS credentials");
                 await new AmazonSecurityTokenServiceClient(AwsCredentials).GetCallerIdentityAsync(new GetCallerIdentityRequest());
                 return true;
 
@@ -167,6 +169,8 @@ namespace Calamari.Aws.Integration
             {
                 try
                 {
+                    Log.Verbose($"Generating keys from metadata URL {RoleUri} to assume instance role");
+                    
                     string payload;
                     using (var client = new HttpClient())
                     {
@@ -202,13 +206,15 @@ namespace Calamari.Aws.Integration
         {
             if ("True".Equals(assumeRole, StringComparison.InvariantCultureIgnoreCase))
             {
-               var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
-               var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest
+                Log.Verbose($"Assuming role {assumeRoleArn}");
+                
+                var client = new AmazonSecurityTokenServiceClient(AwsCredentials); 
+                var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest
                    {
                        RoleArn = assumeRoleArn,
                        RoleSessionName = assumeRoleSession
                    })
-               ).Credentials;
+                ).Credentials;
 
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;

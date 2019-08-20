@@ -21,6 +21,7 @@ namespace Calamari.Aws.Integration
             var awsEnvironmentVars = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult().EnvironmentVars;
             awsEnvironmentVars.MergeDictionaries(environmentVars);
 
+            Log.Verbose("Executing the AWS script");
             return NextWrapper.ExecuteScript(
                 script, scriptSyntax, 
                 variables, 
