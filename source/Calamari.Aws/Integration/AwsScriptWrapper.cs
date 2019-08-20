@@ -20,12 +20,13 @@ namespace Calamari.Aws.Integration
         {
             try
             {
-                Log.Info("END: AwsScriptWrapper.ExecuteScript()");
+                Log.Info("START: AwsScriptWrapper.ExecuteScript()");
 
                 var awsEnvironmentVars =
                     AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult().EnvironmentVars;
                 awsEnvironmentVars.MergeDictionaries(environmentVars);
 
+                Log.Info("START: NextWrapper.ExecuteScript()");
                 return NextWrapper.ExecuteScript(
                     script, scriptSyntax,
                     variables,
