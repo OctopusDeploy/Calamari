@@ -18,14 +18,24 @@ namespace Calamari.Aws.Integration
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
-            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult().EnvironmentVars;
-            awsEnvironmentVars.MergeDictionaries(environmentVars);
+            try
+            {
+                Log.Info("END: AwsScriptWrapper.ExecuteScript()");
 
-            return NextWrapper.ExecuteScript(
-                script, scriptSyntax, 
-                variables, 
-                commandLineRunner,
-                awsEnvironmentVars);
+                var awsEnvironmentVars =
+                    AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult().EnvironmentVars;
+                awsEnvironmentVars.MergeDictionaries(environmentVars);
+
+                return NextWrapper.ExecuteScript(
+                    script, scriptSyntax,
+                    variables,
+                    commandLineRunner,
+                    awsEnvironmentVars);
+            }
+            finally
+            {
+                Log.Info("END: AwsScriptWrapper.ExecuteScript()");
+            }
         }
     }
 }

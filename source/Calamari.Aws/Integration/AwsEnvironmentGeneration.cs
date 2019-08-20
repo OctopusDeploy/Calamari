@@ -146,6 +146,8 @@ namespace Calamari.Aws.Integration
         {
             if (!String.IsNullOrEmpty(accessKey))
             {
+                Log.Verbose("START: AwsEnvironmentGeneration.PopulateSuppliedKeys()");
+                
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
                 if (!await VerifyLogin())
@@ -154,6 +156,7 @@ namespace Calamari.Aws.Integration
                                              "Please check the keys assigned to the Amazon Web Services Account associated with this step. " +
                                              $"For more information visit {Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005")}");
                 }
+                Log.Info("END: AwsEnvironmentGeneration.PopulateSuppliedKeys()");
             }
         }
 
@@ -167,6 +170,8 @@ namespace Calamari.Aws.Integration
             {
                 try
                 {
+                    Log.Info("START: AwsEnvironmentGeneration.PopulateKeysFromInstanceRole()");
+
                     string payload;
                     using (var client = new HttpClient())
                     {
@@ -190,7 +195,12 @@ namespace Calamari.Aws.Integration
                         $"AWS-LOGIN-ERROR-0003: Failed to access the role information under {RoleUri}, " +
                         "or failed to parse the response. This may be because the instance does not have " +
                         "a role assigned to it. " +
-                        $"For more information visit {Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003")}", ex);
+                        $"For more information visit {Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003")}",
+                        ex);
+                }
+                finally
+                {
+                    Log.Info("END: AwsEnvironmentGeneration.PopulateKeysFromInstanceRole()");
                 }
             }
         }
@@ -202,6 +212,8 @@ namespace Calamari.Aws.Integration
         {
             if ("True".Equals(assumeRole, StringComparison.InvariantCultureIgnoreCase))
             {
+                Log.Info("START: AwsEnvironmentGeneration.AssumeRole()");
+                
                var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
                var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest
                    {
@@ -213,6 +225,8 @@ namespace Calamari.Aws.Integration
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;
                 EnvironmentVars["AWS_SESSION_TOKEN"] = credentials.SessionToken;
+                
+                Log.Info("END: AwsEnvironmentGeneration.AssumeRole()");
             }
         }
     }
