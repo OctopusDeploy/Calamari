@@ -164,7 +164,7 @@ if (-not $AppTypeAndVersionExists) {
 
 # Perform an upgrade if upgrades are enabled, the app type and name exists, but the new version does not exist,
 # or if an upgrade was forced and the app type and name exists
-if (($UpgradeEnabled -and $AppTypeAndNameExists -and -not $AppTypeAndNameAndVersionExists) -or ($ForceUpgrade -and -not $AppTypeAndNameExists)) {
+if ($AppTypeAndNameExists -and ($UpgradeEnabled -and -not $AppTypeAndNameAndVersionExists -or $ForceUpgrade)) {
     if ($DeployOnly) {
         $parameters.Action = "Register"
     }
