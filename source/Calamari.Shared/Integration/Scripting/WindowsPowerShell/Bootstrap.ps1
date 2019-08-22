@@ -689,7 +689,10 @@ Log-EnvironmentInformation
 # -----------------------------------------------------------------
 # Invoke target script
 # -----------------------------------------------------------------
-Import-CalamariModules
+
+$moduleImportMeasurement = Measure-Command -Expression {Import-CalamariModules}
+Write-Verbose "Spent $($moduleImportMeasurement.TotalSeconds) seconds importing the Powershell modules"
+
 
 # -----------------------------------------------------------------
 # Invoke target script
