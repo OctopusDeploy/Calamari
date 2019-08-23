@@ -18,9 +18,6 @@ namespace Calamari.Aws.Util
             return new TConfig().Tee(x =>
             {
                 x.RegionEndpoint = environment.AwsRegion;
-                x.ProxyPort = environment.ProxyPort;
-                x.ProxyCredentials = environment.ProxyCredentials;
-                x.ProxyHost = environment.ProxyHost;
             });
         }}
 
