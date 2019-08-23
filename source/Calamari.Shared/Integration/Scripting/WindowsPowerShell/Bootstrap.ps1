@@ -621,7 +621,8 @@ function Import-CalamariModules() {
 		$calamariModulePaths = $OctopusParameters["Octopus.Calamari.Bootstrapper.ModulePaths"].Split(";", [StringSplitOptions]'RemoveEmptyEntries')
 		foreach ($calamariModulePath in $calamariModulePaths) {
 		    if($calamariModulePath.EndsWith(".psd1")) {
-		        Import-Module –Name $calamariModulePath
+				$moduleImportMeasurement = Measure-Command -Expression {Import-Module –Name $calamariModulePath}
+				Write-Verbose "Spent $($moduleImportMeasurement.TotalSeconds) seconds importing the Powershell module $calamariModulePath"
 		    } else {
         		$env:PSModulePath = $calamariModulePath + ";" + $env:PSModulePath
 		    }
