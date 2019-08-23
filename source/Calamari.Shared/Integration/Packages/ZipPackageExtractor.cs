@@ -38,14 +38,14 @@ namespace Calamari.Integration.Packages
             Policy.Handle<IOException>().WaitAndRetry(
                     retryCount: extractAttempts,
                     sleepDurationProvider: i => TimeSpan.FromMilliseconds(50),
-                    onRetry: (ex, i) => { Log.Verbose($"Attempt {i} of {extractAttempts}: {ex.Message}"); })
+                    onRetry: (ex, retry) => { Log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
                 .Execute(() =>
                 {
                     entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
                 });
 #endif
         }
-
+        
         protected void ProcessEvent(ref int filesExtracted, IEntry entry, bool suppressNestedScriptWarning)
         {
             if (entry.IsDirectory) return;
