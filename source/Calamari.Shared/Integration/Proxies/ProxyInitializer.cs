@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net;
-using System.Net.Sockets;
+using Octopus.CoreUtilities;
 
 namespace Calamari.Integration.Proxies
 {
@@ -8,49 +8,46 @@ namespace Calamari.Integration.Proxies
     {
         public static void InitializeDefaultProxy()
         {
-            try
+            InitializeDefaultProxy(ProxySettingsInitializer.GetProxySettingsFromEnvironment());
+        }
+
+        static void InitializeDefaultProxy(ProxySettings proxySettings)
+        {
+            Maybe<IWebProxy> proxy = proxySettings.Accept(new WebProxyVisitor());
+            
+            if (proxy.Some())
+                WebRequest.DefaultWebProxy = proxy.Value;
+        }
+
+
+        class WebProxyVisitor : IProxySettingsVisitor<Maybe<IWebProxy>>
+        {
+            public Maybe<IWebProxy> Visit(BypassProxySettings proxySettings)
             {
-                var proxyUsername = Environment.GetEnvironmentVariable("TentacleProxyUsername");
-                var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
-                var proxyHost = Environment.GetEnvironmentVariable("TentacleProxyHost");
-                var proxyPortText = Environment.GetEnvironmentVariable("TentacleProxyPort");
-                int.TryParse(proxyPortText, out var proxyPort);
-
-                var useSystemProxy = string.IsNullOrWhiteSpace(proxyHost);
-                var proxy = useSystemProxy
-                    ? WebRequest.GetSystemWebProxy()
-                    : new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri);
-                
-                var useDefaultCredentials = string.IsNullOrWhiteSpace(proxyUsername);
-
-                proxy.Credentials = useDefaultCredentials
-                    ? useSystemProxy
-                        ? CredentialCache.DefaultNetworkCredentials
-                        : new NetworkCredential()
-                    : new NetworkCredential(proxyUsername, proxyPassword);
-
-                WebRequest.DefaultWebProxy = proxy;
+                IWebProxy emptyProxy = new WebProxy();
+                return emptyProxy.AsSome();
             }
-            catch (SocketException)
+
+            public Maybe<IWebProxy> Visit(UseSystemProxySettings proxySettings)
             {
-                /*
-                 Ignore this exception. It is probably just an inability to get the IE proxy settings. e.g.
-                 
-                 Unhandled Exception: System.Net.Sockets.SocketException: The requested service provider could not be loaded or initialized
-                   at System.Net.SafeCloseSocketAndEvent.CreateWSASocketWithEvent(AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, Boolean autoReset, Boolean signaled)
-                   at System.Net.NetworkAddressChangePolled..ctor()
-                   at System.Net.AutoWebProxyScriptEngine.AutoDetector.Initialize()
-                   at System.Net.AutoWebProxyScriptEngine.AutoDetector.get_CurrentAutoDetector()
-                   at System.Net.AutoWebProxyScriptEngine..ctor(WebProxy proxy, Boolean useRegistry)
-                   at System.Net.WebProxy.UnsafeUpdateFromRegistry()
-                   at System.Net.WebRequest.InternalGetSystemWebProxy()
-                   at System.Net.WebRequest.GetSystemWebProxy()
-                   at Calamari.Integration.Proxies.ProxyInitializer.InitializeDefaultProxy()
-                   at Calamari.Program.Execute(String[] args)
-                   at Calamari.Program.Main(String[] args)                 
-                 */
-                
-                Log.Error("Failed to get the system proxy settings. Calamari will not use any proxy settings.");
+                return SystemWebProxyRetriever.GetSystemWebProxy().Select(proxy =>
+                {
+                    proxy.Credentials = string.IsNullOrWhiteSpace(proxySettings.Username)
+                        ? CredentialCache.DefaultNetworkCredentials
+                        : new NetworkCredential(proxySettings.Username, proxySettings.Password);
+
+                    return proxy;
+                });
+            }
+
+            public Maybe<IWebProxy> Visit(UseCustomProxySettings proxySettings)
+            {
+                IWebProxy proxy = new WebProxy(new UriBuilder("http", proxySettings.Host, proxySettings.Port).Uri);
+                proxy.Credentials = string.IsNullOrWhiteSpace(proxySettings.Username)
+                    ? new NetworkCredential()
+                    : new NetworkCredential(proxySettings.Username, proxySettings.Password);
+
+                return proxy.AsSome();
             }
         }
     }

@@ -20,10 +20,6 @@ namespace Calamari.Aws.Integration
     public class AwsEnvironmentGeneration
     {
         private const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
-        private const string TentacleProxyHost = "TentacleProxyHost";
-        private const string TentacleProxyPort = "TentacleProxyPort";
-        private const string TentacleProxyUsername = "TentacleProxyUsername";
-        private const string TentacleProxyPassword = "TentacleProxyPassword";
         private readonly string region;
         private readonly string accessKey;
         private readonly string secretKey;
@@ -89,23 +85,6 @@ namespace Calamari.Aws.Integration
         }
 
         public RegionEndpoint AwsRegion => RegionEndpoint.GetBySystemName(EnvironmentVars["AWS_REGION"]);
-        public int ProxyPort => Environment.GetEnvironmentVariable(TentacleProxyPort)?
-            .Map(val => Int32.TryParse(val, out var port) ? port : -1) ?? -1;
-        public string ProxyHost => Environment.GetEnvironmentVariable(TentacleProxyHost);
-
-        public ICredentials ProxyCredentials
-        {
-            get
-            {
-                var credentials = new NetworkCredential(
-                    Environment.GetEnvironmentVariable(TentacleProxyUsername),
-                    Environment.GetEnvironmentVariable(TentacleProxyPassword));
-
-                return credentials.UserName != null && credentials.Password != null ? credentials : null;
-            }
-        }
-        
-
 
         /// <summary>
         /// Verify that we can login with the supplied credentials

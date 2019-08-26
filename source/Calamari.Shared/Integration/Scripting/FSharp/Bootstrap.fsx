@@ -55,18 +55,30 @@ let findVariableOrDefault defaultValue name =
     | None -> defaultValue
 
 let initializeProxy () =
-    let proxyHost = "TentacleProxyHost" |> getEnvironmentVariable 
-    let proxy = match proxyHost with
-                | Some x -> getCustomProxy x
-                | None -> WebRequest.GetSystemWebProxy()
+    let useDefaultProxy = match "TentacleUseDefaultProxy" |> getEnvironmentVariable with
+                            | Some x -> Boolean.Parse(x)
+                            | None -> true
 
+    let proxyHost = "TentacleProxyHost" |> getEnvironmentVariable
+    let useCustomProxy = match proxyHost with
+                            | Some x -> true
+                            | None -> false
+
+    let proxy =        
+        match proxyHost with
+            | Some x -> getCustomProxy x
+            | None -> if useDefaultProxy then WebRequest.GetSystemWebProxy() else new WebProxy() :> IWebProxy
+    
     let proxyUserName  = getEnvironmentVariable "TentacleProxyUsername" 
     let credentials = match proxyUserName with
                         | Some x -> getCustomCredentials x
                         | None -> match proxyHost with
                                     | Some x -> new NetworkCredential() 
                                     | None -> CredentialCache.DefaultNetworkCredentials
-    proxy.Credentials <- (credentials :> ICredentials)
+
+    if (useCustomProxy || useDefaultProxy)
+        then proxy.Credentials <- (credentials :> ICredentials)
+        
     WebRequest.DefaultWebProxy <- proxy
 
 let failStep message = 

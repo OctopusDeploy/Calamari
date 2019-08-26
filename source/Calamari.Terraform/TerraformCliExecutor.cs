@@ -214,7 +214,7 @@ namespace Calamari.Terraform
 
         void InitializeTerraformEnvironmentVariables()
         {
-            defaultEnvironmentVariables = new CommandLineToolsProxyEnvironmentVariables().EnvironmentVariables;
+            defaultEnvironmentVariables = ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
 
             defaultEnvironmentVariables.Add("TF_IN_AUTOMATION", "1");
             defaultEnvironmentVariables.Add("TF_LOG", "TRACE");

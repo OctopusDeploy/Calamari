@@ -213,19 +213,26 @@ public static class Octopus
         int proxyPort;
         int.TryParse(proxyPortText, out proxyPort);
 
-        var useSystemProxy = string.IsNullOrWhiteSpace(proxyHost);
+		var useDefaultProxyText = Environment.GetEnvironmentVariable("TentacleUseDefaultProxy");
+		bool useDefaultProxy;
+		if (!bool.TryParse(useDefaultProxyText, out useDefaultProxy))
+		    useDefaultProxy = true; 
 
-        var proxy = useSystemProxy
-            ? WebRequest.GetSystemWebProxy()
-            : new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri);
+        var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
+        var bypassProxy = !useCustomProxy && !useDefaultProxy;
+        
+        var proxy = useCustomProxy
+            ? new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri)
+            : useDefaultProxy ? WebRequest.GetSystemWebProxy() : new WebProxy();
 
         var useDefaultCredentials = string.IsNullOrWhiteSpace(proxyUsername);
 
-        proxy.Credentials = useDefaultCredentials
-            ? useSystemProxy
-                ? CredentialCache.DefaultNetworkCredentials
-                : new NetworkCredential()
-            : new NetworkCredential(proxyUsername, proxyPassword);
+        if (!bypassProxy)
+            proxy.Credentials = useDefaultCredentials
+                ? useCustomProxy
+                    ? new NetworkCredential()
+                    : CredentialCache.DefaultNetworkCredentials
+                : new NetworkCredential(proxyUsername, proxyPassword);
 
         WebRequest.DefaultWebProxy = proxy;
     }

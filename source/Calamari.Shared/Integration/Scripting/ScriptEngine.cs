@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Integration.Proxies;
 
 namespace Calamari.Integration.Scripting
 {
@@ -14,7 +16,11 @@ namespace Calamari.Integration.Scripting
         public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
-            var prepared = PrepareExecution(script, variables, environmentVars);
+            var environmentVariablesIncludingProxy = environmentVars ?? new Dictionary<string, string>();
+            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables()) 
+                environmentVariablesIncludingProxy[proxyVariable.Key] = proxyVariable.Value;
+
+            var prepared = PrepareExecution(script, variables, environmentVariablesIncludingProxy);
 
             CommandResult result = null;
             foreach (var execution in prepared)

@@ -1,0 +1,4 @@
+﻿#!/bin/bash
+echo "HTTP_PROXY:$HTTP_PROXY"
+echo "HTTPS_PROXY:$HTTPS_PROXY"
+echo "NO_PROXY:$NO_PROXY"
