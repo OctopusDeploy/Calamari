@@ -19,8 +19,6 @@ namespace Calamari.Integration.Processes
 
         public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
 
-        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string outputVariablesFilePath = null, string outputVariablesFilePassword = null) : this(storageFilePath, new List<string>(){ sensitiveFilePath }, sensitiveFilePassword, outputVariablesFilePath, outputVariablesFilePassword) { }
-
         public CalamariVariableDictionary(string storageFilePath, List<string> sensitiveFilePaths, string sensitiveFilePassword, string outputVariablesFilePath = null, string outputVariablesFilePassword = null)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
