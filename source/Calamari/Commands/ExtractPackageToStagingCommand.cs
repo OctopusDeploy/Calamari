@@ -14,7 +14,7 @@ namespace Calamari.Commands
     {
         string packageFile;
         string variablesFile;
-        string sensitiveVariablesFile;
+        private readonly List<string> sensitiveVariableFiles = new List<string>();
         string sensitiveVariablesPassword;
 
         public ExtractToStagingCommand()
@@ -26,7 +26,7 @@ namespace Calamari.Commands
             Options.Add(
                 "sensitiveVariables=",
                 "Password protected JSON file containing sensitive-variables.",
-                v => sensitiveVariablesFile = v);
+                v => sensitiveVariableFiles.Add(v));
             Options.Add(
                 "sensitiveVariablesPassword=",
                 "Password used to decrypt sensitive-variables.",
@@ -46,7 +46,7 @@ namespace Calamari.Commands
 
             var variables = new CalamariVariableDictionary(
                 variablesFile,
-                sensitiveVariablesFile,
+                sensitiveVariableFiles,
                 sensitiveVariablesPassword);
 
             var fileSystem = new WindowsPhysicalFileSystem();

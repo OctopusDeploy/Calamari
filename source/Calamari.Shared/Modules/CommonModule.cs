@@ -20,7 +20,7 @@ namespace Calamari.Modules
         private string variablesFile;
         private string outputVariablesFile;
         private string outputVariablesPassword;
-        private List<string> sensitiveVariablesFiles = new List<string>();
+        private List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
 
         public CommonModule(string[] args)
@@ -30,7 +30,7 @@ namespace Calamari.Modules
                 v => variablesFile = Path.GetFullPath(v),
                 v => outputVariablesFile = v,
                 v => outputVariablesPassword = v,
-                v => sensitiveVariablesFiles.Add(v),
+                v => sensitiveVariableFiles.Add(v),
                 v => sensitiveVariablesPassword = v);
             optionSet.Parse(args);
         }
@@ -39,7 +39,7 @@ namespace Calamari.Modules
         {
             return !string.IsNullOrWhiteSpace(variablesFile) ||
                 !string.IsNullOrWhiteSpace(outputVariablesFile) ||
-                sensitiveVariablesFiles.Any(sensitiveVariablesFile => !string.IsNullOrWhiteSpace(sensitiveVariablesFile)) ||
+                sensitiveVariableFiles.Any(sensitiveVariablesFile => !string.IsNullOrWhiteSpace(sensitiveVariablesFile)) ||
                 !string.IsNullOrWhiteSpace(sensitiveVariablesPassword);
         }
 
@@ -50,7 +50,7 @@ namespace Calamari.Modules
             {
                 builder.RegisterInstance(new CalamariVariableDictionary(
                     variablesFile,
-                    sensitiveVariablesFiles,
+                    sensitiveVariableFiles,
                     sensitiveVariablesPassword,
                     outputVariablesFile,
                     outputVariablesPassword))
