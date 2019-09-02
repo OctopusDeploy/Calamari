@@ -74,9 +74,12 @@ namespace Calamari.Integration.Certificates
                 var certificate = ImportPfxToStore(CertificateSystemStoreLocation.Users, userStoreName, pfxBytes,
                     password, false, privateKeyExportable);
 
-                // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-                var keySecurity = new[] {new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl)};
-                AddPrivateKeyAccessRules(keySecurity, certificate);
+                if (certificate.HasPrivateKey())
+                {
+                    // Because we have to store the private-key in the machine key-store, we must grant the user access to it
+                    var keySecurity = new[] {new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl)};
+                    AddPrivateKeyAccessRules(keySecurity, certificate);
+                }
             }
         }
 
