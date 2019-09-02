@@ -31,6 +31,9 @@ namespace Calamari.Tests.Helpers.Certificates
         public const string ChainSignedByLegacySha1RsaId = "ChainSignedByLegacySha1Rsa";
         public static readonly SampleCertificate ChainSignedByLegacySha1Rsa = new SampleCertificate("chain-signed-by-legacy-sha1-rsa.pfx", "Password01!", "47F51DED16E944AFC4B49B419D1C554974C895D2", true);
 
+        public const string CertWithNoPrivateKeyId = "CertWithNoPrivateKey";
+        public static readonly SampleCertificate CertWithNoPrivateKey = new SampleCertificate("cert-with-no-private-key.pfx", null, "FADD35F52F269FF0123D08396E2A6C1706496EE6", false);
+
         public static readonly IDictionary<string, SampleCertificate> SampleCertificates = new Dictionary<string, SampleCertificate>
         {
             {CngPrivateKeyId, CngWithPrivateKey},

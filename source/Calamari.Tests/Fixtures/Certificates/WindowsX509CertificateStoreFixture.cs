@@ -160,12 +160,30 @@ namespace Calamari.Tests.Fixtures.Certificates
         }
 
         [Test]
-        public void CanImportCertificateForUser()
+        public void CanImportCertificateForSpecificUser()
+        {
+            // This test cheats a little bit, using the current user
+            var user = WindowsIdentity.GetCurrent().Name;
+            var storeName = "My";
+            var sampleCertificate = SampleCertificate.CapiWithPrivateKey;
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
+
+            WindowsX509CertificateStore.ImportCertificateToStore(Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
+                user, storeName, sampleCertificate.HasPrivateKey);
+
+            sampleCertificate.AssertCertificateIsInStore(storeName, StoreLocation.CurrentUser);
+
+            sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
+        }
+        
+        [Test]
+        public void CanImportCertificateWithNoPrivateKeyForSpecificUser()
         {
             // This test cheats a little bit, using the current user 
             var user = WindowsIdentity.GetCurrent().Name;
             var storeName = "My";
-            var sampleCertificate = SampleCertificate.CapiWithPrivateKey;
+            var sampleCertificate = SampleCertificate.CertWithNoPrivateKey;
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
 
