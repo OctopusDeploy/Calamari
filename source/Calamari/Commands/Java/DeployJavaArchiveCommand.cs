@@ -25,7 +25,7 @@ namespace Calamari.Commands.Java
     {
         string variablesFile;
         string archiveFile;
-        string sensitiveVariablesFile;
+        private readonly List<string> sensitiveVariableFiles = new List<string>();
         string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
 
@@ -33,7 +33,7 @@ namespace Calamari.Commands.Java
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
@@ -53,7 +53,7 @@ namespace Calamari.Commands.Java
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var substituter = new FileSubstituter(fileSystem);

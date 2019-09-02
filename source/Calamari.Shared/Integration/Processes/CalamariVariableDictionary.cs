@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Commands.Support;
@@ -18,7 +19,7 @@ namespace Calamari.Integration.Processes
 
         public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
 
-        public CalamariVariableDictionary(string storageFilePath, string sensitiveFilePath, string sensitiveFilePassword, string outputVariablesFilePath = null, string outputVariablesFilePassword = null)
+        public CalamariVariableDictionary(string storageFilePath, List<string> sensitiveFilePaths, string sensitiveFilePassword, string outputVariablesFilePath = null, string outputVariablesFilePassword = null)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -31,23 +32,28 @@ namespace Calamari.Integration.Processes
                 nonSensitiveVariables.GetNames().ForEach(name => Set(name, nonSensitiveVariables.GetRaw(name)));
             }
 
-            if (!string.IsNullOrEmpty(sensitiveFilePath))
+            if (sensitiveFilePaths.Any())
             {
-                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-                    ? fileSystem.ReadFile(sensitiveFilePath)
-                    : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
+                foreach (var sensitiveFilePath in sensitiveFilePaths)
+                {
+                    if (string.IsNullOrEmpty(sensitiveFilePath)) continue;
 
-                try
-                {
-                    var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                    foreach (var variable in sensitiveVariables)
+                    var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+                        ? fileSystem.ReadFile(sensitiveFilePath)
+                        : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
+
+                    try
                     {
-                        SetSensitive(variable.Key, variable.Value);
+                        var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
+                        foreach (var variable in sensitiveVariables)
+                        {
+                            SetSensitive(variable.Key, variable.Value);
+                        }
                     }
-                }
-                catch (JsonReaderException)
-                {
-                    throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
+                    catch (JsonReaderException)
+                    {
+                        throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
+                    }
                 }
             }
 

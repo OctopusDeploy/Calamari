@@ -19,7 +19,7 @@ namespace Calamari.Aws.Commands
     {
         private string packageFile;
         private string variablesFile;
-        private string sensitiveVariablesFile;
+        private readonly List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
         private bool waitForComplete;
         
@@ -28,7 +28,7 @@ namespace Calamari.Aws.Commands
             Options.Add("variables=", "Path to a JSON file containing variables.",
                 v => variablesFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.",
-                v => sensitiveVariablesFile = v);
+                v => sensitiveVariableFiles.Add(v));
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.",
                 v => sensitiveVariablesPassword = v);
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
@@ -43,7 +43,7 @@ namespace Calamari.Aws.Commands
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
             
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
             var stackEventLogger = new StackEventLogger(new LogWrapper());
 
