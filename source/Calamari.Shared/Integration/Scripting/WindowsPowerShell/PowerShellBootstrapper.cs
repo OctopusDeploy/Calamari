@@ -11,23 +11,12 @@ using Octostache;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
-    public class PowerShellBootstrapper
+    public class WindowsPowerShellBootstrapper : PowerShellBootstrapper
     {
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
-        private static readonly string BootstrapScriptTemplate;
-        private static readonly string DebugBootstrapScriptTemplate;
-        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
-        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-        static PowerShellBootstrapper()
-        {
-            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".Bootstrap.ps1");
-            DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
-        }
-
-        public static string PathToPowerShellExecutable()
+        
+        public override string PathToPowerShellExecutable()
         {
             if (powerShellPath != null)
             {
@@ -51,8 +40,56 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             return powerShellPath;
         }
+    }
 
-        public static string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
+    public class PowerShellCoreBootstrapper : PowerShellBootstrapper
+    {
+        static string powerShellPath;
+        const string EnvPowerShellPath = "pwsh.exe";
+
+        public override string PathToPowerShellExecutable()
+        {
+            if (powerShellPath != null)
+            {
+                return powerShellPath;
+            }
+
+            try
+            {
+                var systemFolder = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                powerShellPath = Path.Combine(systemFolder, @"PowerShell\6\", EnvPowerShellPath);
+
+                if (!File.Exists(powerShellPath))
+                {
+                    powerShellPath = EnvPowerShellPath;
+                }
+            }
+            catch (Exception)
+            {
+                powerShellPath = EnvPowerShellPath;
+            }
+
+            return powerShellPath;
+        }
+    }
+    
+    public abstract class PowerShellBootstrapper
+    {
+        private static readonly string BootstrapScriptTemplate;
+        private static readonly string DebugBootstrapScriptTemplate;
+        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
+        static PowerShellBootstrapper()
+        {
+            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".Bootstrap.ps1");
+            DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
+        }
+
+        public abstract string PathToPowerShellExecutable();
+
+        public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
@@ -90,7 +127,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return true;
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
+        public (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
@@ -151,7 +188,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return builder;
         }
 
-        public static string PrepareDebuggingBootstrapFile(Script script)
+        public string PrepareDebuggingBootstrapFile(Script script)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);

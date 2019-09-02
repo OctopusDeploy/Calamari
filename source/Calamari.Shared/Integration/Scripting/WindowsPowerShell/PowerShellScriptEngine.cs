@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security;
@@ -14,15 +16,17 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return new[] {ScriptSyntax.PowerShell};
         }
 
-        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, CalamariVariableDictionary variables,
+        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
+            CalamariVariableDictionary variables,
             Dictionary<string, string> environmentVars = null)
         {
+            var powerShellBootstrapper = GetPowerShellBootstrapper(variables);
+            
             var workingDirectory = Path.GetDirectoryName(script.File);
-
-            var executable = PowerShellBootstrapper.PathToPowerShellExecutable();
-            var (bootstrapFile, otherTemporaryFiles) = PowerShellBootstrapper.PrepareBootstrapFile(script, variables);
-            var debuggingBootstrapFile = PowerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
-            var arguments = PowerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
+            var executable = powerShellBootstrapper.PathToPowerShellExecutable();
+            var (bootstrapFile, otherTemporaryFiles) = powerShellBootstrapper.PrepareBootstrapFile(script, variables);
+            var debuggingBootstrapFile = powerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
+            var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
 
             var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
             var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));
@@ -37,6 +41,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     password),
                 otherTemporaryFiles.Concat(new[] {bootstrapFile, debuggingBootstrapFile})
             );
+        }
+
+        PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
+        {
+            var specifiedWindowsEdition = variables[SpecialVariables.Action.PowerShell.WindowsEdition];
+            if (specifiedWindowsEdition.Equals("PowerShellCore", StringComparison.OrdinalIgnoreCase))
+                return new PowerShellCoreBootstrapper();
+            return new WindowsPowerShellBootstrapper();
         }
 
         static SecureString ToSecureString(string unsecureString)
