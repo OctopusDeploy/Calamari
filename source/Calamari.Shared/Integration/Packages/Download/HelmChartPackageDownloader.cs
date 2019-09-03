@@ -5,6 +5,9 @@ using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Octopus.Versioning;
+#if SUPPORTS_POLLY
+using Polly;
+#endif
 
 namespace Calamari.Integration.Packages.Download
 {
@@ -24,7 +27,6 @@ namespace Calamari.Integration.Packages.Download
         {
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
-            
             
             if (!forcePackageDownload)
             {
@@ -63,9 +65,9 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 var log = new LogWrapper();
-                Invoke( $"init --home \"{homeDir}\" --client-only", tempDirectory, log);
-                Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {feedUri.ToString()}", tempDirectory, log);
-                Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}", tempDirectory, log);
+                InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only", tempDirectory, log, "initialise helm"));
+                InvokeWithRetry(() => Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {feedUri.ToString()}", tempDirectory, log, "add the chart repository"));
+                InvokeWithRetry(() => Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}", tempDirectory, log, "download the chart"));
                 
                 var localDownloadName =
                     Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
@@ -75,8 +77,22 @@ namespace Calamari.Integration.Packages.Download
             }
         }
         
+#if SUPPORTS_POLLY
+        void InvokeWithRetry(Action action)
+        {
+            Policy.Handle<Exception>()
+                .WaitAndRetry(4, retry => TimeSpan.FromSeconds(retry), (ex, timespan) =>
+                {
+                    Console.WriteLine($"Command failed. Retrying in {timespan}.");
+                })
+                .Execute(action);
+        }
+#else
+        //net40 doesn't support polly... usage is low enough to skip the effort to implement nice retries
+        void InvokeWithRetry(Action action) => action();
+#endif
         
-        void Invoke(string args, string dir, ILog log)
+        void Invoke(string args, string dir, ILog log, string specificAction)
         {
             var info = new ProcessStartInfo("helm", args)
             {
@@ -111,12 +127,12 @@ namespace Calamari.Integration.Packages.Download
                 if (!server.HasExited)
                 {
                     server.Kill();
-                    throw new CommandException($"Helm failed to download the chart in an appropriate period of time ({timeout.TotalSeconds} sec). Please try again or check your connection.");
+                    throw new CommandException($"Helm failed to {specificAction} in an appropriate period of time ({timeout.TotalSeconds} sec). Please try again or check your connection.");
                 }
 
                 if (server.ExitCode != 0)
                 {
-                    throw new CommandException($"Helm failed to download the chart (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
+                    throw new CommandException($"Helm failed to {specificAction} (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
                 }
             }
         }
