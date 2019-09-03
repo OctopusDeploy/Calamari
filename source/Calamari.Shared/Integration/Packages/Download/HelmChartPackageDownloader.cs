@@ -65,7 +65,7 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 var log = new LogWrapper();
-                InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only", tempDirectory, log, "initialise helm"));
+                InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only", tempDirectory, log, "initialise"));
                 InvokeWithRetry(() => Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {feedUri.ToString()}", tempDirectory, log, "add the chart repository"));
                 InvokeWithRetry(() => Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}", tempDirectory, log, "download the chart"));
                 
