@@ -1,22 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
 
 namespace Calamari.Tests.Fixtures.PowerShell
-{    
+{
+    [TestFixture]
+    [Category(TestCategory.WindowsEdition.PowerShellCore)]
+    public class PowerShellCoreFixture : PowerShellFixture
+    {
+        protected override string WindowsEdition => "PowerShellCore";
+
+    }
+
+
     [TestFixture]
     [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
+        protected override string WindowsEdition => "PowerShell";
+
         [Test]
         public void ShouldPrioritizePowershellScriptsOverOtherSyntaxes()
         {
@@ -110,6 +123,22 @@ namespace Calamari.Tests.Fixtures.PowerShell
     
     public abstract class PowerShellFixture : CalamariFixture
     {
+        protected abstract string WindowsEdition { get; }
+        private string psEdition;
+
+        protected PowerShellFixture()
+        {
+            psEdition = "Desktop";
+            if (WindowsEdition == "PowerShellCore")
+                psEdition = "Core";
+        }
+        
+        void AssertPSEdition(CalamariResult output)
+        {
+            output.CapturedOutput.AllMessages.Select(i => i.TrimEnd()).Should()
+                .Contain($"PSEdition                      {psEdition}");
+        }
+
         [Test]
         [Platform]
         // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
@@ -121,6 +150,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var variables = new VariableDictionary();
             variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
@@ -132,6 +162,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
+                AssertPSEdition(output);
                 output.AssertOutput(expectedLogMessage);
                 output.AssertOutput("Hello!");
             }
@@ -149,6 +180,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variables = new VariableDictionary();
             if (executeWithoutProfile != null)
                 variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, executeWithoutProfile);
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
@@ -159,6 +191,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
+                AssertPSEdition(output);
                 var allOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
                 // Need to check for "-NoProfile -NoLogo" not just "-NoProfile" because when
                 // run via Cake we end up with the outer Powershell call included in the
@@ -174,37 +207,68 @@ namespace Calamari.Tests.Fixtures.PowerShell
             { [SpecialVariables.Action.PowerShell.ExecuteWithoutProfile] = "true" });
 
             output.AssertSuccess();
+            AssertPSEdition(output);
             output.AssertOutput("-NoProfile");
         }
 
         [Test]
         public void ShouldCallHello()
         {
-            var (output, _) = RunScript("Hello.ps1");
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello!");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("Hello.ps1");
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("Hello!");
+            }
         }
 
         [Test]
         public void ShouldLogWarningIfScriptArgumentUsed()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
-            output.AssertOutput("Hello!");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
+                output.AssertOutput("Hello!");
+            }
         }
 
         [Test]
         public void ShouldRetrieveCustomReturnValue()
         {
-            var (output, _) = RunScript("Exit2.ps1");
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertFailure(2);
-            output.AssertOutput("Hello!");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("Exit2.ps1");
+                
+                AssertPSEdition(output);
+                output.AssertFailure(2);
+                output.AssertOutput("Hello!");
+            }
         }
 
         [Test]
@@ -214,6 +278,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var variables = new VariableDictionary();
             variables.Set("Name", "NameToEncrypt");
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
             variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
 
             var (output, _) = RunScript("HelloWithVariable.ps1", new Dictionary<string, string>()
@@ -221,6 +286,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -228,7 +294,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var outputVariablesFile = Path.GetTempFileName();
 
-            var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" };
+            var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve", ["Octopus.Action.Script.WindowsEdition"] = WindowsEdition };
             var serialized = JsonConvert.SerializeObject(variables);
             var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
             var encoded = Convert.ToBase64String(bytes);
@@ -241,81 +307,158 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello Steve");
+                AssertPSEdition(output);
             }
         }
 
         [Test]
         public void ShouldConsumeParametersWithQuotesUsingDeprecatedArgument()
         {
-            var (output, _) = RunScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
             {
-                ["scriptParameters"] = "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
-            });
-            output.AssertSuccess();
-            output.AssertOutput("Parameters Para meter0Para meter1");
+                var (output, _) = RunScript("Parameters.ps1",
+                    additionalParameters: new Dictionary<string, string>()
+                    {
+                        ["scriptParameters"] = "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
+                    });
+                output.AssertSuccess();
+                output.AssertOutput("Parameters Para meter0Para meter1");
+                AssertPSEdition(output);
+            }
         }
 
         [Test]
         public void ShouldConsumeParametersWithQuotes()
         {
-            var (output, _) = RunScript("Parameters.ps1", new Dictionary<string, string>()
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
             {
-                [SpecialVariables.Action.Script.ScriptParameters] = "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
-            });
-            output.AssertSuccess();
-            output.AssertOutput("Parameters Para meter0Para meter1");
+                var (output, _) = RunScript("Parameters.ps1",
+                    new Dictionary<string, string>()
+                    {
+                        [SpecialVariables.Action.Script.ScriptParameters] =
+                            "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
+                    });
+                output.AssertSuccess();
+                output.AssertOutput("Parameters Para meter0Para meter1");
+                AssertPSEdition(output);
+            }
         }
 
         [Test]
         public void ShouldCaptureAllOutput()
         {
-            var (output, _) = RunScript("Output.ps1");
-            output.AssertFailure();
-            output.AssertOutput("Hello, write-host!");
-            output.AssertOutput("Hello, write-output!");
-            output.AssertOutput("Hello, write-verbose!");
-            output.AssertOutput("Hello, write-warning!");
-            output.AssertErrorOutput("Hello-Error!");
-            output.AssertNoOutput("This warning should not appear in logs!");
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("Output.ps1");
+                output.AssertFailure();
+                output.AssertOutput("Hello, write-host!");
+                output.AssertOutput("Hello, write-output!");
+                output.AssertOutput("Hello, write-verbose!");
+                output.AssertOutput("Hello, write-warning!");
+                output.AssertErrorOutput("Hello-Error!");
+                output.AssertNoOutput("This warning should not appear in logs!");
+                AssertPSEdition(output);
+            }
         }
 
         [Test]
         public void ShouldWriteServiceMessageForArtifacts()
         {
-            var (output, _) = RunScript("CanCreateArtifact.ps1");
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
-            //  this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("CanCreateArtifact.ps1");
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput(
+                    "##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
+                //  this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+            }
         }
         
         [Test]
         public void ShouldWriteServiceMessageForUpdateProgress()
         {
-            var (output, _) = RunScript("UpdateProgress.ps1");
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("UpdateProgress.ps1");
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            }
         }
-        
+
         [Test]
         public void ShouldWriteServiceMessageForUpdateProgressFromPipeline()
         {
-            var (output, _) = RunScript("UpdateProgressFromPipeline.ps1");
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("UpdateProgressFromPipeline.ps1");
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            }
         }
 
         [Test]
         public void ShouldWriteServiceMessageForPipedArtifacts()
         {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
             var path = Path.Combine(Path.GetTempPath(), "CanCreateArtifactPipedTestFile.txt");
             var base64Path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
             try
             {
                 if (!File.Exists(path))
                     File.WriteAllText(path, "");
-                var (output, _) = RunScript("CanCreateArtifactPiped.ps1");
-                output.AssertSuccess();
-                output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
+
+                using (new TemporaryFile(variablesFile))
+                {
+                    var (output, _) = RunScript("CanCreateArtifactPiped.ps1");
+                    output.AssertSuccess();
+                    AssertPSEdition(output);
+                    output.AssertOutput(
+                        $"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
+                }
             }
             finally
             {
@@ -326,138 +469,248 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
-            var (output, _) = RunScript("WarningForMissingArtifact.ps1");
-            output.AssertSuccess();
-            output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
-            output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
-            // this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("WarningForMissingArtifact.ps1");
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
+                output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
+                // this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+            }
         }
 
         [Test]
         public void ShouldAllowDotSourcing()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "CanDotSource.ps1")));
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello!");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "CanDotSource.ps1")));
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("Hello!");
+            }
         }
 
         [Test]
         public void ShouldSetVariables()
         {
-            var (output, variables) = RunScript("CanSetVariable.ps1");
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
-            Assert.AreEqual("World!", variables.Get("TestA"));
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, variable) = RunScript("CanSetVariable.ps1");
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
+                Assert.AreEqual("World!", variable.Get("TestA"));
+            }
         }
 
         [Test]
         public void ShouldSetSensitiveVariables()
         {
-            var (output, variables) = RunScript("CanSetVariable.ps1");
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
-            Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, variable) = RunScript("CanSetVariable.ps1");
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput(
+                    "##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
+                Assert.AreEqual("X marks the spot", variable.Get("SecretSquirrel"));
+            }
         }
 
         [Test]
         public void ShouldSetActionIndexedOutputVariables()
         {
-            var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script"
             });
+            AssertPSEdition(output);
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
         }
 
         [Test]
         public void ShouldSetMachineIndexedOutputVariables()
         {
-            var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script",
                 [SpecialVariables.Machine.Name] = "App01"
             });
 
+            AssertPSEdition(output);
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
         }
 
         [Test]
         public void ShouldFailOnInvalid()
         {
-            var (output, _) = RunScript("Invalid.ps1");
-            output.AssertFailure();
-            output.AssertErrorOutput("A positional parameter cannot be found that accepts");
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("Invalid.ps1");
+                output.AssertFailure();
+                AssertPSEdition(output);
+                output.AssertErrorOutput("A positional parameter cannot be found that accepts");
+            }
         }
 
         [Test]
         public void ShouldFailOnInvalidSyntax()
         {
-            var (output, _) = RunScript("InvalidSyntax.ps1");
-            output.AssertFailure();
-            output.AssertErrorOutput("ParserError");
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("InvalidSyntax.ps1");
+                output.AssertFailure();
+                AssertPSEdition(output);
+                output.AssertErrorOutput("ParserError");
+            }
         }
 
         [Test]
         public void ShouldPrintVariables()
         {
-            var (output, _) = RunScript("PrintVariables.ps1", new Dictionary<string, string>
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
             {
-                ["Variable1"] = "ABC",
-                ["Variable2"] = "DEF",
-                ["Variable3"] = "GHI",
-                ["Foo_bar"] = "Hello",
-                ["Host"] = "Never",
-            });
+                var (output, _) = RunScript("PrintVariables.ps1", new Dictionary<string, string>
+                {
+                    ["Variable1"] = "ABC",
+                    ["Variable2"] = "DEF",
+                    ["Variable3"] = "GHI",
+                    ["Foo_bar"] = "Hello",
+                    ["Host"] = "Never",
+                });
 
 
-            output.AssertSuccess();
-            output.AssertOutput("V1= ABC");
-            output.AssertOutput("V2= DEF");
-            output.AssertOutput("V3= GHI");
-            output.AssertOutput("FooBar= Hello"); // Legacy - '_' used to be removed
-            output.AssertOutput("Foo_Bar= Hello"); // Current - '_' is valid in PowerShell
+                output.AssertSuccess();
+                output.AssertOutput("V1= ABC");
+                output.AssertOutput("V2= DEF");
+                output.AssertOutput("V3= GHI");
+                output.AssertOutput("FooBar= Hello"); // Legacy - '_' used to be removed
+                output.AssertOutput("Foo_Bar= Hello"); // Current - '_' is valid in PowerShell
+                AssertPSEdition(output);
+            }
         }
 
         [Test]
         public void ShouldSupportModulesInVariables()
         {
-            var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>
-            {
-                ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module!\" }",
-                ["Variable2"] = "DEF",
-                ["Variable3"] = "GHI",
-                ["Foo_bar"] = "Hello",
-                ["Host"] = "Never",
-            });
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello from module!");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>
+                {
+                    ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module!\" }",
+                    ["Variable2"] = "DEF",
+                    ["Variable3"] = "GHI",
+                    ["Foo_bar"] = "Hello",
+                    ["Host"] = "Never",
+                });
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("Hello from module!");
+            }
         }
 
         [Test]
         public void ShouldShowFriendlyErrorWithInvalidSyntaxInScriptModule()
         {
-            var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
-            { ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }" });
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertFailure();
-            output.AssertOutput("Failed to import Script Module 'Foo'");
-            output.AssertErrorOutput("Write-Host \"Hello from module!");
-            output.AssertErrorOutput("The string is missing the terminator: \".");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("UseModule.ps1",
+                    new Dictionary<string, string>()
+                    {
+                        ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }"
+                    });
+
+                output.AssertFailure();
+                AssertPSEdition(output);
+                output.AssertOutput("Failed to import Script Module 'Foo'");
+                output.AssertErrorOutput("Write-Host \"Hello from module!");
+                output.AssertErrorOutput("The string is missing the terminator: \".");
+            }
         }
 
         [Test]
         public void ShouldFailIfAModuleHasASyntaxError()
         {
-            var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
-            { ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }" });
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertFailure();
-            output.AssertErrorOutput("ParserError", true);
-            output.AssertErrorOutput("is missing the terminator", true);
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("UseModule.ps1",
+                    new Dictionary<string, string>()
+                    {
+                        ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }"
+                    });
+
+                output.AssertFailure();
+                AssertPSEdition(output);
+                output.AssertErrorOutput("ParserError", true);
+                output.AssertErrorOutput("is missing the terminator", true);
+            }
         }
 
         [Test]
@@ -469,6 +722,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
             variables.Set("Octopus.Environment.Name", "Production");
             variables.Save(variablesFile);
 
@@ -481,6 +735,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
+                AssertPSEdition(output);
                 output.AssertOutput("Hello #{Octopus.Environment.Name}!");
             }
         }
@@ -492,6 +747,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
             variables.Set("Octopus.Environment.Name", "Production");
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
             variables.Set(SpecialVariables.Action.Script.ScriptFileName, "Deploy.ps1");
             variables.Save(variablesFile);
 
@@ -503,6 +759,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
+                AssertPSEdition(output);
                 output.AssertOutput("Extracting package");
                 output.AssertOutput("Performing variable substitution");
                 output.AssertOutput("OctopusParameter: Production");
@@ -514,80 +771,160 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPing()
         {
-            var (output, _) = RunScript("Ping.ps1");
-            output.AssertSuccess();
-            output.AssertOutput("Pinging ");
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("Ping.ps1");
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("Pinging ");
+            }
         }
 
         [Test]
         public void ShouldExecuteWhenPathContainsSingleQuote()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts\\Path With '", "PathWithSingleQuote.ps1")));
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello from a path containing a '");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts\\Path With '", "PathWithSingleQuote.ps1")));
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("Hello from a path containing a '");
+            }
         }
 
         [Test]
         public void ShouldExecuteWhenPathContainsDollar()
         {
-            var output = Invoke(Calamari()
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts\\Path With $", "PathWithDollar.ps1")));
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello from a path containing a $");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts\\Path With $", "PathWithDollar.ps1")));
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("Hello from a path containing a $");
+            }
         }
 
         [Test]
         public void ShouldNotFailOnStdErr()
         {
-            var (output, _) = RunScript("stderr.ps1");
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertErrorOutput("error");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("stderr.ps1");
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertErrorOutput("error");
+            }
         }
 
         [Test]
         public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
-            var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
-            { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertFailure();
-            output.AssertErrorOutput("error");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("stderr.ps1",
+                    new Dictionary<string, string>() {["Octopus.Action.FailScriptOnErrorOutput"] = "True"});
+
+                output.AssertFailure();
+                AssertPSEdition(output);
+                output.AssertErrorOutput("error");
+            }
         }
 
         [Test]
         public void ShouldPassOnStdInfoWithTreatScriptWarningsAsErrors()
         {
-            var (output, _) = RunScript("Hello.ps1", new Dictionary<string, string>()
-            { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello!");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("Hello.ps1",
+                    new Dictionary<string, string>() {["Octopus.Action.FailScriptOnErrorOutput"] = "True"});
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("Hello!");
+            }
         }
 
         [Test]
         public void ShouldNotDoubleReplaceVariables()
         {
-            var (output, _) = RunScript("DontDoubleReplace.ps1", new Dictionary<string, string>()
-            { ["Octopus.Machine.Name"] = "Foo" });
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("The  Octopus variable for machine name is #{Octopus.Machine.Name}");
-            output.AssertOutput("An example of this evaluated is: 'Foo'");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("DontDoubleReplace.ps1",
+                    new Dictionary<string, string>() {["Octopus.Machine.Name"] = "Foo"});
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("The  Octopus variable for machine name is #{Octopus.Machine.Name}");
+                output.AssertOutput("An example of this evaluated is: 'Foo'");
+            }
         }
 
         [Test]
         public void CharacterWithBomMarkCorrectlyEncoded()
         {
-            var (output, _) = RunScript("ScriptWithBOM.ps1");
+            var variablesFile = Path.GetTempFileName();
 
-            output.AssertSuccess();
-            output.AssertOutput("45\r\n226\r\n128\r\n147");
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.WindowsEdition, WindowsEdition);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var (output, _) = RunScript("ScriptWithBOM.ps1");
+
+                output.AssertSuccess();
+                AssertPSEdition(output);
+                output.AssertOutput("45\r\n226\r\n128\r\n147");
+            }
         }
     }
 }

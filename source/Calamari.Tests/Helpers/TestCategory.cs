@@ -19,5 +19,12 @@ namespace Calamari.Tests.Helpers
         }
         
         public const string PlatformAgnostic = "PlatformAgnostic";
+
+        public static class WindowsEdition
+        {
+            public const string PowerShellCore = "PowerShellCore";
+
+            public const string PowerShell = "PowerShell";
+        }
     }
 }
