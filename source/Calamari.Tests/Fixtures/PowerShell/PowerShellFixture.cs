@@ -177,7 +177,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
-            var (output, _) = RunScript("Profile.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("Profile.ps1", new Dictionary<string, string>()
             { [SpecialVariables.Action.PowerShell.ExecuteWithoutProfile] = "true" });
 
             output.AssertSuccess();
@@ -188,7 +188,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHello()
         {
-            var (output, _) = RunScript("Hello.ps1");
+            var (output, _) = RunPowerShellScript("Hello.ps1");
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
@@ -211,7 +211,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldRetrieveCustomReturnValue()
         {
-            var (output, _) = RunScript("Exit2.ps1");
+            var (output, _) = RunPowerShellScript("Exit2.ps1");
 
             output.AssertFailure(2);
             output.AssertOutput("Hello!");
@@ -227,7 +227,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             variables.Set("Name", "NameToEncrypt");
             variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
 
-            var (output, _) = RunScript("HelloWithVariable.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("HelloWithVariable.ps1", new Dictionary<string, string>()
             { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
@@ -248,7 +248,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             using (new TemporaryFile(outputVariablesFile))
             {
-                var (output, _) = RunScript("OutputVariableFromPrevious.ps1", null,
+                var (output, _) = RunPowerShellScript("OutputVariableFromPrevious.ps1", null,
                     new Dictionary<string, string>() { ["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg==" });
 
                 output.AssertSuccess();
@@ -260,7 +260,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldConsumeParametersWithQuotesUsingDeprecatedArgument()
         {
-            var (output, _) = RunScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
             {
                 ["scriptParameters"] = "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
             });
@@ -272,7 +272,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldConsumeParametersWithQuotes()
         {
-            var (output, _) = RunScript("Parameters.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("Parameters.ps1", new Dictionary<string, string>()
             {
                 [SpecialVariables.Action.Script.ScriptParameters] = "-Parameter0 \"Para meter0\" -Parameter1 'Para meter1'"
             });
@@ -284,7 +284,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCaptureAllOutput()
         {
-            var (output, _) = RunScript("Output.ps1");
+            var (output, _) = RunPowerShellScript("Output.ps1");
             output.AssertFailure();
             output.AssertOutput("Hello, write-host!");
             output.AssertOutput("Hello, write-output!");
@@ -298,7 +298,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForArtifacts()
         {
-            var (output, _) = RunScript("CanCreateArtifact.ps1");
+            var (output, _) = RunPowerShellScript("CanCreateArtifact.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
             AssertPowerShellEdition(output);
@@ -307,7 +307,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForUpdateProgress()
         {
-            var (output, _) = RunScript("UpdateProgress.ps1");
+            var (output, _) = RunPowerShellScript("UpdateProgress.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
             AssertPowerShellEdition(output);
@@ -316,7 +316,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForUpdateProgressFromPipeline()
         {
-            var (output, _) = RunScript("UpdateProgressFromPipeline.ps1");
+            var (output, _) = RunPowerShellScript("UpdateProgressFromPipeline.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
             AssertPowerShellEdition(output);
@@ -331,7 +331,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             {
                 if (!File.Exists(path))
                     File.WriteAllText(path, "");
-                var (output, _) = RunScript("CanCreateArtifactPiped.ps1");
+                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1");
                 output.AssertSuccess();
                 output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
                 AssertPowerShellEdition(output);
@@ -345,7 +345,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
-            var (output, _) = RunScript("WarningForMissingArtifact.ps1");
+            var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1");
             output.AssertSuccess();
             output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
@@ -367,7 +367,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetVariables()
         {
-            var (output, variables) = RunScript("CanSetVariable.ps1");
+            var (output, variables) = RunPowerShellScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
             Assert.AreEqual("World!", variables.Get("TestA"));
@@ -377,7 +377,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetSensitiveVariables()
         {
-            var (output, variables) = RunScript("CanSetVariable.ps1");
+            var (output, variables) = RunPowerShellScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
             Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
@@ -387,7 +387,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetActionIndexedOutputVariables()
         {
-            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunPowerShellScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script"
             });
@@ -398,7 +398,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetMachineIndexedOutputVariables()
         {
-            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunPowerShellScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script",
                 [SpecialVariables.Machine.Name] = "App01"
@@ -411,7 +411,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldFailOnInvalid()
         {
-            var (output, _) = RunScript("Invalid.ps1");
+            var (output, _) = RunPowerShellScript("Invalid.ps1");
             output.AssertFailure();
             output.AssertErrorOutput("A positional parameter cannot be found that accepts");
             AssertPowerShellEdition(output);
@@ -420,7 +420,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldFailOnInvalidSyntax()
         {
-            var (output, _) = RunScript("InvalidSyntax.ps1");
+            var (output, _) = RunPowerShellScript("InvalidSyntax.ps1");
             output.AssertFailure();
             output.AssertErrorOutput("ParserError");
             AssertPowerShellEdition(output);
@@ -429,7 +429,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPrintVariables()
         {
-            var (output, _) = RunScript("PrintVariables.ps1", new Dictionary<string, string>
+            var (output, _) = RunPowerShellScript("PrintVariables.ps1", new Dictionary<string, string>
             {
                 ["Variable1"] = "ABC",
                 ["Variable2"] = "DEF",
@@ -451,7 +451,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSupportModulesInVariables()
         {
-            var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>
+            var (output, _) = RunPowerShellScript("UseModule.ps1", new Dictionary<string, string>
             {
                 ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module!\" }",
                 ["Variable2"] = "DEF",
@@ -468,7 +468,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldShowFriendlyErrorWithInvalidSyntaxInScriptModule()
         {
-            var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("UseModule.ps1", new Dictionary<string, string>()
             { ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }" });
 
             output.AssertFailure();
@@ -481,7 +481,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldFailIfAModuleHasASyntaxError()
         {
-            var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("UseModule.ps1", new Dictionary<string, string>()
             { ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }" });
 
             output.AssertFailure();
@@ -536,7 +536,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPing()
         {
-            var (output, _) = RunScript("Ping.ps1");
+            var (output, _) = RunPowerShellScript("Ping.ps1");
             output.AssertSuccess();
             output.AssertOutput("Pinging ");
             AssertPowerShellEdition(output);
@@ -569,7 +569,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldNotFailOnStdErr()
         {
-            var (output, _) = RunScript("stderr.ps1");
+            var (output, _) = RunPowerShellScript("stderr.ps1");
 
             output.AssertSuccess();
             output.AssertErrorOutput("error");
@@ -579,7 +579,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
-            var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("stderr.ps1", new Dictionary<string, string>()
             { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
 
             output.AssertFailure();
@@ -590,7 +590,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPassOnStdInfoWithTreatScriptWarningsAsErrors()
         {
-            var (output, _) = RunScript("Hello.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("Hello.ps1", new Dictionary<string, string>()
             { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
 
             output.AssertSuccess();
@@ -601,7 +601,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldNotDoubleReplaceVariables()
         {
-            var (output, _) = RunScript("DontDoubleReplace.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("DontDoubleReplace.ps1", new Dictionary<string, string>()
             { ["Octopus.Machine.Name"] = "Foo" });
 
             output.AssertSuccess();
@@ -613,7 +613,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void CharacterWithBomMarkCorrectlyEncoded()
         {
-            var (output, _) = RunScript("ScriptWithBOM.ps1");
+            var (output, _) = RunPowerShellScript("ScriptWithBOM.ps1");
 
             output.AssertSuccess();
             output.AssertOutput("45\r\n226\r\n128\r\n147");
@@ -667,6 +667,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 // PowerShell 3 which does not have PSEdition in the output
                 trimmedOutput.Should().NotContain(powerShellCoreEdition);
             }
+        }
+
+        (CalamariResult result, VariableDictionary variables) RunPowerShellScript(string scriptName,
+            Dictionary<string, string> additionalVariables = null,
+            Dictionary<string, string> additionalParameters = null,
+            string sensitiveVariablesPassword = null)
+        {
+            return RunScript(scriptName, additionalVariables, additionalParameters, sensitiveVariablesPassword);
         }
     }
 }
