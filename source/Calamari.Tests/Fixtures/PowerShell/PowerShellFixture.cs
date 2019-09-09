@@ -8,6 +8,7 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -145,6 +146,12 @@ namespace Calamari.Tests.Fixtures.PowerShell
     
     public abstract class PowerShellFixture : CalamariFixture
     {
+        void AssertPSEdition(CalamariResult output)
+        {
+            output.CapturedOutput.AllMessages.Select(i => i.TrimEnd()).Should()
+                .Contain($"PSEdition                      Desktop");
+        }
+
         [Test]
         [TestCase("true", true)]
         [TestCase("false", false)]
@@ -172,6 +179,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 // run via Cake we end up with the outer Powershell call included in the
                 // output too, which has a -NoProfile flag.
                 Assert.That(allOutput.Contains("-NoProfile -NoLo") == calledWithNoProfile);
+                AssertPSEdition(output);
             }
         }
 
@@ -183,6 +191,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("-NoProfile");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -192,6 +201,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -204,6 +214,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -213,6 +224,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertFailure(2);
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -229,6 +241,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -249,6 +262,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello Steve");
+                AssertPSEdition(output);
             }
         }
 
@@ -261,6 +275,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             });
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -272,6 +287,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             });
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -285,6 +301,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Hello, write-warning!");
             output.AssertErrorOutput("Hello-Error!");
             output.AssertNoOutput("This warning should not appear in logs!");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -293,7 +310,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunScript("CanCreateArtifact.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
-            //  this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+            AssertPSEdition(output);
         }
         
         [Test]
@@ -302,6 +319,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunScript("UpdateProgress.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            AssertPSEdition(output);
         }
         
         [Test]
@@ -310,6 +328,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunScript("UpdateProgressFromPipeline.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -324,6 +343,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 var (output, _) = RunScript("CanCreateArtifactPiped.ps1");
                 output.AssertSuccess();
                 output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
+                AssertPSEdition(output);
             }
             finally
             {
@@ -338,7 +358,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
-            // this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -350,6 +370,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -359,6 +380,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
             Assert.AreEqual("World!", variables.Get("TestA"));
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -368,28 +390,31 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
             Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
+            AssertPSEdition(output);
         }
 
         [Test]
         public void ShouldSetActionIndexedOutputVariables()
         {
-            var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script"
             });
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
+            AssertPSEdition(output);
         }
 
         [Test]
         public void ShouldSetMachineIndexedOutputVariables()
         {
-            var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script",
                 [SpecialVariables.Machine.Name] = "App01"
             });
 
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -398,6 +423,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunScript("Invalid.ps1");
             output.AssertFailure();
             output.AssertErrorOutput("A positional parameter cannot be found that accepts");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -406,6 +432,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunScript("InvalidSyntax.ps1");
             output.AssertFailure();
             output.AssertErrorOutput("ParserError");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -427,6 +454,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("V3= GHI");
             output.AssertOutput("FooBar= Hello"); // Legacy - '_' used to be removed
             output.AssertOutput("Foo_Bar= Hello"); // Current - '_' is valid in PowerShell
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -443,6 +471,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello from module!");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -455,6 +484,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Failed to import Script Module 'Foo'");
             output.AssertErrorOutput("Write-Host \"Hello from module!");
             output.AssertErrorOutput("The string is missing the terminator: \".");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -466,6 +496,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertFailure();
             output.AssertErrorOutput("ParserError", true);
             output.AssertErrorOutput("is missing the terminator", true);
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -490,6 +521,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello #{Octopus.Environment.Name}!");
+                AssertPSEdition(output);
             }
         }
 
@@ -516,6 +548,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutput("OctopusParameter: Production");
                 output.AssertOutput("InlineVariable: Production");
                 output.AssertOutput("VariableSubstitution: Production");
+                AssertPSEdition(output);
             }
         }
 
@@ -525,6 +558,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunScript("Ping.ps1");
             output.AssertSuccess();
             output.AssertOutput("Pinging ");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -536,6 +570,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a '");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -547,6 +582,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a $");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -556,6 +592,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertErrorOutput("error");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -566,6 +603,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertFailure();
             output.AssertErrorOutput("error");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -576,6 +614,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -587,6 +626,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("The  Octopus variable for machine name is #{Octopus.Machine.Name}");
             output.AssertOutput("An example of this evaluated is: 'Foo'");
+            AssertPSEdition(output);
         }
 
         [Test]
@@ -596,6 +636,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("45\r\n226\r\n128\r\n147");
+            AssertPSEdition(output);
         }
     }
 }
