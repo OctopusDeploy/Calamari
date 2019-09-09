@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
-        protected override string WindowsEdition => "PowerShell";
+        protected override string WindowsEdition => "WindowsPowerShell";
 
         [Test]
         public void ShouldPrioritizePowershellScriptsOverOtherSyntaxes()
