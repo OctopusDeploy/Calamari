@@ -622,7 +622,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, VariableDictionary variables = null)
         {
-            using (var variablesFile = CreateVariablesFile(variables ?? new VariableDictionary()))
+            var variableDictionary = variables ?? new VariableDictionary();
+            variableDictionary.Add(SpecialVariables.Action.PowerShell.WindowsEdition, GetPowerShellEditionVariable());
+            
+            using (var variablesFile = CreateVariablesFile(variableDictionary))
             {
                 var calamariCommand = Calamari();
                 buildCommand(calamariCommand);
@@ -674,7 +677,22 @@ namespace Calamari.Tests.Fixtures.PowerShell
             Dictionary<string, string> additionalParameters = null,
             string sensitiveVariablesPassword = null)
         {
-            return RunScript(scriptName, additionalVariables, additionalParameters, sensitiveVariablesPassword);
+            var variablesDictionary = additionalVariables ?? new Dictionary<string, string>();
+            variablesDictionary.Add(SpecialVariables.Action.PowerShell.WindowsEdition, GetPowerShellEditionVariable());
+            return RunScript(scriptName, variablesDictionary, additionalParameters, sensitiveVariablesPassword);
+        }
+        
+        string GetPowerShellEditionVariable()
+        {
+            switch(PowerShellEdition)
+            {
+                case PowerShellEdition.WindowsPowerShell:
+                    return "WindowsPowerShell";
+                case PowerShellEdition.PowerShellCore:
+                    return "PowerShellCore";
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }
