@@ -148,8 +148,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
     {
         void AssertPSEdition(CalamariResult output)
         {
+            // Checking for not containing 'Core' as Build Servers run on
+            // PowerShell 3 which does not have PSEdition in the output
             output.CapturedOutput.AllMessages.Select(i => i.TrimEnd()).Should()
-                .Contain($"PSEdition                      Desktop");
+                .NotContain($"PSEdition                      Core");
         }
 
         [Test]
