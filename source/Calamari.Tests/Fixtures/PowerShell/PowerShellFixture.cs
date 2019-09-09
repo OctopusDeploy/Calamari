@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Deployment;
@@ -17,6 +18,40 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
+        [Test]
+        [Platform]
+        // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
+        [TestCase("2", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
+        [TestCase("2.0", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
+        public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                // Let's just use the Hello.ps1 script for something simples
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1"))
+                    .Argument("variables", variablesFile));
+
+                if (output.CapturedOutput.AllMessages
+                    .Select(line => new string(line.ToCharArray().Where(c => c != '\u0000').ToArray()))
+                    .Any(line => line.Contains(".NET Framework is not installed")))
+                {
+                    Assert.Inconclusive("Version 2.0 of PowerShell is not supported on this machine");
+                }
+                
+                output.AssertSuccess();
+                output.AssertOutput(expectedLogMessage);
+                output.AssertOutput("Hello!");
+            }
+        }
+        
         [Test]
         public void ShouldPrioritizePowershellScriptsOverOtherSyntaxes()
         {
@@ -110,33 +145,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
     
     public abstract class PowerShellFixture : CalamariFixture
     {
-        [Test]
-        [Platform]
-        // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
-        [TestCase("2", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
-        [TestCase("2.0", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
-        public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
-        {
-            var variablesFile = Path.GetTempFileName();
-
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(variablesFile))
-            {
-                // Let's just use the Hello.ps1 script for something simples
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1"))
-                    .Argument("variables", variablesFile));
-
-                output.AssertSuccess();
-                output.AssertOutput(expectedLogMessage);
-                output.AssertOutput("Hello!");
-            }
-        }
-
         [Test]
         [TestCase("true", true)]
         [TestCase("false", false)]
