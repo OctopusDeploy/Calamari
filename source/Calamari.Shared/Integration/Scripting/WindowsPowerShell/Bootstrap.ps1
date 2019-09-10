@@ -562,6 +562,19 @@ function Initialize-ProxySettings()
 	}
 	
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
+	if ($PSVersionTable.PSEdition -eq "Core") {
+	    # In some versions of PowerShell Core, if a script uses HttpClient 
+	    # it won't be automatically configured with the right proxy. This is essentially unavoidable
+	    
+	    # The best way can do is make some APIs (like WebClient) continue to work with the proxy, 
+	    # and also use the default parameter values feature with built in cmdlets like Invoke-WebRequest
+	    # We don't use default parameter values in Windows PowerShell because this simplifies things, 
+	    # and means that users could change this value globally by modifying just a single property
+	    $global:PSDefaultParameterValues = @{
+            "Invoke-WebRequest:Proxy" = $env:HTTP_PROXY;
+            "Invoke-RestMethod:Proxy" = $env:HTTP_PROXY
+        }
+	}
 }
 
 function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int] $sleepBetweenFailures = 1) {
