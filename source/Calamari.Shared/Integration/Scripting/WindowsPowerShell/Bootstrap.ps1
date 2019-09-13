@@ -543,7 +543,8 @@ function Initialize-ProxySettings()
 		#system proxy		
 		if ($useDefaultProxy)
 		{
-			$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+		    $proxyUri = New-Object Uri($env:HTTP_PROXY)
+            $proxy = New-Object System.Net.WebProxy($proxyUri)
 
 			if ($hasCredentials)
 			{
@@ -561,19 +562,30 @@ function Initialize-ProxySettings()
 		}
 	}
 	
+    # In some versions of PowerShell Core, if a script uses HttpClient 
+    # it won't be automatically configured with the right proxy. This is essentially unavoidable
+    # For those versions, we expose a $OctopusProxy variable that can be used to manually configure their HttpClients
+	$global:OctopusProxy = $proxy
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
+	
 	if ($PSVersionTable.PSEdition -eq "Core") {
-	    # In some versions of PowerShell Core, if a script uses HttpClient 
-	    # it won't be automatically configured with the right proxy. This is essentially unavoidable
-	    
-	    # The best way can do is make some APIs (like WebClient) continue to work with the proxy, 
-	    # and also use the default parameter values feature with built in cmdlets like Invoke-WebRequest
+        # HttpClient is used to implement built in cmdlets like Invoke-WebRequest.
+        # Because some versions of PowerShell Core don't allow us to set a default proxy for HttpClient,
+        # the cmdlets also don't get a default proxy set either
+        # Fortunately, for these cmdlets we can use $PSDefaultParameterValues to provide the right defaults
 	    # We don't use default parameter values in Windows PowerShell because this simplifies things, 
 	    # and means that users could change this value globally by modifying just a single property
-	    $global:PSDefaultParameterValues = @{
-            "Invoke-WebRequest:Proxy" = $env:HTTP_PROXY;
-            "Invoke-RestMethod:Proxy" = $env:HTTP_PROXY
-        }
+	    if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+	        $PSDefaultParameterValues.Add("Invoke-WebRequest:Proxy", $env:HTTP_PROXY)
+            $PSDefaultParameterValues.Add("Invoke-RestMethod:Proxy", $env:HTTP_PROXY)
+            if ($hasCredentials) {
+                $securePassword = ConvertTo-SecureString $proxyPassword -AsPlainText -Force
+                $credentials = New-Object System.Management.Automation.PSCredential -ArgumentList $proxyUsername,$securePassword
+                        
+                $PSDefaultParameterValues.Add("Invoke-WebRequest:ProxyCredential", $credentials)
+                $PSDefaultParameterValues.Add("Invoke-RestMethod:ProxyCredential", $credentials)
+            }
+	    }
 	}
 }
 
