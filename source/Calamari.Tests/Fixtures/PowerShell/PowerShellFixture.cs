@@ -16,9 +16,17 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.PowerShell
 {    
     [TestFixture]
+    public class WindowsPowerShellCoreFixture : PowerShellFixture
+    {
+        protected override string WindowsEdition => "PowerShellCore";
+    }
+    
+    [TestFixture]
     [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
+        protected override string WindowsEdition => "PowerShell";
+        
         [Test]
         [Platform]
         // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
@@ -54,12 +62,12 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
         
         [Test]
-        public void ShouldPrioritizePowershellScriptsOverOtherSyntaxes()
+        public void ShouldPrioritizePowerShellScriptsOverOtherSyntaxes()
         {
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
             variables.Save(variablesFile);
@@ -71,7 +79,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("variables", variablesFile));
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello Powershell");
+                output.AssertOutput("Hello PowerShell");
             }
         }
     }
@@ -93,7 +101,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
             variables.Save(variablesFile);
@@ -127,7 +135,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
             variables.Save(variablesFile);
@@ -146,12 +154,17 @@ namespace Calamari.Tests.Fixtures.PowerShell
     
     public abstract class PowerShellFixture : CalamariFixture
     {
+        protected abstract string WindowsEdition { get; }
+ 
         void AssertPSEdition(CalamariResult output)
         {
+            var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
             // Checking for not containing 'Core' as Build Servers run on
             // PowerShell 3 which does not have PSEdition in the output
-            output.CapturedOutput.AllMessages.Select(i => i.TrimEnd()).Should()
-                .NotContain($"PSEdition                      Core");
+            if (WindowsEdition == "PowerShell")
+                trimmedOutput.Should().NotContain($"PSEdition                      Core");
+            else
+                trimmedOutput.Should().Contain($"PSEdition                      Core");
         }
 
         [Test]
