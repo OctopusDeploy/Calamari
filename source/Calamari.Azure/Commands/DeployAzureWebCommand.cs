@@ -21,7 +21,7 @@ namespace Calamari.Azure.Commands
     {
         private string variablesFile;
         private string packageFile;
-        private string sensitiveVariablesFile;
+        private readonly List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
 
@@ -29,7 +29,7 @@ namespace Calamari.Azure.Commands
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
@@ -49,7 +49,7 @@ namespace Calamari.Azure.Commands
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
             Log.Info("Deploying package:    " + packageFile);
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));

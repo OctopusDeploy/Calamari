@@ -17,7 +17,7 @@ namespace Calamari.Commands.Java
     public class JavaLibraryCommand : Command
     {
         string variablesFile;
-        string sensitiveVariablesFile;
+        readonly List<string> sensitiveVariableFiles = new List<string>();
         string sensitiveVariablesPassword;
         string actionType;
         readonly CombinedScriptEngine scriptEngine;
@@ -27,7 +27,7 @@ namespace Calamari.Commands.Java
             Options.Add("variables=", "Path to a JSON file containing variables.",
                 v => variablesFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.",
-                v => sensitiveVariablesFile = v);
+                v => sensitiveVariableFiles.Add(v));
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.",
                 v => sensitiveVariablesPassword = v);
             Options.Add("actionType=", "The step type being invoked.", v => actionType = v);
@@ -41,7 +41,7 @@ namespace Calamari.Commands.Java
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var variables =
-                new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+                new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             var commandOutput =
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));

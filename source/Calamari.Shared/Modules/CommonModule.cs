@@ -1,7 +1,9 @@
-﻿using Autofac;
+﻿using System.Collections.Generic;
+using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using System.IO;
+using System.Linq;
 using Calamari.Integration.Certificates;
 using Octostache;
 using Module = Autofac.Module;
@@ -18,7 +20,7 @@ namespace Calamari.Modules
         private string variablesFile;
         private string outputVariablesFile;
         private string outputVariablesPassword;
-        private string sensitiveVariablesFile;
+        private List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
 
         public CommonModule(string[] args)
@@ -28,7 +30,7 @@ namespace Calamari.Modules
                 v => variablesFile = Path.GetFullPath(v),
                 v => outputVariablesFile = v,
                 v => outputVariablesPassword = v,
-                v => sensitiveVariablesFile = v,
+                v => sensitiveVariableFiles.Add(v),
                 v => sensitiveVariablesPassword = v);
             optionSet.Parse(args);
         }
@@ -37,7 +39,7 @@ namespace Calamari.Modules
         {
             return !string.IsNullOrWhiteSpace(variablesFile) ||
                 !string.IsNullOrWhiteSpace(outputVariablesFile) ||
-                !string.IsNullOrWhiteSpace(sensitiveVariablesFile) ||
+                sensitiveVariableFiles.Any(sensitiveVariablesFile => !string.IsNullOrWhiteSpace(sensitiveVariablesFile)) ||
                 !string.IsNullOrWhiteSpace(sensitiveVariablesPassword);
         }
 
@@ -48,7 +50,7 @@ namespace Calamari.Modules
             {
                 builder.RegisterInstance(new CalamariVariableDictionary(
                     variablesFile,
-                    sensitiveVariablesFile,
+                    sensitiveVariableFiles,
                     sensitiveVariablesPassword,
                     outputVariablesFile,
                     outputVariablesPassword))

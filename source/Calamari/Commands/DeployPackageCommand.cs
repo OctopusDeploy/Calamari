@@ -27,7 +27,7 @@ namespace Calamari.Commands
     {
         private string variablesFile;
         private string packageFile;
-        private string sensitiveVariablesFile;
+        private readonly List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
 
@@ -35,7 +35,7 @@ namespace Calamari.Commands
         {
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
@@ -54,7 +54,7 @@ namespace Calamari.Commands
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);

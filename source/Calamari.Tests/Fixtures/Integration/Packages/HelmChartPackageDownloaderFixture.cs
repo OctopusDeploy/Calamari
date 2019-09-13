@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, "FAKE"), true, 1,
                 TimeSpan.FromSeconds(3)));
             
-            StringAssert.Contains("Helm failed to download the chart", exception.Message);
+            StringAssert.Contains("Helm failed to add the chart repository", exception.Message);
             //StringAssert.Contains("401 Unauthorized", exception.Message);
         }
     }

@@ -17,7 +17,7 @@ namespace Calamari.Terraform
 
         private readonly Func<ICalamariFileSystem, IConvention> step;
         private string variablesFile;
-        private string sensitiveVariablesFile;
+        private readonly List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
         private string packageFile;
 
@@ -27,7 +27,7 @@ namespace Calamari.Terraform
             this.step = step;
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
 
@@ -36,7 +36,7 @@ namespace Calamari.Terraform
             Options.Parse(commandLineArguments);
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             
             if (!string.IsNullOrEmpty(packageFile))
             {

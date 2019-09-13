@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
-using Calamari.Util.Environments;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
-using SetProxy;
 
 namespace Calamari.Tests.Fixtures.PowerShell
-{
+{    
     [TestFixture]
-    public class PowerShellFixture : CalamariFixture
+    [Category(TestCategory.CompatibleOS.Windows)]
+    public class WindowsPowerShellFixture : PowerShellFixture
     {
         [Test]
         [Platform]
-        [Category(TestCategory.CompatibleOS.Windows)]
         // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
         [TestCase("2", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
         [TestCase("2.0", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
@@ -41,14 +40,121 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1"))
                     .Argument("variables", variablesFile));
 
+                if (output.CapturedOutput.AllMessages
+                    .Select(line => new string(line.ToCharArray().Where(c => c != '\u0000').ToArray()))
+                    .Any(line => line.Contains(".NET Framework is not installed")))
+                {
+                    Assert.Inconclusive("Version 2.0 of PowerShell is not supported on this machine");
+                }
+                
                 output.AssertSuccess();
                 output.AssertOutput(expectedLogMessage);
                 output.AssertOutput("Hello!");
             }
         }
+        
+        [Test]
+        public void ShouldPrioritizePowershellScriptsOverOtherSyntaxes()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello Powershell");
+            }
+        }
+    }
+    
+    [TestFixture]
+    [Category(TestCategory.CompatibleOS.Nix)]
+    public class WindowsPowerShellOnLinuxFixture : CalamariFixture
+    {
+        [Test]
+        public void PowerShellThrowsExceptionOnNix()
+        {
+            var (output, _) = RunScript("Hello.ps1");
+            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
+        }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldRunBashInsteadOfPowerShell()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello Bash");
+            }
+        }
+    }
+
+    [TestFixture]
+    [Category(TestCategory.CompatibleOS.Mac)]
+    public class WindowsPowerShellOnMacFixture : CalamariFixture
+    {
+        [Test]
+        public void PowerShellThrowsExceptionOnMac()
+        {
+            var (output, _) = RunScript("Hello.ps1");
+            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
+        }
+
+        [Test]
+        public void ShouldRunBashInsteadOfPowerShell()
+        {
+            var variablesFile = Path.GetTempFileName();
+
+            var variables = new VariableDictionary();
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var output = Invoke(Calamari()
+                    .Action("run-script")
+                    .Argument("variables", variablesFile));
+
+                output.AssertSuccess();
+                output.AssertOutput("Hello Bash");
+            }
+        }
+    }
+    
+    public abstract class PowerShellFixture : CalamariFixture
+    {
+        void AssertPSEdition(CalamariResult output)
+        {
+            // Checking for not containing 'Core' as Build Servers run on
+            // PowerShell 3 which does not have PSEdition in the output
+            output.CapturedOutput.AllMessages.Select(i => i.TrimEnd()).Should()
+                .NotContain($"PSEdition                      Core");
+        }
+
+        [Test]
         [TestCase("true", true)]
         [TestCase("false", false)]
         [TestCase("", false)]
@@ -75,11 +181,11 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 // run via Cake we end up with the outer Powershell call included in the
                 // output too, which has a -NoProfile flag.
                 Assert.That(allOutput.Contains("-NoProfile -NoLo") == calledWithNoProfile);
+                AssertPSEdition(output);
             }
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
             var (output, _) = RunScript("Profile.ps1", new Dictionary<string, string>()
@@ -87,20 +193,20 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("-NoProfile");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("Hello.ps1");
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldLogWarningIfScriptArgumentUsed()
         {
             var output = Invoke(Calamari()
@@ -110,20 +216,20 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldRetrieveCustomReturnValue()
         {
             var (output, _) = RunScript("Exit2.ps1");
 
             output.AssertFailure(2);
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var variablesFile = Path.GetTempFileName();
@@ -137,10 +243,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
             var outputVariablesFile = Path.GetTempFileName();
@@ -158,11 +264,11 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello Steve");
+                AssertPSEdition(output);
             }
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldConsumeParametersWithQuotesUsingDeprecatedArgument()
         {
             var (output, _) = RunScript("Parameters.ps1", additionalParameters: new Dictionary<string, string>()
@@ -171,10 +277,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
             });
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("Parameters.ps1", new Dictionary<string, string>()
@@ -183,10 +289,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
             });
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldCaptureAllOutput()
         {
             var (output, _) = RunScript("Output.ps1");
@@ -197,38 +303,37 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Hello, write-warning!");
             output.AssertErrorOutput("Hello-Error!");
             output.AssertNoOutput("This warning should not appear in logs!");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldWriteServiceMessageForArtifacts()
         {
             var (output, _) = RunScript("CanCreateArtifact.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
-            //  this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+            AssertPSEdition(output);
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldWriteServiceMessageForUpdateProgress()
         {
             var (output, _) = RunScript("UpdateProgress.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            AssertPSEdition(output);
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldWriteServiceMessageForUpdateProgressFromPipeline()
         {
             var (output, _) = RunScript("UpdateProgressFromPipeline.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldWriteServiceMessageForPipedArtifacts()
         {
             var path = Path.Combine(Path.GetTempPath(), "CanCreateArtifactPipedTestFile.txt");
@@ -240,6 +345,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 var (output, _) = RunScript("CanCreateArtifactPiped.ps1");
                 output.AssertSuccess();
                 output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
+                AssertPSEdition(output);
             }
             finally
             {
@@ -248,19 +354,16 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
-        
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
             var (output, _) = RunScript("WarningForMissingArtifact.ps1");
             output.AssertSuccess();
             output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
-            // this.Assent(output.CapturedOutput.ToApprovalString(), new Configuration().UsingNamer(new SubdirectoryNamer("Approved")));
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldAllowDotSourcing()
         {
             var output = Invoke(Calamari()
@@ -269,72 +372,72 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetVariables()
         {
             var (output, variables) = RunScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
             Assert.AreEqual("World!", variables.Get("TestA"));
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetSensitiveVariables()
         {
             var (output, variables) = RunScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
             Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetActionIndexedOutputVariables()
         {
-            var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script"
             });
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSetMachineIndexedOutputVariables()
         {
-            var (_, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
+            var (output, variables) = RunScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
                 [SpecialVariables.Action.Name] = "run-script",
                 [SpecialVariables.Machine.Name] = "App01"
             });
 
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailOnInvalid()
         {
             var (output, _) = RunScript("Invalid.ps1");
             output.AssertFailure();
             output.AssertErrorOutput("A positional parameter cannot be found that accepts");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailOnInvalidSyntax()
         {
             var (output, _) = RunScript("InvalidSyntax.ps1");
             output.AssertFailure();
             output.AssertErrorOutput("ParserError");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldPrintVariables()
         {
             var (output, _) = RunScript("PrintVariables.ps1", new Dictionary<string, string>
@@ -353,10 +456,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("V3= GHI");
             output.AssertOutput("FooBar= Hello"); // Legacy - '_' used to be removed
             output.AssertOutput("Foo_Bar= Hello"); // Current - '_' is valid in PowerShell
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSupportModulesInVariables()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>
@@ -370,10 +473,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello from module!");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldShowFriendlyErrorWithInvalidSyntaxInScriptModule()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
@@ -383,10 +486,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("Failed to import Script Module 'Foo'");
             output.AssertErrorOutput("Write-Host \"Hello from module!");
             output.AssertErrorOutput("The string is missing the terminator: \".");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailIfAModuleHasASyntaxError()
         {
             var (output, _) = RunScript("UseModule.ps1", new Dictionary<string, string>()
@@ -395,10 +498,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertFailure();
             output.AssertErrorOutput("ParserError", true);
             output.AssertErrorOutput("is missing the terminator", true);
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotSubstituteVariablesInNonPackagedScript()
         {
             // Use a temp file for the script to avoid mutating the script file for other tests
@@ -420,12 +523,12 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello #{Octopus.Environment.Name}!");
+                AssertPSEdition(output);
             }
         }
 
         [Test]
         [Description("Proves packaged scripts can have variables substituted into them before running")]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldSubstituteVariablesInPackagedScripts()
         {
             var variablesFile = Path.GetTempFileName();
@@ -447,20 +550,20 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutput("OctopusParameter: Production");
                 output.AssertOutput("InlineVariable: Production");
                 output.AssertOutput("VariableSubstitution: Production");
+                AssertPSEdition(output);
             }
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldPing()
         {
             var (output, _) = RunScript("Ping.ps1");
             output.AssertSuccess();
             output.AssertOutput("Pinging ");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsSingleQuote()
         {
             var output = Invoke(Calamari()
@@ -469,10 +572,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a '");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldExecuteWhenPathContainsDollar()
         {
             var output = Invoke(Calamari()
@@ -481,20 +584,20 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a $");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotFailOnStdErr()
         {
             var (output, _) = RunScript("stderr.ps1");
 
             output.AssertSuccess();
             output.AssertErrorOutput("error");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.ps1", new Dictionary<string, string>()
@@ -502,10 +605,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertFailure();
             output.AssertErrorOutput("error");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldPassOnStdInfoWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("Hello.ps1", new Dictionary<string, string>()
@@ -513,10 +616,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void ShouldNotDoubleReplaceVariables()
         {
             var (output, _) = RunScript("DontDoubleReplace.ps1", new Dictionary<string, string>()
@@ -525,48 +628,17 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("The  Octopus variable for machine name is #{Octopus.Machine.Name}");
             output.AssertOutput("An example of this evaluated is: 'Foo'");
+            AssertPSEdition(output);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
-        public void PowershellThrowsExceptionOnNixOrMac()
-        {
-            var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
-        }
-
-        [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
         public void CharacterWithBomMarkCorrectlyEncoded()
         {
             var (output, _) = RunScript("ScriptWithBOM.ps1");
 
             output.AssertSuccess();
             output.AssertOutput("45\r\n226\r\n128\r\n147");
-        }
-
-
-        [Test]
-        public void ShouldAllowPlatformSpecificScriptToExecute()
-        {
-            var variablesFile = Path.GetTempFileName();
-
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(variablesFile))
-            {
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("variables", variablesFile));
-
-                output.AssertSuccess();
-                output.AssertOutput(CalamariEnvironment.IsRunningOnWindows ? "Hello Powershell" : "Hello Bash");
-            }
+            AssertPSEdition(output);
         }
     }
 }

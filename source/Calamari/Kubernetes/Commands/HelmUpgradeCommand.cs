@@ -27,7 +27,7 @@ namespace Calamari.Kubernetes.Commands
     {
         private string variablesFile;
         private string packageFile;
-        private string sensitiveVariablesFile;
+        private readonly List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
@@ -37,7 +37,7 @@ namespace Calamari.Kubernetes.Commands
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariablesFile = v);
+            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             this.scriptEngine = scriptEngine;
             this.deploymentJournalWriter = deploymentJournalWriter;
@@ -53,7 +53,7 @@ namespace Calamari.Kubernetes.Commands
             if (variablesFile != null && !File.Exists(variablesFile))
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariablesFile, sensitiveVariablesPassword);
+            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var substituter = new FileSubstituter(fileSystem);
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
