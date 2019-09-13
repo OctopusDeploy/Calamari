@@ -84,6 +84,7 @@ function Read-PublishProfile {
 
     $publishProfile.ClusterConnectionParameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("ClusterConnectionParameters")
     $publishProfile.UpgradeDeployment = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("UpgradeDeployment")
+	$publishProfile.CopyPackageParameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("CopyPackageParameters")
 
     if ($publishProfileXml.PublishProfile.Item("UpgradeDeployment")) {
         $publishProfile.UpgradeDeployment.Parameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("UpgradeDeployment").Item("Parameters")
@@ -142,6 +143,10 @@ $parameters = @{
     ApplicationParameterFilePath = $publishProfile.ApplicationParameterFile
     ApplicationParameter         = $ApplicationParameter
     ErrorAction                  = 'Stop'
+}
+
+if ($publishProfile.CopyPackageParameters.CompressPackage) {
+    $parameters.CompressPackage = $publishProfile.CopyPackageParameters.CompressPackage
 }
 
 if (-not $AppTypeAndVersionExists) {
