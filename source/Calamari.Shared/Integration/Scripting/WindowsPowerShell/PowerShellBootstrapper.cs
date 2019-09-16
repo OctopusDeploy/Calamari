@@ -56,13 +56,36 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             try
             {
-                var systemFolder = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-                powerShellPath = Path.Combine(systemFolder, @"PowerShell\6\", EnvPowerShellPath);
+                var latestPowerShellVersionDirectory = new [] {
+                        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+                    }
+                    .Where(p => p != null)
+                    .Distinct()
+                    .Select(pf => Path.Combine(pf, "PowerShell"))
+                    .Where(Directory.Exists)
+                    .SelectMany(Directory.EnumerateDirectories)
+                    .Select<string, (string path, int? majorVersion, string remaining)>(d =>
+                    {
+                        var directoryInfo = new DirectoryInfo(d);
+                        var directoryName = directoryInfo.Name;
+			
+                        // Directories are typically versions like "6" or they might also have a prerelease component like "7-preview"
+                        var splitString = directoryName.Split(new[] { '-' }, 2);
+                        var majorVersionPart = splitString[0];
+                        var preRelease = splitString.Length < 2 ? string.Empty : splitString[1]; // typically a prerelease tag, like "preview"
+			
+                        if (int.TryParse(majorVersionPart, out var majorVersion))
+                            return (d, majorVersion, preRelease);
+                        return (d, null, preRelease);
+                    })
+                    .OrderByDescending(p => p.majorVersion)
+                    .ThenBy(p => p.remaining)
+                    .First()
+                    .path;
+                var pathToPwsh = Path.Combine(latestPowerShellVersionDirectory, EnvPowerShellPath);
 
-                if (!File.Exists(powerShellPath))
-                {
-                    powerShellPath = EnvPowerShellPath;
-                }
+                powerShellPath = File.Exists(pathToPwsh) ? pathToPwsh : EnvPowerShellPath;
             }
             catch (Exception)
             {
