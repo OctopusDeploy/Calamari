@@ -541,13 +541,18 @@ function Initialize-ProxySettings()
 	else
 	{
 		#system proxy		
-		if ($useDefaultProxy)
-		{
-		    $proxyUri = New-Object Uri($env:HTTP_PROXY)
-            $proxy = New-Object System.Net.WebProxy($proxyUri)
+		if ($useDefaultProxy) {
+			# If a system proxy is defined, then this env variable should have been configured by Calamari
+			if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+				$proxyUri = New-Object System.Uri($env:HTTP_PROXY)
+				$proxy = New-Object System.Net.WebProxy($proxyUri)
+			}
+			else {
+				# If Tentacle is configured to use a System proxy, but there is no system proxy configured then we should configure this as if there was no proxy
+				$proxy = New-Object System.Net.WebProxy
+			}
 
-			if ($hasCredentials)
-			{
+			if ($hasCredentials) {
 				$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 			}
 			else
