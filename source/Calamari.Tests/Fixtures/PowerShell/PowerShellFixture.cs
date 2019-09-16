@@ -21,6 +21,22 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public class WindowsPowerShellCoreFixture : PowerShellFixture
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
+
+        bool IsPowerShellInstalled()
+        {
+            var (output, _) = RunPowerShellScript("Output.ps1");
+            return output.CapturedOutput.AllMessages.Contains("PSEdition                      Core");
+        }
+        
+        [SetUp]
+        public void SetUp()
+        {
+            if (!IsPowerShellInstalled())
+            {
+                Assert.Inconclusive();
+            }
+        }
+
     }
     
     [TestFixture]
@@ -28,7 +44,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public class WindowsPowerShellFixture : PowerShellFixture
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.WindowsPowerShell;
-
+        
         [Test]
         [Platform]
         // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
@@ -149,22 +165,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public abstract class PowerShellFixture : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
-        string PSEdition;
-        
-        protected PowerShellFixture()
-        {
-            if (PowerShellEdition == PowerShellEdition.WindowsPowerShell)
-                PSEdition = "Desktop";
-            else
-                PSEdition = "Core";
-        }
 
-        bool IsPowerShellInstalled()
-        {
-            var (output, _) = RunScript("Output.ps1");
-            return output.ToString().Contains(PSEdition);
-        }
-        
         void AssertPowerShellEdition(CalamariResult output)
         {
             const string powerShellCoreEdition = "PSEdition                      Core";
@@ -180,15 +181,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
         
-        [SetUp]
-        public void SetUp()
-        {
-            if (!IsPowerShellInstalled())
-            {
-                Assert.Inconclusive();
-            }
-        }
-
         [Test]
         [TestCase("true", true)]
         [TestCase("false", false)]
@@ -698,7 +690,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
-        (CalamariResult result, VariableDictionary variables) RunPowerShellScript(string scriptName,
+        protected (CalamariResult result, VariableDictionary variables) RunPowerShellScript(string scriptName,
             Dictionary<string, string> additionalVariables = null,
             Dictionary<string, string> additionalParameters = null,
             string sensitiveVariablesPassword = null)
