@@ -23,7 +23,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var powerShellBootstrapper = GetPowerShellBootstrapper(variables);
             
             var workingDirectory = Path.GetDirectoryName(script.File);
-            var executable = powerShellBootstrapper.PathToPowerShellExecutable();
+            var executable = powerShellBootstrapper.PathToPowerShellExecutable(variables);
             var (bootstrapFile, otherTemporaryFiles) = powerShellBootstrapper.PrepareBootstrapFile(script, variables);
             var debuggingBootstrapFile = powerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
             var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
