@@ -17,14 +17,8 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    public class WindowsPowerShellCoreFixture : PowerShellFixture
-    {
-        protected override string WindowsEdition => "PowerShellCore";
-    }
-    
-    [TestFixture]
     [Category(TestCategory.CompatibleOS.Windows)]
-    public class PowerShellCoreOnWindows : PowerShellFixture
+    public class WindowsPowerShellCoreFixture : PowerShellFixture
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
     }
@@ -33,8 +27,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
-        protected override string WindowsEdition => "PowerShell";
-        
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.WindowsPowerShell;
+
         [Test]
         [Platform]
         // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
@@ -76,8 +70,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertSuccess();
                 output.AssertOutput("Hello Powershell");
         }
-
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.WindowsPowerShell;
     }
     
     [TestFixture]
@@ -157,18 +149,44 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public abstract class PowerShellFixture : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
+        string PSEdition;
         
-        protected abstract string WindowsEdition { get; }
- 
-        void AssertPSEdition(CalamariResult output)
+        protected PowerShellFixture()
         {
-            var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
-            // Checking for not containing 'Core' as Build Servers run on
-            // PowerShell 3 which does not have PSEdition in the output
-            if (WindowsEdition == "PowerShell")
-                trimmedOutput.Should().NotContain($"PSEdition                      Core");
+            if (PowerShellEdition == PowerShellEdition.WindowsPowerShell)
+                PSEdition = "Desktop";
             else
-                trimmedOutput.Should().Contain($"PSEdition                      Core");
+                PSEdition = "Core";
+        }
+
+        bool IsPowerShellInstalled()
+        {
+            var (output, _) = RunScript("Output.ps1");
+            return output.ToString().Contains(PSEdition);
+        }
+        
+        void AssertPowerShellEdition(CalamariResult output)
+        {
+            const string powerShellCoreEdition = "PSEdition                      Core";
+            var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
+            
+            if (PowerShellEdition == PowerShellEdition.PowerShellCore)
+                trimmedOutput.Should().Contain(powerShellCoreEdition);
+            else
+            {
+                // Checking for not containing 'Core' as Build Servers run on
+                // PowerShell 3 which does not have PSEdition in the output
+                trimmedOutput.Should().NotContain(powerShellCoreEdition);
+            }
+        }
+        
+        [SetUp]
+        public void SetUp()
+        {
+            if (!IsPowerShellInstalled())
+            {
+                Assert.Inconclusive();
+            }
         }
 
         [Test]
@@ -677,21 +695,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
             public void Dispose()
             {
                 tempFile.Dispose();
-            }
-        }
-        
-        void AssertPowerShellEdition(CalamariResult output)
-        {
-            const string powerShellCoreEdition = "PSEdition                      Core";
-            var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
-            
-            if (PowerShellEdition == PowerShellEdition.PowerShellCore)
-                trimmedOutput.Should().Contain(powerShellCoreEdition);
-            else
-            {
-                // Checking for not containing 'Core' as Build Servers run on
-                // PowerShell 3 which does not have PSEdition in the output
-                trimmedOutput.Should().NotContain(powerShellCoreEdition);
             }
         }
 
