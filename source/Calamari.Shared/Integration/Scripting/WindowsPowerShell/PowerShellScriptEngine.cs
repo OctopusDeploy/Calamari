@@ -45,9 +45,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
         {
-            var specifiedWindowsEdition = variables[SpecialVariables.Action.PowerShell.WindowsEdition] ?? "WindowsPowerShell";
+            var specifiedWindowsEdition = variables[SpecialVariables.Action.PowerShell.WindowsEdition];
+            if (string.IsNullOrEmpty(specifiedWindowsEdition))
+                return new WindowsPowerShellBootstrapper();
+            
             if (specifiedWindowsEdition.Equals("PowerShellCore", StringComparison.OrdinalIgnoreCase))
                 return new PowerShellCoreBootstrapper();
+            
+            // If it is an unrecognized value, fall back to Windows 
             return new WindowsPowerShellBootstrapper();
         }
 
