@@ -1,1 +1,0 @@
-﻿pwsh --version
