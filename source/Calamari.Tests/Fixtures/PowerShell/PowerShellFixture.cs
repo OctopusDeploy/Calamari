@@ -18,7 +18,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.Windows)]
-    public class WindowsPowerShellCoreFixture : PowerShellFixture
+    public class PowerShellCoreOnWindows : PowerShellFixture
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
 
