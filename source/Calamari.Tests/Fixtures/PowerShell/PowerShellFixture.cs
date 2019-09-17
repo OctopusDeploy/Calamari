@@ -22,24 +22,16 @@ namespace Calamari.Tests.Fixtures.PowerShell
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
 
-        bool IsPowerShellInstalled()
-        {
-            var (output, _) = RunScript("PSCoreVersion.ps1");
-            var messages = output.CapturedOutput.AllMessages.ToArray();
-            return Array.Find<string>(messages,  e => e.Contains("PowerShell 6") || e.Contains("PowerShell 7")) != null;
-        }
-        
         [SetUp]
         public void SetUp()
         {
-            if (!IsPowerShellInstalled())
-            {
+            CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
+            var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version")); 
+            if (result.HasErrors)
                 Assert.Inconclusive();
-            }
         }
-
     }
-    
+
     [TestFixture]
     [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPowerShellFixture : PowerShellFixture
