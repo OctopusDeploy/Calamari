@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
             var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version")); 
             if (result.HasErrors)
-                Assert.Inconclusive();
+                Assert.Inconclusive("PowerShell Core is not installed in this machine");
         }
     }
 
@@ -683,7 +683,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
-        protected (CalamariResult result, VariableDictionary variables) RunPowerShellScript(string scriptName,
+        (CalamariResult result, VariableDictionary variables) RunPowerShellScript(string scriptName,
             Dictionary<string, string> additionalVariables = null,
             Dictionary<string, string> additionalParameters = null,
             string sensitiveVariablesPassword = null)
