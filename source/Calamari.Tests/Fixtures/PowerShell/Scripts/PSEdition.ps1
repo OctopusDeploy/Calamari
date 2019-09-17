@@ -1,1 +1,0 @@
-﻿$PSEdition

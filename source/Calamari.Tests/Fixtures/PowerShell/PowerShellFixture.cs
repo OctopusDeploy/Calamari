@@ -24,8 +24,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         bool IsPowerShellInstalled()
         {
-            var (output, _) = RunPowerShellScript("Output.ps1");
-            return output.CapturedOutput.AllMessages.Contains("PSEdition                      Core");
+            var (output, _) = RunScript("PSCoreVersion.ps1");
+            var messages = output.CapturedOutput.AllMessages.ToArray();
+            return Array.Find<string>(messages,  e => e.Contains("PowerShell 6") || e.Contains("PowerShell 7")) != null;
         }
         
         [SetUp]
@@ -84,7 +85,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script"), variables);
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello Powershell");
+                output.AssertOutput("Hello PowerShell");
         }
     }
     
