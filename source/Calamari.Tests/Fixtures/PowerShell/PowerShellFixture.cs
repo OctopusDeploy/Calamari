@@ -657,7 +657,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, VariableDictionary variables = null)
         {
             var variableDictionary = variables ?? new VariableDictionary();
-            variableDictionary.Add(SpecialVariables.Action.PowerShell.WindowsEdition, GetPowerShellEditionVariable());
+            variableDictionary.Add(SpecialVariables.Action.PowerShell.Edition, GetPowerShellEditionVariable());
             
             using (var variablesFile = CreateVariablesFile(variableDictionary))
             {
@@ -697,7 +697,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             string sensitiveVariablesPassword = null)
         {
             var variablesDictionary = additionalVariables ?? new Dictionary<string, string>();
-            variablesDictionary.Add(SpecialVariables.Action.PowerShell.WindowsEdition, GetPowerShellEditionVariable());
+            variablesDictionary.Add(SpecialVariables.Action.PowerShell.Edition, GetPowerShellEditionVariable());
             return RunScript(scriptName, variablesDictionary, additionalParameters, sensitiveVariablesPassword);
         }
         

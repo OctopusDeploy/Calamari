@@ -541,12 +541,18 @@ function Initialize-ProxySettings()
 	else
 	{
 		#system proxy		
-		if ($useDefaultProxy)
-		{
-			$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+		if ($useDefaultProxy) {
+			# If a system proxy is defined, then this env variable should have been configured by Calamari
+			if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+				$proxyUri = New-Object System.Uri($env:HTTP_PROXY)
+				$proxy = New-Object System.Net.WebProxy($proxyUri)
+			}
+			else {
+				# If Tentacle is configured to use a System proxy, but there is no system proxy configured then we should configure this as if there was no proxy
+				$proxy = New-Object System.Net.WebProxy
+			}
 
-			if ($hasCredentials)
-			{
+			if ($hasCredentials) {
 				$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 			}
 			else
@@ -561,7 +567,40 @@ function Initialize-ProxySettings()
 		}
 	}
 	
-	[System.Net.WebRequest]::DefaultWebProxy = $proxy
+    # In some versions of PowerShell Core (pre version 7.0.0), if a script uses HttpClient 
+	# it won't be automatically be configured with the right proxy. 
+	# This is unavoidable for those versions, see See https://github.com/dotnet/corefx/issues/36553 for more information
+	# We expose an $OctopusProxy variable that can be used to manually configure HttpClient instances, and this variable is documented
+	# For consistency, we expose this variable across all versions of powershell, in case users have other usages of this variable
+    $global:OctopusProxy = $proxy
+    [System.Net.WebRequest]::DefaultWebProxy = $proxy
+	
+    if ($PSVersionTable.PSEdition -eq "Core") {
+        if ($PSVersionTable.PsVersion.Major -lt 7) {
+            # HttpClient is used to implement built in cmdlets like Invoke-WebRequest.
+            # Because earlier versions of PowerShell Core don't allow us to set a default proxy for HttpClient,
+            # the cmdlets also don't get a default proxy set either
+            # Fortunately, for these cmdlets we can use $PSDefaultParameterValues to provide the right defaults
+            # We don't use default parameter values in Windows PowerShell because this simplifies things, 
+            # and means that users could change this value globally by modifying just a single property
+            if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+                $PSDefaultParameterValues.Add("Invoke-WebRequest:Proxy", $env:HTTP_PROXY)
+                $PSDefaultParameterValues.Add("Invoke-RestMethod:Proxy", $env:HTTP_PROXY)
+                if ($hasCredentials) {
+                    $securePassword = ConvertTo-SecureString $proxyPassword -AsPlainText -Force
+                    $credentials = New-Object System.Management.Automation.PSCredential -ArgumentList $proxyUsername, $securePassword
+                    
+                    $PSDefaultParameterValues.Add("Invoke-WebRequest:ProxyCredential", $credentials)
+                    $PSDefaultParameterValues.Add("Invoke-RestMethod:ProxyCredential", $credentials)
+                }
+            }
+        }
+        else {
+			# In versions of PowerShell Core after 7.0.0, there is a mechanism for setting a default proxy on HttpClient 
+			# See https://github.com/dotnet/corefx/pull/37333
+            [System.Net.Http.HttpClient]::DefaultProxy = $proxy
+        }
+    }
 }
 
 function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int] $sleepBetweenFailures = 1) {

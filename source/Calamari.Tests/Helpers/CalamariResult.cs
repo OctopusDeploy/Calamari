@@ -184,12 +184,12 @@ namespace Calamari.Tests.Helpers
 
         //Assuming we print properties like:
         //"name: expectedValue"
-        public void AssertPropertyValue(string name, string expectedValue)
+        public void AssertPropertyValue(string name, params string[] expectedValues)
         {
             var title = name + ":";
             string line = GetOutputForLineContaining(title);
 
-            line.Replace(title, "").Should().Be(expectedValue);
+            line.Replace(title, "").Should().BeOneOf(expectedValues);
         }
     }
 }

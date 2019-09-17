@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         protected const int proxyPort = 8888;
 
         protected string proxyUrl = $"http://{proxyHost}:{proxyPort}";
-        string authenticatedProxyUrl = $"http://{UrlEncodedProxyUserName}:{UrlEncodedProxyPassword}@{proxyHost}:{proxyPort}";
+        protected string authenticatedProxyUrl = $"http://{UrlEncodedProxyUserName}:{UrlEncodedProxyPassword}@{proxyHost}:{proxyPort}";
 
         protected static bool IsRunningOnWindows = CalamariEnvironment.IsRunningOnWindows;
         

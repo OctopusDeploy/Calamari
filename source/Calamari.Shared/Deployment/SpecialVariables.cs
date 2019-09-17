@@ -357,7 +357,7 @@ namespace Calamari.Deployment
                 public static readonly string UserName = "Octopus.Action.PowerShell.UserName";
                 public static readonly string Password = "Octopus.Action.PowerShell.Password";
                 public static readonly string DebugMode = "Octopus.Action.PowerShell.DebugMode";
-                public static readonly string WindowsEdition = "Octopus.Action.PowerShell.WindowsEdition";
+                public static readonly string Edition = "Octopus.Action.PowerShell.Edition";
             }
 
             public static class Certificate
