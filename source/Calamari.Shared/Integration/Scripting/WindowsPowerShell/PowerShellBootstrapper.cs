@@ -16,7 +16,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
         
-        public override string PathToPowerShellExecutable()
+        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
             if (powerShellPath != null)
             {
@@ -40,23 +40,29 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
             return powerShellPath;
         }
+
+        protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
+        {
+            var customPowerShellVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
+            if (!string.IsNullOrEmpty(customPowerShellVersion))
+            {
+                yield return $"-Version {customPowerShellVersion} ";
+            }
+        }
     }
 
     public class PowerShellCoreBootstrapper : PowerShellBootstrapper
     {
-        static string powerShellPath;
         const string EnvPowerShellPath = "pwsh.exe";
 
-        public override string PathToPowerShellExecutable()
+        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
-            if (powerShellPath != null)
-            {
-                return powerShellPath;
-            }
-
+            var customVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
+            var customVersionIsDefined = !string.IsNullOrEmpty(customVersion);
             try
             {
-                var latestPowerShellVersionDirectory = new [] {
+                var availablePowerShellVersions = new[]
+                    {
                         Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                         Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
                     }
@@ -65,37 +71,63 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     .Select(pf => Path.Combine(pf, "PowerShell"))
                     .Where(Directory.Exists)
                     .SelectMany(Directory.EnumerateDirectories)
-                    .Select<string, (string path, int? majorVersion, string remaining)>(d =>
+                    .Select<string, (string path, string versionId, int? majorVersion, string remaining)>(d =>
                     {
                         var directoryInfo = new DirectoryInfo(d);
                         var directoryName = directoryInfo.Name;
-			
+
                         // Directories are typically versions like "6" or they might also have a prerelease component like "7-preview"
-                        var splitString = directoryName.Split(new[] { '-' }, 2);
+                        var splitString = directoryName.Split(new[] {'-'}, 2);
                         var majorVersionPart = splitString[0];
-                        var preRelease = splitString.Length < 2 ? string.Empty : splitString[1]; // typically a prerelease tag, like "preview"
-			
+                        var preRelease =
+                            splitString.Length < 2
+                                ? string.Empty
+                                : splitString[1]; // typically a prerelease tag, like "preview"
+
                         if (int.TryParse(majorVersionPart, out var majorVersion))
-                            return (d, majorVersion, preRelease);
-                        return (d, null, preRelease);
-                    })
+                            return (d, directoryName, majorVersion, preRelease);
+                        return (d, directoryName, null, preRelease);
+                    }).ToList();
+                var latestPowerShellVersionDirectory = availablePowerShellVersions
+                    .Where(p => string.IsNullOrEmpty(customVersion) || p.versionId == customVersion)
                     .OrderByDescending(p => p.majorVersion)
                     .ThenBy(p => p.remaining)
-                    .First()
-                    .path;
+                    .Select(p => p.path)
+                    .FirstOrDefault();
+                
+                if (customVersionIsDefined && latestPowerShellVersionDirectory == null)
+                {
+                    throw new PowerShellVersionNotFoundException(customVersion, availablePowerShellVersions.Select(v => v.versionId));
+                }
+
                 var pathToPwsh = Path.Combine(latestPowerShellVersionDirectory, EnvPowerShellPath);
 
-                powerShellPath = File.Exists(pathToPwsh) ? pathToPwsh : EnvPowerShellPath;
+                return File.Exists(pathToPwsh) ? pathToPwsh : EnvPowerShellPath;
+            }
+            catch (PowerShellVersionNotFoundException)
+            {
+                throw;
             }
             catch (Exception)
             {
-                powerShellPath = EnvPowerShellPath;
+                return EnvPowerShellPath;
             }
+        }
 
-            return powerShellPath;
+        protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
+        {
+            yield break;
         }
     }
-    
+
+    public class PowerShellVersionNotFoundException : Exception
+    {
+        public PowerShellVersionNotFoundException(string customVersion, IEnumerable<string> availableVersions) 
+            : base($"Attempted to use version {customVersion} of PowerShell Core, but this version could not be found. Available versions: {string.Join(", ", availableVersions)}")
+        {
+        }
+    }
+
     public abstract class PowerShellBootstrapper
     {
         private static readonly string BootstrapScriptTemplate;
@@ -110,18 +142,17 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
         }
 
-        public abstract string PathToPowerShellExecutable();
+        public abstract string PathToPowerShellExecutable(CalamariVariableDictionary variables);
 
         public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            var customPowerShellVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
-            if (!string.IsNullOrEmpty(customPowerShellVersion))
-            {
-                commandArguments.Append($"-Version {customPowerShellVersion} ");
-            }
             var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
+            
+            foreach (var argument in ContributeCommandArguments(variables))
+                commandArguments.Append(argument);
+            
             bool noProfile;
             if (bool.TryParse(executeWithoutProfile, out noProfile) && noProfile)
             {
@@ -138,6 +169,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", filetoExecute, encryptionKey);
             return commandArguments.ToString();
         }
+
+        protected abstract IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables);
 
         private static bool IsDebuggingEnabled(CalamariVariableDictionary variables)
         {
