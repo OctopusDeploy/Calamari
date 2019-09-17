@@ -156,7 +156,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             bool noProfile;
             if (bool.TryParse(executeWithoutProfile, out noProfile) && noProfile)
             {
-                commandArguments.Append("-NoProfile ");;
+                commandArguments.Append("-NoProfile ");
             }
             commandArguments.Append("-NoLogo ");
             commandArguments.Append("-NonInteractive ");
