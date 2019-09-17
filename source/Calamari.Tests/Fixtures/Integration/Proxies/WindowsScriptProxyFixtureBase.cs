@@ -71,14 +71,16 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         {
             base.AssertAuthenticatedProxyUsed(output);
             if (IsRunningOnWindows && TestWebRequestDefaultProxy)
-                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/");
+                // This can be either the authenticated or unauthenticated URL. The authentication part should be ignored
+                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/", authenticatedProxyUrl + "/");
         }
 
         protected override void AssertUnauthenticatedProxyUsed(CalamariResult output)
         {
             base.AssertUnauthenticatedProxyUsed(output);
             if (IsRunningOnWindows && TestWebRequestDefaultProxy)
-                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/");
+                // This can be either the authenticated or unauthenticated URL. The authentication part should be ignored
+                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/", authenticatedProxyUrl + "/");
         }
 
         protected override void AssertNoProxyChanges(CalamariResult output)
