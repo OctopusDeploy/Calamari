@@ -21,12 +21,23 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public class PowerShellCoreOnWindows : PowerShellFixture
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
+
+        [SetUp]
+        public void SetUp()
+        {
+            CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
+            var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version")); 
+            if (result.HasErrors)
+                Assert.Inconclusive("PowerShell Core is not installed in this machine");
+        }
     }
-    
+
     [TestFixture]
     [Category(TestCategory.CompatibleOS.Windows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.WindowsPowerShell;
+        
         [Test]
         [Platform]
         // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
@@ -55,10 +66,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
         
         [Test]
-        public void ShouldPrioritizePowershellScriptsOverOtherSyntaxes()
+        public void ShouldPrioritizePowerShellScriptsOverOtherSyntaxes()
         {
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
 
@@ -66,10 +77,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Action("run-script"), variables);
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello Powershell");
+                output.AssertOutput("Hello PowerShell");
         }
-
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.WindowsPowerShell;
     }
     
     [TestFixture]
@@ -89,7 +98,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
             variables.Save(variablesFile);
@@ -123,7 +132,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variablesFile = Path.GetTempFileName();
 
             var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
+            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
             variables.Save(variablesFile);
@@ -149,6 +158,21 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public abstract class PowerShellFixture : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
+
+        void AssertPowerShellEdition(CalamariResult output)
+        {
+            const string powerShellCoreEdition = "PSEdition                      Core";
+            var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
+            
+            if (PowerShellEdition == PowerShellEdition.PowerShellCore)
+                trimmedOutput.Should().Contain(powerShellCoreEdition);
+            else
+            {
+                // Checking for not containing 'Core' as Build Servers run on
+                // PowerShell 3 which does not have PSEdition in the output
+                trimmedOutput.Should().NotContain(powerShellCoreEdition);
+            }
+        }
         
         [Test]
         [TestCase("true", true)]
@@ -656,21 +680,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
             public void Dispose()
             {
                 tempFile.Dispose();
-            }
-        }
-        
-        void AssertPowerShellEdition(CalamariResult output)
-        {
-            const string powerShellCoreEdition = "PSEdition                      Core";
-            var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
-            
-            if (PowerShellEdition == PowerShellEdition.PowerShellCore)
-                trimmedOutput.Should().Contain(powerShellCoreEdition);
-            else
-            {
-                // Checking for not containing 'Core' as Build Servers run on
-                // PowerShell 3 which does not have PSEdition in the output
-                trimmedOutput.Should().NotContain(powerShellCoreEdition);
             }
         }
 
