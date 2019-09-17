@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -120,7 +121,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
     }
 
-    public class PowerShellVersionNotFoundException : Exception
+    public class PowerShellVersionNotFoundException : CommandException
     {
         public PowerShellVersionNotFoundException(string customVersion, IEnumerable<string> availableVersions) 
             : base($"Attempted to use version {customVersion} of PowerShell Core, but this version could not be found. Available versions: {string.Join(", ", availableVersions)}")
