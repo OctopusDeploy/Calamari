@@ -552,7 +552,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPing()
         {
-            var (output, _) = RunPowerShellScript("Ping.ps1");
+            var pingScriptName = (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+                ? "Ping.Nix.ps1"
+                : "Ping.Win.ps1"; 
+            var (output, _) = RunPowerShellScript(pingScriptName);
             output.AssertSuccess();
             output.AssertOutput("Pinging ");
             AssertPowerShellEdition(output);
