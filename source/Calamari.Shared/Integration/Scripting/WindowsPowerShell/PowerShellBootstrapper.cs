@@ -52,6 +52,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
     }
 
+    public class UnixPowerShellCoreBootstrapper : PowerShellCoreBootstrapper
+    {
+        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
+        {
+            return "pwsh";
+        }
+    }
+
     public class PowerShellCoreBootstrapper : PowerShellBootstrapper
     {
         const string EnvPowerShellPath = "pwsh.exe";

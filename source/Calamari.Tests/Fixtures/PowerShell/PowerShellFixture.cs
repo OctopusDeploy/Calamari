@@ -83,15 +83,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
     
     [TestFixture]
     [Category(TestCategory.CompatibleOS.Nix)]
-    public class WindowsPowerShellOnLinuxFixture : CalamariFixture
+    public class PowerShellOnLinuxFixture : PowerShellFixture
     {
-        [Test]
-        public void PowerShellThrowsExceptionOnNix()
-        {
-            var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
-        }
-
         [Test]
         public void ShouldRunBashInsteadOfPowerShell()
         {
@@ -113,19 +106,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutput("Hello Bash");
             }
         }
+
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
     }
 
     [TestFixture]
     [Category(TestCategory.CompatibleOS.Mac)]
-    public class WindowsPowerShellOnMacFixture : CalamariFixture
+    public class WindowsPowerShellOnMacFixture : PowerShellFixture
     {
-        [Test]
-        public void PowerShellThrowsExceptionOnMac()
-        {
-            var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
-        }
-
         [Test]
         public void ShouldRunBashInsteadOfPowerShell()
         {
@@ -147,6 +135,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutput("Hello Bash");
             }
         }
+        
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
     }
 
     public enum PowerShellEdition
