@@ -35,9 +35,12 @@ function check_user_has_sudo_access_without_password_to_required_commands {
 function check_nginx_exists {
 	sudo -n bash -c 'command -v nginx' > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
-		echo >&2 "The executable 'nginx' does not exist, or is not on the sudo path,"
-		echo >&2 "or the user does not have 'sudo' access to it without a password."
-		echo >&2 "See https://g.octopushq.com/NginxInstall from more information."
+		echo >&2 "The executable 'nginx' does not exist, or cannot be located using the PATH in"
+		echo >&2 "the 'sudo' environment, or the user does not have the required 'sudo' access"
+		echo >&2 "without a password."
+		echo >&2 "For more on installing nginx, see https://g.octopushq.com/NginxInstall."
+		echo >&2 "For more on sudo settings see https://g.octopushq.com/NginxUserPermissions,"
+		echo >&2 "and the 'secure_path' and 'NOPASSWD' options in 'man sudoers'."
 		exit 1
 	fi
 }
