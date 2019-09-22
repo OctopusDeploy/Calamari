@@ -357,7 +357,7 @@ namespace Calamari.Integration.FileSystem
             {
                 Directory.CreateDirectory(path);
             }
-            return path;
+            return Path.GetFullPath(path);
         }
 
         public string CreateTemporaryDirectory()
