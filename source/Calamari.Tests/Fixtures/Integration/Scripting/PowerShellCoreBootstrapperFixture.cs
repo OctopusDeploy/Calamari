@@ -52,22 +52,23 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
         
         [Test]
-        public void NoVersionInstalledShouldThrowException()
+        public void CustommVersionSpecifiedButNoVersionInstalledShouldThrowException()
         {
             var mockFileSystem = Substitute.For<ICalamariFileSystem>();
-            SetUpMockFileSystem(mockFileSystem);
+            string[] installedPSVersions = new string[] { };
+            SetUpMockFileSystem(mockFileSystem, installedPSVersions);
 
             var variables = new CalamariVariableDictionary();
-            variables.Add(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, "6-preview");
+            variables.Add(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, "6");
             
             Action act = () => CreatePowerShellCoreBootstrapper(mockFileSystem).PathToPowerShellExecutable(variables);
             act.Should().Throw<PowerShellVersionNotFoundException>();
         }
         
-        static void SetUpMockFileSystem(ICalamariFileSystem mockFileSystem)
+        static void SetUpMockFileSystem(ICalamariFileSystem mockFileSystem, string[] powerShellVersions = null)
         {
             string parentDirectoryPath = "C:\\Program Files\\PowerShell";
-            var versions = new[] {"6", "7-preview", "7", "8-preview"};
+            var versions = powerShellVersions ?? new[] {"6", "7-preview", "7", "8-preview"};
             
             string[] powerShellPaths = versions.Select(version => $"{parentDirectoryPath}\\{version}").ToArray();
                
