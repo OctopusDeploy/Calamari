@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security;
 using Calamari.Deployment;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
@@ -50,7 +50,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 return new WindowsPowerShellBootstrapper();
             
             if (specifiedEdition.Equals("PowerShellCore", StringComparison.OrdinalIgnoreCase))
-                return new PowerShellCoreBootstrapper();
+                return new PowerShellCoreBootstrapper(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             
             // If it is an unrecognized value, fall back to Windows 
             return new WindowsPowerShellBootstrapper();
