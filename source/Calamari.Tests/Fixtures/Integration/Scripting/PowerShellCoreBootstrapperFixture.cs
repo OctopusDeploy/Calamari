@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -7,6 +8,7 @@ using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
@@ -16,74 +18,104 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class PowerShellCoreBootstrapperFixture
     {
         [Test]
-        public void ShouldReturnLatestPath()
+        public void PathToPowerShellExecutable_ShouldReturnLatestPath()
         {
-            var mockFileSystem = Substitute.For<ICalamariFileSystem>();
-            SetUpMockFileSystem(mockFileSystem);
+            var result = GetPathToPowerShell(new [] {"6", "7-preview", "7", "8-preview"});
             
-            var pathToPowerShell = CreatePowerShellCoreBootstrapper(mockFileSystem).PathToPowerShellExecutable(new CalamariVariableDictionary());
-            pathToPowerShell.Should().Be("C:\\Program Files\\PowerShell\\8-preview\\pwsh.exe");
+            result.Should().Be("C:\\Program Files\\PowerShell\\8-preview\\pwsh.exe");
         }
 
         [Test]
-        public void SpecifyingVersionShouldReturnPath()
+        public void PathToPowerShellExecutable_SpecifyingMajorVersionShouldReturnPath()
         {
-            var mockFileSystem = Substitute.For<ICalamariFileSystem>();
-            SetUpMockFileSystem(mockFileSystem);
-
-            var variables = new CalamariVariableDictionary();
-            variables.Add(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, "6");
+            var result = GetPathToPowerShellWithCustomVersion(new [] {"6", "7"}, "6");
             
-            var pathToPowerShell = CreatePowerShellCoreBootstrapper(mockFileSystem).PathToPowerShellExecutable(variables);
-            pathToPowerShell.Should().Be("C:\\Program Files\\PowerShell\\6\\pwsh.exe");
+            result.Should().Be("C:\\Program Files\\PowerShell\\6\\pwsh.exe");
         }
         
         [Test]
-        public void IncorrectVersionShouldThrowException()
+        public void PathToPowerShellExecutable_SpecifyingMajorVersionAndPreReleaseVersionShouldReturnPath()
         {
-            var mockFileSystem = Substitute.For<ICalamariFileSystem>();
-            SetUpMockFileSystem(mockFileSystem);
-
-            var variables = new CalamariVariableDictionary();
-            variables.Add(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, "6-preview");
+            var result = GetPathToPowerShellWithCustomVersion(new [] {"6", "7", "7-preview"}, "7-preview");
             
-            Action act = () => CreatePowerShellCoreBootstrapper(mockFileSystem).PathToPowerShellExecutable(variables);
-            act.Should().Throw<PowerShellVersionNotFoundException>();
+            result.Should().Be("C:\\Program Files\\PowerShell\\7-preview\\pwsh.exe");
         }
         
         [Test]
-        public void CustommVersionSpecifiedButNoVersionInstalledShouldThrowException()
+        public void PathToPowerShellExecutable_IncorrectVersionShouldThrowException()
         {
-            var mockFileSystem = Substitute.For<ICalamariFileSystem>();
-            string[] installedPSVersions = new string[] { };
-            SetUpMockFileSystem(mockFileSystem, installedPSVersions);
-
-            var variables = new CalamariVariableDictionary();
-            variables.Add(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, "6");
-            
-            Action act = () => CreatePowerShellCoreBootstrapper(mockFileSystem).PathToPowerShellExecutable(variables);
-            act.Should().Throw<PowerShellVersionNotFoundException>();
+            ShouldThrowPowerShellVersionNotFoundException(() =>
+                GetPathToPowerShellWithCustomVersion(new [] {"7"}, "6"));
         }
         
-        static void SetUpMockFileSystem(ICalamariFileSystem mockFileSystem, string[] powerShellVersions = null)
+        [Test]
+        public void PathToPowerShellExecutable_ShouldThrowExceptionWhenPreReleaseTagMissingFromVersion()
         {
-            string parentDirectoryPath = "C:\\Program Files\\PowerShell";
-            var versions = powerShellVersions ?? new[] {"6", "7-preview", "7", "8-preview"};
+            ShouldThrowPowerShellVersionNotFoundException(() => 
+                GetPathToPowerShellWithCustomVersion(new [] {"6", "7-preview"}, "7"));
+        }
+
+        [Test]
+        public void PathToPowerShellExecutable_CustomVersionSpecifiedButNoVersionInstalledShouldThrowException()
+        {
+            ShouldThrowPowerShellVersionNotFoundException(() => 
+                GetPathToPowerShellWithCustomVersion(Enumerable.Empty<string>(), "6"));
+        }
+        
+        [Test]
+        public void PathToPowerShellExecutable_ShouldReturnPwshWhenNoVersionsInstalledOrSpecified()
+        {
+            var result = GetPathToPowerShell(Enumerable.Empty<string>());
+            result.Should().Be("pwsh.exe");
+        }
+
+        static void ShouldThrowPowerShellVersionNotFoundException(Action action)
+        {
+            action.Should().Throw<PowerShellVersionNotFoundException>();
+        }
+
+        static string GetPathToPowerShellWithCustomVersion(IEnumerable<string> versionInstalled, string customVersion)
+        {
+            var fileSystem = CreateFileSystem(versionInstalled);
+
+            var variables = new CalamariVariableDictionary
+            {
+                {SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customVersion}
+            };
+
+            return CreateBootstrapper(fileSystem).PathToPowerShellExecutable(variables);
+        }
+
+        static string GetPathToPowerShell(IEnumerable<string> versionInstalled)
+        {
+            var fileSystem = CreateFileSystem(versionInstalled);
+            return CreateBootstrapper(fileSystem).PathToPowerShellExecutable(new CalamariVariableDictionary());
+        }
+
+        static ICalamariFileSystem CreateFileSystem(IEnumerable<string> versions)
+        {
+            var fileSystem = Substitute.For<ICalamariFileSystem>();
+
+            const string parentDirectoryPath = "C:\\Program Files\\PowerShell";
+
+            var versionsAndPaths = versions.Select(v => (version: v, path: $"{parentDirectoryPath}\\{v}")).ToArray();
             
-            string[] powerShellPaths = versions.Select(version => $"{parentDirectoryPath}\\{version}").ToArray();
+            var powerShellPaths = versionsAndPaths.Select(vap => vap.path).ToArray();
                
-            mockFileSystem.EnumerateDirectories(parentDirectoryPath).Returns(powerShellPaths);
+            fileSystem.EnumerateDirectories(parentDirectoryPath).Returns(powerShellPaths);
             
-            mockFileSystem.DirectoryExists(parentDirectoryPath).Returns(true);
-            
-            for (int i = 0; i < powerShellPaths.Length; i++) 
-                mockFileSystem.GetDirectoryName(powerShellPaths[i]).Returns(versions[i]);
+            fileSystem.DirectoryExists(parentDirectoryPath).Returns(true);
+
+            foreach(var (version, path) in versionsAndPaths)
+                fileSystem.GetDirectoryName(path).Returns(version);
 
             foreach (var t in powerShellPaths)
-                mockFileSystem.FileExists($"{t}\\pwsh.exe").Returns(true);
+                fileSystem.FileExists($"{t}\\pwsh.exe").Returns(true);
+
+            return fileSystem;
         }
 
-        static PowerShellCoreBootstrapper CreatePowerShellCoreBootstrapper(ICalamariFileSystem mockFileSystem)
+        static PowerShellCoreBootstrapper CreateBootstrapper(ICalamariFileSystem mockFileSystem)
         { 
             return new PowerShellCoreBootstrapper(mockFileSystem);
         }
