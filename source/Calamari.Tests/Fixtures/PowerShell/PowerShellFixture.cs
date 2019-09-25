@@ -83,36 +83,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
     
     [TestFixture]
     [Category(TestCategory.CompatibleOS.Nix)]
-    public class PowerShellOnLinuxFixture : PowerShellFixture
-    {
-        [Test]
-        public void ShouldRunBashInsteadOfPowerShell()
-        {
-            var variablesFile = Path.GetTempFileName();
-
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(variablesFile))
-            {
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("variables", variablesFile));
-
-                output.AssertSuccess();
-                output.AssertOutput("Hello Bash");
-            }
-        }
-
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
-    }
-
-    [TestFixture]
     [Category(TestCategory.CompatibleOS.Mac)]
-    public class WindowsPowerShellOnMacFixture : PowerShellFixture
+    public class PowerShellOnLinuxOrMacFixture : PowerShellFixture
     {
         [Test]
         public void ShouldRunBashInsteadOfPowerShell()
@@ -135,7 +107,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutput("Hello Bash");
             }
         }
-        
+
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
     }
 
