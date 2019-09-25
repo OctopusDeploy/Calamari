@@ -34,16 +34,12 @@ namespace Calamari.Integration.Processes
             }       
             catch (Exception ex)
             {
-                if (ex.InnerException is Win32Exception &&
-                     string.Equals(ex.InnerException.Message,"The system cannot find the file specified", StringComparison.Ordinal))
+                if (ex.InnerException is Win32Exception )
                 {
-                    commandOutput.WriteError($"{invocation.Executable} was not found, please ensure that {invocation.Executable} is installed and is in the PATH");
+                    commandOutput.WriteError(ConstructWin32ExceptionMessage(invocation.Executable));
                 }
-                else
-                {
-                    commandOutput.WriteError(ex.ToString());
-                }
-                                
+                
+                commandOutput.WriteError(ex.ToString());
                 commandOutput.WriteError("The command that caused the exception was: " + invocation);
 
                 return new CommandResult(
@@ -52,6 +48,12 @@ namespace Calamari.Integration.Processes
                     ex.ToString(),
                     invocation.WorkingDirectory);
             }
+        }
+
+        public static string ConstructWin32ExceptionMessage(string executable)
+        {
+            return
+                $"Unable to execute {executable}, please ensure that {executable} is installed and is in the PATH.{Environment.NewLine}";
         }
     }
 }
