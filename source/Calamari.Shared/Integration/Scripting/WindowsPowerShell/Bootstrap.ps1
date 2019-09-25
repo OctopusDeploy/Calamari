@@ -526,6 +526,8 @@ function Initialize-ProxySettings()
 	$hasCredentials = ![string]::IsNullOrEmpty($proxyUsername)
 
     # This means we should use the HTTP_PROXY variable if it exists, otherwise treat the proxy as not defined
+    # TODO: It would probably be better if Calamari was responsible for setting TentacleProxyHost, TentacleProxyUsername etc. based on HTTP_PROXY,
+    # but this probably involves resolving https://github.com/OctopusDeploy/Issues/issues/5865 first
     if ($useDefaultProxy -and [string]::IsNullOrEmpty($proxyHost))
     {
         # Calamari ensure both http_proxy and HTTP_PROXY are set, so we don't need to worry about casing
