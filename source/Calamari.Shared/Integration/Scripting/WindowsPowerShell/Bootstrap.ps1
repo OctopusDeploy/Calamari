@@ -513,6 +513,9 @@ function Initialize-ProxySettings()
 	$proxyPassword = $env:TentacleProxyPassword
 	$proxyHost = $env:TentacleProxyHost
 	[int]$proxyPort = $env:TentacleProxyPort
+	if (![string]::IsNullOrEmpty($proxyHost)) {
+	    $proxyUri = New-Object Uri("http://${proxyHost}:$proxyPort")
+	}
 
 	$useDefaultProxy = $true
 	if (![string]::IsNullOrEmpty($env:TentacleUseDefaultProxy)) {
@@ -520,13 +523,34 @@ function Initialize-ProxySettings()
 	}
 
 	$useCustomProxy = ![string]::IsNullOrEmpty($proxyHost)
-	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost)
 	$hasCredentials = ![string]::IsNullOrEmpty($proxyUsername)
+
+    # This means we should use the HTTP_PROXY variable if it exists, otherwise treat the proxy as not defined
+    if ($useDefaultProxy -and [string]::IsNullOrEmpty($proxyHost))
+    {
+        # Calamari ensure both http_proxy and HTTP_PROXY are set, so we don't need to worry about casing
+        if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+            $proxyUri = New-Object System.Uri($env:HTTP_PROXY)
+            
+            # The HTTP_PROXY env variable may also contain credentials.
+            # This is a common enough pattern, but we need to extract the credentials in order to use them
+            
+            # But if credentials were explicitly provided, use those ones instead
+            if (-not $hasCredentials)
+            {
+                $credentialsArray = $proxyUri.UserInfo.Split(":")
+                $hasCredentials = $credentialsArray.length -gt 1;
+                if ($hasCredentials) {
+                    $proxyUsername = $credentialsArray[0];
+                    $proxyPassword = $credentialsArray[1];
+                }
+            }
+        }
+    }
 
 	#custom proxy		
 	if ($useCustomProxy)
 	{
-		$proxyUri = New-Object Uri("http://${proxyHost}:$proxyPort")
 		$proxy = New-Object System.Net.WebProxy($proxyUri)
 
 		if ($hasCredentials)
@@ -542,9 +566,8 @@ function Initialize-ProxySettings()
 	{
 		#system proxy		
 		if ($useDefaultProxy) {
-			# If a system proxy is defined, then this env variable should have been configured by Calamari
-			if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-				$proxyUri = New-Object System.Uri($env:HTTP_PROXY)
+		    # The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
+			if ($proxyUri -ne $null) {
 				$proxy = New-Object System.Net.WebProxy($proxyUri)
 			}
 			else {
@@ -583,15 +606,17 @@ function Initialize-ProxySettings()
             # Fortunately, for these cmdlets we can use $PSDefaultParameterValues to provide the right defaults
             # We don't use default parameter values in Windows PowerShell because this simplifies things, 
             # and means that users could change this value globally by modifying just a single property
-            if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-                $PSDefaultParameterValues.Add("Invoke-WebRequest:Proxy", $env:HTTP_PROXY)
-                $PSDefaultParameterValues.Add("Invoke-RestMethod:Proxy", $env:HTTP_PROXY)
-                if ($hasCredentials) {
-                    $securePassword = ConvertTo-SecureString $proxyPassword -AsPlainText -Force
-                    $credentials = New-Object System.Management.Automation.PSCredential -ArgumentList $proxyUsername, $securePassword
-                    
-                    $PSDefaultParameterValues.Add("Invoke-WebRequest:ProxyCredential", $credentials)
-                    $PSDefaultParameterValues.Add("Invoke-RestMethod:ProxyCredential", $credentials)
+            if ($useDefaultProxy -or $useCustomProxy) {
+                if ($proxyUri -ne $null) {
+                    $PSDefaultParameterValues.Add("Invoke-WebRequest:Proxy", $proxyUri.ToString())
+                    $PSDefaultParameterValues.Add("Invoke-RestMethod:Proxy", $proxyUri.ToString())
+                    if ($hasCredentials) {
+                        $securePassword = ConvertTo-SecureString $proxyPassword -AsPlainText -Force
+                        $credentials = New-Object System.Management.Automation.PSCredential -ArgumentList $proxyUsername, $securePassword
+                        
+                        $PSDefaultParameterValues.Add("Invoke-WebRequest:ProxyCredential", $credentials)
+                        $PSDefaultParameterValues.Add("Invoke-RestMethod:ProxyCredential", $credentials)
+                    }
                 }
             }
         }
