@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
             var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version")); 
             if (result.HasErrors)
-                Assert.Inconclusive("PowerShell Core is not installed in this machine");
+                Assert.Inconclusive("PowerShell Core is not installed on this machine");
         }
     }
 
@@ -86,6 +86,15 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [Category(TestCategory.CompatibleOS.Mac)]
     public class PowerShellOnLinuxOrMacFixture : PowerShellFixture
     {
+        [SetUp]
+        public void SetUp()
+        {
+            CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
+            var result = clr.Execute(new CommandLineInvocation("pwsh", "--version")); 
+            if (result.HasErrors)
+                Assert.Inconclusive("PowerShell Core is not installed on this machine");
+        }
+        
         [Test]
         public void ShouldRunBashInsteadOfPowerShell()
         {
