@@ -13,8 +13,9 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         {
             var output = new CaptureCommandOutput();
             var subject = new CommandLineRunner(output);
-            var result = subject.Execute(new CommandLineInvocation(executable: "random", arguments:"--version"));
+            var result = subject.Execute(new CommandLineInvocation(executable: "TestingCalamariThisExecutableShouldNeverExist", arguments:"--version"));
             result.HasErrors.Should().BeTrue();
+            output.Errors.Should().Contain("TestingCalamariThisExecutableShouldNeverExist was not found, please ensure that TestingCalamariThisExecutableShouldNeverExist is installed and is in the PATH");
         }
     }
 }
