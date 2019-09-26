@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class ScriptEngineFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void PowershellDecryptsSensitiveVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -39,8 +39,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void BashDecryptsSensitiveVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))

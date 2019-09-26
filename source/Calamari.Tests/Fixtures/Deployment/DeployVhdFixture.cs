@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class DeployVhdFixture : DeployPackageFixture
     {
         private const string ServiceName = "Acme.Vhd";

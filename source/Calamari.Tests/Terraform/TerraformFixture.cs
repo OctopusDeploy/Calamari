@@ -26,7 +26,7 @@ namespace Calamari.Tests.Terraform
     [RequiresNon32BitWindows]
     [RequiresNonMac]
     [RequiresNonMono]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class TerraformFixture
     {
         private string customTerraformExecutable;

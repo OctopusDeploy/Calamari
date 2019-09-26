@@ -16,7 +16,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.PowerShell
 {    
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
         [Test]
@@ -77,7 +77,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     }
     
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Nix)]
+    [Category(TestCategory.CompatibleOS.OnlyNix)]
     public class WindowsPowerShellOnLinuxFixture : CalamariFixture
     {
         [Test]
@@ -111,7 +111,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     }
 
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Mac)]
+    [Category(TestCategory.CompatibleOS.OnlyMac)]
     public class WindowsPowerShellOnMacFixture : CalamariFixture
     {
         [Test]
