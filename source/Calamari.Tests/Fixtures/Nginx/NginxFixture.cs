@@ -16,7 +16,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Nginx
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNix)]
+    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
     public class NginxFixture : CalamariFixture
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();

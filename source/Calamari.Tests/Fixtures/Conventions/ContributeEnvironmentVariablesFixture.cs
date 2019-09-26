@@ -16,6 +16,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             if (!CalamariEnvironment.IsRunningOnWindows)
                 Assert.Ignore("This test is designed to run on windows");
+
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My OS is #{env:OS}"), Does.StartWith("My OS is Windows"));
         }
@@ -40,6 +41,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             // http://askubuntu.com/a/394330
             if (!CalamariEnvironment.IsRunningOnMac)
                 Assert.Ignore("This test is designed to run on Mac");
+
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My paths are #{env:PATH}"), Does.Contain("/usr/local/bin"));
         }

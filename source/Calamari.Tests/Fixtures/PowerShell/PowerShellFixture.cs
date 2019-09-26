@@ -77,11 +77,11 @@ namespace Calamari.Tests.Fixtures.PowerShell
     }
     
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNix)]
-    public class WindowsPowerShellOnLinuxFixture : CalamariFixture
+    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+    public class WindowsPowerShellOnLinuxAndMacFixture : CalamariFixture
     {
         [Test]
-        public void PowerShellThrowsExceptionOnNix()
+        public void PowerShellThrowsExceptionOnNixAndMac()
         {
             var (output, _) = RunScript("Hello.ps1");
             output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
@@ -110,40 +110,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
     }
 
-    [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyMac)]
-    public class WindowsPowerShellOnMacFixture : CalamariFixture
-    {
-        [Test]
-        public void PowerShellThrowsExceptionOnMac()
-        {
-            var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
-        }
-
-        [Test]
-        public void ShouldRunBashInsteadOfPowerShell()
-        {
-            var variablesFile = Path.GetTempFileName();
-
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello Powershell");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(variablesFile))
-            {
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("variables", variablesFile));
-
-                output.AssertSuccess();
-                output.AssertOutput("Hello Bash");
-            }
-        }
-    }
-    
     public abstract class PowerShellFixture : CalamariFixture
     {
         void AssertPSEdition(CalamariResult output)
