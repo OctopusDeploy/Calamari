@@ -562,7 +562,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts\\Path With '", "PathWithSingleQuote.ps1")));
+                .Argument("script", GetFixtureResouce(Path.Combine("Scripts", "Path With '"), "PathWithSingleQuote.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a '");
@@ -574,7 +574,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts\\Path With $", "PathWithDollar.ps1")));
+                .Argument("script", GetFixtureResouce(Path.Combine("Scripts", "Path With $"), "PathWithDollar.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a $");
