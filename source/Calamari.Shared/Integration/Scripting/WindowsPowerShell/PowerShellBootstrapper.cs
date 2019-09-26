@@ -131,13 +131,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
     }
     
-    public class PowerShellCoreBootstrapper : PowerShellBootstrapper
+    public abstract class PowerShellCoreBootstrapper : PowerShellBootstrapper
     {
-        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
-        {
-            throw new NotImplementedException();
-        }
-
         protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
         {
             yield break;
