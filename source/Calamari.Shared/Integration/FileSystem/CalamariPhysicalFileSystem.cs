@@ -662,6 +662,11 @@ namespace Calamari.Integration.FileSystem
             return new FileInfo(filePath).Name;
         }
 
+        public string GetDirectoryName(string directoryPath)
+        {
+            return new DirectoryInfo(directoryPath).Name;
+        }
+
         public Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess)
         {
             return File.Open(filePath, fileMode, fileAccess, FileShare.None);
