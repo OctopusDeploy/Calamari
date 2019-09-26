@@ -220,11 +220,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHelloWithSensitiveVariable()
         {
-            var variablesFile = Path.GetTempFileName();
-
             var variables = new VariableDictionary();
             variables.Set("Name", "NameToEncrypt");
-            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
 
             var (output, _) = RunPowerShellScript("HelloWithVariable.ps1", new Dictionary<string, string>()
             { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
@@ -237,6 +234,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
+            if (IsRunningOnUnixLikeEnvironment)
+                Assert.Inconclusive("outputVariables is provided for offline drops, and is only supported for windows deployments, since it uses DP-API to encrypt and decrypt the output variables");
+            
             var outputVariablesFile = Path.GetTempFileName();
 
             var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" };
