@@ -8,7 +8,6 @@ using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
@@ -115,9 +114,9 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             return fileSystem;
         }
 
-        static PowerShellCoreBootstrapper CreateBootstrapper(ICalamariFileSystem mockFileSystem)
+        static WindowsPowerShellCoreBootstrapper CreateBootstrapper(ICalamariFileSystem mockFileSystem)
         { 
-            return new PowerShellCoreBootstrapper(mockFileSystem);
+            return new WindowsPowerShellCoreBootstrapper(mockFileSystem);
         }
     }
 }
