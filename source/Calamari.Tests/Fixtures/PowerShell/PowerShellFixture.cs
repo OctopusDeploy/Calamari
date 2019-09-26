@@ -297,9 +297,13 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForArtifacts()
         {
-            var (output, _) = RunPowerShellScript("CanCreateArtifact.ps1");
+            var artifactPath = IsRunningOnUnixLikeEnvironment ? @"\tmp\calamari\File.txt" : @"C:\Path\File.txt";
+            var (output, _) = RunPowerShellScript("CanCreateArtifact.ps1", new Dictionary<string, string> {{"ArtifactPath", artifactPath}});
             output.AssertSuccess();
-            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
+            var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
+                ? "##octopus[createArtifact path='L3RtcC9jYWxhbWFyaS9GaWxlLnR4dA==' name='XHRtcFxjYWxhbWFyaVxGaWxlLnR4dA==' length='MA==']"
+                : "##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']";
+            output.AssertOutput(expectedArtifactServiceMessage);
             AssertPowerShellEdition(output);
         }
         
@@ -324,13 +328,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForPipedArtifacts()
         {
-            var path = Path.Combine(Path.GetTempPath(), "CanCreateArtifactPipedTestFile.txt");
+            var tempPath = Path.GetTempPath(); // There is no nice platform agnostic way to do this until powershell 7 ships and is on all our test agents (this introduces a new "TEMP" drive)
+            var path = Path.Combine(tempPath, "CanCreateArtifactPipedTestFile.txt");
             var base64Path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
             try
             {
                 if (!File.Exists(path))
                     File.WriteAllText(path, "");
-                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1");
+                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1", new Dictionary<string, string>() {{"TempDirectory", tempPath}});
                 output.AssertSuccess();
                 output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
                 AssertPowerShellEdition(output);
@@ -344,10 +349,16 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
-            var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1");
+            var nonExistantArtifactPath = IsRunningOnUnixLikeEnvironment 
+                ? @"\tmp\NonExistantPath\NonExistantFile.txt" 
+                : @"C:\NonExistantPath\NonExistantFile.txt";
+            var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1", new Dictionary<string, string> {{"ArtifactPath", nonExistantArtifactPath}});
             output.AssertSuccess();
-            output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
-            output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
+            output.AssertOutput($@"There is no file at '{nonExistantArtifactPath}' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
+            var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
+                ? "##octopus[createArtifact path='L3RtcC9Ob25FeGlzdGFudFBhdGgvTm9uRXhpc3RhbnRGaWxlLnR4dA==' name='XHRtcFxOb25FeGlzdGFudFBhdGhcTm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']"
+                : "##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']";
+            output.AssertOutput(expectedArtifactServiceMessage);
             AssertPowerShellEdition(output);
         }
 
@@ -620,11 +631,11 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunPowerShellScript("ScriptWithBOM.ps1");
 
             output.AssertSuccess();
-            output.AssertOutput("45\r\n226\r\n128\r\n147");
+            output.AssertOutput(string.Join(Environment.NewLine, "45", "226", "128", "147"));
             AssertPowerShellEdition(output);
         }
-        
-        bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
+
+        static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
 
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, VariableDictionary variables = null)
         {
