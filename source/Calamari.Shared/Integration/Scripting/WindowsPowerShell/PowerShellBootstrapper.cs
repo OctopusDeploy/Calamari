@@ -55,7 +55,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     public class PowerShellCoreBootstrapper : PowerShellBootstrapper
     {
         const string EnvPowerShellPath = "pwsh.exe";
-        ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
 
         public PowerShellCoreBootstrapper(ICalamariFileSystem fileSystem)
         {
@@ -77,7 +77,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     .Distinct()
                     .Select(pf => Path.Combine(pf, "PowerShell"))
                     .Where(fileSystem.DirectoryExists)
-                    .SelectMany(fileSystem.EnumerateDirectories) // use fs everywhere
+                    .SelectMany(fileSystem.EnumerateDirectories)
                     .Select<string, (string path, string versionId, int? majorVersion, string remaining)>(d =>
                     {
                         var directoryName = fileSystem.GetDirectoryName(d);
