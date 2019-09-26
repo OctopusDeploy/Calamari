@@ -158,7 +158,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Profile.ps1")), 
+                .Argument("script", GetFixtureResouce("Scripts", ProfileScript)), 
                 variables);
 
             output.AssertSuccess();
@@ -170,17 +170,19 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Should().Be(calledWithNoProfile);
             AssertPowerShellEdition(output);
         }
-
+        
         [Test]
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
-            var (output, _) = RunPowerShellScript("Profile.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript(ProfileScript, new Dictionary<string, string>()
             { [SpecialVariables.Action.PowerShell.ExecuteWithoutProfile] = "true" });
 
             output.AssertSuccess();
             output.AssertOutput("-NoProfile");
             AssertPowerShellEdition(output);
         }
+
+        string ProfileScript => IsRunningOnUnixLikeEnvironment ? "Profile.Nix.ps1" : "Profile.Windows.ps1";
 
         [Test]
         public void ShouldCallHello()
@@ -200,7 +202,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
             output.AssertSuccess();
-            output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
+            output.AssertOutput($"##octopus[stdout-warning]{Environment.NewLine}The `--script` parameter is deprecated.");
             output.AssertOutput("Hello!");
             AssertPowerShellEdition(output);
         }
@@ -533,12 +535,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPing()
         {
-            var pingScriptName = (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+            var pingScriptName = IsRunningOnUnixLikeEnvironment
                 ? "Ping.Nix.ps1"
                 : "Ping.Win.ps1"; 
             var (output, _) = RunPowerShellScript(pingScriptName);
             output.AssertSuccess();
-            output.AssertOutput("Pinging ");
+
+            var expectedPingingText = IsRunningOnUnixLikeEnvironment ? "PING " : "Pinging ";
+            output.AssertOutput(expectedPingingText);
             AssertPowerShellEdition(output);
         }
 
@@ -569,7 +573,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldNotFailOnStdErr()
         {
-            var (output, _) = RunPowerShellScript("stderr.ps1");
+            var (output, _) = RunPowerShellScript("StdErr.ps1");
 
             output.AssertSuccess();
             output.AssertErrorOutput("error");
@@ -579,7 +583,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
-            var (output, _) = RunPowerShellScript("stderr.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("StdErr.ps1", new Dictionary<string, string>()
             { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
 
             output.AssertFailure();
@@ -619,6 +623,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("45\r\n226\r\n128\r\n147");
             AssertPowerShellEdition(output);
         }
+        
+        bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
 
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, VariableDictionary variables = null)
         {
