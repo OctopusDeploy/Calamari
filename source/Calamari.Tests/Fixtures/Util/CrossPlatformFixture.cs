@@ -25,8 +25,7 @@ namespace Calamari.Tests.Fixtures.Util
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void TildePrefixReplacedWithHome()
         {
             var home = Environment.GetEnvironmentVariable("HOME");
@@ -42,8 +41,7 @@ namespace Calamari.Tests.Fixtures.Util
         [TestCase("$MARIO_BROTHERZZ/blah", "/blah", Description = "Variables terminate at last non alpha numeric character")]
         [TestCase("IMA$MARIO_BROTHER", "IMALUIGI", Description = "Variables begin from dollar character")]
         [TestCase("\\$MARIO_BROTHER/blah", "\\$MARIO_BROTHER/blah", Description = "Escaped dollar preserved")]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void NixEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
             var value = CrossPlatform.ExpandPathEnvironmentVariables(inputValue);
@@ -53,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Util
         [Test]
         [TestCase("$MARIO_BROTHER/blah", "$MARIO_BROTHER/blah", Description = "Nix variable format ignored")]
         [TestCase("IMA%MARIO_BROTHER%PLUMBER", "IMALUIGIPLUMBER", Description = "Variables demarcated by percent character")]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void WindowsEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
             var value = CrossPlatform.ExpandPathEnvironmentVariables(inputValue);

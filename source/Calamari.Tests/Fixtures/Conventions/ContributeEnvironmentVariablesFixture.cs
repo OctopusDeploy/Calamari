@@ -11,17 +11,18 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class ContributeEnvironmentVariablesConventionFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldAddWindowsEnvironmentVariables()
         {
             if (!CalamariEnvironment.IsRunningOnWindows)
                 Assert.Ignore("This test is designed to run on windows");
+
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My OS is #{env:OS}"), Does.StartWith("My OS is Windows"));
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.OnlyNix)]
         public void ShouldAddLinuxEnvironmentVariables()
         {
             if (!CalamariEnvironment.IsRunningOnNix)
@@ -32,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.OnlyMac)]
         public void ShouldAddMacEnvironmentVariables()
         {
             // Mac running in TeamCity agent service does not contain $HOME variable
@@ -40,6 +41,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             // http://askubuntu.com/a/394330
             if (!CalamariEnvironment.IsRunningOnMac)
                 Assert.Ignore("This test is designed to run on Mac");
+
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My paths are #{env:PATH}"), Does.Contain("/usr/local/bin"));
         }

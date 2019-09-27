@@ -11,11 +11,13 @@ namespace Calamari.Tests.Helpers
 
         public static class CompatibleOS
         {
-            public const string Nix = "Nix";
+            public const string OnlyNix = "Nix";
 
-            public const string Windows = "Windows";
+            public const string OnlyWindows = "Windows";
 
-            public const string Mac = "macOS";
+            public const string OnlyMac = "macOS";
+
+            public const string OnlyNixOrMac = "nixMacOS";
         }
         
         public const string PlatformAgnostic = "PlatformAgnostic";

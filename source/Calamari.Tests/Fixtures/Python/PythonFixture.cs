@@ -61,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Python
         }
         
         [Test, RequiresMinimumPython3Version(4)]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldWriteServiceMessageForArtifactsOnWindows()
         {
             var (output, _) = RunScript("createartifactwin.py");
@@ -70,8 +70,7 @@ namespace Calamari.Tests.Fixtures.Python
         }
 
         [Test, RequiresMinimumPython3Version(4)]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void ShouldWriteServiceMessageForArtifactsOnNix()
         {
             var (output, _) = RunScript("createartifactnix.py");
