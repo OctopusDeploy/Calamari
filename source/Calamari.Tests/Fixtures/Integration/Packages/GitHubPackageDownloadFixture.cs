@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)] //Keeps rate limit low
+        [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHub()
         {
             var downloader = new GitHubPackageDownloader();
@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)] //Keeps rate limit low
+        [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void WillReUseFileIfItExists()
         {
             var downloader = new GitHubPackageDownloader();
@@ -76,7 +76,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)] //Keeps rate limit low
+        [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHubWithDifferentVersionFormat()
         {
             var downloader = new GitHubPackageDownloader();

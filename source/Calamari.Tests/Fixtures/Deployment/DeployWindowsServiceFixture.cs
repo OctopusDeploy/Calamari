@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class DeployWindowsServiceFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => "Acme.Service";

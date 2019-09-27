@@ -9,7 +9,7 @@ using SetProxy;
 namespace Calamari.Tests.Fixtures.Integration.Proxies
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class ProxyInitializerFixture
     {
         const string BadproxyUrl = "http://proxy-initializer-fixture-bad-proxy:1234";

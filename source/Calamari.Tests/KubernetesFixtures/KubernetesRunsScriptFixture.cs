@@ -40,7 +40,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void PowershellKubeCtlScripts()
         {
@@ -49,7 +49,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.OnlyNix)]
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void BashKubeCtlScripts()
         {
