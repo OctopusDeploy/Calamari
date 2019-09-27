@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class PowerShellCoreOnWindows : PowerShellFixture
     {
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Core;
 
         [SetUp]
         public void SetUp()
@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class WindowsPowerShellFixture : PowerShellFixture
     {
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.WindowsPowerShell;
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Desktop;
         
         [Test]
         [Platform]
@@ -121,8 +121,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
     public enum PowerShellEdition
     {
-        WindowsPowerShell,
-        PowerShellCore
+        Desktop,
+        Core
     }
     
     public abstract class PowerShellFixture : CalamariFixture
@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             const string powerShellCoreEdition = "PSEdition                      Core";
             var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
             
-            if (PowerShellEdition == PowerShellEdition.PowerShellCore)
+            if (PowerShellEdition == PowerShellEdition.Core)
                 trimmedOutput.Should().Contain(powerShellCoreEdition);
             else
             {
@@ -687,10 +687,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             switch(PowerShellEdition)
             {
-                case PowerShellEdition.WindowsPowerShell:
-                    return "WindowsPowerShell";
-                case PowerShellEdition.PowerShellCore:
-                    return "PowerShellCore";
+                case PowerShellEdition.Desktop:
+                    return "Desktop";
+                case PowerShellEdition.Core:
+                    return "Core";
                 default:
                     throw new ArgumentOutOfRangeException();
             }
