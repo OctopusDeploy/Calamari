@@ -28,8 +28,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var debuggingBootstrapFile = powerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
             var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
 
-            var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
-            var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));
+            var userName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(SpecialVariables.Action.PowerShell.UserName) : null;
+            var password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password)) : null;
 
             yield return new ScriptExecution(
                 new CommandLineInvocation(

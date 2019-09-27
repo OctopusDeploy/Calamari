@@ -16,7 +16,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     {
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
-        
+
+        public override bool AllowImpersonation() => true;
+
         public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
             if (powerShellPath != null)
@@ -54,6 +56,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
     public class UnixPowerShellCoreBootstrapper : PowerShellCoreBootstrapper
     {
+        public override bool AllowImpersonation() => false;
+
         public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
             return "pwsh";
@@ -69,6 +73,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         {
             this.fileSystem = fileSystem;
         }
+
+        public override bool AllowImpersonation() => true;
 
         public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
@@ -161,6 +167,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
         }
 
+        public abstract bool AllowImpersonation();
+        
         public abstract string PathToPowerShellExecutable(CalamariVariableDictionary variables);
 
         public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
