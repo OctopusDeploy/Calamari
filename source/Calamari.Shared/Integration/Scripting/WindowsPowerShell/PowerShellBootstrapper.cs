@@ -59,10 +59,16 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return "pwsh";
         }
     }
-
-    public class PowerShellCoreBootstrapper : PowerShellBootstrapper
+    
+    public class WindowsPowerShellCoreBootstrapper : PowerShellCoreBootstrapper
     {
         const string EnvPowerShellPath = "pwsh.exe";
+        readonly ICalamariFileSystem fileSystem;
+
+        public WindowsPowerShellCoreBootstrapper(ICalamariFileSystem fileSystem)
+        {
+            this.fileSystem = fileSystem;
+        }
 
         public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
@@ -78,12 +84,11 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                     .Where(p => p != null)
                     .Distinct()
                     .Select(pf => Path.Combine(pf, "PowerShell"))
-                    .Where(Directory.Exists)
-                    .SelectMany(Directory.EnumerateDirectories)
+                    .Where(fileSystem.DirectoryExists)
+                    .SelectMany(fileSystem.EnumerateDirectories)
                     .Select<string, (string path, string versionId, int? majorVersion, string remaining)>(d =>
                     {
-                        var directoryInfo = new DirectoryInfo(d);
-                        var directoryName = directoryInfo.Name;
+                        var directoryName = fileSystem.GetDirectoryName(d);
 
                         // Directories are typically versions like "6" or they might also have a prerelease component like "7-preview"
                         var splitString = directoryName.Split(new[] {'-'}, 2);
@@ -97,6 +102,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                             return (d, directoryName, majorVersion, preRelease);
                         return (d, directoryName, null, preRelease);
                     }).ToList();
+                
                 var latestPowerShellVersionDirectory = availablePowerShellVersions
                     .Where(p => string.IsNullOrEmpty(customVersion) || p.versionId == customVersion)
                     .OrderByDescending(p => p.majorVersion)
@@ -106,12 +112,13 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 
                 if (customVersionIsDefined && latestPowerShellVersionDirectory == null)
                 {
-                    throw new PowerShellVersionNotFoundException(customVersion, availablePowerShellVersions.Select(v => v.versionId));
+                    throw new PowerShellVersionNotFoundException(customVersion,
+                        availablePowerShellVersions.Select(v => v.versionId));
                 }
 
                 var pathToPwsh = Path.Combine(latestPowerShellVersionDirectory, EnvPowerShellPath);
 
-                return File.Exists(pathToPwsh) ? pathToPwsh : EnvPowerShellPath;
+                return fileSystem.FileExists(pathToPwsh) ? pathToPwsh : EnvPowerShellPath;
             }
             catch (PowerShellVersionNotFoundException)
             {
@@ -122,7 +129,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 return EnvPowerShellPath;
             }
         }
-
+    }
+    
+    public abstract class PowerShellCoreBootstrapper : PowerShellBootstrapper
+    {
         protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
         {
             yield break;
