@@ -8,14 +8,14 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
     public class SystemSemaphoreFixture : SemaphoreFixtureBase
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void SystemSemaphoreWaitsUntilFirstSemaphoreIsReleased()
         {
             SecondSemaphoreWaitsUntilFirstSemaphoreIsReleased(new SystemSemaphoreManager());
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void SystemSemaphoreShouldIsolate()
         {
             ShouldIsolate(new SystemSemaphoreManager());

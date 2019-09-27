@@ -13,7 +13,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.Scripting
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class PowerShellCoreBootstrapperFixture
     {
         [Test]

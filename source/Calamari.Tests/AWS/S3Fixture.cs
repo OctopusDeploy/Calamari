@@ -40,7 +40,7 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void UploadPackage1()
         {
             var fileSelections = new List<S3FileSelectionProperties>
@@ -73,7 +73,7 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void UploadPackage2()
         {
             var fileSelections = new List<S3FileSelectionProperties>
@@ -132,7 +132,7 @@ namespace Calamari.Tests.AWS
         };
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void UploadPackageWithMetadata()
         {
             var fileSelections = new List<S3FileSelectionProperties>

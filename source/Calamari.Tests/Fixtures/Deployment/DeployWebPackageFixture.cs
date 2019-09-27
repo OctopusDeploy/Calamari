@@ -44,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDeployPackageOnWindows()
         {
             var result = DeployPackage();
@@ -57,8 +57,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void ShouldDeployPackageOnMacOrNix()
         {
             if (!CalamariEnvironment.IsRunningOnMac && !CalamariEnvironment.IsRunningOnNix)
@@ -191,7 +190,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
 #if IIS_SUPPORT
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldModifyIisWebsiteRoot()
         {
             // If the 'UpdateIisWebsite' variable is set, the website root will be updated
