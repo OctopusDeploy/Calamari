@@ -54,7 +54,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
     }
 
-    public class UnixPowerShellCoreBootstrapper : PowerShellCoreBootstrapper
+    public class UnixLikePowerShellCoreBootstrapper : PowerShellCoreBootstrapper
     {
         public override bool AllowImpersonation() => false;
 

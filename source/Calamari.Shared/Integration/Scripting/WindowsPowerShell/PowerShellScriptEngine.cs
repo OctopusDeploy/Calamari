@@ -46,7 +46,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
         {
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                return new UnixPowerShellCoreBootstrapper();
+                return new UnixLikePowerShellCoreBootstrapper();
             
             var specifiedEdition = variables[SpecialVariables.Action.PowerShell.Edition];
             if (string.IsNullOrEmpty(specifiedEdition))
