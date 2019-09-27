@@ -49,7 +49,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (string.IsNullOrEmpty(specifiedEdition))
                 return new WindowsPowerShellBootstrapper();
             
-            if (specifiedEdition.Equals("PowerShellCore", StringComparison.OrdinalIgnoreCase))
+            if (specifiedEdition.Equals("Core", StringComparison.OrdinalIgnoreCase))
                 return new PowerShellCoreBootstrapper(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             
             // If it is an unrecognized value, fall back to Windows 
