@@ -116,7 +116,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.PowerShellCore;
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Core;
     }
 
     public enum PowerShellEdition
