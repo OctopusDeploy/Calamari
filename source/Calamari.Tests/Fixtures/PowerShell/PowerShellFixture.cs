@@ -30,6 +30,17 @@ namespace Calamari.Tests.Fixtures.PowerShell
             if (result.HasErrors)
                 Assert.Inconclusive("PowerShell Core is not installed on this machine");
         }
+
+        [Test]
+        public void IncorrectPowerShellEditionShouldThrowException()
+        {
+            var nonExistentEdition = "PowerShellCore";
+            var output = RunScript("Hello.ps1",
+                new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
+            
+            output.result.AssertFailure();
+            output.result.AssertErrorOutput("Attempted to use PowerShellCore edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop");
+        }
     }
 
     [TestFixture]
@@ -78,6 +89,17 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello PowerShell");
+        }
+        
+        [Test]
+        public void IncorrectPowerShellEditionShouldThrowException()
+        {
+            var nonExistentEdition = "WindowsPowerShell";
+            var output = RunScript("Hello.ps1",
+                new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
+            
+            output.result.AssertFailure();
+            output.result.AssertErrorOutput("Attempted to use WindowsPowerShell edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop");
         }
     }
     
