@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -43,7 +44,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             );
         }
 
-        PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
+        public PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
         {
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 return new UnixLikePowerShellCoreBootstrapper();
@@ -55,8 +56,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (specifiedEdition.Equals("Core", StringComparison.OrdinalIgnoreCase))
                 return new WindowsPowerShellCoreBootstrapper(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             
-            // If it is an unrecognized value, fall back to Windows 
-            return new WindowsPowerShellBootstrapper();
+            if (specifiedEdition.Equals("Desktop", StringComparison.OrdinalIgnoreCase))
+                return new WindowsPowerShellBootstrapper();
+            
+            throw new PowerShellEditionNotFoundException(specifiedEdition);
         }
 
         static SecureString ToSecureString(string unsecureString)
@@ -68,6 +71,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 s.AppendChar(c);
                 return s;
             });
+        }
+        
+        public class PowerShellEditionNotFoundException : CommandException
+        {
+            public PowerShellEditionNotFoundException(string specifiedEdition) 
+                : base($"Attempted to use {specifiedEdition} edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop")
+            {
+            }
         }
     }
 }
