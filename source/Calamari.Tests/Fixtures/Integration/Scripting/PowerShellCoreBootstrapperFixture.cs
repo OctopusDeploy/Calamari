@@ -8,7 +8,6 @@ using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
