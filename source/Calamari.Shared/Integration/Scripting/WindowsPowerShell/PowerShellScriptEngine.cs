@@ -44,7 +44,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             );
         }
 
-        public PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
+        PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
         {
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 return new UnixLikePowerShellCoreBootstrapper();
@@ -67,18 +67,19 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (string.IsNullOrEmpty(unsecureString))
                 return null;
 
-            return unsecureString.Aggregate(new SecureString(), (s, c) => {
+            return unsecureString.Aggregate(new SecureString(), (s, c) =>
+            {
                 s.AppendChar(c);
                 return s;
             });
         }
-        
-        public class PowerShellEditionNotFoundException : CommandException
+    }
+    
+    public class PowerShellEditionNotFoundException : CommandException
+    {
+        public PowerShellEditionNotFoundException(string specifiedEdition) 
+            : base($"Attempted to use {specifiedEdition} edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop")
         {
-            public PowerShellEditionNotFoundException(string specifiedEdition) 
-                : base($"Attempted to use {specifiedEdition} edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop")
-            {
-            }
         }
     }
 }
