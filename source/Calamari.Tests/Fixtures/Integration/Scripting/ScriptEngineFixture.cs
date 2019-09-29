@@ -28,19 +28,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 result.AssertOutput("KingKong");
             }
         }
-        
-        [Test]
-        public void ThrowsExceptionWhenWrongPowerShellEditionIsSpecified()
-        {
-            var variables = new CalamariVariableDictionary
-            {
-                {SpecialVariables.Action.PowerShell.Edition,"ScriptEngine2000"}
-            };
 
-            ShouldThrowPowerShellEditionNotFoundException(() =>
-                new PowerShellScriptEngine().GetPowerShellBootstrapper(variables));
-        }
-        
         [Category(TestCategory.ScriptingSupport.ScriptCS)]
         [Test, RequiresMonoVersion400OrAbove, RequiresDotNet45]
         public void CSharpDecryptsSensitiveVariables()
@@ -79,11 +67,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             var runner = new CommandLineRunner(capture);
             var result = psse.Execute(new Script(scriptName), variables, runner);
             return new CalamariResult(result.ExitCode, capture);
-        }
-        
-        private void ShouldThrowPowerShellEditionNotFoundException(Action action)
-        {
-            action.Should().Throw<PowerShellScriptEngine.PowerShellEditionNotFoundException>();
         }
     }
 }
