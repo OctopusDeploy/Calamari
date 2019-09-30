@@ -39,7 +39,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
             
             output.result.AssertFailure();
-            output.result.AssertErrorOutput("Attempted to use PowerShellCore edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop");
+            output.result.AssertErrorOutput("Attempted to use 'PowerShellCore' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");
         }
     }
 
@@ -99,7 +99,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
             
             output.result.AssertFailure();
-            output.result.AssertErrorOutput("Attempted to use WindowsPowerShell edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop");
+            output.result.AssertErrorOutput("Attempted to use 'WindowsPowerShell' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");
         }
     }
     
