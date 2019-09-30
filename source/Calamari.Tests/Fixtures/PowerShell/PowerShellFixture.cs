@@ -28,7 +28,18 @@ namespace Calamari.Tests.Fixtures.PowerShell
             CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
             var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version")); 
             if (result.HasErrors)
-                Assert.Inconclusive("PowerShell Core is not installed in this machine");
+                Assert.Inconclusive("PowerShell Core is not installed on this machine");
+        }
+
+        [Test]
+        public void IncorrectPowerShellEditionShouldThrowException()
+        {
+            var nonExistentEdition = "PowerShellCore";
+            var output = RunScript("Hello.ps1",
+                new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
+            
+            output.result.AssertFailure();
+            output.result.AssertErrorOutput("Attempted to use PowerShellCore edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop");
         }
     }
 
@@ -79,19 +90,32 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertSuccess();
                 output.AssertOutput("Hello PowerShell");
         }
+        
+        [Test]
+        public void IncorrectPowerShellEditionShouldThrowException()
+        {
+            var nonExistentEdition = "WindowsPowerShell";
+            var output = RunScript("Hello.ps1",
+                new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
+            
+            output.result.AssertFailure();
+            output.result.AssertErrorOutput("Attempted to use WindowsPowerShell edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop");
+        }
     }
     
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNix)]
-    public class WindowsPowerShellOnLinuxFixture : CalamariFixture
+    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+    public class PowerShellOnLinuxOrMacFixture : PowerShellFixture
     {
-        [Test]
-        public void PowerShellThrowsExceptionOnNix()
+        [SetUp]
+        public void SetUp()
         {
-            var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
+            CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
+            var result = clr.Execute(new CommandLineInvocation("pwsh", "--version")); 
+            if (result.HasErrors)
+                Assert.Inconclusive("PowerShell Core is not installed on this machine");
         }
-
+        
         [Test]
         public void ShouldRunBashInsteadOfPowerShell()
         {
@@ -113,40 +137,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertOutput("Hello Bash");
             }
         }
-    }
 
-    [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyMac)]
-    public class WindowsPowerShellOnMacFixture : CalamariFixture
-    {
-        [Test]
-        public void PowerShellThrowsExceptionOnMac()
-        {
-            var (output, _) = RunScript("Hello.ps1");
-            output.AssertErrorOutput("PowerShell scripts are not supported on this platform");
-        }
-
-        [Test]
-        public void ShouldRunBashInsteadOfPowerShell()
-        {
-            var variablesFile = Path.GetTempFileName();
-
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(variablesFile))
-            {
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("variables", variablesFile));
-
-                output.AssertSuccess();
-                output.AssertOutput("Hello Bash");
-            }
-        }
+        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Core;
     }
 
     public enum PowerShellEdition
@@ -187,7 +179,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Profile.ps1")), 
+                .Argument("script", GetFixtureResouce("Scripts", ProfileScript)), 
                 variables);
 
             output.AssertSuccess();
@@ -199,17 +191,19 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Should().Be(calledWithNoProfile);
             AssertPowerShellEdition(output);
         }
-
+        
         [Test]
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
-            var (output, _) = RunPowerShellScript("Profile.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript(ProfileScript, new Dictionary<string, string>()
             { [SpecialVariables.Action.PowerShell.ExecuteWithoutProfile] = "true" });
 
             output.AssertSuccess();
             output.AssertOutput("-NoProfile");
             AssertPowerShellEdition(output);
         }
+
+        string ProfileScript => IsRunningOnUnixLikeEnvironment ? "Profile.Nix.ps1" : "Profile.Windows.ps1";
 
         [Test]
         public void ShouldCallHello()
@@ -229,7 +223,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
 
             output.AssertSuccess();
-            output.AssertOutput("##octopus[stdout-warning]\r\nThe `--script` parameter is deprecated.");
+            output.AssertOutput($"##octopus[stdout-warning]{Environment.NewLine}The `--script` parameter is deprecated.");
             output.AssertOutput("Hello!");
             AssertPowerShellEdition(output);
         }
@@ -247,11 +241,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHelloWithSensitiveVariable()
         {
-            var variablesFile = Path.GetTempFileName();
-
             var variables = new VariableDictionary();
             variables.Set("Name", "NameToEncrypt");
-            variables.SaveEncrypted("5XETGOgqYR2bRhlfhDruEg==", variablesFile);
 
             var (output, _) = RunPowerShellScript("HelloWithVariable.ps1", new Dictionary<string, string>()
             { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
@@ -264,6 +255,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
+            if (IsRunningOnUnixLikeEnvironment)
+                Assert.Inconclusive("outputVariables is provided for offline drops, and is only supported for windows deployments, since it uses DP-API to encrypt and decrypt the output variables");
+            
             var outputVariablesFile = Path.GetTempFileName();
 
             var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" };
@@ -324,9 +318,13 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForArtifacts()
         {
-            var (output, _) = RunPowerShellScript("CanCreateArtifact.ps1");
+            var artifactPath = IsRunningOnUnixLikeEnvironment ? @"\tmp\calamari\File.txt" : @"C:\Path\File.txt";
+            var (output, _) = RunPowerShellScript("CanCreateArtifact.ps1", new Dictionary<string, string> {{"ArtifactPath", artifactPath}});
             output.AssertSuccess();
-            output.AssertOutput("##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']");
+            var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
+                ? "##octopus[createArtifact path='L3RtcC9jYWxhbWFyaS9GaWxlLnR4dA==' name='XHRtcFxjYWxhbWFyaVxGaWxlLnR4dA==' length='MA==']"
+                : "##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']";
+            output.AssertOutput(expectedArtifactServiceMessage);
             AssertPowerShellEdition(output);
         }
         
@@ -351,13 +349,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForPipedArtifacts()
         {
-            var path = Path.Combine(Path.GetTempPath(), "CanCreateArtifactPipedTestFile.txt");
+            var tempPath = Path.GetTempPath(); // There is no nice platform agnostic way to do this until powershell 7 ships and is on all our test agents (this introduces a new "TEMP" drive)
+            var path = Path.Combine(tempPath, "CanCreateArtifactPipedTestFile.txt");
             var base64Path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
             try
             {
                 if (!File.Exists(path))
                     File.WriteAllText(path, "");
-                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1");
+                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1", new Dictionary<string, string>() {{"TempDirectory", tempPath}});
                 output.AssertSuccess();
                 output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
                 AssertPowerShellEdition(output);
@@ -371,10 +370,16 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
-            var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1");
+            var nonExistantArtifactPath = IsRunningOnUnixLikeEnvironment 
+                ? @"\tmp\NonExistantPath\NonExistantFile.txt" 
+                : @"C:\NonExistantPath\NonExistantFile.txt";
+            var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1", new Dictionary<string, string> {{"ArtifactPath", nonExistantArtifactPath}});
             output.AssertSuccess();
-            output.AssertOutput(@"There is no file at 'C:\NonExistantPath\NonExistantFile.txt' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
-            output.AssertOutput("##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']");
+            output.AssertOutput($@"There is no file at '{nonExistantArtifactPath}' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
+            var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
+                ? "##octopus[createArtifact path='L3RtcC9Ob25FeGlzdGFudFBhdGgvTm9uRXhpc3RhbnRGaWxlLnR4dA==' name='XHRtcFxOb25FeGlzdGFudFBhdGhcTm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']"
+                : "##octopus[createArtifact path='QzpcTm9uRXhpc3RhbnRQYXRoXE5vbkV4aXN0YW50RmlsZS50eHQ=' name='Tm9uRXhpc3RhbnRGaWxlLnR4dA==' length='MA==']";
+            output.AssertOutput(expectedArtifactServiceMessage);
             AssertPowerShellEdition(output);
         }
 
@@ -562,9 +567,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPing()
         {
-            var (output, _) = RunPowerShellScript("Ping.ps1");
+            var pingScriptName = IsRunningOnUnixLikeEnvironment
+                ? "Ping.Nix.ps1"
+                : "Ping.Win.ps1"; 
+            var (output, _) = RunPowerShellScript(pingScriptName);
             output.AssertSuccess();
-            output.AssertOutput("Pinging ");
+
+            var expectedPingingText = IsRunningOnUnixLikeEnvironment ? "PING " : "Pinging ";
+            output.AssertOutput(expectedPingingText);
             AssertPowerShellEdition(output);
         }
 
@@ -573,7 +583,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts\\Path With '", "PathWithSingleQuote.ps1")));
+                .Argument("script", GetFixtureResouce(Path.Combine("Scripts", "Path With '"), "PathWithSingleQuote.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a '");
@@ -585,7 +595,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts\\Path With $", "PathWithDollar.ps1")));
+                .Argument("script", GetFixtureResouce(Path.Combine("Scripts", "Path With $"), "PathWithDollar.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a $");
@@ -595,7 +605,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldNotFailOnStdErr()
         {
-            var (output, _) = RunPowerShellScript("stderr.ps1");
+            var (output, _) = RunPowerShellScript("StdErr.ps1");
 
             output.AssertSuccess();
             output.AssertErrorOutput("error");
@@ -605,7 +615,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
-            var (output, _) = RunPowerShellScript("stderr.ps1", new Dictionary<string, string>()
+            var (output, _) = RunPowerShellScript("StdErr.ps1", new Dictionary<string, string>()
             { ["Octopus.Action.FailScriptOnErrorOutput"] = "True" });
 
             output.AssertFailure();
@@ -642,9 +652,11 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunPowerShellScript("ScriptWithBOM.ps1");
 
             output.AssertSuccess();
-            output.AssertOutput("45\r\n226\r\n128\r\n147");
+            output.AssertOutput(string.Join(Environment.NewLine, "45", "226", "128", "147"));
             AssertPowerShellEdition(output);
         }
+
+        static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
 
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, VariableDictionary variables = null)
         {

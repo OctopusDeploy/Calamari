@@ -114,9 +114,9 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             return fileSystem;
         }
 
-        static PowerShellCoreBootstrapper CreateBootstrapper(ICalamariFileSystem mockFileSystem)
+        static WindowsPowerShellCoreBootstrapper CreateBootstrapper(ICalamariFileSystem mockFileSystem)
         { 
-            return new PowerShellCoreBootstrapper(mockFileSystem);
+            return new WindowsPowerShellCoreBootstrapper(mockFileSystem);
         }
     }
 }

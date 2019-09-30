@@ -29,8 +29,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var debuggingBootstrapFile = powerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
             var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
 
-            var userName = variables.Get(SpecialVariables.Action.PowerShell.UserName);
-            var password = ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password));
+            var userName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(SpecialVariables.Action.PowerShell.UserName) : null;
+            var password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password)) : null;
 
             yield return new ScriptExecution(
                 new CommandLineInvocation(
@@ -44,14 +44,17 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             );
         }
 
-        public PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
+        PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
         {
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+                return new UnixLikePowerShellCoreBootstrapper();
+            
             var specifiedEdition = variables[SpecialVariables.Action.PowerShell.Edition];
             if (string.IsNullOrEmpty(specifiedEdition))
                 return new WindowsPowerShellBootstrapper();
             
             if (specifiedEdition.Equals("Core", StringComparison.OrdinalIgnoreCase))
-                return new PowerShellCoreBootstrapper(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+                return new WindowsPowerShellCoreBootstrapper(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             
             if (specifiedEdition.Equals("Desktop", StringComparison.OrdinalIgnoreCase))
                 return new WindowsPowerShellBootstrapper();
@@ -64,18 +67,19 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (string.IsNullOrEmpty(unsecureString))
                 return null;
 
-            return unsecureString.Aggregate(new SecureString(), (s, c) => {
+            return unsecureString.Aggregate(new SecureString(), (s, c) =>
+            {
                 s.AppendChar(c);
                 return s;
             });
         }
-        
-        public class PowerShellEditionNotFoundException : CommandException
+    }
+    
+    public class PowerShellEditionNotFoundException : CommandException
+    {
+        public PowerShellEditionNotFoundException(string specifiedEdition) 
+            : base($"Attempted to use {specifiedEdition} edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop")
         {
-            public PowerShellEditionNotFoundException(string specifiedEdition) 
-                : base($"Attempted to use {specifiedEdition} edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop")
-            {
-            }
         }
     }
 }

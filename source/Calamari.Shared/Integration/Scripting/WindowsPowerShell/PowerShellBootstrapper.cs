@@ -16,7 +16,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     {
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
-        
+
+        public override bool AllowImpersonation() => true;
+
         public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
             if (powerShellPath != null)
@@ -52,15 +54,27 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
     }
 
-    public class PowerShellCoreBootstrapper : PowerShellBootstrapper
+    public class UnixLikePowerShellCoreBootstrapper : PowerShellCoreBootstrapper
+    {
+        public override bool AllowImpersonation() => false;
+
+        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
+        {
+            return "pwsh";
+        }
+    }
+    
+    public class WindowsPowerShellCoreBootstrapper : PowerShellCoreBootstrapper
     {
         const string EnvPowerShellPath = "pwsh.exe";
         readonly ICalamariFileSystem fileSystem;
 
-        public PowerShellCoreBootstrapper(ICalamariFileSystem fileSystem)
+        public WindowsPowerShellCoreBootstrapper(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
         }
+
+        public override bool AllowImpersonation() => true;
 
         public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
@@ -104,7 +118,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 
                 if (customVersionIsDefined && latestPowerShellVersionDirectory == null)
                 {
-                    throw new PowerShellVersionNotFoundException(customVersion, availablePowerShellVersions.Select(v => v.versionId));
+                    throw new PowerShellVersionNotFoundException(customVersion,
+                        availablePowerShellVersions.Select(v => v.versionId));
                 }
 
                 var pathToPwsh = Path.Combine(latestPowerShellVersionDirectory, EnvPowerShellPath);
@@ -120,7 +135,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 return EnvPowerShellPath;
             }
         }
-
+    }
+    
+    public abstract class PowerShellCoreBootstrapper : PowerShellBootstrapper
+    {
         protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
         {
             yield break;
@@ -149,6 +167,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
         }
 
+        public abstract bool AllowImpersonation();
+        
         public abstract string PathToPowerShellExecutable(CalamariVariableDictionary variables);
 
         public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
