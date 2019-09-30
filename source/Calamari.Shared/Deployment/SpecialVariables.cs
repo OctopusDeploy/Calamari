@@ -106,12 +106,6 @@ namespace Calamari.Deployment
         public static class Deployment
         {
             public static string Id = "Octopus.Deployment.Id";
-            
-            public static class Tenant
-            {
-                public static string Id = "Octopus.Deployment.Tenant.Id";
-                public static string Name = "Octopus.Deployment.Tenant.Name";
-            }
         }
 
         public static class Package
@@ -538,6 +532,12 @@ namespace Calamari.Deployment
             {
                 return $"{variableName}.Subject";
             }
+        }
+
+        public static class Tenant
+        {
+            public static string Id = "Octopus.Tenant.Id";
+            public static string Name = "Octopus.Tenant.Name";
         }
     }
 }

@@ -73,7 +73,7 @@ namespace Calamari.Deployment
 
         static string AppendTenantNameIfProvided(ICalamariFileSystem fileSystem, VariableDictionary variables, string root)
         {
-            var tenant = variables.Get(SpecialVariables.Deployment.Tenant.Name);
+            var tenant = variables.Get(SpecialVariables.Tenant.Name);
             if (!string.IsNullOrWhiteSpace(tenant))
             {
                 tenant = fileSystem.RemoveInvalidFileNameChars(tenant);

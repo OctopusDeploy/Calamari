@@ -88,7 +88,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             variables.Set(SpecialVariables.Environment.Name, environment);
-            variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
+            variables.Set(SpecialVariables.Tenant.Name, tenant);
 
             CreateConvention().Install(deployment);
 
@@ -105,7 +105,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             variables.Set(SpecialVariables.Environment.Name, environment);
-            variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
+            variables.Set(SpecialVariables.Tenant.Name, tenant);
 
             CreateConvention().Install(deployment);
 

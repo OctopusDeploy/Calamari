@@ -66,7 +66,7 @@ namespace Calamari.Deployment.Conventions
                     result.Add(new XmlConfigTransformDefinition(environment));
                 }
                 
-                var tenant = deployment.Variables.Get(SpecialVariables.Deployment.Tenant.Name);
+                var tenant = deployment.Variables.Get(SpecialVariables.Tenant.Name);
                 if (!string.IsNullOrWhiteSpace(tenant))
                 {
                     result.Add(new XmlConfigTransformDefinition(tenant));
