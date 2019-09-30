@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using Calamari.Deployment;
+﻿using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -9,7 +7,6 @@ using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Fixtures.ScriptCS;
 using Calamari.Tests.Helpers;
-using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
@@ -28,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 result.AssertOutput("KingKong");
             }
         }
-        
+
         [Category(TestCategory.ScriptingSupport.ScriptCS)]
         [Test, RequiresMonoVersion400OrAbove, RequiresDotNet45]
         public void CSharpDecryptsSensitiveVariables()

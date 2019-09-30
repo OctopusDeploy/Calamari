@@ -78,7 +78,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     public class PowerShellEditionNotFoundException : CommandException
     {
         public PowerShellEditionNotFoundException(string specifiedEdition) 
-            : base($"Attempted to use {specifiedEdition} edition of PowerShell, but this edition could not be found. Available editions: Core, Desktop")
+            : base($"Attempted to use '{specifiedEdition}' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop")
         {
         }
     }

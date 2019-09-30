@@ -29,14 +29,17 @@ namespace Calamari.Tests.Helpers
                 var files = Directory.EnumerateFiles(sourceDirectory, "*.*", SearchOption.AllDirectories)
                     .Select(f => new FileInfo(f))
                     .Where(f => isRunningOnWindows
-                        ? !f.Name.EndsWith(".Nix.nuspec")
-                        : !f.Name.EndsWith(".nuspec") || f.Name.EndsWith(".Nix.nuspec"))
+                        ? !IsNixNuspecFile(f)
+                        : !IsNotANuspecFile(f) || IsNixNuspecFile(f))
                     .Where(f => isRunningOnWindows ? f.Extension != ".sh" : f.Extension != ".ps1");
                 foreach(var file in files)
                     writer.Write(GetFilePathRelativeToRoot(sourceDirectory, file), file);
             }
             
             return outputTarFilename;
+
+            bool IsNixNuspecFile(FileInfo f) => f.Name.EndsWith(".Nix.nuspec");
+            bool IsNotANuspecFile(FileInfo f) => f.Name.EndsWith(".nuspec");
         }
         
         static string GetFilePathRelativeToRoot(string root, FileInfo file)
