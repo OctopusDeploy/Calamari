@@ -107,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldExtractToEnvironmentSpecificFolderIfProvided()
         {
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
-            variables.Set("Octopus.Environment.Name", "Production");
+            variables.Set(SpecialVariables.Environment.Name, "Production");
 
             convention.Install(new RunningDeployment(PackageLocation, variables));
 
@@ -118,8 +118,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldExtractToTenantSpecificFolderIfProvided()
         {
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
-            variables.Set("Octopus.Environment.Name", "Production");
-            variables.Set("Octopus.Deployment.Tenant.Name", "MegaCorp");
+            variables.Set(SpecialVariables.Environment.Name, "Production");
+            variables.Set(SpecialVariables.Tenant.Name, "MegaCorp");
 
             convention.Install(new RunningDeployment(PackageLocation, variables));
 
@@ -131,7 +131,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldRemoveInvalidPathCharsFromEnvironmentName()
         {
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
-            variables.Set("Octopus.Environment.Name", "Production! Tokyo");
+            variables.Set(SpecialVariables.Environment.Name, "Production! Tokyo");
 
             convention.Install(new RunningDeployment(PackageLocation, variables));
 
