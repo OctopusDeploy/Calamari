@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Calamari.Hooks;
 using Calamari.Integration.EmbeddedResources;
@@ -16,8 +15,6 @@ namespace Calamari.Kubernetes
         readonly CalamariVariableDictionary variables;
         readonly WindowsPhysicalFileSystem fileSystem;
         readonly AssemblyEmbeddedResources embeddedResources;
-
-        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.Bash, ScriptSyntax.PowerShell};
 
         public KubernetesContextScriptWrapper(CalamariVariableDictionary variables)
         {
@@ -36,7 +33,7 @@ namespace Calamari.Kubernetes
             return (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
                     !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName, "")) ||
                     !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, ""))) &&
-                   supportedScriptSyntax.Contains(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
+                    syntax == ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
         }
 
         public IScriptWrapper NextWrapper { get; set; }

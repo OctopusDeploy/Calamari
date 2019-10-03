@@ -1,4 +1,4 @@
-﻿using Calamari.Commands.Support;
+using Calamari.Commands.Support;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
@@ -33,9 +33,9 @@ namespace Calamari.Integration.Scripting
         public ScriptSyntax[] GetSupportedTypes()
         {
             var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };
-            var commonScriptSyntax =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
+            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
 
-            return preferredScriptSyntax.Concat(commonScriptSyntax).Distinct() as ScriptSyntax[];
+            return preferredScriptSyntax.Concat(scriptSyntaxesSupportedOnAllPlatforms).Distinct().ToArray();
         }
         
         public CommandResult Execute(
