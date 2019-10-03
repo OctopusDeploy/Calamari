@@ -124,9 +124,9 @@ namespace Calamari.Integration.Packages.Download
         
         string GetFetchScript(IScriptEngine scriptEngine)
         {
-            var syntax = scriptEngine.GetSupportedTypes()
-                .First(s => s.Equals(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment()));
-
+            var syntax = new[] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() }
+                .First(s => scriptEngine.GetSupportedTypes().Contains(s));
+            
             string contextFile;
             switch (syntax)
             {
