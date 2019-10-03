@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -126,9 +124,9 @@ namespace Calamari.Integration.Packages.Download
         
         string GetFetchScript(IScriptEngine scriptEngine)
         {
-            var syntax = new[] {ScriptSyntax.PowerShell, ScriptSyntax.Bash}
-                .First(syntx => scriptEngine.GetSupportedTypes().Contains(syntx));
-            
+            var syntax = scriptEngine.GetSupportedTypes()
+                .First(s => s.Equals(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment()));
+
             string contextFile;
             switch (syntax)
             {

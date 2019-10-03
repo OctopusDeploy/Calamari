@@ -29,13 +29,15 @@ namespace Calamari.Integration.Scripting
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
 
+
         public ScriptSyntax[] GetSupportedTypes()
         {
-            return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                ? new[] { ScriptSyntax.Bash, ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python }
-                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
-        }
+            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };
+            var commonScriptSyntax =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
 
+            return preferredScriptSyntax.Concat(commonScriptSyntax).Distinct() as ScriptSyntax[];
+        }
+        
         public CommandResult Execute(
             Script script,
             CalamariVariableDictionary variables,
