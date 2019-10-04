@@ -28,8 +28,9 @@ namespace Calamari.Kubernetes.Conventions
         
         public void Install(RunningDeployment deployment)
         {
-            var cmd = BuildHelmCommand(deployment);   
-            var fileName = SyntaxSpecificFileName(deployment);
+            ScriptSyntax syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
+            var cmd = BuildHelmCommand(deployment, syntax);   
+            var fileName = SyntaxSpecificFileName(deployment, syntax);
             
             using (new TemporaryFile(fileName))
             {
@@ -50,14 +51,14 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        string BuildHelmCommand(RunningDeployment deployment)
+        string BuildHelmCommand(RunningDeployment deployment, ScriptSyntax syntax)
         {
             var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
             
             var sb = new StringBuilder();
 
-            SetExecutable(deployment, sb);
+            SetExecutable(deployment, sb, syntax);
             sb.Append($" upgrade --install");
             SetNamespaceParameter(deployment, sb);
             SetResetValuesParameter(deployment, sb);
@@ -72,7 +73,7 @@ namespace Calamari.Kubernetes.Conventions
             return sb.ToString();
         }
 
-        void SetExecutable(RunningDeployment deployment, StringBuilder sb)
+        void SetExecutable(RunningDeployment deployment, StringBuilder sb, ScriptSyntax syntax)
         {
             var helmExecutable = deployment.Variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
             if (!string.IsNullOrWhiteSpace(helmExecutable))
@@ -89,16 +90,8 @@ namespace Calamari.Kubernetes.Conventions
                     Log.Info($"Using custom helm executable at {helmExecutable}");
                 }
 
-                var scriptType = scriptEngine.GetSupportedTypes();
-                if (scriptType.Contains(ScriptSyntax.PowerShell))
-                {
-                    sb.Append(". "); //With powershell we need to invoke custom executables
-                }
-                else
-                {
-                    sb.Append($"chmod +x \"{helmExecutable}\"\n");
-                }
-
+                // With PowerShell we need to invoke custom executables
+                sb.Append(syntax == ScriptSyntax.PowerShell ? ". " : $"chmod +x \"{helmExecutable}\"\n");
                 sb.Append($"\"{helmExecutable}\"");
             }
             else
@@ -186,10 +179,9 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
         }
 
-        string SyntaxSpecificFileName(RunningDeployment deployment)
+        string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
         {
-            var scriptType = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
-            return Path.Combine(deployment.CurrentDirectory, scriptType == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
+            return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
 
         static string GetReleaseName(CalamariVariableDictionary variables)
