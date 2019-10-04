@@ -188,8 +188,8 @@ namespace Calamari.Kubernetes.Conventions
 
         string SyntaxSpecificFileName(RunningDeployment deployment)
         {
-            var scriptType = scriptEngine.GetSupportedTypes();
-            return Path.Combine(deployment.CurrentDirectory, scriptType.Contains(ScriptSyntax.PowerShell) ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
+            var scriptType = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
+            return Path.Combine(deployment.CurrentDirectory, scriptType == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
 
         static string GetReleaseName(CalamariVariableDictionary variables)
