@@ -1,1 +1,1 @@
-﻿New-OctopusArtifact -Path "C:\Path\File.txt"
+﻿New-OctopusArtifact -Path $ArtifactPath
