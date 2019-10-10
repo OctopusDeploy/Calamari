@@ -213,6 +213,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("Hello!");
             AssertPowerShellEdition(output);
+            output.AssertProcessNameAndId("powershell");
         }
 
         [Test]

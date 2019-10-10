@@ -85,8 +85,8 @@ function SafelyLog-ProcessVars
 {
 	Try
 	{
-		$hostProcess = [System.Diagnostics.Process]::GetCurrentProcess().ProcessName
-		Write-Host "  HostProcessName: $($hostProcess)"
+	    $process = [System.Diagnostics.Process]::GetCurrentProcess();
+		Write-Host "  HostProcess: $($process.ProcessName) ($($process.Id))"
 	}
 	Catch
 	{
@@ -728,6 +728,7 @@ Import-CalamariModules
 # Invoke target script
 # -----------------------------------------------------------------
 {{BeforeLaunchingUserScriptDebugLocation}}
+
 . '{{TargetScriptFile}}' {{ScriptParameters}}
 
 # -----------------------------------------------------------------

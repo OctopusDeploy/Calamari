@@ -58,7 +58,11 @@ namespace Calamari.Util.Environments
 
         static IEnumerable<string> GetProcessVars()
         {
-            yield return SafelyGet(() => $"HostProcessName: {Process.GetCurrentProcess().ProcessName}");
+            yield return SafelyGet(() =>
+            {
+                var process = Process.GetCurrentProcess();
+                return $"HostProcess: {process.ProcessName} ({process.Id})";
+            });
         }
     }
 }
