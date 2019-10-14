@@ -728,7 +728,6 @@ Import-CalamariModules
 # Invoke target script
 # -----------------------------------------------------------------
 {{BeforeLaunchingUserScriptDebugLocation}}
-
 . '{{TargetScriptFile}}' {{ScriptParameters}}
 
 # -----------------------------------------------------------------

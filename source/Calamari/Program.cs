@@ -4,15 +4,12 @@ using Calamari.Integration.Proxies;
 using Calamari.Modules;
 using Calamari.Util;
 using System;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Extensions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Util.Environments;
 
 namespace Calamari
@@ -74,26 +71,8 @@ namespace Calamari
             this.helpCommand = helpCommand;
         }
 
-    
         public int Execute(string[] args)
         {
-            try
-            {
-                var copyTo = $@"c:\temp\CalamariCopy\{DateTime.Now:HHmmss}";
-                var workingDirectory = Environment.CurrentDirectory;
-                Log.Info(workingDirectory);
-                var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-                Log.Info($"Copying working directory '{workingDirectory}' to '{copyTo}'");
-                fs.CopyDirectory(workingDirectory, copyTo);
-                File.WriteAllText(Path.Combine(copyTo, "Arguments.txt"), string.Join("\r\n", args));
-                File.WriteAllText(Path.Combine(copyTo, "CopiedFromDirectory.txt"), workingDirectory);
-            }
-            catch(Exception ex)
-            {
-                Log.Error(ex.Message);
-            }
-
             if(IsVersionCommand(args))
             {
                 Console.Write($"Calamari version: {typeof(Program).Assembly.GetInformationalVersion()}");

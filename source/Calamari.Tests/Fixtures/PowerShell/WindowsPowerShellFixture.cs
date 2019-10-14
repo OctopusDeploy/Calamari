@@ -10,7 +10,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
-    public class WindowsPowerShellFixtureBase : PowerShellFixtureBase
+    public class WindowsPowerShellFixture : PowerShellFixtureBase
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Desktop;
         

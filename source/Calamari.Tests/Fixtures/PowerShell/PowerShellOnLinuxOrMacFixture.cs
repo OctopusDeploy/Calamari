@@ -11,7 +11,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
-    public class PowerShellOnLinuxOrMacFixtureBase : PowerShellFixtureBase
+    public class PowerShellOnLinuxOrMacFixture : PowerShellFixtureBase
     {
         [SetUp]
         public void SetUp()

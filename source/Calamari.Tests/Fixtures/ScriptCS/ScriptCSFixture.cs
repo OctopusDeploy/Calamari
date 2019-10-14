@@ -96,6 +96,5 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
         }
-  
     }
 }
