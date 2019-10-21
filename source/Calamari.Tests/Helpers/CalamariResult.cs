@@ -195,7 +195,7 @@ namespace Calamari.Tests.Helpers
         public void AssertProcessNameAndId(string processName)
         {
             AssertOutputMatches(@"HostProcess: (Calamari|dotnet|mono-sgen32|mono-sgen) \([0-9]+\)", "Calamari process name and id are printed");
-            AssertOutputMatches($@"HostProcess: {processName} \([0-9]+\)", $"{processName} process name and id are printed");
+            AssertOutputMatches($@"HostProcess: ({processName}|mono-sgen32|mono-sgen) \([0-9]+\)", $"{processName} process name and id are printed");
         }
     }
 }
