@@ -149,11 +149,11 @@ namespace Calamari.Tests.Helpers
             allOutput.Should().Contain(expected);
         }
 
-        public void AssertOutputMatches(string regex)
+        public void AssertOutputMatches(string regex, string message = null)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
-            Assert.That(allOutput, Does.Match(regex));
+            Assert.That(allOutput, Does.Match(regex), message);
         }
 
         public void AssertNoOutputMatches(string regex)
@@ -190,6 +190,12 @@ namespace Calamari.Tests.Helpers
             string line = GetOutputForLineContaining(title);
 
             line.Replace(title, "").Should().BeOneOf(expectedValues);
+        }
+
+        public void AssertProcessNameAndId(string processName)
+        {
+            AssertOutputMatches(@"HostProcess: (Calamari|dotnet|mono-sgen32|mono-sgen) \([0-9]+\)", "Calamari process name and id are printed");
+            AssertOutputMatches($@"HostProcess: ({processName}|mono-sgen32|mono-sgen) \([0-9]+\)", $"{processName} process name and id are printed");
         }
     }
 }

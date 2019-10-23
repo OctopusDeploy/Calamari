@@ -7,7 +7,6 @@ using System.Text;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -16,138 +15,13 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
-    [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
-    public class PowerShellCoreOnWindows : PowerShellFixture
-    {
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Core;
-
-        [SetUp]
-        public void SetUp()
-        {
-            CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
-            var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version")); 
-            if (result.HasErrors)
-                Assert.Inconclusive("PowerShell Core is not installed on this machine");
-        }
-
-        [Test]
-        public void IncorrectPowerShellEditionShouldThrowException()
-        {
-            var nonExistentEdition = "PowerShellCore";
-            var output = RunScript("Hello.ps1",
-                new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
-            
-            output.result.AssertFailure();
-            output.result.AssertErrorOutput("Attempted to use 'PowerShellCore' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");
-        }
-    }
-
-    [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
-    public class WindowsPowerShellFixture : PowerShellFixture
-    {
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Desktop;
-        
-        [Test]
-        [Platform]
-        // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
-        [TestCase("2", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
-        [TestCase("2.0", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
-        public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
-        {
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
-
-            // Let's just use the Hello.ps1 script for something simples
-            var output = InvokeCalamariForPowerShell(calamari => calamari
-                .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")), variables);
-
-            if (output.CapturedOutput.AllMessages
-                .Select(line => new string(line.ToCharArray().Where(c => c != '\u0000').ToArray()))
-                .Any(line => line.Contains(".NET Framework is not installed")))
-            {
-                Assert.Inconclusive("Version 2.0 of PowerShell is not supported on this machine");
-            }
-            
-            output.AssertSuccess();
-            output.AssertOutput(expectedLogMessage);
-            output.AssertOutput("Hello!");
-        }
-        
-        [Test]
-        public void ShouldPrioritizePowerShellScriptsOverOtherSyntaxes()
-        {
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
-
-            var output = InvokeCalamariForPowerShell(calamari => calamari
-                .Action("run-script"), variables);
-
-                output.AssertSuccess();
-                output.AssertOutput("Hello PowerShell");
-        }
-        
-        [Test]
-        public void IncorrectPowerShellEditionShouldThrowException()
-        {
-            var nonExistentEdition = "WindowsPowerShell";
-            var output = RunScript("Hello.ps1",
-                new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
-            
-            output.result.AssertFailure();
-            output.result.AssertErrorOutput("Attempted to use 'WindowsPowerShell' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");
-        }
-    }
-    
-    [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
-    public class PowerShellOnLinuxOrMacFixture : PowerShellFixture
-    {
-        [SetUp]
-        public void SetUp()
-        {
-            CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());
-            var result = clr.Execute(new CommandLineInvocation("pwsh", "--version")); 
-            if (result.HasErrors)
-                Assert.Inconclusive("PowerShell Core is not installed on this machine");
-        }
-        
-        [Test]
-        public void ShouldRunBashInsteadOfPowerShell()
-        {
-            var variablesFile = Path.GetTempFileName();
-
-            var variables = new VariableDictionary();
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
-            variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
-            variables.Save(variablesFile);
-
-            using (new TemporaryFile(variablesFile))
-            {
-                var output = Invoke(Calamari()
-                    .Action("run-script")
-                    .Argument("variables", variablesFile));
-
-                output.AssertSuccess();
-                output.AssertOutput("Hello Bash");
-            }
-        }
-
-        protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Core;
-    }
-
     public enum PowerShellEdition
     {
         Desktop,
         Core
     }
     
-    public abstract class PowerShellFixture : CalamariFixture
+    public abstract class PowerShellFixtureBase : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
 
@@ -213,6 +87,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("Hello!");
             AssertPowerShellEdition(output);
+            output.AssertProcessNameAndId(PowerShellEdition == PowerShellEdition.Core ? "pwsh" : "powershell");
         }
 
         [Test]
