@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Calamari.Hooks;
 using Calamari.Integration.EmbeddedResources;
@@ -17,8 +16,6 @@ namespace Calamari.Kubernetes
         readonly WindowsPhysicalFileSystem fileSystem;
         readonly AssemblyEmbeddedResources embeddedResources;
 
-        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.Bash, ScriptSyntax.PowerShell};
-
         public KubernetesContextScriptWrapper(CalamariVariableDictionary variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
@@ -31,10 +28,13 @@ namespace Calamari.Kubernetes
         /// <summary>
         /// One of these fields must be present for a k8s step
         /// </summary>
-        public bool IsEnabled(ScriptSyntax syntax) => (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
-                               !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName, "")) ||
-                               !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, ""))) &&
-                                supportedScriptSyntax.Contains(syntax);
+        public bool IsEnabled(ScriptSyntax syntax)
+        {
+            return (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
+                    !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName, "")) ||
+                    !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, ""))) &&
+                    syntax == ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
+        }
 
         public IScriptWrapper NextWrapper { get; set; }
 
