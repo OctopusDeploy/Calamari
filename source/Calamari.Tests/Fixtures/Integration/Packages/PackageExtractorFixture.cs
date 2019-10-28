@@ -118,6 +118,24 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.That(Directory.Exists(folderName), Is.True, $"The empty folder '{Path.GetFileName(folderName)}' should have been extracted.");
         }
 
+        [Test]
+        //Latest version of SharpCompress throws an exception if a symbolic link is encountered and we haven't provided a handler for it.
+        public void ExtractIgnoresSymbolicLinks()
+        {
+            var fileName = GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, "1.0.0.0-symlink", "tar.gz"));
+
+            var extractor = new TarGzipPackageExtractor();
+            var targetDir = GetTargetDir(typeof(TarGzipPackageExtractor), fileName);
+
+            extractor.Extract(fileName, targetDir, true);
+
+            //If we get this far and an exception hasn't been thrown, the test has served it's purpose'
+
+            //If the symbolic link actually exists, someone has implimented it but hasn't updated/deleted this test
+            var symlink = Path.Combine(targetDir, "octopus-sample", "link-to-sample");
+            Assert.That(File.Exists(symlink), Is.False, $"Symbolic link exists, please update this test.");
+        }
+
         private string GetFileName(string extension)
         {
             return GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, PackageVersion, extension));

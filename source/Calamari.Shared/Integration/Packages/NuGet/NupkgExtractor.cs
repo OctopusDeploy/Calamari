@@ -41,7 +41,7 @@ namespace Calamari.Integration.Packages.NuGet
                         continue;
 
                     var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
-                    entry.WriteToFile(targetFile, new ExtractionOptions { Overwrite = true });
+                    entry.WriteToFile(targetFile, new ExtractionOptions { Overwrite = true, WriteSymbolicLink = WriteSymbolicLink });
 
                     SetFileLastModifiedTime(entry, targetFile);
 
@@ -53,6 +53,11 @@ namespace Calamari.Integration.Packages.NuGet
 
                 return filesExtracted;
             }
+        }
+
+        static void WriteSymbolicLink(string sourcepath, string targetpath)
+        {
+            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
         }
 
         static void SetFileLastModifiedTime(IEntry entry, string targetFile)
