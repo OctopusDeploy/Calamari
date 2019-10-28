@@ -32,7 +32,7 @@ namespace Calamari.Integration.Packages
         static void ExtractEntry(string directory, ZipArchiveEntry entry)
         {
 #if NET40
-            entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
+            entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink });
 #else
             var extractAttempts = 10;
             Policy.Handle<IOException>().WaitAndRetry(
@@ -41,11 +41,16 @@ namespace Calamari.Integration.Packages
                     onRetry: (ex, retry) => { Log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
                 .Execute(() =>
                 {
-                    entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true});
+                    entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink });
                 });
 #endif
         }
-        
+
+        static void WriteSymbolicLink(string sourcepath, string targetpath)
+        {
+            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
+        }
+
         protected void ProcessEvent(ref int filesExtracted, IEntry entry, bool suppressNestedScriptWarning)
         {
             if (entry.IsDirectory) return;
