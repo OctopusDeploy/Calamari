@@ -122,18 +122,23 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         //Latest version of SharpCompress throws an exception if a symbolic link is encountered and we haven't provided a handler for it.
         public void ExtractIgnoresSymbolicLinks()
         {
-            var fileName = GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, "1.0.0.0-symlink", "tar.gz"));
+            using (var logs = new ProxyLog())
+            {
+                var fileName = GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, "1.0.0.0-symlink", "tar.gz"));
 
-            var extractor = new TarGzipPackageExtractor();
-            var targetDir = GetTargetDir(typeof(TarGzipPackageExtractor), fileName);
+                var extractor = new TarGzipPackageExtractor();
+                var targetDir = GetTargetDir(typeof(TarGzipPackageExtractor), fileName);
 
-            extractor.Extract(fileName, targetDir, true);
+                extractor.Extract(fileName, targetDir, true);
 
-            //If we get this far and an exception hasn't been thrown, the test has served it's purpose'
+                //If we get this far and an exception hasn't been thrown, the test has served it's purpose'
 
-            //If the symbolic link actually exists, someone has implimented it but hasn't updated/deleted this test
-            var symlink = Path.Combine(targetDir, "octopus-sample", "link-to-sample");
-            Assert.That(File.Exists(symlink), Is.False, $"Symbolic link exists, please update this test.");
+                //If the symbolic link actually exists, someone has implimented it but hasn't updated/deleted this test
+                var symlink = Path.Combine(targetDir, "octopus-sample", "link-to-sample");
+                Assert.That(File.Exists(symlink), Is.False, $"Symbolic link exists, please update this test.");
+
+                logs.StdOut.Contains("Cannot create symbolic link");
+            }
         }
 
         private string GetFileName(string extension)
