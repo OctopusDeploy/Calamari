@@ -24,7 +24,7 @@ namespace Calamari.Azure.Deployment.Conventions
             
             if (variables.Get(SpecialVariables.Account.AccountType) == "AzureSubscription")
             {
-                Log.Warn("Use of Management Certificates to deploy Azure Web App services has been deprecated by Microsoft and they are progressively disabling them, please update to using a Service Principal. If you receive an error about the app not being found in the subscription then this account type is the most likely cause.");
+                Log.Warn("Use of Management Certificates to deploy Azure Web App services has been deprecated by Microsoft and they are progressively disabling them, please update to using a Service Principal. If you receive an error about the app not being found in the subscription then this account type is the most likely cause. See [our documentation](https://g.octopushq.com/AzureTargets#azure-management-certificate) for more details.");
             }
 
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
