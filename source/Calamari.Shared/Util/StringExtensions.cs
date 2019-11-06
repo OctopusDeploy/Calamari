@@ -37,13 +37,23 @@ namespace Calamari.Util
 
         public static string AsRelativePathFrom(this string source, string baseDirectory)
         {
+            // Adapted from https://stackoverflow.com/a/340454
             var uri = new Uri(source);
             if (!baseDirectory.EndsWith(Path.DirectorySeparatorChar.ToString()))
             {
                 baseDirectory += Path.DirectorySeparatorChar.ToString();
             }
             var baseUri = new Uri(baseDirectory);
-            return baseUri.MakeRelativeUri(uri).ToString();
+
+            var relativeUri = baseUri.MakeRelativeUri(uri);
+            var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+            if (baseUri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase))
+            {
+                relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            }
+
+            return relativePath;
         }
     }
 }
