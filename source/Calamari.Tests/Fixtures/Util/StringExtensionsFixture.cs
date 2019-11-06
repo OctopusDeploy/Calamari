@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
 using NUnit.Framework;
@@ -36,6 +37,7 @@ namespace Calamari.Tests.Fixtures.Util
         [TestCase(@"C:/Path/To/File5.txt", @"C:/Path", @"To/File5.txt")]
         [TestCase(@"C:/Path/To/File6 With Spaces.txt", @"C:/Path", @"To/File6 With Spaces.txt")]
         [Test]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void AsRelativePathFrom(string source, string baseDirectory, string expected)
         {
             Assert.AreEqual(expected, source.AsRelativePathFrom(baseDirectory));
