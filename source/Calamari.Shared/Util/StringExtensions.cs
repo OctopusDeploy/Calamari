@@ -48,11 +48,6 @@ namespace Calamari.Util
             var relativeUri = baseUri.MakeRelativeUri(uri);
             var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
 
-            if (baseUri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase))
-            {
-                relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-            }
-
             return relativePath;
         }
     }
