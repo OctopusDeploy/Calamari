@@ -33,9 +33,8 @@ namespace Calamari.Tests.Fixtures.Util
         [TestCase(@"C:\Path\To\File1.txt", @"C:\Path\", @"To/File1.txt")]
         [TestCase(@"C:\Path\To\File2.txt", @"C:\Path", @"To/File2.txt")]
         [TestCase(@"C:\Path\To\File3 With Spaces.txt", @"C:\Path", @"To/File3 With Spaces.txt")]
-        //[TestCase(@"C:/Path/To/File4.txt", @"C:/Path/", @"To/File4.txt")]
-        [TestCase(@"C:/Path/To/File5.txt", @"C:/Path", @"To/File5.txt")]
-        [TestCase(@"C:/Path/To/File6 With Spaces.txt", @"C:/Path", @"To/File6 With Spaces.txt")]
+        [TestCase(@"C:/Path/To/File4.txt", @"C:/Path", @"To/File4.txt")]
+        [TestCase(@"C:/Path/To/File5 With Spaces.txt", @"C:/Path", @"To/File5 With Spaces.txt")]
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void AsRelativePathFrom(string source, string baseDirectory, string expected)
