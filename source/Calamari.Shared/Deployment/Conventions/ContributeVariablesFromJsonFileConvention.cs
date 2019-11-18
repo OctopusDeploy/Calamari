@@ -6,34 +6,15 @@ using Octostache;
 
 namespace Calamari.Deployment.Conventions
 {
-    /// <summary>
-    /// Attempts to read a file path from an environment variable and, if present,
-    /// reads that file as a VariableDictionary and copies the values into the
-    /// current RunningDeployment's VariableDictionary.
-    /// </summary>
     public class ContributeVariablesFromJsonFileConvention : IInstallConvention
     {
-        /// <summary>
-        /// The name of the environment variable that specifies the file path
-        /// from which to read the additional variables.
-        /// </summary>
-        public const string AdditionalVariablesKey = SpecialVariables.Environment.Prefix + "Octopus.AdditionalVariablesPath";
-
         readonly Func<string, VariableDictionary> dictionaryReader;
         
-        /// <summary>
-        /// Creates a default convention that attempts to read variable files
-        /// using Octostache's reading functionality.
-        /// </summary>
         public ContributeVariablesFromJsonFileConvention()
             : this(ReadDictionaryFromFilePath)
         {
         }
         
-        /// <summary>
-        /// Creates a convention that uses the provided function to read a
-        /// variable dictionary from a filepath.
-        /// </summary>
         public ContributeVariablesFromJsonFileConvention(Func<string, VariableDictionary> dictionaryReader)
         {
             this.dictionaryReader = dictionaryReader;
@@ -44,7 +25,7 @@ namespace Calamari.Deployment.Conventions
             if (deployment == null)
                 throw new ArgumentNullException(nameof(deployment));
             
-            var additionalVariablesPath = deployment.Variables.Get(AdditionalVariablesKey);
+            var additionalVariablesPath = deployment.Variables.Get(SpecialVariables.AdditionalVariablesPath);
 
             if (string.IsNullOrEmpty(additionalVariablesPath))
                 return;
@@ -75,15 +56,12 @@ namespace Calamari.Deployment.Conventions
         {
             var msg = $"Could not read additional variables from JSON file at '{path}'. " +
                       $"{reason} Make sure the file can be read or remove the " +
-                      $"'{AdditionalVariablesKey}' environment variable. " +
+                      $"'{SpecialVariables.AdditionalVariablesPath}' environment variable. " +
                       $"See inner exception for details.";
             
             throw new CommandException(msg, inner);
         }
         
-        /// <summary>
-        /// Copies all of the variables from one variable dictionary into another.
-        /// </summary>
         void CopyVariables(VariableDictionary copyFrom, CalamariVariableDictionary copyTo)
         {
             foreach (var variable in copyFrom)

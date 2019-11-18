@@ -63,7 +63,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             RunTest(
                 new[]
                 {
-                    (ContributeVariablesFromJsonFileConvention.AdditionalVariablesKey, "ignored_by_this_test"),
+                    (SpecialVariables.AdditionalVariablesPath, "ignored_by_this_test"),
                     ("existing.key", "existing.value")
                 },
                 new[]
@@ -74,7 +74,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 {
                     actual.Should().HaveCount(3);
                     actual.Should().ContainSingle(pair => 
-                        pair.Key == ContributeVariablesFromJsonFileConvention.AdditionalVariablesKey &&
+                        pair.Key == SpecialVariables.AdditionalVariablesPath &&
                         pair.Value == "ignored_by_this_test");
                     actual.Should().ContainSingle(pair => 
                         pair.Key == "existing.key" &&
@@ -95,7 +95,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 null,
                 new CalamariVariableDictionary
                 {
-                    { ContributeVariablesFromJsonFileConvention.AdditionalVariablesKey, filePath }
+                    { SpecialVariables.AdditionalVariablesPath, filePath }
                 }
             );
 
@@ -106,7 +106,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 .Should()
                 .Throw<CommandException>()
                 // Make sure that the message says how to turn this feature off.
-                .Where(e => e.Message.Contains(ContributeVariablesFromJsonFileConvention.AdditionalVariablesKey))
+                .Where(e => e.Message.Contains(SpecialVariables.AdditionalVariablesPath))
                 // Make sure that the message says where it looked for the file.
                 .Where(e => e.Message.Contains(filePath));
         }
