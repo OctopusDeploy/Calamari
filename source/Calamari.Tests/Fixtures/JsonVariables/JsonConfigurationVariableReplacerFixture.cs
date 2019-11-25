@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
         [Test]
         public void ShouldReplaceInSimpleFile()
         {
-            const string expected = 
+            const string expected =
                 @"{" +
                 "  \"MyMessage\": \"Hello world\"," +
                 "  \"EmailSettings\": {" +
@@ -54,7 +54,10 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             const string expected =
                 @"{" +
                 "  \"MyMessage\": \"Hello world!\"," +
-                "  \"IThinkOctopusIsGreat\": \"Yes, I do!\"" +
+                "  \"IThinkOctopusIsGreat\": \"Yes, I do!\"," +
+                "  \"octopus\": {" +
+                "    \"section\": \"Should work\"" +
+                "  }" +
                 "}";
 
             var variables = new VariableDictionary();
@@ -62,6 +65,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             variables.Set("IThinkOctopusIsGreat", "Yes, I do!");
             variables.Set("OctopusRocks", "This is ignored");
             variables.Set("Octopus.Rocks", "So is this");
+            variables.Set("octopus:section", "Should work");
 
             var replaced = Replace(variables, existingFile: "appsettings.ignore-octopus.json");
             AssertJsonEquivalent(replaced, expected);
@@ -233,7 +237,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
             AssertJsonEquivalent(replaced, expected);
         }
-        
+
         [Test]
         public void ShouldReplacePropertyOfAnElementInArray()
         {
@@ -384,8 +388,8 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 Console.WriteLine("Replaced:");
                 Console.WriteLine(replacedJson.ToString(Formatting.Indented));
 
-                Assert.Fail("Replaced JSON did not match expected JSON");                
+                Assert.Fail("Replaced JSON did not match expected JSON");
             }
-        } 
+        }
     }
 }
