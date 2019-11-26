@@ -55,8 +55,10 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 @"{" +
                 "  \"MyMessage\": \"Hello world!\"," +
                 "  \"IThinkOctopusIsGreat\": \"Yes, I do!\"," +
-                "  \"octopus\": {" +
-                "    \"section\": \"Should work\"" +
+                "  \"OctopusRocks\": \"Yes it does\"," +
+                "  \"Octopus\": {" +
+                "    \"Section\": \"Should work\"," +
+                "    \"Rocks\": \"is not changed\"," +
                 "  }" +
                 "}";
 
@@ -65,7 +67,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             variables.Set("IThinkOctopusIsGreat", "Yes, I do!");
             variables.Set("OctopusRocks", "This is ignored");
             variables.Set("Octopus.Rocks", "So is this");
-            variables.Set("octopus:section", "Should work");
+            variables.Set("Octopus:Section", "Should work");
 
             var replaced = Replace(variables, existingFile: "appsettings.ignore-octopus.json");
             AssertJsonEquivalent(replaced, expected);
