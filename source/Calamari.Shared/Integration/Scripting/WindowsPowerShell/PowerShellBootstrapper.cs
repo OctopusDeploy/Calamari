@@ -179,6 +179,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
             var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
+            var traceLevel = variables[SpecialVariables.Action.PowerShell.TraceMode];
+            var traceCommand = !string.IsNullOrEmpty(traceLevel) ? " Set-PSDebug -Trace 2; " : "";
             
             foreach (var argument in ContributeCommandArguments(variables))
                 commandArguments.Append(argument);
@@ -192,11 +194,11 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
 
-            var filetoExecute = IsDebuggingEnabled(variables)
+            var fileToExecute = IsDebuggingEnabled(variables)
                 ? debuggingBootstrapFile.EscapeSingleQuotedString()
                 : bootstrapFile.EscapeSingleQuotedString();
 
-            commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", filetoExecute, encryptionKey);
+            commandArguments.AppendFormat("-Command \"{0}Try {{. {{. '{1}' -OctopusKey '{2}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", traceCommand, fileToExecute, encryptionKey);
             return commandArguments.ToString();
         }
 
