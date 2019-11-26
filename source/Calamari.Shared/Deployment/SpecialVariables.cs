@@ -360,8 +360,13 @@ namespace Calamari.Deployment
                 public static readonly string UserName = "Octopus.Action.PowerShell.UserName";
                 public static readonly string Password = "Octopus.Action.PowerShell.Password";
                 public static readonly string DebugMode = "Octopus.Action.PowerShell.DebugMode";
-                public static readonly string TraceMode = "Octopus.Action.PowerShell.TraceMode";
                 public static readonly string Edition = "Octopus.Action.PowerShell.Edition";
+
+                public static class PSDebug
+                {
+                    public static readonly string Trace = "Octopus.Action.PowerShell.PSDebug.Trace";
+                    public static readonly string Strict = "Octopus.Action.PowerShell.PSDebug.Strict";
+                }
             }
 
             public static class Certificate
