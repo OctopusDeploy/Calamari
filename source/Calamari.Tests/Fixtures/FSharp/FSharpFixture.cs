@@ -61,6 +61,7 @@ namespace Calamari.Tests.Fixtures.FSharp
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
+            output.AssertProcessNameAndId("fsi");
         }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]

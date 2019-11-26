@@ -349,7 +349,7 @@ namespace Calamari.Integration.FileSystem
 
         string GetTempBasePath()
         {
-            var path1 = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var path1 = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
             path1 = Path.Combine(path1, Assembly.GetEntryAssembly()?.GetName().Name ?? "Octopus.Calamari");
             path1 = Path.Combine(path1, "Temp");
             var path = path1;
@@ -357,7 +357,7 @@ namespace Calamari.Integration.FileSystem
             {
                 Directory.CreateDirectory(path);
             }
-            return path;
+            return Path.GetFullPath(path);
         }
 
         public string CreateTemporaryDirectory()
@@ -660,6 +660,11 @@ namespace Calamari.Integration.FileSystem
         public string GetFileName(string filePath)
         {
             return new FileInfo(filePath).Name;
+        }
+
+        public string GetDirectoryName(string directoryPath)
+        {
+            return new DirectoryInfo(directoryPath).Name;
         }
 
         public Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess)

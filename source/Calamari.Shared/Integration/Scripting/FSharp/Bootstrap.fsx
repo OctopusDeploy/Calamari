@@ -165,7 +165,8 @@ let private safelyLogPathVars () =
 
 let private safelyLogProcessVars () =
     try
-        printfn "  HostProcessName: %s" (Process.GetCurrentProcess().ProcessName)
+        let proc = Process.GetCurrentProcess()
+        printfn "  HostProcess: %s (%d)" proc.ProcessName proc.Id
     with
     | _ -> ()
 

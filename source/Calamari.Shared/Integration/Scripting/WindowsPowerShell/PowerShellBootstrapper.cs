@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -11,23 +12,14 @@ using Octostache;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
-    public class PowerShellBootstrapper
+    public class WindowsPowerShellBootstrapper : PowerShellBootstrapper
     {
         static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
-        private static readonly string BootstrapScriptTemplate;
-        private static readonly string DebugBootstrapScriptTemplate;
-        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
-        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-        static PowerShellBootstrapper()
-        {
-            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".Bootstrap.ps1");
-            DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
-        }
+        public override bool AllowImpersonation() => true;
 
-        public static string PathToPowerShellExecutable()
+        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
         {
             if (powerShellPath != null)
             {
@@ -52,16 +44,145 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return powerShellPath;
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
+        protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
         {
-            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
-            var commandArguments = new StringBuilder();
             var customPowerShellVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
             if (!string.IsNullOrEmpty(customPowerShellVersion))
             {
-                commandArguments.Append($"-Version {customPowerShellVersion} ");
+                yield return $"-Version {customPowerShellVersion} ";
             }
+        }
+    }
+
+    public class UnixLikePowerShellCoreBootstrapper : PowerShellCoreBootstrapper
+    {
+        public override bool AllowImpersonation() => false;
+
+        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
+        {
+            return "pwsh";
+        }
+    }
+    
+    public class WindowsPowerShellCoreBootstrapper : PowerShellCoreBootstrapper
+    {
+        const string EnvPowerShellPath = "pwsh.exe";
+        readonly ICalamariFileSystem fileSystem;
+
+        public WindowsPowerShellCoreBootstrapper(ICalamariFileSystem fileSystem)
+        {
+            this.fileSystem = fileSystem;
+        }
+
+        public override bool AllowImpersonation() => true;
+
+        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
+        {
+            var customVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
+            var customVersionIsDefined = !string.IsNullOrEmpty(customVersion);
+            try
+            {
+                var availablePowerShellVersions = new[]
+                    {
+                        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+                    }
+                    .Where(p => p != null)
+                    .Distinct()
+                    .Select(pf => Path.Combine(pf, "PowerShell"))
+                    .Where(fileSystem.DirectoryExists)
+                    .SelectMany(fileSystem.EnumerateDirectories)
+                    .Select<string, (string path, string versionId, int? majorVersion, string remaining)>(d =>
+                    {
+                        var directoryName = fileSystem.GetDirectoryName(d);
+
+                        // Directories are typically versions like "6" or they might also have a prerelease component like "7-preview"
+                        var splitString = directoryName.Split(new[] {'-'}, 2);
+                        var majorVersionPart = splitString[0];
+                        var preRelease =
+                            splitString.Length < 2
+                                ? string.Empty
+                                : splitString[1]; // typically a prerelease tag, like "preview"
+
+                        if (int.TryParse(majorVersionPart, out var majorVersion))
+                            return (d, directoryName, majorVersion, preRelease);
+                        return (d, directoryName, null, preRelease);
+                    }).ToList();
+                
+                var latestPowerShellVersionDirectory = availablePowerShellVersions
+                    .Where(p => string.IsNullOrEmpty(customVersion) || p.versionId == customVersion)
+                    .OrderByDescending(p => p.majorVersion)
+                    .ThenBy(p => p.remaining)
+                    .Select(p => p.path)
+                    .FirstOrDefault();
+                
+                if (customVersionIsDefined && latestPowerShellVersionDirectory == null)
+                {
+                    throw new PowerShellVersionNotFoundException(customVersion,
+                        availablePowerShellVersions.Select(v => v.versionId));
+                }
+
+                if (latestPowerShellVersionDirectory == null)
+                    return EnvPowerShellPath;
+                
+                var pathToPwsh = Path.Combine(latestPowerShellVersionDirectory, EnvPowerShellPath);
+
+                return fileSystem.FileExists(pathToPwsh) ? pathToPwsh : EnvPowerShellPath;
+            }
+            catch (PowerShellVersionNotFoundException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                return EnvPowerShellPath;
+            }
+        }
+    }
+    
+    public abstract class PowerShellCoreBootstrapper : PowerShellBootstrapper
+    {
+        protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
+        {
+            yield break;
+        }
+    }
+
+    public class PowerShellVersionNotFoundException : CommandException
+    {
+        public PowerShellVersionNotFoundException(string customVersion, IEnumerable<string> availableVersions) 
+            : base($"Attempted to use version '{customVersion}' of PowerShell Core, but this version could not be found. Available versions: {string.Join(", ", availableVersions)}")
+        {
+        }
+    }
+
+    public abstract class PowerShellBootstrapper
+    {
+        private static readonly string BootstrapScriptTemplate;
+        private static readonly string DebugBootstrapScriptTemplate;
+        static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
+        static PowerShellBootstrapper()
+        {
+            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".Bootstrap.ps1");
+            DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
+        }
+
+        public abstract bool AllowImpersonation();
+        
+        public abstract string PathToPowerShellExecutable(CalamariVariableDictionary variables);
+
+        public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
+        {
+            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var commandArguments = new StringBuilder();
             var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
+            
+            foreach (var argument in ContributeCommandArguments(variables))
+                commandArguments.Append(argument);
+            
             bool noProfile;
             if (bool.TryParse(executeWithoutProfile, out noProfile) && noProfile)
             {
@@ -79,6 +200,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return commandArguments.ToString();
         }
 
+        protected abstract IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables);
+
         private static bool IsDebuggingEnabled(CalamariVariableDictionary variables)
         {
             var powershellDebugMode = variables[SpecialVariables.Action.PowerShell.DebugMode];
@@ -90,7 +213,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return true;
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
+        public (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
@@ -151,7 +274,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return builder;
         }
 
-        public static string PrepareDebuggingBootstrapFile(Script script)
+        public string PrepareDebuggingBootstrapFile(Script script)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);

@@ -71,7 +71,7 @@ namespace Calamari.Tests.Fixtures.Commands
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void RunScript()
         {
             Assert.IsTrue(File.Exists(Script), Script + " must exist as a file");

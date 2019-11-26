@@ -64,6 +64,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
+            output.AssertProcessNameAndId("scriptcs");
         }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
