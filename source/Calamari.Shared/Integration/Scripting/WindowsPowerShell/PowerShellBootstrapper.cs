@@ -221,7 +221,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var strictCommand = "";
             if (bool.TryParse(strictArg, out var strictArgAsBool) && strictArgAsBool)
             {
-                Log.Info($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled, putting PowerShell into strict mode where variables must be assigned a value before being referenced in a script. If a variable is referenced before a value is assigned, an exception will be thrown. This feature is experimental.");
+                Log.Info($"{SpecialVariables.Action.PowerShell.PSDebug.Strict} is enabled, putting PowerShell into strict mode where variables must be assigned a value before being referenced in a script. If a variable is referenced before a value is assigned, an exception will be thrown. This feature is experimental.");
                 strictCommand = " -Strict";
             }
             
