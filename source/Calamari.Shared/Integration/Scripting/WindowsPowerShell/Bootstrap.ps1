@@ -730,7 +730,7 @@ Import-CalamariModules
 {{BeforeLaunchingUserScriptDebugLocation}}
 try
 {
-	. '{{TargetScriptFile}}' { { ScriptParameters } }
+	. '{{TargetScriptFile}}' {{ScriptParameters}}
 }
 catch
 {
