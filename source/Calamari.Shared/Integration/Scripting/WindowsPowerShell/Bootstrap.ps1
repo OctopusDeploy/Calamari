@@ -728,7 +728,21 @@ Import-CalamariModules
 # Invoke target script
 # -----------------------------------------------------------------
 {{BeforeLaunchingUserScriptDebugLocation}}
-. '{{TargetScriptFile}}' {{ScriptParameters}}
+try
+{
+	. '{{TargetScriptFile}}' { { ScriptParameters } }
+}
+catch
+{
+	[System.Console]::Error.WriteLine($error[0].Exception.Message)
+	[System.Console]::Error.WriteLine($error[0].InvocationInfo.PositionMessage)
+	[System.Console]::Error.WriteLine($error[0].ScriptStackTrace)
+	if ($null -ne $error[0].ErrorDetails) {
+		[System.Console]::Error.WriteLine($error[0].ErrorDetails.Message)
+	}
+
+	exit 1
+}
 
 # -----------------------------------------------------------------
 # Ensure we exit with whatever exit code the last exe used
