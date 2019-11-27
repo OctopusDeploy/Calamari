@@ -182,18 +182,19 @@ namespace Calamari.Integration.JsonVariables
 
         public void Update(VariableDictionary variables)
         {
-            bool filter(string v)
+            bool VariableNameIsNotASystemVariable(string v)
             {
                 if (v.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase))
                 {
                     // Only include variables starting with 'Octopus'
                     // if it also has a colon (:)
-                    return v.StartsWith("Octopus:");
+                    return v.StartsWith("Octopus:", StringComparison.OrdinalIgnoreCase)
+                        && map.ContainsKey(v);
                 }
                 return map.ContainsKey(v);
             }
 
-            foreach (var name in variables.GetNames().Where(filter))
+            foreach (var name in variables.GetNames().Where(VariableNameIsNotASystemVariable))
             {
                 try
                 {
