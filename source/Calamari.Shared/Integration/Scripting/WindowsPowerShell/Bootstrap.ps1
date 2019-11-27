@@ -734,7 +734,8 @@ try
 }
 catch
 {
-	[System.Console]::Error.WriteLine($error[0].Exception.Message)
+	
+	[System.Console]::Error.WriteLine("$($error[0].CategoryInfo.Category): $($error[0].Exception.Message)")
 	[System.Console]::Error.WriteLine($error[0].InvocationInfo.PositionMessage)
 	[System.Console]::Error.WriteLine($error[0].ScriptStackTrace)
 	if ($null -ne $error[0].ErrorDetails) {
