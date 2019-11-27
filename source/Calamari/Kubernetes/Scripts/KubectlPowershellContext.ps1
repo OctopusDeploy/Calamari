@@ -68,8 +68,13 @@ function SetupContext {
 		& az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG
 		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
 	} else {
+		Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl"
 		& $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
+		
+		Write-Verbose "$Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace"
 		& $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
+		
+		Write-Verbose "$Kubectl_Exe config use-context octocontext"
 		& $Kubectl_Exe config use-context octocontext
 
 		if(-not [string]::IsNullOrEmpty($K8S_Client_Cert)) {
@@ -83,13 +88,17 @@ function SetupContext {
 				Exit 1
 			}
 
+			Write-Verbose "Encoding client cert key"
 			$K8S_Client_Cert_Key_Encoded = $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Key)))
+			Write-Verbose "Encoding client cert pem"
 			$K8S_Client_Cert_Pem_Encoded = $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Client_Cert_Pem)))
 
 			# Don't leak the private key in the logs
 			Set-OctopusVariable -name "$($K8S_Client_Cert).PrivateKeyPemBase64" -value $K8S_Client_Cert_Key_Encoded -sensitive
 
+			Write-Verbose "$Kubectl_Exe config set users.octouser.client-certificate-data <client-cert-pem>"
 			& $Kubectl_Exe config set users.octouser.client-certificate-data $K8S_Client_Cert_Pem_Encoded
+			Write-Verbose "& $Kubectl_Exe config set users.octouser.client-key-data <client-cert-key>"
 			& $Kubectl_Exe config set users.octouser.client-key-data $K8S_Client_Cert_Key_Encoded
 		}
 
@@ -100,9 +109,11 @@ function SetupContext {
 			}
 
 			# Inline the certificate as base64 encoded data
+			Write-Verbose "$Kubectl_Exe config set clusters.octocluster.certificate-authority-data <server-cert-pem>"
 			& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Server_Cert_Pem)))
 		}
 		else {
+			Write-Verbose "$Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification"
 			& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification
 		}
 
