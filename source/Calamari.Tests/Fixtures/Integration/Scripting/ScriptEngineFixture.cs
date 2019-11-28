@@ -16,8 +16,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class ScriptEngineFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void PowershellDecryptsSensitiveVariables()
+        public void PowerShellDecryptsSensitiveVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
@@ -28,7 +27,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         [TestCase("true")]
         [TestCase("True")]
         [TestCase("1")]
@@ -58,7 +56,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         [TestCase("0")]
         [TestCase("False")]
         [TestCase("false")]
@@ -80,7 +77,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void PowerShellWorksWithStrictMode()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -97,7 +93,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         [TestCase("false")]
         [TestCase("")]
         public void PowerShellDoesntForceStrictMode(string variableValue)
