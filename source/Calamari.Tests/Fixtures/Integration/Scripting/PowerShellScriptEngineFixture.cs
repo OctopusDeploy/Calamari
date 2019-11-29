@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
-using Calamari.Tests.Fixtures.ScriptCS;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
@@ -28,6 +28,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("1")]
         [TestCase("2")]
         [RequiresNonFreeBSDPlatform]
+        [RequiresPowerShell5OrAbove]
         public void PowerShellCanSetTraceMode(string variableValue)
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -41,6 +42,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
                 result.AssertOutput("KingKong");
                 result.AssertOutput("DEBUG:    1+  >>>> Write-Host $mysecrect");
+                result.AssertNoOutput("PowerShell tracing is only supported with PowerShell versions 5 and above");
 
                 if (variableValue != "1")
                 {
@@ -50,6 +52,33 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                     //we translate "true" to "2"
                     result.AssertOutput("! CALL function 'Import-CalamariModules'");
                 }
+            }
+        }
+        
+        [Test]
+        [TestCase("true")]
+        [TestCase("True")]
+        [TestCase("1")]
+        [TestCase("2")]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresPowerShell4]
+        public void PowerShell4DoesntSupport(string variableValue)
+        {
+            //this may cause an `Inconclusive: Outcome value 0 is not understood` error in Rider
+            //known bug - https://youtrack.jetbrains.com/issue/RSRP-465549
+            if (ScriptingEnvironment.SafelyGetPowerShellVersion().Major != 4)
+                Assert.Inconclusive("This test requires PowerShell 4");
+            
+            using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
+            {
+                File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");
+                var calamariVariableDictionary = GetDictionaryWithSecret();
+                calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Trace", variableValue);
+
+                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, calamariVariableDictionary);
+
+                result.AssertOutput("KingKong");
+                result.AssertOutput("Octopus.Action.PowerShell.PSDebug.Trace is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version 4.0.");
             }
         }
 

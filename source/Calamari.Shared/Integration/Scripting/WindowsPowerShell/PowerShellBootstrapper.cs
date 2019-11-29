@@ -206,15 +206,21 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             //https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/set-psdebug?view=powershell-6
             var traceArg = variables[SpecialVariables.Action.PowerShell.PSDebug.Trace];
             var traceCommand = "-Trace 0";
-            if (int.TryParse(traceArg, out var traceArgAsInt))
+            var powerShellVersion = ScriptingEnvironment.SafelyGetPowerShellVersion();
+            int.TryParse(traceArg, out var traceArgAsInt);
+            bool.TryParse(traceArg, out var traceArgAsBool);
+            if (traceArgAsInt > 0 || traceArgAsBool)
             {
-                Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled,  This should only be used for debugging, and then disabled again for normal deployments.");
-                traceCommand = $"-Trace {traceArgAsInt}";
-            }
-            else if (bool.TryParse(traceArg, out var traceArgAsBool) && traceArgAsBool)
-            {
-                Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled,  This should only be used for debugging, and then disabled again for normal deployments.");
-                traceCommand = "-Trace 2";
+                if (powerShellVersion.Major < 5 && powerShellVersion.Major > 0)
+                    Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version {powerShellVersion}.");
+                else
+                {
+                    Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled. This should only be used for debugging, and then disabled again for normal deployments.");
+                    if (traceArgAsInt > 0)
+                        traceCommand = $"-Trace {traceArgAsInt}";
+                    if (traceArgAsBool)
+                        traceCommand = $"-Trace 2";
+                }
             }
             
             var strictArg = variables[SpecialVariables.Action.PowerShell.PSDebug.Strict];
