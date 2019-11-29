@@ -327,8 +327,19 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldFailOnInvalidSyntax()
         {
             var (output, _) = RunPowerShellScript("InvalidSyntax.ps1");
+
             output.AssertFailure();
-            output.AssertErrorOutput("ParserError");
+            //ensure it logs the type of error
+            output.AssertErrorOutput("ParserError:");
+            //ensure it logs the error line in question
+            output.AssertErrorOutput("+ $#FC(@UCJ@(#U");
+            //ensure it logs each of the errors
+            output.AssertErrorOutput("Unexpected token '@(' in expression or statement.");
+            output.AssertErrorOutput("Missing closing ')' in expression.");
+            output.AssertErrorOutput("The splatting operator '@' cannot be used to reference variables in an expression. '@UCJ' can be used only as an argument to a command. To reference variables in an expression use '$UCJ'.");
+            //ensure it logs the stack trace
+            output.AssertErrorOutput("at <ScriptBlock>, ");
+            
             AssertPowerShellEdition(output);
         }
 
@@ -378,9 +389,18 @@ namespace Calamari.Tests.Fixtures.PowerShell
             { ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module! }" });
 
             output.AssertFailure();
-            output.AssertOutput("Failed to import Script Module 'Foo'");
-            output.AssertErrorOutput("Write-Host \"Hello from module!");
+            //ensure it logs the script module name
+            output.AssertErrorOutput("Failed to import Script Module 'Foo' from '");
+            //ensure it logs the type of error
+            output.AssertErrorOutput("ParserError:");
+            //ensure it logs the error line in question
+            output.AssertErrorOutput("+ function SayHello() { Write-Host \"Hello from module! }");
+            //ensure it logs each of the errors
             output.AssertErrorOutput("The string is missing the terminator: \".");
+            output.AssertErrorOutput("Missing closing '}' in statement block or type definition.");
+            //ensure it logs the stack trace
+            output.AssertErrorOutput("at Import-ScriptModule, ");
+            output.AssertErrorOutput("at <ScriptBlock>, ");
             AssertPowerShellEdition(output);
         }
 
