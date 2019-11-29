@@ -121,8 +121,14 @@ function Import-ScriptModule([string]$moduleName, [string]$moduleFilePath)
 	}
 	Catch
 	{
-		Write-Warning "Failed to import Script Module '$moduleName'"
-		Throw
+		[System.Console]::Error.WriteLine("Failed to import Script Module '$moduleName' from '$moduleFilePath'")
+		[System.Console]::Error.WriteLine("$($error[0].CategoryInfo.Category): $($error[0].Exception.Message)")
+		[System.Console]::Error.WriteLine($error[0].InvocationInfo.PositionMessage)
+		[System.Console]::Error.WriteLine($error[0].ScriptStackTrace)
+		if ($null -ne $error[0].ErrorDetails) {
+			[System.Console]::Error.WriteLine($error[0].ErrorDetails.Message)
+		}
+		exit 1
 	}
 }
 
