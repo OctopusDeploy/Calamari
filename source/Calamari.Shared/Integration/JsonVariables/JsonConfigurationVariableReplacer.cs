@@ -188,8 +188,14 @@ namespace Calamari.Integration.JsonVariables
                 {
                     // Only include variables starting with 'Octopus'
                     // if it also has a colon (:)
-                    return v.StartsWith("Octopus:", StringComparison.OrdinalIgnoreCase)
-                        && map.ContainsKey(v);
+                    if (v.StartsWith("Octopus:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return map.ContainsKey(v);
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
                 return map.ContainsKey(v);
             }
