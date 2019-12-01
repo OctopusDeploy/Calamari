@@ -397,7 +397,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertErrorOutput("+ function SayHello() { Write-Host \"Hello from module! }");
             //ensure it logs each of the errors
             output.AssertErrorOutput("The string is missing the terminator: \".");
-            output.AssertErrorOutput("Missing closing '}' in statement block or type definition.");
+            output.AssertErrorOutput("Missing closing '}' in statement block");
             //ensure it logs the stack trace
             output.AssertErrorOutput("at Import-ScriptModule, ");
             output.AssertErrorOutput("at <ScriptBlock>, ");
