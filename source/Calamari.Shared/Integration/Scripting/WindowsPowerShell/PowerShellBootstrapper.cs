@@ -179,7 +179,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
             var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
-            
+            var traceCommand = GetPsDebugCommand(variables);
+
             foreach (var argument in ContributeCommandArguments(variables))
                 commandArguments.Append(argument);
             
@@ -192,12 +193,45 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
 
-            var filetoExecute = IsDebuggingEnabled(variables)
+            var fileToExecute = IsDebuggingEnabled(variables)
                 ? debuggingBootstrapFile.EscapeSingleQuotedString()
                 : bootstrapFile.EscapeSingleQuotedString();
 
-            commandArguments.AppendFormat("-Command \"Try {{. {{. '{0}' -OctopusKey '{1}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", filetoExecute, encryptionKey);
+            commandArguments.AppendFormat("-Command \"{0}Try {{. {{. '{1}' -OctopusKey '{2}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", traceCommand, fileToExecute, encryptionKey);
             return commandArguments.ToString();
+        }
+
+        static string GetPsDebugCommand(CalamariVariableDictionary variables)
+        {
+            //https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/set-psdebug?view=powershell-6
+            var traceArg = variables[SpecialVariables.Action.PowerShell.PSDebug.Trace];
+            var traceCommand = "-Trace 0";
+            var powerShellVersion = ScriptingEnvironment.SafelyGetPowerShellVersion();
+            int.TryParse(traceArg, out var traceArgAsInt);
+            bool.TryParse(traceArg, out var traceArgAsBool);
+            if (traceArgAsInt > 0 || traceArgAsBool)
+            {
+                if (powerShellVersion.Major < 5 && powerShellVersion.Major > 0)
+                    Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version {powerShellVersion}.");
+                else
+                {
+                    Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled. This should only be used for debugging, and then disabled again for normal deployments.");
+                    if (traceArgAsInt > 0)
+                        traceCommand = $"-Trace {traceArgAsInt}";
+                    if (traceArgAsBool)
+                        traceCommand = $"-Trace 2";
+                }
+            }
+            
+            var strictArg = variables[SpecialVariables.Action.PowerShell.PSDebug.Strict];
+            var strictCommand = "";
+            if (bool.TryParse(strictArg, out var strictArgAsBool) && strictArgAsBool)
+            {
+                Log.Info($"{SpecialVariables.Action.PowerShell.PSDebug.Strict} is enabled, putting PowerShell into strict mode where variables must be assigned a value before being referenced in a script. If a variable is referenced before a value is assigned, an exception will be thrown. This feature is experimental.");
+                strictCommand = " -Strict";
+            }
+            
+            return $"Set-PSDebug {traceCommand}{strictCommand};";
         }
 
         protected abstract IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables);
