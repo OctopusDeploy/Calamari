@@ -167,6 +167,8 @@ function SetupContext {
 function ConfigureKubeCtlPath {
     $env:KUBECONFIG=$OctopusParameters["Octopus.Action.Kubernetes.KubectlConfig"]
     Write-Host "Temporary kubectl config set to $env:KUBECONFIG"
+	# create an empty file, to suppress kubectl errors about the file missing
+	Set-Content -Path $env:KUBECONFIG -Value ""
 }
 
 function CreateNamespace {
