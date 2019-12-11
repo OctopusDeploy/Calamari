@@ -1,6 +1,8 @@
 using System;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
+using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting
 {
@@ -44,6 +46,31 @@ namespace Calamari.Integration.Scripting
                 throw new MonoVersionCanNotBeDeterminedException($"Display name does not seem to include version number. Retrieved value: {displayName}.");
 
             return Version.Parse(match.Value);
+        }
+
+        public static Version SafelyGetPowerShellVersion()
+        {
+            try
+            {
+                foreach (var cmd in new[] {"powershell.exe", "pwsh.exe"})
+                {
+                    var stdOut = new StringBuilder();
+                    var stdError = new StringBuilder();
+                    var result = SilentProcessRunner.ExecuteCommand(
+                        cmd,
+                        $"-command \"{"$PSVersionTable.PSVersion.ToString()"}\"",
+                        Environment.CurrentDirectory,
+                        s => stdOut.AppendLine(s),
+                        s => stdError.AppendLine(s));
+                    if (result.ExitCode == 0)
+                        return Version.Parse(stdOut.ToString());
+                }
+            }
+            catch
+            {
+                //silently ignore it - we dont want to 
+            }
+            return Version.Parse("0.0.0");
         }
     }
 }

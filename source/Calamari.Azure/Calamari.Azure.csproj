@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
     <Version>1.0.0.0</Version>
     <TargetFramework>net452</TargetFramework>
@@ -105,4 +106,8 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
+  <Target Condition="$([MSBuild]::IsOSUnixLike())" Name="Build">
+    <Message Text="This build is unsupported on unix like environments"/>
+  </Target>
+  <Import Condition="!$([MSBuild]::IsOSUnixLike())" Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 </Project>

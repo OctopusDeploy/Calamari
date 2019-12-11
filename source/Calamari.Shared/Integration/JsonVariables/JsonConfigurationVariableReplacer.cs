@@ -182,18 +182,33 @@ namespace Calamari.Integration.JsonVariables
 
         public void Update(VariableDictionary variables)
         {
-            foreach (var name in variables.GetNames().Where(x => !x.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase)))
+            bool VariableNameIsNotASystemVariable(string v)
             {
-                if (map.ContainsKey(name))
+                if (v.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase))
                 {
-                    try
+                    // Only include variables starting with 'Octopus'
+                    // if it also has a colon (:)
+                    if (v.StartsWith("Octopus:", StringComparison.OrdinalIgnoreCase))
                     {
-                        map[name](variables.Get(name));
+                        return map.ContainsKey(v);
                     }
-                    catch (Exception e)
+                    else
                     {
-                        Log.WarnFormat("Unable to set value for {0}. The following error occurred: {1}", name, e.Message);
+                        return false;
                     }
+                }
+                return map.ContainsKey(v);
+            }
+
+            foreach (var name in variables.GetNames().Where(VariableNameIsNotASystemVariable))
+            {
+                try
+                {
+                    map[name](variables.Get(name));
+                }
+                catch (Exception e)
+                {
+                    Log.WarnFormat("Unable to set value for {0}. The following error occurred: {1}", name, e.Message);
                 }
             }
         }

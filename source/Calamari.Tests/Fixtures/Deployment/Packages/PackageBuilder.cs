@@ -19,13 +19,11 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var nugetCommandLine = TestEnvironment.GetTestPath("NuGet", "NuGet.exe");
             Assert.That(File.Exists(nugetCommandLine), string.Format("NuGet.exe is not available (expected at {0}).", nugetCommandLine));
 
-            var target = Path.Combine(packageDirectory, name + ".nuspec");
-            Assert.That(File.Exists(target), string.Format("Nuspec for {0} is not available (expected at {1}.", name, target));
+            var target = GetNixFileOrDefault(packageDirectory, name, ".nuspec");
 #else
             var nugetCommandLine = "dotnet";
 
-            var target = packageDirectory;
-            Assert.That(Directory.Exists(target), string.Format("Project for {0} is not available (expected at {1}.", name, target));      
+            var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
 #endif                 
 
             var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
@@ -61,6 +59,28 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
             Assert.That(File.Exists(path), string.Format("The generated nupkg was unable to be found (expected at {0}).", path));
             return path;
+        }
+
+        static string GetNixFileOrDefault(string filePath, string filePrefix, string fileSuffix)
+        {
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                return GetWindowsOrDefaultPath();
+            }
+            else
+            {
+                var path = Path.Combine(filePath, filePrefix + ".Nix" + fileSuffix);
+                return File.Exists(path) 
+                    ? path 
+                    : GetWindowsOrDefaultPath();
+            }
+
+            string GetWindowsOrDefaultPath()
+            {
+                var path = Path.Combine(filePath, filePrefix + fileSuffix);
+                Assert.That(File.Exists(path), $"{fileSuffix} for {filePrefix} is not available (expected at {path}.");
+                return path;
+            }
         }
 
         static string AddFileToPackage(string packageDirectory)

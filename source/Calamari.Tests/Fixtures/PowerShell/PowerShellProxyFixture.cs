@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Windows)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class PowerShellProxyFixture : WindowsScriptProxyFixtureBase
     {
         protected override CalamariResult RunScript()
