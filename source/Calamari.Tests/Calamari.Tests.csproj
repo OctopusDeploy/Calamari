@@ -9,7 +9,7 @@
     <NoWarn>NU1603</NoWarn>
     <ApplicationIcon />
     <StartupObject />
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
     <TargetFrameworks>net452;netcoreapp2.2</TargetFrameworks>
