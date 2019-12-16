@@ -69,6 +69,29 @@ Task("SetTeamCityVersion")
             BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
     });
 
+Task("CheckForbiddenWords")
+	.Does(() =>
+{
+	Information("Checking codebase for forbidden words.");
+
+	IEnumerable<string> redirectedOutput;
+ 	var exitCodeWithArgument =
+    	StartProcess(
+        	"git",
+        	new ProcessSettings {
+            	Arguments = "grep -i -I -n -f ForbiddenWords.txt -- \"./*\" \":!ForbiddenWords.txt\"",
+             	RedirectStandardOutput = true
+        	},
+        	out redirectedOutput
+     	);
+
+	var filesContainingForbiddenWords = redirectedOutput.ToArray();
+	if (filesContainingForbiddenWords.Any())
+		throw new Exception("Found forbidden words in the following files, please clean them up:\r\n" + string.Join("\r\n", filesContainingForbiddenWords));
+
+	Information("Sanity check passed.");
+});
+
 Task("Clean")
 	.IsDependentOn("SetTeamCityVersion")
     .Does(() =>
@@ -87,6 +110,7 @@ Task("Restore")
     }));
 
 Task("Build")
+    .IsDependentOn("CheckForbiddenWords")
     .IsDependentOn("Restore")
     .Does(() =>
 	{
