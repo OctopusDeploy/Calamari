@@ -65,9 +65,9 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 var log = new LogWrapper();
-                InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only", tempDirectory, log, "initialise"));
-                InvokeWithRetry(() => Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {feedUri.ToString()}", tempDirectory, log, "add the chart repository"));
-                InvokeWithRetry(() => Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}", tempDirectory, log, "download the chart"));
+                InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only --debug", tempDirectory, log, "initialise"));
+                InvokeWithRetry(() => Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} --debug {TempRepoName} {feedUri.ToString()}", tempDirectory, log, "add the chart repository"));
+                InvokeWithRetry(() => Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" --debug {TempRepoName}/{packageId}", tempDirectory, log, "download the chart"));
                 
                 var localDownloadName =
                     Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
