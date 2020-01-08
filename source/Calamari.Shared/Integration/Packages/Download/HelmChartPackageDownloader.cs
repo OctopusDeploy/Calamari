@@ -13,6 +13,12 @@ namespace Calamari.Integration.Packages.Download
 {
     public class HelmChartPackageDownloader: IPackageDownloader
     {
+        enum HelmVersion
+        {
+            VERSION2,
+            VERSION3
+        }
+        
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string Extension = ".tgz";
         private readonly ICalamariFileSystem fileSystem;
@@ -65,9 +71,26 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 var log = new LogWrapper();
-                InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only --debug", tempDirectory, log, "initialise"));
-                InvokeWithRetry(() => Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} --debug {TempRepoName} {feedUri.ToString()}", tempDirectory, log, "add the chart repository"));
-                InvokeWithRetry(() => Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" --debug {TempRepoName}/{packageId}", tempDirectory, log, "download the chart"));
+                
+                HelmVersion helmVersion;
+                try
+                {
+                    helmVersion = GetHelmVersion(tempDirectory, log);
+                }
+                catch (Exception ex)
+                {
+                    log.Verbose(ex.Message);
+                    throw new Exception("There was an error running Helm. Please ensure that the Helm client tools are installed.");
+                }
+                
+                if (helmVersion == HelmVersion.VERSION2)
+                {
+                    RunCommandsForHelm2(feedUri.ToString(), packageId, version, homeDir, stagingDir, tempDirectory, cred, log);
+                }
+                else
+                {
+                    RunCommandsForHelm3(feedUri.ToString(), packageId, version, stagingDir, tempDirectory, cred, log);
+                }
                 
                 var localDownloadName =
                     Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
@@ -75,6 +98,35 @@ namespace Calamari.Integration.Packages.Download
                 fileSystem.MoveFile(Directory.GetFiles(stagingDir)[0], localDownloadName);
                 return PackagePhysicalFileMetadata.Build(localDownloadName);
             }
+        }
+        
+        HelmVersion GetHelmVersion(string directory, ILog log)
+        {
+            //eg of output for helm 2: Client: v2.16.1+gbbdfe5e
+            //eg of output for helm 3: v3.0.1+g7c22ef9
+            
+            var versionString = InvokeWithOutput("version --client --short", directory, log, "Checking helm version");
+            var version = versionString[versionString.IndexOf('v') + 1];
+
+            return version.Equals('3') ? HelmVersion.VERSION3 : HelmVersion.VERSION2;
+        }
+        
+        void RunCommandsForHelm2(string url, string packageId, IVersion version, string homeDir, string stagingDir, string tempDirectory, NetworkCredential cred, ILog log)
+        {
+            InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only --debug", tempDirectory, log, "initialise"));
+            InvokeWithRetry(() => Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} --debug {TempRepoName} {url}", tempDirectory, log, "add the chart repository"));
+            InvokeWithRetry(() => Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" --debug {TempRepoName}/{packageId}", tempDirectory, log, "download the chart"));
+        }
+
+        void RunCommandsForHelm3(string url, string packageId, IVersion version, string stagingDir, string directory, NetworkCredential cred, ILog log)
+        {
+            InvokeWithRetry(() =>
+                Invoke(
+                    $"repo add {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {url}",
+                    directory, log, "add the chart repository"));
+            InvokeWithRetry(() =>
+                Invoke($"pull --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}",
+                    directory, log, "download the chart"));
         }
         
 #if SUPPORTS_POLLY
@@ -92,7 +144,12 @@ namespace Calamari.Integration.Packages.Download
         void InvokeWithRetry(Action action) => action();
 #endif
         
-        void Invoke(string args, string dir, ILog log, string specificAction)
+        public void Invoke(string args, string dir, ILog log, string specificAction)
+        {
+            InvokeWithOutput(args, dir, log, specificAction);
+        }
+        
+        string InvokeWithOutput(string args, string dir, ILog log, string specificAction)
         {
             var info = new ProcessStartInfo("helm", args)
             {
@@ -134,6 +191,8 @@ namespace Calamari.Integration.Packages.Download
                 {
                     throw new CommandException($"Helm failed to {specificAction} (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
                 }
+
+                return stdout;
             }
         }
 
