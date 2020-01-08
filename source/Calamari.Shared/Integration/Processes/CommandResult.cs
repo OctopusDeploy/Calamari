@@ -6,6 +6,7 @@
         private readonly int exitCode;
         private readonly string additionalErrors;
         private readonly string workingDirectory;
+        private readonly bool timedOut;
 
         public CommandResult(string command, int exitCode) : this(command, exitCode, null)
         {
@@ -25,11 +26,22 @@
             this.workingDirectory = workingDirectory;
         }
 
+        public CommandResult(string command, int exitCode, string additionalErrors, string workingDirectory, bool timedOut)
+        {
+            this.command = command;
+            this.exitCode = exitCode;
+            this.additionalErrors = additionalErrors;
+            this.workingDirectory = workingDirectory;
+            this.timedOut = timedOut;
+        }
+
         public int ExitCode => exitCode;
 
         public string Errors => additionalErrors;
 
         public bool HasErrors => !string.IsNullOrWhiteSpace(additionalErrors);
+
+        public bool TimedOut => timedOut;
 
         public CommandResult VerifySuccess()
         {
@@ -39,7 +51,8 @@
                     command, 
                     exitCode, 
                     additionalErrors, 
-                    workingDirectory);
+                    workingDirectory,
+                    timedOut);
             }
 
             return this;

@@ -75,7 +75,6 @@ namespace Calamari.Deployment
                 }
             }
         }
-
         void RunRollbackConventions()
         {
             foreach (var convention in conventions.OfType<IRollbackConvention>())

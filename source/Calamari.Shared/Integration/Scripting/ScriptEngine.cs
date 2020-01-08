@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -29,6 +30,17 @@ namespace Calamari.Integration.Scripting
                 {
                     CopyWorkingDirectory(variables, execution.CommandLineInvocation.WorkingDirectory,
                         execution.CommandLineInvocation.Arguments);
+                }
+
+                if (variables.IsSet(SpecialVariables.Action.Script.Timeout))
+                {
+                    var timeout = variables.GetInt32(SpecialVariables.Action.Script.Timeout);
+                    execution.CommandLineInvocation.TimeoutMilliseconds = timeout ?? Timeout.Infinite;
+                    Log.Info($"Timeout was set to {execution.CommandLineInvocation.TimeoutMilliseconds}");
+                }
+                else
+                {
+                    Log.Verbose("Timeout was not set for this script. Octopus will wait for the script to complete indefinitely.");
                 }
 
                 try

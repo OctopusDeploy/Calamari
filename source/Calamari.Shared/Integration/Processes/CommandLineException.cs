@@ -6,11 +6,12 @@ namespace Calamari.Integration.Processes
     public class CommandLineException : Exception
     {
         public CommandLineException(
-            string commandLine, 
-            int exitCode, 
-            string additionalInformation, 
-            string workingDirectory = null)
-            : base(FormatMessage(commandLine, exitCode, additionalInformation, workingDirectory))
+            string commandLine,
+            int exitCode,
+            string additionalInformation,
+            string workingDirectory = null,
+            bool timedOut = false)
+            : base(FormatMessage(commandLine, exitCode, additionalInformation, workingDirectory, timedOut))
         {
         }
 
@@ -18,17 +19,23 @@ namespace Calamari.Integration.Processes
             string commandLine, 
             int exitCode, 
             string additionalInformation,
-            string workingDirectory)
+            string workingDirectory,
+            bool timedOut)
         {
             var sb = new StringBuilder("The following command: ");
             sb.AppendLine(commandLine);
             
-            if (!String.IsNullOrEmpty(workingDirectory))
+            if (!string.IsNullOrEmpty(workingDirectory))
             {
                 sb.Append("With the working directory of: ")
                     .AppendLine(workingDirectory);
             }
-            
+
+            if (timedOut)
+            {
+                sb.Append("Timed out before execution completed. Check the script Timeout environment variable.").AppendLine();
+            }
+
             sb.Append("Failed with exit code: ").Append(exitCode).AppendLine();
             if (!string.IsNullOrWhiteSpace(additionalInformation))
             {

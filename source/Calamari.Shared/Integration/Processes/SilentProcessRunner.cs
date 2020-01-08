@@ -42,9 +42,10 @@ namespace Calamari.Integration.Processes
             string arguments, 
             string workingDirectory, 
             Action<string> output, 
-            Action<string> error)
+            Action<string> error,
+            int timeoutMilliseconds = Timeout.Infinite)
         {
-            return ExecuteCommand(executable, arguments, workingDirectory, null, null, null, output, error);
+            return ExecuteCommand(executable, arguments, workingDirectory, null, null, null, output, error, timeoutMilliseconds);
         }
         
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -53,9 +54,10 @@ namespace Calamari.Integration.Processes
             string workingDirectory, 
             Dictionary<string, string> environmentVars, 
             Action<string> output, 
-            Action<string> error)
+            Action<string> error,
+            int timeoutMilliseconds = Timeout.Infinite)
         {
-            return ExecuteCommand(executable, arguments, workingDirectory, environmentVars, null, null, output, error);
+            return ExecuteCommand(executable, arguments, workingDirectory, environmentVars, null, null, output, error, timeoutMilliseconds);
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -66,7 +68,8 @@ namespace Calamari.Integration.Processes
             string userName,             
             SecureString password, 
             Action<string> output, 
-            Action<string> error)
+            Action<string> error,
+            int timeoutMilliseconds = Timeout.Infinite)
         {
             try
             {
@@ -149,11 +152,27 @@ namespace Calamari.Integration.Processes
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
 
-                        process.WaitForExit();
-                        outputWaitHandle.WaitOne();
-                        errorWaitHandle.WaitOne();
+                        // Some processes can have race conditions. Between the call to Start and WaitForExit part of the process may have exited already.
+                        // This can happen when callign CommitChanges in dotnet's ServerManager as shown here: https://stackoverflow.com/questions/7446632/servermanager-commitchanges-makes-changes-with-a-slight-delay
+                        // Commit changes is called by appcmd from IIS, which is called by Set-ItemProperty from the WebAdministration module in Powershell
+                        // https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit?view=netframework-4.8#System_Diagnostics_Process_WaitForExit_System_Int32_
+                        // Add a timeout passed down from some default configuration or context up the call stack, 0 will never timeout.
+                        var timedOut = !process.WaitForExit(timeoutMilliseconds);
 
-                        return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString());
+                        if (!timedOut)
+                        {
+                            // Only wait when the process has not timed out, otherwise we will be stuck here as well.
+                            outputWaitHandle.WaitOne();
+                            errorWaitHandle.WaitOne();
+                        } else
+                        {
+                            Log.Error($"Process with ID {process.Id} exceeded the max allowed runtime of {timeoutMilliseconds} milliseconds and will be killed.");
+                            process.CancelOutputRead();
+                            process.CancelErrorRead();
+                            process.Kill();
+                        }
+
+                        return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString(), timedOut);
                     }
                 }
             }
