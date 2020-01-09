@@ -1,4 +1,5 @@
-﻿﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,8 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
- using Newtonsoft.Json;
+using Calamari.Util;
+using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.Conventions
 {
@@ -18,19 +20,21 @@ namespace Calamari.Kubernetes.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
+        readonly CommandCaptureOutput commandCaptureOutput;
 
-        public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, CommandCaptureOutput commandCaptureOutput, ICalamariFileSystem fileSystem)
         {
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.commandCaptureOutput = commandCaptureOutput;
         }
         
         public void Install(RunningDeployment deployment)
         {
             ScriptSyntax syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
             var cmd = BuildHelmCommand(deployment, syntax);   
-            var fileName = SyntaxSpecificFileName(deployment, syntax);
+            var fileName = SyntaxSpecificFileNameExtension("Calamari.HelmUpgrade", deployment, syntax);
             
             using (new TemporaryFile(fileName))
             {
@@ -58,12 +62,14 @@ namespace Calamari.Kubernetes.Conventions
             
             var sb = new StringBuilder();
 
+            HelmUtils.HelmVersion helmVersion = GetHelmVersion(deployment, syntax);
+
             SetExecutable(deployment, sb, syntax);
             sb.Append($" upgrade --install");
             SetNamespaceParameter(deployment, sb);
             SetResetValuesParameter(deployment, sb);
-            SetTillerTimeoutParameter(deployment, sb);
-            SetTillerNamespaceParameter(deployment, sb);
+            SetTillerTimeoutParameter(deployment, sb, helmVersion);
+            SetTillerNamespaceParameter(deployment, sb, helmVersion);
             SetTimeoutParameter(deployment, sb);
             SetValuesParameters(deployment, sb);
             SetAdditionalArguments(deployment, sb);
@@ -71,6 +77,37 @@ namespace Calamari.Kubernetes.Conventions
 
             Log.Verbose(sb.ToString());
             return sb.ToString();
+        }
+
+        HelmUtils.HelmVersion GetHelmVersion(RunningDeployment deployment, ScriptSyntax syntax)
+        {
+            var sb = new StringBuilder();
+            SetExecutable(deployment, sb, syntax);
+
+            sb.Append(" version --client --short");
+            
+            var fileName = SyntaxSpecificFileNameExtension("Calamari.HelmVersion", deployment, syntax);
+
+            using (new TemporaryFile(fileName))
+            {
+                fileSystem.OverwriteFile(fileName, sb.ToString());
+                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
+                if (result.ExitCode != 0)
+                {
+                    throw new CommandException(string.Format(
+                        "Helm Upgrade returned non-zero exit code: {0}. Deployment terminated.", result.ExitCode));
+                }
+
+                if (result.HasErrors &&
+                    deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
+                {
+                    throw new CommandException(
+                        $"Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
+                }
+            }
+
+            string cmdOutput = commandCaptureOutput.Infos[commandCaptureOutput.Infos.Count - 1];
+            return HelmUtils.ParseHelmVersionFromHelmVersionCmdOutput(cmdOutput);
         }
 
         void SetExecutable(RunningDeployment deployment, StringBuilder sb, ScriptSyntax syntax)
@@ -145,12 +182,31 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        static void SetTillerNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
+        //Tiller only required in Helm 2
+        static void SetTillerNamespaceParameter(RunningDeployment deployment, StringBuilder sb, HelmUtils.HelmVersion helmVersion)
         {
+            if (helmVersion != HelmUtils.HelmVersion.Version2) return;
+            
             if (deployment.Variables.IsSet(SpecialVariables.Helm.TillerNamespace))
             {
                 sb.Append($" --tiller-namespace \"{deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace)}\"");
             }
+        }
+        
+        //Tiller only required in Helm 2
+        static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb, HelmUtils.HelmVersion helmVersion)
+        {
+            if (helmVersion != HelmUtils.HelmVersion.Version2) return;
+            
+            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
+            
+            var tillerTimeout = deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout);
+            if (!int.TryParse(tillerTimeout, out _))
+            {
+                throw new CommandException($"Tiller timeout period is not a valid integer: {tillerTimeout}");
+            }
+
+            sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
         }
 
         static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
@@ -166,22 +222,9 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" --timeout \"{timeout}\"");
         }
 
-        static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
+        string SyntaxSpecificFileNameExtension(string fileName, RunningDeployment deployment, ScriptSyntax syntax)
         {
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
-            
-            var tillerTimeout = deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout);
-            if (!int.TryParse(tillerTimeout, out _))
-            {
-                throw new CommandException($"Tiller timeout period is not a valid integer: {tillerTimeout}");
-            }
-
-            sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
-        }
-
-        string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
-        {
-            return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
+            return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? $"{fileName}.ps1" : $"{fileName}.sh");
         }
 
         static string GetReleaseName(CalamariVariableDictionary variables)

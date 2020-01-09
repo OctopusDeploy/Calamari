@@ -118,9 +118,9 @@ namespace Calamari.Terraform
 
             var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
                 arguments, TemplateDirectory, environmentVar);
-            
-            var commandOutput = new CaptureOutput(output ?? new ConsoleCommandOutput());
-            var cmd = new CommandLineRunner(commandOutput);
+
+            var commandOutput = new CommandCaptureOutput();
+            var cmd = new CommandLineRunner(new SplitCommandOutput(commandOutput, output ?? new ConsoleCommandOutput()));
             
             Log.Info(commandLineInvocation.ToString());
             
@@ -160,28 +160,6 @@ namespace Calamari.Terraform
                 }
 
                 ExecuteCommandInternal($"workspace new \"{Workspace}\"", out _).VerifySuccess();
-            }
-        }
-
-        class CaptureOutput : ICommandOutput
-        {
-            readonly ICommandOutput decorated;
-
-            public CaptureOutput(ICommandOutput decorated)
-            {
-                this.decorated = decorated;
-            }
-            public List<string> Infos { get; } = new List<string>();
-
-            public void WriteInfo(string line)
-            {
-                Infos.Add(line);
-                decorated.WriteInfo(line);
-            }
-
-            public void WriteError(string line)
-            {
-                decorated.WriteError(line);
             }
         }
 

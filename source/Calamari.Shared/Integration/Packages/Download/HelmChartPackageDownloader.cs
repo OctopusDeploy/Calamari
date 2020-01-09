@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
+using Calamari.Util;
 using Octopus.Versioning;
 #if SUPPORTS_POLLY
 using Polly;
@@ -13,12 +14,6 @@ namespace Calamari.Integration.Packages.Download
 {
     public class HelmChartPackageDownloader: IPackageDownloader
     {
-        enum HelmVersion
-        {
-            VERSION2,
-            VERSION3
-        }
-        
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string Extension = ".tgz";
         private readonly ICalamariFileSystem fileSystem;
@@ -72,7 +67,7 @@ namespace Calamari.Integration.Packages.Download
 
                 var log = new LogWrapper();
                 
-                HelmVersion helmVersion;
+                HelmUtils.HelmVersion helmVersion;
                 try
                 {
                     helmVersion = GetHelmVersion(tempDirectory, log);
@@ -83,7 +78,7 @@ namespace Calamari.Integration.Packages.Download
                     throw new Exception("There was an error running Helm. Please ensure that the Helm client tools are installed.");
                 }
                 
-                if (helmVersion == HelmVersion.VERSION2)
+                if (helmVersion == HelmUtils.HelmVersion.Version2)
                 {
                     RunCommandsForHelm2(feedUri.ToString(), packageId, version, homeDir, stagingDir, tempDirectory, cred, log);
                 }
@@ -100,15 +95,13 @@ namespace Calamari.Integration.Packages.Download
             }
         }
         
-        HelmVersion GetHelmVersion(string directory, ILog log)
+        HelmUtils.HelmVersion GetHelmVersion(string directory, ILog log)
         {
             //eg of output for helm 2: Client: v2.16.1+gbbdfe5e
             //eg of output for helm 3: v3.0.1+g7c22ef9
             
             var versionString = InvokeWithOutput("version --client --short", directory, log, "Checking helm version");
-            var version = versionString[versionString.IndexOf('v') + 1];
-
-            return version.Equals('3') ? HelmVersion.VERSION3 : HelmVersion.VERSION2;
+            return HelmUtils.ParseHelmVersionFromHelmVersionCmdOutput(versionString);
         }
         
         void RunCommandsForHelm2(string url, string packageId, IVersion version, string homeDir, string stagingDir, string tempDirectory, NetworkCredential cred, ILog log)
