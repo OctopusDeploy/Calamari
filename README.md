@@ -48,3 +48,5 @@ After you finish merging to master to tag the Calamari NuGet package:
 * Run `git tag` and scroll to the bottom of the list to get the last known tag
 * Patch, Minor or Major Version the tag according to `<Major>.<Minor>.<Patch>`
 * `git push --tag`
+
+This will trigger our build server to build and publish a new version to feedz.io.
