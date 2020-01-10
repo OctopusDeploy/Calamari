@@ -40,7 +40,7 @@ Octopus.Server.exe service --instance <instance> --start --nologo --console
 
 ** Ensure you update your build to the latest Calamari or revert to the bundled package when you upgrade Octopus Server **
 
-## Tagging
+## Releasing
 
 After you finish merging to master to tag the Calamari NuGet package:
 
