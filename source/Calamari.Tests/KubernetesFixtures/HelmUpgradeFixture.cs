@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using Calamari.Deployment;
@@ -296,11 +296,11 @@ namespace Calamari.Tests.KubernetesFixtures
             
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            var script = "set_octopusvariable Message \"$("+ kubectlCmd +")\"\nhelm delete "+ ReleaseName +" --purge";
+            var script = "set_octopusvariable Message \"$(" + kubectlCmd + ")\"\nhelm delete " + ReleaseName;
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
-                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
+                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\nhelm delete {ReleaseName}";
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
