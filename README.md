@@ -44,9 +44,18 @@ Octopus.Server.exe service --instance <instance> --start --nologo --console
 
 After you finish merging to master to tag the Calamari NuGet package:
 
+Firstly, find out what the latest tag is. There are two ways to do this:
+
 * On your terminal, checkout `master` and `git pull` for good measure
 * Run `git tag` and scroll to the bottom of the list to get the last known tag
+
+Alternatively,
+
+* Check the last build on master as it will be pre-release version of the next `<Major>.<Minor>.<Patch>` version
+
+Finally, tag and push the new release
+
 * Patch, Minor or Major Version the tag according to `<Major>.<Minor>.<Patch>`
 * `git push --tag`
 
-This will trigger our build server to build and publish a new version to feedz.io.
+This will trigger our build server to build and publish a new version to feedz.io which can be seen here https://feedz.io/org/octopus-deploy/repository/dependencies/packages/Calamari.
