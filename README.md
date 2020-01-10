@@ -5,9 +5,8 @@ Calamari is the command-line tool invoked by Tentacle during a deployment. It kn
 You will need the .NET Core SDK `2.2`, downloadable from https://dotnet.microsoft.com/download
 
 Run `Build.cmd` to build the solution
-  
-When the solution is built, a new Calamari package is created in the `artifacts` directory.
 
+When the solution is built, a new Calamari package is created in the `artifacts` directory.
 
 ## Usage
 
@@ -41,3 +40,11 @@ Octopus.Server.exe service --instance <instance> --start --nologo --console
 
 ** Ensure you update your build to the latest Calamari or revert to the bundled package when you upgrade Octopus Server **
 
+## Tagging
+
+After you finish merging to master to tag the Calamari NuGet package:
+
+* On your terminal, checkout `master` and `git pull` for good measure
+* Run `git tag` and scroll to the bottom of the list to get the last known tag
+* Patch, Minor or Major Version the tag according to `<Major>.<Minor>.<Patch>`
+* `git push --tag`
