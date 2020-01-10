@@ -46,7 +46,6 @@ namespace Calamari.Tests.Terraform
                         using (var client = new HttpClient())
                         {
                             var json = await client.GetStringAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
-
                             var parsedJson = JObject.Parse(json);
 
                             var downloadBaseUrl = parsedJson["current_download_url"].Value<string>();
@@ -60,6 +59,7 @@ namespace Calamari.Tests.Terraform
                                 {
                                     if (!response.IsSuccessStatusCode())
                                     {
+                                        // Falback to version that we know works
                                         downloadBaseUrl = "https://releases.hashicorp.com/terraform/0.12.12/";
                                         currentVersion = "0.12.12";
                                         fileName = $"terraform_{currentVersion}_windows_amd64.zip";
@@ -68,7 +68,11 @@ namespace Calamari.Tests.Terraform
                             }
                             catch (WebException ex)
                             {
-                                Log.Error($"There was an error accessing the terraform cli. The response {ex.Response} was returned");
+                                Log.Error($"There was an error accessing the terraform cli on try #{retry.CurrentTry}. Falling back to default. {ex.Message}");
+                                if (!retry.CanRetry())
+                                {
+                                    Assert.Inconclusive("Terraform CLI cannot be downloaded on this machine.");
+                                }
                             }
                             
                             if (CalamariEnvironment.IsRunningOnNix)
