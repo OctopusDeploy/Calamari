@@ -9,7 +9,7 @@ namespace Calamari.Util
     {
         public static bool ContainsIgnoreCase(this string originalString, string value)
         {
-            return originalString.IndexOf(value, StringComparison.CurrentCultureIgnoreCase) != -1;
+            return originalString.IndexOf(value, StringComparison.InvariantCultureIgnoreCase) != -1;
         }
 
         public static string EscapeSingleQuotedString(this string str) =>
