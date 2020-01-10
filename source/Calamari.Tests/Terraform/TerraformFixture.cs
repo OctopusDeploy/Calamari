@@ -18,6 +18,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
 using Newtonsoft.Json.Linq;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Tests.Terraform
 {
@@ -45,30 +46,22 @@ namespace Calamari.Tests.Terraform
                         using (var client = new HttpClient())
                         {
                             var json = await client.GetStringAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
-
                             var parsedJson = JObject.Parse(json);
 
                             var downloadBaseUrl = parsedJson["current_download_url"].Value<string>();
                             var currentVersion = parsedJson["current_version"].Value<string>();
-                            var fileName = $"terraform_{currentVersion}_windows_amd64.zip";
+                            var fileName = GetTerraformFileName(currentVersion);
 
-                            if (CalamariEnvironment.IsRunningOnNix)
+                            if (!TerraformFileAvailable(downloadBaseUrl, retry, fileName))
                             {
-                                fileName = $"terraform_{currentVersion}_linux_amd64.zip";
+                                // At times Terraform's API has been unreliable. This is a fallback
+                                // for a version we know exists.
+                                downloadBaseUrl = "https://releases.hashicorp.com/terraform/0.12.19/";
+                                currentVersion = "0.12.19";
+                                fileName = GetTerraformFileName(currentVersion);
                             }
-
-                            var zipPath = Path.Combine(Path.GetTempPath(), fileName);
-                            using (new TemporaryFile(zipPath))
-                            {
-                                using (var fileStream =
-                                    new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                                using (var stream = await client.GetStreamAsync($"{downloadBaseUrl}{fileName}"))
-                                {
-                                    await stream.CopyToAsync(fileStream);
-                                }
-
-                                ZipFile.ExtractToDirectory(zipPath, destination);
-                            }
+                            
+                            await DownloadTerraform(fileName, client, downloadBaseUrl, destination);
                         }
 
                         customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault();
@@ -102,6 +95,48 @@ namespace Calamari.Tests.Terraform
             }
 
             await DownloadCli(destinationDirectoryName);
+        }
+        
+        static string GetTerraformFileName(string currentVersion)
+        {
+            return CalamariEnvironment.IsRunningOnNix
+                ? $"terraform_{currentVersion}_linux_amd64.zip"
+                : $"terraform_{currentVersion}_windows_amd64.zip";
+        }
+        
+        static bool TerraformFileAvailable(string downloadBaseUrl, RetryTracker retry, string fileName)
+        {
+            try
+            {
+                var request = WebRequest.Create($"{downloadBaseUrl}{fileName}");
+                request.Method = "HEAD";
+
+                using (request.GetResponse())
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"There was an error accessing the terraform cli on try #{retry.CurrentTry}. Falling back to default. {ex.Message}");
+                return false;
+            }
+        }
+
+        static async Task DownloadTerraform(string fileName, HttpClient client, string downloadBaseUrl, string destination)
+        {
+            var zipPath = Path.Combine(Path.GetTempPath(), fileName);
+            using (new TemporaryFile(zipPath))
+            {
+                using (var fileStream =
+                    new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var stream = await client.GetStreamAsync($"{downloadBaseUrl}{fileName}"))
+                {
+                    await stream.CopyToAsync(fileStream);
+                }
+
+                ZipFile.ExtractToDirectory(zipPath, destination);
+            }
         }
 
         [Test]
