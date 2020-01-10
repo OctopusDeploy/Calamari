@@ -41,7 +41,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             using (var client = clientFactory())
             {
-                if (await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistAsync(client, bucketName))
+                if (await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(client, bucketName))
                 {
                     Log.Verbose($"Bucket {bucketName} exists in region {awsEnvironmentGeneration.AwsRegion}. Skipping creation.");
                     return;
