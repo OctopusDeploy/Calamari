@@ -50,48 +50,18 @@ namespace Calamari.Tests.Terraform
 
                             var downloadBaseUrl = parsedJson["current_download_url"].Value<string>();
                             var currentVersion = parsedJson["current_version"].Value<string>();
-                            var fileName = $"terraform_{currentVersion}_windows_amd64.zip";
-                            
-                            try
-                            {
-                                var request = WebRequest.Create($"{downloadBaseUrl}{fileName}");
-                                using (var response = (HttpWebResponse)request.GetResponse())
-                                {
-                                    if (!response.IsSuccessStatusCode())
-                                    {
-                                        // Falback to version that we know works
-                                        downloadBaseUrl = "https://releases.hashicorp.com/terraform/0.12.12/";
-                                        currentVersion = "0.12.12";
-                                        fileName = $"terraform_{currentVersion}_windows_amd64.zip";
-                                    }
-                                }
-                            }
-                            catch (WebException ex)
-                            {
-                                Log.Error($"There was an error accessing the terraform cli on try #{retry.CurrentTry}. Falling back to default. {ex.Message}");
-                                if (!retry.CanRetry())
-                                {
-                                    Assert.Inconclusive("Terraform CLI cannot be downloaded on this machine.");
-                                }
-                            }
-                            
-                            if (CalamariEnvironment.IsRunningOnNix)
-                            {
-                                fileName = $"terraform_{currentVersion}_linux_amd64.zip";
-                            }
-                            
-                            var zipPath = Path.Combine(Path.GetTempPath(), fileName);
-                            using (new TemporaryFile(zipPath))
-                            {
-                                using (var fileStream =
-                                    new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                                using (var stream = await client.GetStreamAsync($"{downloadBaseUrl}{fileName}"))
-                                {
-                                    await stream.CopyToAsync(fileStream);
-                                }
+                            var fileName = GetTerraformFileName(currentVersion);
 
-                                ZipFile.ExtractToDirectory(zipPath, destination);
+                            if (!TerraformFileAvailable(downloadBaseUrl, retry, fileName))
+                            {
+                                // At times Terraform's API has been unreliable. This is a fallback
+                                // for a version we know exists.
+                                downloadBaseUrl = "https://releases.hashicorp.com/terraform/0.12.19/";
+                                currentVersion = "0.12.19";
+                                fileName = GetTerraformFileName(currentVersion);
                             }
+                            
+                            await DownloadTerraform(fileName, client, downloadBaseUrl, destination);
                         }
 
                         customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault();
@@ -125,6 +95,48 @@ namespace Calamari.Tests.Terraform
             }
 
             await DownloadCli(destinationDirectoryName);
+        }
+        
+        static string GetTerraformFileName(string currentVersion)
+        {
+            return CalamariEnvironment.IsRunningOnNix
+                ? $"terraform_{currentVersion}_linux_amd64.zip"
+                : $"terraform_{currentVersion}_windows_amd64.zip";
+        }
+        
+        static bool TerraformFileAvailable(string downloadBaseUrl, RetryTracker retry, string fileName)
+        {
+            try
+            {
+                var request = WebRequest.Create($"{downloadBaseUrl}{fileName}");
+                request.Method = "HEAD";
+
+                using (request.GetResponse())
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"There was an error accessing the terraform cli on try #{retry.CurrentTry}. Falling back to default. {ex.Message}");
+                return false;
+            }
+        }
+
+        static async Task DownloadTerraform(string fileName, HttpClient client, string downloadBaseUrl, string destination)
+        {
+            var zipPath = Path.Combine(Path.GetTempPath(), fileName);
+            using (new TemporaryFile(zipPath))
+            {
+                using (var fileStream =
+                    new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var stream = await client.GetStreamAsync($"{downloadBaseUrl}{fileName}"))
+                {
+                    await stream.CopyToAsync(fileStream);
+                }
+
+                ZipFile.ExtractToDirectory(zipPath, destination);
+            }
         }
 
         [Test]
