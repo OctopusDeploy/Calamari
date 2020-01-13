@@ -66,27 +66,7 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 var log = new LogWrapper();
-                
-                HelmUtils.HelmVersion helmVersion;
-                try
-                {
-                    helmVersion = GetHelmVersion(tempDirectory, log);
-                }
-                catch (Exception ex)
-                {
-                    log.Verbose(ex.Message);
-                    throw new Exception("There was an error running Helm. Please ensure that the Helm client tools are installed.");
-                }
-                
-                if (helmVersion == HelmUtils.HelmVersion.Version2)
-                {
-                    RunCommandsForHelm2(feedUri.ToString(), packageId, version, homeDir, stagingDir, tempDirectory, cred, log);
-                }
-                else
-                {
-                    RunCommandsForHelm3(feedUri.ToString(), packageId, version, stagingDir, tempDirectory, cred, log);
-                }
-                
+
                 var localDownloadName =
                     Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
 
@@ -94,16 +74,7 @@ namespace Calamari.Integration.Packages.Download
                 return PackagePhysicalFileMetadata.Build(localDownloadName);
             }
         }
-        
-        HelmUtils.HelmVersion GetHelmVersion(string directory, ILog log)
-        {
-            //eg of output for helm 2: Client: v2.16.1+gbbdfe5e
-            //eg of output for helm 3: v3.0.1+g7c22ef9
-            
-            var versionString = InvokeWithOutput("version --client --short", directory, log, "Checking helm version");
-            return HelmUtils.ParseHelmVersionFromHelmVersionCmdOutput(versionString);
-        }
-        
+
         void RunCommandsForHelm2(string url, string packageId, IVersion version, string homeDir, string stagingDir, string tempDirectory, NetworkCredential cred, ILog log)
         {
             InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only --debug", tempDirectory, log, "initialise"));

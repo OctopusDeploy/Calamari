@@ -59,167 +59,22 @@ namespace Calamari.Kubernetes.Conventions
         {
             var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
-            
-            var sb = new StringBuilder();
 
-            HelmUtils.HelmVersion helmVersion = GetHelmVersion(deployment, syntax);
+            var helmCommandBuilder = HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(fileSystem, deployment.Variables, deployment.CurrentDirectory)
+                    .SetExecutable(deployment.Variables)
+                    .WithCommand("upgrade")
+                    .Install()
+                    .NamespaceFromSpecialVariable(deployment)
+                    .ResetValuesFromSpecialVariableFlag(deployment)
+                    .TillerTimeoutFromSpecialVariable(deployment)
+                    .TillerNamespaceFromSpecialVariable(deployment)
+                    .TimeoutFromSpecialVariable(deployment)
+                    .ValuesFromSpecialVariable(deployment, fileSystem)
+                    .AdditionalArgumentsFromSpecialVariable(deployment)
+                    .AdditionalArguments($" \"{releaseName}\" \"{packagePath}\"");
 
-            SetExecutable(deployment, sb, syntax);
-            sb.Append($" upgrade --install");
-            SetNamespaceParameter(deployment, sb);
-            SetResetValuesParameter(deployment, sb);
-            SetTillerTimeoutParameter(deployment, sb, helmVersion);
-            SetTillerNamespaceParameter(deployment, sb, helmVersion);
-            SetTimeoutParameter(deployment, sb);
-            SetValuesParameters(deployment, sb);
-            SetAdditionalArguments(deployment, sb);
-            sb.Append($" \"{releaseName}\" \"{packagePath}\"");
-
-            Log.Verbose(sb.ToString());
-            return sb.ToString();
-        }
-
-        HelmUtils.HelmVersion GetHelmVersion(RunningDeployment deployment, ScriptSyntax syntax)
-        {
-            var sb = new StringBuilder();
-            SetExecutable(deployment, sb, syntax);
-
-            sb.Append(" version --client --short");
-            
-            var fileName = SyntaxSpecificFileNameExtension("Calamari.HelmVersion", deployment, syntax);
-
-            using (new TemporaryFile(fileName))
-            {
-                fileSystem.OverwriteFile(fileName, sb.ToString());
-                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
-                if (result.ExitCode != 0)
-                {
-                    throw new CommandException(string.Format(
-                        "Helm Upgrade returned non-zero exit code: {0}. Deployment terminated.", result.ExitCode));
-                }
-
-                if (result.HasErrors &&
-                    deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
-                {
-                    throw new CommandException(
-                        $"Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
-                }
-            }
-
-            string cmdOutput = commandCaptureOutput.Infos[commandCaptureOutput.Infos.Count - 1];
-            return HelmUtils.ParseHelmVersionFromHelmVersionCmdOutput(cmdOutput);
-        }
-
-        void SetExecutable(RunningDeployment deployment, StringBuilder sb, ScriptSyntax syntax)
-        {
-            var helmExecutable = deployment.Variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
-            if (!string.IsNullOrWhiteSpace(helmExecutable))
-            {
-                if (deployment.Variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
-                        .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
-                {
-                    helmExecutable = Path.Combine(SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable);
-                    Log.Info(
-                        $"Using custom helm executable at {helmExecutable} from inside package. Full path at {Path.GetFullPath(helmExecutable)}");
-                }
-                else
-                {
-                    Log.Info($"Using custom helm executable at {helmExecutable}");
-                }
-
-                // With PowerShell we need to invoke custom executables
-                sb.Append(syntax == ScriptSyntax.PowerShell ? ". " : $"chmod +x \"{helmExecutable}\"\n");
-                sb.Append($"\"{helmExecutable}\"");
-            }
-            else
-            {
-                sb.Append("helm");
-            }
-        }
-
-        static void SetNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
-        {
-            var @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
-            if (!string.IsNullOrWhiteSpace(@namespace))
-            {
-                sb.Append($" --namespace \"{@namespace}\"");
-            }
-        }
-
-        static void SetResetValuesParameter(RunningDeployment deployment, StringBuilder sb)
-        {
-            if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
-            {
-                sb.Append(" --reset-values");
-            }
-        }
-
-        void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
-        {
-            foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
-            {
-                sb.Append($" --values \"{additionalValuesFile}\"");
-            }
-
-            if (TryAddRawValuesYaml(deployment, out var rawValuesFile))
-            {
-                sb.Append($" --values \"{rawValuesFile}\"");
-            }
-
-            if (TryGenerateVariablesFile(deployment, out var valuesFile))
-            {
-                sb.Append($" --values \"{valuesFile}\"");
-            }
-        }
-
-        void SetAdditionalArguments(RunningDeployment deployment, StringBuilder sb)
-        {
-            var additionalArguments = deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments);
-
-            if (!string.IsNullOrWhiteSpace(additionalArguments))
-            {
-                sb.Append($" {additionalArguments}");
-            }
-        }
-
-        //Tiller only required in Helm 2
-        static void SetTillerNamespaceParameter(RunningDeployment deployment, StringBuilder sb, HelmUtils.HelmVersion helmVersion)
-        {
-            if (helmVersion != HelmUtils.HelmVersion.Version2) return;
-            
-            if (deployment.Variables.IsSet(SpecialVariables.Helm.TillerNamespace))
-            {
-                sb.Append($" --tiller-namespace \"{deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace)}\"");
-            }
-        }
-        
-        //Tiller only required in Helm 2
-        static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb, HelmUtils.HelmVersion helmVersion)
-        {
-            if (helmVersion != HelmUtils.HelmVersion.Version2) return;
-            
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
-            
-            var tillerTimeout = deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout);
-            if (!int.TryParse(tillerTimeout, out _))
-            {
-                throw new CommandException($"Tiller timeout period is not a valid integer: {tillerTimeout}");
-            }
-
-            sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
-        }
-
-        static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
-        {
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
-            
-            var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
-            if (!int.TryParse(timeout, out _))
-            {
-                throw new CommandException($"Timeout period is not a valid integer: {timeout}");
-            }
-
-            sb.Append($" --timeout \"{timeout}\"");
+            Log.Verbose(helmCommandBuilder.Build());
+            return helmCommandBuilder.Build();
         }
 
         string SyntaxSpecificFileNameExtension(string fileName, RunningDeployment deployment, ScriptSyntax syntax)
@@ -242,45 +97,6 @@ namespace Calamari.Kubernetes.Conventions
             return releaseName;
         }
 
-        IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
-        {
-            var variables = deployment.Variables;
-            var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
-            foreach (var packageReferenceName in packageReferenceNames)
-            {
-                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
-                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
-                
-                foreach (var providedPath in paths)
-                {
-                    var packageId = variables.Get(Deployment.SpecialVariables.Packages.PackageId(packageReferenceName));
-                    var version = variables.Get(Deployment.SpecialVariables.Packages.PackageVersion(packageReferenceName));
-                    var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
-                    var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
-
-                    if (!files.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory 
-                    {
-                        Log.Verbose($"Unable to find values files at path `{providedPath}`. " +
-                                    $"Chart package contains root directory with chart name, so looking for values in there.");
-                        var chartRelativePath = Path.Combine(fileSystem.RemoveInvalidFileNameChars(packageId), relativePath);
-                        files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
-                    }
-
-                    if (!files.Any())
-                    {
-                        throw new CommandException($"Unable to find file `{providedPath}` for package {packageId} v{version}");
-                    }
-                    
-                    foreach (var file in files)
-                    {
-                        var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                        Log.Info($"Including values file `{relative}` from package {packageId} v{version}");
-                        yield return Path.GetFullPath(file);
-                    }
-                }
-            }
-        }
-
         string GetChartLocation(RunningDeployment deployment)
         {
             var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
@@ -299,37 +115,6 @@ namespace Calamari.Kubernetes.Conventions
             }
 
             return packagePath;
-        }
-
-        static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
-        {
-            fileName = null;
-            var yaml = deployment.Variables.Get(SpecialVariables.Helm.YamlValues);
-            if (!string.IsNullOrWhiteSpace(yaml))
-            {
-                fileName = Path.Combine(deployment.CurrentDirectory, "rawYamlValues.yaml");
-                File.WriteAllText(fileName, yaml);
-                return true;
-            }
-
-            return false;
-        }
-
-        static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
-        {
-            fileName = null;
-            var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
-            var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(variables);
-
-            if (!values.Any())
-            {
-                return false;
-            }
-            
-            fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
-            File.WriteAllText(fileName, RawValuesToYamlConverter.Convert(values));
-            return true;
-
         }
     }
 }

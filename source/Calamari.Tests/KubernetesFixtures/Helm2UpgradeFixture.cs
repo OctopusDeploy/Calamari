@@ -6,16 +6,19 @@ using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using  Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Kubernetes;
 using Calamari.Tests.Fixtures;
 using NUnit.Framework;
 using Octostache;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    public class HelmUpgradeFixture : CalamariFixture
+    public class Helm2UpgradeFixture : CalamariFixture
     {
         static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
+
         static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
 
         ICalamariFileSystem FileSystem { get; set; }
@@ -60,7 +63,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(Kubernetes.SpecialVariables.Namespace, Namespace);
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
             Variables.Set(SpecialVariables.Account.Token, ClusterToken);
-            
+
             AddPostDeployMessageCheckAndCleanup();
         }
 
@@ -72,13 +75,12 @@ namespace Calamari.Tests.KubernetesFixtures
         public void Upgrade_Succeeds()
         {
             var result = DeployPackage();
-
-            //res.AssertOutputMatches("NAME:   mynewrelease"); //Does not appear on upgrades, only installs
+            
             result.AssertSuccess();
-            result.AssertOutputMatches($"NAMESPACE: {Namespace}");
-            result.AssertOutputMatches("STATUS: DEPLOYED");
-            result.AssertOutputMatches(ConfigMapName);
-            result.AssertOutputMatches($"release \"{ReleaseName}\" deleted");
+            result.AssertOutputMatchesCaseInsensitive($"NAMESPACE: {Namespace}");
+            result.AssertOutputMatchesCaseInsensitive("STATUS: DEPLOYED");
+            result.AssertOutputMatchesCaseInsensitive(ConfigMapName);
+            result.AssertOutputMatchesCaseInsensitive($"release \"{ReleaseName}\" deleted");
             result.AssertNoOutput("Using custom helm executable at");
             
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
@@ -230,6 +232,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 var customLocation = platformFile + Path.DirectorySeparatorChar +"helm";
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
 
+                AddPostDeployMessageCheckAndCleanup(null, false, true);
+
                 var result = DeployPackage();
                 result.AssertSuccess();
                 result.AssertOutput("Using custom helm executable at");
@@ -283,7 +287,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches("helm upgrade (.*) --dry-run");
         }
 
-        void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false)
+        void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false, bool isUsingCustomPackage = false)
         {
             if (dryRun)
             {
@@ -292,15 +296,21 @@ namespace Calamari.Tests.KubernetesFixtures
                 return;
             }
             
-            var @namespace = explicitNamespace ?? Namespace; 
-            
+            var @namespace = explicitNamespace ?? Namespace;
+
+            var helmDeleteCommand = isUsingCustomPackage ? new Helm2CommandBuilder() : HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(FileSystem, Variables);
+            helmDeleteCommand
+                .WithCommand("delete")
+                .Purge()
+                .AdditionalArguments($"\"{ReleaseName}\"");
+
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            var script = "set_octopusvariable Message \"$(" + kubectlCmd + ")\"\nhelm delete " + ReleaseName;
+            var script = $"set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{helmDeleteCommand.Build()}";
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
-                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\nhelm delete {ReleaseName}";
+                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\n{helmDeleteCommand.Build()}";
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);

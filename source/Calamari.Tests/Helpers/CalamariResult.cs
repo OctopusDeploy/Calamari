@@ -155,6 +155,14 @@ namespace Calamari.Tests.Helpers
 
             Assert.That(allOutput, Does.Match(regex), message);
         }
+        
+        public void AssertOutputMatchesCaseInsensitive(string regex, string message = null)
+        {
+            regex = regex.ToLower();
+            var allOutput = string.Join(Environment.NewLine, captured.Infos).ToLower();
+
+            Assert.That(allOutput, Does.Match(regex), message);
+        }
 
         public void AssertNoOutputMatches(string regex)
         {
