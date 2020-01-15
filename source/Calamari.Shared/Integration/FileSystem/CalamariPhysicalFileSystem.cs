@@ -457,7 +457,7 @@ namespace Calamari.Integration.FileSystem
                 File.Copy(temporaryReplacement, originalFile, true);
             else
             {
-                System.IO.File.Replace(temporaryReplacement, originalFile, backup);
+                System.IO.File.Replace(temporaryReplacement, originalFile, backup, true);
             }
 
             File.Delete(temporaryReplacement);
