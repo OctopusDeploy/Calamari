@@ -575,6 +575,8 @@ if ($deployAsWebSite)
 
 	$sitePath = ("IIS:\Sites\" + $webSiteName)
 
+	$odTempBinding = ":81:od-temp.example.com"
+
 	# Create Website
 	Execute-WithRetry { 
 		Write-Verbose "Loading Site"
@@ -582,7 +584,7 @@ if ($deployAsWebSite)
 		if (!$site) { 
 			Write-Host "Site `"$webSiteName`" does not exist, creating..." 
 			$id = (dir iis:\sites | foreach {$_.id} | sort -Descending | select -first 1) + 1
-			new-item $sitePath -bindings @{protocol="http";bindingInformation=":81:od-temp.example.com"} -id $id -physicalPath $webRoot -confirm:$false
+			new-item $sitePath -bindings @{protocol="http";bindingInformation=$odTempBinding} -id $id -physicalPath $webRoot -confirm:$false
 		} else {
 			Write-Host "Site `"$webSiteName`" already exists"
 		}
@@ -619,7 +621,7 @@ if ($deployAsWebSite)
         # Merge existing bindings into the configured collection. This allows the following code to be the same regardless of this options
         $configuredBindingsLookup = Convert-ToHashTable $wsbindings
         $existingBindings = Get-ItemProperty $sitePath -name bindings
-        $bindingsToMerge = $existingBindings.Collection | where { $configuredBindingsLookup[(Get-BindingKey $_)] -eq $null } | ForEach-Object { $wsbindings.Add($_) }
+        $bindingsToMerge = $existingBindings.Collection | where { ($configuredBindingsLookup[(Get-BindingKey $_)] -eq $null) -and ($_.bindingInformation -ne $odTempBinding) } | ForEach-Object { $wsbindings.Add($_) }
     }
 
 	# Returns $true if existing IIS bindings are as specified in configuration, otherwise $false

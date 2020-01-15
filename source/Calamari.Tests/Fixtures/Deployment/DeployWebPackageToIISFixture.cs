@@ -167,7 +167,38 @@ namespace Calamari.Tests.Fixtures.Deployment
             website.Bindings.Should().Contain(b => b.EndPoint.Port == existingBindingPort, "Existing binding should remain");
             website.Bindings.Should().Contain(b => b.EndPoint.Port == 1082, "New binding should be added");
         }
-        
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        public void ShouldExcludeTempBindingWhenExistingBindingsIsMerge()
+        {
+            // The variable we are testing
+            Variables["Octopus.Action.IISWebSite.ExistingBindings"] = "merge";
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = @"[{""protocol"":""http"",""port"":1082,""host"":"""",""thumbprint"":"""",""requireSni"":false,""enabled"":true}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            website.Bindings.Count().Should().Be(1);
+            website.Bindings.Should().Contain(b => b.EndPoint.Port == 1082, "New binding should be added");
+        }
+
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldRemoveExistingBindingsByDefault()
