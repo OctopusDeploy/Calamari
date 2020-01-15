@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using Calamari.Deployment;
+﻿using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Octostache;
 
 namespace Calamari.Kubernetes

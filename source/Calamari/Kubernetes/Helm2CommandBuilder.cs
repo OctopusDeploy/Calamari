@@ -1,21 +1,12 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Calamari.Commands.Support;
+﻿using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Kubernetes.Conventions;
-using Newtonsoft.Json;
 using Octostache;
 
 namespace Calamari.Kubernetes
 {
     public class Helm2CommandBuilder : HelmCommandBuilder, IHelmCommandBuilder
     {
-
         public IHelmCommandBuilder WithCommand(string command)
         {
             CommandStringBuilder.Append(command);
@@ -27,7 +18,7 @@ namespace Calamari.Kubernetes
             CommandStringBuilder.Append(" --debug");
             return this;
         }
-        
+
         public IHelmCommandBuilder Namespace(string @namespace)
         {
             CommandStringBuilder.Append($" --namespace \"{@namespace}\"");
@@ -38,9 +29,8 @@ namespace Calamari.Kubernetes
         {
             var @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
             if (!string.IsNullOrWhiteSpace(@namespace))
-            {
                 Namespace(@namespace);
-            }
+
             return this;
         }
 
@@ -53,18 +43,15 @@ namespace Calamari.Kubernetes
         public IHelmCommandBuilder ResetValuesFromSpecialVariableFlag(RunningDeployment deployment)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
-            {
                 ResetValues();
-            }
+
             return this;
         }
 
         public IHelmCommandBuilder TillerTimeout(string tillerTimeout)
         {
             if (!int.TryParse(tillerTimeout, out _))
-            {
                 throw new CommandException($"Tiller timeout period is not a valid integer: {tillerTimeout}");
-            }
 
             CommandStringBuilder.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
             return this;
@@ -72,7 +59,9 @@ namespace Calamari.Kubernetes
 
         public IHelmCommandBuilder TillerTimeoutFromSpecialVariable(RunningDeployment deployment)
         {
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return this;;
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout))
+                return this;
 
             return TillerTimeout(deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout));
         }
@@ -86,18 +75,15 @@ namespace Calamari.Kubernetes
         public IHelmCommandBuilder TillerNamespaceFromSpecialVariable(RunningDeployment deployment)
         {
             if (deployment.Variables.IsSet(SpecialVariables.Helm.TillerNamespace))
-            {
                 TillerNamespace(deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace));
-            }
+
             return this;
         }
 
         public IHelmCommandBuilder Timeout(string timeout)
         {
             if (!int.TryParse(timeout, out _))
-            {
                 throw new CommandException($"Timeout period is not a valid integer: {timeout}");
-            }
 
             CommandStringBuilder.Append($" --timeout \"{timeout}\"");
             return this;
@@ -105,8 +91,9 @@ namespace Calamari.Kubernetes
 
         public IHelmCommandBuilder TimeoutFromSpecialVariable(RunningDeployment deployment)
         {
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return this;;
-            
+            if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout))
+                return this;
+
             Timeout(deployment.Variables.Get(SpecialVariables.Helm.Timeout));
             return this;
         }
@@ -125,14 +112,11 @@ namespace Calamari.Kubernetes
             }
 
             if (TryAddRawValuesYaml(deployment, out var rawValuesFile))
-            {
                 Values(rawValuesFile);
-            }
 
             if (TryGenerateVariablesFile(deployment, out var valuesFile))
-            {
                 Values(valuesFile);
-            }
+
             return this;
         }
 
@@ -145,11 +129,9 @@ namespace Calamari.Kubernetes
         public IHelmCommandBuilder AdditionalArgumentsFromSpecialVariable(RunningDeployment deployment)
         {
             var additionalArguments = deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments);
-
             if (!string.IsNullOrWhiteSpace(additionalArguments))
-            {
                 AdditionalArguments(additionalArguments);
-            }
+
             return this;
         }
 
@@ -158,7 +140,7 @@ namespace Calamari.Kubernetes
             CommandStringBuilder.Append(" --purge");
             return this;
         }
-        
+
         public IHelmCommandBuilder Install()
         {
             CommandStringBuilder.Append(" --install");
@@ -186,29 +168,25 @@ namespace Calamari.Kubernetes
         public IHelmCommandBuilder Destination(string destinationDirectory)
         {
             CommandStringBuilder.Append($" --destination \"{destinationDirectory}\"");
-            
             return this;
         }
 
         public IHelmCommandBuilder Username(string username)
         {
             CommandStringBuilder.Append($" --username \"{username}\"");
-            
             return this;
         }
 
         public IHelmCommandBuilder Password(string password)
         {
             CommandStringBuilder.Append($" --password \"{password}\"");
-            
             return this;
         }
-        
+
         public IHelmCommandBuilder SetExecutable(VariableDictionary variableDictionary)
         {
             HelmExecutable.Clear();
             HelmExecutable.Append(HelmBuilder.HelmExecutable(variableDictionary));
-            
             return this;
         }
 
@@ -217,7 +195,6 @@ namespace Calamari.Kubernetes
             CommandStringBuilder.Clear();
             HelmExecutable.Clear();
             HelmExecutable.Append("helm");
-
             return this;
         }
 

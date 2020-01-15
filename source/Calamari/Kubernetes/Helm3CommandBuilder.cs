@@ -1,14 +1,6 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Calamari.Commands.Support;
+﻿using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Kubernetes.Conventions;
-using Newtonsoft.Json;
 using Octostache;
 
 namespace Calamari.Kubernetes
@@ -27,7 +19,7 @@ namespace Calamari.Kubernetes
             CommandStringBuilder.Append(" --debug");
             return this;
         }
-        
+
         public IHelmCommandBuilder Namespace(string @namespace)
         {
             CommandStringBuilder.Append($" --namespace \"{@namespace}\"");
@@ -38,9 +30,8 @@ namespace Calamari.Kubernetes
         {
             var @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
             if (!string.IsNullOrWhiteSpace(@namespace))
-            {
                 Namespace(@namespace);
-            }
+
             return this;
         }
 
@@ -53,38 +44,34 @@ namespace Calamari.Kubernetes
         public IHelmCommandBuilder ResetValuesFromSpecialVariableFlag(RunningDeployment deployment)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
-            {
                 ResetValues();
-            }
             return this;
         }
 
         public IHelmCommandBuilder TillerTimeout(string tillerTimeout)
         {
-        return this;
+            return this;
         }
 
         public IHelmCommandBuilder TillerTimeoutFromSpecialVariable(RunningDeployment deployment)
         {
-        return this;
+            return this;
         }
 
         public IHelmCommandBuilder TillerNamespace(string tillerNamespace)
         {
-        return this;
+            return this;
         }
 
         public IHelmCommandBuilder TillerNamespaceFromSpecialVariable(RunningDeployment deployment)
         {
-        return this;
+            return this;
         }
 
         public IHelmCommandBuilder Timeout(string timeout)
         {
             if (!int.TryParse(timeout, out _))
-            {
                 throw new CommandException($"Timeout period is not a valid integer: {timeout}");
-            }
 
             CommandStringBuilder.Append($" --timeout \"{timeout}\"");
             return this;
@@ -92,8 +79,10 @@ namespace Calamari.Kubernetes
 
         public IHelmCommandBuilder TimeoutFromSpecialVariable(RunningDeployment deployment)
         {
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return this;;
-            
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout))
+                return this;
+
             return Timeout(deployment.Variables.Get(SpecialVariables.Helm.Timeout));
         }
 
@@ -111,14 +100,11 @@ namespace Calamari.Kubernetes
             }
 
             if (TryAddRawValuesYaml(deployment, out var rawValuesFile))
-            {
                 Values(rawValuesFile);
-            }
 
             if (TryGenerateVariablesFile(deployment, out var valuesFile))
-            {
                 Values(valuesFile);
-            }
+
             return this;
         }
 
@@ -131,19 +117,17 @@ namespace Calamari.Kubernetes
         public IHelmCommandBuilder AdditionalArgumentsFromSpecialVariable(RunningDeployment deployment)
         {
             var additionalArguments = deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments);
-
             if (!string.IsNullOrWhiteSpace(additionalArguments))
-            {
                 AdditionalArguments(additionalArguments);
-            }
+
             return this;
         }
-        
+
         public IHelmCommandBuilder Purge()
         {
             return this;
         }
-        
+
         public IHelmCommandBuilder Install()
         {
             CommandStringBuilder.Append(" --install");
@@ -185,24 +169,22 @@ namespace Calamari.Kubernetes
             CommandStringBuilder.Append($" --password \"{password}\"");
             return this;
         }
-        
+
         public IHelmCommandBuilder SetExecutable(VariableDictionary variableDictionary)
         {
             HelmExecutable.Clear();
             HelmExecutable.Append(HelmBuilder.HelmExecutable(variableDictionary));
-            
             return this;
         }
-        
+
         public IHelmCommandBuilder Reset()
         {
             CommandStringBuilder.Clear();
             HelmExecutable.Clear();
             HelmExecutable.Append("helm");
-
             return this;
         }
-        
+
         public string Build()
         {
             return $"{HelmExecutable} {CommandStringBuilder}";

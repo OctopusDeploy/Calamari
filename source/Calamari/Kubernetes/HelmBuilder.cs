@@ -4,35 +4,34 @@ using System.IO;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Util;
 using Octostache;
-using SharpCompress.Common;
 
 namespace Calamari.Kubernetes
 {
     public static class HelmBuilder
     {
-
         public static IHelmCommandBuilder GetHelmCommandBuilderForInstalledHelmVersion(ICalamariFileSystem fileSystem, VariableDictionary variableDictionary, string workingDirectory = "")
         {
-            //var workingDirectory = fileSystem.CreateTemporaryDirectory();
-            
             var info = new ProcessStartInfo(HelmExecutable(variableDictionary), "version --client --short")
             {
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
-                WorkingDirectory =  workingDirectory
+                WorkingDirectory = workingDirectory
             };
-            
+
             var stdOutVersion = "";
 
             var sw = Stopwatch.StartNew();
             var timeout = TimeSpan.FromSeconds(30);
             using (var server = Process.Start(info))
             {
+                if (server == null)
+                    throw new CommandException("Failed to start helm process.");
+
                 while (!server.WaitForExit(10000) && sw.Elapsed < timeout)
                 {
                     Log.Warn($"Still waiting for {info.FileName} {info.Arguments} [PID:{server.Id}] to exit after waiting {sw.Elapsed}...");
@@ -40,15 +39,11 @@ namespace Calamari.Kubernetes
 
                 stdOutVersion = server.StandardOutput.ReadToEnd();
                 if (!string.IsNullOrWhiteSpace(stdOutVersion))
-                {
                     Log.Verbose(stdOutVersion);
-                }
 
                 var stderr = server.StandardError.ReadToEnd();
                 if (!string.IsNullOrWhiteSpace(stderr))
-                {
                     Log.Error(stderr);
-                }
 
                 if (!server.HasExited)
                 {
@@ -57,24 +52,22 @@ namespace Calamari.Kubernetes
                 }
 
                 if (server.ExitCode != 0)
-                {
                     throw new CommandException($"Helm failed to get the version (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
-                }
             }
-            
-            if (stdOutVersion.IndexOf('v') < 0)
-            {
-                throw new InvalidFormatException(
-                    $"Version output of {stdOutVersion} cannot be parsed into helm version as it's of invalid format");
-            }
-            var version = stdOutVersion[stdOutVersion.IndexOf('v') + 1];
 
-            if (version.Equals('3')) return new Helm3CommandBuilder();
-            return new Helm2CommandBuilder();
-            
+            var helmVersion = HelmHelper.GetHelmVersion(stdOutVersion);
+            switch (helmVersion)
+            {
+                case HelmVersion.Version2:
+                    return new Helm2CommandBuilder();
+                case HelmVersion.Version3:
+                    return new Helm3CommandBuilder();
+                default:
+                    throw new CommandException($"Unsupported helm version '{helmVersion}'");
+            }
         }
 
-        public static String HelmExecutable(VariableDictionary variableDictionary)
+        public static string HelmExecutable(VariableDictionary variableDictionary)
         {
             var helmExecutableStringBuilder = new StringBuilder();
             var helmExecutable = variableDictionary.Get(SpecialVariables.Helm.CustomHelmExecutable);
