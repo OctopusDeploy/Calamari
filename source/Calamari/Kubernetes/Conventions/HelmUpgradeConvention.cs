@@ -87,8 +87,9 @@ namespace Calamari.Kubernetes.Conventions
         string GetChartLocation(RunningDeployment deployment)
         {
             var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
-            if (fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
-                return Path.Combine(packagePath, "Chart.yaml");
+            var chartYamlPath = Path.Combine(packagePath, "Chart.yaml");
+            if (fileSystem.FileExists(chartYamlPath))
+                return chartYamlPath;
 
             var packageId = deployment.Variables.Get(Deployment.SpecialVariables.Package.NuGetPackageId);
             packagePath = Path.Combine(packagePath, packageId);

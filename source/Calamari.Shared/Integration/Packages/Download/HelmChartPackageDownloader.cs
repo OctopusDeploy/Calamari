@@ -72,6 +72,7 @@ namespace Calamari.Integration.Packages.Download
                     log.Verbose(ex.Message);
                     throw new CommandException("There was an error running Helm. Please ensure that the Helm client tools are installed.");
                 }
+                log.Verbose($"Using helm {helmVersion}");
 
                 var cred = feedCredentials.GetCredential(feedUri, "basic");
                 switch (helmVersion)
@@ -103,13 +104,8 @@ namespace Calamari.Integration.Packages.Download
 
         void RunCommandsForHelm3(string url, string packageId, IVersion version, string stagingDir, string directory, NetworkCredential cred, ILog log)
         {
-            InvokeWithRetry(() =>
-                Invoke(
-                    $"repo add {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {url}",
-                    directory, log, "add the chart repository"));
-            InvokeWithRetry(() =>
-                Invoke($"pull --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}",
-                    directory, log, "download the chart"));
+            InvokeWithRetry(() => Invoke($"repo add {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {url}", directory, log, "add the chart repository"));
+            InvokeWithRetry(() => Invoke($"pull --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}", directory, log, "download the chart"));
         }
 
 #if SUPPORTS_POLLY

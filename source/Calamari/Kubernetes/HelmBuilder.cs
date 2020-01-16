@@ -56,6 +56,7 @@ namespace Calamari.Kubernetes
             }
 
             var helmVersion = HelmHelper.GetHelmVersion(stdOutVersion);
+            Log.Verbose($"Using helm {helmVersion}");
             switch (helmVersion)
             {
                 case HelmVersion.Version2:
