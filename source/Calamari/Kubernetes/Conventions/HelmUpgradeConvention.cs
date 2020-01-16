@@ -44,7 +44,7 @@ namespace Calamari.Kubernetes.Conventions
             var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
 
-            //var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            //TODO: markse - the problem with "access denied" is happening here, where the HelmBuilder tries to execute to determine version.
             var helmCommandBuilder = HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(deployment.Variables, deployment.CurrentDirectory)
                     .SetExecutable(deployment.Variables)
                     .WithCommand("upgrade")
