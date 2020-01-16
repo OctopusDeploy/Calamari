@@ -61,9 +61,9 @@ namespace Calamari.Integration.Packages
         }
 
         /// <summary>
-        ///  Old school parser for those file not yet sourced directly from the cache.
+        /// Old school parser for those file not yet sourced directly from the cache.
         /// Expects pattern {PackageId}.{Version}.{Extension}
-        /// Issue with extension parser if pre-release tag is present where two part extendsions are incorrectly split.
+        /// Issue with extension parser if pre-release tag is present where two part extensions are incorrectly split.
         /// e.g. MyApp.1.0.0-beta.tar.gz  => .tar forms part of pre-release tag and not extension
         /// </summary>
         /// <param name="fileName"></param>

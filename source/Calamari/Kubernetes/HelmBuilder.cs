@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Calamari.Commands.Support;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 using Octostache;
@@ -12,7 +11,7 @@ namespace Calamari.Kubernetes
 {
     public static class HelmBuilder
     {
-        public static IHelmCommandBuilder GetHelmCommandBuilderForInstalledHelmVersion(ICalamariFileSystem fileSystem, VariableDictionary variableDictionary, string workingDirectory = "")
+        public static IHelmCommandBuilder GetHelmCommandBuilderForInstalledHelmVersion(VariableDictionary variableDictionary, string workingDirectory)
         {
             var info = new ProcessStartInfo(HelmExecutable(variableDictionary), "version --client --short")
             {

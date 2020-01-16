@@ -4,7 +4,7 @@ using System.Net;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
-using  Calamari.Integration.Processes;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Kubernetes;
 using Calamari.Tests.Fixtures;
@@ -53,7 +53,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "0.3.7");
             Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.NuGetPackageId}}}");
             Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.NuGetPackageVersion}}}");
-            
+
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
 
@@ -75,14 +75,14 @@ namespace Calamari.Tests.KubernetesFixtures
         public void Upgrade_Succeeds()
         {
             var result = DeployPackage();
-            
+
             result.AssertSuccess();
             result.AssertOutputMatchesCaseInsensitive($"NAMESPACE: {Namespace}");
             result.AssertOutputMatchesCaseInsensitive("STATUS: DEPLOYED");
             result.AssertOutputMatchesCaseInsensitive(ConfigMapName);
             result.AssertOutputMatchesCaseInsensitive($"release \"{ReleaseName}\" deleted");
             result.AssertNoOutput("Using custom helm executable at");
-            
+
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
 
@@ -94,9 +94,9 @@ namespace Calamari.Tests.KubernetesFixtures
         public void NoValues_EmbededValuesUsed()
         {
             var result = DeployPackage();
-            
+
             result.AssertSuccess();
-            
+
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
 
@@ -135,7 +135,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -144,13 +144,13 @@ namespace Calamari.Tests.KubernetesFixtures
         public void ValuesFromChartPackage_NewValuesUsed()
         {
             //Additional Package
-            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), Path.Combine("mychart","secondary.Development.yaml"));
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), Path.Combine("mychart", "secondary.Development.yaml"));
 
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -165,7 +165,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -190,7 +190,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -211,10 +211,11 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonMacAttribute]
         [Category(TestCategory.PlatformAgnostic)]
         public void CustomDownloadedHelmExe_RelativePath()
-        {   
+        {
             var version = "2.9.1";
-            var platformFile = CalamariEnvironment.IsRunningOnWindows ?  "windows-amd64" : "linux-amd64";
+            var platformFile = CalamariEnvironment.IsRunningOnWindows ? "windows-amd64" : "linux-amd64";
             var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{platformFile}.tgz");
+
             using (new TemporaryFile(fileName))
             {
                 using (var myWebClient = new WebClient())
@@ -228,8 +229,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 Variables.Set(SpecialVariables.Packages.PackageId(customHelmExePackageId), "helmexe");
                 Variables.Set(SpecialVariables.Packages.PackageVersion(customHelmExePackageId), version);
 
-                //If package is provided then it should be treated as a relative path
-                var customLocation = platformFile + Path.DirectorySeparatorChar +"helm";
+                // If package is provided then it should be treated as a relative path
+                var customLocation = platformFile + Path.DirectorySeparatorChar + "helm";
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
 
                 AddPostDeployMessageCheckAndCleanup(null, false, true);
@@ -239,23 +240,23 @@ namespace Calamari.Tests.KubernetesFixtures
                 result.AssertOutput("Using custom helm executable at");
             }
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMacAttribute]
         [Category(TestCategory.PlatformAgnostic)]
         public void TillerNamespace_CannotFindIfRandomNamespaceUsed()
-        {   
+        {
             // We're basically just testing here that setting the tiller namespace does put the param into the cmd
             Variables.Set(Kubernetes.SpecialVariables.Helm.TillerNamespace, "random-foobar");
 
             var result = DeployPackage();
-            
+
             result.AssertFailure();
             result.AssertErrorOutput("Error: could not find tiller");
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -263,10 +264,10 @@ namespace Calamari.Tests.KubernetesFixtures
         [Category(TestCategory.PlatformAgnostic)]
         public void Namespace_Override_Used()
         {
-            const string @namespace = "calamari-testing-foo"; 
+            const string @namespace = "calamari-testing-foo";
             Variables.Set(Kubernetes.SpecialVariables.Helm.Namespace, @namespace);
-            AddPostDeployMessageCheckAndCleanup(@namespace); 
-            
+            AddPostDeployMessageCheckAndCleanup(@namespace);
+
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
@@ -287,7 +288,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches("helm upgrade (.*) --dry-run");
         }
 
-        void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false, bool isUsingCustomPackage = false)
+        void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false, bool isUsingCustomVersion2Package = false)
         {
             if (dryRun)
             {
@@ -295,22 +296,24 @@ namespace Calamari.Tests.KubernetesFixtures
                 Variables.Set(SpecialVariables.Package.EnabledFeatures, "");
                 return;
             }
-            
+
             var @namespace = explicitNamespace ?? Namespace;
 
-            var helmDeleteCommand = isUsingCustomPackage ? new Helm2CommandBuilder() : HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(FileSystem, Variables);
-            helmDeleteCommand
+            var tempDirectory = FileSystem.CreateTemporaryDirectory();
+            var helmDeleteCommandBuilder = isUsingCustomVersion2Package ? new Helm2CommandBuilder() : HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(Variables, tempDirectory);
+            helmDeleteCommandBuilder
                 .WithCommand("delete")
                 .Purge()
                 .AdditionalArguments($"\"{ReleaseName}\"");
+            var helpDeleteCommand = helmDeleteCommandBuilder.Build();
 
-            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
+            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace + " -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            var script = $"set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{helmDeleteCommand.Build()}";
+            var script = $"set_octopusvariable Message \"$({kubectlCmd})\"\n{helpDeleteCommand}";
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
-                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\n{helmDeleteCommand.Build()}";
+                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\n{helpDeleteCommand}";
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);

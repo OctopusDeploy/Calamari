@@ -47,8 +47,7 @@ namespace Calamari.Kubernetes.Commands
                 throw new CommandException("Could not find variables file: " + variablesFile);
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
-            var commandLineCapture = new CommandCaptureOutput();
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables), commandLineCapture));
+            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var substituter = new FileSubstituter(fileSystem);
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             ValidateRequiredVariables(variables);
@@ -62,7 +61,7 @@ namespace Calamari.Kubernetes.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new HelmUpgradeConvention(scriptEngine, commandLineRunner, commandLineCapture, fileSystem),
+                new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
             var deployment = new RunningDeployment(packageFile, variables);

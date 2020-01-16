@@ -14,14 +14,12 @@ namespace Calamari.Kubernetes.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
-        readonly CommandCaptureOutput commandCaptureOutput;
 
-        public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, CommandCaptureOutput commandCaptureOutput, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
         {
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
-            this.commandCaptureOutput = commandCaptureOutput;
         }
 
         public void Install(RunningDeployment deployment)
@@ -46,7 +44,8 @@ namespace Calamari.Kubernetes.Conventions
             var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
 
-            var helmCommandBuilder = HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(fileSystem, deployment.Variables, deployment.CurrentDirectory)
+            //var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            var helmCommandBuilder = HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(deployment.Variables, deployment.CurrentDirectory)
                     .SetExecutable(deployment.Variables)
                     .WithCommand("upgrade")
                     .Install()
