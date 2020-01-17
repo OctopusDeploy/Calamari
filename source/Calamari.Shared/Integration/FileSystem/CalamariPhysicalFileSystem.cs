@@ -453,18 +453,18 @@ namespace Calamari.Integration.FileSystem
         {
             var backup = originalFile + ".backup" + Guid.NewGuid();
 
-            if (!File.Exists(originalFile))
-                File.Copy(temporaryReplacement, originalFile, true);
-            else
+            if (File.Exists(originalFile))
             {
-                System.IO.File.Replace(temporaryReplacement, originalFile, backup);
+                File.Copy(originalFile, backup, true);
             }
+
+            File.Copy(temporaryReplacement, originalFile, true);
 
             File.Delete(temporaryReplacement);
             if (File.Exists(backup))
                 File.Delete(backup);
         }
-
+        
         public void WriteAllBytes(string filePath, byte[] data)
         {
             File.WriteAllBytes(filePath, data);
