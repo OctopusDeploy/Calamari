@@ -335,6 +335,7 @@ function New-OctopusArtifact
         [Alias('fullname')]
         [Alias('path')]
         [string]$fullpath,
+        [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [string]$name=""""
     )
     process
