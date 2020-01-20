@@ -1,4 +1,4 @@
-﻿param([string]$OctopusKey="")
+param([string]$OctopusKey="")
 {{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
 
@@ -567,14 +567,8 @@ function Initialize-ProxySettings() {
 	else {
 		#system proxy		
 		if ($useDefaultProxy) {
-			# The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
-			if ($proxyUri -ne $null) {
-				$proxy = New-Object System.Net.WebProxy($proxyUri)
-			}
-			else {
-				# If Tentacle is configured to use a System proxy, but there is no system proxy configured then we should configure this as if there was no proxy
-				$proxy = New-Object System.Net.WebProxy
-			}
+
+			$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
 
 			if ($hasCredentials) {
 				$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
