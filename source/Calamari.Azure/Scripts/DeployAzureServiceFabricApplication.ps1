@@ -134,7 +134,7 @@ Write-Verbose "Application Type Version: $AppTypeVersion"
 Write-Verbose "Application Name: $AppName"
 Write-Verbose "Upgrade Vetod: $UpgradeVetod"
 Write-Verbose "Force Upgrade based on Override upgrade behavior '$OverrideUpgradeBehavior': $ForceUpgrade"
-Write-Verbose "Upgrade deployment in profile: $UpgradeEnabledInProfile"
+Write-Verbose "Upgrade enabled in profile: $UpgradeEnabledInProfile"
 Write-Verbose "Found Application: '$AppTypeName' with version '$AppTypeVersion'"
 
 $parameters = @{
