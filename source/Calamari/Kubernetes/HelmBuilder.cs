@@ -13,13 +13,15 @@ namespace Calamari.Kubernetes
     {
         public static IHelmCommandBuilder GetHelmCommandBuilderForInstalledHelmVersion(VariableDictionary variableDictionary, string workingDirectory)
         {
-            var info = new ProcessStartInfo(HelmExecutable(variableDictionary), "version --client --short")
+            var info = new ProcessStartInfo(HelmExecutableFullPath(variableDictionary,workingDirectory), "version --client --short")
             {
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 WorkingDirectory = workingDirectory
+                
+
             };
 
             var stdOutVersion = "";
@@ -67,6 +69,33 @@ namespace Calamari.Kubernetes
             }
         }
 
+        public static string HelmExecutableFullPath(VariableDictionary variableDictionary, string workingDirectory)
+        {
+            var helmExecutable = variableDictionary.Get(SpecialVariables.Helm.CustomHelmExecutable);
+            if (!string.IsNullOrWhiteSpace(helmExecutable))
+            {
+                if (variableDictionary.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
+                        .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
+                {
+                    helmExecutable = Path.Combine(SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable);
+                    var fullPath = Path.GetFullPath(Path.Combine(workingDirectory, helmExecutable));
+                    Log.Info(
+                        $"Using custom helm executable at {helmExecutable} from inside package. Full path at {fullPath}");
+
+                    return fullPath;
+                }
+                else
+                {
+                    Log.Info($"Using custom helm executable at {helmExecutable}");
+                    return helmExecutable;
+                }
+            }
+            else
+            {
+                return "helm";
+            }
+        }
+        
         public static string HelmExecutable(VariableDictionary variableDictionary)
         {
             var helmExecutableStringBuilder = new StringBuilder();

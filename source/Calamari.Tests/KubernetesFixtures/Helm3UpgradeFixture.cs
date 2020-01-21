@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Tests.Helpers;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -10,6 +12,7 @@ using Calamari.Kubernetes;
 using Calamari.Tests.Fixtures;
 using NUnit.Framework;
 using Octostache;
+using SharpCompress.Archives.GZip;
 using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -24,9 +27,41 @@ namespace Calamari.Tests.KubernetesFixtures
         const string Namespace = "calamari-testing";
         const string ChartPackageName = "mychart-0.3.7.tgz";
 
+        TemporaryDirectory helm3ExecutableDirectory;
         ICalamariFileSystem FileSystem { get; set; }
         VariableDictionary Variables { get; set; }
         string StagingDirectory { get; set; }
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            DownloadHelm3Executable();
+            
+            void DownloadHelm3Executable()
+            {
+                const string version = "3.0.2";
+                var platformFile = CalamariEnvironment.IsRunningOnWindows ? "windows-amd64" : "linux-amd64";
+                var tempPath = Path.GetTempPath();
+                var fileName = Path.GetFullPath(Path.Combine(tempPath, $"helm-v{version}-{platformFile}.tgz"));
+                using (new TemporaryFile(fileName))
+                {
+                    using (var myWebClient = new WebClient())
+                    {
+                        myWebClient.DownloadFile($"https://get.helm.sh/helm-v{version}-{platformFile}.tar.gz", fileName);
+                    }
+
+                    new TarGzipPackageExtractor().Extract(fileName, tempPath, false);
+                    
+                    helm3ExecutableDirectory = new TemporaryDirectory(Path.Combine(tempPath, platformFile));
+                }
+            }
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            helm3ExecutableDirectory?.Dispose();
+        }
 
         [SetUp]
         public void SetUp()
@@ -77,7 +112,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatchesCaseInsensitive($"NAMESPACE: {Namespace}");
             result.AssertOutputMatchesCaseInsensitive("STATUS: DEPLOYED");
             result.AssertOutputMatchesCaseInsensitive($"release \"{ReleaseName}\" uninstalled");
-            result.AssertNoOutput("Using custom helm executable at");
+//            result.AssertNoOutput("Using custom helm executable at");
 
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
@@ -228,26 +263,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 AddPostDeployMessageCheckAndCleanup(null, false, true);
 
-                var result = DeployPackage();
+                var result = DeployPackage(customLocation);
                 result.AssertSuccess();
                 result.AssertOutput("Using custom helm executable at");
             }
-        }
-
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
-        [Category(TestCategory.PlatformAgnostic)]
-        public void TillerNamespace_CannotFindIfRandomNamespaceUsed()
-        {
-            // We're basically just testing here that setting the tiller namespace does put the param into the cmd
-            Variables.Set(Kubernetes.SpecialVariables.Helm.TillerNamespace, "random-foobar");
-
-            var result = DeployPackage();
-
-            result.AssertFailure();
-            result.AssertErrorOutput("Error: could not find tiller");
         }
 
         [Test]
@@ -278,7 +297,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            result.AssertOutputMatches("helm upgrade (.*) --dry-run");
+            result.AssertOutputMatches("helm(\") upgrade (.*) --dry-run");
         }
 
         void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false, bool isUsingCustomVersion3Package = false)
@@ -292,12 +311,16 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var @namespace = explicitNamespace ?? Namespace;
 
+            if (!isUsingCustomVersion3Package)
+                Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, Path.Combine(helm3ExecutableDirectory.DirectoryPath, "helm"));
+
             var tempDirectory = FileSystem.CreateTemporaryDirectory();
             var helmDeleteCommand = isUsingCustomVersion3Package ? new Helm3CommandBuilder() : HelmBuilder.GetHelmCommandBuilderForInstalledHelmVersion(Variables, tempDirectory);
             helmDeleteCommand
+                .SetExecutable(Variables)
                 .WithCommand("uninstall")
                 .Purge()
-                .Namespace(Namespace)
+                .Namespace(@namespace)
                 .AdditionalArguments($"\"{ReleaseName}\"");
 
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace + " -o jsonpath=\"{.data.myvalue}\"";
@@ -313,8 +336,11 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
         }
 
-        CalamariResult DeployPackage()
+        CalamariResult DeployPackage(string customHelmExe = null)
         {
+            if (customHelmExe == null)
+                Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, Path.Combine(helm3ExecutableDirectory.DirectoryPath, "helm"));
+            
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
                 var pkg = GetFixtureResouce("Charts", ChartPackageName);
