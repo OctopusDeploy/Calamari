@@ -122,10 +122,9 @@ $AppName = Get-ApplicationNameFromApplicationParameterFile $publishProfile.Appli
 $AppTypeAndNameExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName })
 $AppTypeAndNameAndVersionExists = $null -ne (Get-ServiceFabricApplication | ? { $_.ApplicationTypeName -eq $AppTypeName -and $_.ApplicationName -eq $AppName -and $_.ApplicationTypeVersion -eq $AppTypeVersion})
 $AppTypeAndVersionExists = $null -ne (Get-ServiceFabricApplicationType -ApplicationTypeName $AppTypeName | Where-Object { $_.ApplicationTypeVersion -eq $AppTypeVersion })
-$UpgradeEnabledInProfile = $publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled
-$UpgradeEnabled = $UpgradeEnabledInProfile -and -not ($OverrideUpgradeBehavior -eq 'VetoUpgrade')
-$ForceUpgrade = $OverrideUpgradeBehavior -eq 'ForceUpgrade'
-$requiresRegister = $false
+$UpgradeEnabledInProfile = ($null -ne $publishProfile.UpgradeDeployment) -and ($publishProfile.UpgradeDeployment.Enabled -ieq "True" -or $publishProfile.UpgradeDeployment.Enabled -eq "1")
+$UpgradeVetod = $OverrideUpgradeBehavior -eq 'VetoUpgrade'
+$ForceUpgrade = $OverrideUpgradeBehavior -eq 'ForceUpgrade' -or $UpgradeEnabledInProfile
 
 Write-Verbose "App Type Name And Version Exists: $AppTypeAndVersionExists"
 Write-Verbose "Application Type and Name Exists: $AppTypeAndNameExists"
@@ -133,8 +132,9 @@ Write-Verbose "Application Type and Name and Version Exists: $AppTypeAndNameAndV
 Write-Verbose "Application Type Name: $AppTypeName"
 Write-Verbose "Application Type Version: $AppTypeVersion"
 Write-Verbose "Application Name: $AppName"
+Write-Verbose "Upgrade Vetod: $UpgradeVetod"
 Write-Verbose "Force Upgrade based on Override upgrade behavior '$OverrideUpgradeBehavior': $ForceUpgrade"
-Write-Verbose "Upgrade enabled in profile: $UpgradeEnabledInProfile"
+Write-Verbose "Upgrade deployment in profile: $UpgradeEnabledInProfile"
 Write-Verbose "Found Application: '$AppTypeName' with version '$AppTypeVersion'"
 
 $parameters = @{
@@ -164,7 +164,7 @@ if (-not $AppTypeAndVersionExists) {
 
 # Perform an upgrade if upgrades are enabled, the app type and name exists, but the new version does not exist,
 # or if an upgrade was forced and the app type and name exists
-if ($AppTypeAndNameExists -and ($UpgradeEnabled -and -not $AppTypeAndNameAndVersionExists -or $ForceUpgrade)) {
+if ($ForceUpgrade -or ($AppTypeAndNameExists -and -not $UpgradeVetod -and -not $AppTypeAndNameAndVersionExists)) {
     if ($DeployOnly) {
         $parameters.Action = "Register"
     }
