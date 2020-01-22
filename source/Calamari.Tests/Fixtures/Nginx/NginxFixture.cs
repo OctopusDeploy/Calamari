@@ -216,7 +216,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
         
         [Test]
-        public void TestLocationsUnsitableForFilenames()
+        public void TestLocationsUnsuitableForFilenames()
         {
             /*
              * Here we have two locations based on regular expressions: '= \' and '^/[a-z]something'. While these are different

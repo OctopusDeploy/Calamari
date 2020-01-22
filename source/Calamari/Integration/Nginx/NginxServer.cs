@@ -152,7 +152,7 @@ namespace Calamari.Integration.Nginx
                 // of these will be sanitized down to an empty string.
                 var sanitizedResult = match.Value.Replace("/", "_").Trim('_');
                 // If we did not get an empty string, use the result. Otherwise fall back to the default.
-                if (!String.IsNullOrWhiteSpace(sanitizedResult)) return sanitizedResult;
+                if (!string.IsNullOrWhiteSpace(sanitizedResult)) return sanitizedResult;
             }
 
             return defaultValue;
