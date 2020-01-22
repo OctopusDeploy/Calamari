@@ -130,8 +130,13 @@ namespace Calamari.Integration.Nginx
                 var sanitizedLocationName = SanitizeLocationName(location.Path, locationIndex.ToString());
                 var locationConfFile = Path.Combine(TempConfigRootDirectory, $"{virtualServerName}.conf.d",
                     $"location.{sanitizedLocationName}.conf");
+                var defaultLocationConfFile = Path.Combine(TempConfigRootDirectory, $"{virtualServerName}.conf.d",
+                    $"location.{locationIndex}.conf");
 
-                additionalLocations.Add(locationConfFile, locationConfig);
+                additionalLocations.Add(
+                    // Don't assume sanitized means unique. If the filename is already used, fall back to the indexed filename.
+                    additionalLocations.ContainsKey(locationConfFile) ? defaultLocationConfFile : locationConfFile, 
+                    locationConfig);
                 locationIndex++;
             }
 
@@ -141,9 +146,16 @@ namespace Calamari.Integration.Nginx
         private string SanitizeLocationName(string locationPath, string defaultValue)
         {
             var match = Regex.Match(locationPath, "[a-zA-Z0-9/]+");
-            return match.Success 
-                ? match.Value.Replace("/", "_").Trim('_') 
-                : defaultValue;
+            if (match.Success)
+            {
+                // Watch out for cases where multiple locations both match a string like "/". Both
+                // of these will be sanitized down to an empty string.
+                var sanitizedResult = match.Value.Replace("/", "_").Trim('_');
+                // If we did not get an empty string, use the result. Otherwise fall back to the default.
+                if (!string.IsNullOrWhiteSpace(sanitizedResult)) return sanitizedResult;
+            }
+
+            return defaultValue;
         }
 
         public NginxServer WithRootLocation(Location location)

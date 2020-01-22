@@ -214,5 +214,38 @@ namespace Calamari.Tests.Fixtures.Nginx
             this.Assent(File.ReadAllText(rootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
             this.Assent(File.ReadAllText(apiConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.apiLocation");
         }
+        
+        [Test]
+        public void TestLocationsUnsuitableForFilenames()
+        {
+            /*
+             * Here we have two locations based on regular expressions: '= \' and '^/[a-z]something'. While these are different
+             * locations as far as NGINX is concerned, we need to be sure they are correctly converted into individual conf files
+             * after the locations are sanitized into strings suitable for filenames.
+             */
+            var additionalLocations =
+                JsonConvert.DeserializeObject<IEnumerable<Location>>(
+                    "[{\"path\":\"= /\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"index\\\":\\\"index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"}, {\"path\":\"^/[a-z]something\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"index\\\":\\\"index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"}]");
+            var rootLocation =
+                JsonConvert.DeserializeObject<Location>(
+                    "{\"path\":\"/\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"}");
+            
+            var virtualServerName = "StaticContent";
+
+            nginxServer
+                .WithVirtualServerName(virtualServerName)
+                .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpOnlyBinding),
+                    new Dictionary<string, (string, string, string)>())
+                .WithRootLocation(rootLocation)
+                .WithAdditionalLocations(additionalLocations);
+
+            nginxServer.BuildConfiguration();
+            nginxServer.SaveConfiguration(tempDirectory);
+            
+            var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf.d");
+            
+            // The two additional locations must be files in the conf.d directory 
+            Assert.IsTrue(Directory.GetFiles(nginxConfigFilePath).Length == 2);
+        }
     }
 }
