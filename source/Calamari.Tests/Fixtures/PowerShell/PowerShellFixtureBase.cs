@@ -225,20 +225,53 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldWriteServiceMessageForPipedArtifacts()
         {
             var tempPath = Path.GetTempPath(); // There is no nice platform agnostic way to do this until powershell 7 ships and is on all our test agents (this introduces a new "TEMP" drive)
-            var path = Path.Combine(tempPath, "CanCreateArtifactPipedTestFile.txt");
-            var base64Path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
+            var artifacts = Enumerable.Range(0, 3).Select(i =>
+                new Artifact(Path.Combine(tempPath, $"CanCreateArtifactPipedTestFile{i}.artifact"))).ToList();
+            foreach (var artifact in artifacts)
+            {
+                artifact.Create();
+            }
+
             try
             {
-                if (!File.Exists(path))
-                    File.WriteAllText(path, "");
-                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1", new Dictionary<string, string>() {{"TempDirectory", tempPath}});
+                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1", new Dictionary<string, string> {{"TempDirectory", tempPath}});
                 output.AssertSuccess();
-                output.AssertOutput($"##octopus[createArtifact path='{base64Path}' name='Q2FuQ3JlYXRlQXJ0aWZhY3RQaXBlZFRlc3RGaWxlLnR4dA==' length='MA==']");
+                foreach (var artifact in artifacts)
+                {
+                    var expectedPath = Convert.ToBase64String(Encoding.UTF8.GetBytes(artifact.Path));
+                    var expectedName = Convert.ToBase64String(Encoding.UTF8.GetBytes(artifact.Name));
+                    output.AssertOutput($"##octopus[createArtifact path='{expectedPath}' name='{expectedName}' length='MA==']");
+                }
+
                 AssertPowerShellEdition(output);
             }
             finally
             {
-                File.Delete(path);
+                foreach (var artifact in artifacts)
+                {
+                    artifact.Delete();
+                }
+            }
+        }
+
+        class Artifact
+        {
+            public string Name => System.IO.Path.GetFileName(Path);
+            public string Path { get; }
+
+            public Artifact(string path)
+            {
+                Path = path;
+            }
+            public void Create()
+            {
+                if (!File.Exists(Path))
+                    File.WriteAllText(Path, "");
+            }
+
+            public void Delete()
+            {
+                File.Delete(Path);
             }
         }
 
