@@ -24,30 +24,27 @@ namespace Calamari.Azure.Deployment.Conventions
                 var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
                 var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
                 var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
-                var account = AccountFactory.Create(variables);
+                var account = new AzureServicePrincipalAccount(variables);
 
-                if (account is AzureServicePrincipalAccount servicePrincipalAccount)
+                var client = account.CreateWebSiteManagementClient();
+                var site = client?.WebApps.Get(resourceGroupName, siteAndSlotName);
+                if (site != null)
                 {
-                    var client = servicePrincipalAccount.CreateWebSiteManagementClient();
-                    var site = client?.WebApps.Get(resourceGroupName, siteAndSlotName);
-                    if (site != null)
+                    var portalUrl = GetAzurePortalUrl(azureEnvironment);
+
+                    Log.Info($"Default Host Name: {site.DefaultHostName}");
+                    Log.Info($"Application state: {site.State}");
+                    Log.Info("Links:");
+                    Log.LogLink($"https://{site.DefaultHostName}");
+
+                    if (!site.HttpsOnly.HasValue || site.HttpsOnly == false)
                     {
-                        var portalUrl = GetAzurePortalUrl(azureEnvironment);
-
-                        Log.Info($"Default Host Name: {site.DefaultHostName}");
-                        Log.Info($"Application state: {site.State}");
-                        Log.Info("Links:");
-                        Log.LogLink($"https://{site.DefaultHostName}");
-
-                        if (!site.HttpsOnly.HasValue || site.HttpsOnly == false)
-                        {
-                            Log.LogLink($"http://{site.DefaultHostName}");
-                        }
-
-                        string portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
-
-                        Log.LogLink(portalUri, "View in Azure Portal");
+                        Log.LogLink($"http://{site.DefaultHostName}");
                     }
+
+                    string portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
+
+                    Log.LogLink(portalUri, "View in Azure Portal");
                 }
             }
             catch

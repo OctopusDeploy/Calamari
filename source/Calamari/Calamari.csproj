@@ -39,6 +39,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+    <ProjectReference Include="..\Calamari.Azure.CloudServices\Calamari.Azure.CloudServices.csproj" />
     <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">

@@ -4,9 +4,9 @@
     <Version>1.0.0.0</Version>
     <TargetFramework>net452</TargetFramework>
     <PlatformTarget>anycpu</PlatformTarget>
-    <AssemblyName>Calamari.Azure</AssemblyName>
+    <AssemblyName>Calamari.Azure.CloudServices</AssemblyName>
     <OutputType>Library</OutputType>
-    <PackageId>Calamari.Azure</PackageId>
+    <PackageId>Calamari.Azure.CloudServices</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <Authors>Octopus Deploy</Authors>
     <Copyright>Octopus Deploy Pty Ltd</Copyright>
@@ -16,16 +16,16 @@
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
-    <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
+    <Description>Contains the command-line Calamari tool, plus additional commands for Azure Cloud Services integration.</Description>
+    <ApplicationManifest>Calamari.Azure.CloudServices.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
     <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
-    <EmbeddedResource Include="Scripts\AzureServiceFabricContext.ps1" />
-    <EmbeddedResource Include="Scripts\DeployAzureServiceFabricApplication.ps1" />
+    <EmbeddedResource Include="Scripts\AzureCloudServiceContext.ps1" />
+    <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
+    <EmbeddedResource Include="Scripts\SwapAzureCloudServiceDeployment.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
@@ -46,7 +46,6 @@
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.10" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.10" />
-    <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
     <PackageReference Include="Microsoft.Web.Deployment" Version="3.6.0" />
     <PackageReference Include="Microsoft.WindowsAzure.Common" Version="1.4.1" />
     <PackageReference Include="Microsoft.WindowsAzure.Common.Dependencies" Version="1.1.1" />
@@ -76,7 +75,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Calamari.Azure.exe.manifest">
+    <None Update="Calamari.Azure.CloudServices.exe.manifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

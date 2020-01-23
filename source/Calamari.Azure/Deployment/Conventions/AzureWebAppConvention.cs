@@ -119,7 +119,7 @@ namespace Calamari.Azure.Deployment.Conventions
 
         private static WebDeployPublishSettings GetPublishProfile(VariableDictionary variables)
         {
-            var account = AccountFactory.Create(variables);
+            var account = new AzureServicePrincipalAccount(variables);
 
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
@@ -132,12 +132,8 @@ namespace Calamari.Azure.Deployment.Conventions
                     variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty), 
                     targetSite);
             }
-            else if (account is AzureAccount azureAccount)
-            {
-                return new WebDeployPublishSettings(targetSite.Site, ServiceManagementPublishProfileProvider.GetPublishProperties(azureAccount, targetSite));
-            }
 
-            throw new CommandException("Account type must be either Azure Management Certificate or Azure Service Principal");
+            throw new CommandException("Account type must be Azure Service Principal");
         }
 
         private static string BuildPath(AzureTargetSite site, VariableDictionary variables)

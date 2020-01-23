@@ -4,7 +4,7 @@ using Octostache;
 
 namespace Calamari.Azure.Accounts
 {
-    public class AzureServicePrincipalAccount : Account
+    public class AzureServicePrincipalAccount
     {
         public AzureServicePrincipalAccount(VariableDictionary variables)
         {
