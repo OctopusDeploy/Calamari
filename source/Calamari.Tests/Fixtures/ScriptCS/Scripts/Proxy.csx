@@ -17,3 +17,12 @@ if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         Console.WriteLine("WebRequest.DefaultProxy:None");
     }
 }
+
+var bypassUri = Environment.GetEnvironmentVariable("TEST_ONLY_PROXY_EXCEPTION_URI");
+if (!string.IsNullOrEmpty(bypassUri))
+{
+    if(System.Net.WebRequest.DefaultWebProxy.IsBypassed(new Uri(bypassUri)))
+    {
+        Console.WriteLine("ProxyBypassed:" + bypassUri);
+    }
+}
