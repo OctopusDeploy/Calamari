@@ -12,3 +12,12 @@ else
 {
     Write-Host "WebRequest.DefaultProxy:None"
 }
+
+
+if($env:TEST_ONLY_PROXY_EXCEPTION_URI) {
+    $bypassUri = New-Object Uri($env:TEST_ONLY_PROXY_EXCEPTION_URI)
+    $isProxyBypassed = [System.Net.WebRequest]::DefaultWebProxy.IsBypassed($bypassUri)
+    if ($isProxyBypassed) {
+        Write-Host "ProxyBypassed:$bypassUri"
+    }
+}
