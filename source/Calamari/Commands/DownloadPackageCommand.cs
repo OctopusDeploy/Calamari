@@ -98,6 +98,7 @@ namespace Calamari.Commands
                 Log.SetOutputVariable("StagedPackage.Hash", pkg.Hash);
                 Log.SetOutputVariable("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
                 Log.SetOutputVariable("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
+                Log.SetOutputVariable("StagedPackage.NormalizedFilename", $"{pkg.PackageId}-{pkg.Version}.{pkg.Extension}");
             }
             catch (Exception ex)
             {

@@ -200,6 +200,11 @@ namespace Calamari.Deployment
             {
                 return $"Octopus.Action.Package[{key}].PackageFilePath";
             }
+
+            public static string NormalizedFilename(string key)
+            {
+                return $"Octopus.Action.Package[{key}].NormalizedFilename";
+            }
         }
 
         public static class Vhd
