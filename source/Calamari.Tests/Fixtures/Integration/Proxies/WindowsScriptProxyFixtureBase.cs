@@ -121,7 +121,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         {
 #if !NETCORE
             AssertUnauthenticatedSystemProxyUsed(output);
-            if (IsRunningOnWindows && TestWebRequestDefaultProxy)
+            if (TestWebRequestDefaultProxy)
                 output.AssertPropertyValue("ProxyBypassed", bypassedUrl);
 #else
             base.AssertNoProxyChanges(output);

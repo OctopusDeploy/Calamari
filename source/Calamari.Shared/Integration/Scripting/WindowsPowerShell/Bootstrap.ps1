@@ -569,7 +569,7 @@ function Initialize-ProxySettings() {
 		if ($useDefaultProxy) {
 			# The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
 			if ($proxyUri -ne $null) {
-				if($Env:OS -like "Windows*"){
+				if (-not (Test-Path variable:IsWindows) -or $isWindows){
 					$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
 				}
 				else {
