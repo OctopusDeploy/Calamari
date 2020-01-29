@@ -14,7 +14,7 @@ $ErrorActionPreference = 'Stop'
 
 function Log-VersionTable
 {
-	Write-Verbose ($PSVersionTable | Out-String)
+	Write-Verbose ($PSVersionTable | Out-String -Width 200) # Calling Out-String without specify the width resulted in blank lines when running tests under MacOS for some reason
 }
 
 function Log-EnvironmentInformation
