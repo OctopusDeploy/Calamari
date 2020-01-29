@@ -569,6 +569,7 @@ function Initialize-ProxySettings() {
 		if ($useDefaultProxy) {
 			# The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
 			if ($proxyUri -ne $null) {
+				# isWindows was introduced in PSCore and is not available for standard PowerShell
 				if (-not (Test-Path variable:IsWindows) -or $isWindows){
 					$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
 				}
