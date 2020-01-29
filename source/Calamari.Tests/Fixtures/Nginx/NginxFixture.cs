@@ -230,7 +230,8 @@ namespace Calamari.Tests.Fixtures.Nginx
                 JsonConvert.DeserializeObject<Location>(
                     "{\"path\":\"/\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"}");
             
-            var virtualServerName = "StaticContent";
+            // Make sure slashes don't create nested directories. GitHub packages follow this package ID format.
+            var virtualServerName = "StaticContent/MyTest";
 
             nginxServer
                 .WithVirtualServerName(virtualServerName)
@@ -242,10 +243,15 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.BuildConfiguration();
             nginxServer.SaveConfiguration(tempDirectory);
             
-            var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf.d");
+            var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{nginxServer.VirtualServerName}.conf.d");
             
             // The two additional locations must be files in the conf.d directory 
             Assert.IsTrue(Directory.GetFiles(nginxConfigFilePath).Length == 2);
+            // Ensure there is a single file and a single directory in the nginx conf directory. This ensures that there are no unexpected subdirectories.
+            Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf")).Length == 1);
+            Assert.IsTrue(Directory.GetDirectories(Path.Combine(tempDirectory, "conf")).Length == 1);
+            // Ensure the filename matches the expected format.
+            Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf"))[0].EndsWith($"{nginxServer.VirtualServerName}.conf"));
         }
     }
 }
