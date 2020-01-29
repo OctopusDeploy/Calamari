@@ -2,7 +2,6 @@
 using Calamari.Integration.Certificates;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Management.Compute;
-using Microsoft.WindowsAzure.Management.WebSites;
 
 namespace Calamari.Azure.CloudServices.Accounts
 {
@@ -19,13 +18,6 @@ namespace Calamari.Azure.CloudServices.Accounts
             return string.IsNullOrWhiteSpace(account.ServiceManagementEndpointBaseUri)
                 ? new ComputeManagementClient(account.Credentials(certificateStore))
                 : new ComputeManagementClient(account.Credentials(certificateStore), new Uri(account.ServiceManagementEndpointBaseUri));
-        }
-
-        public static WebSiteManagementClient CreateWebSiteManagementClient(this AzureAccount account, ICertificateStore certificateStore)
-        {
-            return string.IsNullOrWhiteSpace(account.ServiceManagementEndpointBaseUri)
-                ? new WebSiteManagementClient(account.Credentials(certificateStore))
-                : new WebSiteManagementClient(account.Credentials(certificateStore), new Uri(account.ServiceManagementEndpointBaseUri));
         }
     }
 }
