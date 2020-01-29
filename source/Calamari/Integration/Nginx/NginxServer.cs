@@ -37,6 +37,10 @@ namespace Calamari.Integration.Nginx
 
         public NginxServer WithVirtualServerName(string name)
         {
+            /*
+             * Ensure package ids with chars that are invalid for file names (for example, a GitHub package is in the format
+             * "owner/repository") do not generate unexpected file names.
+             */
             VirtualServerName = String.Join("_", name.Split(
                 System.IO.Path.GetInvalidFileNameChars(),
                 StringSplitOptions.RemoveEmptyEntries));
