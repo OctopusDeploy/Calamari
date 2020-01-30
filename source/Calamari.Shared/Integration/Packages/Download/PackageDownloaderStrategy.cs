@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Net;
+using System.Net.Http;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages.Download.Helm;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octopus.Versioning;
@@ -47,7 +49,8 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new GitHubPackageDownloader();
                     break;
                 case FeedType.Helm :
-                    downloader = new HelmChartPackageDownloader(fileSystem);
+                    var cred = feedCredentials.GetCredential(feedUri, "basic");
+                    downloader = new HelmChartPackageDownloader(fileSystem, new HelmEndpointProxy(new HttpClient(), feedUri, cred.UserName, cred.Password), new HttpClient());
                     break;
                 case FeedType.Docker :
                 case FeedType.AwsElasticContainerRegistry :
