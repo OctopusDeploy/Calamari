@@ -22,9 +22,9 @@ namespace Calamari.Integration.Packages.Download
 {
     public class HelmChartPackageDownloader: IPackageDownloader
     {
-        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
+        static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string Extension = ".tgz";
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
         readonly IHelmEndpointProxy endpointProxy;
         readonly HttpClient client;
 
