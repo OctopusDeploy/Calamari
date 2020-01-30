@@ -570,7 +570,13 @@ function Initialize-ProxySettings() {
 		if ($useDefaultProxy) {
 			# The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
 			if ($proxyUri -ne $null) {
-				$proxy = New-Object System.Net.WebProxy($proxyUri)
+				# isWindows was introduced in PSCore and is not available for standard PowerShell
+				if (-not (Test-Path variable:IsWindows) -or $isWindows){
+					$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+				}
+				else {
+					$proxy = New-Object System.Net.WebProxy($proxyUri)
+				}
 			}
 			else {
 				# If Tentacle is configured to use a System proxy, but there is no system proxy configured then we should configure this as if there was no proxy
