@@ -38,9 +38,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             downloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new HelmEndpointProxy(new HttpClient(),new Uri(AuthFeedUri), FeedUsername, FeedPassword), new HttpClient());
         }
         
-        //TODO: Revisit this at a later point. Mono really doesn't want to play nice here.
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAbove(Description = "This test requires TLS 1.2, which doesn't work with mono prior to 4.8")]
         public void PackageWithCredentials_Loads()
         {
             var pkg = downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 1,
