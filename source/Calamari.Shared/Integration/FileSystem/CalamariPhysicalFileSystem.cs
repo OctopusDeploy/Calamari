@@ -577,6 +577,16 @@ namespace Calamari.Integration.FileSystem
 
         public void EnsureDiskHasEnoughFreeSpace(string directoryPath)
         {
+            if (CalamariEnvironment.IsRunningOnMono && CalamariEnvironment.IsRunningOnMac)
+            {
+                //After upgrading to macOS 10.15.2, and mono 5.14.0, drive.TotalFreeSpace and drive.AvailableFreeSpace both started returning 0.
+                //see https://github.com/mono/mono/issues/17151, which was fixed in mono 6.4.xx
+                //If we upgrade mono past 5.14.x, scriptcs stops working.
+                //Rock and a hard place.
+                Log.Verbose("Unable to determine disk free space under Mono on macOS. Assuming there's enough.");
+                return;
+            }
+            
             if (SkipFreeDiskSpaceCheck)
             {
                 Log.Verbose($"{SpecialVariables.SkipFreeDiskSpaceCheck} is enabled. The check to ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has enough free space will be skipped.");
