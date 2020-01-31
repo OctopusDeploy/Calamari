@@ -65,6 +65,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
         public void ShouldDownloadPackage()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
@@ -153,6 +154,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
         public void ShouldUsePackageFromCache()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -239,6 +241,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAbove]
         public void ShouldByPassCacheAndDownloadPackage()
         {
             DownloadPackage(FeedzPackage.PackageId,
