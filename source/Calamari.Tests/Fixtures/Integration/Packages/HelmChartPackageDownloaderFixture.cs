@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Net;
-using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
+using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -15,7 +15,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string AuthFeedUri =   "https://octopusdeploy.jfrog.io/octopusdeploy/helm-testing/";
         static readonly string FeedUsername = "e2e-reader";
         static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.HelmPassword);
-        private static string home = Path.GetTempPath();
+        static string home = Path.GetTempPath();
+        HelmChartPackageDownloader downloader;
         
         [OneTimeSetUp]
         public void TestFixtureSetUp()
@@ -28,33 +29,31 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             Environment.SetEnvironmentVariable("TentacleHome", null);
         }
+
+        [SetUp]
+        public void Setup()
+        {
+            downloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+        }
         
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresMonoVersion480OrAboveForTls12(Description = "This test requires TLS 1.2, which doesn't work with mono prior to 4.8")]
         public void PackageWithCredentials_Loads()
         {
-            var downloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
             var pkg = downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 1,
                 TimeSpan.FromSeconds(3));
-            
-            Assert.AreEqual("mychart", pkg.PackageId);
-            Assert.AreEqual(new SemanticVersion("0.3.7"), pkg.Version);
-        }        
+            pkg.PackageId.Should().Be("mychart");
+            pkg.Version.Should().Be(new SemanticVersion("0.3.7"));
+        }
         
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
-        public void PackageWithWrongCredentials_Fails()
+        [RequiresMonoVersion480OrAboveForTls12(Description = "This test requires TLS 1.2, which doesn't work with mono prior to 4.8")]
+        public void PackageWithInvalidUrl_Throws()
         {
-            var downloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
-            var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, "FAKE"), true, 1,
-                TimeSpan.FromSeconds(3)));
-            
-            StringAssert.Contains("Helm failed to add the chart repository", exception.Message);
-            //StringAssert.Contains("401 Unauthorized", exception.Message);
+            var badUrl = new Uri($"https://octopusdeploy.jfrog.io/gobbelygook/{Guid.NewGuid().ToString("N")}");
+            var badEndpointDownloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            Action action = () => badEndpointDownloader.DownloadPackage("something", new SemanticVersion("99.9.7"), "gobbely", new Uri(badUrl, "something.99.9.7"), new NetworkCredential(FeedUsername, FeedPassword), true, 1, TimeSpan.FromSeconds(3));
+            action.Should().Throw<Exception>().And.Message.Should().Contain("Unable to read Helm index file").And.Contain("404");
         }
     }
 }

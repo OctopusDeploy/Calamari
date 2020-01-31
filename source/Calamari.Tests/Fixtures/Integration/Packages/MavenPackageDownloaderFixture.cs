@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void DownloadMavenPackage()
         {
