@@ -179,7 +179,7 @@ namespace Calamari.Aws.Integration
         /// </summary>
         async Task AssumeRole()
         {
-            if ("True".Equals(assumeRole, StringComparison.InvariantCultureIgnoreCase))
+            if ("True".Equals(assumeRole, StringComparison.OrdinalIgnoreCase))
             {
                var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
                var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest

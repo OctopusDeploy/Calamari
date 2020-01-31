@@ -22,7 +22,7 @@ namespace Calamari.Integration.Proxies
         public static IEnumerable<EnvironmentVariable> GenerateProxyEnvironmentVariables()
         {
             var environmentVariables = Environment.GetEnvironmentVariables();
-            var existingProxyEnvironmentVariables = ProxyEnvironmentVariableNames.Where(environmentVariables.Contains).ToHashSet(StringComparer.InvariantCulture);
+            var existingProxyEnvironmentVariables = ProxyEnvironmentVariableNames.Where(environmentVariables.Contains).ToHashSet(StringComparer.Ordinal);
             if (existingProxyEnvironmentVariables.Any())
             {
                 Log.Verbose("Proxy related environment variables already exist. Calamari will not overwrite any proxy environment variables.");
