@@ -32,8 +32,7 @@ namespace Calamari.Kubernetes
         {
             return (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
                     !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName, "")) ||
-                    !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, ""))) &&
-                    syntax == ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
+                    !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, "")));
         }
 
         public IScriptWrapper NextWrapper { get; set; }
