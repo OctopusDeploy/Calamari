@@ -65,7 +65,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         public void ShouldDownloadPackage()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
@@ -81,7 +81,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenPackage()
         {
@@ -110,7 +110,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenSnapshotPackage()
         {
@@ -154,7 +154,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         public void ShouldUsePackageFromCache()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -178,7 +178,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenPackageFromCache()
         {
@@ -210,7 +210,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenSnapshotPackageFromCache()
         {
@@ -241,7 +241,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         public void ShouldByPassCacheAndDownloadPackage()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -264,7 +264,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
@@ -302,7 +302,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenSnapshotPackage()
         {

@@ -50,5 +50,13 @@ namespace Calamari.Util
 
             return relativePath;
         }
+        
+        public static bool IsValidUrl(this string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            return Uri.TryCreate(value, UriKind.Absolute, out var _);
+        }
     }
 }
