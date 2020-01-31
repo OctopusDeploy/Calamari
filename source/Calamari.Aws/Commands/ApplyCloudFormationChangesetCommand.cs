@@ -33,7 +33,7 @@ namespace Calamari.Aws.Commands
                 v => sensitiveVariablesPassword = v);
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete =  
-                !bool.FalseString.Equals(v, StringComparison.InvariantCultureIgnoreCase)); //True by default
+                !bool.FalseString.Equals(v, StringComparison.OrdinalIgnoreCase)); //True by default
         }
 
         public override int Execute(string[] commandLineArguments)

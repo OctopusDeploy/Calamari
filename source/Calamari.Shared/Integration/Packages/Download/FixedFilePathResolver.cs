@@ -51,7 +51,7 @@ namespace Calamari.Integration.Packages.Download
 
         void EnsureRightPackage(string packageId)
         {
-            var samePackage = string.Equals(packageId, packageName, StringComparison.InvariantCultureIgnoreCase);
+            var samePackage = string.Equals(packageId, packageName, StringComparison.OrdinalIgnoreCase);
 
             if (!samePackage)
             {

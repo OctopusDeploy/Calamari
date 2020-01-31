@@ -135,7 +135,7 @@ namespace Calamari.Integration.Packages
             }
 
             //TODO: Extract... Obviously _could_ be an issue for .net core
-            if (extension.Equals(".nupkg", StringComparison.InvariantCultureIgnoreCase) && File.Exists(path))
+            if (extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase) && File.Exists(path))
             {
 //                var metaData = new FileSystemNuGetPackage(path);
 //                version = metaData.Version;

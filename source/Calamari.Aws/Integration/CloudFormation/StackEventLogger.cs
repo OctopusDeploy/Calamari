@@ -10,7 +10,7 @@ namespace Calamari.Aws.Integration.CloudFormation
     {
         private readonly ILog log;
         private string lastMessage;
-        private HashSet<string> warnings = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        private HashSet<string> warnings = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public StackEventLogger(ILog log)
         {

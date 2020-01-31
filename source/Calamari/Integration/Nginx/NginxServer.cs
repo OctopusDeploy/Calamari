@@ -45,7 +45,7 @@ namespace Calamari.Integration.Nginx
         {
             foreach (var binding in bindings)
             {
-                if (string.Equals("http", binding.Protocol, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals("http", binding.Protocol, StringComparison.OrdinalIgnoreCase))
                 {
                     AddServerBindingDirective(NginxDirectives.Server.Listen,
                         GetListenValue(binding.IpAddress, binding.Port));
