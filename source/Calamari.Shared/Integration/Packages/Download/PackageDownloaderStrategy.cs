@@ -49,8 +49,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new GitHubPackageDownloader();
                     break;
                 case FeedType.Helm :
-                    var cred = feedCredentials.GetCredential(feedUri, "basic");
-                    downloader = new HelmChartPackageDownloader(fileSystem, new HelmEndpointProxy(new HttpClient(), feedUri, cred.UserName, cred.Password), new HttpClient());
+                    downloader = new HelmChartPackageDownloader(fileSystem);
                     break;
                 case FeedType.Docker :
                 case FeedType.AwsElasticContainerRegistry :

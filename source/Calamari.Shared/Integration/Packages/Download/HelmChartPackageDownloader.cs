@@ -28,11 +28,11 @@ namespace Calamari.Integration.Packages.Download
         readonly IHelmEndpointProxy endpointProxy;
         readonly HttpClient client;
 
-        public HelmChartPackageDownloader(ICalamariFileSystem fileSystem, IHelmEndpointProxy endpointProxy, HttpClient client)
+        public HelmChartPackageDownloader(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.endpointProxy = endpointProxy;
-            this.client = client;
+            client = new HttpClient(new HttpClientHandler{ AutomaticDecompression  = DecompressionMethods.None });
+            endpointProxy = new HelmEndpointProxy(client);
         }
         
         public PackagePhysicalFileMetadata DownloadPackage(string packageId, IVersion version, string feedId, Uri feedUri,
@@ -51,7 +51,7 @@ namespace Calamari.Integration.Packages.Download
                 }
             }
 
-            var package = GetChartDetails(packageId, CancellationToken.None);
+            var package = GetChartDetails(feedUri, feedCredentials,  packageId, CancellationToken.None);
 
             if (string.IsNullOrEmpty(package.PackageId))
             {
@@ -70,10 +70,12 @@ namespace Calamari.Integration.Packages.Download
             return DownloadChart(packageUrl, packageId, version, feedCredentials, cacheDirectory);
         }
         
-        (string PackageId, IEnumerable<HelmYamlReader.ChartData> Versions) GetChartDetails(string packageId, CancellationToken cancellationToken)
+        (string PackageId, IEnumerable<HelmIndexYamlReader.ChartData> Versions) GetChartDetails(Uri feedUri, ICredentials credentials, string packageId, CancellationToken cancellationToken)
         {
-            var yaml = endpointProxy.Get(cancellationToken);
-            var package = HelmYamlReader.Read(yaml).FirstOrDefault(p => p.PackageId.Equals(packageId, StringComparison.InvariantCultureIgnoreCase));
+            var cred = credentials.GetCredential(feedUri, "basic");
+            
+            var yaml = endpointProxy.Get(feedUri, cred.UserName, cred.Password, cancellationToken);
+            var package = HelmIndexYamlReader.Read(yaml).FirstOrDefault(p => p.PackageId.Equals(packageId, StringComparison.InvariantCultureIgnoreCase));
             return package;
         }
 

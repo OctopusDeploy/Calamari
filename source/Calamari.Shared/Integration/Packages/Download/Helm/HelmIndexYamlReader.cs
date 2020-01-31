@@ -7,7 +7,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Integration.Packages.Download.Helm
 {
-    public static class HelmYamlReader
+    public static class HelmIndexYamlReader
     {
         public static IEnumerable<(string PackageId, IEnumerable<ChartData> Versions)> Read(YamlStream yaml)
         {

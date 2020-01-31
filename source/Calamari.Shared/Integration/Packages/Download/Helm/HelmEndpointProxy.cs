@@ -9,30 +9,24 @@ namespace Calamari.Integration.Packages.Download.Helm
 {
     public interface IHelmEndpointProxy
     {
-        YamlStream Get(CancellationToken cancellationToken);
+        YamlStream Get(Uri chartRepositoryRootUrl, string username, string password, CancellationToken cancellationToken);
     }
     
      public class HelmEndpointProxy: IHelmEndpointProxy
     {
-        readonly Uri endpoint;
-        readonly string username;
-        readonly string password;
         static readonly string[] AcceptedContentType = {"application/x-yaml", "application/yaml"};
         static string httpAccept = string.Join( ", ", AcceptedContentType);
         
         readonly HttpClient client;
 
-        public HelmEndpointProxy(HttpClient client, Uri endpoint, string username, string password)
+        public HelmEndpointProxy(HttpClient client)
         {
-            this.endpoint = new Uri(endpoint, "index.yaml");
-            this.username = username;
-            this.password = password;
             this.client = client;
         }
 
-        public YamlStream Get(CancellationToken cancellationToken)
+        public YamlStream Get(Uri chartRepositoryRootUrl, string username, string password, CancellationToken cancellationToken)
         {
-            using (var response = PerformRequest(cancellationToken))
+            using (var response = GetIndexYaml(chartRepositoryRootUrl, username, password, cancellationToken))
             {
                 var stream = response.Content.ReadAsStreamAsync().Result;
 
@@ -45,13 +39,14 @@ namespace Calamari.Integration.Packages.Download.Helm
             }
         }
 
-        HttpResponseMessage PerformRequest(CancellationToken cancellationToken)
+        HttpResponseMessage GetIndexYaml(Uri chartRepositoryRootUrl, string username, string password, CancellationToken cancellationToken)
         {
             HttpResponseMessage response;
+            var endpoint = new Uri(chartRepositoryRootUrl, "index.yaml");
 
             using (var msg = new HttpRequestMessage(HttpMethod.Get, endpoint))
             {
-                ApplyAuthorization(msg);
+                ApplyAuthorization(username, password, msg);
                 ApplyAccept(msg);
                 response = client.SendAsync(msg, cancellationToken).Result;
             }
@@ -64,7 +59,7 @@ namespace Calamari.Integration.Packages.Download.Helm
             return response;
         }
         
-        void ApplyAuthorization(HttpRequestMessage msg)
+        void ApplyAuthorization(string username, string password, HttpRequestMessage msg)
         {
             msg.Headers.AddAuthenticationHeader(username, password);
         }
