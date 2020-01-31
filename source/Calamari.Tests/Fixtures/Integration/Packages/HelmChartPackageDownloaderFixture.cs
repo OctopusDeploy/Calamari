@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         //TODO: Revisit this at a later point. Mono really doesn't want to play nice here.
         [Test]
-        [RequiresNonMono]
+        [RequiresMonoVersion480OrAbove]
         public void PackageWithCredentials_Loads()
         {
             var pkg = downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 1,
