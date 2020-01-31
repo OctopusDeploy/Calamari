@@ -1,36 +1,66 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Calamari.Tests.Helpers;
-using  Calamari.Integration.Processes;
+using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures;
+using Calamari.Tests.Helpers;
+using Calamari.Util;
 using NUnit.Framework;
 using Octostache;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
-    [TestFixture]
-    public class HelmUpgradeFixture : CalamariFixture
+    public abstract class HelmUpgradeFixture : CalamariFixture
     {
         static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
+
         static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
 
         ICalamariFileSystem FileSystem { get; set; }
-        VariableDictionary Variables { get; set; }
+        protected VariableDictionary Variables { get; set; }
         string StagingDirectory { get; set; }
-        static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
+        protected static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
 
-        static readonly string ConfigMapName = "mychart-configmap-" + ReleaseName;
+        protected static readonly string ConfigMapName = "mychart-configmap-" + ReleaseName;
 
-        const string Namespace = "calamari-testing";
+        protected const string Namespace = "calamari-testing";
         const string ChartPackageName = "mychart-0.3.7.tgz";
 
+        static string HelmOsPlatform => CalamariEnvironment.IsRunningOnWindows ? "windows-amd64" : "linux-amd64";
 
+        TemporaryDirectory explicitVersionTempDirectory;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            if (ExplicitExeVersion != null)
+                DownloadExplicitHelmExecutable();
+            
+            void DownloadExplicitHelmExecutable()
+            {
+                explicitVersionTempDirectory = TemporaryDirectory.Create();
+                var fileName = Path.GetFullPath(Path.Combine(explicitVersionTempDirectory.DirectoryPath, $"helm-v{ExplicitExeVersion}-{HelmOsPlatform}.tgz"));
+                using (new TemporaryFile(fileName))
+                {
+                    DownloadHelmPackage(ExplicitExeVersion, fileName);
+
+                    new TarGzipPackageExtractor().Extract(fileName, explicitVersionTempDirectory.DirectoryPath, false);
+                }
+            }
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            explicitVersionTempDirectory?.Dispose();
+        }
+        
         [SetUp]
-        public void SetUp()
+        public virtual void SetUp()
         {
             FileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -61,33 +91,16 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
             Variables.Set(SpecialVariables.Account.Token, ClusterToken);
             
+            if (ExplicitExeVersion != null)
+                Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, HelmExePath);
+            
             AddPostDeployMessageCheckAndCleanup();
         }
-
+       
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
-        [Category(TestCategory.PlatformAgnostic)]
-        public void Upgrade_Succeeds()
-        {
-            var result = DeployPackage();
-
-            //res.AssertOutputMatches("NAME:   mynewrelease"); //Does not appear on upgrades, only installs
-            result.AssertSuccess();
-            result.AssertOutputMatches($"NAMESPACE: {Namespace}");
-            result.AssertOutputMatches("STATUS: DEPLOYED");
-            result.AssertOutputMatches(ConfigMapName);
-            result.AssertOutputMatches($"release \"{ReleaseName}\" deleted");
-            result.AssertNoOutput("Using custom helm executable at");
-            
-            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
-        }
-
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void NoValues_EmbededValuesUsed()
         {
@@ -101,7 +114,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void ExplicitValues_NewValuesUsed()
         {
@@ -116,7 +129,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromPackage_NewValuesUsed()
         {
@@ -134,15 +147,16 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
         
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromChartPackage_NewValuesUsed()
         {
             //Additional Package
-            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), Path.Combine("mychart","secondary.Development.yaml"));
+            Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), Path.Combine("mychart", "secondary.Development.yaml"));
 
             var result = DeployPackage();
             result.AssertSuccess();
@@ -152,7 +166,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromChartPackageWithoutSubDirectory_NewValuesUsed()
         {
@@ -167,7 +181,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromPackageAndExplicit_ExplicitTakesPrecedence()
         {
@@ -192,7 +206,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromRawYaml_ValuesAdded()
         {
@@ -203,22 +217,13 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
         }
 
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
-        [Category(TestCategory.PlatformAgnostic)]
-        public void CustomDownloadedHelmExe_RelativePath()
-        {   
-            var version = "2.9.1";
-            var platformFile = CalamariEnvironment.IsRunningOnWindows ?  "windows-amd64" : "linux-amd64";
-            var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{platformFile}.tgz");
+        protected void TestCustomHelmExeInPackage_RelativePath(string version)
+        {
+            var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{HelmOsPlatform}.tgz");
+
             using (new TemporaryFile(fileName))
             {
-                using (var myWebClient = new WebClient())
-                {
-                    myWebClient.DownloadFile($"https://storage.googleapis.com/kubernetes-helm/helm-v{version}-{platformFile}.tar.gz", fileName);
-                }
+                DownloadHelmPackage(version, fileName);
 
                 var customHelmExePackageId = Kubernetes.SpecialVariables.Helm.Packages.CustomHelmExePackageKey;
                 Variables.Set(SpecialVariables.Packages.OriginalPath(customHelmExePackageId), fileName);
@@ -226,36 +231,22 @@ namespace Calamari.Tests.KubernetesFixtures
                 Variables.Set(SpecialVariables.Packages.PackageId(customHelmExePackageId), "helmexe");
                 Variables.Set(SpecialVariables.Packages.PackageVersion(customHelmExePackageId), version);
 
-                //If package is provided then it should be treated as a relative path
-                var customLocation = platformFile + Path.DirectorySeparatorChar +"helm";
+                // If package is provided then it should be treated as a relative path
+                var customLocation = HelmOsPlatform + Path.DirectorySeparatorChar + "helm";
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
+
+                AddPostDeployMessageCheckAndCleanup();
 
                 var result = DeployPackage();
                 result.AssertSuccess();
-                result.AssertOutput("Using custom helm executable at");
+                result.AssertOutput($"Using custom helm executable at {HelmOsPlatform}\\helm from inside package. Full path at");
             }
         }
-        
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
-        [Category(TestCategory.PlatformAgnostic)]
-        public void TillerNamespace_CannotFindIfRandomNamespaceUsed()
-        {   
-            // We're basically just testing here that setting the tiller namespace does put the param into the cmd
-            Variables.Set(Kubernetes.SpecialVariables.Helm.TillerNamespace, "random-foobar");
 
-            var result = DeployPackage();
-            
-            result.AssertFailure();
-            result.AssertErrorOutput("Error: could not find tiller");
-        }
-        
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void Namespace_Override_Used()
         {
@@ -271,7 +262,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMacAttribute]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void AdditionalArgumentsPassed()
         {
@@ -280,8 +271,12 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            result.AssertOutputMatches("helm upgrade (.*) --dry-run");
+            result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
         }
+
+        protected abstract string ExplicitExeVersion { get; }
+
+        protected string HelmExePath => ExplicitExeVersion == null ? "helm" : Path.Combine(explicitVersionTempDirectory.DirectoryPath, HelmOsPlatform, "helm"); 
 
         void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false)
         {
@@ -291,23 +286,39 @@ namespace Calamari.Tests.KubernetesFixtures
                 Variables.Set(SpecialVariables.Package.EnabledFeatures, "");
                 return;
             }
-            
+
             var @namespace = explicitNamespace ?? Namespace; 
             
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            var script = "set_octopusvariable Message \"$("+ kubectlCmd +")\"\nhelm delete "+ ReleaseName +" --purge";
+            var deleteCommand = DeleteCommand(@namespace, ReleaseName, HelmExePath);
+            var script = "set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{HelmExePath} "+ deleteCommand;
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
-                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\nhelm delete {ReleaseName} --purge";
+                script = $"Set-OctopusVariable -name Message -Value $({kubectlCmd})\r\n{HelmExePath} " + deleteCommand;
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
         }
 
-        CalamariResult DeployPackage()
+        string DeleteCommand(string @namespace, string releaseName, string helmExecutablePath)
+        {
+            var helmVersion = HelmVersionRetriever.GetVersion(helmExecutablePath);
+
+            switch (helmVersion)
+            {
+                case HelmVersion.V2:
+                    return $"delete {releaseName} --purge";
+                case HelmVersion.V3:
+                    return $"uninstall {releaseName} --namespace {@namespace}";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(helmVersion), helmVersion, "Unrecognized Helm version");
+            }
+        }
+
+        protected CalamariResult DeployPackage()
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
@@ -318,6 +329,14 @@ namespace Calamari.Tests.KubernetesFixtures
                     .Action("helm-upgrade")
                     .Argument("package", pkg)
                     .Argument("variables", variablesFile.FilePath));
+            }
+        }
+        
+        protected static void DownloadHelmPackage(string version, string fileName)
+        {
+            using (var myWebClient = new WebClient())
+            {
+                myWebClient.DownloadFile($"https://get.helm.sh/helm-v{version}-{HelmOsPlatform}.tar.gz", fileName);
             }
         }
     }
