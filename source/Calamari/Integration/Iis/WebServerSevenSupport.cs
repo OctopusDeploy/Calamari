@@ -16,7 +16,7 @@ namespace Calamari.Integration.Iis
 
             Execute(serverManager =>
             {
-                var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
+                var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.OrdinalIgnoreCase));
                 if (existing == null)
                 {
                     existing = serverManager.Sites.Add(webSiteName, webRootPath, port);                    
@@ -52,7 +52,7 @@ namespace Calamari.Integration.Iis
         {
             Execute(serverManager =>
             {
-                var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase));
+                var existing = serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.OrdinalIgnoreCase));
                 if (existing == null)
                 {
                     throw new Exception($"The site '{webSiteName}'  does not exist.");
@@ -67,7 +67,7 @@ namespace Calamari.Integration.Iis
         {
             Execute(serverManager =>
             {
-                var existing = serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase));
+                var existing = serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.OrdinalIgnoreCase));
                 if (existing == null)
                 {
                     throw new Exception($"The application pool '{applicationPoolName}' does not exist");
@@ -102,7 +102,7 @@ namespace Calamari.Integration.Iis
                 var virtuals = ListVirtualDirectories("", site);
                 foreach (var vdir in virtuals)
                 {
-                    if (!string.Equals(Normalize(vdir.FullVirtualPath), Normalize(virtualDirectoryPath), StringComparison.InvariantCultureIgnoreCase)) 
+                    if (!string.Equals(Normalize(vdir.FullVirtualPath), Normalize(virtualDirectoryPath), StringComparison.OrdinalIgnoreCase)) 
                         continue;
 
                     found(vdir.VirtualDirectory);
@@ -174,7 +174,7 @@ namespace Calamari.Integration.Iis
 
         public Site FindWebSite(string webSiteName)
         {
-            return Execute(serverManager => serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.InvariantCultureIgnoreCase)));
+            return Execute(serverManager => serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.OrdinalIgnoreCase)));
         }
 
         public bool WebSiteExists(string webSiteName)
@@ -195,7 +195,7 @@ namespace Calamari.Integration.Iis
 
         public ApplicationPool FindApplicationPool(string applicationPoolName)
         {
-            return Execute(serverManager => serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.InvariantCultureIgnoreCase)));              
+            return Execute(serverManager => serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.OrdinalIgnoreCase)));              
         }
 
         public bool ApplicationPoolExists(string applicationPool)
