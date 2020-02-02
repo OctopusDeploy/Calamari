@@ -110,7 +110,7 @@ namespace Calamari.Azure.Integration.Websites.Publishing
             {
                 var sites = webSiteClient.WebApps.List();
                 var matchingSites = sites.Where(webApp =>
-                    string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.CurrentCultureIgnoreCase)).ToList();
+                    string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.OrdinalIgnoreCase)).ToList();
 
                 LogFoundSites(sites.ToList());
 
