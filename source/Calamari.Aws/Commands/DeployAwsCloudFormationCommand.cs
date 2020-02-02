@@ -47,10 +47,10 @@ namespace Calamari.Aws.Commands
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", 
-                v => waitForComplete = !bool.FalseString.Equals(v, StringComparison.InvariantCultureIgnoreCase)); //True by default
+                v => waitForComplete = !bool.FalseString.Equals(v, StringComparison.OrdinalIgnoreCase)); //True by default
             Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
             Options.Add("disableRollback=", "True to disable the CloudFormation stack rollback on failure, and False otherwise.", 
-                v => disableRollback = bool.TrueString.Equals(v, StringComparison.InvariantCultureIgnoreCase)); //False by default
+                v => disableRollback = bool.TrueString.Equals(v, StringComparison.OrdinalIgnoreCase)); //False by default
         }
 
         public override int Execute(string[] commandLineArguments)

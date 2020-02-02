@@ -75,7 +75,7 @@ namespace Calamari.Integration.Packages.Download
             var cred = credentials.GetCredential(feedUri, "basic");
             
             var yaml = endpointProxy.Get(feedUri, cred.UserName, cred.Password, cancellationToken);
-            var package = HelmIndexYamlReader.Read(yaml).FirstOrDefault(p => p.PackageId.Equals(packageId, StringComparison.InvariantCultureIgnoreCase));
+            var package = HelmIndexYamlReader.Read(yaml).FirstOrDefault(p => p.PackageId.Equals(packageId, StringComparison.OrdinalIgnoreCase));
             return package;
         }
 

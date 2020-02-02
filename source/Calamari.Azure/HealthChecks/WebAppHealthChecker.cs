@@ -69,7 +69,7 @@ namespace Calamari.Azure.HealthChecks
                         if (webAppsResponse.StatusCode != HttpStatusCode.OK)
                             throw new Exception($"Azure returned HTTP status-code getting WebApps for the WebSpace '{webSpace}': {webAppsResponse.StatusCode}");
                         return webAppsResponse.WebSites.Where(
-                            x => string.Equals(x.Name, siteName, StringComparison.CurrentCultureIgnoreCase)
+                            x => string.Equals(x.Name, siteName, StringComparison.OrdinalIgnoreCase)
                             && x.WebSpace.ToLower().Contains(resourceGroupName.ToLower())
                         );
                     }).FirstOrDefault();
@@ -85,7 +85,7 @@ namespace Calamari.Azure.HealthChecks
                 var matchingSite = webSiteClient.WebApps
                     .ListByResourceGroup(resourceGroupName, true)
                     .ToList()
-                    .FirstOrDefault(x => string.Equals(x.Name, siteAndSlotName, StringComparison.CurrentCultureIgnoreCase));
+                    .FirstOrDefault(x => string.Equals(x.Name, siteAndSlotName, StringComparison.OrdinalIgnoreCase));
                 if (matchingSite == null)
                     throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {servicePrincipalAccount.SubscriptionNumber}");
             }
