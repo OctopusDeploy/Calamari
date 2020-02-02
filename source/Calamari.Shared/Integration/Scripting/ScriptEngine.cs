@@ -1,7 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -35,12 +34,17 @@ namespace Calamari.Integration.Scripting
                 if (variables.IsSet(SpecialVariables.Action.Script.Timeout))
                 {
                     var timeout = variables.GetInt32(SpecialVariables.Action.Script.Timeout);
-                    execution.CommandLineInvocation.TimeoutMilliseconds = timeout ?? Timeout.Infinite;
-                    Log.Info($"Timeout was set to {execution.CommandLineInvocation.TimeoutMilliseconds}");
-                }
-                else
-                {
-                    Log.Verbose("Timeout was not set for this script. Octopus will wait for the script to complete indefinitely.");
+                    execution.CommandLineInvocation.Timeout = timeout.HasValue && timeout > 0 ? TimeSpan.FromMilliseconds(timeout.Value) : TimeSpan.MaxValue;
+
+                    if (execution.CommandLineInvocation.Timeout == TimeSpan.Zero)
+                    {
+                        var link = "https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit?view=netframework-4.8#System_Diagnostics_Process_WaitForExit_System_Int32_";
+                        Log.Warn($"The timeout for this script was set to 0. Perhaps this was not intended. Setting the timeout to 0 will succeed only if the script exits immediately. See {link}. It will be ignored.");
+                    }
+                    else if (execution.CommandLineInvocation.Timeout > TimeSpan.Zero && execution.CommandLineInvocation.Timeout != TimeSpan.MaxValue)
+                    {
+                        Log.Verbose($"The script for this action will be executed with a timeout of {execution.CommandLineInvocation.Timeout} milliseconds. To remove this timeout, set the Action.Script.Timeout special variable to -1 or delete the variable.");
+                    }
                 }
 
                 try

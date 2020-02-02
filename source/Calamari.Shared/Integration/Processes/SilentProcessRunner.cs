@@ -43,9 +43,9 @@ namespace Calamari.Integration.Processes
             string workingDirectory, 
             Action<string> output, 
             Action<string> error,
-            int timeoutMilliseconds = Timeout.Infinite)
+            TimeSpan? timeout = null)
         {
-            return ExecuteCommand(executable, arguments, workingDirectory, null, null, null, output, error, timeoutMilliseconds);
+            return ExecuteCommand(executable, arguments, workingDirectory, null, null, null, output, error, timeout);
         }
         
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -55,9 +55,9 @@ namespace Calamari.Integration.Processes
             Dictionary<string, string> environmentVars, 
             Action<string> output, 
             Action<string> error,
-            int timeoutMilliseconds = Timeout.Infinite)
+            TimeSpan? timeout = null)
         {
-            return ExecuteCommand(executable, arguments, workingDirectory, environmentVars, null, null, output, error, timeoutMilliseconds);
+            return ExecuteCommand(executable, arguments, workingDirectory, environmentVars, null, null, output, error, timeout);
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -69,7 +69,7 @@ namespace Calamari.Integration.Processes
             SecureString password, 
             Action<string> output, 
             Action<string> error,
-            int timeoutMilliseconds = Timeout.Infinite)
+            TimeSpan? timeout = null)
         {
             try
             {
@@ -152,27 +152,21 @@ namespace Calamari.Integration.Processes
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
 
-                        // Some processes can have race conditions. Between the call to Start and WaitForExit part of the process may have exited already.
-                        // This can happen when callign CommitChanges in dotnet's ServerManager as shown here: https://stackoverflow.com/questions/7446632/servermanager-commitchanges-makes-changes-with-a-slight-delay
-                        // Commit changes is called by appcmd from IIS, which is called by Set-ItemProperty from the WebAdministration module in Powershell
-                        // https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit?view=netframework-4.8#System_Diagnostics_Process_WaitForExit_System_Int32_
-                        // Add a timeout passed down from some default configuration or context up the call stack, 0 will never timeout.
-                        var timedOut = !process.WaitForExit(timeoutMilliseconds);
+                        // TimeSpan.TotalMilliseconds can have a value > int.MaxValue, so we just assume wait for ever if this happens.
+                        var timeoutMilliseconds = timeout == null || timeout.Value.TotalMilliseconds > int.MaxValue ? -1 : (int)(timeout.Value.TotalMilliseconds);
+                        var processExited = process.WaitForExit(timeoutMilliseconds);
 
-                        if (!timedOut)
+                        if (!processExited)
                         {
-                            // Only wait when the process has not timed out, otherwise we will be stuck here as well.
-                            outputWaitHandle.WaitOne();
-                            errorWaitHandle.WaitOne();
-                        } else
-                        {
-                            Log.Error($"Process with ID {process.Id} exceeded the max allowed runtime of {timeoutMilliseconds} milliseconds and will be killed.");
-                            process.CancelOutputRead();
-                            process.CancelErrorRead();
+                            Log.Error($"Process with ID {process.Id} exceeded the max allowed runtime of {timeout} and will be killed.");
                             process.Kill();
+                            process.WaitForExit();
                         }
 
-                        return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString(), timedOut);
+                        outputWaitHandle.WaitOne();
+                        errorWaitHandle.WaitOne();
+
+                        return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString(), !processExited);
                     }
                 }
             }

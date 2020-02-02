@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Security;
-using System.Threading;
 
 namespace Calamari.Integration.Processes
 {
@@ -9,13 +8,13 @@ namespace Calamari.Integration.Processes
     {
         readonly string workingDirectory;
 
-        public CommandLineInvocation(string executable, string arguments, Dictionary<string, string> environmentVars = null, bool isolate = false, int timeoutMilliseconds = Timeout.Infinite)
+        public CommandLineInvocation(string executable, string arguments, Dictionary<string, string> environmentVars = null, bool isolate = false, TimeSpan? timeout = null)
         {
             Executable = executable;
             Arguments = arguments;
             EnvironmentVars = environmentVars;
             Isolate = isolate;
-            TimeoutMilliseconds = timeoutMilliseconds;
+            Timeout = timeout ?? TimeSpan.MaxValue;
         }
 
         public CommandLineInvocation(
@@ -26,13 +25,13 @@ namespace Calamari.Integration.Processes
             string userName = null, 
             SecureString password = null,
             bool isolate = false,
-            int timeoutMilliseconds = Timeout.Infinite)
+            TimeSpan? timeout = null)
             : this(executable, arguments, environmentVars, isolate)
         {
             this.workingDirectory = workingDirectory;
             UserName = userName;
             Password = password;
-            TimeoutMilliseconds = timeoutMilliseconds;
+            Timeout = timeout ?? TimeSpan.MaxValue;
         }
 
         public string Executable { get; }
@@ -45,7 +44,7 @@ namespace Calamari.Integration.Processes
         
         public Dictionary<string, string> EnvironmentVars { get; }
         public bool Isolate { get; }
-        public int TimeoutMilliseconds { get; internal set; }
+        public TimeSpan Timeout { get; internal set; }
 
         /// <summary>
         /// The initial working-directory for the invocation.

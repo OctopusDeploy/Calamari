@@ -14,19 +14,6 @@ namespace Calamari.Integration.Processes
 
         public CommandResult Execute(CommandLineInvocation invocation)
         {
-            var timedOut = false;
-
-            if (invocation.TimeoutMilliseconds > -1)
-            {
-                if (invocation.TimeoutMilliseconds == 0)
-                {
-                    var link = "https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit?view=netframework-4.8#System_Diagnostics_Process_WaitForExit_System_Int32_";
-                    commandOutput.WriteInfo($"The timeout for this script was set to 0. Perhaps this was not intended. Setting the timeout to 0 will succeed only if the script exits immediately. See {link}");
-                }
-
-                commandOutput.WriteInfo($"The script for this action will be executed with a timeout of {invocation.TimeoutMilliseconds} milliseconds. To remove this timeout, set the Action.Script.Timeout special variable to -1 or delete the variable.");
-            }
-
             try
             {
                 var exitCode = SilentProcessRunner.ExecuteCommand(
@@ -38,15 +25,14 @@ namespace Calamari.Integration.Processes
                     invocation.Password,
                     commandOutput.WriteInfo,
                     commandOutput.WriteError,
-                    invocation.TimeoutMilliseconds);
-
-                timedOut = exitCode.TimedOut;
+                    invocation.Timeout);
 
                 return new CommandResult(
                     invocation.ToString(),
                     exitCode.ExitCode,
                     exitCode.ErrorOutput,
-                    invocation.WorkingDirectory);
+                    invocation.WorkingDirectory,
+                    exitCode.TimedOut);
             }       
             catch (Exception ex)
             {
@@ -63,7 +49,7 @@ namespace Calamari.Integration.Processes
                     -1, 
                     ex.ToString(),
                     invocation.WorkingDirectory,
-                    timedOut);
+                    false);
             }
         }
 

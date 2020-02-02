@@ -33,7 +33,7 @@ namespace Calamari.Integration.Processes
 
             if (timedOut)
             {
-                sb.Append("Timed out before execution completed. Check the script Timeout environment variable.").AppendLine();
+                sb.Append("Timed out before execution completed. Check the Octopus.Action.Script.Timeout variable.").AppendLine();
             }
 
             sb.Append("Failed with exit code: ").Append(exitCode).AppendLine();
