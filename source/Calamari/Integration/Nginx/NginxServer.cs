@@ -18,14 +18,14 @@ namespace Calamari.Integration.Nginx
         private readonly string TempConfigRootDirectory = "conf";
         private readonly string TempSslRootDirectory = "ssl";
 
-        private bool useHostName;
-        private string hostName;
-        private readonly IDictionary<string, string> additionalLocations = new Dictionary<string, string>();
-        private readonly IDictionary<string, string> sslCerts = new Dictionary<string, string>();
-        private string virtualServerName;
-        private dynamic rootLocation;
+        public bool UseHostName { get; private set; }
+        public string HostName { get; private set; }
+        public IDictionary<string, string> AdditionalLocations { get; } = new Dictionary<string, string>();
+        public  IDictionary<string, string> SslCerts { get; } = new Dictionary<string, string>();
+        public string VirtualServerName { get; private set; }
+        public dynamic RootLocation { get; private set; }
 
-        private string virtualServerConfig;
+        string virtualServerConfig;
 
         public static NginxServer AutoDetect()
         {
@@ -37,7 +37,13 @@ namespace Calamari.Integration.Nginx
 
         public NginxServer WithVirtualServerName(string name)
         {
-            virtualServerName = name;
+            /*
+             * Ensure package ids with chars that are invalid for file names (for example, a GitHub package is in the format
+             * "owner/repository") do not generate unexpected file names.
+             */
+            VirtualServerName = String.Join("_", name.Split(
+                System.IO.Path.GetInvalidFileNameChars(),
+                StringSplitOptions.RemoveEmptyEntries));
             return this;
         }
 
@@ -45,7 +51,7 @@ namespace Calamari.Integration.Nginx
         {
             foreach (var binding in bindings)
             {
-                if (string.Equals("http", binding.Protocol, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals("http", binding.Protocol, StringComparison.OrdinalIgnoreCase))
                 {
                     AddServerBindingDirective(NginxDirectives.Server.Listen,
                         GetListenValue(binding.IpAddress, binding.Port));
@@ -69,10 +75,10 @@ namespace Calamari.Integration.Nginx
                         var certificateKeyFileName = $"{sanitizedSubjectCommonName}.key";
 
                         var certificateTempRootPath = Path.Combine(TempSslRootDirectory, sanitizedSubjectCommonName);
-                        sslCerts.Add(
+                        SslCerts.Add(
                             Path.Combine(certificateTempRootPath, certificateFileName),
                             certificate.CertificatePem);
-                        sslCerts.Add(
+                        SslCerts.Add(
                             Path.Combine(certificateTempRootPath, certificateKeyFileName),
                             certificate.PrivateKeyPem);
 
@@ -113,8 +119,8 @@ namespace Calamari.Integration.Nginx
         {
             if (string.IsNullOrWhiteSpace(serverHostName) || serverHostName.Equals("*")) return this;
 
-            useHostName = true;
-            hostName = serverHostName;
+            UseHostName = true;
+            HostName = serverHostName;
 
             return this;
         }
@@ -128,10 +134,15 @@ namespace Calamari.Integration.Nginx
             {
                 var locationConfig = GetLocationConfig(location);
                 var sanitizedLocationName = SanitizeLocationName(location.Path, locationIndex.ToString());
-                var locationConfFile = Path.Combine(TempConfigRootDirectory, $"{virtualServerName}.conf.d",
+                var locationConfFile = Path.Combine(TempConfigRootDirectory, $"{VirtualServerName}.conf.d",
                     $"location.{sanitizedLocationName}.conf");
+                var defaultLocationConfFile = Path.Combine(TempConfigRootDirectory, $"{VirtualServerName}.conf.d",
+                    $"location.{locationIndex}.conf");
 
-                additionalLocations.Add(locationConfFile, locationConfig);
+                AdditionalLocations.Add(
+                    // Don't assume sanitized means unique. If the filename is already used, fall back to the indexed filename.
+                    AdditionalLocations.ContainsKey(locationConfFile) ? defaultLocationConfFile : locationConfFile, 
+                    locationConfig);
                 locationIndex++;
             }
 
@@ -141,14 +152,21 @@ namespace Calamari.Integration.Nginx
         private string SanitizeLocationName(string locationPath, string defaultValue)
         {
             var match = Regex.Match(locationPath, "[a-zA-Z0-9/]+");
-            return match.Success 
-                ? match.Value.Replace("/", "_").Trim('_') 
-                : defaultValue;
+            if (match.Success)
+            {
+                // Watch out for cases where multiple locations both match a string like "/". Both
+                // of these will be sanitized down to an empty string.
+                var sanitizedResult = match.Value.Replace("/", "_").Trim('_');
+                // If we did not get an empty string, use the result. Otherwise fall back to the default.
+                if (!string.IsNullOrWhiteSpace(sanitizedResult)) return sanitizedResult;
+            }
+
+            return defaultValue;
         }
 
         public NginxServer WithRootLocation(Location location)
         {
-            rootLocation = location;
+            RootLocation = location;
 
             return this;
         }
@@ -159,30 +177,30 @@ namespace Calamari.Integration.Nginx
             virtualServerConfig = $@"
 server {{
 {string.Join(Environment.NewLine, serverBindingDirectives.Select(binding => $"    {binding.Key} {binding.Value};"))}
-{(useHostName ? $"    {NginxDirectives.Server.HostName} {hostName};" : "")}
-{(additionalLocations.Any() ? $"    {NginxDirectives.Include} {nginxConfigRootDirectory}/{virtualServerName}.conf.d/location.*.conf;" : "")}
-{GetLocationConfig(rootLocation)}
+{(UseHostName ? $"    {NginxDirectives.Server.HostName} {HostName};" : "")}
+{(AdditionalLocations.Any() ? $"    {NginxDirectives.Include} {nginxConfigRootDirectory}/{VirtualServerName}.conf.d/location.*.conf;" : "")}
+{GetLocationConfig(RootLocation)}
 }}
 ";
         }
 
         public void SaveConfiguration(string tempDirectory)
         {
-            foreach (var sslCert in sslCerts)
+            foreach (var sslCert in SslCerts)
             {
                 var sslCertPath = Path.Combine(tempDirectory, sslCert.Key);
                 fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(sslCertPath));
                 fileSystem.OverwriteFile(sslCertPath, sslCert.Value);
             }
 
-            foreach (var additionalLocation in additionalLocations)
+            foreach (var additionalLocation in AdditionalLocations)
             {
                 var locationConfPath = Path.Combine(tempDirectory, additionalLocation.Key);
                 fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(locationConfPath));
                 fileSystem.OverwriteFile(locationConfPath, RemoveEmptyLines(additionalLocation.Value));
             }
 
-            var virtualServerConfPath = Path.Combine(tempDirectory, TempConfigRootDirectory, $"{virtualServerName}.conf");
+            var virtualServerConfPath = Path.Combine(tempDirectory, TempConfigRootDirectory, $"{VirtualServerName}.conf");
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(virtualServerConfPath));
             fileSystem.OverwriteFile(virtualServerConfPath, RemoveEmptyLines(virtualServerConfig));
         }

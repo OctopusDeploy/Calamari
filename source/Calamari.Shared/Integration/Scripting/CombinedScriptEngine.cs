@@ -1,4 +1,4 @@
-﻿using Calamari.Commands.Support;
+using Calamari.Commands.Support;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
@@ -29,13 +29,15 @@ namespace Calamari.Integration.Scripting
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
 
+
         public ScriptSyntax[] GetSupportedTypes()
         {
-            return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-                ? new[] { ScriptSyntax.Bash, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python }
-                : new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
-        }
+            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };
+            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
 
+            return preferredScriptSyntax.Concat(scriptSyntaxesSupportedOnAllPlatforms).Distinct().ToArray();
+        }
+        
         public CommandResult Execute(
             Script script,
             CalamariVariableDictionary variables,

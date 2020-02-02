@@ -62,6 +62,11 @@ namespace Calamari.Integration.Packages
                 "JAVA-DEPLOY-ERROR-0001"));
         }
 
+        internal static void WarnUnsupportedSymlinkExtraction(string path)
+        {
+            Log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", path);
+        }
+
         internal static void WarnIfScriptInSubFolder(string path)
         {
             var fileName = Path.GetFileName(path);

@@ -16,7 +16,7 @@ namespace Calamari.Aws.Integration.CloudFormation
 {
     public static class CloudFormationObjectExtensions
     {
-        private static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"
         };
@@ -24,7 +24,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         // These status indicate that an update or create was not successful.
         // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
         private static HashSet<string> UnsuccessfulStackEvents =
-            new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "CREATE_ROLLBACK_COMPLETE",
                 "CREATE_ROLLBACK_FAILED",
@@ -60,7 +60,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// 
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
         private static HashSet<string> UnrecoverableStackStatuses =
-            new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "CREATE_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED",
                 "UPDATE_ROLLBACK_FAILED"

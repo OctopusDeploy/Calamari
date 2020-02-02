@@ -5,8 +5,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Bash
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Nix)]
-    [Category(TestCategory.CompatibleOS.Mac)]
+    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
     public class BashProxyFixture : ScriptProxyFixtureBase
     {
         protected override CalamariResult RunScript()

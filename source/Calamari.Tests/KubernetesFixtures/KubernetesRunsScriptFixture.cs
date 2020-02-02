@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -20,13 +21,12 @@ namespace Calamari.Tests.KubernetesFixtures
         static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
 
         [Test]
-        [TestCase("Url", "", "", ScriptSyntax.PowerShell, true)]
-        [TestCase("", "Name", "", ScriptSyntax.PowerShell, true)]
-        [TestCase("", "", "Name", ScriptSyntax.PowerShell, true)]
-        [TestCase("Url", "", "", ScriptSyntax.Bash, true)]
-        [TestCase("", "", "", ScriptSyntax.PowerShell, false)]
-        [TestCase("Url", "", "", ScriptSyntax.FSharp, false)]
-        public void ShouldBeEnabled(string clusterUrl, string aksClusterName, string eksClusterName, ScriptSyntax syntax, bool expected)
+        [TestCase("Url", "", "", true)]
+        [TestCase("", "Name", "" , true)]
+        [TestCase("", "", "Name", true)]
+        [TestCase("", "", "", false)]
+        public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl, string aksClusterName,
+            string eksClusterName, bool expected)
         {
             var variables = new CalamariVariableDictionary
             {
@@ -35,12 +35,44 @@ namespace Calamari.Tests.KubernetesFixtures
                 {SpecialVariables.EksClusterName, eksClusterName}
             };
             var target = new KubernetesContextScriptWrapper(variables);
-            var actual = target.IsEnabled(syntax);
+            var actual = target.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
             actual.Should().Be(expected);
+        }
+        
+        [Test]
+        public void ShouldBeEnabledIfScriptSyntaxIsPreferredSyntaxOnEnvironment()
+        {
+            var variables = new CalamariVariableDictionary
+            {
+                {SpecialVariables.ClusterUrl, "Url"},
+                {SpecialVariables.AksClusterName, ""},
+                {SpecialVariables.EksClusterName, ""}
+            };
+            var target = new KubernetesContextScriptWrapper(variables);
+            var actual = target.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
+            actual.Should().BeTrue();
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        public void ShouldBeDisabledIfScriptSyntaxIsNotPreferredSyntaxOnEnvironment()
+        {
+            var variables = new CalamariVariableDictionary
+            {
+                {SpecialVariables.ClusterUrl, "Url"},
+                {SpecialVariables.AksClusterName, ""},
+                {SpecialVariables.EksClusterName, ""}
+            };
+            var target = new KubernetesContextScriptWrapper(variables);
+            var possibleSyntaxes = Enum.GetValues(typeof(ScriptSyntax)).Cast<ScriptSyntax>();
+            foreach (var syntax in possibleSyntaxes.Except(new [] {ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment()}))
+            {
+                var actual = target.IsEnabled(syntax);
+                actual.Should().BeFalse();    
+            }
+        }
+        
+        [Test]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void PowershellKubeCtlScripts()
         {
@@ -49,7 +81,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
+        [Category(TestCategory.CompatibleOS.OnlyNix)]
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void BashKubeCtlScripts()
         {

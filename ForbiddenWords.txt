@@ -1,0 +1,4 @@
+NOSHIP
+NOCOMMIT
+\W+shit\W+
+\W+fuck\W+

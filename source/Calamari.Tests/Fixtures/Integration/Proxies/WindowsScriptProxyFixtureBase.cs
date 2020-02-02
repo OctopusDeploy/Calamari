@@ -1,3 +1,4 @@
+using System;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -9,7 +10,14 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
     public abstract class WindowsScriptProxyFixtureBase : ScriptProxyFixtureBase
     {
         protected abstract bool TestWebRequestDefaultProxy { get; }
-        
+
+        protected CalamariResult RunWith(bool useDefaultProxy, string proxyhost, int proxyPort, string proxyUsername, string proxyPassword, string proxyException)
+        {
+            Environment.SetEnvironmentVariable("TEST_ONLY_PROXY_EXCEPTION_URI", proxyException);
+
+            return RunWith(useDefaultProxy, proxyhost, proxyPort, proxyUsername, proxyPassword);
+        }
+
         [TearDown]
         public void ResetSystemProxy()
         {
@@ -18,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public virtual void Initialize_HasSystemProxy_NoProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -28,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public virtual void Initialize_HasSystemProxy_UseSystemProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -38,7 +46,19 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        public virtual void Initialize_HasSystemProxy_UseSystemProxyWithExceptions()
+        {
+            var proxyException = "octopustestbypassurl.com";
+            var proxyExceptionUrl = $"http://{proxyException}/";
+            ProxyRoutines.SetProxy(proxyUrl, proxyException).Should().BeTrue();
+            var result = RunWith(true, "", 80, "", "", proxyExceptionUrl);
+
+            AssertUnauthenticatedSystemProxyUsedWithException(result, proxyExceptionUrl);
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public virtual void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -48,7 +68,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public virtual void Initialize_HasSystemProxy_CustomProxy()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -58,7 +78,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public virtual void Initialize_HasSystemProxy_CustomProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -71,14 +91,16 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         {
             base.AssertAuthenticatedProxyUsed(output);
             if (IsRunningOnWindows && TestWebRequestDefaultProxy)
-                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/");
+                // This can be either the authenticated or unauthenticated URL. The authentication part should be ignored
+                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/", authenticatedProxyUrl + "/");
         }
 
         protected override void AssertUnauthenticatedProxyUsed(CalamariResult output)
         {
             base.AssertUnauthenticatedProxyUsed(output);
             if (IsRunningOnWindows && TestWebRequestDefaultProxy)
-                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/");
+                // This can be either the authenticated or unauthenticated URL. The authentication part should be ignored
+                output.AssertPropertyValue("WebRequest.DefaultProxy", proxyUrl + "/", authenticatedProxyUrl + "/");
         }
 
         protected override void AssertNoProxyChanges(CalamariResult output)
@@ -93,6 +115,17 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             base.AssertProxyBypassed(output);
             if (IsRunningOnWindows && TestWebRequestDefaultProxy)
                 output.AssertPropertyValue("WebRequest.DefaultProxy", "None");
+        }
+
+        void AssertUnauthenticatedSystemProxyUsedWithException(CalamariResult output, string bypassedUrl)
+        {
+#if !NETCORE
+            AssertUnauthenticatedSystemProxyUsed(output);
+            if (TestWebRequestDefaultProxy)
+                output.AssertPropertyValue("ProxyBypassed", bypassedUrl);
+#else
+            base.AssertNoProxyChanges(output);
+#endif
         }
 
         void AssertUnauthenticatedSystemProxyUsed(CalamariResult output)

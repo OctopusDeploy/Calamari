@@ -1,1 +1,1 @@
-﻿New-OctopusArtifact -Path "C:\NonExistantPath\NonExistantFile.txt"
+﻿New-OctopusArtifact -Path $ArtifactPath

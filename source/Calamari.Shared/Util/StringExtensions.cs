@@ -9,7 +9,7 @@ namespace Calamari.Util
     {
         public static bool ContainsIgnoreCase(this string originalString, string value)
         {
-            return originalString.IndexOf(value, StringComparison.CurrentCultureIgnoreCase) != -1;
+            return originalString.IndexOf(value, StringComparison.OrdinalIgnoreCase) != -1;
         }
 
         public static string EscapeSingleQuotedString(this string str) =>
@@ -37,13 +37,26 @@ namespace Calamari.Util
 
         public static string AsRelativePathFrom(this string source, string baseDirectory)
         {
+            // Adapted from https://stackoverflow.com/a/340454
             var uri = new Uri(source);
             if (!baseDirectory.EndsWith(Path.DirectorySeparatorChar.ToString()))
             {
                 baseDirectory += Path.DirectorySeparatorChar.ToString();
             }
             var baseUri = new Uri(baseDirectory);
-            return baseUri.MakeRelativeUri(uri).ToString();
+
+            var relativeUri = baseUri.MakeRelativeUri(uri);
+            var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+            return relativePath;
+        }
+        
+        public static bool IsValidUrl(this string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            return Uri.TryCreate(value, UriKind.Absolute, out var _);
         }
     }
 }

@@ -1,1 +1,1 @@
-﻿Get-ChildItem -Path $env:TEMP -Filter "CanCreateArtifactPipedTestFile.txt" | New-OctopusArtifact 
+﻿Get-ChildItem -Path $TempDirectory -Filter *.artifact | New-OctopusArtifact

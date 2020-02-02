@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net452;netstandard2.0;net40</TargetFrameworks>
     <OutputType>Library</OutputType>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Shared</AssemblyName>
@@ -23,6 +22,12 @@
     <StartupObject />
     <RootNamespace>Calamari</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+    <TargetFrameworks>net452;netstandard2.0;net40</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
@@ -43,9 +48,10 @@
     <PackageReference Include="Octodiff" Version="1.1.2" />
     <PackageReference Include="Octopus.Versioning" Version="4.1.3" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
-    <PackageReference Include="Octostache" Version="2.6.0" />
-    <PackageReference Include="SharpCompress" Version="0.15.2" />
+    <PackageReference Include="Octostache" Version="2.7.0" />
+    <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="YamlDotNet" Version="8.1.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Autofac" Version="4.8.0" />
@@ -58,7 +64,7 @@
     <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
     <PackageReference Include="System.IO.Packaging" Version="4.3.0" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.3.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
     <PackageReference Include="Polly" Version="5.4.0" />
   </ItemGroup>

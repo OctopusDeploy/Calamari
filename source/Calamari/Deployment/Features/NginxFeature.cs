@@ -56,7 +56,7 @@ namespace Calamari.Deployment.Features
         {
             var sslCertsForEnabledBindings = new Dictionary<string, (string, string, string)>();
             foreach (var httpsBinding in enabledBindings.Where(b =>
-                string.Equals("https", b.Protocol, StringComparison.InvariantCultureIgnoreCase) &&
+                string.Equals("https", b.Protocol, StringComparison.OrdinalIgnoreCase) &&
                 !string.IsNullOrEmpty(b.CertificateVariable)
             ))
             {

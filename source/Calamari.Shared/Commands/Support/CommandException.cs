@@ -8,5 +8,11 @@ namespace Calamari.Commands.Support
             : base(message)
         {
         }
+
+        public CommandException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+            
+        }
     }
 }

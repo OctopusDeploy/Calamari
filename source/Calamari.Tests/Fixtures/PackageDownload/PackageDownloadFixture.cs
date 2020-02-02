@@ -23,7 +23,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         static readonly string PublicFeedUri = "https://packages.octopushq.com/integration-tests/nuget/index.json";
         static readonly string NuGetFeedUri = "https://www.nuget.org/api/v2/";
-        
+
         private static readonly string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
         private static readonly string AuthFeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
         private static readonly string AuthFeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
@@ -32,18 +32,18 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly long ExpectedPackageSize = 3749;
         static readonly SampleFeedPackage FeedzPackage = new SampleFeedPackage() { Id = "feeds-feedz", Version = new SemanticVersion("1.0.0"), PackageId = "OctoConsole" };
         static readonly SampleFeedPackage FileShare = new SampleFeedPackage() { Id = "feeds-local", Version = new SemanticVersion(1, 0, 0), PackageId = "Acme.Web" };
-        static readonly SampleFeedPackage NuGetFeed = new SampleFeedPackage() {Id = "feeds-nuget", Version = new SemanticVersion(2, 1, 0), PackageId = "abp.castle.log4net" };
+        static readonly SampleFeedPackage NuGetFeed = new SampleFeedPackage() { Id = "feeds-nuget", Version = new SemanticVersion(2, 1, 0), PackageId = "abp.castle.log4net" };
 
         static readonly string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
         static readonly long ExpectedMavenPackageSize = 2575022;
         static readonly string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
         static readonly SampleFeedPackage MavenPublicFeed = new SampleFeedPackage("#") { Id = "feeds-maven", Version = VersionFactory.CreateMavenVersion("22.0"), PackageId = "com.google.guava:guava" };
-        
+
         static readonly string ExpectedMavenSnapshotPackageHash = "e211b82586ea564b0382cbc87d23854273fc8b2e";
         static readonly long ExpectedMavenSnapshotPackageSize = 2592096;
         static readonly string MavenSnapshotPublicFeedUri = "https://oss.sonatype.org/content/repositories/snapshots/";
         static readonly SampleFeedPackage MavenSnapshotPublicFeed = new SampleFeedPackage("#") { Id = "feeds-maven", Version = VersionFactory.CreateMavenVersion("22.0-SNAPSHOT"), PackageId = "com.google.guava:guava" };
-        
+
         [SetUp]
         public void SetUp()
         {
@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 Directory.CreateDirectory(TentacleHome);
 
             Directory.SetCurrentDirectory(TentacleHome);
-   
+
             Environment.SetEnvironmentVariable("TentacleHome", TentacleHome);
             Console.WriteLine("TentacleHome is set to: " + TentacleHome);
         }
@@ -65,6 +65,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAboveForTls12]
         public void ShouldDownloadPackage()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
@@ -80,7 +81,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenPackage()
         {
@@ -109,7 +110,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenSnapshotPackage()
         {
@@ -117,9 +118,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 Assert.Inconclusive("As of November 2018, this test is failing under dotnet core on the cloudmac under teamcity - we were getting an error 'SSL connect error' when trying to download from  'https://repo.maven.apache.org/maven2/'. Marking as inconclusive so we can re-enable the build - it had been disabled for months :(");
 
             var result = DownloadPackage(
-                MavenPublicFeed.PackageId, 
-                MavenPublicFeed.Version.ToString(), 
-                MavenPublicFeed.Id, 
+                MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version.ToString(),
+                MavenPublicFeed.Id,
                 MavenPublicFeedUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven);
@@ -153,6 +154,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAboveForTls12]
         public void ShouldUsePackageFromCache()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -163,7 +165,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             var result = DownloadPackage(FeedzPackage.PackageId,
                 FeedzPackage.Version.ToString(),
-                FeedzPackage.Id, 
+                FeedzPackage.Id,
                 PublicFeedUri);
 
             result.AssertSuccess();
@@ -176,7 +178,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenPackageFromCache()
         {
@@ -208,7 +210,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenSnapshotPackageFromCache()
         {
@@ -239,6 +241,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAboveForTls12]
         public void ShouldByPassCacheAndDownloadPackage()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -259,9 +262,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertStagePackageOutputVariableSet(result, FeedzPackage);
             result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
         }
-        
+
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
@@ -270,25 +273,25 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             var firstDownload = DownloadPackage(
                 MavenPublicFeed.PackageId,
-                MavenPublicFeed.Version.ToString(), 
+                MavenPublicFeed.Version.ToString(),
                 MavenPublicFeed.Id,
                 MavenPublicFeedUri,
                 versionFormat: VersionFormat.Maven,
                 feedType: FeedType.Maven);
-            
+
             firstDownload.AssertSuccess();
-            
+
             var secondDownload = DownloadPackage(
-                MavenPublicFeed.PackageId, 
-                MavenPublicFeed.Version.ToString(), 
+                MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version.ToString(),
                 MavenPublicFeed.Id,
-                MavenPublicFeedUri, 
+                MavenPublicFeedUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven,
                 forcePackageDownload: true);
-            
+
             secondDownload.AssertSuccess();
-            
+
             secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
             secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
             secondDownload.AssertOutput("Found package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
@@ -297,34 +300,34 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertStagePackageOutputVariableSet(secondDownload, MavenPublicFeed);
             secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
         }
-        
+
         [Test]
-        [RequiresMonoVersion480OrAbove]
+        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenSnapshotPackage()
         {
 
             var firstDownload = DownloadPackage(
                 MavenSnapshotPublicFeed.PackageId,
-                MavenSnapshotPublicFeed.Version.ToString(), 
+                MavenSnapshotPublicFeed.Version.ToString(),
                 MavenSnapshotPublicFeed.Id,
                 MavenSnapshotPublicFeedUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven);
-            
+
             firstDownload.AssertSuccess();
-            
+
             var secondDownload = DownloadPackage(
-                MavenSnapshotPublicFeed.PackageId, 
-                MavenSnapshotPublicFeed.Version.ToString(), 
+                MavenSnapshotPublicFeed.PackageId,
+                MavenSnapshotPublicFeed.Version.ToString(),
                 MavenSnapshotPublicFeed.Id,
                 MavenSnapshotPublicFeedUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven,
                 forcePackageDownload: true);
-            
+
             secondDownload.AssertSuccess();
-            
+
             secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
             secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenSnapshotPublicFeed.DownloadFolder);
             secondDownload.AssertOutput("Found package {0} v{1}", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version);
@@ -426,7 +429,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FileShare.PackageId, FileShare.Version, acmeWeb.DirectoryPath);
             }
         }
-  
+
         [Test]
         public void FileShareFeedShouldUsePackageFromCache()
         {
@@ -607,9 +610,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static void AssertStagePackageOutputVariableSet(CalamariResult result, SampleFeedPackage testFeed)
         {
             var newPacakgeRegex = PackageName.ToRegexPattern(testFeed.PackageId, testFeed.Version, testFeed.DownloadFolder);
-            result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine", Does.Match(newPacakgeRegex +".*"));
+            result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine", Does.Match(newPacakgeRegex + ".*"));
         }
-        
+
         private TemporaryFile CreateSamplePackage()
         {
             return new TemporaryFile(PackageBuilder.BuildSamplePackage(FileShare.PackageId, FileShare.Version.ToString()));
@@ -621,14 +624,14 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             {
                 Delimiter = ".";
             }
-            
+
             public SampleFeedPackage(string delimiter)
             {
                 Delimiter = delimiter;
             }
 
             private string Delimiter { get; set; }
-            
+
             public string Id { get; set; }
 
             public string PackageId { get; set; }

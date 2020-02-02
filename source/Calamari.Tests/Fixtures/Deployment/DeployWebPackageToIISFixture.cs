@@ -67,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDeployAsWebSite()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -107,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDeployAsVirtualDirectory()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1083);
@@ -136,7 +136,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldKeepExistingBindingsWhenExistingBindingsIsMerge()
         {
             // The variable we are testing
@@ -167,9 +167,40 @@ namespace Calamari.Tests.Fixtures.Deployment
             website.Bindings.Should().Contain(b => b.EndPoint.Port == existingBindingPort, "Existing binding should remain");
             website.Bindings.Should().Contain(b => b.EndPoint.Port == 1082, "New binding should be added");
         }
-        
+
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        public void ShouldExcludeTempBindingWhenExistingBindingsIsMerge()
+        {
+            // The variable we are testing
+            Variables["Octopus.Action.IISWebSite.ExistingBindings"] = "merge";
+
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] = @"[{""protocol"":""http"",""port"":1082,""host"":"""",""thumbprint"":"""",""requireSni"":false,""enabled"":true}]";
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            website.Bindings.Count().Should().Be(1);
+            website.Bindings.Should().Contain(b => b.EndPoint.Port == 1082, "New binding should be added");
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldRemoveExistingBindingsByDefault()
         {
             const int existingBindingPort = 1083;
@@ -199,7 +230,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDeployNewVersion()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1083);
@@ -226,7 +257,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldNotAllowMissingParentSegments()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1084);
@@ -248,7 +279,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldNotAllowMissingWebSiteForVirtualFolders()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "virtualDirectory";
@@ -266,7 +297,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDeployAsWebApplication()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", 1085);
@@ -303,7 +334,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDetectAttemptedConversionFromVirtualDirectoryToWebApplication()
         {
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, $"/{uniqueValue}", ".", 1086);
@@ -328,7 +359,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDeployWhenVirtualPathAlreadyExistsAndPointsToPhysicalDirectory()
         {
             var webSitePhysicalPath = Path.Combine(Path.GetTempPath(), uniqueValue);
@@ -358,7 +389,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsVariable()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -402,7 +433,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldFindAndUseExistingCertificateInStoreIfPresent()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -445,7 +476,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsThumbprint()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -482,7 +513,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test] // https://github.com/OctopusDeploy/Issues/issues/3378
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldNotFailIfDisabledBindingUsesUnavailableCertificateVariable()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";

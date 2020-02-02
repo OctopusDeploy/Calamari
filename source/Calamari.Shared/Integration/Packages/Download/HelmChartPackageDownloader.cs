@@ -1,10 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Threading;
 using Calamari.Commands.Support;
+using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages.Download.Helm;
+using Calamari.Util;
+using NuGet;
 using Octopus.Versioning;
+using HttpClient = System.Net.Http.HttpClient;
 #if SUPPORTS_POLLY
 using Polly;
 #endif
@@ -13,13 +22,17 @@ namespace Calamari.Integration.Packages.Download
 {
     public class HelmChartPackageDownloader: IPackageDownloader
     {
-        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
+        static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string Extension = ".tgz";
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
+        readonly IHelmEndpointProxy endpointProxy;
+        readonly HttpClient client;
 
         public HelmChartPackageDownloader(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
+            client = new HttpClient(new HttpClientHandler{ AutomaticDecompression  = DecompressionMethods.None });
+            endpointProxy = new HelmEndpointProxy(client);
         }
         
         public PackagePhysicalFileMetadata DownloadPackage(string packageId, IVersion version, string feedId, Uri feedUri,
@@ -37,22 +50,42 @@ namespace Calamari.Integration.Packages.Download
                     return downloaded;
                 }
             }
+
+            var package = GetChartDetails(feedUri, feedCredentials,  packageId, CancellationToken.None);
+
+            if (string.IsNullOrEmpty(package.PackageId))
+            {
+                throw new CommandException($"There was an error fetching the chart from the provided repository. The package id was not valid ({package.PackageId})");
+            }
             
-            return DownloadChart(packageId, version, feedUri, feedCredentials, cacheDirectory);
+            var packageVersion = package.Versions.FirstOrDefault(v => version.Equals(v.Version));
+            var foundUrl = packageVersion?.Urls.FirstOrDefault();
+                
+            if (foundUrl == null)
+            {
+                throw new CommandException("Could not determine download url from chart repository. Please check associated index.yaml is correct.");
+            }
+            
+            var packageUrl = foundUrl.IsValidUrl() ? new Uri(foundUrl, UriKind.Absolute) :  new Uri(feedUri, foundUrl);
+            return DownloadChart(packageUrl, packageId, version, feedCredentials, cacheDirectory);
         }
         
-        const string TempRepoName = "octopusfeed";
-
-        PackagePhysicalFileMetadata DownloadChart(string packageId, IVersion version, Uri feedUri,
-            ICredentials feedCredentials, string cacheDirectory)
+        (string PackageId, IEnumerable<HelmIndexYamlReader.ChartData> Versions) GetChartDetails(Uri feedUri, ICredentials credentials, string packageId, CancellationToken cancellationToken)
         {
-            var cred = feedCredentials.GetCredential(feedUri, "basic");
+            var cred = credentials.GetCredential(feedUri, "basic");
+            
+            var yaml = endpointProxy.Get(feedUri, cred.UserName, cred.Password, cancellationToken);
+            var package = HelmIndexYamlReader.Read(yaml).FirstOrDefault(p => p.PackageId.Equals(packageId, StringComparison.OrdinalIgnoreCase));
+            return package;
+        }
 
+        PackagePhysicalFileMetadata DownloadChart(Uri url, string packageId, IVersion version, ICredentials feedCredentials, string cacheDirectory)
+        {
+            var cred = feedCredentials.GetCredential(url, "basic");
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
-
+            
             using (new TemporaryDirectory(tempDirectory))
             {
-                
                 var homeDir = Path.Combine(tempDirectory, "helm");
                 if (!Directory.Exists(homeDir))
                 {
@@ -64,15 +97,34 @@ namespace Calamari.Integration.Packages.Download
                     Directory.CreateDirectory(stagingDir);
                 }
 
-                var log = new LogWrapper();
-                InvokeWithRetry(() => Invoke($"init --home \"{homeDir}\" --client-only", tempDirectory, log, "initialise"));
-                InvokeWithRetry(() => Invoke($"repo add --home \"{homeDir}\" {(string.IsNullOrEmpty(cred.UserName) ? "" : $"--username \"{cred.UserName}\" --password \"{cred.Password}\"")} {TempRepoName} {feedUri.ToString()}", tempDirectory, log, "add the chart repository"));
-                InvokeWithRetry(() => Invoke($"fetch --home \"{homeDir}\"  --version \"{version}\" --destination \"{stagingDir}\" {TempRepoName}/{packageId}", tempDirectory, log, "download the chart"));
+                string cachedFileName = PackageName.ToCachedFileName(packageId, version, Extension);
+                var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
                 
-                var localDownloadName =
-                    Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
+                InvokeWithRetry(() =>
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    request.Headers.AddAuthenticationHeader(cred.UserName, cred.Password);
+                    
+                    using (var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write))
+                    using (var response = client.SendAsync(request).Result)
+                    {
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            throw new CommandException(
+                                $"Helm failed to download the chart (Status Code {(int) response.StatusCode}). Reason: {response.ReasonPhrase}");
+                        }
+                        
+                        #if NET40
+                        response.Content.CopyToAsync(fileStream).Wait();
+                        #else
+                        response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
+                        #endif
+                    }
+                });
 
-                fileSystem.MoveFile(Directory.GetFiles(stagingDir)[0], localDownloadName);
+                var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
+
+                fileSystem.MoveFile(downloadPath, localDownloadName);
                 return PackagePhysicalFileMetadata.Build(localDownloadName);
             }
         }
@@ -92,51 +144,6 @@ namespace Calamari.Integration.Packages.Download
         void InvokeWithRetry(Action action) => action();
 #endif
         
-        void Invoke(string args, string dir, ILog log, string specificAction)
-        {
-            var info = new ProcessStartInfo("helm", args)
-            {
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = dir,
-                CreateNoWindow = true
-            };
-
-            var sw = Stopwatch.StartNew();
-            var timeout = TimeSpan.FromSeconds(30);
-            using (var server = Process.Start(info))
-            {
-                while (!server.WaitForExit(10000) && sw.Elapsed < timeout)
-                {
-                    log.Warn($"Still waiting for {info.FileName} {info.Arguments} [PID:{server.Id}] to exit after waiting {sw.Elapsed}...");
-                }
-
-                var stdout = server.StandardOutput.ReadToEnd();
-                if (!string.IsNullOrWhiteSpace(stdout))
-                {
-                    log.Verbose(stdout);
-                }
-
-                var stderr = server.StandardError.ReadToEnd();
-                if (!string.IsNullOrWhiteSpace(stderr))
-                {
-                    log.Error(stderr);
-                }
-
-                if (!server.HasExited)
-                {
-                    server.Kill();
-                    throw new CommandException($"Helm failed to {specificAction} in an appropriate period of time ({timeout.TotalSeconds} sec). Please try again or check your connection.");
-                }
-
-                if (server.ExitCode != 0)
-                {
-                    throw new CommandException($"Helm failed to {specificAction} (Exit code {server.ExitCode}). Error output: \r\n{stderr}");
-                }
-            }
-        }
-
         PackagePhysicalFileMetadata SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
             Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());

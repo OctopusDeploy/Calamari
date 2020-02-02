@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using Calamari.Integration.Proxies;
 using Calamari.Tests.Helpers;
@@ -39,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void Initialize_HasSystemProxy_NoProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -49,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void Initialize_HasSystemProxy_UseSystemProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -69,7 +70,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void Initialize_HasSystemProxy_CustomProxy()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -79,7 +80,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Windows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void Initialize_HasSystemProxy_CustomProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -128,19 +129,34 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             AssertAuthenticatedProxyUsed(result);
         }
 
-        [TestCase("HTTP_PROXY")]
         [TestCase("http_proxy")]
-        [TestCase("HTTPS_PROXY")]
         [TestCase("https_proxy")]
-        [TestCase("NO_PROXY")]
         [TestCase("no_proxy")]
-        public void Initialize_OneEnvironmentVariableExists_NoneReturned(string existingVariableName)
+        public void Initialize_OneLowerCaseEnvironmentVariableExists_UpperCaseVariantReturned(string existingVariableName)
         {
             var existingValue = "blahblahblah";
             Environment.SetEnvironmentVariable(existingVariableName, existingValue);
-            var result = RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword);
+            var result = RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword).ToList();
 
-            result.Should().BeEmpty();
+            result.Should().ContainSingle("The existing variable should be duplicated as an upper case variable");
+            var variable = result.Single();
+            variable.Key.Should().Be(existingVariableName.ToUpperInvariant());
+            variable.Value.Should().Be(existingValue);
+        }
+        
+        [TestCase("HTTP_PROXY")]
+        [TestCase("HTTPS_PROXY")]
+        [TestCase("NO_PROXY")]
+        public void Initialize_OneUpperCaseEnvironmentVariableExists_LowerCaseVariantReturned(string existingVariableName)
+        {
+            var existingValue = "blahblahblah";
+            Environment.SetEnvironmentVariable(existingVariableName, existingValue);
+            var result = RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword).ToList();
+
+            result.Should().ContainSingle("The existing variable should be duplicated as a lower case variable");
+            var variable = result.Single();
+            variable.Key.Should().Be(existingVariableName.ToLowerInvariant());
+            variable.Value.Should().Be(existingValue);
         }
         
         IEnumerable<EnvironmentVariable> RunWith(

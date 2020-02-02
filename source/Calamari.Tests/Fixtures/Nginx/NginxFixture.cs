@@ -16,7 +16,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Nginx
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.Nix)]
+    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
     public class NginxFixture : CalamariFixture
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -135,8 +135,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.Nix)]
-        [Category(TestCategory.CompatibleOS.Mac)]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void SetupReverseProxyWithSslSite()
         {
             var locations =
@@ -214,6 +213,45 @@ namespace Calamari.Tests.Fixtures.Nginx
             
             this.Assent(File.ReadAllText(rootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
             this.Assent(File.ReadAllText(apiConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.apiLocation");
+        }
+        
+        [Test]
+        public void TestLocationsUnsuitableForFilenames()
+        {
+            /*
+             * Here we have two locations based on regular expressions: '= \' and '^/[a-z]something'. While these are different
+             * locations as far as NGINX is concerned, we need to be sure they are correctly converted into individual conf files
+             * after the locations are sanitized into strings suitable for filenames.
+             */
+            var additionalLocations =
+                JsonConvert.DeserializeObject<IEnumerable<Location>>(
+                    "[{\"path\":\"= /\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"index\\\":\\\"index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"}, {\"path\":\"^/[a-z]something\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"index\\\":\\\"index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"}]");
+            var rootLocation =
+                JsonConvert.DeserializeObject<Location>(
+                    "{\"path\":\"/\",\"directives\":\"{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\",\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"}");
+            
+            // Make sure slashes don't create nested directories. GitHub packages follow this package ID format.
+            var virtualServerName = "StaticContent/MyTest";
+
+            nginxServer
+                .WithVirtualServerName(virtualServerName)
+                .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpOnlyBinding),
+                    new Dictionary<string, (string, string, string)>())
+                .WithRootLocation(rootLocation)
+                .WithAdditionalLocations(additionalLocations);
+
+            nginxServer.BuildConfiguration();
+            nginxServer.SaveConfiguration(tempDirectory);
+            
+            var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{nginxServer.VirtualServerName}.conf.d");
+            
+            // The two additional locations must be files in the conf.d directory 
+            Assert.IsTrue(Directory.GetFiles(nginxConfigFilePath).Length == 2);
+            // Ensure there is a single file and a single directory in the nginx conf directory. This ensures that there are no unexpected subdirectories.
+            Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf")).Length == 1);
+            Assert.IsTrue(Directory.GetDirectories(Path.Combine(tempDirectory, "conf")).Length == 1);
+            // Ensure the filename matches the expected format.
+            Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf"))[0].EndsWith($"{nginxServer.VirtualServerName}.conf"));
         }
     }
 }

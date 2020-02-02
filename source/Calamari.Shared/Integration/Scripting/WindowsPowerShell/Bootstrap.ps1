@@ -14,7 +14,7 @@ $ErrorActionPreference = 'Stop'
 
 function Log-VersionTable
 {
-	Write-Verbose ($PSVersionTable | Out-String)
+	Write-Verbose ($PSVersionTable | Out-String -Width 200) # Calling Out-String without specify the width resulted in blank lines when running tests under MacOS 10.15 and Netcore 3.1 for some reason
 }
 
 function Log-EnvironmentInformation
@@ -85,8 +85,8 @@ function SafelyLog-ProcessVars
 {
 	Try
 	{
-		$hostProcess = [System.Diagnostics.Process]::GetCurrentProcess().ProcessName
-		Write-Host "  HostProcessName: $($hostProcess)"
+	    $process = [System.Diagnostics.Process]::GetCurrentProcess();
+		Write-Host "  HostProcess: $($process.ProcessName) ($($process.Id))"
 	}
 	Catch
 	{
@@ -121,8 +121,14 @@ function Import-ScriptModule([string]$moduleName, [string]$moduleFilePath)
 	}
 	Catch
 	{
-		Write-Warning "Failed to import Script Module '$moduleName'"
-		Throw
+		[System.Console]::Error.WriteLine("Failed to import Script Module '$moduleName' from '$moduleFilePath'")
+		[System.Console]::Error.WriteLine("$($error[0].CategoryInfo.Category): $($error[0].Exception.Message)")
+		[System.Console]::Error.WriteLine($error[0].InvocationInfo.PositionMessage)
+		[System.Console]::Error.WriteLine($error[0].ScriptStackTrace)
+		if ($null -ne $error[0].ErrorDetails) {
+			[System.Console]::Error.WriteLine($error[0].ErrorDetails.Message)
+		}
+		exit 1
 	}
 }
 
@@ -329,6 +335,7 @@ function New-OctopusArtifact
         [Alias('fullname')]
         [Alias('path')]
         [string]$fullpath,
+        [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [string]$name=""""
     )
     process
@@ -507,12 +514,14 @@ function Decrypt-Variables($iv, $Encrypted)
 	return $parameters
 }
 
-function Initialize-ProxySettings()
-{
+function Initialize-ProxySettings() {
 	$proxyUsername = $env:TentacleProxyUsername
 	$proxyPassword = $env:TentacleProxyPassword
 	$proxyHost = $env:TentacleProxyHost
 	[int]$proxyPort = $env:TentacleProxyPort
+	if (![string]::IsNullOrEmpty($proxyHost)) {
+		$proxyUri = New-Object Uri("http://${proxyHost}:$proxyPort")
+	}
 
 	$useDefaultProxy = $true
 	if (![string]::IsNullOrEmpty($env:TentacleUseDefaultProxy)) {
@@ -520,48 +529,109 @@ function Initialize-ProxySettings()
 	}
 
 	$useCustomProxy = ![string]::IsNullOrEmpty($proxyHost)
-	$useSystemProxy = [string]::IsNullOrEmpty($proxyHost)
 	$hasCredentials = ![string]::IsNullOrEmpty($proxyUsername)
 
-	#custom proxy		
-	if ($useCustomProxy)
-	{
-		$proxyUri = New-Object Uri("http://${proxyHost}:$proxyPort")
-		$proxy = New-Object System.Net.WebProxy($proxyUri)
-
-		if ($hasCredentials)
-		{
-			$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)			
-		}
-		else
-		{
-			$proxy.Credentials = New-Object System.Net.NetworkCredential("","")
+	# This means we should use the HTTP_PROXY variable if it exists, otherwise treat the proxy as not defined
+	# TODO: It would probably be better if Calamari was responsible for setting TentacleProxyHost, TentacleProxyUsername etc. based on HTTP_PROXY,
+	# but this probably involves resolving https://github.com/OctopusDeploy/Issues/issues/5865 first
+	if ($useDefaultProxy -and [string]::IsNullOrEmpty($proxyHost)) {
+		# Calamari ensure both http_proxy and HTTP_PROXY are set, so we don't need to worry about casing
+		if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
+			$proxyUri = New-Object System.Uri($env:HTTP_PROXY)
+            
+			# The HTTP_PROXY env variable may also contain credentials.
+			# This is a common enough pattern, but we need to extract the credentials in order to use them
+            
+			# But if credentials were explicitly provided, use those ones instead
+			if (-not $hasCredentials) {
+				$credentialsArray = $proxyUri.UserInfo.Split(":")
+				$hasCredentials = $credentialsArray.length -gt 1;
+				if ($hasCredentials) {
+					$proxyUsername = $credentialsArray[0];
+					$proxyPassword = $credentialsArray[1];
+				}
+			}
 		}
 	}
-	else
-	{
-		#system proxy		
-		if ($useDefaultProxy)
-		{
-			$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
 
-			if ($hasCredentials)
-			{
+	#custom proxy		
+	if ($useCustomProxy) {
+		$proxy = New-Object System.Net.WebProxy($proxyUri)
+
+		if ($hasCredentials) {
+			$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)			
+		}
+		else {
+			$proxy.Credentials = New-Object System.Net.NetworkCredential("", "")
+		}
+	}
+	else {
+		#system proxy		
+		if ($useDefaultProxy) {
+			# The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
+			if ($proxyUri -ne $null) {
+				# isWindows was introduced in PSCore and is not available for standard PowerShell
+				if (-not (Test-Path variable:IsWindows) -or $isWindows){
+					$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+				}
+				else {
+					$proxy = New-Object System.Net.WebProxy($proxyUri)
+				}
+			}
+			else {
+				# If Tentacle is configured to use a System proxy, but there is no system proxy configured then we should configure this as if there was no proxy
+				$proxy = New-Object System.Net.WebProxy
+			}
+
+			if ($hasCredentials) {
 				$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 			}
-			else
-			{
+			else {
 				$proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
 			}
 		}
 		#bypass proxy
-		else
-		{
+		else {
 			$proxy = New-Object System.Net.WebProxy
 		}
 	}
 	
+	# In some versions of PowerShell Core (pre version 7.0.0), if a script uses HttpClient 
+	# it won't be automatically be configured with the right proxy. 
+	# This is unavoidable for those versions, see See https://github.com/dotnet/corefx/issues/36553 for more information
+	# We expose an $OctopusProxy variable that can be used to manually configure HttpClient instances, and this variable is documented
+	# For consistency, we expose this variable across all versions of powershell, in case users have other usages of this variable
+	$global:OctopusProxy = $proxy
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
+	
+	if ($PSVersionTable.PSEdition -eq "Core") {
+		if ($PSVersionTable.PsVersion.Major -lt 7) {
+			# HttpClient is used to implement built in cmdlets like Invoke-WebRequest.
+			# Because earlier versions of PowerShell Core don't allow us to set a default proxy for HttpClient,
+			# the cmdlets also don't get a default proxy set either
+			# Fortunately, for these cmdlets we can use $PSDefaultParameterValues to provide the right defaults
+			# We don't use default parameter values in Windows PowerShell because this simplifies things, 
+			# and means that users could change this value globally by modifying just a single property
+			if ($useDefaultProxy -or $useCustomProxy) {
+				if ($proxyUri -ne $null) {
+					$PSDefaultParameterValues.Add("Invoke-WebRequest:Proxy", $proxyUri.ToString())
+					$PSDefaultParameterValues.Add("Invoke-RestMethod:Proxy", $proxyUri.ToString())
+					if ($hasCredentials) {
+						$securePassword = ConvertTo-SecureString $proxyPassword -AsPlainText -Force
+						$credentials = New-Object System.Management.Automation.PSCredential -ArgumentList $proxyUsername, $securePassword
+                        
+						$PSDefaultParameterValues.Add("Invoke-WebRequest:ProxyCredential", $credentials)
+						$PSDefaultParameterValues.Add("Invoke-RestMethod:ProxyCredential", $credentials)
+					}
+				}
+			}
+		}
+		else {
+			# In versions of PowerShell Core after 7.0.0, there is a mechanism for setting a default proxy on HttpClient 
+			# See https://github.com/dotnet/corefx/pull/37333
+			[System.Net.Http.HttpClient]::DefaultProxy = $proxy
+		}
+	}
 }
 
 function Execute-WithRetry([ScriptBlock] $command, [int] $maxFailures = 3, [int] $sleepBetweenFailures = 1) {
@@ -671,7 +741,22 @@ Import-CalamariModules
 # Invoke target script
 # -----------------------------------------------------------------
 {{BeforeLaunchingUserScriptDebugLocation}}
-. '{{TargetScriptFile}}' {{ScriptParameters}}
+try
+{
+	. '{{TargetScriptFile}}' {{ScriptParameters}}
+}
+catch
+{
+	
+	[System.Console]::Error.WriteLine("$($error[0].CategoryInfo.Category): $($error[0].Exception.Message)")
+	[System.Console]::Error.WriteLine($error[0].InvocationInfo.PositionMessage)
+	[System.Console]::Error.WriteLine($error[0].ScriptStackTrace)
+	if ($null -ne $error[0].ErrorDetails) {
+		[System.Console]::Error.WriteLine($error[0].ErrorDetails.Message)
+	}
+
+	exit 1
+}
 
 # -----------------------------------------------------------------
 # Ensure we exit with whatever exit code the last exe used
