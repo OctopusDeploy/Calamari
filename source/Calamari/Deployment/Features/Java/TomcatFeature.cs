@@ -28,7 +28,7 @@ namespace Calamari.Deployment.Features.Java
                 return;
 
             // Environment variables are used to pass parameters to the Java library
-            Log.Verbose("Invoking java.exe to perform Tomcat integration");
+            Log.Verbose("Invoking java to perform Tomcat integration");
             javaRunner.Run("com.octopus.calamari.tomcat.TomcatDeploy", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath)},
