@@ -40,39 +40,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        public void ShouldBeEnabledIfScriptSyntaxIsPreferredSyntaxOnEnvironment()
-        {
-            var variables = new CalamariVariableDictionary
-            {
-                {SpecialVariables.ClusterUrl, "Url"},
-                {SpecialVariables.AksClusterName, ""},
-                {SpecialVariables.EksClusterName, ""}
-            };
-            var target = new KubernetesContextScriptWrapper(variables);
-            var actual = target.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
-            actual.Should().BeTrue();
-        }
-
-        [Test]
-        public void ShouldBeDisabledIfScriptSyntaxIsNotPreferredSyntaxOnEnvironment()
-        {
-            var variables = new CalamariVariableDictionary
-            {
-                {SpecialVariables.ClusterUrl, "Url"},
-                {SpecialVariables.AksClusterName, ""},
-                {SpecialVariables.EksClusterName, ""}
-            };
-            var target = new KubernetesContextScriptWrapper(variables);
-            var possibleSyntaxes = Enum.GetValues(typeof(ScriptSyntax)).Cast<ScriptSyntax>();
-            foreach (var syntax in possibleSyntaxes.Except(new [] {ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment()}))
-            {
-                var actual = target.IsEnabled(syntax);
-                actual.Should().BeFalse();    
-            }
-        }
-        
-        [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)] //note: this would probably work on linux
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void PowershellKubeCtlScripts()
         {
