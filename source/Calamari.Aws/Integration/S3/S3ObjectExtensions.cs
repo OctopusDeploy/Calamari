@@ -16,7 +16,7 @@ namespace Calamari.Aws.Integration.S3
     {
         //Special headers as per AWS docs - https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUT.html
         private static readonly IDictionary<string, Func<HeadersCollection, string>> SupportedSpecialHeaders =
-            new Dictionary<string, Func<HeadersCollection, string>>(StringComparer.InvariantCultureIgnoreCase)
+            new Dictionary<string, Func<HeadersCollection, string>>(StringComparer.OrdinalIgnoreCase)
                 .WithHeaderFrom("Cache-Control", headers => headers.CacheControl)
                 .WithHeaderFrom("Content-Disposition", headers => headers.ContentDisposition)
                 .WithHeaderFrom("Content-Encoding", headers => headers.ContentEncoding)
@@ -49,7 +49,7 @@ namespace Calamari.Aws.Integration.S3
             var allKeys = next.Keys.Union(current.Keys).Distinct().ToList();
             var keysInBoth = allKeys.Where(key => next.ContainsKey(key) && current.ContainsKey(key)).ToList();
             var missingKeys = allKeys.Except(keysInBoth).ToList();
-            var differentValues = keysInBoth.Where(key => string.Compare(next[key], current[key], StringComparison.CurrentCultureIgnoreCase) != 0).ToList();
+            var differentValues = keysInBoth.Where(key => !string.Equals(next[key], current[key], StringComparison.OrdinalIgnoreCase)).ToList();
 
             return missingKeys.Count == 0 && differentValues.Count == 0;
         }
@@ -154,7 +154,7 @@ namespace Calamari.Aws.Integration.S3
 
         public static bool IsSameAsRequestMd5Digest(this ETag etag, PutObjectRequest request)
         {
-            return string.Compare(etag.Hash, request.Md5DigestToHexString(), StringComparison.InvariantCultureIgnoreCase) == 0;
+            return string.Compare(etag.Hash, request.Md5DigestToHexString(), StringComparison.OrdinalIgnoreCase) == 0;
         }
     }
 }
