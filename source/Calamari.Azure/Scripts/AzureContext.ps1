@@ -53,6 +53,7 @@ function Execute-WithRetry([ScriptBlock] $command) {
             if ($attemptCount -lt ($maxFailures)) {
                 Write-Host ("Attempt $attemptCount of $maxFailures failed: " + $_.Exception.Message)
             } else {
+                Write-Host $_.Exception | format-list -force
                 throw
             }
         }
