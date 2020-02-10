@@ -247,12 +247,10 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
             
-            var directory = Path.GetDirectoryName(deployment.PackageFilePath);
             var filename = GetNormalizedPackageFilename(deployment);
-            var filePath = directory != null ? Path.Combine(directory,  filename) : filename;
             
             return CreateRequest(deployment.PackageFilePath,
-                    GetBucketKey(directory, filePath, options), options)
+                    GetBucketKey(null, filename, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -299,7 +297,11 @@ namespace Calamari.Aws.Deployment.Conventions
                 case BucketKeyBehaviourType.Custom:
                     return () => behaviour.BucketKey;
                 case BucketKeyBehaviourType.Filename:
-                    return () => $"{behaviour.BucketKeyPrefix}{filePath.AsRelativePathFrom(baseDir)}";
+                    return () =>
+                    {
+                        var key = baseDir == null ? Path.GetFileName(filePath) : filePath.AsRelativePathFrom(baseDir);
+                        return $"{behaviour.BucketKeyPrefix}{key}";
+                    };
                 default:
                     throw new NotImplementedException();
             }
