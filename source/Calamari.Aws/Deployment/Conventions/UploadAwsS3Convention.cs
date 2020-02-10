@@ -246,9 +246,16 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
-
+            
+            var id = deployment.Variables.Get(SpecialVariables.Packages.PackageId(null));
+            var version = deployment.Variables.Get(SpecialVariables.Packages.PackageVersion(null));
+            var extension = Path.GetExtension(deployment.Variables.Get(SpecialVariables.Packages.OriginalPath(null)));
+            var directory = Path.GetDirectoryName(deployment.PackageFilePath);
+            var filename = $"{id}.{version}{extension}";
+            var filePath = directory != null ? Path.Combine(directory,  filename) : filename;
+            
             return CreateRequest(deployment.PackageFilePath,
-                    GetBucketKey(Path.GetDirectoryName(deployment.PackageFilePath), deployment.PackageFilePath, options), options)
+                    GetBucketKey(directory, filePath, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
