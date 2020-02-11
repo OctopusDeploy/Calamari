@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -60,7 +61,7 @@ namespace Calamari.Kubernetes.Conventions
             var packagePath = GetChartLocation(deployment);
 
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
-            var helmVersion = HelmVersionRetriever.GetVersion(customHelmExecutable ?? "helm");
+            var helmVersion = GetVersion(deployment.Variables);
             Log.Verbose($"Helm version: {helmVersion}");
 
             var sb = new StringBuilder();
@@ -82,6 +83,16 @@ namespace Calamari.Kubernetes.Conventions
 
             Log.Verbose(sb.ToString());
             return sb.ToString();
+        }
+
+        HelmVersion GetVersion(VariableDictionary variableDictionary)
+        {
+            var clientVersionText = variableDictionary.Get(SpecialVariables.Helm.ClientVersion);
+
+            if (Enum.TryParse(clientVersionText, out HelmVersion version))
+                return version;
+
+            throw new CommandException($"Unrecognized Helm version: '{clientVersionText}'");
         }
 
         void SetExecutable(StringBuilder sb, ScriptSyntax syntax, string customHelmExecutable)
