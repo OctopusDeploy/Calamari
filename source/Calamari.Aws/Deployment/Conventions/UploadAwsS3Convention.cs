@@ -23,7 +23,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
-    public class UploadAwsS3Convention : IInstallConvention
+     public class UploadAwsS3Convention : IInstallConvention
     {
         private readonly ICalamariFileSystem fileSystem;
         private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
@@ -31,6 +31,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly S3TargetMode targetMode;
         private readonly IProvideS3TargetOptions optionsProvider;
         private readonly IFileSubstituter fileSubstituter;
+        readonly IBucketKeyProvider bucketKeyProvider;
         private readonly bool md5HashSupported;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
@@ -40,7 +41,8 @@ namespace Calamari.Aws.Deployment.Conventions
             string bucket,
             S3TargetMode targetMode,
             IProvideS3TargetOptions optionsProvider,
-            IFileSubstituter fileSubstituter
+            IFileSubstituter fileSubstituter,
+            IBucketKeyProvider bucketKeyProvider
         )
         {
             this.fileSystem = fileSystem;
@@ -49,6 +51,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.targetMode = targetMode;
             this.optionsProvider = optionsProvider;
             this.fileSubstituter = fileSubstituter;
+            this.bucketKeyProvider = bucketKeyProvider;
             this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
         }
 
@@ -290,17 +293,9 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        public static string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour)
+        public string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour)
         {
-            switch (behaviour.BucketKeyBehaviour)
-            {
-                case BucketKeyBehaviourType.Custom:
-                    return behaviour.BucketKey;
-                case BucketKeyBehaviourType.Filename:
-                    return $"{behaviour.BucketKeyPrefix}{defaultKey}";
-                default:
-                    throw new NotImplementedException();
-            }
+            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour);
         }
 
         /// <summary>

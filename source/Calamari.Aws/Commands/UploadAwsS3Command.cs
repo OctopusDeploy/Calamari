@@ -54,6 +54,7 @@ namespace Calamari.Aws.Commands
             fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
             var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
             var substituter = new FileSubstituter(fileSystem);
+            var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
 
@@ -70,7 +71,8 @@ namespace Calamari.Aws.Commands
                     bucket,
                     targetType,
                     new VariableS3TargetOptionsProvider(variables),
-                    substituter
+                    substituter,
+                    bucketKeyProvider
                 )
             };
 
