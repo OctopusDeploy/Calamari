@@ -8,11 +8,17 @@ namespace Calamari.Tests.AWS.S3
     [TestFixture]
     public class BucketKeyProviderFixture
     {
+        IBucketKeyProvider sut;
+        [SetUp]
+        public void Setup()
+        {
+            sut = new BucketKeyProvider();
+        }
+        
         [Test]
         public void PackageFilenameBehaviorUsesDefaultWithPrefix()
         {
-            var provider = new BucketKeyProvider();
-            var result = provider.GetBucketKey("default",
+            var result = sut.GetBucketKey("default",
                 new S3PackageOptions
                 {
                     BucketKeyPrefix = "test/",
@@ -26,8 +32,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void PackageCustomBehaviorUsesProvidedBucketKey()
         {
-            var provider = new BucketKeyProvider();
-            var result = provider.GetBucketKey("default",
+            var result = sut.GetBucketKey("default",
                 new S3PackageOptions
                 {
                     BucketKeyPrefix = "test/",
@@ -41,8 +46,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void SingleSelectionFilenameBehaviorUsesDefaultWithPrefix()
         {
-            var provider = new BucketKeyProvider();
-            var result = provider.GetBucketKey("default",
+            var result = sut.GetBucketKey("default",
                 new S3SingleFileSelectionProperties
                 {
                     BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
@@ -56,8 +60,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void SingleFileSelectionCustomBehaviorUsesProvidedBucketKey()
         {
-            var provider = new BucketKeyProvider();
-            var result = provider.GetBucketKey("default",
+            var result = sut.GetBucketKey("default",
                 new S3SingleFileSelectionProperties
                 {
                     BucketKeyBehaviour = BucketKeyBehaviourType.Custom,
