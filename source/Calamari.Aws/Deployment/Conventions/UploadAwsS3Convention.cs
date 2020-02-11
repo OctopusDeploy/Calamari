@@ -233,7 +233,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 _ => new List<string>{ filePath })
                 .Install(deployment);
     
-            return CreateRequest(filePath, GetBucketKey(Path.GetDirectoryName(filePath), selection), selection)
+            return CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(deployment.StagingDirectory), selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
                     .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
