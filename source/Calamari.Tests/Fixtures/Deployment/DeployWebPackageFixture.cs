@@ -274,8 +274,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             Variables.Set(SpecialVariables.RetentionPolicySet, "a/b/c/d");
-            Variables.Set(SpecialVariables.Package.NuGetPackageId, "Acme.Web");
-            Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
+            Variables.Set(SpecialVariables.Package.PackageId, "Acme.Web");
+            Variables.Set(SpecialVariables.Package.PackageVersion, "1.0.0");
 
             var result = DeployPackage(deploymentType);
             result.AssertSuccess();
@@ -291,8 +291,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             Variables.Set(SpecialVariables.RetentionPolicySet, "a/b/c/d");
-            Variables.Set(SpecialVariables.Package.NuGetPackageId, "Acme.Web");
-            Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "1.0.0");
+            Variables.Set(SpecialVariables.Package.PackageId, "Acme.Web");
+            Variables.Set(SpecialVariables.Package.PackageVersion, "1.0.0");
 
             var result = DeployPackage(DeploymentType.Tar);
             result.AssertSuccess();
