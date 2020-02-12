@@ -185,8 +185,8 @@ namespace Calamari.Tests.AWS
 
         static void Validate(Action<AmazonS3Client> execute)
         {
-            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_Calamari_Access"),
-                Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
+            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_E2E_AccessKeyId"),
+                Environment.GetEnvironmentVariable("AWS_E2E_SecretKeyId"));
             var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.APSoutheast1};
             using (var client = new AmazonS3Client(credentials, config))
             {
@@ -214,8 +214,8 @@ namespace Calamari.Tests.AWS
             var variablesFile = Path.GetTempFileName();
             var variables = new VariableDictionary();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_Calamari_Access"));
-            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
+            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_E2E_AccessKeyId"));
+            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_E2E_SecretKeyId"));
             variables.Set("Octopus.Action.Aws.Region", RegionEndpoint.APSoutheast1.SystemName);
             variables.Set(AwsSpecialVariables.S3.FileSelections,
                 JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
