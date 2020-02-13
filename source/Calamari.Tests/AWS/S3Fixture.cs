@@ -109,8 +109,8 @@ namespace Calamari.Tests.AWS
             {"Cache-Control", "max-age=123"},
             {"Content-Disposition", "some disposition"},
             {"Content-Encoding", "some-encoding"},
-            {"Content-Type", "some-content"},
-            {"Expires", "2020-01-02T00:00:00.000Z"},
+            {"Content-Type", "application/octet-stream"},
+            {"Expires", DateTime.Parse("2020-01-02T00:00:00.000Z").ToString("R")},
             {"x-amz-website-redirect-location", "/anotherPage.html"},
             
             //Locking requires a bucket with versioning
@@ -130,7 +130,6 @@ namespace Calamari.Tests.AWS
         };
 
         [Test]
-        [Ignore("This test currently fails locally, root cause not known yet.")]
         public void UploadPackageWithMetadata()
         {
             var fileSelections = new List<S3FileSelectionProperties>
