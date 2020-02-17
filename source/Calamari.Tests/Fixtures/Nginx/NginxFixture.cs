@@ -191,7 +191,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             var confDirectory = "conf";
             
             var deployment = new RunningDeployment($"C:\\{packageId}.zip", new CalamariVariableDictionary());
-            deployment.Variables.Set(SpecialVariables.Package.NuGetPackageId, packageId);
+            deployment.Variables.Set(SpecialVariables.Package.PackageId, packageId);
             deployment.Variables.Set(SpecialVariables.Package.Output.InstallationDirectoryPath, $"/var/www/{packageId}");
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Bindings, httpOnlyBinding);
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Locations, staticContentAndReverseProxyLocations);

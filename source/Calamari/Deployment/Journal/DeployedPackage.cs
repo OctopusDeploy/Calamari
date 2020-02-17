@@ -43,18 +43,18 @@ namespace Calamari.Deployment.Journal
         {
             var variables = deployment.Variables;
 
-            if (!string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Package.NuGetPackageId)))
+            if (!string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Package.PackageId)))
             {
                 yield return new DeployedPackage(
-                    variables.Get(SpecialVariables.Package.NuGetPackageId),
-                    variables.Get(SpecialVariables.Package.NuGetPackageVersion),
+                    variables.Get(SpecialVariables.Package.PackageId),
+                    variables.Get(SpecialVariables.Package.PackageVersion),
                     deployment.PackageFilePath
                 );
             }
 
             foreach (var packageReferenceName in variables.GetIndexes(SpecialVariables.Packages.PackageCollection))
             {
-                if (string.IsNullOrEmpty(packageReferenceName) && variables.IsSet(SpecialVariables.Package.NuGetPackageId))
+                if (string.IsNullOrEmpty(packageReferenceName) && variables.IsSet(SpecialVariables.Package.PackageId))
                 {
                     continue;
                 }

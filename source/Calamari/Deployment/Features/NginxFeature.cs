@@ -36,7 +36,7 @@ namespace Calamari.Deployment.Features
             var customNginxSslRoot = variables.Get(SpecialVariables.Action.Nginx.SslRoot);
             
             nginxServer
-                .WithVirtualServerName(variables.Get(SpecialVariables.Package.NuGetPackageId))
+                .WithVirtualServerName(variables.Get(SpecialVariables.Package.PackageId))
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))
                 .WithServerBindings(enabledBindings, sslCertificates, customNginxSslRoot)
                 .WithRootLocation(rootLocation)

@@ -88,10 +88,10 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
 
             //Chart Pckage
-            Variables.Set(SpecialVariables.Package.NuGetPackageId, "mychart");
-            Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "0.3.7");
-            Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.NuGetPackageId}}}");
-            Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.NuGetPackageVersion}}}");
+            Variables.Set(SpecialVariables.Package.PackageId, "mychart");
+            Variables.Set(SpecialVariables.Package.PackageVersion, "0.3.7");
+            Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.PackageId}}}");
+            Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.PackageVersion}}}");
             
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
