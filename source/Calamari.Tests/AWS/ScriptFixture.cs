@@ -1,106 +1,128 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Retry;
 using Calamari.Integration.Scripting;
+using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.AWS
 {
     [TestFixture]
+    [RequiresNonFreeBSDPlatform]
+    [Category(TestCategory.CompatibleOS.OnlyNix)]
     public class ScriptFixture : CalamariFixture
     {
         const string PathEnvironmentVariableName = "PATH";
-        const string PythonPathEnvironmentVariableName = "PYTHONPATH";
 
         [OneTimeSetUp]
-        public void InstallTools()
+        public async Task InstallTools()
         {
-            void AddAwsCliToPath(string destination, string installPath)
+            void AddAwsCliToPath(string binPath)
             {
-                var path = Environment.GetEnvironmentVariable(PathEnvironmentVariableName) ?? string.Empty; 
-                if (!path.Contains(installPath))
-                {
-                    var pathWithAwsCli =
-                        $"{installPath}{Path.PathSeparator}{path}";
-                    Environment.SetEnvironmentVariable(PathEnvironmentVariableName, pathWithAwsCli);
-                }
+                var path = Environment.GetEnvironmentVariable(PathEnvironmentVariableName) ?? string.Empty;
+                if (path.Contains(binPath)) return;
                 
-                var pythonPathWithAwsCli =
-                    Environment.GetEnvironmentVariable(PythonPathEnvironmentVariableName) is object
-                        ? $"{destination}{Path.PathSeparator}{Environment.GetEnvironmentVariable(PythonPathEnvironmentVariableName)}"
-                        : destination;
-                Environment.SetEnvironmentVariable(PythonPathEnvironmentVariableName, pythonPathWithAwsCli);
+                var pathWithAwsCli =
+                    $"{binPath}{Path.PathSeparator}{path}";
+                Environment.SetEnvironmentVariable(PathEnvironmentVariableName, pathWithAwsCli);
             }
 
-            void InstallAwsCli(string destination, string installPath)
+            async Task InstallAwsCli(string destination, string binPath)
             {
-                Directory.CreateDirectory(installPath);
-                var installAwsCliScriptPath = Path.Combine(destination, GetScriptFileName("install-awscli"));
-                var scriptBody = $"pip install awscli --target {destination} --upgrade --no-cache-dir --force-reinstall --disable-pip-version-check --no-warn-script-location";
-                using (new TemporaryFile(installAwsCliScriptPath))
+                Console.WriteLine("Downloading aws cli...");
+                var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
+                while (retry.Try())
                 {
-                    File.WriteAllText(installAwsCliScriptPath, scriptBody);
-                    var (output, _) = RunScript(installAwsCliScriptPath);
-                    output.AssertSuccess();
-                }
+                    try
+                    {
+                        using (var client = new HttpClient())
+                        {
+                            var zipPath = Path.Combine(Path.GetTempPath(), "awscliv2.zip");
+                            using (new TemporaryFile(zipPath))
+                            {
+                                using (var fileStream =
+                                    new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                                using (var stream = await client.GetStreamAsync($"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"))
+                                {
+                                    await stream.CopyToAsync(fileStream);
+                                }
 
-                AddAwsCliToPath(destination, installPath);
+                                ZipFile.ExtractToDirectory(zipPath, destination);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        if (!retry.CanRetry())
+                            throw;
+
+                        await Task.Delay(retry.Sleep());
+                    }
+                }
+                
+                AddAwsCliToPath(binPath);
             }
 
             var destinationDirectoryName = TestEnvironment.GetTestPath("AWSCLIPath");
-            var binPath = Path.Combine(destinationDirectoryName, "bin");
-            if (Directory.Exists(destinationDirectoryName) && Directory.GetFiles(binPath).Any())
+            var awsCliPath = GetAwsCliPath(destinationDirectoryName);
+            if (AwsCliInstalled(destinationDirectoryName, awsCliPath))
             {
-                AddAwsCliToPath(destinationDirectoryName, binPath);
+                AddAwsCliToPath(awsCliPath);
                 return;
             }
 
-            InstallAwsCli(destinationDirectoryName, binPath);
+            await InstallAwsCli(destinationDirectoryName, awsCliPath);
         }
 
         [OneTimeTearDown]
         public void RemoveTools()
         {
-            void RemoveAwsCliFromPath(string destination, string installPath)
+            void RemoveAwsCliFromPath(string destination)
             {
                 var path = Environment.GetEnvironmentVariable(PathEnvironmentVariableName) ?? string.Empty;
-                if (path.Contains(installPath))
-                {
-                    var pathWithOutAwsCli = path
-                        .Replace(installPath, "")
-                        .Trim(Path.PathSeparator);
-                    Environment.SetEnvironmentVariable(PathEnvironmentVariableName, pathWithOutAwsCli);
-                }
-
-                var pythonPath = Environment.GetEnvironmentVariable(PythonPathEnvironmentVariableName) ?? string.Empty; 
-                if (pythonPath.Contains(destination))
-                {
-                    var pythonPathWithoutAwsCli = pythonPath
-                        .Replace(destination, "")
-                        .Trim(Path.PathSeparator);
-                    Environment.SetEnvironmentVariable(PythonPathEnvironmentVariableName,
-                        pythonPathWithoutAwsCli.Length > 0 ? pythonPathWithoutAwsCli : null);
-                }
+                if (!path.Contains(destination)) return;
+                
+                var pathWithOutAwsCli = path
+                    .Replace(destination, "")
+                    .Trim(Path.PathSeparator);
+                Environment.SetEnvironmentVariable(PathEnvironmentVariableName, pathWithOutAwsCli);
             }
             
-            void UninstallAwsCli(string destination, string installPath)
+            void UninstallAwsCli(string destination, string binPath)
             {
-                RemoveAwsCliFromPath(destination, installPath);
+                RemoveAwsCliFromPath(binPath);
                 Directory.Delete(destination, true);
             }
             
             var destinationDirectoryName = TestEnvironment.GetTestPath("AWSCLIPath");
-            var binPath = Path.Combine(destinationDirectoryName, "bin");
-            if (!Directory.Exists(destinationDirectoryName) || !Directory.Exists(binPath))
+            var awsCliPath = GetAwsCliPath(destinationDirectoryName);
+            if (!AwsCliInstalled(destinationDirectoryName, awsCliPath))
             {
-                RemoveAwsCliFromPath(destinationDirectoryName, binPath);
+                RemoveAwsCliFromPath(destinationDirectoryName);
                 return;
             }
 
-            UninstallAwsCli(destinationDirectoryName, binPath);
+            UninstallAwsCli(destinationDirectoryName, awsCliPath);
+        }
+
+        static bool AwsCliInstalled(string destination, string binPath)
+        {
+            if (!Directory.Exists(destination)) return false;
+            
+            var path = Directory.EnumerateFiles(binPath).FirstOrDefault();
+            return path is object;
+        }
+        
+        static string GetAwsCliPath(string destination)
+        {
+            return Path.Combine(destination, "aws", "dist");
         }
 
         [Test]
