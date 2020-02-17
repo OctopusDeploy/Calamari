@@ -9,6 +9,7 @@ using System.Xml;
 using Calamari.Exceptions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
+using Calamari.Integration.Processes;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;
@@ -20,13 +21,22 @@ namespace Calamari.Integration.Packages.Download
     /// </summary>
     public class MavenPackageDownloader : IPackageDownloader
     {
+   
         /// <summary>
         /// These are extensions that can be handled by extractors other than the Java one. We accept these
         /// because not all artifacts from Maven will be used by Java.
         /// </summary>
         public static readonly string[] AdditionalExtensions = {".nupkg", ".tar.bz2", ".tar.bz", ".tbz", ".tgz", ".tar.gz", ".tar.Z", ".tar"};
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
-        readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
+        readonly ICalamariFileSystem fileSystem;
+        readonly IFreeSpaceChecker freeSpaceChecker;
+
+        public MavenPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
+        {
+            this.fileSystem = fileSystem;
+            this.freeSpaceChecker = freeSpaceChecker;
+        }
 
         public PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
@@ -116,7 +126,7 @@ namespace Calamari.Integration.Packages.Download
 
             Log.Info("Downloading Maven package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
-            fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
+            freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
             var mavenPackageId = new MavenPackageID(packageId, version);
             

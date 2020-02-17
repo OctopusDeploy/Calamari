@@ -6,6 +6,7 @@ using System.Net.Cache;
 using System.Threading;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
@@ -18,9 +19,18 @@ namespace Calamari.Integration.Packages.Download
 {
     public class GitHubPackageDownloader : IPackageDownloader
     {
+        readonly ICalamariFileSystem fileSystem;
+        readonly IFreeSpaceChecker freeSpaceChecker;
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
-        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
         public static readonly string DownloadingExtension = ".downloading";
+
+        public GitHubPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
+        {
+            this.fileSystem = fileSystem;
+            this.freeSpaceChecker = freeSpaceChecker;
+        }
+
         const string Extension = ".zip";
         const char OwnerRepoSeperator = '/';
 
@@ -102,7 +112,7 @@ namespace Calamari.Integration.Packages.Download
             Log.Info("Downloading GitHub package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
-            fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
+            freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
             SplitPackageId(packageId, out string owner, out string repository);
             if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repository))

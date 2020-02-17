@@ -16,7 +16,7 @@ namespace Calamari.Integration.FileSystem
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool GetDiskFreeSpaceEx(string lpDirectoryName, out ulong lpFreeBytesAvailable, out ulong lpTotalNumberOfBytes, out ulong lpTotalNumberOfFreeBytes);
 
-        protected override bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
+        public override bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
         {
             ulong freeBytesAvailable;
             ulong totalNumberOfBytes;

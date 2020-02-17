@@ -571,57 +571,6 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        public bool SkipFreeDiskSpaceCheck { get; set; }
-        public int? FreeDiskSpaceOverrideInMegaBytes { get; set; }
-
-        public void EnsureDiskHasEnoughFreeSpace(string directoryPath)
-        {
-            if (CalamariEnvironment.IsRunningOnMono && CalamariEnvironment.IsRunningOnMac)
-            {
-                //After upgrading to macOS 10.15.2, and mono 5.14.0, drive.TotalFreeSpace and drive.AvailableFreeSpace both started returning 0.
-                //see https://github.com/mono/mono/issues/17151, which was fixed in mono 6.4.xx
-                //If we upgrade mono past 5.14.x, scriptcs stops working.
-                //Rock and a hard place.
-                Log.Verbose("Unable to determine disk free space under Mono on macOS. Assuming there's enough.");
-                return;
-            }
-            
-            if (SkipFreeDiskSpaceCheck)
-            {
-                Log.Verbose($"{SpecialVariables.SkipFreeDiskSpaceCheck} is enabled. The check to ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has enough free space will be skipped.");
-                return;
-            }
-
-            long? freeDiskSpaceOverrideInBytes = null;
-            if (FreeDiskSpaceOverrideInMegaBytes.HasValue)
-            {
-                freeDiskSpaceOverrideInBytes = ((long) FreeDiskSpaceOverrideInMegaBytes*1024*1024);
-                Log.Verbose($"{SpecialVariables.FreeDiskSpaceOverrideInMegaBytes} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {((ulong)freeDiskSpaceOverrideInBytes).ToFileSizeString()} free disk space.");
-            }
-
-            EnsureDiskHasEnoughFreeSpace(directoryPath, freeDiskSpaceOverrideInBytes ?? 500L * 1024 * 1024);
-        }
-
-        public void EnsureDiskHasEnoughFreeSpace(string directoryPath, long requiredSpaceInBytes)
-        {
-            ulong totalNumberOfFreeBytes;
-
-            var success = GetDiskFreeSpace(directoryPath, out totalNumberOfFreeBytes);
-            if (!success)
-                return;
-
-            var required = requiredSpaceInBytes < 0 ? 0 : (ulong)requiredSpaceInBytes;
-            // If a free disk space override value has not been provided, always make sure at least 500MB are available regardless of what we need
-            if(!FreeDiskSpaceOverrideInMegaBytes.HasValue)
-                required = Math.Max(required, 500L * 1024 * 1024);
-
-            if (totalNumberOfFreeBytes < required)
-            {
-                throw new IOException(
-                    $"The drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' does not have enough free disk space available for this operation to proceed. The disk only has {totalNumberOfFreeBytes.ToFileSizeString()} available; please free up at least {required.ToFileSizeString()}.");
-            }
-        }
-
         public string GetFullPath(string relativeOrAbsoluteFilePath)
         {
             if (!Path.IsPathRooted(relativeOrAbsoluteFilePath))
@@ -633,7 +582,7 @@ namespace Calamari.Integration.FileSystem
             return relativeOrAbsoluteFilePath;
         }
 
-        protected abstract bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
+        public abstract bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
 
         public string GetRelativePath(string fromFile, string toFile)
         {

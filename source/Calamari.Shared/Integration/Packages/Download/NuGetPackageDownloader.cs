@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Integration.Processes;
 using Octopus.Versioning;
 #if USE_NUGET_V2_LIBS
 using NuGet;
@@ -19,8 +20,18 @@ namespace Calamari.Integration.Packages.Download
     {
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
-        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
         public static readonly string DownloadingExtension = ".downloading";
+
+        
+        readonly ICalamariFileSystem fileSystem;
+        readonly IFreeSpaceChecker freeSpaceChecker;
+        
+        public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
+        {
+            this.fileSystem = fileSystem;
+            this.freeSpaceChecker = freeSpaceChecker;
+        }
 
         public PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
@@ -85,7 +96,7 @@ namespace Calamari.Integration.Packages.Download
         {
             Log.Info("Downloading NuGet package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
-            fileSystem.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
+            freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
             var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".nupkg"));
 
