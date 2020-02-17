@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Calamari.Integration.FileSystem;
@@ -42,6 +43,8 @@ namespace Calamari.Tests.AWS
                 {
                     try
                     {
+                        ServicePointManager.SecurityProtocol =
+                            SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                         using (var client = new HttpClient())
                         {
                             var zipPath = Path.Combine(Path.GetTempPath(), "awscliv2.zip");
