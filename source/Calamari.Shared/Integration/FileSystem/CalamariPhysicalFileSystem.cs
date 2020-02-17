@@ -380,14 +380,14 @@ namespace Calamari.Integration.FileSystem
             PurgeDirectory(targetDirectory, fi => false, options, cancel);
         }
 
-        public void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options)
+        public void PurgeDirectory(string targetDirectory, Predicate<FileSystemInfo> exclude, FailureOptions options)
         {
             PurgeDirectory(targetDirectory, exclude, options, CancellationToken.None);
         }
 
         public void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs)
         {
-            Predicate<IFileSystemInfo> check = null;
+            Predicate<FileSystemInfo> check = null;
             if (globs.Any())
             {
                 var keep = EnumerateWithGlob(targetDirectory, globs);
@@ -400,7 +400,7 @@ namespace Calamari.Integration.FileSystem
             PurgeDirectory(targetDirectory, check, options, CancellationToken.None);
         }
 
-        void PurgeDirectory(string targetDirectory, Predicate<IFileSystemInfo> exclude, FailureOptions options, CancellationToken cancel, bool includeTarget = false, RetryTracker retry = null)
+        void PurgeDirectory(string targetDirectory, Predicate<FileSystemInfo> exclude, FailureOptions options, CancellationToken cancel, bool includeTarget = false, RetryTracker retry = null)
         {
             exclude = exclude?? (fi => false);
 
@@ -415,7 +415,7 @@ namespace Calamari.Integration.FileSystem
             {
                 cancel.ThrowIfCancellationRequested();
 
-                var includeInfo = new FileSystemInfoAdapter(new FileInfo(file));
+                var includeInfo = new FileInfo(file);
                 if (exclude(includeInfo))
                 {
                     continue;
@@ -429,8 +429,7 @@ namespace Calamari.Integration.FileSystem
                 cancel.ThrowIfCancellationRequested();
 
                 var info = new DirectoryInfo(directory);
-                var includeInfo = new FileSystemInfoAdapter(info);
-                if (exclude(includeInfo))
+                if (exclude(info))
                 {
                     continue;
                 }
