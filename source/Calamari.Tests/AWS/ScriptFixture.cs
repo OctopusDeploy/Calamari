@@ -57,6 +57,8 @@ namespace Calamari.Tests.AWS
                                 ZipFile.ExtractToDirectory(zipPath, destination);
                             }
                         }
+                        
+                        break;
                     }
                     catch
                     {
