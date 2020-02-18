@@ -50,8 +50,6 @@ namespace Calamari.Aws.Commands
             if (!fileSystem.FileExists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
 
-            fileSystem.FreeDiskSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
-            fileSystem.SkipFreeDiskSpaceCheck = variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck);
             var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
             var substituter = new FileSubstituter(fileSystem);
             var bucketKeyProvider = new BucketKeyProvider();

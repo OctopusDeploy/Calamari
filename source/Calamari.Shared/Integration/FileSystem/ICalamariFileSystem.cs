@@ -37,8 +37,7 @@ namespace Calamari.Integration.FileSystem
         void PurgeDirectory(string targetDirectory, Predicate<FileSystemInfo> exclude, FailureOptions options);
         void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs);
         void EnsureDirectoryExists(string directoryPath);
-        void EnsureDiskHasEnoughFreeSpace(string directoryPath);
-        void EnsureDiskHasEnoughFreeSpace(string directoryPath, long requiredSpaceInBytes);
+        bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
         string GetFullPath(string relativeOrAbsoluteFilePath);
         void OverwriteAndDelete(string originalFile, string temporaryReplacement);
         void WriteAllBytes(string filePath, byte[] data);

@@ -83,7 +83,10 @@ namespace Calamari.Commands
                     out var parsedAttemptBackoff);
 
                 var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
-                var pkg = new PackageDownloaderStrategy(scriptEngine, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), commandLineRunner).DownloadPackage(
+                ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+                IFreeSpaceChecker freeSpaceChecker = new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariableDictionary());
+
+                var pkg = new PackageDownloaderStrategy(scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner).DownloadPackage(
                     packageId,
                     version,
                     feedId,

@@ -4,7 +4,7 @@ namespace Calamari.Integration.FileSystem
 {
     public class NixCalamariPhysicalFileSystem : CalamariPhysicalFileSystem
     {
-        protected override bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
+        public override bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
         {
             // This method will not work for UNC paths on windows 
             // (hence WindowsPhysicalFileSystem) but should be sufficient for Linux mounts

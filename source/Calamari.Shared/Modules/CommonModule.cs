@@ -5,6 +5,7 @@ using Calamari.Integration.Processes;
 using System.IO;
 using System.Linq;
 using Calamari.Integration.Certificates;
+using Calamari.Integration.FileSystem;
 using Octostache;
 using Module = Autofac.Module;
 
@@ -66,6 +67,7 @@ namespace Calamari.Modules
                     .As<VariableDictionary>();
             }
 
+            builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>();
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().InstancePerLifetimeScope();
             builder.RegisterType<LogWrapper>().As<ILog>().InstancePerLifetimeScope();
         }
