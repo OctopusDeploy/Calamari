@@ -42,8 +42,10 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string ExpectedMavenSnapshotPackageHash = "e211b82586ea564b0382cbc87d23854273fc8b2e";
         static readonly long ExpectedMavenSnapshotPackageSize = 2592096;
         static readonly string MavenSnapshotPublicFeedUri = "https://oss.sonatype.org/content/repositories/snapshots/";
-        static readonly SampleFeedPackage MavenSnapshotPublicFeed = new SampleFeedPackage("#") { Id = "feeds-maven", Version = VersionFactory.CreateMavenVersion("22.0-SNAPSHOT"), PackageId = "com.google.guava:guava" };
-        
+        // If this version is no longer available go to https://oss.sonatype.org/#view-repositories;releases~browseindex
+        // In the bottom panel, expand Releases -> com -> google -> guava and find whatever the latest Snapshot version is
+        static readonly SampleFeedPackage MavenSnapshotPublicFeed = new SampleFeedPackage("#") { Id = "feeds-maven", Version = VersionFactory.CreateMavenVersion("24.0-SNAPSHOT"), PackageId = "com.google.guava:guava" };
+
         [SetUp]
         public void SetUp()
         {
