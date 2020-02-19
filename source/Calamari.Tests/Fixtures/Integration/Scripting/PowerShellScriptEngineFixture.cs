@@ -12,12 +12,12 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     {
         [Test]
         [RequiresNonFreeBSDPlatform]
-        public void PowerShellDecryptsSensitiveVariables()
+        public void PowerShellDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");
-                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, GetDictionaryWithSecret());
+                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, GetVariables());
                 result.AssertOutput("KingKong");
             }
         }
@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");
-                var calamariVariableDictionary = GetDictionaryWithSecret();
+                var calamariVariableDictionary = GetVariables();
                 calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Trace", variableValue);
 
                 var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath,
@@ -72,7 +72,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");
-                var calamariVariableDictionary = GetDictionaryWithSecret();
+                var calamariVariableDictionary = GetVariables();
                 calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Trace", variableValue);
 
                 var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, calamariVariableDictionary);
@@ -93,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");
-                var calamariVariableDictionary = GetDictionaryWithSecret();
+                var calamariVariableDictionary = GetVariables();
                 if (!string.IsNullOrEmpty(variableValue))
                     calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Trace", variableValue);
 
@@ -113,7 +113,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             {
                 File.WriteAllText(scriptFile.FilePath,
                     "$newVar = $nonExistentVar" + Environment.NewLine + "write-host \"newVar = '$newVar'\"");
-                var calamariVariableDictionary = GetDictionaryWithSecret();
+                var calamariVariableDictionary = GetVariables();
                 calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Strict", "true");
 
                 var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath,
@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             {
                 File.WriteAllText(scriptFile.FilePath,
                     "$newVar = $nonExistentVar" + Environment.NewLine + "write-host \"newVar = '$newVar'\"");
-                var calamariVariableDictionary = GetDictionaryWithSecret();
+                var calamariVariableDictionary = GetVariables();
                 if (!string.IsNullOrEmpty(variableValue))
                     calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Strict", variableValue);
 

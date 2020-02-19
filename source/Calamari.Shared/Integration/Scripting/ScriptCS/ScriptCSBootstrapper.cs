@@ -113,9 +113,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var builder = new StringBuilder();
             foreach (var variable in variables.GetNames())
             {
-                var variableValue = variables.IsSensitive(variable)
-                    ? EncryptVariable(variables.Get(variable))
-                    : EncodeValue(variables.Get(variable));
+                var variableValue = EncryptVariable(variables.Get(variable));
                 builder.Append("\t\t\tthis[").Append(EncodeValue(variable)).Append("] = ").Append(variableValue).AppendLine(";");
             }
             return builder.ToString();
@@ -139,10 +137,9 @@ namespace Calamari.Integration.Scripting.ScriptCS
                 return "null;";
 
             var encrypted = VariableEncryptor.Encrypt(value);
-            byte[] iv;
-            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
 
-            return string.Format("DecryptString(\"{0}\", \"{1}\")", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
+            return $@"DecryptString(""{Convert.ToBase64String(rawEncrypted)}"", ""{Convert.ToBase64String(iv)}"")";
         }
     }
 }

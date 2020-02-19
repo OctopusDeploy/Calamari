@@ -11,12 +11,12 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     {
         [Category(TestCategory.ScriptingSupport.ScriptCS)]
         [Test, RequiresMonoVersion400OrAbove, RequiresDotNet45]
-        public void CSharpDecryptsSensitiveVariables()
+        public void CSharpDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
             {
                 File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(Octopus.Parameters[\"mysecrect\"]);");
-                var result = ExecuteScript(new ScriptCSScriptEngine(), scriptFile.FilePath, GetDictionaryWithSecret());
+                var result = ExecuteScript(new ScriptCSScriptEngine(), scriptFile.FilePath, GetVariables());
                 result.AssertOutput("KingKong");
             }
         }
