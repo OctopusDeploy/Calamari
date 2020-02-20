@@ -13,7 +13,7 @@ namespace Calamari.Tests.Hooks
         /// <summary>
         /// This is how we know if this wrapper was called or not
         /// </summary>
-        public bool WasCalled { get; private set; } = false;
+        public static bool WasCalled { get; set; } = false;
         public int Priority => 1;
         public bool IsEnabled(ScriptSyntax scriptSyntax) => true;
         public IScriptWrapper NextWrapper { get; set; }

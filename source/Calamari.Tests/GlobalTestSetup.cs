@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Plumbing;
 using NUnit.Framework;
 
 namespace Calamari.Tests
@@ -14,11 +15,11 @@ namespace Calamari.Tests
     public class GlobalTestSetup
     {
         [OneTimeSetUp]
-        public void EnableTLS12()
+        public void EnableAllSecurityProtocols()
         {
             // Enabling of TLS1.2 happens on Calamari.exe startup in main,
             // however this will ensure it is applied during Unit Tests which will bypass the main entrypoint
-            Calamari.Program.EnableAllSecurityProtocols();
+            SecurityProtocols.EnableAllSecurityProtocols();
         }
     }
 }
