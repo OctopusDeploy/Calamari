@@ -19,13 +19,15 @@ namespace Calamari.Aws.Commands
     public class UploadAwsS3Command : Command
     {
         readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
         private string packageFile;
         private string bucket;
         private string targetMode;
 
-        public UploadAwsS3Command(IVariables variables)
+        public UploadAwsS3Command(IVariables variables, ICalamariFileSystem fileSystem)
         {
             this.variables = variables;
+            this.fileSystem = fileSystem;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
             Options.Add("targetMode=", "Whether the entire package or files within the package should be uploaded to the s3 bucket", v => targetMode = v);
@@ -34,8 +36,6 @@ namespace Calamari.Aws.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             if (string.IsNullOrEmpty(packageFile))
             {

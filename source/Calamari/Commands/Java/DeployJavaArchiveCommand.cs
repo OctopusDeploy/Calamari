@@ -26,13 +26,15 @@ namespace Calamari.Commands.Java
         string archiveFile;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
 
-        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
 
             this.scriptEngine = scriptEngine;
             this.variables = variables;
+            this.fileSystem = fileSystem;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -46,8 +48,6 @@ namespace Calamari.Commands.Java
                 throw new CommandException("Could not find archive file: " + archiveFile);
 
             Log.Info("Deploying:    " + archiveFile);
-            
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);

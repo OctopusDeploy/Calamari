@@ -9,6 +9,7 @@ using Calamari.Deployment;
 using Calamari.Integration.Retry;
 using Calamari.Util;
 using System.Runtime.InteropServices;
+using Calamari.Integration.FileSystem;
 
 namespace Calamari.Integration.FileSystem
 {

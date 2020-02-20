@@ -18,10 +18,12 @@ namespace Calamari.Deployment.Features
         public string DeploymentStage => DeploymentStages.AfterDeploy;
 
         readonly NginxServer nginxServer;
+        readonly ICalamariFileSystem fileSystem;
 
-        public NginxFeature(NginxServer nginxServer)
+        public NginxFeature(NginxServer nginxServer, ICalamariFileSystem fileSystem)
         {
             this.nginxServer = nginxServer;
+            this.fileSystem = fileSystem;
         }
         
         public void Execute(RunningDeployment deployment)
@@ -47,7 +49,7 @@ namespace Calamari.Deployment.Features
             nginxServer.BuildConfiguration(customNginxConfRoot);
 
             Log.Verbose("Saving nginx configuration");
-            var tempDirectory = CalamariPhysicalFileSystem.GetPhysicalFileSystem().CreateTemporaryDirectory();
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
             variables.Set("OctopusNginxFeatureTempDirectory", tempDirectory);
             nginxServer.SaveConfiguration(tempDirectory);
         }

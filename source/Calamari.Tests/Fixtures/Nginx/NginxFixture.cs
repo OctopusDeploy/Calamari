@@ -198,7 +198,10 @@ namespace Calamari.Tests.Fixtures.Nginx
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Locations, staticContentAndReverseProxyLocations);
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.HostName, "www.nginxsampleweb.app");
 
-            new NginxFeature(nginxServer).Execute(deployment);
+            new NginxFeature(
+                nginxServer,
+                CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+            ).Execute(deployment);
 
             var nginxTempDirectory = deployment.Variables.Get("OctopusNginxFeatureTempDirectory");
             Assert.That(nginxTempDirectory, Is.Not.Empty);

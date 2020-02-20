@@ -119,7 +119,11 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
 
         protected void DeployPackage(string packageName)
         {
-            var command = new DeployJavaArchiveCommand(new CombinedScriptEngine(), Variables);
+            var command = new DeployJavaArchiveCommand(
+                new CombinedScriptEngine(), 
+                Variables,
+                CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+            );
             ReturnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
     }

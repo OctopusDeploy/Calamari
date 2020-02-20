@@ -230,7 +230,10 @@ namespace Calamari.Tests.AWS
                 new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
-                var command = new UploadAwsS3Command(new CalamariVariables());
+                var command = new UploadAwsS3Command(
+                    new CalamariVariables(),
+                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                );
                 var result = command.Execute(new[] { 
                     "--package", $"{package.FilePath}", 
                     "--variables", $"{variablesFile}", 

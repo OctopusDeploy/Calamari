@@ -16,17 +16,17 @@ namespace Calamari.Commands
     {
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
 
-        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter, IVariables variables)
+        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
         {
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
+            this.fileSystem = fileSystem;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
             var packageFile = variables.GetEnvironmentExpandedPath(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
             if(string.IsNullOrEmpty(packageFile))
             {

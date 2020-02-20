@@ -12,14 +12,16 @@ namespace Calamari.Commands
     public class CleanCommand : Command
     {
         readonly IVariables variables;
-        
+        readonly ICalamariFileSystem fileSystem;
+
         string retentionPolicySet;
         int days;
         int releases;
 
-        public CleanCommand(IVariables variables)
+        public CleanCommand(IVariables variables, ICalamariFileSystem fileSystem)
         {
             this.variables = variables;
+            this.fileSystem = fileSystem;
             Options.Add("retentionPolicySet=", "The release-policy-set ID", x => retentionPolicySet = x);
             Options.Add("days=", "Number of days to keep artifacts", x => int.TryParse(x, out days));
             Options.Add("releases=", "Number of releases to keep artifacts for", x => int.TryParse(x, out releases));
@@ -36,7 +38,6 @@ namespace Calamari.Commands
 
             variables.EnrichWithEnvironmentVariables();
 
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var deploymentJournal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
             var clock = new SystemClock();
 

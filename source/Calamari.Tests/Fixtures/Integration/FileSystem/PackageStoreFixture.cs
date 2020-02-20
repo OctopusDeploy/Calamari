@@ -44,7 +44,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("2.0.0.2")))
             {
                 var store = new PackageStore(
-                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
+                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(),
+                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                    );
 
                 var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion(1, 1, 1, 1));
 
@@ -59,7 +61,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("1.0.0.1", true)))
             {
                 var store = new PackageStore(
-                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
+                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(),
+                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                );
 
                 var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion(1, 1, 1, 1));
 
@@ -74,7 +78,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreateEmptyFile("1.0.0.2")))
             {
                 var store = new PackageStore(
-                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor());
+                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(),
+                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                );
 
                 var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion("1.1.1.1"));
 

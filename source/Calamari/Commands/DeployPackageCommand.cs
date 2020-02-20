@@ -28,13 +28,15 @@ namespace Calamari.Commands
         private string packageFile;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
 
-        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
             this.scriptEngine = scriptEngine;
             this.variables = variables;
+            this.fileSystem = fileSystem;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -47,8 +49,6 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find package file: " + packageFile);    
 
             Log.Info("Deploying package:    " + packageFile);
-            
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var featureClasses = new List<IFeature>();
 
@@ -64,7 +64,7 @@ namespace Calamari.Commands
 #endif
             if (!CalamariEnvironment.IsRunningOnWindows)
             {
-                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect()));
+                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem));
             }
 
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
