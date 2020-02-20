@@ -10,6 +10,7 @@ using Octopus.Versioning.Semver;
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
+    [Ignore("2019.9 doesn't support Helm3, which is the version on the agents")]
     public class HelmChartPackageDownloaderFixture
     {
         static readonly string AuthFeedUri =   "https://octopusdeploy.jfrog.io/octopusdeploy/helm-testing/";

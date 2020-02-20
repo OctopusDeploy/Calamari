@@ -13,6 +13,7 @@ using Octostache;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
+    [Ignore("2019.9 doesn't support Helm3, which is the version on the agents")]
     public class HelmUpgradeFixture : CalamariFixture
     {
         static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
