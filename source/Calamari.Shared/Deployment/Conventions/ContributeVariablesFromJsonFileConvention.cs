@@ -62,7 +62,7 @@ namespace Calamari.Deployment.Conventions
             throw new CommandException(msg, inner);
         }
         
-        void CopyVariables(VariableDictionary copyFrom, CalamariVariableDictionary copyTo)
+        void CopyVariables(VariableDictionary copyFrom, IVariables copyTo)
         {
             foreach (var variable in copyFrom)
             {

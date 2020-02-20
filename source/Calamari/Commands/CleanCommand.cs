@@ -11,13 +11,13 @@ namespace Calamari.Commands
     [Command("clean", Description = "Removes packages and files according to the configured retention policy")]
     public class CleanCommand : Command
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         
         string retentionPolicySet;
         int days;
         int releases;
 
-        public CleanCommand(CalamariVariableDictionary variables)
+        public CleanCommand(IVariables variables)
         {
             this.variables = variables;
             Options.Add("retentionPolicySet=", "The release-policy-set ID", x => retentionPolicySet = x);

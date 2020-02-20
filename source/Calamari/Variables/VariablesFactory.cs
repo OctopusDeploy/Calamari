@@ -13,9 +13,9 @@ namespace Calamari.Variables
 {
     public class VariablesFactory
     {
-        public static CalamariVariableDictionary Create(ICalamariFileSystem fileSystem, CommonOptions options)
+        public static IVariables Create(ICalamariFileSystem fileSystem, CommonOptions options)
         {
-            var variables = new CalamariVariableDictionary();
+            var variables = new CalamariVariables();
             
             var variablesFile = options.InputVariables.VariablesFile;
             if (!string.IsNullOrEmpty(variablesFile))

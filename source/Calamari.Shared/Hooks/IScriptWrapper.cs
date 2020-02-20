@@ -34,7 +34,7 @@ namespace Calamari.Hooks
         /// </summary>
         CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars);
     }

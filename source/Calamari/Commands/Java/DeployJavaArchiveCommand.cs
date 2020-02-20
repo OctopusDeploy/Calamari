@@ -25,9 +25,9 @@ namespace Calamari.Commands.Java
     {
         string archiveFile;
         private readonly CombinedScriptEngine scriptEngine;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, CalamariVariableDictionary variables)
+        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, IVariables variables)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
 

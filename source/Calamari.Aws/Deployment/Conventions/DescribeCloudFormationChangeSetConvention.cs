@@ -43,7 +43,7 @@ namespace Calamari.Aws.Deployment.Conventions
             );
         }
         
-        public async Task DescribeChangeset(StackArn stack, ChangeSetArn changeSet, CalamariVariableDictionary variables)
+        public async Task DescribeChangeset(StackArn stack, ChangeSetArn changeSet, IVariables variables)
         {
             Guard.NotNull(stack, "The provided stack identifer or name may not be null");
             Guard.NotNull(changeSet, "The provided change set identifier or name may not be null");

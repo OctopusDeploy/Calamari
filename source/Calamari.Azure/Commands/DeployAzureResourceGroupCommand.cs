@@ -21,12 +21,12 @@ namespace Calamari.Azure.Commands
     public class DeployAzureResourceGroupCommand : Command
     {
         private readonly CombinedScriptEngine scriptEngine;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         private string packageFile;
         private string templateFile;
         private string templateParameterFile;
 
-        public DeployAzureResourceGroupCommand(CombinedScriptEngine scriptEngine, CalamariVariableDictionary variables)
+        public DeployAzureResourceGroupCommand(CombinedScriptEngine scriptEngine, IVariables variables)
         {
             this.scriptEngine = scriptEngine;
             this.variables = variables;

@@ -17,7 +17,7 @@ namespace Calamari.Commands
     {
         private readonly CombinedScriptEngine scriptEngine;
         readonly IFreeSpaceChecker freeSpaceChecker;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
         string packageId;
         string packageVersion;
@@ -31,7 +31,7 @@ namespace Calamari.Commands
         private FeedType feedType = FeedType.NuGet;
         private VersionFormat versionFormat = VersionFormat.Semver;
 
-        public DownloadPackageCommand(CombinedScriptEngine scriptEngine, IFreeSpaceChecker freeSpaceChecker, CalamariVariableDictionary variables)
+        public DownloadPackageCommand(CombinedScriptEngine scriptEngine, IFreeSpaceChecker freeSpaceChecker, IVariables variables)
         {
             this.scriptEngine = scriptEngine;
             this.freeSpaceChecker = freeSpaceChecker;

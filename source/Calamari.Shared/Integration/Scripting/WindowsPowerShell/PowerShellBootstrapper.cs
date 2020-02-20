@@ -19,7 +19,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         public override bool AllowImpersonation() => true;
 
-        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
+        public override string PathToPowerShellExecutable(IVariables variables)
         {
             if (powerShellPath != null)
             {
@@ -44,7 +44,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return powerShellPath;
         }
 
-        protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
+        protected override IEnumerable<string> ContributeCommandArguments(IVariables variables)
         {
             var customPowerShellVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
             if (!string.IsNullOrEmpty(customPowerShellVersion))
@@ -58,7 +58,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     {
         public override bool AllowImpersonation() => false;
 
-        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
+        public override string PathToPowerShellExecutable(IVariables variables)
         {
             return "pwsh";
         }
@@ -76,7 +76,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         public override bool AllowImpersonation() => true;
 
-        public override string PathToPowerShellExecutable(CalamariVariableDictionary variables)
+        public override string PathToPowerShellExecutable(IVariables variables)
         {
             var customVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
             var customVersionIsDefined = !string.IsNullOrEmpty(customVersion);
@@ -142,7 +142,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
     
     public abstract class PowerShellCoreBootstrapper : PowerShellBootstrapper
     {
-        protected override IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables)
+        protected override IEnumerable<string> ContributeCommandArguments(IVariables variables)
         {
             yield break;
         }
@@ -172,9 +172,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         public abstract bool AllowImpersonation();
         
-        public abstract string PathToPowerShellExecutable(CalamariVariableDictionary variables);
+        public abstract string PathToPowerShellExecutable(IVariables variables);
 
-        public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, CalamariVariableDictionary variables)
+        public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, IVariables variables)
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
@@ -201,7 +201,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return commandArguments.ToString();
         }
 
-        static string GetPsDebugCommand(CalamariVariableDictionary variables)
+        static string GetPsDebugCommand(IVariables variables)
         {
             //https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/set-psdebug?view=powershell-6
             var traceArg = variables[SpecialVariables.Action.PowerShell.PSDebug.Trace];
@@ -234,9 +234,9 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return $"Set-PSDebug {traceCommand}{strictCommand};";
         }
 
-        protected abstract IEnumerable<string> ContributeCommandArguments(CalamariVariableDictionary variables);
+        protected abstract IEnumerable<string> ContributeCommandArguments(IVariables variables);
 
-        private static bool IsDebuggingEnabled(CalamariVariableDictionary variables)
+        private static bool IsDebuggingEnabled(IVariables variables)
         {
             var powershellDebugMode = variables[SpecialVariables.Action.PowerShell.DebugMode];
 
@@ -247,7 +247,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return true;
         }
 
-        public (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, CalamariVariableDictionary variables)
+        public (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, IVariables variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
@@ -272,7 +272,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return (bootstrapFile, scriptModulePaths);
     }
 
-        private static StringBuilder SetupDebugBreakpoints(StringBuilder builder, CalamariVariableDictionary variables)
+        private static StringBuilder SetupDebugBreakpoints(StringBuilder builder, IVariables variables)
         {
             const string powershellWaitForDebuggerCommand = "Wait-Debugger";
             var startOfBootstrapScriptDebugLocation = string.Empty;
@@ -326,7 +326,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
 
 
-        static (string[] scriptModulePaths, string scriptModuleDeclarations) DeclareScriptModules(CalamariVariableDictionary variables, string parentDirectory)
+        static (string[] scriptModulePaths, string scriptModuleDeclarations) DeclareScriptModules(IVariables variables, string parentDirectory)
         {
             var output = new StringBuilder();
 
@@ -335,7 +335,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return (scriptModules, output.ToString());
         }
 
-        static string[] WriteScriptModules(VariableDictionary variables, string parentDirectory, StringBuilder output)
+        static string[] WriteScriptModules(IVariables variables, string parentDirectory, StringBuilder output)
         {
             var scriptModules = new List<string>();
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
@@ -356,7 +356,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             return scriptModules.ToArray();
         }
 
-        static (string encrypted, string iv) GetEncryptedVariablesString(CalamariVariableDictionary variables)
+        static (string encrypted, string iv) GetEncryptedVariablesString(IVariables variables)
         {
             var sb = new StringBuilder();
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
@@ -374,7 +374,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             );
         }
 
-        static string DeclareLocalVariables(CalamariVariableDictionary variables)
+        static string DeclareLocalVariables(IVariables variables)
         {
             var output = new StringBuilder();
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))

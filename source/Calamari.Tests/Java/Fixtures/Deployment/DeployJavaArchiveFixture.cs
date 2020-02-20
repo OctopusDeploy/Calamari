@@ -10,6 +10,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octostache;
 
@@ -18,7 +19,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
     [TestFixture]
     public class DeployJavaArchiveFixture : CalamariFixture
     {
-        protected CalamariVariableDictionary Variables { get; private set; }
+        protected IVariables Variables { get; private set; }
         protected ICalamariFileSystem FileSystem { get; private set; }
         protected string ApplicationDirectory { get; private set; }
 
@@ -40,7 +41,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(ApplicationDirectory, "DeploymentJournal.xml"));
 
-            Variables = new CalamariVariableDictionary();
+            Variables = new CalamariVariables();
             Variables.EnrichWithEnvironmentVariables();
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, ApplicationDirectory);
         }

@@ -18,12 +18,12 @@ namespace Calamari.Aws.Commands
     [Command("upload-aws-s3", Description = "Uploads a package or package file(s) to an AWS s3 bucket")]
     public class UploadAwsS3Command : Command
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         private string packageFile;
         private string bucket;
         private string targetMode;
 
-        public UploadAwsS3Command(CalamariVariableDictionary variables)
+        public UploadAwsS3Command(IVariables variables)
         {
             this.variables = variables;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));

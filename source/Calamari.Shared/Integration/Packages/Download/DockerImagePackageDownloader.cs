@@ -18,7 +18,7 @@ namespace Calamari.Integration.Packages.Download
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
@@ -29,7 +29,7 @@ namespace Calamari.Integration.Packages.Download
             }
         };
 
-        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, CalamariVariableDictionary variables)
+        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;

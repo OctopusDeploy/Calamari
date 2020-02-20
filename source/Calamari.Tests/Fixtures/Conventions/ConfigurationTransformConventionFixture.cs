@@ -7,6 +7,7 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -20,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         IConfigurationTransformer configurationTransformer;
         ITransformFileLocator transformFileLocator;
         RunningDeployment deployment;
-        CalamariVariableDictionary variables;
+        IVariables variables;
         ProxyLog logs;
 
         [SetUp]
@@ -32,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             
             var deployDirectory = BuildConfigPath(null);
 
-            variables = new CalamariVariableDictionary();
+            variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
 
@@ -240,7 +241,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldOutputDiagnosticsLoggingIfEnabled()
         {
             var calamariFileSystem = Substitute.For<ICalamariFileSystem>();
-            var deploymentVariables = new CalamariVariableDictionary();
+            var deploymentVariables = new CalamariVariables();
             deploymentVariables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, @"MyPackage.1.0.0.nupkg");
             deploymentVariables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, @"MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config => MyApplication.ProcessingServer.WorkerRole.dll.config");
             deploymentVariables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, "True");

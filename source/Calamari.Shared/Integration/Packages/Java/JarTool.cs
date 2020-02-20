@@ -16,7 +16,7 @@ namespace Calamari.Integration.Packages.Java
         readonly ICommandOutput commandOutput;
         readonly string toolsPath;
 
-        public JarTool(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, VariableDictionary variables)
+        public JarTool(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, IVariables variables)
         {
             this.commandLineRunner = commandLineRunner;
             this.commandOutput = commandOutput;

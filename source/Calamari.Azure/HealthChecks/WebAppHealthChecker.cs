@@ -29,7 +29,7 @@ namespace Calamari.Azure.HealthChecks
             return deploymentTargetTypeName == "AzureWebApp";
         }
 
-        public int ExecuteHealthCheck(CalamariVariableDictionary variables)
+        public int ExecuteHealthCheck(IVariables variables)
         {
             var account = AccountFactory.Create(variables);
 

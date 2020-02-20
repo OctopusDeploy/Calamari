@@ -5,6 +5,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -22,7 +23,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.GitHubPassword);
 
         static readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        static readonly FreeSpaceChecker freeSpaceChecker = new FreeSpaceChecker(fileSystem, new CalamariVariableDictionary());
+        static readonly FreeSpaceChecker freeSpaceChecker = new FreeSpaceChecker(fileSystem, new CalamariVariables());
             
         private static string home = Path.GetTempPath();
         [OneTimeSetUp]

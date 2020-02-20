@@ -30,13 +30,13 @@ namespace Calamari.Commands
         string packageFile;
         string scriptParametersArg;
         readonly IDeploymentJournalWriter deploymentJournalWriter;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         readonly CombinedScriptEngine scriptEngine;
         IFileSubstituter fileSubstituter; 
 
         public RunScriptCommand(
             IDeploymentJournalWriter deploymentJournalWriter,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             CombinedScriptEngine scriptEngine)
         {
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));

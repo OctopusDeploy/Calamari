@@ -19,7 +19,7 @@ namespace Calamari.Integration.ConfigurationVariables
             this.ignoreVariableReplacementErrors = ignoreVariableReplacementErrors;
         }
 
-        public void ModifyConfigurationFile(string configurationFilePath, VariableDictionary variables)
+        public void ModifyConfigurationFile(string configurationFilePath, IVariables variables)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace Calamari.Integration.ConfigurationVariables
             }
         }
 
-        static List<string> ApplyChanges(XNode doc, VariableDictionary variables)
+        static List<string> ApplyChanges(XNode doc, IVariables variables)
         {
             var changes = new List<string>();
 
@@ -88,7 +88,7 @@ namespace Calamari.Integration.ConfigurationVariables
             }
         }
 
-        static IEnumerable<string> ReplaceAppSettingOrConnectionString(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, VariableDictionary variables)
+        static IEnumerable<string> ReplaceAppSettingOrConnectionString(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, string valueAttributeName, IVariables variables)
         {
             var changes = new List<string>();
             var settings = (
@@ -121,7 +121,7 @@ namespace Calamari.Integration.ConfigurationVariables
             return changes;
         }
 
-        static IEnumerable<string> ReplaceStonglyTypeApplicationSetting(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, VariableDictionary variables)
+        static IEnumerable<string> ReplaceStonglyTypeApplicationSetting(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, IVariables variables)
         {
             var changes = new List<string>();
 

@@ -6,7 +6,7 @@ namespace Calamari.Azure.Accounts
 {
     public static class AccountFactory
     {
-        public static Account Create(VariableDictionary variables)
+        public static Account Create(IVariables variables)
         {
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
 

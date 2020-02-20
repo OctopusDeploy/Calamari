@@ -9,6 +9,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
@@ -190,7 +191,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             var packageId = "NginxSampleWebApp";
             var confDirectory = "conf";
             
-            var deployment = new RunningDeployment($"C:\\{packageId}.zip", new CalamariVariableDictionary());
+            var deployment = new RunningDeployment($"C:\\{packageId}.zip", new CalamariVariables());
             deployment.Variables.Set(SpecialVariables.Package.PackageId, packageId);
             deployment.Variables.Set(SpecialVariables.Package.Output.InstallationDirectoryPath, $"/var/www/{packageId}");
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Bindings, httpOnlyBinding);

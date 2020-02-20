@@ -12,10 +12,10 @@ namespace Calamari.Commands
     [Command("extract-package-to-staging", Description = "Extracts a package into the staging area")]
     public class ExtractToStagingCommand : Command
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         string packageFile;
 
-        public ExtractToStagingCommand(CalamariVariableDictionary variables)
+        public ExtractToStagingCommand(IVariables variables)
         {
             this.variables = variables;
             Options.Add(

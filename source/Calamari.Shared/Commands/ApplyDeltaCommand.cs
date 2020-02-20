@@ -23,9 +23,9 @@ namespace Calamari.Commands
         
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICalamariFileSystem fileSystem;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public ApplyDeltaCommand(IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
+        public ApplyDeltaCommand(IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, IVariables variables)
         {
             this.freeSpaceChecker = freeSpaceChecker;
             this.fileSystem = fileSystem;

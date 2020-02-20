@@ -21,9 +21,9 @@ namespace Calamari.Azure.Commands
     {
         private string packageFile;
         private readonly CombinedScriptEngine scriptEngine;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public DeployAzureWebCommand(CombinedScriptEngine scriptEngine, CalamariVariableDictionary variables)
+        public DeployAzureWebCommand(CombinedScriptEngine scriptEngine, IVariables variables)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 

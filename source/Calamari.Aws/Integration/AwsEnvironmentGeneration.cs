@@ -27,7 +27,7 @@ namespace Calamari.Aws.Integration
         private readonly string assumeRoleArn;
         private readonly string assumeRoleSession;
 
-        public static async Task<AwsEnvironmentGeneration> Create(CalamariVariableDictionary variables)
+        public static async Task<AwsEnvironmentGeneration> Create(IVariables variables)
         {
             var environmentGeneration = new AwsEnvironmentGeneration(variables);
 
@@ -46,7 +46,7 @@ namespace Calamari.Aws.Integration
 
         public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
-        private AwsEnvironmentGeneration(CalamariVariableDictionary variables)
+        private AwsEnvironmentGeneration(IVariables variables)
         {
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();

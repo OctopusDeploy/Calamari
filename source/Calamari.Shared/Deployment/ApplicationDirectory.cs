@@ -16,7 +16,7 @@ namespace Calamari.Deployment
         /// Returns the directory where the package will be installed. 
         /// Also ensures the directory exists, and that there is free-space on the disk.
         /// </summary>
-        public static string GetApplicationDirectory(PackageFileNameMetadata packageFileNameMetadata, CalamariVariableDictionary variables, ICalamariFileSystem fileSystem)
+        public static string GetApplicationDirectory(PackageFileNameMetadata packageFileNameMetadata, IVariables variables, ICalamariFileSystem fileSystem)
         {
             return EnsureTargetPathExistsAndIsEmpty(
                 Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables),
@@ -26,7 +26,7 @@ namespace Calamari.Deployment
         }
 
         /// This will be specific to Tenant and/or Environment if these variables are available.
-        static string GetEnvironmentApplicationDirectory(ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
+        static string GetEnvironmentApplicationDirectory(ICalamariFileSystem fileSystem, IVariables variables)
         {
             var root = GetApplicationDirectoryRoot(variables);
             root = AppendTenantNameIfProvided(fileSystem, variables, root);
@@ -38,7 +38,7 @@ namespace Calamari.Deployment
             return root;
         }
 
-        static string GetApplicationDirectoryRoot(VariableDictionary variables)
+        static string GetApplicationDirectoryRoot(IVariables variables)
         {
             const string windowsRoot = "env:SystemDrive";
             const string linuxRoot = "env:HOME";
@@ -60,7 +60,7 @@ namespace Calamari.Deployment
 
         }
 
-        static string AppendEnvironmentNameIfProvided(ICalamariFileSystem fileSystem, VariableDictionary variables, string root)
+        static string AppendEnvironmentNameIfProvided(ICalamariFileSystem fileSystem, IVariables variables, string root)
         {
             var environment = variables.Get(SpecialVariables.Environment.Name);
             if (!string.IsNullOrWhiteSpace(environment))
@@ -72,7 +72,7 @@ namespace Calamari.Deployment
             return root;
         }
 
-        static string AppendTenantNameIfProvided(ICalamariFileSystem fileSystem, VariableDictionary variables, string root)
+        static string AppendTenantNameIfProvided(ICalamariFileSystem fileSystem, IVariables variables, string root)
         {
             var tenant = variables.Get(SpecialVariables.Deployment.Tenant.Name);
             if (!string.IsNullOrWhiteSpace(tenant))

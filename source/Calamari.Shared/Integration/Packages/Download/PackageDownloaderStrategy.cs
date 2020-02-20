@@ -19,9 +19,9 @@ namespace Calamari.Integration.Packages.Download
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICommandLineRunner commandLineRunner;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner, CalamariVariableDictionary variables)
+        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner, IVariables variables)
         {
             this.engine = engine;
             this.fileSystem = fileSystem;

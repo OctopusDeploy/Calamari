@@ -53,7 +53,7 @@ namespace Calamari
 
             var builder = new ContainerBuilder();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterInstance(variables).As<CalamariVariableDictionary>().As<VariableDictionary>();
+            builder.RegisterInstance(variables).As<IVariables>().As<VariableDictionary>();
             
             // Register the program entry point
             builder.RegisterModule(new CalamariProgramModule());

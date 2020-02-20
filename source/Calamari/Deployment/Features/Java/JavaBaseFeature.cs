@@ -15,9 +15,9 @@ namespace Calamari.Deployment.Features.Java
     public class JavaRunner
     {
         readonly ICommandLineRunner commandLineRunner;
-        readonly VariableDictionary variables;
+        readonly IVariables variables;
 
-        public JavaRunner(ICommandLineRunner commandLineRunner, VariableDictionary variables)
+        public JavaRunner(ICommandLineRunner commandLineRunner, IVariables variables)
         {
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;

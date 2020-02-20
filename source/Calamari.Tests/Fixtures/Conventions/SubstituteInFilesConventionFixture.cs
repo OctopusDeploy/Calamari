@@ -8,6 +8,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 using Octostache;
@@ -22,14 +23,14 @@ namespace Calamari.Tests.Fixtures.Conventions
         ICalamariFileSystem fileSystem;
         IFileSubstituter substituter;
         RunningDeployment deployment;
-        CalamariVariableDictionary variables;
+        IVariables variables;
 
         [SetUp]
         public void SetUp()
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
             substituter = Substitute.For<IFileSubstituter>();
-            variables = new CalamariVariableDictionary();
+            variables = new CalamariVariables();
 
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
             {
@@ -66,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             CreateConvention().Install(deployment);
 
-            substituter.DidNotReceive().PerformSubstitution(Arg.Any<string>(), Arg.Any<VariableDictionary>());
+            substituter.DidNotReceive().PerformSubstitution(Arg.Any<string>(), Arg.Any<IVariables>());
         }
 
         private SubstituteInFilesConvention CreateConvention()

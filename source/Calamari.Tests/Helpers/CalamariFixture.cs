@@ -10,6 +10,7 @@ using Autofac;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
+using Calamari.Variables;
 
 namespace Calamari.Tests.Helpers
 {
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Helpers
             return new CommandLine(octoDiffExe);
         }
 
-        protected CalamariResult InvokeInProcess(CommandLine command, VariableDictionary variables = null)
+        protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
         {
             using (var logs = new ProxyLog())
             {
@@ -49,20 +50,20 @@ namespace Calamari.Tests.Helpers
                 var capture = new CaptureCommandOutput();
                 var sco = new SplitCommandOutput(
                     new ConsoleCommandOutput(), 
-                    new ServiceMessageCommandOutput(variables ?? new VariableDictionary()),
+                    new ServiceMessageCommandOutput(variables ?? new CalamariVariables()),
                     capture);
                 logs.Flush(sco);
                 return new CalamariResult(exitCode, capture);
             }
         }
 
-        protected CalamariResult Invoke(CommandLine command, VariableDictionary variables = null)
+        protected CalamariResult Invoke(CommandLine command, IVariables variables = null)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(
                 new SplitCommandOutput(
                     new ConsoleCommandOutput(),
-                    new ServiceMessageCommandOutput(variables ?? new VariableDictionary()),
+                    new ServiceMessageCommandOutput(variables ?? new CalamariVariables()),
                     capture));
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, capture);
@@ -82,13 +83,13 @@ namespace Calamari.Tests.Helpers
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
 
-        protected (CalamariResult result, VariableDictionary variables) RunScript(string scriptName,
+        protected (CalamariResult result, IVariables variables) RunScript(string scriptName,
             Dictionary<string, string> additionalVariables = null,
             Dictionary<string, string> additionalParameters = null,
             string sensitiveVariablesPassword = null)
         {
             var variablesFile = Path.GetTempFileName();
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptName);
             variables.Set(SpecialVariables.Action.Script.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
             variables.Set(SpecialVariables.Action.Script.Syntax, ScriptTypeExtensions.FileNameToScriptType(scriptName).ToString());

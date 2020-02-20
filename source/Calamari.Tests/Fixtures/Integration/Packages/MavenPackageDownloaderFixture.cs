@@ -5,6 +5,7 @@ using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octopus.Versioning;
 
@@ -32,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresNonFreeBSDPlatform]
         public void DownloadMavenPackage()
         {
-            var downloader = new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariableDictionary()));
+            var downloader = new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariables()));
             var pkg = downloader.DownloadPackage("com.google.guava:guava", VersionFactory.CreateMavenVersion("22.0"), "feed-maven",
                 new Uri("https://repo.maven.apache.org/maven2/"), new NetworkCredential("", ""), true, 3, TimeSpan.FromSeconds(3));
 

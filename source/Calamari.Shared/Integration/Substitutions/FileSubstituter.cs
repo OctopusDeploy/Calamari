@@ -15,12 +15,12 @@ namespace Calamari.Integration.Substitutions
             this.fileSystem = fileSystem;
         }
 
-        public void PerformSubstitution(string sourceFile, VariableDictionary variables)
+        public void PerformSubstitution(string sourceFile, IVariables variables)
         {
             PerformSubstitution(sourceFile, variables, sourceFile);
         }
 
-        public void PerformSubstitution(string sourceFile, VariableDictionary variables, string targetFile)
+        public void PerformSubstitution(string sourceFile, IVariables variables, string targetFile)
         {
             Log.Verbose($"Performing variable substitution on '{sourceFile}'");
 
@@ -35,7 +35,7 @@ namespace Calamari.Integration.Substitutions
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }
 
-        private Encoding GetEncoding(VariableDictionary variables, Encoding fileEncoding)
+        private Encoding GetEncoding(IVariables variables, Encoding fileEncoding)
         {
             var requestedEncoding = variables.Get(SpecialVariables.Package.SubstituteInFilesOutputEncoding);
             if (requestedEncoding == null)

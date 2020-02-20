@@ -18,11 +18,11 @@ namespace Calamari.Aws.Commands
     [Command("delete-aws-cloudformation", Description = "Destroy an existing AWS CloudFormation stack")]
     public class DeleteCloudFormationCommand : Command
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         private string packageFile;
         private bool waitForComplete;
         
-        public DeleteCloudFormationCommand(CalamariVariableDictionary variables)
+        public DeleteCloudFormationCommand(IVariables variables)
         {
             this.variables = variables;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));

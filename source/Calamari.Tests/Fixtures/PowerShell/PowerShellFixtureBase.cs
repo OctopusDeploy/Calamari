@@ -8,6 +8,7 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -47,7 +48,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [TestCase(null, false)]
         public void ShouldCallWithNoProfileWhenVariableSet(string executeWithoutProfile, bool calledWithNoProfile)
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             if (executeWithoutProfile != null)
                 variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, executeWithoutProfile);
             
@@ -116,7 +117,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldCallHelloWithSensitiveVariable()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("Name", "NameToEncrypt");
 
             var (output, _) = RunPowerShellScript("HelloWithVariable.ps1", new Dictionary<string, string>()
@@ -456,7 +457,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var scriptFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".ps1");
             File.WriteAllText(scriptFile, "Write-Host \"Hello #{Octopus.Environment.Name}!\"");
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("Octopus.Environment.Name", "Production");
 
             using (new TemporaryFile(scriptFile))
@@ -475,7 +476,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Description("Proves packaged scripts can have variables substituted into them before running")]
         public void ShouldSubstituteVariablesInPackagedScripts()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("Octopus.Environment.Name", "Production");
             variables.Set(SpecialVariables.Action.Script.ScriptFileName, "Deploy.ps1");
 
@@ -586,9 +587,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
 
-        protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, VariableDictionary variables = null)
+        protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, CalamariVariables variables = null)
         {
-            var variableDictionary = variables ?? new VariableDictionary();
+            var variableDictionary = variables ?? new CalamariVariables();
             variableDictionary.Add(SpecialVariables.Action.PowerShell.Edition, GetPowerShellEditionVariable());
             
             using (var variablesFile = CreateVariablesFile(variableDictionary))
@@ -600,7 +601,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
         
-        VariableFile CreateVariablesFile(VariableDictionary variables)
+        VariableFile CreateVariablesFile(CalamariVariables variables)
         {
             return new VariableFile(variables);
         }
@@ -610,7 +611,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             readonly TemporaryFile tempFile;
             public string FilePath { get; }
 
-            public VariableFile(VariableDictionary variables)
+            public VariableFile(CalamariVariables variables)
             {
                 FilePath = Path.GetTempFileName();
                 tempFile = new TemporaryFile(FilePath);
@@ -623,7 +624,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
-        (CalamariResult result, VariableDictionary variables) RunPowerShellScript(string scriptName,
+        (CalamariResult result, IVariables variables) RunPowerShellScript(string scriptName,
             Dictionary<string, string> additionalVariables = null,
             Dictionary<string, string> additionalParameters = null,
             string sensitiveVariablesPassword = null)

@@ -7,6 +7,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octostache;
 
@@ -18,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         CalamariResult result;
         ICalamariFileSystem fileSystem;
         IDeploymentJournal deploymentJournal;
-        VariableDictionary variables;
+        IVariables variables;
         string tentacleDirectory;
         string packagesDirectory;
         string stagingDirectory;
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(tentacleHiddenDirectory, "DeploymentJournal.xml" ));
             Environment.SetEnvironmentVariable("TentacleHome", tentacleHiddenDirectory);
 
-            variables = new VariableDictionary();
+            variables = new CalamariVariables();
             variables.EnrichWithEnvironmentVariables();
 
             deploymentJournal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);

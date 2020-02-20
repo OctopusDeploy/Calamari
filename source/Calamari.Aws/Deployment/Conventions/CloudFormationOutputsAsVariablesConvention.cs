@@ -70,7 +70,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: hasOutputs() || result.Some()));
         }
 
-        public void PipeOutputs(IEnumerable<VariableOutput> outputs, CalamariVariableDictionary variables, string name = "AwsOutputs")
+        public void PipeOutputs(IEnumerable<VariableOutput> outputs, IVariables variables, string name = "AwsOutputs")
         {
             Guard.NotNull(variables, "Variables may not be null");
 
@@ -80,7 +80,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        public async Task GetAndPipeOutputVariablesWithRetry(Func<Task<Maybe<Stack>>> query, CalamariVariableDictionary variables, bool wait, int retryCount, TimeSpan waitPeriod)
+        public async Task GetAndPipeOutputVariablesWithRetry(Func<Task<Maybe<Stack>>> query, IVariables variables, bool wait, int retryCount, TimeSpan waitPeriod)
         {
             for (var retry = 0; retry < retryCount; ++retry)
             {

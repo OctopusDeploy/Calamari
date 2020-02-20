@@ -13,9 +13,9 @@ namespace Calamari.Commands
     public class HealthCheckCommand : Command
     {
         private readonly IEnumerable<IDoesDeploymentTargetTypeHealthChecks> deploymentTargetTypeHealthCheckers;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public HealthCheckCommand(IEnumerable<IDoesDeploymentTargetTypeHealthChecks> deploymentTargetTypeHealthCheckers, CalamariVariableDictionary variables)
+        public HealthCheckCommand(IEnumerable<IDoesDeploymentTargetTypeHealthChecks> deploymentTargetTypeHealthCheckers, IVariables variables)
         {
             this.deploymentTargetTypeHealthCheckers = deploymentTargetTypeHealthCheckers;
             this.variables = variables;

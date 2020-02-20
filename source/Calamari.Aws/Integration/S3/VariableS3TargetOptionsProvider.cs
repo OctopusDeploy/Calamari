@@ -12,10 +12,10 @@ namespace Calamari.Aws.Integration.S3
 {
     public class VariableS3TargetOptionsProvider : IProvideS3TargetOptions
     {
-        private readonly CalamariVariableDictionary variables;
+        private readonly IVariables variables;
 
 
-        public VariableS3TargetOptionsProvider(CalamariVariableDictionary variables)
+        public VariableS3TargetOptionsProvider(IVariables variables)
         {
             this.variables = variables;
         }

@@ -5,6 +5,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting.Python;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Octopus.CoreUtilities;
@@ -50,7 +51,7 @@ namespace Calamari.Tests.Fixtures
             var runner = new CommandLineRunner(
                 new SplitCommandOutput(
                     new ConsoleCommandOutput(),
-                    new ServiceMessageCommandOutput(new VariableDictionary()),
+                    new ServiceMessageCommandOutput(new CalamariVariables()),
                     capture));
             var result = runner.Execute(command.Build());
             if (result.ExitCode != 0)

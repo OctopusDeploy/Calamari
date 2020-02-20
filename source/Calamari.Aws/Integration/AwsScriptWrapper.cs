@@ -14,7 +14,7 @@ namespace Calamari.Aws.Integration
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {

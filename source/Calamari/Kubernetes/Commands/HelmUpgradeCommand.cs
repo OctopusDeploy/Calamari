@@ -28,10 +28,10 @@ namespace Calamari.Kubernetes.Commands
         private string packageFile;
         private readonly CombinedScriptEngine scriptEngine;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         
-        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter, CalamariVariableDictionary variables)
+        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             this.scriptEngine = scriptEngine;

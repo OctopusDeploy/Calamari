@@ -17,11 +17,11 @@ namespace Calamari.Aws.Commands
     [Command("apply-aws-cloudformation-changeset", Description = "Apply an existing AWS CloudFormation changeset")]
     public class ApplyCloudFormationChangesetCommand: Command
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         private string packageFile;
         private bool waitForComplete;
         
-        public ApplyCloudFormationChangesetCommand(CalamariVariableDictionary variables)
+        public ApplyCloudFormationChangesetCommand(IVariables variables)
         {
             this.variables = variables;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));

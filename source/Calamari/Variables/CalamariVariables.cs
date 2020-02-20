@@ -1,17 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using Calamari.Commands.Support;
-using Calamari.Integration.FileSystem;
 using Calamari.Util;
-using Newtonsoft.Json;
 using Octostache;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Variables
 {
-    public class CalamariVariableDictionary : VariableDictionary
+    public class CalamariVariables : VariableDictionary, IVariables
     {
         protected HashSet<string> SensitiveVariableNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -41,9 +35,9 @@ namespace Calamari.Integration.Processes
         public void Merge(VariableDictionary other)
             => other.GetNames().ForEach(name => Set(name, other.GetRaw(name)));
 
-        public CalamariVariableDictionary Clone()
+        public IVariables Clone()
         {
-            var dict = new CalamariVariableDictionary();
+            var dict = new CalamariVariables();
             dict.Merge(this);
             return dict;
         } 

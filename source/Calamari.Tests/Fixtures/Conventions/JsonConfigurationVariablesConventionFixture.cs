@@ -6,6 +6,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -22,7 +23,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [SetUp]
         public void SetUp()
         {
-            var variables = new CalamariVariableDictionary(); 
+            var variables = new CalamariVariables(); 
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0"));
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), variables);
             configurationVariableReplacer = Substitute.For<IJsonConfigurationVariableReplacer>();

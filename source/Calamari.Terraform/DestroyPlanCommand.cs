@@ -7,7 +7,7 @@ namespace Calamari.Terraform
     [Command("destroyplan-terraform", Description = "Plans the destruction of Terraform resources")]
     public class DestroyPlanCommand : TerraformCommand
     {
-        public DestroyPlanCommand(CalamariVariableDictionary variables, ICalamariFileSystem fileSystem) 
+        public DestroyPlanCommand(IVariables variables, ICalamariFileSystem fileSystem) 
             : base(variables, fileSystem, new DestroyPlanTerraformConvention(fileSystem))
         {
         }

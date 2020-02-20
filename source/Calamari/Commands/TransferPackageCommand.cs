@@ -15,9 +15,9 @@ namespace Calamari.Commands
     public class TransferPackageCommand : Command
     {
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter, CalamariVariableDictionary variables)
+        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter, IVariables variables)
         {
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;

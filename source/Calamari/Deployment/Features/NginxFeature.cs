@@ -52,7 +52,7 @@ namespace Calamari.Deployment.Features
             nginxServer.SaveConfiguration(tempDirectory);
         }
 
-        IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> GetSslCertificates(IEnumerable<Binding> enabledBindings, CalamariVariableDictionary variables)
+        IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> GetSslCertificates(IEnumerable<Binding> enabledBindings, IVariables variables)
         {
             var sslCertsForEnabledBindings = new Dictionary<string, (string, string, string)>();
             foreach (var httpsBinding in enabledBindings.Where(b =>
@@ -70,7 +70,7 @@ namespace Calamari.Deployment.Features
             return sslCertsForEnabledBindings;
         }
 
-        static IEnumerable<Binding> GetEnabledBindings(VariableDictionary variables)
+        static IEnumerable<Binding> GetEnabledBindings(IVariables variables)
         {
             var bindingsString = variables.Get(SpecialVariables.Action.Nginx.Server.Bindings);
             if (string.IsNullOrWhiteSpace(bindingsString)) return new List<Binding>();
@@ -80,7 +80,7 @@ namespace Calamari.Deployment.Features
                 : new List<Binding>();
         }
 
-        static (Location rootLocation, IEnumerable<Location> additionalLocations) GetLocations(VariableDictionary variables)
+        static (Location rootLocation, IEnumerable<Location> additionalLocations) GetLocations(IVariables variables)
         {
             var locationsString = variables.Get(SpecialVariables.Action.Nginx.Server.Locations);
             if(string.IsNullOrWhiteSpace(locationsString)) return (null, new List<Location>());

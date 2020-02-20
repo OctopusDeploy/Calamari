@@ -15,6 +15,7 @@ using Calamari.Integration.Retry;
 using Calamari.Terraform;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
@@ -376,7 +377,7 @@ namespace Calamari.Tests.Terraform
 
             using (var currentDirectory = TemporaryDirectory.Create())
             {
-                var variables = new CalamariVariableDictionary();
+                var variables = new CalamariVariables();
                 variables.Set(TerraformSpecialVariables.Calamari.TerraformCliPath, Path.GetDirectoryName(customTerraformExecutable));
                 variables.Set(SpecialVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
                 variables.Set(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable, customTerraformExecutable);

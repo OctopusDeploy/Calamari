@@ -16,12 +16,12 @@ namespace Calamari.Terraform
         const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
 
         private readonly IConvention step;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         private string packageFile;
 
 
-        protected TerraformCommand(CalamariVariableDictionary variables, ICalamariFileSystem fileSystem, IConvention step)
+        protected TerraformCommand(IVariables variables, ICalamariFileSystem fileSystem, IConvention step)
         {
             this.step = step;
             this.variables = variables;

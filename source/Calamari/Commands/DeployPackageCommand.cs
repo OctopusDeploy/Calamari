@@ -27,9 +27,9 @@ namespace Calamari.Commands
     {
         private string packageFile;
         private readonly CombinedScriptEngine scriptEngine;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public DeployPackageCommand(CombinedScriptEngine scriptEngine, CalamariVariableDictionary variables)
+        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 

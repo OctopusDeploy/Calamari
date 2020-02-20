@@ -29,7 +29,7 @@ namespace Calamari.Hooks
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars) => 
             scriptEngine.Execute(script, variables, commandLineRunner, environmentVars);

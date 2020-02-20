@@ -57,7 +57,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         private static void DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             WebDeployPublishSettings publishSettings)
         {
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
@@ -117,7 +117,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return false;
         }
 
-        private static WebDeployPublishSettings GetPublishProfile(VariableDictionary variables)
+        private static WebDeployPublishSettings GetPublishProfile(IVariables variables)
         {
             var account = AccountFactory.Create(variables);
 
@@ -140,7 +140,7 @@ namespace Calamari.Azure.Deployment.Conventions
             throw new CommandException("Account type must be either Azure Management Certificate or Azure Service Principal");
         }
 
-        private static string BuildPath(AzureTargetSite site, VariableDictionary variables)
+        private static string BuildPath(AzureTargetSite site, IVariables variables)
         {
             var relativePath = (variables.Get(SpecialVariables.Action.Azure.PhysicalPath) ?? "").TrimStart('\\');
             return relativePath != ""
@@ -169,7 +169,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return options;
         }
 
-        private static DeploymentSyncOptions DeploymentSyncOptions(VariableDictionary variables)
+        private static DeploymentSyncOptions DeploymentSyncOptions(IVariables variables)
         {
             var syncOptions = new DeploymentSyncOptions
             {
@@ -185,7 +185,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         private static void ApplyPreserveAppDataDeploymentRule(DeploymentSyncOptions syncOptions,
-            VariableDictionary variables)
+            IVariables variables)
         {
             // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
             // ReSharper disable once InvertIf
@@ -199,7 +199,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         private static void ApplyPreservePathsDeploymentRule(DeploymentSyncOptions syncOptions,
-            VariableDictionary variables)
+            IVariables variables)
         {
             // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
@@ -217,7 +217,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         private static void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
-            VariableDictionary variables)
+            IVariables variables)
         {
             // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))

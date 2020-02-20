@@ -5,6 +5,6 @@ namespace Calamari.Azure.Integration
 {
     public interface ISubscriptionCloudCredentialsFactory
     {
-        SubscriptionCloudCredentials GetCredentials(VariableDictionary variables);
+        SubscriptionCloudCredentials GetCredentials(IVariables variables);
     }
 }

@@ -9,6 +9,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Kubernetes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -28,7 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl, string aksClusterName,
             string eksClusterName, bool expected)
         {
-            var variables = new CalamariVariableDictionary
+            var variables = new CalamariVariables
             {
                 {SpecialVariables.ClusterUrl, clusterUrl},
                 {SpecialVariables.AksClusterName, aksClusterName},
@@ -44,7 +45,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void PowershellKubeCtlScripts()
         {
-            var wrapper = new KubernetesContextScriptWrapper(new CalamariVariableDictionary());
+            var wrapper = new KubernetesContextScriptWrapper(new CalamariVariables());
             TestScript(wrapper, "Test-Script.ps1");
         }
 
@@ -53,7 +54,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
         public void BashKubeCtlScripts()
         {
-            var wrapper = new KubernetesContextScriptWrapper(new CalamariVariableDictionary());
+            var wrapper = new KubernetesContextScriptWrapper(new CalamariVariables());
             TestScript(wrapper, "Test-Script.sh");
         }
 
@@ -64,7 +65,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 File.WriteAllText(temp.FilePath, "kubectl get nodes");
 
-                var deploymentVariables = new CalamariVariableDictionary();
+                var deploymentVariables = new CalamariVariables();
                 deploymentVariables.Set(SpecialVariables.ClusterUrl, ServerUrl);
                 
                 deploymentVariables.Set(SpecialVariables.SkipTlsVerification, "true");
@@ -77,7 +78,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName, CalamariVariableDictionary variables)
+        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName, IVariables variables)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(capture);

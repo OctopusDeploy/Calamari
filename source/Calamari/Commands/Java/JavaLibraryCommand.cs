@@ -19,9 +19,9 @@ namespace Calamari.Commands.Java
         string actionType;
         readonly CombinedScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public JavaLibraryCommand(CombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
+        public JavaLibraryCommand(CombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, IVariables variables)
         {
             Options.Add("actionType=", "The step type being invoked.", v => actionType = v);
             this.scriptEngine = scriptEngine;

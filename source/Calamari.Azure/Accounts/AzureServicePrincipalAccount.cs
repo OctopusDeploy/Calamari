@@ -6,7 +6,7 @@ namespace Calamari.Azure.Accounts
 {
     public class AzureServicePrincipalAccount : Account
     {
-        public AzureServicePrincipalAccount(VariableDictionary variables)
+        public AzureServicePrincipalAccount(IVariables variables)
         {
             SubscriptionNumber = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             ClientId = variables.Get(SpecialVariables.Action.Azure.ClientId);

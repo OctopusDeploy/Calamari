@@ -4,6 +4,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Processes;
+using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -14,14 +15,14 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         ICalamariFileSystem fileSystem;
         IInternetInformationServer iis;
-        CalamariVariableDictionary variables;
+        IVariables variables;
         RunningDeployment deployment;
         const string stagingDirectory = "C:\\Applications\\Acme\\1.0.0";
 
         [SetUp]
         public void SetUp()
         {
-            variables = new CalamariVariableDictionary();
+            variables = new CalamariVariables();
             fileSystem = Substitute.For<ICalamariFileSystem>();
             iis = Substitute.For<IInternetInformationServer>();
             deployment = new RunningDeployment("C:\\packages", variables)

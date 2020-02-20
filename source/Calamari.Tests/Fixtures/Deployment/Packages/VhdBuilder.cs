@@ -6,6 +6,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -36,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, InitializeAndCopyFilesScript(vhdPath, packageDirectory, twoPartitions));
-                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, new CalamariVariableDictionary());
+                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, new CalamariVariables());
                 result.AssertSuccess();
             }
 
@@ -50,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             return tempDirectory;
         }
 
-        private static CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, CalamariVariableDictionary variables)
+        private static CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariables variables)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(capture);

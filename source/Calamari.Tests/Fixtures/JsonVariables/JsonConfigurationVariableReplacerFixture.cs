@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -37,7 +38,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("MyMessage", "Hello world");
             variables.Set("EmailSettings:SmtpHost", "localhost");
             variables.Set("EmailSettings:SmtpPort", "23");
@@ -62,7 +63,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("MyMessage", "Hello world!");
             variables.Set("IThinkOctopusIsGreat", "Yes, I do!");
             variables.Set("OctopusRocks", "This is ignored");
@@ -86,7 +87,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "}" +
                 "]";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("0:Property", "NewValue");
 
             var replaced = Replace(variables, existingFile: "appsettings.top-level-array.json");
@@ -109,7 +110,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("MyMessage", "Hello world!");
             variables.Set("EmailSettings:SmtpPort", "24");
             variables.Set("EmailSettings:DefaultRecipients:Cc", "damo@octopus.com");
@@ -134,7 +135,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("mymessage", "Hello! world!");
             variables.Set("EmailSettings:Defaultrecipients:To", "mark@octopus.com");
             variables.Set("EmailSettings:defaultRecipients:Cc", "henrik@octopus.com");
@@ -151,7 +152,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  \"MyMessage\": \"\"," +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("MyMessage", "");
 
             var replaced = Replace(variables, existingFile: "appsettings.single.json");
@@ -166,7 +167,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  \"MyMessage\": null," +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("MyMessage", null);
 
             var replaced = Replace(variables, existingFile: "appsettings.single.json");
@@ -184,7 +185,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("EnvironmentVariables:Hosting:Environment", "Production");
 
             var replaced = Replace(variables, existingFile: "appsettings.colon-in-name.json");
@@ -207,7 +208,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("EmailSettings:DefaultRecipients", @"{""To"": ""rob@octopus.com"", ""Cc"": ""henrik@octopus.com""}");
 
             var replaced = Replace(variables, existingFile: "appsettings.simple.json");
@@ -233,7 +234,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("EmailSettings:DefaultRecipients:1", "henrik@octopus.com");
 
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
@@ -263,7 +264,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("EmailSettings:DefaultRecipients:1:Email", "henrik@octopus.com");
 
             var replaced = Replace(variables, existingFile: "appsettings.object-array.json");
@@ -287,7 +288,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("EmailSettings:DefaultRecipients", @"[""mike@octopus.com"", ""henrik@octopus.com""]");
 
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
@@ -311,7 +312,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("EmailSettings:SmtpPort", "8023");
 
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
@@ -330,7 +331,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  \"IntegerValue\": 70," +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("DecimalValue", "50.0");
             variables.Set("FloatValue", "456e-5");
             variables.Set("StringValue", "60.0");
@@ -357,14 +358,14 @@ namespace Calamari.Tests.Fixtures.JsonVariables
                 "  }" +
                 "}";
 
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("EmailSettings:UseProxy", "true");
 
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
             AssertJsonEquivalent(replaced, expected);
         }
 
-        string Replace(VariableDictionary variables, string existingFile = null)
+        string Replace(IVariables variables, string existingFile = null)
         {
             var temp = Path.GetTempFileName();
             if (existingFile != null)

@@ -33,7 +33,7 @@ namespace Calamari.Integration.Scripting.Bash
             return commandArguments.ToString();
         }
         
-        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
 
@@ -51,7 +51,7 @@ namespace Calamari.Integration.Scripting.Bash
             return configurationFile;
         }
 
-        static IEnumerable<string> GetVariableSwitchConditions(CalamariVariableDictionary variables)
+        static IEnumerable<string> GetVariableSwitchConditions(IVariables variables)
         {
             return variables.GetNames().Select(variable =>
             {
@@ -96,7 +96,7 @@ namespace Calamari.Integration.Scripting.Bash
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory, VariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory, IVariables variables)
         {            
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
@@ -116,7 +116,7 @@ namespace Calamari.Integration.Scripting.Bash
             return (bootstrapFile, scriptModulePaths);
         }
         
-        static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
+        static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {

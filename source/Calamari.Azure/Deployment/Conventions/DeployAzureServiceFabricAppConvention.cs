@@ -71,7 +71,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        void SetRegisterApplicationTypeTimeout(CalamariVariableDictionary variables)
+        void SetRegisterApplicationTypeTimeout(IVariables variables)
         {
             var registerAppTypeTimeout = variables.Get(SpecialVariables.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec);
             if (registerAppTypeTimeout != null)

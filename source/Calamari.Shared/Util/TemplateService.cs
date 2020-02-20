@@ -17,14 +17,14 @@ namespace Calamari.Util
             this.replacement = replacement;
         }
 
-        public string GetTemplateContent(string relativePath, bool inPackage, CalamariVariableDictionary variables)
+        public string GetTemplateContent(string relativePath, bool inPackage, IVariables variables)
         {
             return resolver.Resolve(relativePath, inPackage, variables)
                 .Map(x => x.Value)
                 .Map(fileSystem.ReadFile);
         }
 
-        public string GetSubstitutedTemplateContent(string relativePath, bool inPackage, CalamariVariableDictionary variables)
+        public string GetSubstitutedTemplateContent(string relativePath, bool inPackage, IVariables variables)
         {
             return replacement.ResolveAndSubstituteFile(
                 () => resolver.Resolve(relativePath, inPackage, variables).Value,

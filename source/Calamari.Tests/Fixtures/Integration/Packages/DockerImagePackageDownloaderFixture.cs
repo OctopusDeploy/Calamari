@@ -7,6 +7,7 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -104,7 +105,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         DockerImagePackageDownloader GetDownloader()
         {
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
-            return new DockerImagePackageDownloader(new CombinedScriptEngine(), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariableDictionary());
+            return new DockerImagePackageDownloader(new CombinedScriptEngine(), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables());
         }
         
     }

@@ -5,6 +5,7 @@ using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octostache;
 
@@ -24,7 +25,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void DoesNotAddXmlHeader()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -36,7 +37,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void SupportsNamespaces()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -53,7 +54,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void ReplacesAppSettings()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -70,7 +71,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void ReplacesStronglyTypedAppSettings()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -85,7 +86,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void ReplacesConnectionStrings()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("MyDb1", "Server=foo");
             variables.Set("MyDb2", "Server=bar&bar=123");
             
@@ -101,7 +102,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [ExpectedException(typeof (System.Xml.XmlException))]
         public void ShouldThrowExceptionForBadConfig()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
         }
 
@@ -109,11 +110,11 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
             configurationVariablesReplacer = new ConfigurationVariablesReplacer(true);
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
         }
 
-        string PerformTest(string sampleFile, VariableDictionary variables)
+        string PerformTest(string sampleFile, IVariables variables)
         {
             var temp = Path.GetTempFileName();
             File.Copy(sampleFile, temp, true);

@@ -5,6 +5,7 @@ using Calamari.Azure.Deployment.Conventions;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -20,7 +21,7 @@ namespace Calamari.Tests.AzureFixtures
             {
                 var convention = new AzureWebAppConvention();
 
-                var vars = new CalamariVariableDictionary();
+                var vars = new CalamariVariables();
                 vars.Set(SpecialVariables.Account.AccountType, "AzureSubscription");
 
                 var deployment = new RunningDeployment("", vars);
@@ -43,7 +44,7 @@ namespace Calamari.Tests.AzureFixtures
             {
                 var convention = new AzureWebAppConvention();
 
-                var vars = new CalamariVariableDictionary();
+                var vars = new CalamariVariables();
                 vars.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
 
                 var deployment = new RunningDeployment("", vars);

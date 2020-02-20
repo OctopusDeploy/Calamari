@@ -15,9 +15,9 @@ namespace Calamari.Integration.FileSystem
     public class FreeSpaceChecker : IFreeSpaceChecker
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public FreeSpaceChecker(ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
+        public FreeSpaceChecker(ICalamariFileSystem fileSystem, IVariables variables)
         {
             this.fileSystem = fileSystem;
             this.variables = variables;

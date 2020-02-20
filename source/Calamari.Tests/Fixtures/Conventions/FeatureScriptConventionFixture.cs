@@ -7,6 +7,7 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -20,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         IScriptEngine scriptEngine;
         ICommandLineRunner commandLineRunner;
         RunningDeployment deployment;
-        CalamariVariableDictionary variables;
+        IVariables variables;
         const string stagingDirectory = "c:\\applications\\acme\\1.0.0";
         const string scriptContents = "blah blah blah";
 
@@ -34,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.PowerShell });
 
-            variables = new CalamariVariableDictionary();
+            variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.blah");
 
             deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };

@@ -15,7 +15,7 @@ namespace Calamari.Azure.Integration
             this.certificateStore = certificateStore;
         }
 
-        public SubscriptionCloudCredentials GetCredentials(VariableDictionary variables)
+        public SubscriptionCloudCredentials GetCredentials(IVariables variables)
         {
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var certificateThumbprint = variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint);

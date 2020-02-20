@@ -53,7 +53,7 @@ namespace Calamari.Azure.Deployment.Conventions
             fileSystem.OverwriteFile(configurationFilePath, document.ToString());
         }
 
-        static void UpdateConfigurationSettings(XContainer configurationFile, VariableDictionary variables)
+        static void UpdateConfigurationSettings(XContainer configurationFile, IVariables variables)
         {
             Log.Verbose("Updating configuration settings...");
             var foundSettings = false;
@@ -79,7 +79,7 @@ namespace Calamari.Azure.Deployment.Conventions
             }
         }
 
-        void UpdateConfigurationWithCurrentInstanceCount(XContainer localConfigurationFile, string configurationFileName, VariableDictionary variables)
+        void UpdateConfigurationWithCurrentInstanceCount(XContainer localConfigurationFile, string configurationFileName, IVariables variables)
         {
             if (!variables.GetFlag(SpecialVariables.Action.Azure.UseCurrentInstanceCount))
                 return;

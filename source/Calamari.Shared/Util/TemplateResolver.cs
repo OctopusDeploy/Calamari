@@ -17,7 +17,7 @@ namespace Calamari.Util
             this.filesystem = filesystem;
         }
 
-        public ResolvedTemplatePath Resolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
+        public ResolvedTemplatePath Resolve(string relativeFilePath, bool inPackage, IVariables variables)
         {
             var result = MaybeResolve(relativeFilePath, inPackage, variables);
             
@@ -33,7 +33,7 @@ namespace Calamari.Util
             throw new CommandException($"Could not find '{relativeFilePath}'{packageMessage}");
         }
 
-        public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables)
+        public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, IVariables variables)
         {
             var absolutePath = relativeFilePath.ToMaybe().Select(path => inPackage
                 ? Path.Combine(variables.Get(SpecialVariables.OriginalPackageDirectoryPath), variables.Evaluate(path))

@@ -16,9 +16,9 @@ namespace Calamari.Commands
     [Command("import-certificate", Description = "Imports a X.509 certificate into a Windows certificate store")]
     public class ImportCertificateCommand : Command
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         
-        public ImportCertificateCommand(CalamariVariableDictionary variables)
+        public ImportCertificateCommand(IVariables variables)
         {
             this.variables = variables;
         }
@@ -90,7 +90,7 @@ namespace Calamari.Commands
             }
         }
 
-        internal static ICollection<PrivateKeyAccessRule> GetPrivateKeyAccessRules(VariableDictionary variables)
+        internal static ICollection<PrivateKeyAccessRule> GetPrivateKeyAccessRules(IVariables variables)
         {
             // The private-key access-rules are stored as escaped JSON. However, they may contain nested
             // variables (for example the user-name may be an Octopus variable) which may not be escaped,
@@ -109,7 +109,7 @@ namespace Calamari.Commands
             return PrivateKeyAccessRule.FromJson(escapedAndSubstituted);
         }
 
-        string GetMandatoryVariable(CalamariVariableDictionary variables, string variableName)
+        string GetMandatoryVariable(IVariables variables, string variableName)
         {
             var value = variables.Get(variableName);
 

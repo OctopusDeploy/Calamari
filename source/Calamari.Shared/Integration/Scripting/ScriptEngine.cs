@@ -13,7 +13,7 @@ namespace Calamari.Integration.Scripting
     {
         public abstract ScriptSyntax[] GetSupportedTypes();
 
-        public CommandResult Execute(Script script, CalamariVariableDictionary variables, ICommandLineRunner commandLineRunner,
+        public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
             var environmentVariablesIncludingProxy = environmentVars ?? new Dictionary<string, string>();
@@ -62,10 +62,10 @@ namespace Calamari.Integration.Scripting
             return result;
         }
 
-        protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script, CalamariVariableDictionary variables,
+        protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
             Dictionary<string, string> environmentVars = null);
         
-        static void CopyWorkingDirectory(CalamariVariableDictionary variables, string workingDirectory, string arguments)
+        static void CopyWorkingDirectory(IVariables variables, string workingDirectory, string arguments)
         {
             var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 

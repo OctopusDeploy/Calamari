@@ -105,7 +105,7 @@ namespace Calamari
             SetOutputVariable(name, value, null, isSensitive);
         }
 
-        public static void SetOutputVariable(string name, string value, VariableDictionary variables, bool isSensitive = false)
+        public static void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
         {
             Guard.NotNull(name, "name can not be null");
             Guard.NotNull(value, "value can not be null");

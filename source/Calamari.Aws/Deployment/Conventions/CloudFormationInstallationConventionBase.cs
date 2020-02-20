@@ -129,7 +129,7 @@ namespace Calamari.Aws.Deployment.Conventions
             return (valid, excluded);
         }
 
-        protected void SetOutputVariable(CalamariVariableDictionary variables, string name, string value)
+        protected void SetOutputVariable(IVariables variables, string name, string value)
         {
             Log.SetOutputVariable($"AwsOutputs[{name}]", value ?? "", variables);
             Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{name}]\"");

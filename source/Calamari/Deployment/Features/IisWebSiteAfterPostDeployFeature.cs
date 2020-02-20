@@ -29,7 +29,7 @@ namespace Calamari.Deployment.Features
         }
 
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT
-        static void EnsureApplicationPoolHasCertificatePrivateKeyAccess(VariableDictionary variables)
+        static void EnsureApplicationPoolHasCertificatePrivateKeyAccess(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
             {
@@ -48,7 +48,7 @@ namespace Calamari.Deployment.Features
             }
         }
 
-        static PrivateKeyAccessRule CreatePrivateKeyAccessForApplicationPoolAccount(VariableDictionary variables)
+        static PrivateKeyAccessRule CreatePrivateKeyAccessForApplicationPoolAccount(IVariables variables)
         {
             var applicationPoolIdentityTypeValue = variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolIdentityType);
 
@@ -64,7 +64,7 @@ namespace Calamari.Deployment.Features
         }
 
         static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType,
-            VariableDictionary variables)
+            IVariables variables)
         {
             switch (applicationPoolIdentityType)
             {

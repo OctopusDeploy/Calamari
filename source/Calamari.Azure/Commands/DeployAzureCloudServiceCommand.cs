@@ -25,9 +25,9 @@ namespace Calamari.Azure.Commands
     {
         private string packageFile;
         private readonly CombinedScriptEngine scriptEngine;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
-        public DeployAzureCloudServiceCommand(CombinedScriptEngine scriptEngine, CalamariVariableDictionary variables)
+        public DeployAzureCloudServiceCommand(CombinedScriptEngine scriptEngine, IVariables variables)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 

@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octostache;
 
@@ -30,7 +31,7 @@ namespace Calamari.Tests.Fixtures.Certificates
         [Test]
         public void CanDeserializeNestedVariable()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             const string json = @"[
                 {""Identity"": ""#{UserName}"", ""Access"": ""FullControl""}
             ]";

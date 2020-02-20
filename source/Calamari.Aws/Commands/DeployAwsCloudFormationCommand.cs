@@ -26,7 +26,7 @@ namespace Calamari.Aws.Commands
     [Command("deploy-aws-cloudformation", Description = "Creates a new AWS CloudFormation deployment")]
     public class DeployCloudFormationCommand : Command
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         private string packageFile;
         private string templateFile;
         private string templateParameterFile;
@@ -34,7 +34,7 @@ namespace Calamari.Aws.Commands
         private string stackName;
         private bool disableRollback;
 
-        public DeployCloudFormationCommand(CalamariVariableDictionary variables)
+        public DeployCloudFormationCommand(IVariables variables)
         {
             this.variables = variables;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
