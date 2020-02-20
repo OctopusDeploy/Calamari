@@ -15,67 +15,6 @@ namespace Calamari.Integration.Processes
     {
         protected HashSet<string> SensitiveVariableNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        public CalamariVariableDictionary() { }
-
-        public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
-
-        public CalamariVariableDictionary(string storageFilePath, List<string> sensitiveFilePaths, string sensitiveFilePassword, string outputVariablesFilePath = null, string outputVariablesFilePassword = null)
-        {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            if (!string.IsNullOrEmpty(storageFilePath))
-            {
-                if (!fileSystem.FileExists(storageFilePath))
-                    throw new CommandException("Could not find variables file: " + storageFilePath);
-
-                var nonSensitiveVariables =  new VariableDictionary(storageFilePath);
-                nonSensitiveVariables.GetNames().ForEach(name => Set(name, nonSensitiveVariables.GetRaw(name)));
-            }
-
-            if (sensitiveFilePaths.Any())
-            {
-                foreach (var sensitiveFilePath in sensitiveFilePaths)
-                {
-                    if (string.IsNullOrEmpty(sensitiveFilePath)) continue;
-
-                    var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-                        ? fileSystem.ReadFile(sensitiveFilePath)
-                        : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
-
-                    try
-                    {
-                        var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                        foreach (var variable in sensitiveVariables)
-                        {
-                            SetSensitive(variable.Key, variable.Value);
-                        }
-                    }
-                    catch (JsonReaderException)
-                    {
-                        throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(outputVariablesFilePath))
-            {
-                var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), outputVariablesFilePassword);
-                try
-                {
-                    var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                    foreach (var variable in outputVariables)
-                    {
-                        Set(variable.Key, variable.Value);
-                    }
-
-                }
-                catch (JsonReaderException)
-                {
-                    throw new CommandException("Unable to parse output variables as valid JSON.");
-                }
-            }
-        }
-
         public void SetSensitive(string name, string value)
         {
             if (name == null) return;
@@ -88,31 +27,6 @@ namespace Calamari.Integration.Processes
             return name != null && SensitiveVariableNames.Contains(name);
         }
 
-        static string Decrypt(byte[] encryptedVariables, string encryptionPassword)
-        {
-            try
-            {
-                return new AesEncryption(encryptionPassword).Decrypt(encryptedVariables);
-            }
-            catch (CryptographicException)
-            {
-                throw new CommandException("Cannot decrypt sensitive-variables. Check your password is correct.");
-            }
-        }
-
-        static string DecryptWithMachineKey(string base64EncodedEncryptedVariables, string password)
-        {
-            try
-            {
-                var encryptedVariables = Convert.FromBase64String(base64EncodedEncryptedVariables);
-                var bytes = ProtectedData.Unprotect(encryptedVariables, Convert.FromBase64String(password ?? string.Empty), DataProtectionScope.CurrentUser);
-                return Encoding.UTF8.GetString(bytes);
-            }
-            catch (CryptographicException)
-            {
-                throw new CommandException("Cannot decrypt output variables.");
-            }
-        }
 
         public string GetEnvironmentExpandedPath(string variableName, string defaultValue = null)
         {
@@ -123,5 +37,15 @@ namespace Calamari.Integration.Processes
         {
             return this[name] != null;
         }
+
+        public void Merge(VariableDictionary other)
+            => other.GetNames().ForEach(name => Set(name, other.GetRaw(name)));
+
+        public CalamariVariableDictionary Clone()
+        {
+            var dict = new CalamariVariableDictionary();
+            dict.Merge(this);
+            return dict;
+        } 
     }
 }

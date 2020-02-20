@@ -18,19 +18,15 @@ namespace Calamari.Aws.Commands
     [Command("upload-aws-s3", Description = "Uploads a package or package file(s) to an AWS s3 bucket")]
     public class UploadAwsS3Command : Command
     {
-        private string variablesFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
+        readonly CalamariVariableDictionary variables;
         private string packageFile;
         private string bucket;
         private string targetMode;
 
-        public UploadAwsS3Command()
+        public UploadAwsS3Command(CalamariVariableDictionary variables)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            this.variables = variables;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
             Options.Add("targetMode=", "Whether the entire package or files within the package should be uploaded to the s3 bucket", v => targetMode = v);
         }
@@ -40,7 +36,6 @@ namespace Calamari.Aws.Commands
             Options.Parse(commandLineArguments);
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             if (string.IsNullOrEmpty(packageFile))
             {

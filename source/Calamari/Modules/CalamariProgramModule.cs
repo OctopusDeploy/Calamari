@@ -22,7 +22,6 @@ namespace Calamari.Modules
                         (pi, ctx) => CommandLocator.GetOptionalNamedCommand(ctx, CalamariCommandsModule.RunCommand)))
                 .SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>();
-            builder.Register((_) => CalamariPhysicalFileSystem.GetPhysicalFileSystem()).As<ICalamariFileSystem>();
             builder.RegisterType<CombinedScriptEngine>().AsSelf();
             
             builder

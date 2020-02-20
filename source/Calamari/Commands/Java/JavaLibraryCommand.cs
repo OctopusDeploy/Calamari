@@ -16,32 +16,23 @@ namespace Calamari.Commands.Java
     [Command("java-library", Description = "Invokes the Octopus java library")]
     public class JavaLibraryCommand : Command
     {
-        string variablesFile;
-        readonly List<string> sensitiveVariableFiles = new List<string>();
-        string sensitiveVariablesPassword;
         string actionType;
         readonly CombinedScriptEngine scriptEngine;
+        readonly ICalamariFileSystem fileSystem;
+        readonly CalamariVariableDictionary variables;
 
-        public JavaLibraryCommand(CombinedScriptEngine scriptEngine)
+        public JavaLibraryCommand(CombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.",
-                v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.",
-                v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.",
-                v => sensitiveVariablesPassword = v);
             Options.Add("actionType=", "The step type being invoked.", v => actionType = v);
             this.scriptEngine = scriptEngine;
+            this.fileSystem = fileSystem;
+            this.variables = variables;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
             JavaRuntime.VerifyExists();
-            
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var variables =
-                new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             var commandOutput =
                 new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));

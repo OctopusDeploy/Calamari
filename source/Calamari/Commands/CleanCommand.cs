@@ -11,12 +11,15 @@ namespace Calamari.Commands
     [Command("clean", Description = "Removes packages and files according to the configured retention policy")]
     public class CleanCommand : Command
     {
+        readonly CalamariVariableDictionary variables;
+        
         string retentionPolicySet;
         int days;
         int releases;
 
-        public CleanCommand()
+        public CleanCommand(CalamariVariableDictionary variables)
         {
+            this.variables = variables;
             Options.Add("retentionPolicySet=", "The release-policy-set ID", x => retentionPolicySet = x);
             Options.Add("days=", "Number of days to keep artifacts", x => int.TryParse(x, out days));
             Options.Add("releases=", "Number of releases to keep artifacts for", x => int.TryParse(x, out releases));
@@ -31,7 +34,6 @@ namespace Calamari.Commands
             if (days <=0 && releases <= 0)
                 throw new CommandException("A value must be provided for either --days or --releases");
 
-            var variables = new CalamariVariableDictionary();
             variables.EnrichWithEnvironmentVariables();
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();

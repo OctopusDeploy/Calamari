@@ -13,42 +13,46 @@ using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
-    public class DockerImagePackageDownloader: IPackageDownloader
+    public class DockerImagePackageDownloader : IPackageDownloader
     {
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        readonly CalamariVariableDictionary variables;
         const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
         readonly Dictionary<string, string> environmentVariables = new Dictionary<string, string>()
         {
-            {"DOCKER_CONFIG", "./octo-docker-configs"}
+            {
+                "DOCKER_CONFIG", "./octo-docker-configs"
+            }
         };
-        
-        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+
+        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, CalamariVariableDictionary variables)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.variables = variables;
         }
-        
+
         public PackagePhysicalFileMetadata DownloadPackage(string packageId, IVersion version, string feedId, Uri feedUri,
             ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
         {
             //Always try re-pull image, docker engine can take care of the rest
             var feedHost = GetFeedHost(feedUri);
-            var fullImageName =  GetFullImageName(packageId, version, feedUri, feedHost);
+            var fullImageName = GetFullImageName(packageId, version, feedUri, feedHost);
             var (username, password) = ExtractCredentials(feedCredentials, feedUri);
-            
+
             PerformPull(username, password, fullImageName, feedHost);
             var (hash, size) = GetImageDetails(fullImageName);
-            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), fullImageName, hash, size );
+            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), fullImageName, hash, size);
         }
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri, string feedHost)
         {
-            return feedUri.Host.Equals(DockerHubRegistry) ?  $"{packageId}:{version}" : $"{feedHost}/{packageId}:{version}";
+            return feedUri.Host.Equals(DockerHubRegistry) ? $"{packageId}:{version}" : $"{feedHost}/{packageId}:{version}";
         }
 
         static string GetFeedHost(Uri feedUri)
@@ -71,14 +75,13 @@ namespace Calamari.Integration.Packages.Download
             var file = GetFetchScript(scriptEngine);
             using (new TemporaryFile(file))
             {
-                var result = scriptEngine.Execute(new Script(file),
-                    new CalamariVariableDictionary()
-                    {
-                        ["DockerUsername"] = username,
-                        ["DockerPassword"] = password,
-                        ["Image"] = fullImageName,
-                        ["FeedUri"] = feed
-                    }, commandLineRunner, environmentVariables);
+                var clone = variables.Clone();
+                clone["DockerUsername"] = username;
+                clone["DockerPassword"] = password;
+                clone["Image"] = fullImageName;
+                clone["FeedUri"] = feed;
+
+                var result = scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
                 if (result.ExitCode != 0)
                     throw new CommandException("Unable to pull Docker image");
             }
@@ -117,11 +120,12 @@ namespace Calamari.Integration.Packages.Download
             {
                 return (null, null);
             }
+
             var creds = feedCredentials.GetCredential(feedUri, "basic");
             return (creds.UserName, creds.Password);
         }
-        
-        
+
+
         string GetFetchScript(IScriptEngine scriptEngine)
         {
             var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
@@ -136,9 +140,9 @@ namespace Calamari.Integration.Packages.Download
                     contextFile = "DockerPull.ps1";
                     break;
                 default:
-                    throw new InvalidOperationException("No kubernetes context wrapper exists for "+ syntax);
+                    throw new InvalidOperationException("No kubernetes context wrapper exists for " + syntax);
             }
-            
+
             var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
             var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Integration.Packages.Download.Scripts.{contextFile}");
             fileSystem.OverwriteFile(scriptFile, contextScript);

@@ -48,5 +48,6 @@ namespace Calamari.Integration.FileSystem
         DateTime GetCreationTime(string filePath);
         string GetFileName(string filePath);
         string GetDirectoryName(string directoryPath);
+        byte[] ReadAllBytes(string filePath);
     }
 }

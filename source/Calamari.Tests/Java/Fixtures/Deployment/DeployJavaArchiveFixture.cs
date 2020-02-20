@@ -18,7 +18,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
     [TestFixture]
     public class DeployJavaArchiveFixture : CalamariFixture
     {
-        protected VariableDictionary Variables { get; private set; }
+        protected CalamariVariableDictionary Variables { get; private set; }
         protected ICalamariFileSystem FileSystem { get; private set; }
         protected string ApplicationDirectory { get; private set; }
 
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(ApplicationDirectory, "DeploymentJournal.xml"));
 
-            Variables = new VariableDictionary();
+            Variables = new CalamariVariableDictionary();
             Variables.EnrichWithEnvironmentVariables();
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, ApplicationDirectory);
         }
@@ -118,13 +118,8 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
 
         protected void DeployPackage(string packageName)
         {
-            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
-            {
-                Variables.Save(variablesFile.FilePath);
-
-                var command = new DeployJavaArchiveCommand(new CombinedScriptEngine());
-                ReturnCode = command.Execute(new[] { "--archive", $"{packageName}", "--variables", $"{variablesFile.FilePath}" });
-            }
+            var command = new DeployJavaArchiveCommand(new CombinedScriptEngine(), Variables);
+            ReturnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
     }
 }

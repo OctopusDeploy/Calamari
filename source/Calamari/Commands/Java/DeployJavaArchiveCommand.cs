@@ -23,20 +23,16 @@ namespace Calamari.Commands.Java
     [Command("deploy-java-archive", Description = "Deploys a Java archive (.jar, .war, .ear)")]
     public class DeployJavaArchiveCommand : Command
     {
-        string variablesFile;
         string archiveFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
+        readonly CalamariVariableDictionary variables;
 
-        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine)
+        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, CalamariVariableDictionary variables)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
+            this.variables = variables;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -53,7 +49,6 @@ namespace Calamari.Commands.Java
             
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var substituter = new FileSubstituter(fileSystem);

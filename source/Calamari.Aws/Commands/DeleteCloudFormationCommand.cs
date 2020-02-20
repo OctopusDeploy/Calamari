@@ -18,20 +18,13 @@ namespace Calamari.Aws.Commands
     [Command("delete-aws-cloudformation", Description = "Destroy an existing AWS CloudFormation stack")]
     public class DeleteCloudFormationCommand : Command
     {
+        readonly CalamariVariableDictionary variables;
         private string packageFile;
-        private string variablesFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
         private bool waitForComplete;
         
-        public DeleteCloudFormationCommand()
+        public DeleteCloudFormationCommand(CalamariVariableDictionary variables)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.",
-                v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.",
-                v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.",
-                v => sensitiveVariablesPassword = v);
+            this.variables = variables;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete =  
                 !bool.FalseString.Equals(v, StringComparison.OrdinalIgnoreCase)); //True by default
@@ -41,10 +34,6 @@ namespace Calamari.Aws.Commands
         {
             Options.Parse(commandLineArguments);
 
-            if (variablesFile != null && !File.Exists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-            
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();;
             var stackEventLogger = new StackEventLogger(new LogWrapper());
          

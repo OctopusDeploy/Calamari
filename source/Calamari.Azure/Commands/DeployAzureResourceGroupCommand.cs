@@ -21,20 +21,16 @@ namespace Calamari.Azure.Commands
     public class DeployAzureResourceGroupCommand : Command
     {
         private readonly CombinedScriptEngine scriptEngine;
-        private string variablesFile;
+        readonly CalamariVariableDictionary variables;
         private string packageFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
         private string templateFile;
         private string templateParameterFile;
 
-        public DeployAzureResourceGroupCommand(CombinedScriptEngine scriptEngine)
+        public DeployAzureResourceGroupCommand(CombinedScriptEngine scriptEngine, CalamariVariableDictionary variables)
         {
             this.scriptEngine = scriptEngine;
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            this.variables = variables;
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
         }
@@ -43,10 +39,6 @@ namespace Calamari.Azure.Commands
         {
             Options.Parse(commandLineArguments);
 
-            if (variablesFile != null && !File.Exists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var fileSystem = new WindowsPhysicalFileSystem();

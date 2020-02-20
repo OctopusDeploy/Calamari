@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Calamari.Integration.Processes;
 #if AWS
 using System;
 using System.Collections.Generic;
@@ -228,7 +229,7 @@ namespace Calamari.Tests.AWS
                 new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
-                var command = new UploadAwsS3Command();
+                var command = new UploadAwsS3Command(new CalamariVariableDictionary());
                 var result = command.Execute(new[] { 
                     "--package", $"{package.FilePath}", 
                     "--variables", $"{variablesFile}", 

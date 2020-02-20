@@ -22,22 +22,18 @@ namespace Calamari.Azure.Commands
     [Command("deploy-azure-service-fabric-app", Description = "Extracts and installs an Azure Service Fabric Application")]
     public class DeployAzureServiceFabricAppCommand : Command
     {
-        private string variablesFile;
         private string packageFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
         private readonly ICertificateStore certificateStore;
+        readonly CalamariVariableDictionary variables;
 
-        public DeployAzureServiceFabricAppCommand(CombinedScriptEngine scriptEngine, ICertificateStore certificateStore)
+        public DeployAzureServiceFabricAppCommand(CombinedScriptEngine scriptEngine, ICertificateStore certificateStore, CalamariVariableDictionary variables)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
             this.certificateStore = certificateStore;
+            this.variables = variables;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -53,11 +49,7 @@ namespace Calamari.Azure.Commands
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
 
-            if (variablesFile != null && !File.Exists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
             Log.Info("Deploying package:    " + packageFile);
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
