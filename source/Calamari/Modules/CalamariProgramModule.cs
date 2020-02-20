@@ -24,7 +24,6 @@ namespace Calamari.Modules
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>();
             builder.Register((_) => CalamariPhysicalFileSystem.GetPhysicalFileSystem()).As<ICalamariFileSystem>();
             builder.RegisterType<CombinedScriptEngine>().AsSelf();
-            builder.RegisterType<HelpCommand>().AsSelf();
             
             builder
                 .RegisterAssemblyTypes(this.GetType().Assembly)
