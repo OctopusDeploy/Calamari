@@ -24,11 +24,25 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             HelmVersionParser.ParseVersion("v4.0.2+g19e47ee").Should().BeNull();
         }
-        
+
         [Test]
-        public void ParseVersion_Rubbish_Null()
+        public void ParseVersion_V3UppercaseVersion_Null()
         {
-            HelmVersionParser.ParseVersion("zsd3242347ee").Should().BeNull();
+            HelmVersionParser.ParseVersion("V3.0.2+g19e47ee").Should().BeNull();
+        }
+
+        [Test]
+        public void ParseVersion_V3WithoutPrefix_Null()
+        {
+            HelmVersionParser.ParseVersion("3.0.2+g19e47ee").Should().BeNull();
+        }
+        
+        [TestCase("vzsd3242347ee", Description = "Has a v")]
+        [TestCase("zsd3242347ee", Description = "No v")]
+        [TestCase("v", Description = "Just v")]
+        public void ParseVersion_Rubbish_Null(string version)
+        {
+            HelmVersionParser.ParseVersion(version).Should().BeNull();
         }
     }
 }
