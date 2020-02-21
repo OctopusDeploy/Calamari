@@ -62,8 +62,8 @@ namespace Calamari.Kubernetes.Conventions
 
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
             var helmVersion = GetVersion(deployment.Variables);
-            Log.Verbose($"Helm version: {helmVersion}");
-
+            CheckHelmToolVersion(customHelmExecutable, helmVersion);
+            
             var sb = new StringBuilder();
 
             SetExecutable(sb, syntax, customHelmExecutable);
@@ -319,7 +319,24 @@ namespace Calamari.Kubernetes.Conventions
             fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
             File.WriteAllText(fileName, RawValuesToYamlConverter.Convert(values));
             return true;
+        }
+        
+        static void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
+        {
+            Log.Verbose($"Helm version selected: {selectedVersion}");
 
+            StringBuilder stdout = new StringBuilder();
+            var result = SilentProcessRunner.ExecuteCommand(customHelmExecutable ?? "helm", "version --client --short", Environment.CurrentDirectory, output => stdout.Append(output), error => { });
+
+            if (result.ExitCode != 0)
+                Log.Warn("Unable to retrieve the Helm tool version");
+
+            var toolVersion = HelmVersionParser.ParseVersion(stdout.ToString());
+            if (!toolVersion.HasValue)
+                Log.Warn("Unable to parse the Helm tool version text: " + stdout);
+            
+            if (toolVersion.Value != selectedVersion)
+                Log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
         }
     }
 }
