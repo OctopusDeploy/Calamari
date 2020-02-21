@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
+using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Integration.FileSystem
@@ -12,6 +13,7 @@ namespace Calamari.Integration.FileSystem
         void EnsureDiskHasEnoughFreeSpace(string directoryPath);
     }
 
+    [RegisterMe]    
     public class FreeSpaceChecker : IFreeSpaceChecker
     {
         readonly ICalamariFileSystem fileSystem;

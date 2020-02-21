@@ -2,12 +2,14 @@
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Util;
 
 namespace Calamari.Tests.Hooks
 {
     /// <summary>
     /// A mock script wrapper that we can use to track if it has been executed or not
     /// </summary>
+    [RegisterMe]
     public class ScriptHookMock : IScriptWrapper
     {
         /// <summary>

@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
@@ -105,7 +108,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         DockerImagePackageDownloader GetDownloader()
         {
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
-            return new DockerImagePackageDownloader(new CombinedScriptEngine(), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables());
+            return new DockerImagePackageDownloader(new CombinedScriptEngine(Enumerable.Empty<IScriptWrapper>()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables());
         }
         
     }

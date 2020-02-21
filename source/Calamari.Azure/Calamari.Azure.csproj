@@ -107,7 +107,7 @@
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
   <Target Condition="$([MSBuild]::IsOSUnixLike())" Name="Build">
-    <Message Text="This build is unsupported on unix like environments"/>
+    <Message Text="This build is unsupported on unix like environments" />
   </Target>
   <Import Condition="!$([MSBuild]::IsOSUnixLike())" Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 </Project>

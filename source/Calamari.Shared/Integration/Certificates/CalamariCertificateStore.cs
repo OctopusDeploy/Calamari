@@ -7,10 +7,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 using Calamari.Deployment;
+using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Integration.Certificates
 {
+    [RegisterMe]
     public class CalamariCertificateStore : ICertificateStore
     {
         public X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes)

@@ -4,11 +4,9 @@ using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
-using Octostache;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +15,6 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
-using Calamari.Modules;
 using Calamari.Util;
 
 namespace Calamari.Commands

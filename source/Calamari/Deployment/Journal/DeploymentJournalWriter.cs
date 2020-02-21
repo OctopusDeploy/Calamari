@@ -2,9 +2,11 @@
 using System.Linq;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Util;
 
 namespace Calamari.Deployment.Journal
 {
+    [RegisterMe]
     public class DeploymentJournalWriter : IDeploymentJournalWriter
     {
         private readonly ICalamariFileSystem fileSystem;
