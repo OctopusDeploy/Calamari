@@ -40,27 +40,43 @@ namespace Calamari
                 var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
                 Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
-                var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-                var variables = VariablesFactory.Create(fileSystem, options);
+                using (var container = BuildContainer(options))
+                {
+                    var command = container.Resolve<ICommand[]>();
+                    if (command.Length == 0)
+                        throw new CommandException($"Could not find the command {options.Command}");
+                    if (command.Length > 1)
+                        throw new CommandException($"Multiple commands found with the name {options.Command}");
 
-                var builder = new ContainerBuilder();
-                builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-                builder.RegisterInstance(variables).As<IVariables>();
-
-                var allAssemblies = GetAllAssembliesToRegister(options).ToArray();
-
-                foreach (var assembly in allAssemblies)
-                    builder.RegisterAssemblyModules(assembly);
-
-                builder.RegisterType(FindCommandType(allAssemblies, options)).As<ICommand>();
-
-                using (var container = builder.Build())
-                    return container.Resolve<ICommand>().Execute(options.RemainingArguments.ToArray());
+                    return command[0].Execute(options.RemainingArguments.ToArray());
+                }
             }
             catch (Exception ex)
             {
                 return ConsoleFormatter.PrintError(ex);
             }
+        }
+
+        static IContainer BuildContainer(CommonOptions options)
+        {
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var variables = VariablesFactory.Create(fileSystem, options);
+            
+            var builder = new ContainerBuilder();
+            builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
+            builder.RegisterInstance(variables).As<IVariables>();
+
+            var assemblies = GetAllAssembliesToRegister(options).ToArray();
+
+            foreach (var assembly in assemblies)
+                builder.RegisterAssemblyModules(assembly);
+
+            builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<ICommand>()
+                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+                .As<ICommand>();
+
+            return builder.Build();
         }
 
         static IEnumerable<Assembly> GetAllAssembliesToRegister(CommonOptions options)
@@ -69,19 +85,6 @@ namespace Calamari
             yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
             foreach (var extension in options.Extensions)
                 yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
-        }
-
-        static Type FindCommandType(Assembly[] allAssemblies, CommonOptions options)
-        {
-            var commandType = allAssemblies
-                .SelectMany(a => a.GetExportedTypes())
-                .Where(t => !t.IsAbstract && !t.IsInterface)
-                .Where(t => t.IsAssignableTo<ICommand>())
-                .FirstOrDefault(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase));
-
-            if (commandType == null)
-                throw new CommandException($"Could not find the command {options.Command}");
-            return commandType;
         }
     }
 }
