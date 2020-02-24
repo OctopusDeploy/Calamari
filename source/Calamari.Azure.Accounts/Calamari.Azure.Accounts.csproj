@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>1.0.0.0</Version>
+    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+    <AssemblyName>Calamari.Azure.Accounts</AssemblyName>
+    <OutputType>Library</OutputType>
+    <PackageId>Calamari.Azure.Accounts</PackageId>
+    <Authors>Octopus Deploy</Authors>
+    <Copyright>Octopus Deploy Pty Ltd</Copyright>
+    <PackageTags>tool</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/OctopusDeploy/Calamari/</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <Description>Contains the classes for Azure accounts.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
+  </ItemGroup>
+</Project>

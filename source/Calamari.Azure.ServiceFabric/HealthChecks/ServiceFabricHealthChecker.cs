@@ -4,7 +4,6 @@ using System.Fabric.Security;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Azure.Util;
 using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
 using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
