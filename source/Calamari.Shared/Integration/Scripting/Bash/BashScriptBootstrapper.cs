@@ -55,10 +55,7 @@ namespace Calamari.Integration.Scripting.Bash
         {
             return variables.GetNames().Select(variable =>
             {
-                var variableValue = variables.IsSensitive(variable)
-                    ? DecryptValueCommand(variables.Get(variable))
-                    : string.Format("decode_servicemessagevalue \"{0}\"", EncodeValue(variables.Get(variable)));
-
+                var variableValue = DecryptValueCommand(variables.Get(variable));
                 return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable), variableValue);
             });
         }
@@ -66,10 +63,9 @@ namespace Calamari.Integration.Scripting.Bash
         static string DecryptValueCommand(string value)
         {
             var encrypted = VariableEncryptor.Encrypt(value ?? "");
-            byte[] iv;
-            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
             
-            return string.Format("decrypt_variable \"{0}\" \"{1}\"", Convert.ToBase64String(rawEncrypted), ToHex(iv));
+            return $@"decrypt_variable ""{Convert.ToBase64String(rawEncrypted)}"" ""{ToHex(iv)}""";
         }
 
         static string ToHex(byte[] bytes)
