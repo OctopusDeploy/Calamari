@@ -12,10 +12,10 @@ namespace Calamari.Deployment.Conventions
         public ExtractPackageToStagingDirectoryConvention(
             IPackageExtractor extractor, 
             ICalamariFileSystem fileSystem,
-            String subDirectory = "staging") 
+            bool extractToSubdirectory = true) 
             : base(extractor, fileSystem)
         {
-            SubDirectory = subDirectory;
+            SubDirectory = extractToSubdirectory ? "staging" : null;
         }
 
         protected override string GetTargetPath(RunningDeployment deployment)

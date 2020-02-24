@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -31,9 +32,10 @@ namespace Calamari.Kubernetes.Commands
         private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
+        readonly IConventionFactory conventionFactory;
         readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         
-        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter)
+        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter, IConventionFactory conventionFactory)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
@@ -41,6 +43,7 @@ namespace Calamari.Kubernetes.Commands
             Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             this.scriptEngine = scriptEngine;
             this.deploymentJournalWriter = deploymentJournalWriter;
+            this.conventionFactory = conventionFactory;
         }
         
         public override int Execute(string[] commandLineArguments)
@@ -55,7 +58,6 @@ namespace Calamari.Kubernetes.Commands
 
             var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var substituter = new FileSubstituter(fileSystem);
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             ValidateRequiredVariables(variables);
             
@@ -63,13 +65,13 @@ namespace Calamari.Kubernetes.Commands
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
+                conventionFactory.ExtractPackageToStagingDirectory(),
                 new StageScriptPackagesConvention(null, fileSystem, extractor, true),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                conventionFactory.ConfiguredScript(DeploymentStages.PreDeploy),
+                conventionFactory.SubstituteInFiles(_ => true, FileTargetFactory),
+                conventionFactory.ConfiguredScript(DeploymentStages.Deploy),
                 new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                conventionFactory.ConfiguredScript(DeploymentStages.PostDeploy),
             };
             var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);

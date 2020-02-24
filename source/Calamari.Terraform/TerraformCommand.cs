@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -16,15 +17,17 @@ namespace Calamari.Terraform
         const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
 
         private readonly Func<ICalamariFileSystem, IConvention> step;
+        readonly IConventionFactory conventionFactory;
         private string variablesFile;
         private readonly List<string> sensitiveVariableFiles = new List<string>();
         private string sensitiveVariablesPassword;
         private string packageFile;
 
 
-        protected TerraformCommand(Func<ICalamariFileSystem, IConvention> step)
+        protected TerraformCommand(Func<ICalamariFileSystem, IConvention> step, IConventionFactory conventionFactory)
         {
             this.step = step;
+            this.conventionFactory = conventionFactory;
             Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
@@ -46,8 +49,6 @@ namespace Calamari.Terraform
                 }
             }
 
-            var substituter = new FileSubstituter(fileSystem);
-            var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
             var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution, true);
             var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
@@ -59,8 +60,8 @@ namespace Calamari.Terraform
             {
                 new ContributeEnvironmentVariablesConvention(),
                 new LogVariablesConvention(),
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => packageFile != null),
-                new SubstituteInFilesConvention(fileSystem, substituter,
+                conventionFactory.ExtractPackageToStagingDirectory().When(_ => packageFile != null),
+                conventionFactory.SubstituteInFiles(
                     _ => true,
                     _ => FileTargetFactory(runAutomaticFileSubstitution ? DefaultTerraformFileSubstitution : string.Empty, additionalFileSubstitution)),
                 step(fileSystem)

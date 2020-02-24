@@ -12,13 +12,15 @@ namespace Calamari.Commands
     [Command("extract-package-to-staging", Description = "Extracts a package into the staging area")]
     public class ExtractToStagingCommand : Command
     {
+        readonly IConventionFactory conventionFactory;
         string packageFile;
         string variablesFile;
         private readonly List<string> sensitiveVariableFiles = new List<string>();
         string sensitiveVariablesPassword;
 
-        public ExtractToStagingCommand()
+        public ExtractToStagingCommand(IConventionFactory conventionFactory)
         {
+            this.conventionFactory = conventionFactory;
             Options.Add(
                 "variables=",
                 "Path to a JSON file containing variables.",
@@ -53,11 +55,7 @@ namespace Calamari.Commands
 
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(
-                    new GenericPackageExtractorFactory()
-                        .createStandardGenericPackageExtractor(),
-                    fileSystem,
-                    null)
+                conventionFactory.ExtractPackageToStagingDirectory(extractToSubdirectory: false)
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
