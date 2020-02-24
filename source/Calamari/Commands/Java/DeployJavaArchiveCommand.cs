@@ -17,6 +17,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 using Calamari.Java.Deployment.Conventions;
+using Calamari.Variables;
 
 namespace Calamari.Commands.Java
 {
@@ -73,8 +74,6 @@ namespace Calamari.Commands.Java
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
-                new ContributePreviousInstallationConvention(journal),
-                new ContributePreviousSuccessfulInstallationConvention(journal),
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 // If we are deploying the package exploded then extract directly to the application directory.

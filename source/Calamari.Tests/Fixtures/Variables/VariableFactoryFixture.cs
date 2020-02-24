@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Util;
 using Calamari.Variables;
@@ -11,7 +10,7 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Fixtures.Integration.Process
+namespace Calamari.Tests.Fixtures.Variables
 {
     [TestFixture]
     public class VariableFactoryFixture

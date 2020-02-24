@@ -69,6 +69,8 @@ namespace Calamari.Variables
                 }
             }
 
+            DeploymentJournalVariableContributor.Contribute(fileSystem, variables);
+                
             return variables;
         }
         
