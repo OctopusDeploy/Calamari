@@ -245,29 +245,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void ShouldLogVariables()
-        {
-            Variables.Set(SpecialVariables.PrintVariables, true.ToString());
-            Variables.Set(SpecialVariables.PrintEvaluatedVariables, true.ToString());
-            Variables.Set(SpecialVariables.Environment.Name, "Production");
-            const string variableName = "foo";
-            const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
-            Variables.Set(variableName, rawVariableValue) ;
-
-            var result = DeployPackage();
-
-            //Assert raw variables were output
-            result.AssertOutput($"##octopus[stdout-warning]{Environment.NewLine}{SpecialVariables.PrintVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
-            result.AssertOutput("The following variables are available:");
-            result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, rawVariableValue));
-
-            //Assert evaluated variables were output
-            result.AssertOutput($"##octopus[stdout-warning]{Environment.NewLine}{SpecialVariables.PrintEvaluatedVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
-            result.AssertOutput("The following evaluated variables are available:");
-            result.AssertOutput(string.Format("[{0}] = '{1}'", variableName, "The environment is Production"));
-        }
-
-        [Test]
         [TestCase(DeploymentType.Nupkg)]
         [TestCase(DeploymentType.Tar)]
         public void ShouldSkipIfAlreadyInstalled(DeploymentType deploymentType)

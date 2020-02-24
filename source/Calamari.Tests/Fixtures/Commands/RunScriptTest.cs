@@ -6,6 +6,8 @@ using System;
 using System.IO;
 using System.Reflection;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Helpers;
+using FluentAssertions;
 
 namespace Calamari.Tests.Fixtures
 {
@@ -15,9 +17,11 @@ namespace Calamari.Tests.Fixtures
         [Test]
         public void RunScript()
         {
-            var retCode = Program.Main(new[] {"run-script"});
-            // Expected because we don't pass the required variables
-            Assert.AreEqual(1, retCode);
+            var program = new TestProgram();
+            var retCode = program.RunStubCommand();
+            
+            retCode.Should().Be(0);
+            program.StubWasCalled.Should().BeTrue();
         }
     }
 }

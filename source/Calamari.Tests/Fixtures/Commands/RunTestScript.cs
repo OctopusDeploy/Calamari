@@ -1,11 +1,10 @@
-﻿using Calamari.Commands.Support;
+﻿using System.IO;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using System.IO;
 
-namespace Calamari.Tests.Commands
+namespace Calamari.Tests.Fixtures.Commands
 {
     /// <summary>
     /// A cut down command that runs a script without any journaling, variable substitution or
