@@ -63,8 +63,6 @@ namespace Calamari.Azure.Commands
 
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention(),
                 new SwapAzureDeploymentConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
                 new FindCloudServicePackageConvention(fileSystem),

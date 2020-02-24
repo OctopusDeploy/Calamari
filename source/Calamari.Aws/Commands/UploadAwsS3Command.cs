@@ -53,8 +53,6 @@ namespace Calamari.Aws.Commands
 
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => targetType == S3TargetMode.FileSelections),
                 new LogAwsUserInfoConvention(environment),
                 new CreateS3BucketConvention(environment, _ => bucket),

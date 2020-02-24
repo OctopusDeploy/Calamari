@@ -39,5 +39,6 @@ namespace Calamari.Integration.ServiceMessages
                     break;
             }
         }
+        
     }
 }

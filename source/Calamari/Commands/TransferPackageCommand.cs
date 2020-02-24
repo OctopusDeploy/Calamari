@@ -40,10 +40,8 @@ namespace Calamari.Commands
             
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
                 new ContributePreviousInstallationConvention(journal),
                 new ContributePreviousSuccessfulInstallationConvention(journal),
-                new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new TransferPackageConvention(fileSystem),
             };

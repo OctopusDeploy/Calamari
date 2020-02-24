@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Util;
 using Calamari.Variables;
+using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -61,7 +63,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         [Test]
         public void ShouldIncludeEncryptedSensitiveVariables()
         {
-            var result = VariablesFactory.Create(fileSystem, options);
+            var result = new VariablesFactory(fileSystem).Create(options);
 
             Assert.AreEqual("firstSensitiveVariableValue", result.Get("firstSensitiveVariableName"));
             Assert.AreEqual("secondSensitiveVariableValue", result.Get("secondSensitiveVariableName"));
@@ -77,7 +79,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
             File.WriteAllText(firstSensitiveVariablesFileName, JsonConvert.SerializeObject(sensitiveVariables));
             File.WriteAllText(secondSensitiveVariablesFileName, "{}");
             
-            var result = VariablesFactory.Create(fileSystem, options);
+            var result = new VariablesFactory(fileSystem).Create(options);
 
             Assert.AreEqual("firstSensitiveVariableValue", result.Get("firstSensitiveVariableName"));
             Assert.AreEqual("firstInsensitiveVariableValue", result.Get("firstInsensitiveVariableName"));
@@ -89,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         {
             options.InputVariables.SensitiveVariablesPassword = "FakePassword";
             CreateSensitiveVariableFile();
-            VariablesFactory.Create(fileSystem, options);
+            new VariablesFactory(fileSystem).Create(options);
         }
 
         [Test]
@@ -98,7 +100,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         {
             options.InputVariables.SensitiveVariablesPassword = null;
             File.WriteAllText(firstSensitiveVariablesFileName, "I Am Not JSON");
-            VariablesFactory.Create(fileSystem, options);
+            new VariablesFactory(fileSystem).Create(options);
         }
 
         void CreateInSensitiveVariableFile()
@@ -126,10 +128,49 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         [Test]
         public void ShouldCheckVariableIsSet()
         {
-            var variables = VariablesFactory.Create(fileSystem, options);
+            var variables = new VariablesFactory(fileSystem).Create(options);
 
             Assert.That(variables.IsSet("thisIsBogus"), Is.False);
             Assert.That(variables.IsSet("firstSensitiveVariableName"), Is.True);
+        }
+        
+        
+        [Test]
+        public void VariablesInAdditionalVariablesPathAreContributed()
+        {
+            using (var varFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                new CalamariVariables
+                {
+                    {
+                        "new.key", "new.value"
+                    }
+                }.Save(varFile.FilePath);
+
+                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, varFile.FilePath);
+
+                var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
+                    .Create(new CommonOptions("test"));
+
+                variables.Get("new.key").Should().Be("new.value");
+            }
+        }
+
+        [Test]
+        public void IfAdditionalVariablesPathDoesNotExistAnExceptionIsThrown()
+        {
+            const string filePath = "c:/assuming/that/this/file/doesnt/exist.json";
+
+            Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, filePath);
+                
+            new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
+                .Invoking(c => c.Create(new CommonOptions("test")))
+                .Should()
+                .Throw<CommandException>()
+                // Make sure that the message says how to turn this feature off.
+                .Where(e => e.Message.Contains(SpecialVariables.AdditionalVariablesPath))
+                // Make sure that the message says where it looked for the file.
+                .Where(e => e.Message.Contains(filePath));
         }
     }
 }

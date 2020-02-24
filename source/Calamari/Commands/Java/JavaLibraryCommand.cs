@@ -41,7 +41,6 @@ namespace Calamari.Commands.Java
             
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
                 new JavaStepConvention(actionType, new JavaRunner(commandLineRunner, variables)),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine,
                     commandLineRunner, embeddedResources)

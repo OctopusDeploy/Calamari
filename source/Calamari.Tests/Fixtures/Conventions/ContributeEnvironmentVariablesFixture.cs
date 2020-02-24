@@ -1,5 +1,6 @@
 ﻿using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
@@ -49,9 +50,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private VariableDictionary AddEnvironmentVariables()
         {
-            var variables = new CalamariVariables();
-            var convention = new ContributeEnvironmentVariablesConvention();
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
+            var variables = (CalamariVariables) new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem()).Create(new CommonOptions("test"));
 
             Assert.That(variables.GetNames().Count, Is.GreaterThan(3));
             Assert.That(variables.GetRaw(SpecialVariables.Tentacle.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));

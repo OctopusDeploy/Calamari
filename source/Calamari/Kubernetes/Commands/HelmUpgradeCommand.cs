@@ -53,8 +53,6 @@ namespace Calamari.Kubernetes.Commands
             
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
                 new StageScriptPackagesConvention(null, fileSystem, extractor, true),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),

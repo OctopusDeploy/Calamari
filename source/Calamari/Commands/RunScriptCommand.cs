@@ -65,9 +65,6 @@ namespace Calamari.Commands
 
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
-                new ContributeVariablesFromJsonFileConvention(),
-                new LogVariablesConvention(),
                 new StageScriptPackagesConvention(packageFile, fileSystem, extractor),
                 // Substitute the script source file
                 new SubstituteInFilesConvention(fileSystem, fileSubstituter, _ => true, ScriptFileTargetFactory),

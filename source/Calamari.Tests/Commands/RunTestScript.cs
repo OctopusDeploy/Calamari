@@ -32,9 +32,6 @@ namespace Calamari.Tests.Commands
         {
             Options.Parse(commandLineArguments);
             
-            variables.EnrichWithEnvironmentVariables();
-            variables.LogVariables();
-
             var runner = new CommandLineRunner(new ConsoleCommandOutput());
             Log.VerboseFormat("Executing '{0}'", scriptFile);
             var result = scriptEngine.Execute(new Script(scriptFile, ""), variables, runner);

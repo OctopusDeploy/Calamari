@@ -7,7 +7,7 @@ namespace Calamari
     public class CommonOptions
     {
 
-        CommonOptions(string command)
+        internal CommonOptions(string command)
         {
             Command = command;
         }

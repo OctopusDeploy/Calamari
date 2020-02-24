@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Extensions;
@@ -63,7 +64,8 @@ namespace Calamari
         static IContainer BuildContainer(CommonOptions options)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var variables = VariablesFactory.Create(fileSystem, options);
+            var variables = new VariablesFactory(fileSystem).Create(options);
+            VariableLogger.LogVariables(variables);
 
             var builder = new ContainerBuilder();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
@@ -103,5 +105,6 @@ namespace Calamari
             foreach (var extension in options.Extensions)
                 yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
         }
+        
     }
 }
