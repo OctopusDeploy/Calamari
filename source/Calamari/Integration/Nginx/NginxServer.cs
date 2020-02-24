@@ -237,7 +237,7 @@ server {{
         {
             if (string.IsNullOrEmpty(directivesString) && string.IsNullOrEmpty(reverseProxyDirectivesString)) return string.Empty;
 
-            var directives = ParseJson(directivesString);
+            var directives = ParseJsonArray(directivesString);
             var reverseProxyDirectives = ParseJson(reverseProxyDirectivesString);
             var allDirectives = CombineItems(directives.ToList(), reverseProxyDirectives.ToList());
             return !allDirectives.Any()
@@ -277,7 +277,30 @@ server {{
 
             return items1;
         }
-        
+
+        static IEnumerable<dynamic> ParseJsonArray(string json)
+        {
+            try
+            {
+                var result = new List<dynamic>();
+                var array = JArray.Parse(json);
+                foreach (var o in array.Children<JObject>())
+                {
+                    foreach (var p in o.Properties())
+                    {
+                        result.Add(new { p.Name, Value = (string)p.Value });
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return new List<dynamic>();
+            }
+        }
+
         static IEnumerable<dynamic> ParseJson(string json)
         {
             try
