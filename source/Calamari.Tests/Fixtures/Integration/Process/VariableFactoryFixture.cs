@@ -74,11 +74,11 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         public void ShouldIncludeCleartextSensitiveVariables()
         {
             options.InputVariables.SensitiveVariablesPassword = null;
-            
+
             var sensitiveVariables = new Dictionary<string, string> { { "firstSensitiveVariableName", "firstSensitiveVariableValue"} };
             File.WriteAllText(firstSensitiveVariablesFileName, JsonConvert.SerializeObject(sensitiveVariables));
             File.WriteAllText(secondSensitiveVariablesFileName, "{}");
-            
+
             var result = new VariablesFactory(fileSystem).Create(options);
 
             Assert.AreEqual("firstSensitiveVariableValue", result.Get("firstSensitiveVariableName"));
@@ -133,44 +133,58 @@ namespace Calamari.Tests.Fixtures.Integration.Process
             Assert.That(variables.IsSet("thisIsBogus"), Is.False);
             Assert.That(variables.IsSet("firstSensitiveVariableName"), Is.True);
         }
-        
-        
+
+
         [Test]
         public void VariablesInAdditionalVariablesPathAreContributed()
         {
-            using (var varFile = new TemporaryFile(Path.GetTempFileName()))
+            try
             {
-                new CalamariVariables
+                using (var varFile = new TemporaryFile(Path.GetTempFileName()))
                 {
+                    new CalamariVariables
                     {
-                        "new.key", "new.value"
-                    }
-                }.Save(varFile.FilePath);
+                        {
+                            "new.key", "new.value"
+                        }
+                    }.Save(varFile.FilePath);
 
-                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, varFile.FilePath);
+                    Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, varFile.FilePath);
 
-                var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
-                    .Create(new CommonOptions("test"));
+                    var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
+                        .Create(new CommonOptions("test"));
 
-                variables.Get("new.key").Should().Be("new.value");
+                    variables.Get("new.key").Should().Be("new.value");
+                }
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, null);
             }
         }
 
         [Test]
         public void IfAdditionalVariablesPathDoesNotExistAnExceptionIsThrown()
         {
-            const string filePath = "c:/assuming/that/this/file/doesnt/exist.json";
+            try
+            {
+                const string filePath = "c:/assuming/that/this/file/doesnt/exist.json";
 
-            Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, filePath);
-                
-            new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
-                .Invoking(c => c.Create(new CommonOptions("test")))
-                .Should()
-                .Throw<CommandException>()
-                // Make sure that the message says how to turn this feature off.
-                .Where(e => e.Message.Contains(SpecialVariables.AdditionalVariablesPath))
-                // Make sure that the message says where it looked for the file.
-                .Where(e => e.Message.Contains(filePath));
+                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, filePath);
+
+                new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
+                    .Invoking(c => c.Create(new CommonOptions("test")))
+                    .Should()
+                    .Throw<CommandException>()
+                    // Make sure that the message says how to turn this feature off.
+                    .Where(e => e.Message.Contains(SpecialVariables.AdditionalVariablesPath))
+                    // Make sure that the message says where it looked for the file.
+                    .Where(e => e.Message.Contains(filePath));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, null);
+            }
         }
     }
 }

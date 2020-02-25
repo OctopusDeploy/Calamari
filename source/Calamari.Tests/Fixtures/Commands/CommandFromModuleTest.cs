@@ -89,7 +89,5 @@ namespace Calamari.Tests.Fixtures.Commands
             }
         }
     }
-    
-    
 }
 #endif
