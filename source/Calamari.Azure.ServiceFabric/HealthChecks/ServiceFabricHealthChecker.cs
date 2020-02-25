@@ -2,7 +2,7 @@
 using System.Fabric;
 using System.Fabric.Security;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Azure.Util;
+using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Deployment;
 using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
@@ -10,7 +10,7 @@ using Calamari.Integration.Processes;
 using Calamari.Util;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace Calamari.Azure.HealthChecks
+namespace Calamari.Azure.ServiceFabric.HealthChecks
 {
     public class ServiceFabricHealthChecker : IDoesDeploymentTargetTypeHealthChecks
     {

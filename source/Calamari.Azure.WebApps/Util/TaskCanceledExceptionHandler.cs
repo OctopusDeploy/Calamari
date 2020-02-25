@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Azure.Util
+namespace Calamari.Azure.WebApps.Util
 {
     /// <summary>
     /// A service for dealing with task cancelled exceptions.

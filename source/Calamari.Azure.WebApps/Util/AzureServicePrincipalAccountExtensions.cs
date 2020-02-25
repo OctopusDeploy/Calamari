@@ -1,9 +1,10 @@
 ﻿using System;
-using Calamari.Azure.Integration.Security;
+using Calamari.Azure.Accounts;
+using Calamari.Azure.Accounts.Security;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
 
-namespace Calamari.Azure.Accounts
+namespace Calamari.Azure.WebApps.Util
 {
     public static class AzureServicePrincipalAccountExtensions
     {

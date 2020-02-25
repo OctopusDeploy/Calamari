@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using Calamari.Azure.Deployment.Conventions;
+using Calamari.Azure.WebApps.Deployment.Conventions;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -14,7 +14,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
 
-namespace Calamari.Azure.Commands
+namespace Calamari.Azure.WebApps.Commands
 {
     [Command("deploy-azure-web", Description = "Extracts and installs a deployment package to an Azure Web Application")]
     public class DeployAzureWebCommand : Command

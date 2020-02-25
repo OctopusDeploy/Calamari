@@ -1,7 +1,7 @@
 ﻿using System;
-using Calamari.Azure.Integration.Websites.Publishing;
+using Calamari.Azure.WebApps.Integration.Websites.Publishing;
 
-namespace Calamari.Azure.Util
+namespace Calamari.Azure.WebApps.Util
 {
     public static class AzureWebAppHelper
     {

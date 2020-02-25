@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Calamari.Integration.Retry;
 
-namespace Calamari.Azure.Util
+namespace Calamari.Azure.ServiceFabric.Util
 {
     public static class AzureRetryTracker
     {

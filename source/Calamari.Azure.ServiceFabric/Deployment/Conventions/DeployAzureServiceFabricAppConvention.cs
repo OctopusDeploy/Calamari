@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
@@ -7,10 +8,9 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using System.IO;
 using Calamari.Util;
 
-namespace Calamari.Azure.Deployment.Conventions
+namespace Calamari.Azure.ServiceFabric.Deployment.Conventions
 {
     public class DeployAzureServiceFabricAppConvention : IInstallConvention
     {

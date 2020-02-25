@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
 
-namespace Calamari.Azure.Util
+namespace Calamari.Azure.ServiceFabric.Util
 {
     public static class ServiceFabricHelper
     {

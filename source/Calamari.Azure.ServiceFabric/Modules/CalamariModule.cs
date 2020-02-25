@@ -2,7 +2,7 @@
 using Calamari.HealthChecks;
 using Calamari.Hooks;
 
-namespace Calamari.Azure.Modules
+namespace Calamari.Azure.ServiceFabric.Modules
 {
     /// <summary>
     /// The script wrapper exposed by this module needs to be used for Azure script steps

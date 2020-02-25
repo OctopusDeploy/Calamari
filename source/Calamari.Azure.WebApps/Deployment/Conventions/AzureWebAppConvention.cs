@@ -5,8 +5,8 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Calamari.Azure.Accounts;
-using Calamari.Azure.Integration.Websites.Publishing;
-using Calamari.Azure.Util;
+using Calamari.Azure.WebApps.Integration.Websites.Publishing;
+using Calamari.Azure.WebApps.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -14,7 +14,7 @@ using Calamari.Integration.Processes;
 using Microsoft.Web.Deployment;
 using Octostache;
 
-namespace Calamari.Azure.Deployment.Conventions
+namespace Calamari.Azure.WebApps.Deployment.Conventions
 {
     public class AzureWebAppConvention : IInstallConvention
     {

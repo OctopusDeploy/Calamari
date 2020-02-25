@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.Azure.Accounts;
-using Calamari.Azure.Integration.Security;
-using Calamari.Azure.Util;
+using Calamari.Azure.Accounts.Integration;
+using Calamari.Azure.Accounts.Security;
+using Calamari.Azure.WebApps.Util;
 using Calamari.Commands.Support;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.WebSites;
@@ -17,7 +17,7 @@ using Microsoft.Rest;
 using Microsoft.Rest.TransientFaultHandling;
 using NuGet;
 
-namespace Calamari.Azure.Integration.Websites.Publishing
+namespace Calamari.Azure.WebApps.Integration.Websites.Publishing
 {
     public class ResourceManagerPublishProfileProvider
     {

@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using Calamari.Azure.Accounts;
+using Calamari.Azure.WebApps.Util;
 using Calamari.Deployment;
 using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Processes;
 using Microsoft.Azure.Management.WebSites;
-using Microsoft.WindowsAzure.Management.WebSites;
-using Microsoft.WindowsAzure.Management.WebSites.Models;
 
-namespace Calamari.Azure.HealthChecks
+namespace Calamari.Azure.WebApps.HealthChecks
 {
     public class WebAppHealthChecker : IDoesDeploymentTargetTypeHealthChecks
     {

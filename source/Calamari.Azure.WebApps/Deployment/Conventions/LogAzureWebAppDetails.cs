@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using Calamari.Azure.Accounts;
+using Calamari.Azure.WebApps.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Microsoft.Azure.Management.WebSites;
 
-namespace Calamari.Azure.Deployment.Conventions
+namespace Calamari.Azure.WebApps.Deployment.Conventions
 {
     public class LogAzureWebAppDetails : IInstallConvention
     {

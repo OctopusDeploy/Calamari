@@ -1,4 +1,4 @@
-﻿namespace Calamari.Azure.Integration.Websites.Publishing
+﻿namespace Calamari.Azure.WebApps.Integration.Websites.Publishing
 {
     public class AzureTargetSite
     {

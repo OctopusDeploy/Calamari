@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using Calamari.Azure.Deployment.Conventions;
+using Calamari.Azure.ServiceFabric.Deployment.Conventions;
+using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Certificates;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
@@ -14,10 +16,8 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
-using Calamari.Azure.Util;
-using Calamari.Integration.Certificates;
 
-namespace Calamari.Azure.Commands
+namespace Calamari.Azure.ServiceFabric.Commands
 {
     [Command("deploy-azure-service-fabric-app", Description = "Extracts and installs an Azure Service Fabric Application")]
     public class DeployAzureServiceFabricAppCommand : Command

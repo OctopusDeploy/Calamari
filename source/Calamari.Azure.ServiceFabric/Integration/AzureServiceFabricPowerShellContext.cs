@@ -1,4 +1,9 @@
-﻿using Calamari.Azure.Util;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Hooks;
@@ -7,13 +12,8 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octostache;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 
-namespace Calamari.Azure.Integration
+namespace Calamari.Azure.ServiceFabric.Integration
 {
     public class AzureServiceFabricPowerShellContext : IScriptWrapper
     {

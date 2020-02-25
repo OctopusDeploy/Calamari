@@ -1,4 +1,4 @@
-﻿using Calamari.Azure.Integration;
+﻿using Calamari.Azure.Accounts.Integration;
 using Calamari.Deployment;
 using Octostache;
 

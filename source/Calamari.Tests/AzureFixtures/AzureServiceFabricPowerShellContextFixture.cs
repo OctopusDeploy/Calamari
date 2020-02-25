@@ -1,5 +1,5 @@
 #if AZURE
-using Calamari.Azure.Integration;
+using Calamari.Azure.ServiceFabric.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

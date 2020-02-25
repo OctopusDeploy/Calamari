@@ -1,6 +1,6 @@
 ﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace Calamari.Azure.Integration.Security
+namespace Calamari.Azure.Accounts.Security
 {
     public class ServicePrincipal
     {

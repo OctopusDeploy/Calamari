@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
-using Calamari.Deployment.Conventions;
-using Calamari.Deployment;
 
-namespace Calamari.Azure.Deployment.Conventions
+namespace Calamari.Azure.ServiceFabric.Deployment.Conventions
 {
     public class SubstituteVariablesInAzureServiceFabricPackageConvention : IInstallConvention
     {
