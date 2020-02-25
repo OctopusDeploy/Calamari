@@ -29,7 +29,7 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
+    <EmbeddedResource Include="Scripts\*" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Azure.Accounts\Calamari.Azure.Accounts.csproj" />

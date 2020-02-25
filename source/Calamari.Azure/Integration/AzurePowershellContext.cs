@@ -23,7 +23,7 @@ namespace Calamari.Azure.Integration
         readonly ICalamariEmbeddedResources embeddedResources;
         readonly CalamariVariableDictionary variables;
 
-        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell};
+        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell, ScriptSyntax.Bash};
 
         const string CertificateFileName = "azure_certificate.pfx";
         const int PasswordSizeBytes = 20;
@@ -60,7 +60,7 @@ namespace Calamari.Azure.Integration
             }
 
             var workingDirectory = Path.GetDirectoryName(script.File);
-            variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
+            variables.Set("OctopusAzureTargetScript", $"{script.File}");
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
@@ -73,7 +73,7 @@ namespace Calamari.Azure.Integration
             SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
-            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
+            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
             {
                 if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
                 {
@@ -93,10 +93,23 @@ namespace Calamari.Azure.Integration
             }
         }
       
-        string CreateContextScriptFile(string workingDirectory)
+        string CreateContextScriptFile(string workingDirectory, ScriptSyntax syntax)
         {
-            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureContext.ps1");
-            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.AzureContext.ps1");
+            string contextFile;
+            switch (syntax)
+            {
+                case ScriptSyntax.Bash:
+                    contextFile = "AzureContext.sh";
+                    break;
+                case ScriptSyntax.PowerShell:
+                    contextFile = "AzureContext.ps1";
+                    break;
+                default:
+                    throw new InvalidOperationException($"No Azure context wrapper exists for {syntax}");
+            }
+            
+            var azureContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Azure.Scripts.{contextFile}");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }
