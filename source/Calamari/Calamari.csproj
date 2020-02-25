@@ -38,6 +38,7 @@
   -->
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <ProjectReference Include="..\Calamari.Azure.CloudServices\Calamari.Azure.CloudServices.csproj" />
     <ProjectReference Include="..\Calamari.Azure.ServiceFabric\Calamari.Azure.ServiceFabric.csproj" />
     <ProjectReference Include="..\Calamari.Azure.WebApps\Calamari.Azure.WebApps.csproj" />
