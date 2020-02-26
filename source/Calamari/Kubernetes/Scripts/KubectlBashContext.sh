@@ -122,16 +122,16 @@ function setup_context {
         # kubectl doesn't yet support exec authentication
         # https://github.com/kubernetes/kubernetes/issues/64751
         # so build this manually
-        Octopus_K8S_ClusterName=$(get_octopusvariable "Octopus.Action.Kubernetes.ClusterName")
+        Octopus_K8S_ClusterName=$(get_octopusvariable "Octopus.Action.Kubernetes.EksClusterName")
         echo "Creating kubectl context to $Octopus_K8S_ClusterUrl using EKS cluster name $Octopus_K8S_ClusterName"
-    
+
         # The call to set-cluster above will create a file with empty users. We need to call
         # set-cluster first, because if we try to add the exec user first, set-cluster will
         # delete those settings. So we now delete the users line (the last line of the yaml file)
         # and add our own.
-    
+
         #(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
-    
+
         # https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
         echo "users:" >> $KUBECONFIG
         echo "- name: octouser" >> $KUBECONFIG
