@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Octostache;
 
@@ -15,7 +16,7 @@ namespace Calamari.Deployment
         /// Returns the directory where the package will be installed. 
         /// Also ensures the directory exists, and that there is free-space on the disk.
         /// </summary>
-        public static string GetApplicationDirectory(PackageFileNameMetadata packageFileNameMetadata, VariableDictionary variables, ICalamariFileSystem fileSystem)
+        public static string GetApplicationDirectory(PackageFileNameMetadata packageFileNameMetadata, CalamariVariableDictionary variables, ICalamariFileSystem fileSystem)
         {
             return EnsureTargetPathExistsAndIsEmpty(
                 Path.Combine(GetEnvironmentApplicationDirectory(fileSystem, variables),
@@ -25,14 +26,14 @@ namespace Calamari.Deployment
         }
 
         /// This will be specific to Tenant and/or Environment if these variables are available.
-        static string GetEnvironmentApplicationDirectory(ICalamariFileSystem fileSystem, VariableDictionary variables)
+        static string GetEnvironmentApplicationDirectory(ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
         {
             var root = GetApplicationDirectoryRoot(variables);
             root = AppendTenantNameIfProvided(fileSystem, variables, root);
             root = AppendEnvironmentNameIfProvided(fileSystem, variables, root);
 
             fileSystem.EnsureDirectoryExists(root);
-            fileSystem.EnsureDiskHasEnoughFreeSpace(root);
+            new FreeSpaceChecker(fileSystem, variables).EnsureDiskHasEnoughFreeSpace(root);
 
             return root;
         }

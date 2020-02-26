@@ -25,7 +25,7 @@ namespace Calamari.Deployment.Conventions
             var iisSiteName = deployment.Variables.Get(SpecialVariables.Package.UpdateIisWebsiteName);
             if (string.IsNullOrWhiteSpace(iisSiteName))
             {
-                iisSiteName = deployment.Variables.Get(SpecialVariables.Package.NuGetPackageId);
+                iisSiteName = deployment.Variables.Get(SpecialVariables.Package.PackageId);
             }
 
             var webRoot = GetRootMostDirectoryContainingWebConfig(deployment);

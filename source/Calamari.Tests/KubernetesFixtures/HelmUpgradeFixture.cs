@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Text;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -9,7 +11,9 @@ using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
+using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Versioning.Semver;
 using Octostache;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -32,13 +36,21 @@ namespace Calamari.Tests.KubernetesFixtures
 
         static string HelmOsPlatform => CalamariEnvironment.IsRunningOnWindows ? "windows-amd64" : "linux-amd64";
 
+        HelmVersion? helmVersion;
         TemporaryDirectory explicitVersionTempDirectory;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
             if (ExplicitExeVersion != null)
+            {
                 DownloadExplicitHelmExecutable();
+                helmVersion = new SemanticVersion(ExplicitExeVersion).Major == 2 ? HelmVersion.V2 : HelmVersion.V3;
+            }
+            else
+            {
+                helmVersion = GetVersion();
+            }
             
             void DownloadExplicitHelmExecutable()
             {
@@ -76,14 +88,15 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
 
             //Chart Pckage
-            Variables.Set(SpecialVariables.Package.NuGetPackageId, "mychart");
-            Variables.Set(SpecialVariables.Package.NuGetPackageVersion, "0.3.7");
-            Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.NuGetPackageId}}}");
-            Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.NuGetPackageVersion}}}");
+            Variables.Set(SpecialVariables.Package.PackageId, "mychart");
+            Variables.Set(SpecialVariables.Package.PackageVersion, "0.3.7");
+            Variables.Set(SpecialVariables.Packages.PackageId(""), $"#{{{SpecialVariables.Package.PackageId}}}");
+            Variables.Set(SpecialVariables.Packages.PackageVersion(""), $"#{{{SpecialVariables.Package.PackageVersion}}}");
             
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
-
+            Variables.Set(Kubernetes.SpecialVariables.Helm.ClientVersion, helmVersion.ToString());
+            
             //K8S Auth
             Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
             Variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "True");
@@ -273,7 +286,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
         }
-
+        
         protected abstract string ExplicitExeVersion { get; }
 
         protected string HelmExePath => ExplicitExeVersion == null ? "helm" : Path.Combine(explicitVersionTempDirectory.DirectoryPath, HelmOsPlatform, "helm"); 
@@ -291,7 +304,7 @@ namespace Calamari.Tests.KubernetesFixtures
             
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
-            var deleteCommand = DeleteCommand(@namespace, ReleaseName, HelmExePath);
+            var deleteCommand = DeleteCommand(@namespace, ReleaseName);
             var script = "set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{HelmExePath} "+ deleteCommand;
             if (CalamariEnvironment.IsRunningOnWindows)
             {
@@ -303,10 +316,8 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
         }
 
-        string DeleteCommand(string @namespace, string releaseName, string helmExecutablePath)
+        string DeleteCommand(string @namespace, string releaseName)
         {
-            var helmVersion = HelmVersionRetriever.GetVersion(helmExecutablePath);
-
             switch (helmVersion)
             {
                 case HelmVersion.V2:
@@ -331,12 +342,48 @@ namespace Calamari.Tests.KubernetesFixtures
                     .Argument("variables", variablesFile.FilePath));
             }
         }
-        
-        protected static void DownloadHelmPackage(string version, string fileName)
+
+        static void DownloadHelmPackage(string version, string fileName)
         {
             using (var myWebClient = new WebClient())
             {
                 myWebClient.DownloadFile($"https://get.helm.sh/helm-v{version}-{HelmOsPlatform}.tar.gz", fileName);
+            }
+        }
+
+        static HelmVersion GetVersion()
+        {
+            StringBuilder stdout = new StringBuilder();
+            var result = SilentProcessRunner.ExecuteCommand("helm", "version --client --short", Environment.CurrentDirectory, output => stdout.AppendLine(output), error => { });
+
+            result.ExitCode.Should().Be(0, $"Failed to retrieve version from Helm (Exit code {result.ExitCode}). Error output: \r\n{result.ErrorOutput}");
+
+            return ParseVersion(stdout.ToString());
+        }
+        
+        //versionString from "helm version --client --short"
+        static HelmVersion ParseVersion(string versionString)
+        {
+            //eg of output for helm 2: Client: v2.16.1+gbbdfe5e
+            //eg of output for helm 3: v3.0.1+g7c22ef9
+            
+            var indexOfVersionIdentifier = versionString.IndexOf('v');
+            if (indexOfVersionIdentifier == -1)
+                throw new FormatException($"Failed to find version identifier from '{versionString}'.");
+
+            var indexOfVersionNumber = indexOfVersionIdentifier + 1;
+            if (indexOfVersionNumber >= versionString.Length)
+                throw new FormatException($"Failed to find version number from '{versionString}'.");
+
+            var version = versionString[indexOfVersionNumber];
+            switch (version)
+            {
+                case '3':
+                    return HelmVersion.V3;
+                case '2':
+                    return HelmVersion.V2;
+                default:
+                    throw new InvalidOperationException($"Unsupported helm version '{version}'");
             }
         }
     }

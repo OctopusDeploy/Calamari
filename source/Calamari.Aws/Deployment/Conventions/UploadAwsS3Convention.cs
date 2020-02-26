@@ -23,7 +23,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
-    public class UploadAwsS3Convention : IInstallConvention
+     public class UploadAwsS3Convention : IInstallConvention
     {
         private readonly ICalamariFileSystem fileSystem;
         private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
@@ -31,6 +31,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly S3TargetMode targetMode;
         private readonly IProvideS3TargetOptions optionsProvider;
         private readonly IFileSubstituter fileSubstituter;
+        readonly IBucketKeyProvider bucketKeyProvider;
         private readonly bool md5HashSupported;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
@@ -40,7 +41,8 @@ namespace Calamari.Aws.Deployment.Conventions
             string bucket,
             S3TargetMode targetMode,
             IProvideS3TargetOptions optionsProvider,
-            IFileSubstituter fileSubstituter
+            IFileSubstituter fileSubstituter,
+            IBucketKeyProvider bucketKeyProvider
         )
         {
             this.fileSystem = fileSystem;
@@ -49,6 +51,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.targetMode = targetMode;
             this.optionsProvider = optionsProvider;
             this.fileSubstituter = fileSubstituter;
+            this.bucketKeyProvider = bucketKeyProvider;
             this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
         }
 
@@ -197,7 +200,7 @@ namespace Calamari.Aws.Deployment.Conventions
             
             foreach (var matchedFile in files)
             {
-                var request = CreateRequest(matchedFile.FilePath,() => $"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath}", selection);
+                var request = CreateRequest(matchedFile.FilePath,$"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath}", selection);
                 LogPutObjectRequest(matchedFile.FilePath, request);
     
                 results.Add(await HandleUploadRequest(clientFactory(), request, WarnAndIgnoreException));
@@ -230,7 +233,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 _ => new List<string>{ filePath })
                 .Install(deployment);
     
-            return CreateRequest(filePath, GetBucketKey(Path.GetDirectoryName(filePath), filePath, selection), selection)
+            return CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(deployment.StagingDirectory), selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
                     .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -246,11 +249,21 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
-
+            
+            var filename = GetNormalizedPackageFilename(deployment);
+            
             return CreateRequest(deployment.PackageFilePath,
-                    GetBucketKey(Path.GetDirectoryName(deployment.PackageFilePath), deployment.PackageFilePath, options), options)
+                    GetBucketKey(filename, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
+        }
+
+        public string GetNormalizedPackageFilename(RunningDeployment deployment)
+        {
+            var id = deployment.Variables.Get(SpecialVariables.Packages.PackageId(null));
+            var version = deployment.Variables.Get(SpecialVariables.Packages.PackageVersion(null));
+            var extension = Path.GetExtension(deployment.Variables.Get(SpecialVariables.Packages.OriginalPath(null)));
+            return $"{id}.{version}{extension}";
         }
 
         /// <summary>
@@ -260,7 +273,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="bucketKey"></param>
         /// <param name="properties"></param>
         /// <returns>PutObjectRequest with all information including metadata and tags from provided properties</returns>
-        private PutObjectRequest CreateRequest(string path, Func<string> bucketKey, S3TargetPropertiesBase properties)
+        private PutObjectRequest CreateRequest(string path, string bucketKey, S3TargetPropertiesBase properties)
         {
             Guard.NotNullOrWhiteSpace(path, "The given path may not be null");
             Guard.NotNullOrWhiteSpace(bucket, "The provided bucket key may not be null");
@@ -270,7 +283,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     FilePath = path,
                     BucketName = bucket?.Trim(),
-                    Key = bucketKey()?.Trim(),
+                    Key = bucketKey?.Trim(),
                     StorageClass = S3StorageClass.FindValue(properties.StorageClass?.Trim()),
                     CannedACL = S3CannedACL.FindValue(properties.CannedAcl?.Trim())
                 }
@@ -280,17 +293,9 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        public static Func<string> GetBucketKey(string baseDir, string filePath, IHaveBucketKeyBehaviour behaviour)
+        public string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour)
         {
-            switch (behaviour.BucketKeyBehaviour)
-            {
-                case BucketKeyBehaviourType.Custom:
-                    return () => behaviour.BucketKey;
-                case BucketKeyBehaviourType.Filename:
-                    return () => $"{behaviour.BucketKeyPrefix}{filePath.AsRelativePathFrom(baseDir)}";
-                default:
-                    throw new NotImplementedException();
-            }
+            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour);
         }
 
         /// <summary>
