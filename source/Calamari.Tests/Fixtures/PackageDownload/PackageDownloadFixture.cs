@@ -142,6 +142,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
+        [RequiresMonoVersion480OrAboveForTls12]
         public void ShouldDownloadPackageWithRepositoryMetadata()
         {
             var result = DownloadPackage(NuGetFeed.PackageId, NuGetFeed.Version.ToString(), NuGetFeed.Id, NuGetFeedUri);
