@@ -24,8 +24,7 @@
     <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\AzureServiceFabricContext.ps1" />
-    <EmbeddedResource Include="Scripts\DeployAzureServiceFabricApplication.ps1" />
+    <EmbeddedResource Include="Scripts\*" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />

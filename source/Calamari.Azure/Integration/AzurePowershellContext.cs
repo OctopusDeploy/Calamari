@@ -109,7 +109,7 @@ namespace Calamari.Azure.Integration
             }
             
             var azureContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
-            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Azure.Scripts.{contextFile}");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"Calamari.Azure.Scripts.{contextFile}");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }

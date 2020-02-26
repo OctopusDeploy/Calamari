@@ -27,9 +27,7 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\AzureCloudServiceContext.ps1" />
-    <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
-    <EmbeddedResource Include="Scripts\SwapAzureCloudServiceDeployment.ps1" />
+    <EmbeddedResource Include="Scripts\*" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
