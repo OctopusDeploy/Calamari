@@ -11,11 +11,6 @@ namespace Calamari.Commands.Support
 
         protected OptionSet Options { get; private set; }
 
-        public void GetHelp(TextWriter writer)
-        {
-            Options.WriteOptionDescriptions(writer);
-        }
-
         public abstract int Execute(string[] commandLineArguments);
     }
 }

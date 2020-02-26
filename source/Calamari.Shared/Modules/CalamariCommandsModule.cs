@@ -33,14 +33,6 @@ namespace Calamari.Modules
         protected override void Load(ContainerBuilder builder)
         {
             RegisterNormalCommand(builder);
-            // Only in the event that the primary command was the help command do
-            // we go ahead and register the Command object that the help command
-            // will display the details of.
-            if (CommandLocator.Find(commandName, ThisAssembly) == typeof(HelpCommand))
-            {
-                RegisterHelpCommand(builder);
-            }
-            RegisterCommandAttributes(builder);
         }
 
         /// <summary>
@@ -50,14 +42,6 @@ namespace Calamari.Modules
         private Type RegisterNormalCommand(ContainerBuilder builder) =>
             CommandLocator.Find(commandName, assembly)?
                 .Tee(command => AddICommandToContext(builder, command, RunCommand));
-
-        /// <summary>
-        /// Register the command that the HelpCommand displays help for. This is registered
-        /// as an unnamed ICommand that is then consumed by the HelpCommand constructor.
-        /// </summary>
-        private Type RegisterHelpCommand(ContainerBuilder builder) =>
-            CommandLocator.Find(helpCommandName, assembly)?
-                .Tee(helpCommand => AddICommandToContext(builder, helpCommand, HelpCommand));
 
         /// <summary>
         /// Register an ICommand with the builder with a name
@@ -74,13 +58,5 @@ namespace Calamari.Modules
                         (pi, ctx) => pi.ParameterType == typeof(ICommand) && pi.Name == "commandToHelpWith",
                         (pi, ctx) => CommandLocator.GetOptionalNamedCommand(ctx, HelpCommand)))
                 .SingleInstance();
-
-        private void RegisterCommandAttributes(ContainerBuilder builder)
-        {
-            foreach (var commandMetadata in CommandLocator.List(assembly))
-            {
-                builder.RegisterInstance(commandMetadata).As<ICommandMetadata>();
-            }
-        }
     }
 }

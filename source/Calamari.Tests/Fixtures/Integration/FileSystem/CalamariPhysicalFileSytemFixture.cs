@@ -88,7 +88,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             var testFile = CreateFile(folderName, fileName);
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            fileSystem.PurgeDirectory(PurgeTestDirectory, (fsi) => fsi.IsDirectory && fsi.Name.StartsWith("Important"), FailureOptions.IgnoreFailure);
+            fileSystem.PurgeDirectory(PurgeTestDirectory, (fsi) => fsi.Attributes.HasFlag(FileAttributes.Directory) && fsi.Name.StartsWith("Important"), FailureOptions.IgnoreFailure);
 
             return File.Exists(testFile);
         }

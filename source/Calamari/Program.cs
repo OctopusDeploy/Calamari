@@ -25,8 +25,8 @@ namespace Calamari
             typeof(Program).Assembly,
             typeof(CalamariCommandsModule).Assembly
         };
+        
         private readonly ICommand command;
-        private readonly HelpCommand helpCommand;
 
         static int Main(string[] args)
         {
@@ -65,10 +65,9 @@ namespace Calamari
             return builder.Build();
         }
 
-        public Program(ICommand command, HelpCommand helpCommand)
+        public Program(ICommand command)
         {
             this.command = command;
-            this.helpCommand = helpCommand;
         }
 
         public int Execute(string[] args)
@@ -90,9 +89,7 @@ namespace Calamari
             try
             {
                 if (command == null)
-                {
-                    return PrintHelp(PluginUtils.GetFirstArgument(args));
-                }
+                    throw new CommandException("Could not find the command");
 
                 return command.Execute(args.Skip(1).ToArray());
             }
@@ -105,12 +102,6 @@ namespace Calamari
         static bool IsVersionCommand(string[] args)
         {
             return args.Length > 0 && (args[0].ToLower() == "version" || args[0].ToLower() == "--version");
-        }
-
-        private int PrintHelp(string action)
-        {
-            helpCommand.HelpWasAskedFor = false;
-            return helpCommand.Execute(new[] { action });
         }
 
         public static void EnableAllSecurityProtocols()

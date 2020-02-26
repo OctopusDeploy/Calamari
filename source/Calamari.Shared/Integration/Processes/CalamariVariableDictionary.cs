@@ -13,8 +13,6 @@ namespace Calamari.Integration.Processes
 {
     public class CalamariVariableDictionary : VariableDictionary
     {
-        protected HashSet<string> SensitiveVariableNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
         public CalamariVariableDictionary() { }
 
         public CalamariVariableDictionary(string storageFilePath) : base(storageFilePath) { }
@@ -47,7 +45,7 @@ namespace Calamari.Integration.Processes
                         var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
                         foreach (var variable in sensitiveVariables)
                         {
-                            SetSensitive(variable.Key, variable.Value);
+                            Set(variable.Key, variable.Value);
                         }
                     }
                     catch (JsonReaderException)
@@ -67,7 +65,6 @@ namespace Calamari.Integration.Processes
                     {
                         Set(variable.Key, variable.Value);
                     }
-
                 }
                 catch (JsonReaderException)
                 {
@@ -75,19 +72,7 @@ namespace Calamari.Integration.Processes
                 }
             }
         }
-
-        public void SetSensitive(string name, string value)
-        {
-            if (name == null) return;
-            Set(name, value);
-            SensitiveVariableNames.Add(name);
-        }
-
-        public bool IsSensitive(string name)
-        {
-            return name != null && SensitiveVariableNames.Contains(name);
-        }
-
+        
         static string Decrypt(byte[] encryptedVariables, string encryptionPassword)
         {
             try

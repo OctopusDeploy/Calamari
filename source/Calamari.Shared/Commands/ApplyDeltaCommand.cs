@@ -21,6 +21,7 @@ namespace Calamari.Commands
         bool showProgress;
         bool skipVerification;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        readonly IFreeSpaceChecker freeSpaceChecker = new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariableDictionary());
 
         public ApplyDeltaCommand()
         {
@@ -44,7 +45,7 @@ namespace Calamari.Commands
             try
             {
                 ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
-                fileSystem.EnsureDiskHasEnoughFreeSpace(PackageStore.GetPackagesDirectory());
+                freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(PackageStore.GetPackagesDirectory());
 
                 var tempNewFilePath = newFilePath + ".partial";
 #if USE_OCTODIFF_EXE

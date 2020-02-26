@@ -16,11 +16,7 @@ namespace Calamari.Modules
         /// </summary>
         /// <returns>The named command class, or null if none exist</returns>
         Type Find(string name, Assembly assembly);
-        /// <summary>
-        /// Get all the command attributes
-        /// </summary>
-        /// <returns>All the Command Attributes in the given assembly</returns>
-        ICommandMetadata[] List(Assembly assembly);
+
         /// <summary>
         /// Get a named service from autofac, or null if it doesn't exist
         /// </summary>

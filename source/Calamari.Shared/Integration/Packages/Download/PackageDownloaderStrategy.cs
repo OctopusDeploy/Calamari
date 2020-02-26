@@ -15,16 +15,19 @@ namespace Calamari.Integration.Packages.Download
     /// </summary>
     public class PackageDownloaderStrategy
     {
-        private readonly IScriptEngine engine;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly ICommandLineRunner commandLineRunner;
+        readonly IScriptEngine engine;
+        readonly ICalamariFileSystem fileSystem;
+        readonly IFreeSpaceChecker freeSpaceChecker;
+        readonly ICommandLineRunner commandLineRunner;
 
-        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner)
         {
             this.engine = engine;
             this.fileSystem = fileSystem;
+            this.freeSpaceChecker = freeSpaceChecker;
             this.commandLineRunner = commandLineRunner;
         }
+        
         public PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
             IVersion version,
@@ -40,18 +43,18 @@ namespace Calamari.Integration.Packages.Download
             switch (feedType)
             {
                 case FeedType.Maven:
-                    downloader = new MavenPackageDownloader();
+                    downloader = new MavenPackageDownloader(fileSystem, freeSpaceChecker);
                     break;
                 case FeedType.NuGet:
-                    downloader = new NuGetPackageDownloader();
+                    downloader = new NuGetPackageDownloader(fileSystem, freeSpaceChecker);
                     break;
                 case FeedType.GitHub:
-                    downloader = new GitHubPackageDownloader();
+                    downloader = new GitHubPackageDownloader(fileSystem, freeSpaceChecker);
                     break;
-                case FeedType.Helm :
+                case FeedType.Helm:
                     downloader = new HelmChartPackageDownloader(fileSystem);
                     break;
-                case FeedType.Docker :
+                case FeedType.Docker:
                 case FeedType.AwsElasticContainerRegistry :
                     downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner);
                     break;

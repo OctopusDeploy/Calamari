@@ -16,23 +16,12 @@ namespace Calamari.Modules
             var fixedName = name.Trim().ToLowerInvariant();
             var found = (from t in assembly.GetTypes()
                 where typeof(ICommand).IsAssignableFrom(t)
-                let attribute = (ICommandMetadata)t.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
+                let attribute = (CommandAttribute)t.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
                 where attribute != null
-                where attribute.Name == fixedName || attribute.Aliases.Any(a => a == fixedName)
+                where attribute.Name == fixedName
                 select t).FirstOrDefault();
 
             return found;
-        }
-
-
-        public ICommandMetadata[] List(Assembly assembly)
-        {
-            return
-                (from t in assembly.GetTypes()
-                    where typeof(ICommand).IsAssignableFrom(t)
-                    let attribute = (ICommandMetadata)t.GetCustomAttributes(typeof(CommandAttribute), true).FirstOrDefault()
-                    where attribute != null
-                    select attribute).ToArray();
         }
 
         public ICommand GetOptionalNamedCommand(IComponentContext ctx, string named)
@@ -44,8 +33,7 @@ namespace Calamari.Modules
             catch (ComponentNotRegisteredException)
             {
                 // If there is no component registered with the name we're looking for then let it
-                // through to the keeper. Program will display help to explain which commands can be
-                // found and the one you asked for that it couldn't find. Any other exception with
+                // through to the keeper. Any other exception with
                 // registrations should go boom so we can see exactly what's wrong with the registrations.
                 return null;
             }

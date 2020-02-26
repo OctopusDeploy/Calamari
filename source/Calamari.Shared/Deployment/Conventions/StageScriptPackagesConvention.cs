@@ -45,6 +45,7 @@ namespace Calamari.Deployment.Conventions
 
             foreach (var packageReferenceName in packageReferenceNames)
             {
+                Log.Verbose($"Considering '{packageReferenceName}' for extraction");
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 
                 var packageOriginalPath = variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName));
@@ -59,7 +60,10 @@ namespace Calamari.Deployment.Conventions
 
                 // In the case of container images, the original path is not a file-path.  We won't try and extract or move it.
                 if (!fileSystem.FileExists(packageOriginalPath))
+                {
+                    Log.Verbose($"Package '{packageReferenceName}' was not found at '{packageOriginalPath}', skipping extraction");
                     continue;
+                }
 
                 var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(packageReferenceName));
 
