@@ -94,7 +94,7 @@ namespace Calamari.Azure.ServiceFabric.Integration
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureServiceFabricContext.ps1");
-            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), "Calamari.Azure.Scripts.AzureServiceFabricContext.ps1");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Assembly.GetName().Name}.Scripts.AzureServiceFabricContext.ps1");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
         }
