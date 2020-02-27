@@ -1,8 +1,7 @@
-﻿#if AZURE
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using NUnit.Framework;
 
-namespace Calamari.Tests.AzureFixtures
+namespace Calamari.Azure.ServiceFabric.Tests.Fixtures
 {
     [TestFixture]
     public class AzurePowerShellFixture
@@ -20,4 +19,3 @@ namespace Calamari.Tests.AzureFixtures
         }
     }
 }
-#endif

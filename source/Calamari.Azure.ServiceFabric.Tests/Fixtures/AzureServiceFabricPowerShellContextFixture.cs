@@ -1,4 +1,3 @@
-#if AZURE
 using Calamari.Azure.ServiceFabric.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
@@ -6,7 +5,7 @@ using Calamari.Integration.Scripting;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.AzureFixtures
+namespace Calamari.Azure.ServiceFabric.Tests.Fixtures
 {
     [TestFixture]
     public class AzureServiceFabricPowerShellContextFixture
@@ -28,4 +27,3 @@ namespace Calamari.Tests.AzureFixtures
         }
     }
 }
-#endif
