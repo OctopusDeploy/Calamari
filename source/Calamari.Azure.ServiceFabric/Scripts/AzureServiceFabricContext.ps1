@@ -231,4 +231,4 @@ Execute-WithRetry {
 }
 
 Write-Verbose "Invoking target script $OctopusFabricTargetScript with $OctopusFabricTargetScriptParameters parameters."
-Invoke-Expression ". $OctopusFabricTargetScript $OctopusFabricTargetScriptParameters"
+Invoke-Expression ". `"$OctopusFabricTargetScript`" $OctopusFabricTargetScriptParameters"
