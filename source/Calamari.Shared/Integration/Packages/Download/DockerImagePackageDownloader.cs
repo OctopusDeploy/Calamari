@@ -37,18 +37,20 @@ namespace Calamari.Integration.Packages.Download
             ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
         {
             //Always try re-pull image, docker engine can take care of the rest
-            var feedHost = GetFeedHost(feedUri);
-            var fullImageName =  GetFullImageName(packageId, version, feedUri, feedHost);
+            var fullImageName =  GetFullImageName(packageId, version, feedUri);
             var (username, password) = ExtractCredentials(feedCredentials, feedUri);
             
+            var feedHost = GetFeedHost(feedUri);
             PerformPull(username, password, fullImageName, feedHost);
             var (hash, size) = GetImageDetails(fullImageName);
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), fullImageName, hash, size );
         }
 
-        static string GetFullImageName(string packageId, IVersion version, Uri feedUri, string feedHost)
+        static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
         {
-            return feedUri.Host.Equals(DockerHubRegistry) ?  $"{packageId}:{version}" : $"{feedHost}/{packageId}:{version}";
+            return feedUri.Host.Equals(DockerHubRegistry) 
+                ? $"{packageId}:{version}" 
+                : $"{feedUri.Authority}{feedUri.AbsolutePath.TrimEnd('/')}/{packageId}:{version}";
         }
 
         static string GetFeedHost(Uri feedUri)
