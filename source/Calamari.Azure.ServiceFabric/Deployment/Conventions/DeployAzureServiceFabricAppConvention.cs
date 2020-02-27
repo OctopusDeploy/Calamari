@@ -57,7 +57,7 @@ namespace Calamari.Azure.ServiceFabric.Deployment.Conventions
             if (!fileSystem.FileExists(scriptFile))
             {
                 // Use our bundled version.
-                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(GetType().Assembly, "Calamari.Azure.ServiceFabric.Scripts.DeployAzureServiceFabricApplication.ps1"));
+                fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Assembly.GetName().Name}.Scripts.DeployAzureServiceFabricApplication.ps1"));
             }
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
