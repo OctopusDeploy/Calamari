@@ -1,0 +1,9 @@
+server {
+    listen 80;
+    location / {
+        root #{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot;
+        try_files $uri $uri/ /index.html;
+        include fastcgi_params;
+        include /etc/nginx/api_proxy.conf;
+    }
+}
