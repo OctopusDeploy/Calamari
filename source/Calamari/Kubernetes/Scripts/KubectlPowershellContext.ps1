@@ -30,6 +30,104 @@ $K8S_Server_Cert = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuth
 $K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
 $Kubectl_Exe=GetKubectl
 
+$OctopusAzureSubscriptionId = $OctopusParameters["Octopus.Action.Azure.SubscriptionId"]
+$OctopusAzureADTenantId = $OctopusParameters["Octopus.Action.Azure.TenantId"]
+$OctopusAzureADClientId = $OctopusParameters["Octopus.Action.Azure.ClientId"]
+$OctopusAzureADPassword = $OctopusParameters["Octopus.Action.Azure.Password"]
+$OctopusAzureEnvironment = $OctopusParameters["Octopus.Action.Azure.Environment"]
+$OctopusDisableAzureCLI = $OctopusParameters["OctopusDisableAzureCLI"]
+
+function EnsureDirectoryExists([string] $path)
+{
+	New-Item -ItemType Directory -Force -Path $path *>$null
+}
+
+function ConnectAzAccount {
+	# Authenticate via Service Principal
+	$securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+	$creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+
+	if(Get-InstalledModule AzureRM -ErrorAction SilentlyContinue)
+	{
+		if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
+		{
+			# Turn on AzureRm aliasing
+			# See https://docs.microsoft.com/en-us/powershell/azure/migrate-from-azurerm-to-az?view=azps-3.0.0#enable-azurerm-compatibility-aliases
+			Enable-AzureRmAlias -Scope Process
+		}
+
+		# Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
+		Disable-AzureRMContextAutosave -Scope Process
+
+		$AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
+		if (!$AzureEnvironment)
+		{
+			Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
+			exit -2
+		}
+
+		Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+
+		# Force any output generated to be verbose in Octopus logs.
+		Write-Host "##octopus[stdout-verbose]"
+		Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+		Write-Host "##octopus[stdout-default]"
+	}
+	elseif (Get-InstalledModule Az -ErrorAction SilentlyContinue)
+	{
+		# Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
+		Disable-AzContextAutosave -Scope Process
+
+		$AzureEnvironment = Get-AzEnvironment -Name $OctopusAzureEnvironment
+		if (!$AzureEnvironment)
+		{
+			Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
+			exit -2
+		}
+
+		Write-Verbose "Az Modules: Authenticating with Service Principal"
+
+		# Force any output generated to be verbose in Octopus logs.
+		Write-Host "##octopus[stdout-verbose]"
+		Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+		Write-Host "##octopus[stdout-default]"
+	}
+
+	If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
+		try {
+			# authenticate with the Azure CLI
+			Write-Host "##octopus[stdout-verbose]"
+
+			$env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli")
+			EnsureDirectoryExists($env:AZURE_CONFIG_DIR)
+
+			$previousErrorAction = $ErrorActionPreference
+			$ErrorActionPreference = "Continue"
+
+			az cloud set --name $OctopusAzureEnvironment 2>$null 3>$null
+			$ErrorActionPreference = $previousErrorAction
+
+			Write-Host "Azure CLI: Authenticating with Service Principal"
+
+			$loginArgs = @();
+			$loginArgs += @("-u", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId))));
+			$loginArgs += @("-p", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
+			$loginArgs += @("--tenant", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId))));
+			az login --service-principal $loginArgs
+
+			Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
+			az account set --subscription $OctopusAzureSubscriptionId
+
+			Write-Host "##octopus[stdout-default]"
+			Write-Verbose "Successfully authenticated with the Azure CLI"
+		} catch  {
+			# failed to authenticate with Azure CLI
+			Write-Verbose "Failed to authenticate with Azure CLI"
+			Write-Verbose $_.Exception.Message
+		}
+	}
+}
+
 function SetupContext {
 	if($K8S_AccountType -ne "AzureServicePrincipal" -and [string]::IsNullOrEmpty($K8S_ClusterUrl)){
 		Write-Error "Kubernetes cluster URL is missing"
@@ -62,6 +160,8 @@ function SetupContext {
 	# When using an Azure account, use the az command line tool to build the
 	# kubeconfig file.
 	if($K8S_AccountType -eq "AzureServicePrincipal") {
+		ConnectAzAccount
+		
 		$K8S_Azure_Resource_Group=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterResourceGroup"]
 		$K8S_Azure_Cluster=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterName"]
 		Write-Host "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $K8S_Namespace) using a AzureServicePrincipal"
