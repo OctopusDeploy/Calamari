@@ -145,8 +145,8 @@ Task("Pack")
     .Does(() =>
 {
     DoPackage("Calamari", "net40", nugetVersion);
-	DoPackage("Calamari", "net461", nugetVersion, "Cloud");
-    Zip("./source/Calamari.Tests/bin/Release/net461/", Path.Combine(artifactsDir, "Binaries.zip"));
+	DoPackage("Calamari", "net452", nugetVersion, "Cloud");
+    Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
     DoPackage("Calamari", "netcoreapp2.2", nugetVersion, "portable");
