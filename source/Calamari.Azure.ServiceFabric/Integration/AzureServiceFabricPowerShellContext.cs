@@ -55,7 +55,7 @@ namespace Calamari.Azure.ServiceFabric.Integration
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
             var workingDirectory = Path.GetDirectoryName(script.File);
-            variables.Set("OctopusFabricTargetScript", "\"" + script.File + "\"");
+            variables.Set("OctopusFabricTargetScript", script.File);
             variables.Set("OctopusFabricTargetScriptParameters", script.Parameters);
 
             // Azure PS modules are required for looking up Azure environments (needed for AAD url lookup in Service Fabric world).

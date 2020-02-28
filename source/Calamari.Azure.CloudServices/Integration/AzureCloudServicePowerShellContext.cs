@@ -60,7 +60,7 @@ namespace Calamari.Azure.CloudServices.Integration
             }
 
             var workingDirectory = Path.GetDirectoryName(script.File);
-            variables.Set("OctopusAzureTargetScript", "\"" + script.File + "\"");
+            variables.Set("OctopusAzureTargetScript", script.File);
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
             SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
