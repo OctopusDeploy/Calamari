@@ -5,6 +5,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.PowerShell
@@ -18,7 +19,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [SetUp]
         public void SetUp()
         {
-            var path = new WindowsPowerShellCoreBootstrapper(new WindowsPhysicalFileSystem()).PathToPowerShellExecutable(new CalamariVariableDictionary());
+            var path = new WindowsPowerShellCoreBootstrapper(new WindowsPhysicalFileSystem()).PathToPowerShellExecutable(new CalamariVariables());
             if (!File.Exists(path))
             {
                 CommandLineRunner clr = new CommandLineRunner(new IgnoreCommandOutput());

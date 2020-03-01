@@ -133,7 +133,7 @@ namespace Calamari.Azure.Deployment.Conventions
         }
 
         static void PollForCompletion(Func<IResourceManagementClient> createArmClient, string resourceGroupName,
-            string deploymentName, VariableDictionary variables)
+            string deploymentName, IVariables variables)
         {
             // While the deployment is running, we poll to check its state.
             // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds. 
@@ -212,7 +212,7 @@ namespace Calamari.Azure.Deployment.Conventions
             return log.ToString();
         }
 
-        static void CaptureOutputs(string outputsJson, VariableDictionary variables)
+        static void CaptureOutputs(string outputsJson, IVariables variables)
         {
             if (string.IsNullOrWhiteSpace(outputsJson))
                 return;

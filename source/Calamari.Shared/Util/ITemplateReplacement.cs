@@ -20,11 +20,11 @@ namespace Calamari.Util
             Func<string, string> fetch,
             string relativeFilePath, 
             bool inPackage, 
-            VariableDictionary variables);
+            IVariables variables);
 
         string ResolveAndSubstituteFile(
             Func<string> resolve,
             Func<string, string> fetch,
-            VariableDictionary variables);
+            IVariables variables);
     }
 }

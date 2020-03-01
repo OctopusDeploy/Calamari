@@ -37,7 +37,7 @@ namespace Calamari.Integration.Scripting.Python
             return commandArguments.ToString();
         }
         
-        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".py");
 
@@ -55,7 +55,7 @@ namespace Calamari.Integration.Scripting.Python
             return configurationFile;
         }
 
-        static IEnumerable<string> GetVariables(CalamariVariableDictionary variables)
+        static IEnumerable<string> GetVariables(IVariables variables)
         {
             return variables.GetNames().Select(variable =>
             {
@@ -96,7 +96,7 @@ namespace Calamari.Integration.Scripting.Python
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, VariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, IVariables variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
@@ -115,7 +115,7 @@ namespace Calamari.Integration.Scripting.Python
             return (bootstrapFile, scriptModulePaths);
         }
         
-        static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
+        static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {

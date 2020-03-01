@@ -13,7 +13,7 @@ namespace Calamari.Util
             this.resolver = resolver;
         }
 
-        public string ResolveAndSubstituteFile(Func<string, string> readContent, string relativeFilePath, bool inPackage, VariableDictionary variables)
+        public string ResolveAndSubstituteFile(Func<string, string> readContent, string relativeFilePath, bool inPackage, IVariables variables)
         {
             return ResolveAndSubstituteFile(
                 () => resolver.Resolve(relativeFilePath, inPackage, variables).Value,
@@ -21,7 +21,7 @@ namespace Calamari.Util
                 variables);
         }
 
-        public string ResolveAndSubstituteFile(Func<string> resolvePath, Func<string, string> readContent, VariableDictionary variables)
+        public string ResolveAndSubstituteFile(Func<string> resolvePath, Func<string, string> readContent, IVariables variables)
         {
             return resolvePath()
                 .Map(readContent)

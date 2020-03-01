@@ -2,6 +2,7 @@
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -31,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [SetUp]
         public void SetUp()
         {
-            deployment = new RunningDeployment("c:\\packages", new CalamariVariableDictionary());
+            deployment = new RunningDeployment("c:\\packages", new CalamariVariables());
         }
 
         [Test]

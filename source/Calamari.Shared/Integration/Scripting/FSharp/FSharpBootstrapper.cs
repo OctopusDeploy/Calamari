@@ -48,7 +48,7 @@ namespace Calamari.Integration.Scripting.FSharp
             return commandArguments.ToString();
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, VariableDictionary variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
@@ -67,7 +67,7 @@ namespace Calamari.Integration.Scripting.FSharp
             return (bootstrapFile, scriptModulePaths);
         }
         
-        static IEnumerable<string> PrepareScriptModules(VariableDictionary variables, string workingDirectory)
+        static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(SpecialVariables.IsLibraryScriptModule))
             {
@@ -83,7 +83,7 @@ namespace Calamari.Integration.Scripting.FSharp
             }
         }
 
-        public static string PrepareConfigurationFile(string workingDirectory, CalamariVariableDictionary variables)
+        public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".fsx");
 
@@ -101,7 +101,7 @@ namespace Calamari.Integration.Scripting.FSharp
             return configurationFile;
         }
 
-        static string WritePatternMatching(CalamariVariableDictionary variables)
+        static string WritePatternMatching(IVariables variables)
         {
             var builder = new StringBuilder();
             foreach (var variableName in variables.GetNames())

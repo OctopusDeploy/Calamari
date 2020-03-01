@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octostache;
 
@@ -21,7 +22,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [TestCase("2.0", "PSVersion                      2.0", IncludePlatform = "Win2008Server,Win2008ServerR2,Win2012Server,Win2012ServerR2,Windows10")]
         public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
 
             // Let's just use the Hello.ps1 script for something simples
@@ -44,7 +45,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldPrioritizePowerShellScriptsOverOtherSyntaxes()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");

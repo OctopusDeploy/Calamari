@@ -24,7 +24,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             this.parse = parse;
         }
 
-        public static CloudFormationTemplate Create(ResolvedTemplatePath path, ITemplateInputs<Parameter> parameters, ICalamariFileSystem filesSystem, CalamariVariableDictionary variables)
+        public static CloudFormationTemplate Create(ResolvedTemplatePath path, ITemplateInputs<Parameter> parameters, ICalamariFileSystem filesSystem, IVariables variables)
         {
             Guard.NotNull(path, "Path must not be null");
             return new CloudFormationTemplate(() => variables.Evaluate(filesSystem.ReadFile(path.Value)), parameters, JsonConvert.DeserializeObject<List<StackFormationNamedOutput>> );

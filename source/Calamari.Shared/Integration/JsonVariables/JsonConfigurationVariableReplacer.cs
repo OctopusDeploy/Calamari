@@ -10,7 +10,7 @@ namespace Calamari.Integration.JsonVariables
 {
     public class JsonConfigurationVariableReplacer : IJsonConfigurationVariableReplacer
     {
-        public void ModifyJsonFile(string jsonFilePath, VariableDictionary variables)
+        public void ModifyJsonFile(string jsonFilePath, IVariables variables)
         {
             var root = LoadJson(jsonFilePath);
 
@@ -180,7 +180,7 @@ namespace Calamari.Integration.JsonVariables
             key = string.Join(":", path.Reverse());
         }
 
-        public void Update(VariableDictionary variables)
+        public void Update(IVariables variables)
         {
             bool VariableNameIsNotASystemVariable(string v)
             {

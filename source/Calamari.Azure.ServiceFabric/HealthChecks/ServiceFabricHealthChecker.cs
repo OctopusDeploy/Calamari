@@ -28,7 +28,7 @@ namespace Calamari.Azure.ServiceFabric.HealthChecks
             return deploymentTargetTypeName == "AzureServiceFabricCluster";
         }
 
-        public int ExecuteHealthCheck(CalamariVariableDictionary variables)
+        public int ExecuteHealthCheck(IVariables variables)
         {
             if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running health checks on Service Fabric targets.");

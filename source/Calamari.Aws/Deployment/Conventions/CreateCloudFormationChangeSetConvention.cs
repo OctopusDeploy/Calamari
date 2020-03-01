@@ -90,7 +90,7 @@ namespace Calamari.Aws.Deployment.Conventions
             return clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
         }
 
-        private Action<RunningChangeSet> ApplyVariables(CalamariVariableDictionary variables)
+        private Action<RunningChangeSet> ApplyVariables(IVariables variables)
         {
             return result =>
             {

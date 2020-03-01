@@ -7,7 +7,7 @@ namespace Calamari.Azure.CloudServices.Accounts
 {
     public class AzureAccount
     {
-        public AzureAccount(VariableDictionary variables)
+        public AzureAccount(IVariables variables)
         {
             SubscriptionNumber = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             AzureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);

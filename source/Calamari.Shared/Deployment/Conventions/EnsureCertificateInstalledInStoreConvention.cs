@@ -33,7 +33,7 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void EnsureCertificateInStore(VariableDictionary variables, string certificateVariable)
+        void EnsureCertificateInStore(IVariables variables, string certificateVariable)
         {
             var storeLocation = StoreLocation.LocalMachine;
             if (!string.IsNullOrWhiteSpace(storeLocationVariableName) && Enum.TryParse(variables.Get(storeLocationVariableName, StoreLocation.LocalMachine.ToString()), out StoreLocation storeLocationOverride))

@@ -3,6 +3,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -26,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 "C:\\App\\MyApp\\Views\\Web.config"
             });
 
-            deployment = new RunningDeployment("C:\\Packages", new CalamariVariableDictionary());
+            deployment = new RunningDeployment("C:\\Packages", new CalamariVariables());
             replacer = Substitute.For<IConfigurationVariablesReplacer>();
         }
 

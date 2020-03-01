@@ -13,7 +13,7 @@ namespace Calamari.Integration.Scripting.Python
             return new[] {ScriptSyntax.Python};
         }
 
-        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, CalamariVariableDictionary variables,
+        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {
             var executable = PythonBootstrapper.FindPythonExecutable();

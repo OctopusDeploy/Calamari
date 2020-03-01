@@ -14,7 +14,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
         private readonly Func<Maybe<string>> content;
         private readonly Func<string, List<Parameter>> parse;
 
-        public static CloudFormationParametersFile Create(Maybe<ResolvedTemplatePath> path, ICalamariFileSystem fileSystem, CalamariVariableDictionary variables)
+        public static CloudFormationParametersFile Create(Maybe<ResolvedTemplatePath> path, ICalamariFileSystem fileSystem, IVariables variables)
         {
             return new CloudFormationParametersFile(() => path.Select(x => variables.Evaluate(fileSystem.ReadFile(x.Value))), JsonConvert.DeserializeObject<List<Parameter>>);
         }

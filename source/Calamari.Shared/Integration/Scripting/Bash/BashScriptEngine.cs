@@ -12,7 +12,7 @@ namespace Calamari.Integration.Scripting.Bash
             return new[] {ScriptSyntax.Bash};
         }
 
-        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, CalamariVariableDictionary variables,
+        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);

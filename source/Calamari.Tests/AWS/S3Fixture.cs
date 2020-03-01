@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using Calamari.Integration.Processes;
+using Calamari.Variables;
 #if AWS
 using System;
 using System.Collections.Generic;
@@ -214,7 +216,7 @@ namespace Calamari.Tests.AWS
             });
 
             var variablesFile = Path.GetTempFileName();
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_Calamari_Access"));
             variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
@@ -228,7 +230,10 @@ namespace Calamari.Tests.AWS
                 new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
-                var command = new UploadAwsS3Command();
+                var command = new UploadAwsS3Command(
+                    new CalamariVariables(),
+                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                );
                 var result = command.Execute(new[] { 
                     "--package", $"{package.FilePath}", 
                     "--variables", $"{variablesFile}", 

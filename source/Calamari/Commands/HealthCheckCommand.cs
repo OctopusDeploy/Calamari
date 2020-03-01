@@ -13,24 +13,16 @@ namespace Calamari.Commands
     public class HealthCheckCommand : Command
     {
         private readonly IEnumerable<IDoesDeploymentTargetTypeHealthChecks> deploymentTargetTypeHealthCheckers;
-        private string variablesFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
+        readonly IVariables variables;
 
-        public HealthCheckCommand(IEnumerable<IDoesDeploymentTargetTypeHealthChecks> deploymentTargetTypeHealthCheckers)
+        public HealthCheckCommand(IEnumerable<IDoesDeploymentTargetTypeHealthChecks> deploymentTargetTypeHealthCheckers, IVariables variables)
         {
             this.deploymentTargetTypeHealthCheckers = deploymentTargetTypeHealthCheckers;
-
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            this.variables = variables;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
-
             var deploymentTargetTypeName = variables.Get(SpecialVariables.Machine.DeploymentTargetType);
 
             var checker = deploymentTargetTypeHealthCheckers.SingleOrDefault(x => x.HandlesDeploymentTargetTypeName(deploymentTargetTypeName));

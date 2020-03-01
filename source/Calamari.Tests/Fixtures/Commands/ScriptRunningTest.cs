@@ -39,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Commands
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
 
-        private CalamariVariableDictionary BuildVariables(CalamariVariableDictionary variables)
+        private IVariables BuildVariables(IVariables variables)
         {
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
@@ -76,7 +76,7 @@ namespace Calamari.Tests.Fixtures.Commands
         {
             Assert.IsTrue(File.Exists(Script), Script + " must exist as a file");
 
-            BuildVariables(container.Resolve<CalamariVariableDictionary>());
+            BuildVariables(container.Resolve<IVariables>());
             var retCode = container.Resolve<Calamari.Program>().Execute(Args);
             Assert.AreEqual(0, retCode);
             // TestModule should have been loadded because we are treating the 

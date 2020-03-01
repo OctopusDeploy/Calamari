@@ -23,20 +23,16 @@ namespace Calamari.Azure.CloudServices.Commands
     [Command("deploy-azure-cloud-service", Description = "Extracts and installs an Azure Cloud-Service")]
     public class DeployAzureCloudServiceCommand : Command
     {
-        private string variablesFile;
         private string packageFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
+        readonly IVariables variables;
 
-        public DeployAzureCloudServiceCommand(CombinedScriptEngine scriptEngine)
+        public DeployAzureCloudServiceCommand(CombinedScriptEngine scriptEngine, IVariables variables)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
+            this.variables = variables;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -48,11 +44,7 @@ namespace Calamari.Azure.CloudServices.Commands
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);    
 
-            if (variablesFile != null && !File.Exists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
             Log.Info("Deploying package:    " + packageFile);
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             var account = new AzureAccount(variables);
             

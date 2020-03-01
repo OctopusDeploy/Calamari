@@ -6,6 +6,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Util;
+using Calamari.Variables;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -13,13 +14,14 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Integration.Process
 {
     [TestFixture]
-    public class CalamariVariableDictionaryFixture
+    public class VariableFactoryFixture
     {
         string tempDirectory;
         string firstInsensitiveVariablesFileName;
         string firstSensitiveVariablesFileName;
         string secondSensitiveVariablesFileName;
         ICalamariFileSystem fileSystem;
+        CommonOptions options;
         const string encryptionPassword = "HumptyDumpty!";
 
         [SetUp]
@@ -34,6 +36,19 @@ namespace Calamari.Tests.Fixtures.Integration.Process
 
             CreateSensitiveVariableFile();
             CreateInSensitiveVariableFile();
+
+            options = CommonOptions.Parse(new[]
+            {
+                "Test",
+                "--variables", 
+                firstInsensitiveVariablesFileName,
+                "--sensitiveVariables",
+                firstSensitiveVariablesFileName,
+                "--sensitiveVariables",
+                secondSensitiveVariablesFileName,
+                "--sensitiveVariablesPassword",
+                encryptionPassword
+            });
         }
 
         [TearDown]
@@ -46,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         [Test]
         public void ShouldIncludeEncryptedSensitiveVariables()
         {
-            var result = new CalamariVariableDictionary(firstInsensitiveVariablesFileName, new List<string>() { firstSensitiveVariablesFileName, secondSensitiveVariablesFileName }, encryptionPassword);
+            var result = VariablesFactory.Create(fileSystem, options);
 
             Assert.AreEqual("firstSensitiveVariableValue", result.Get("firstSensitiveVariableName"));
             Assert.AreEqual("secondSensitiveVariableValue", result.Get("secondSensitiveVariableName"));
@@ -56,10 +71,13 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         [Test]
         public void ShouldIncludeCleartextSensitiveVariables()
         {
+            options.InputVariables.SensitiveVariablesPassword = null;
+            
             var sensitiveVariables = new Dictionary<string, string> { { "firstSensitiveVariableName", "firstSensitiveVariableValue"} };
             File.WriteAllText(firstSensitiveVariablesFileName, JsonConvert.SerializeObject(sensitiveVariables));
-
-            var result = new CalamariVariableDictionary(firstInsensitiveVariablesFileName, new List<string>() { firstSensitiveVariablesFileName }, null);
+            File.WriteAllText(secondSensitiveVariablesFileName, "{}");
+            
+            var result = VariablesFactory.Create(fileSystem, options);
 
             Assert.AreEqual("firstSensitiveVariableValue", result.Get("firstSensitiveVariableName"));
             Assert.AreEqual("firstInsensitiveVariableValue", result.Get("firstInsensitiveVariableName"));
@@ -69,15 +87,18 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         [ExpectedException(typeof(CommandException), ExpectedMessage = "Cannot decrypt sensitive-variables. Check your password is correct.")]
         public void ThrowsCommandExceptionIfUnableToDecrypt()
         {
-            new CalamariVariableDictionary(firstInsensitiveVariablesFileName, new List<string>() { firstSensitiveVariablesFileName }, "FakePassword");
+            options.InputVariables.SensitiveVariablesPassword = "FakePassword";
+            CreateSensitiveVariableFile();
+            VariablesFactory.Create(fileSystem, options);
         }
 
         [Test]
         [ExpectedException(typeof(CommandException), ExpectedMessage = "Unable to parse sensitive-variables as valid JSON.")]
         public void ThrowsCommandExceptionIfUnableToParseAsJson()
         {
+            options.InputVariables.SensitiveVariablesPassword = null;
             File.WriteAllText(firstSensitiveVariablesFileName, "I Am Not JSON");
-            new CalamariVariableDictionary(firstInsensitiveVariablesFileName, new List<string>() { firstSensitiveVariablesFileName }, null);
+            VariablesFactory.Create(fileSystem, options);
         }
 
         void CreateInSensitiveVariableFile()
@@ -105,7 +126,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process
         [Test]
         public void ShouldCheckVariableIsSet()
         {
-            var variables = new CalamariVariableDictionary(firstInsensitiveVariablesFileName, new List<string>(){ firstSensitiveVariablesFileName }, encryptionPassword);
+            var variables = VariablesFactory.Create(fileSystem, options);
 
             Assert.That(variables.IsSet("thisIsBogus"), Is.False);
             Assert.That(variables.IsSet("firstSensitiveVariableName"), Is.True);

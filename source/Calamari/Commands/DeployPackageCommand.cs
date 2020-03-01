@@ -25,20 +25,18 @@ namespace Calamari.Commands
     [Command("deploy-package", Description = "Extracts and installs a deployment package")]
     public class DeployPackageCommand : Command
     {
-        private string variablesFile;
         private string packageFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
+        readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
 
-        public DeployPackageCommand(CombinedScriptEngine scriptEngine)
+        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
 
             this.scriptEngine = scriptEngine;
+            this.variables = variables;
+            this.fileSystem = fileSystem;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -51,10 +49,6 @@ namespace Calamari.Commands
                 throw new CommandException("Could not find package file: " + packageFile);    
 
             Log.Info("Deploying package:    " + packageFile);
-            
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
 
             var featureClasses = new List<IFeature>();
 
@@ -70,7 +64,7 @@ namespace Calamari.Commands
 #endif
             if (!CalamariEnvironment.IsRunningOnWindows)
             {
-                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect()));
+                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem));
             }
 
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));

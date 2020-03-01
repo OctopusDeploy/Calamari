@@ -10,10 +10,12 @@ using System.Threading.Tasks;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Integration.Retry;
 using Calamari.Terraform;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
@@ -375,8 +377,7 @@ namespace Calamari.Tests.Terraform
 
             using (var currentDirectory = TemporaryDirectory.Create())
             {
-                var variablesFile = Path.GetTempFileName();
-                var variables = new VariableDictionary();
+                var variables = new CalamariVariables();
                 variables.Set(TerraformSpecialVariables.Calamari.TerraformCliPath, Path.GetDirectoryName(customTerraformExecutable));
                 variables.Set(SpecialVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
                 variables.Set(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable, customTerraformExecutable);
@@ -387,31 +388,26 @@ namespace Calamari.Tests.Terraform
 
                 Copy(terraformFiles, currentDirectory.DirectoryPath);
 
-                variables.Save(variablesFile);
-
-                using (new TemporaryFile(variablesFile))
+                foreach (var commandType in commandTypes)
                 {
-                    foreach (var commandType in commandTypes)
-                    {
-                        var sb = new StringBuilder();
-                        Log.StdOut = new IndentedTextWriter(new StringWriter(sb));
+                    var sb = new StringBuilder();
+                    Log.StdOut = new IndentedTextWriter(new StringWriter(sb));
 
-                        var command = (ICommand) Activator.CreateInstance(commandType);
-                        var result = command.Execute(new[] {"--variables", $"{variablesFile}"});
+                    var command = (ICommand) Activator.CreateInstance(commandType, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+                    var result = command.Execute(new string[0]);
 
-                        result.Should().Be(0);
+                    result.Should().Be(0);
 
-                        var output = sb.ToString();
+                    var output = sb.ToString();
 
-                        Console.WriteLine(output);
+                    Console.WriteLine(output);
 
-                        yield return output;
-                    }
+                    yield return output;
                 }
             }
         }
 
-        string ExecuteAndReturnLogOutput<T>(Action<VariableDictionary> populateVariables, string folderName) where T : ICommand, new()
+        string ExecuteAndReturnLogOutput<T>(Action<VariableDictionary> populateVariables, string folderName) where T : ICommand
         {
             return ExecuteAndReturnLogOutput(typeof(T), populateVariables, folderName);
         }

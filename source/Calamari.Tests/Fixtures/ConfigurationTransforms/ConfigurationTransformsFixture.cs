@@ -8,6 +8,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -23,7 +24,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void SetUp()
         {
             log = new InMemoryLog();
-            var variables = new CalamariVariableDictionary();
+            var variables = new CalamariVariables();
             configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
         }
 
@@ -58,7 +59,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
-            var variables = new CalamariVariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.IgnoreConfigTransformationErrors, "true");
             configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
 
@@ -77,7 +78,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldSuppressExceptionForTransformWarnings_WhenFlagIsSet()
         {
-            var variables = new CalamariVariableDictionary();
+            var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, "false");
             configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
 

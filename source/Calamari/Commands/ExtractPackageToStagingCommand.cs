@@ -12,25 +12,12 @@ namespace Calamari.Commands
     [Command("extract-package-to-staging", Description = "Extracts a package into the staging area")]
     public class ExtractToStagingCommand : Command
     {
+        readonly IVariables variables;
         string packageFile;
-        string variablesFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        string sensitiveVariablesPassword;
 
-        public ExtractToStagingCommand()
+        public ExtractToStagingCommand(IVariables variables)
         {
-            Options.Add(
-                "variables=",
-                "Path to a JSON file containing variables.",
-                v => variablesFile = Path.GetFullPath(v));
-            Options.Add(
-                "sensitiveVariables=",
-                "Password protected JSON file containing sensitive-variables.",
-                v => sensitiveVariableFiles.Add(v));
-            Options.Add(
-                "sensitiveVariablesPassword=",
-                "Password used to decrypt sensitive-variables.",
-                v => sensitiveVariablesPassword = v);
+            this.variables = variables;
             Options.Add(
                 "package=", 
                 "Path to the package to extract.",
@@ -40,14 +27,6 @@ namespace Calamari.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
-            if (variablesFile != null && !File.Exists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
-            var variables = new CalamariVariableDictionary(
-                variablesFile,
-                sensitiveVariableFiles,
-                sensitiveVariablesPassword);
 
             var fileSystem = new WindowsPhysicalFileSystem();
 

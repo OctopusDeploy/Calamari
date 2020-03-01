@@ -18,7 +18,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         }
 
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {
             var powerShellBootstrapper = GetPowerShellBootstrapper(variables);
@@ -44,7 +44,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             );
         }
 
-        PowerShellBootstrapper GetPowerShellBootstrapper(CalamariVariableDictionary variables)
+        PowerShellBootstrapper GetPowerShellBootstrapper(IVariables variables)
         {
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 return new UnixLikePowerShellCoreBootstrapper();

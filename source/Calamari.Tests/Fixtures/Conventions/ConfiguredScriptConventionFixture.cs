@@ -7,6 +7,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.Core.Arguments;
@@ -21,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         IScriptEngine scriptEngine;
         ICommandLineRunner commandLineRunner;
         RunningDeployment deployment;
-        CalamariVariableDictionary variables;
+        IVariables variables;
         const string stagingDirectory = "c:\\applications\\acme\\1.0.0";
 
         [SetUp]
@@ -33,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.PowerShell });
 
-            variables = new CalamariVariableDictionary();
+            variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
 
             deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };

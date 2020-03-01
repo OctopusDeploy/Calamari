@@ -21,7 +21,7 @@ namespace Calamari.Azure.Integration
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
         readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell, ScriptSyntax.Bash};
 
@@ -30,7 +30,7 @@ namespace Calamari.Azure.Integration
 
         public const string DefaultAzureEnvironment = "AzureCloud";
 
-        public AzurePowerShellContext(CalamariVariableDictionary variables)
+        public AzurePowerShellContext(IVariables variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
@@ -48,7 +48,7 @@ namespace Calamari.Azure.Integration
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
@@ -114,7 +114,7 @@ namespace Calamari.Azure.Integration
             return azureContextScriptFile;
         }
 
-        private string CreateAzureCertificate(string workingDirectory, VariableDictionary variables)
+        private string CreateAzureCertificate(string workingDirectory, IVariables variables)
         {
             var certificateFilePath = Path.Combine(workingDirectory, CertificateFileName);
             var certificatePassword = GenerateCertificatePassword();
@@ -130,7 +130,7 @@ namespace Calamari.Azure.Integration
             return certificateFilePath;
         }
 
-        static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        static void SetOutputVariable(string name, string value, IVariables variables)
         {
             if (variables.Get(name) != value)
             {

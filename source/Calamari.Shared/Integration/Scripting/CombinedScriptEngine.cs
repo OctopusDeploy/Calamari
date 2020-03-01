@@ -40,7 +40,7 @@ namespace Calamari.Integration.Scripting
         
         public CommandResult Execute(
             Script script,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {

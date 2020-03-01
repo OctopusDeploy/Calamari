@@ -6,6 +6,7 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -15,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class ExtractPackageToApplicationDirectoryConventionFixture
     {
         IPackageExtractor extractor;
-        CalamariVariableDictionary variables;
+        IVariables variables;
         ExtractPackageToApplicationDirectoryConvention convention;
         ICalamariFileSystem fileSystem;
         static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Acme.Web.1.0.0.zip");
@@ -28,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));
 
-            variables = new CalamariVariableDictionary();
+            variables = new CalamariVariables();
             convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem);
         }
 

@@ -10,7 +10,11 @@ using System.Reflection;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Extensions;
+using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 using Calamari.Util.Environments;
+using Calamari.Variables;
+using Octostache;
 
 namespace Calamari
 {
@@ -31,6 +35,7 @@ namespace Calamari
         static int Main(string[] args)
         {
             EnableAllSecurityProtocols();
+
             using (var container = BuildContainer(args))
             {
                 return container.Resolve<Program>().Execute(args);
@@ -39,15 +44,21 @@ namespace Calamari
 
         public static IContainer BuildContainer(string[] args)
         {
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var options = CommonOptions.Parse(args);
+            var variables = VariablesFactory.Create(fileSystem, options);
+
             var firstArg = PluginUtils.GetFirstArgument(args);
             var secondArg = PluginUtils.GetSecondArgument(args);
 
             var builder = new ContainerBuilder();
-
+            builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
+            builder.RegisterInstance(variables).As<IVariables>().As<VariableDictionary>();
+            
             // Register the program entry point
             builder.RegisterModule(new CalamariProgramModule());
             // This will register common utilities and services
-            builder.RegisterModule(new CommonModule(args));
+            builder.RegisterModule(new CommonModule());
             // For all the common locations (i.e. this assembly and the shared one)
             // load any commands, and any commands to support the help command (if
             // required).

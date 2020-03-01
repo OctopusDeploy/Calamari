@@ -6,9 +6,9 @@ namespace Calamari.Deployment
     public class RunningDeployment
     {
         private readonly string packageFilePath;
-        private readonly CalamariVariableDictionary variables;
+        private readonly IVariables variables;
 
-        public RunningDeployment(string packageFilePath, CalamariVariableDictionary variables)
+        public RunningDeployment(string packageFilePath, IVariables variables)
         {
             this.packageFilePath = packageFilePath;
             this.variables = variables;
@@ -50,7 +50,7 @@ namespace Calamari.Deployment
                 : CustomDirectory; }
         }
 
-        public CalamariVariableDictionary Variables
+        public IVariables Variables
         {
             get {  return variables; }
         }

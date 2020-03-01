@@ -6,6 +6,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -77,7 +78,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         {
             var fileSystem = CreateFileSystem(versionInstalled);
 
-            var variables = new CalamariVariableDictionary
+            var variables = new CalamariVariables
             {
                 {SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customVersion}
             };
@@ -88,7 +89,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         static string GetPathToPowerShell(IEnumerable<string> versionInstalled)
         {
             var fileSystem = CreateFileSystem(versionInstalled);
-            return CreateBootstrapper(fileSystem).PathToPowerShellExecutable(new CalamariVariableDictionary());
+            return CreateBootstrapper(fileSystem).PathToPowerShellExecutable(new CalamariVariables());
         }
 
         static ICalamariFileSystem CreateFileSystem(IEnumerable<string> versions)

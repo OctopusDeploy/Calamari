@@ -25,34 +25,34 @@ namespace Calamari.Commands
     [Command("run-script", Description = "Invokes a script")]
     public class RunScriptCommand : Command
     {
-        static readonly IVariableDictionaryUtils VariableDictionaryUtils = new VariableDictionaryUtils();
         string scriptFileArg;
         string packageFile;
         string scriptParametersArg;
         readonly IDeploymentJournalWriter deploymentJournalWriter;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         readonly CombinedScriptEngine scriptEngine;
+        readonly ICalamariFileSystem fileSystem;
         IFileSubstituter fileSubstituter; 
 
         public RunScriptCommand(
             IDeploymentJournalWriter deploymentJournalWriter,
-            CalamariVariableDictionary variables,
-            CombinedScriptEngine scriptEngine)
+            IVariables variables,
+            CombinedScriptEngine scriptEngine, 
+            ICalamariFileSystem fileSystem)
         {
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
             Options.Add("scriptParameters=", $"Parameters to pass to the script.", v => scriptParametersArg = v);
-            VariableDictionaryUtils.PopulateOptions(Options);
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.scriptEngine = scriptEngine;
+            this.fileSystem = fileSystem;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
             
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
                 new ServiceMessageCommandOutput(variables)));
           

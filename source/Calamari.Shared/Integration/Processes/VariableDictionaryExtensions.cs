@@ -8,7 +8,7 @@ namespace Calamari.Integration.Processes
 {
     public static class VariableDictionaryExtensions
     {
-        public static void EnrichWithEnvironmentVariables(this VariableDictionary variables)
+        public static void EnrichWithEnvironmentVariables(this IVariables variables)
         {
             var environmentVariables = Environment.GetEnvironmentVariables();
 
@@ -20,7 +20,7 @@ namespace Calamari.Integration.Processes
             variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
         }
 
-        public static void SetOutputVariable(this VariableDictionary variables, string name, string value)
+        public static void SetOutputVariable(this IVariables variables, string name, string value)
         {
             variables.Set(name, value);
 
@@ -47,7 +47,7 @@ namespace Calamari.Integration.Processes
             variables.Set(machineIndexedVariableName, value);
         }
 
-        public static void LogVariables(this VariableDictionary variables)
+        public static void LogVariables(this IVariables variables)
         {
             if (variables.GetFlag(SpecialVariables.PrintVariables))
             {
@@ -62,7 +62,7 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        private static string ToString(this VariableDictionary variables, Func<string, bool> nameFilter, bool useRawValue)
+        private static string ToString(this IVariables variables, Func<string, bool> nameFilter, bool useRawValue)
         {
             var text = new StringBuilder();
 
@@ -83,7 +83,7 @@ namespace Calamari.Integration.Processes
             return !variableName.Contains("CustomScripts.");
         }
 
-        public static T GetEnum<T>(this VariableDictionary variables, string value, T @default)
+        public static T GetEnum<T>(this IVariables variables, string value, T @default)
             => (T)Enum.Parse(typeof(T), variables.Get(value, @default.ToString()), true);
     }
 }

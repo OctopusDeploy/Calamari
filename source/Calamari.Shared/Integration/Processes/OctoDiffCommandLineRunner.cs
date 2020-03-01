@@ -11,16 +11,18 @@ namespace Calamari.Integration.Processes
 {
     public class OctoDiffCommandLineRunner 
     {
+        readonly IVariables variables;
         public CommandLine OctoDiff { get; }
 
-        public OctoDiffCommandLineRunner()
+        public OctoDiffCommandLineRunner(IVariables variables)
         {
+            this.variables = variables;
             OctoDiff = new CommandLine(FindOctoDiffExecutable());
         }
 
         public CommandResult Execute()
         {
-            var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(new CalamariVariableDictionary())));
+            var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var result = runner.Execute(OctoDiff.Build());
             return result;
         }

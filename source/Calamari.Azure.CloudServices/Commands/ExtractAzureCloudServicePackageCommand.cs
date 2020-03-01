@@ -12,11 +12,13 @@ namespace Calamari.Azure.CloudServices.Commands
     [Command("extract-cspkg", Description = "Extracts an Azure cloud-service package (.cspkg)")]
     public class ExtractAzureCloudServicePackageCommand : Command
     {
+        readonly IVariables variables;
         private string packageFile;
         private string destinationDirectory;
 
-        public ExtractAzureCloudServicePackageCommand()
+        public ExtractAzureCloudServicePackageCommand(IVariables variables)
         {
+            this.variables = variables;
             Options.Add("cspkg=", "Path to the cloud-service package", v => packageFile = Path.GetFullPath(v));
             Options.Add("destination=", "Destination directory for extracted files", v => destinationDirectory = Path.GetFullPath(v));
         }
@@ -30,7 +32,6 @@ namespace Calamari.Azure.CloudServices.Commands
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);    
 
-            var variables = new CalamariVariableDictionary();
             variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, packageFile);
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, !string.IsNullOrWhiteSpace(destinationDirectory) ? destinationDirectory : Path.GetDirectoryName(packageFile));
 

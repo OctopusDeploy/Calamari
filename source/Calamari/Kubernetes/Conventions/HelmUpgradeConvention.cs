@@ -85,9 +85,9 @@ namespace Calamari.Kubernetes.Conventions
             return sb.ToString();
         }
 
-        HelmVersion GetVersion(VariableDictionary variableDictionary)
+        HelmVersion GetVersion(IVariables variables)
         {
-            var clientVersionText = variableDictionary.Get(SpecialVariables.Helm.ClientVersion);
+            var clientVersionText = variables.Get(SpecialVariables.Helm.ClientVersion);
 
             if (Enum.TryParse(clientVersionText, out HelmVersion version))
                 return version;
@@ -109,12 +109,12 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        static string CustomHelmExecutableFullPath(VariableDictionary variableDictionary, string workingDirectory)
+        static string CustomHelmExecutableFullPath(IVariables variables, string workingDirectory)
         {
-            var helmExecutable = variableDictionary.Get(SpecialVariables.Helm.CustomHelmExecutable);
+            var helmExecutable = variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
             if (!string.IsNullOrWhiteSpace(helmExecutable))
             {
-                if (variableDictionary.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
+                if (variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
                         .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
                 {
                     var fullPath = Path.GetFullPath(Path.Combine(workingDirectory, SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable));
@@ -217,7 +217,7 @@ namespace Calamari.Kubernetes.Conventions
             return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
 
-        static string GetReleaseName(CalamariVariableDictionary variables)
+        static string GetReleaseName(IVariables variables)
         {
             var validChars = new Regex("[^a-zA-Z0-9-]");
             var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();

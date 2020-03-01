@@ -1,6 +1,7 @@
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
 {
@@ -8,13 +9,13 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     {
         protected CalamariVariableDictionary GetVariables()
         {
-            var cd = new CalamariVariableDictionary();
+            var cd = new CalamariVariables();
             cd.Set("foo", "bar");
             cd.Set("mysecrect", "KingKong");
             return cd;
         }
 
-        protected CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, CalamariVariableDictionary variables)
+        protected CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariables variables)
         {
             var capture = new CaptureCommandOutput();
             var runner = new CommandLineRunner(capture);

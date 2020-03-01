@@ -10,7 +10,7 @@ namespace Calamari.Integration.FileSystem
     public class PackageStore
     {
         private readonly IPackageExtractor packageExtractorFactory;
-        readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        readonly ICalamariFileSystem fileSystem;
         static readonly string RootDirectory = Path.Combine(TentacleHome, "Files");
 
         static string TentacleHome
@@ -26,9 +26,10 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-        public PackageStore(IPackageExtractor packageExtractorFactory)
+        public PackageStore(IPackageExtractor packageExtractorFactory, ICalamariFileSystem fileSystem)
         {
             this.packageExtractorFactory = packageExtractorFactory;
+            this.fileSystem = fileSystem;
         }
 
         public static string GetPackagesDirectory()

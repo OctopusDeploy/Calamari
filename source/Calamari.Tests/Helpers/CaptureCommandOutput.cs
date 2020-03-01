@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
+using Calamari.Variables;
 using Octostache;
 
 namespace Calamari.Tests.Helpers
@@ -12,7 +13,7 @@ namespace Calamari.Tests.Helpers
         readonly List<string> infos = new List<string>();
         readonly List<string> errors = new List<string>();
         readonly ServiceMessageParser serviceMessageParser;
-        readonly VariableDictionary outputVariables = new VariableDictionary();
+        readonly IVariables outputVariables = new CalamariVariables();
 
         public CaptureCommandOutput()
         {
@@ -32,7 +33,7 @@ namespace Calamari.Tests.Helpers
             errors.Add(line);
         }
 
-        public VariableDictionary OutputVariables => outputVariables;
+        public IVariables OutputVariables => outputVariables;
 
         public IList<string> Infos => infos;
 

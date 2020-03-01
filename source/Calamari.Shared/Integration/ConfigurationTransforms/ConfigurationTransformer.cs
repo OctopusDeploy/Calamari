@@ -95,7 +95,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             configurationFileDocument.Save(destinationFile);
         }
 
-        public static ConfigurationTransformer FromVariables(CalamariVariableDictionary variables, ILog log = null)
+        public static ConfigurationTransformer FromVariables(IVariables variables, ILog log = null)
         {
             var treatConfigTransformationWarningsAsErrors = variables.GetFlag(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, true);
             var ignoreConfigTransformErrors = variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors);

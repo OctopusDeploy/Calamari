@@ -4,6 +4,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
@@ -16,10 +17,10 @@ namespace Calamari.Tests.Fixtures.Conventions
         void RunTest(
             IEnumerable<(string Key, string Value)> existingVariables,
             IEnumerable<(string Key, string Value)> newVariables,
-            Action<CalamariVariableDictionary> assertions
+            Action<CalamariVariables> assertions
         )
         {
-            var deploymentVariables = new CalamariVariableDictionary();
+            var deploymentVariables = new CalamariVariables();
 
             foreach (var variable in existingVariables)
             {
@@ -28,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             
             var deployment = new RunningDeployment(null, deploymentVariables);
             
-            var fileVariables = new VariableDictionary();
+            var fileVariables = new CalamariVariables();
 
             foreach (var variable in newVariables)
             {
@@ -41,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             var actual = deployment.Variables;
 
-            assertions(actual);
+            assertions((CalamariVariables) actual);
         }
 
         [Test]
@@ -93,7 +94,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             
             var deployment = new RunningDeployment(
                 null,
-                new CalamariVariableDictionary
+                new CalamariVariables
                 {
                     { SpecialVariables.AdditionalVariablesPath, filePath }
                 }

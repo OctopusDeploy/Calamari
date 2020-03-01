@@ -10,14 +10,16 @@ namespace Calamari.Commands
     [Command("find-package", Description = "Finds the package that matches the specified ID and version. If no exact match is found, it returns a list of the nearest packages that matches the ID")]
     public class FindPackageCommand : Command
     {
+        readonly ICalamariFileSystem fileSystem;
         string packageId;
         string rawPackageVersion;
         string packageHash;
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
 
-        public FindPackageCommand()
+        public FindPackageCommand(ICalamariFileSystem fileSystem)
         {
+            this.fileSystem = fileSystem;
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
             Options.Add("packageHash=", "Package hash to compare against", v => packageHash = v);
@@ -42,7 +44,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
 
             var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(null);
-            var packageStore = new PackageStore(extractor);
+            var packageStore = new PackageStore(extractor, fileSystem);
 
             if (!VersionFactory.TryCreateVersion(rawPackageVersion, out IVersion version, versionFormat))
             {

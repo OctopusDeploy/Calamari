@@ -27,7 +27,7 @@ namespace Calamari.Deployment.Features
 
 
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-        static void EnsureCertificatesUsedInBindingsAreInStore(VariableDictionary variables)
+        static void EnsureCertificatesUsedInBindingsAreInStore(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
             {
@@ -40,7 +40,7 @@ namespace Calamari.Deployment.Features
             }
         }
 
-        static void EnsureCertificateInStore(VariableDictionary variables, string certificateVariable)
+        static void EnsureCertificateInStore(IVariables variables, string certificateVariable)
         {
             var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
 
@@ -76,7 +76,7 @@ namespace Calamari.Deployment.Features
             return null;
         }
 
-        static string AddCertificateToLocalMachineStore(VariableDictionary variables, string certificateVariable)
+        static string AddCertificateToLocalMachineStore(IVariables variables, string certificateVariable)
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
             var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");

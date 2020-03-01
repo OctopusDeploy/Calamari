@@ -11,7 +11,7 @@ namespace Calamari.Deployment.Features
         public abstract string DeploymentStage { get; }
         public abstract void Execute(RunningDeployment deployment);
 
-        protected static IEnumerable<dynamic> GetEnabledBindings(VariableDictionary variables)
+        protected static IEnumerable<dynamic> GetEnabledBindings(IVariables variables)
         {
             var bindingString = variables.Get(SpecialVariables.Action.IisWebSite.Bindings);
 

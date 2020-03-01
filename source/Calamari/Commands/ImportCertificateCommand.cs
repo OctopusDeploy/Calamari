@@ -16,31 +16,24 @@ namespace Calamari.Commands
     [Command("import-certificate", Description = "Imports a X.509 certificate into a Windows certificate store")]
     public class ImportCertificateCommand : Command
     {
-        private string variablesFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
-
-        public ImportCertificateCommand()
+        readonly IVariables variables;
+        
+        public ImportCertificateCommand(IVariables variables)
         {
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            this.variables = variables;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
-
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             variables.EnrichWithEnvironmentVariables();
             variables.LogVariables();
 
-            ImportCertificate(variables);
+            ImportCertificate();
 
             return 0;
         }
 
-        void ImportCertificate(CalamariVariableDictionary variables)
+        void ImportCertificate()
         {
             var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.CertificateVariable);
             var pfxBytes = Convert.FromBase64String(GetMandatoryVariable(variables, $"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
@@ -97,7 +90,7 @@ namespace Calamari.Commands
             }
         }
 
-        internal static ICollection<PrivateKeyAccessRule> GetPrivateKeyAccessRules(VariableDictionary variables)
+        internal static ICollection<PrivateKeyAccessRule> GetPrivateKeyAccessRules(IVariables variables)
         {
             // The private-key access-rules are stored as escaped JSON. However, they may contain nested
             // variables (for example the user-name may be an Octopus variable) which may not be escaped,
@@ -116,7 +109,7 @@ namespace Calamari.Commands
             return PrivateKeyAccessRule.FromJson(escapedAndSubstituted);
         }
 
-        string GetMandatoryVariable(CalamariVariableDictionary variables, string variableName)
+        string GetMandatoryVariable(IVariables variables, string variableName)
         {
             var value = variables.Get(variableName);
 

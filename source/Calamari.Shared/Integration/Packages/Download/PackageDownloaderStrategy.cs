@@ -19,13 +19,15 @@ namespace Calamari.Integration.Packages.Download
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IVariables variables;
 
-        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner)
+        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner, IVariables variables)
         {
             this.engine = engine;
             this.fileSystem = fileSystem;
             this.freeSpaceChecker = freeSpaceChecker;
             this.commandLineRunner = commandLineRunner;
+            this.variables = variables;
         }
         
         public PackagePhysicalFileMetadata DownloadPackage(
@@ -56,7 +58,7 @@ namespace Calamari.Integration.Packages.Download
                     break;
                 case FeedType.Docker:
                 case FeedType.AwsElasticContainerRegistry :
-                    downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner);
+                    downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables);
                     break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");

@@ -5,6 +5,7 @@ using Octopus.CoreUtilities.Extensions;
 using System;
 using System.IO;
 using System.Reflection;
+using Calamari.Integration.FileSystem;
 
 namespace Calamari.Tests.Fixtures
 {

@@ -3,6 +3,7 @@ using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -18,7 +19,7 @@ namespace Calamari.Tests.AzureFixtures
         [TestCase("Azure", "", ScriptSyntax.FSharp, false)]
         public void ShouldBeEnabled(string accountType, string connectionEndpoint, ScriptSyntax syntax, bool expected)
         {
-            var variables = new CalamariVariableDictionary
+            var variables = new CalamariVariables
             {
                 {SpecialVariables.Account.AccountType, accountType},
                 {SpecialVariables.Action.ServiceFabric.ConnectionEndpoint, connectionEndpoint}

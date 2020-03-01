@@ -48,7 +48,7 @@ namespace Calamari.Terraform
         }
 
         // We not referencing the Azure project because we want to be multi-platform 
-        static Dictionary<string, string> AzureEnvironmentVariables(VariableDictionary variables)
+        static Dictionary<string, string> AzureEnvironmentVariables(IVariables variables)
         {
             string AzureEnvironment(string s)
             {

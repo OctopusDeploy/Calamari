@@ -16,6 +16,10 @@ namespace Calamari.Commands
     public class DownloadPackageCommand : Command
     {
         private readonly CombinedScriptEngine scriptEngine;
+        readonly IFreeSpaceChecker freeSpaceChecker;
+        readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
+
         string packageId;
         string packageVersion;
         bool forcePackageDownload;
@@ -28,9 +32,12 @@ namespace Calamari.Commands
         private FeedType feedType = FeedType.NuGet;
         private VersionFormat versionFormat = VersionFormat.Semver;
 
-        public DownloadPackageCommand(CombinedScriptEngine scriptEngine)
+        public DownloadPackageCommand(CombinedScriptEngine scriptEngine, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem)
         {
             this.scriptEngine = scriptEngine;
+            this.freeSpaceChecker = freeSpaceChecker;
+            this.variables = variables;
+            this.fileSystem = fileSystem;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
             Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
@@ -83,10 +90,8 @@ namespace Calamari.Commands
                     out var parsedAttemptBackoff);
 
                 var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
-                ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-                IFreeSpaceChecker freeSpaceChecker = new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariableDictionary());
 
-                var pkg = new PackageDownloaderStrategy(scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner).DownloadPackage(
+                var pkg = new PackageDownloaderStrategy(scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner, variables).DownloadPackage(
                     packageId,
                     version,
                     feedId,

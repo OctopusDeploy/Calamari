@@ -19,11 +19,11 @@ namespace Calamari.Azure.ServiceFabric.Integration
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
         readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell};
 
-        public AzureServiceFabricPowerShellContext(CalamariVariableDictionary variables)
+        public AzureServiceFabricPowerShellContext(IVariables variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.embeddedResources = new AssemblyEmbeddedResources();
@@ -40,7 +40,7 @@ namespace Calamari.Azure.ServiceFabric.Integration
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
@@ -99,14 +99,14 @@ namespace Calamari.Azure.ServiceFabric.Integration
             return azureContextScriptFile;
         }
 
-        static void SetAzureModulesLoadingMethod(VariableDictionary variables)
+        static void SetAzureModulesLoadingMethod(IVariables variables)
         {
             // We don't bundle the standard Azure PS module for Service Fabric work. We do however need
             // a certain Active Directory library that is bundled with Calamari.
             SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(AzureServiceFabricPowerShellContext).Assembly.Location), variables);
         }
 
-        static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        static void SetOutputVariable(string name, string value, IVariables variables)
         {
             if (variables.Get(name) != value)
             {
@@ -114,7 +114,7 @@ namespace Calamari.Azure.ServiceFabric.Integration
             }
         }
 
-        string GetMandatoryVariable(CalamariVariableDictionary variables, string variableName)
+        string GetMandatoryVariable(IVariables variables, string variableName)
         {
             var value = variables.Get(variableName);
 

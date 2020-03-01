@@ -7,6 +7,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
+using Calamari.Variables;
 using NUnit.Framework;
 using Octostache;
 
@@ -20,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldSubstitute()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables["ServerEndpoints[FOREXUAT01].Name"] = "forexuat01.local";
             variables["ServerEndpoints[FOREXUAT01].Port"] = "1566";
             variables["ServerEndpoints[FOREXUAT02].Name"] = "forexuat02.local";
@@ -34,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldIgnoreParserErrors()
         {
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables["fox"] = "replaced fox";
 
             var text = PerformTest(GetFixtureResouce("Samples", "ParserErrors.txt"), variables).Text;
@@ -47,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         public void ShouldRetainEncodingIfNoneSet()
         {
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
             var result = PerformTest(filePath, variables);
@@ -64,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         {
 
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables[SpecialVariables.Package.SubstituteInFilesOutputEncoding] = "utf-8";
 
             var encoding = (Encoding)PerformTest(filePath, variables).Encoding;
@@ -80,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         {
 
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables[SpecialVariables.Package.SubstituteInFilesOutputEncoding] = "utf-666";
 
             var encoding = (Encoding)PerformTest(filePath, variables).Encoding;
@@ -137,7 +138,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         public void RetainANSI()
         {
             var filePath = GetFixtureResouce("Samples", "ANSI.txt");
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
             var result = PerformTest(filePath, variables);
@@ -152,7 +153,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         public void RetainASCII()
         {
             var filePath = GetFixtureResouce("Samples", "ASCII.txt");
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
             var result = PerformTest(filePath, variables);
@@ -167,7 +168,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         public void RetainUTF8()
         {
             var filePath = GetFixtureResouce("Samples", "UTF8.txt");
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
             var result = PerformTest(filePath, variables);
@@ -184,7 +185,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         public void RetainUTF8Bom()
         {
             var filePath = GetFixtureResouce("Samples", "UTF8BOM.txt");
-            var variables = new VariableDictionary();
+            var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
             var result = PerformTest(filePath, variables);
@@ -195,7 +196,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             Assert.AreEqual(Encoding.UTF8, result.Encoding);
         }
 
-        dynamic PerformTest(string sampleFile, VariableDictionary variables)
+        dynamic PerformTest(string sampleFile, IVariables variables)
         {
             var temp = Path.GetTempFileName();
             using (new TemporaryFile(temp))

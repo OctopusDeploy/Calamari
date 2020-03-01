@@ -37,7 +37,7 @@ namespace Calamari.Util
         /// <param name="inPackage">True if the file is in a package, and false otherwise</param>
         /// <param name="variables">The variables that contain the deployment locations</param>
         /// <returns>The path to the supplied file</returns>
-        ResolvedTemplatePath Resolve(string relativeFilePath, bool inPackage, VariableDictionary variables);
+        ResolvedTemplatePath Resolve(string relativeFilePath, bool inPackage, IVariables variables);
 
         /// <summary>
         /// Gets the path to the supplied template file in a safe way.
@@ -46,6 +46,6 @@ namespace Calamari.Util
         /// <param name="inPackage">True if the file is in a package, and false otherwise</param>
         /// <param name="variables">The variables that contain the deployment locations</param>
         /// <returns>Maybe file path or Nothing if it doesn't exist</returns>
-        Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, VariableDictionary variables);
+        Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, IVariables variables);
     }
 }

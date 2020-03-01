@@ -15,25 +15,18 @@ namespace Calamari.Commands
     public class TransferPackageCommand : Command
     {
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
-        private string variablesFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
+        readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
 
-        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter)
+        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
         {
             this.deploymentJournalWriter = deploymentJournalWriter;
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
+            this.variables = variables;
+            this.fileSystem = fileSystem;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
-
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var packageFile = variables.GetEnvironmentExpandedPath(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
             if(string.IsNullOrEmpty(packageFile))
             {

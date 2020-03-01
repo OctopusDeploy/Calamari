@@ -4,6 +4,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -34,10 +35,10 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
             scriptEngine = Substitute.For<IScriptEngine>();
-            scriptEngine.Execute(Arg.Any<Script>(), Arg.Any<CalamariVariableDictionary>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
+            scriptEngine.Execute(Arg.Any<Script>(), Arg.Any<IVariables>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
             scriptEngine.GetSupportedTypes().Returns(new[] {ScriptSyntax.CSharp, ScriptSyntax.PowerShell});
             runner = Substitute.For<ICommandLineRunner>();
-            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariableDictionary());
+            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariables());
         }
 
         [Test]

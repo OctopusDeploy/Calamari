@@ -42,7 +42,7 @@ namespace Calamari.Deployment.Features.Java.Actions
             });
         }
         
-        string GetTomcatVersion(CalamariVariableDictionary variables)
+        string GetTomcatVersion(IVariables variables)
         {
             var catalinaHome = variables.Get(SpecialVariables.Action.Java.TomcatDeployCertificate.CatalinaHome) ??
                                 Environment.GetEnvironmentVariable("CATALINA_HOME");;

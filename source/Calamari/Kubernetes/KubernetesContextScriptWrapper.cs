@@ -12,11 +12,11 @@ namespace Calamari.Kubernetes
 {
     public class KubernetesContextScriptWrapper : IScriptWrapper
     {
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
         readonly WindowsPhysicalFileSystem fileSystem;
         readonly AssemblyEmbeddedResources embeddedResources;
 
-        public KubernetesContextScriptWrapper(CalamariVariableDictionary variables)
+        public KubernetesContextScriptWrapper(IVariables variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.embeddedResources = new AssemblyEmbeddedResources();
@@ -39,7 +39,7 @@ namespace Calamari.Kubernetes
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
+            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {

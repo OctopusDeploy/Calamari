@@ -15,29 +15,24 @@ namespace Calamari.Terraform
     {
         const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
 
-        private readonly Func<ICalamariFileSystem, IConvention> step;
-        private string variablesFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
+        private readonly IConvention step;
+        readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
         private string packageFile;
 
 
-        protected TerraformCommand(Func<ICalamariFileSystem, IConvention> step)
+        protected TerraformCommand(IVariables variables, ICalamariFileSystem fileSystem, IConvention step)
         {
             this.step = step;
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
+            this.variables = variables;
+            this.fileSystem = fileSystem;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
 
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
-            
             if (!string.IsNullOrEmpty(packageFile))
             {
                 if (!fileSystem.FileExists(packageFile))
@@ -63,7 +58,7 @@ namespace Calamari.Terraform
                 new SubstituteInFilesConvention(fileSystem, substituter,
                     _ => true,
                     _ => FileTargetFactory(runAutomaticFileSubstitution ? DefaultTerraformFileSubstitution : string.Empty, additionalFileSubstitution)),
-                step(fileSystem)
+                step
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

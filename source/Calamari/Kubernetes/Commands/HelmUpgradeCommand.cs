@@ -25,22 +25,19 @@ namespace Calamari.Kubernetes.Commands
     [Command("helm-upgrade", Description = "Performs Helm Upgrade with Chart while performing variable replacement")]
     public class HelmUpgradeCommand : Command
     {
-        private string variablesFile;
         private string packageFile;
-        private readonly List<string> sensitiveVariableFiles = new List<string>();
-        private string sensitiveVariablesPassword;
         private readonly CombinedScriptEngine scriptEngine;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
-        readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        
-        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter)
+        readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
+
+        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
-            Options.Add("variables=", "Path to a JSON file containing variables.", v => variablesFile = Path.GetFullPath(v));
-            Options.Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => sensitiveVariableFiles.Add(v));
-            Options.Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => sensitiveVariablesPassword = v);
             this.scriptEngine = scriptEngine;
             this.deploymentJournalWriter = deploymentJournalWriter;
+            this.variables = variables;
+            this.fileSystem = fileSystem;
         }
         
         public override int Execute(string[] commandLineArguments)
@@ -49,15 +46,10 @@ namespace Calamari.Kubernetes.Commands
 
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
-            
-            if (variablesFile != null && !File.Exists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
-            var variables = new CalamariVariableDictionary(variablesFile, sensitiveVariableFiles, sensitiveVariablesPassword);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var substituter = new FileSubstituter(fileSystem);
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
-            ValidateRequiredVariables(variables);
+            ValidateRequiredVariables();
             
             var conventions = new List<IConvention>
             {
@@ -88,7 +80,7 @@ namespace Calamari.Kubernetes.Commands
             return 0;
         }
 
-        private void ValidateRequiredVariables(CalamariVariableDictionary variables)
+        private void ValidateRequiredVariables()
         {
             if (!variables.IsSet(SpecialVariables.ClusterUrl))
             {

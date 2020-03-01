@@ -5,6 +5,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -16,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         RunningDeployment deployment;
         ICalamariFileSystem fileSystem;
-        CalamariVariableDictionary variables;
+        IVariables variables;
         readonly string customInstallationDirectory = (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac) ? "/var/tmp/myCustomInstallDir" : "C:\\myCustomInstallDir";
         readonly string stagingDirectory = (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac) ? "/var/tmp/applications/Acme/1.0.0" : "C:\\applications\\Acme\\1.0.0";
         readonly string packageFilePath = (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac) ? "/var/tmp/packages" : "C:\\packages";
@@ -24,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [SetUp]
         public void SetUp()
         {
-            variables = new CalamariVariableDictionary();
+            variables = new CalamariVariables();
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
             fileSystem = Substitute.For<ICalamariFileSystem>();
             deployment = new RunningDeployment(packageFilePath, variables);

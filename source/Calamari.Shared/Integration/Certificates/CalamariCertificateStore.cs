@@ -23,14 +23,14 @@ namespace Calamari.Integration.Certificates
             return GetOrAdd(thumbprint, bytes, null, new X509Store(storeName, StoreLocation.CurrentUser));
         }
 
-        public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
+        public X509Certificate2 GetOrAdd(IVariables variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
         {
             var location = (StoreLocation) Enum.Parse(typeof(StoreLocation), storeLocation);
             var name = (StoreName) Enum.Parse(typeof(StoreName), storeName);
             return GetOrAdd(variables, certificateVariable, name, location);
         }
 
-        public X509Certificate2 GetOrAdd(VariableDictionary variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
+        public X509Certificate2 GetOrAdd(IVariables variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
             var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");

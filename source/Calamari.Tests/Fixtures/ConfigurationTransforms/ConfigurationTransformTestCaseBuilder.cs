@@ -12,6 +12,7 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
+using Calamari.Variables;
 using NSubstitute;
 using NSubstitute.Core;
 using NUnit.Framework;
@@ -121,7 +122,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var transform = new XmlConfigTransformDefinition(transformDefinition);
 
-            var deploymentVariables = new CalamariVariableDictionary();
+            var deploymentVariables = new CalamariVariables();
             deploymentVariables[SpecialVariables.OriginalPackageDirectoryPath] = extractionDirectory;
             var deployment = new RunningDeployment(null, deploymentVariables);
 
