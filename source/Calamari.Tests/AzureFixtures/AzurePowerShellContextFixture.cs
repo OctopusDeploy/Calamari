@@ -1,4 +1,4 @@
-#if AZURE
+#if AZURE_CORE
 using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
