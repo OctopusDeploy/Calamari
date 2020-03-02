@@ -6,29 +6,25 @@ using Calamari.Tests.Hooks;
 using NUnit.Framework;
 using System;
 using System.IO;
+using Calamari.Integration.FileSystem;
+using Calamari.Variables;
 
 namespace Calamari.Tests.Fixtures.Commands
 {
     [TestFixture]
-    public class ScriptRunningTest
+    public class CommandFromModuleTest
     {
-        private IContainer container;
-
         // The Azure extensions are not used in testing because the machines do not have the required
         // PowerShell modules. i.e. you get the error:
         // The term 'Get-AzureRmEnvironment' is not recognized as the name of a cmdlet
         // You can uncomment the line below for local testing though.
         //private string Extensions = "--extensions=Calamari.Aws,Calamari.Azure,Calamari.Tests"; 
 
-        private string Extensions = "--extensions=Calamari.Aws,Calamari.Tests";
-
         private string Script = GetFixtureResource("Scripts", "awsscript.ps1");
-
-        private string[] Args => new[] {"run-test-script", "--script=" + Script, Extensions};
-
+        
         private static string GetFixtureResource(params string[] paths)
         {
-            var type = typeof(ScriptRunningTest);
+            var type = typeof(CommandFromModuleTest);
             return GetFixtureResource(type, paths);
         }
 
@@ -39,8 +35,9 @@ namespace Calamari.Tests.Fixtures.Commands
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
 
-        private IVariables BuildVariables(IVariables variables)
+        private CalamariVariables BuildVariables()
         {
+            var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
             variables.Set("AwsAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
@@ -61,13 +58,6 @@ namespace Calamari.Tests.Fixtures.Commands
         public void SetUp()
         {
             ExternalVariables.LogMissingVariables();
-            container = Calamari.Program.BuildContainer(Args);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            container?.Dispose();
         }
 
         [Test]
@@ -76,14 +66,27 @@ namespace Calamari.Tests.Fixtures.Commands
         {
             Assert.IsTrue(File.Exists(Script), Script + " must exist as a file");
 
-            BuildVariables(container.Resolve<IVariables>());
-            var retCode = container.Resolve<Calamari.Program>().Execute(Args);
-            Assert.AreEqual(0, retCode);
-            // TestModule should have been loadded because we are treating the 
-            // Calamari.Test dll as an extension. This means ScriptHookMock and
-            // EnvironmentVariableHook have been placed in the container, and because
-            // it is enabled they must have been called.
-            Assert.IsTrue(container.Resolve<ScriptHookMock>().WasCalled);
+            using (var temp = new TemporaryFile(Path.GetTempFileName()))
+            {
+                BuildVariables().Save(temp.FilePath);
+
+                var args = new[]
+                {
+                    "run-test-script", 
+                    "--script=" + Script, 
+                    "--extensions=Calamari.Aws,Calamari.Tests",
+                    "--variables=" + temp.FilePath
+                };
+
+                ScriptHookMock.WasCalled = false;
+                var retCode = Program.Main(args);
+                Assert.AreEqual(0, retCode);
+                // TestModule should have been loadded because we are treating the 
+                // Calamari.Test dll as an extension. This means ScriptHookMock and
+                // EnvironmentVariableHook have been placed in the container, and because
+                // it is enabled they must have been called.
+                Assert.IsTrue(ScriptHookMock.WasCalled);
+            }
         }
     }
 }

@@ -4,6 +4,8 @@ using Calamari.Integration.Proxies;
 using Calamari.Modules;
 using Calamari.Util;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -12,97 +14,42 @@ using Calamari.Deployment;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using NuGet;
 using Octostache;
 
 namespace Calamari
 {
     public class Program
     {
-        private static readonly IPluginUtils PluginUtils = new PluginUtils();
-        /// <summary>
-        /// Common assemblies that will always be present
-        /// </summary>
-        private static readonly Assembly[] KnownAssemblies = new[]
+        public static int Main(string[] args)
         {
-            typeof(Program).Assembly,
-            typeof(CalamariCommandsModule).Assembly
-        };
-        
-        private readonly ICommand command;
-
-        static int Main(string[] args)
-        {
-            EnableAllSecurityProtocols();
-
-            using (var container = BuildContainer(args))
-            {
-                return container.Resolve<Program>().Execute(args);
-            }
-        }
-
-        public static IContainer BuildContainer(string[] args)
-        {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var options = CommonOptions.Parse(args);
-            var variables = VariablesFactory.Create(fileSystem, options);
-
-            var firstArg = PluginUtils.GetFirstArgument(args);
-            var secondArg = PluginUtils.GetSecondArgument(args);
-
-            var builder = new ContainerBuilder();
-            builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterInstance(variables).As<IVariables>().As<VariableDictionary>();
-            
-            // Register the program entry point
-            builder.RegisterModule(new CalamariProgramModule());
-            // This will register common utilities and services
-            builder.RegisterModule(new CommonModule());
-            // For all the common locations (i.e. this assembly and the shared one)
-            // load any commands, and any commands to support the help command (if
-            // required).
-            foreach (var knownAssembly in KnownAssemblies)
-            {
-                builder.RegisterModule(new CalamariCommandsModule(firstArg, secondArg, knownAssembly));
-            }
-            // For the external libraries, let them load any additional
-            // services via their module classes.
-            foreach (var module in new ModuleLoader(args).AllModules)
-            {
-                builder.RegisterModule(module);
-            }
-
-            return builder.Build();
-        }
-
-        public Program(ICommand command)
-        {
-            this.command = command;
-        }
-
-        public int Execute(string[] args)
-        {
-            if(IsVersionCommand(args))
-            {
-                Console.Write($"Calamari version: {typeof(Program).Assembly.GetInformationalVersion()}");
-                return 0;
-            }
-                
-            Log.Verbose($"Octopus Deploy: Calamari version {typeof(Program).Assembly.GetInformationalVersion()}");
-            Log.Verbose($"Environment Information:{Environment.NewLine}" +
-                        $"  {string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation())}");
-
-            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
-
-            ProxyInitializer.InitializeDefaultProxy();
-
             try
             {
-                if (command == null)
-                    throw new CommandException("Could not find the command");
+                SecurityProtocols.EnableAllSecurityProtocols();
 
-                return command.Execute(args.Skip(1).ToArray());
+                var options = CommonOptions.Parse(args);
+
+                Log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
+
+                if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
+                    return 0;
+
+                var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
+                Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+
+                using (var container = BuildContainer(options))
+                {
+                    var command = container.Resolve<ICommand[]>();
+                    if (command.Length == 0)
+                        throw new CommandException($"Could not find the command {options.Command}");
+                    if (command.Length > 1)
+                        throw new CommandException($"Multiple commands found with the name {options.Command}");
+
+                    return command[0].Execute(options.RemainingArguments.ToArray());
+                }
             }
             catch (Exception ex)
             {
@@ -110,38 +57,34 @@ namespace Calamari
             }
         }
 
-        static bool IsVersionCommand(string[] args)
+        static IContainer BuildContainer(CommonOptions options)
         {
-            return args.Length > 0 && (args[0].ToLower() == "version" || args[0].ToLower() == "--version");
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var variables = VariablesFactory.Create(fileSystem, options);
+            
+            var builder = new ContainerBuilder();
+            builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
+            builder.RegisterInstance(variables).As<IVariables>();
+
+            var assemblies = GetAllAssembliesToRegister(options).ToArray();
+
+            foreach (var assembly in assemblies)
+                builder.RegisterAssemblyModules(assembly);
+
+            builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<ICommand>()
+                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+                .As<ICommand>();
+
+            return builder.Build();
         }
 
-        public static void EnableAllSecurityProtocols()
+        static IEnumerable<Assembly> GetAllAssembliesToRegister(CommonOptions options)
         {
-            // TLS1.2 was required to access GitHub apis as of 22 Feb 2018. 
-            // https://developer.github.com/changes/2018-02-01-weak-crypto-removal-notice/
-
-            // TLS1.1 and below was discontinued on MavenCentral as of 18 June 2018
-            //https://central.sonatype.org/articles/2018/May/04/discontinue-support-for-tlsv11-and-below/
-
-            var securityProcotolTypes =
-#if HAS_SSL3
-                SecurityProtocolType.Ssl3 |
-#endif
-                SecurityProtocolType.Tls;
-
-            if (Enum.IsDefined(typeof(SecurityProtocolType), 768))
-                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType)768;
-
-            if (Enum.IsDefined(typeof(SecurityProtocolType), 3072))
-            {
-                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType)3072;
-            }
-            else
-            {
-                Log.Verbose($"TLS1.2 is not supported, this means that some outgoing connections to third party endpoints will not work as they now only support TLS1.2.{Environment.NewLine}This includes GitHub feeds and Maven feeds.");
-            }
-
-            ServicePointManager.SecurityProtocol = securityProcotolTypes;
+            yield return typeof(Program).Assembly; // Calamari
+            yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
+            foreach (var extension in options.Extensions)
+                yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
         }
     }
 }
