@@ -12,13 +12,11 @@ namespace Calamari.Azure.WebApps.HealthChecks
 {
     public class WebAppHealthChecker : IDoesDeploymentTargetTypeHealthChecks
     {
-        private readonly ILog log;
-        private readonly ICertificateStore certificateStore;
+        readonly IVariables variables;
 
-        public WebAppHealthChecker(ILog log, ICertificateStore certificateStore)
+        public WebAppHealthChecker(IVariables variables)
         {
-            this.log = log;
-            this.certificateStore = certificateStore;
+            this.variables = variables;
         }
 
         public bool HandlesDeploymentTargetTypeName(string deploymentTargetTypeName)
@@ -26,7 +24,7 @@ namespace Calamari.Azure.WebApps.HealthChecks
             return deploymentTargetTypeName == "AzureWebApp";
         }
 
-        public int ExecuteHealthCheck(CalamariVariableDictionary variables)
+        public int ExecuteHealthCheck()
         {
             var account = new AzureServicePrincipalAccount(variables);
 

@@ -12,13 +12,13 @@ namespace Calamari.Azure.CloudServices.HealthChecks
 {
     public class CloudServiceHealthChecker : IDoesDeploymentTargetTypeHealthChecks
     {
-        private readonly ILog log;
         private readonly ICertificateStore certificateStore;
+        readonly IVariables variables;
 
-        public CloudServiceHealthChecker(ILog log, ICertificateStore certificateStore)
+        public CloudServiceHealthChecker(ICertificateStore certificateStore, IVariables variables)
         {
-            this.log = log;
             this.certificateStore = certificateStore;
+            this.variables = variables;
         }
 
         public bool HandlesDeploymentTargetTypeName(string deploymentTargetTypeName)
@@ -26,7 +26,7 @@ namespace Calamari.Azure.CloudServices.HealthChecks
             return deploymentTargetTypeName == "AzureCloudService";
         }
 
-        public int ExecuteHealthCheck(CalamariVariableDictionary variables)
+        public int ExecuteHealthCheck()
         {
             var account = new AzureAccount(variables);
 

@@ -8,13 +8,18 @@ namespace Calamari.Aws.Integration
 {
     public class AwsScriptWrapper : IScriptWrapper
     {
+        readonly IVariables variables;
         public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
         bool IScriptWrapper.IsEnabled(ScriptSyntax syntax) => true;
         public IScriptWrapper NextWrapper { get; set; }
 
+        public AwsScriptWrapper(IVariables variables)
+        {
+            this.variables = variables;
+        }
+        
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
@@ -23,7 +28,6 @@ namespace Calamari.Aws.Integration
 
             return NextWrapper.ExecuteScript(
                 script, scriptSyntax, 
-                variables, 
                 commandLineRunner,
                 awsEnvironmentVars);
         }

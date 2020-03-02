@@ -21,7 +21,7 @@ namespace Calamari.Azure.CloudServices.Integration
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly CalamariVariableDictionary variables;
+        readonly IVariables variables;
 
         readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell};
 
@@ -30,7 +30,7 @@ namespace Calamari.Azure.CloudServices.Integration
 
         public const string DefaultAzureEnvironment = "AzureCloud";
 
-        public AzureCloudServicePowerShellContext(CalamariVariableDictionary variables)
+        public AzureCloudServicePowerShellContext(IVariables variables)
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
@@ -48,7 +48,6 @@ namespace Calamari.Azure.CloudServices.Integration
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            CalamariVariableDictionary variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
@@ -63,21 +62,21 @@ namespace Calamari.Azure.CloudServices.Integration
             variables.Set("OctopusAzureTargetScript", script.File);
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId), variables);
-            SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName), variables);
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId));
+            SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName));
             var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
             if (azureEnvironment != DefaultAzureEnvironment)
             {
                 Log.Info("Using Azure Environment override - {0}", azureEnvironment);
             }
-            SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
+            SetOutputVariable("OctopusAzureEnvironment", azureEnvironment);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                using (new TemporaryFile(CreateAzureCertificate(workingDirectory, variables)))
+                using (new TemporaryFile(CreateAzureCertificate(workingDirectory)))
                 {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
                 }
             }
         }
@@ -90,7 +89,7 @@ namespace Calamari.Azure.CloudServices.Integration
             return azureContextScriptFile;
         }
 
-        private string CreateAzureCertificate(string workingDirectory, VariableDictionary variables)
+        private string CreateAzureCertificate(string workingDirectory)
         {
             var certificateFilePath = Path.Combine(workingDirectory, CertificateFileName);
             var certificatePassword = GenerateCertificatePassword();
@@ -106,7 +105,7 @@ namespace Calamari.Azure.CloudServices.Integration
             return certificateFilePath;
         }
 
-        static void SetOutputVariable(string name, string value, VariableDictionary variables)
+        void SetOutputVariable(string name, string value)
         {
             if (variables.Get(name) != value)
             {

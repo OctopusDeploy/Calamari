@@ -45,10 +45,9 @@ namespace Calamari.Integration.Scripting
             Dictionary<string, string> environmentVars = null)
         {
             var syntax = ValidateScriptType(script);
-            return BuildWrapperChain(syntax)
-                .ExecuteScript(script, syntax, variables, commandLineRunner, environmentVars);
+            return BuildWrapperChain(syntax, variables)
+                .ExecuteScript(script, syntax, commandLineRunner, environmentVars);
         }
-            
 
 
         /// <summary>
@@ -60,12 +59,13 @@ namespace Calamari.Integration.Scripting
         /// context.
         /// </summary>
         /// <param name="scriptSyntax">The type of the script being run</param>
+        /// <param name="variables"></param>
         /// <returns>
         /// The start of the wrapper chain. Because each IScriptWrapper is expected to call its NextWrapper,
         /// calling ExecuteScript() on the start of the chain will result in every part of the chain being
         /// executed, down to the final TerminalScriptWrapper.
         /// </returns>
-        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax) =>
+        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables) =>
             // get the type of script
             scriptWrapperHooks
                 .Where(hook => hook.IsEnabled(scriptSyntax))
@@ -77,7 +77,7 @@ namespace Calamari.Integration.Scripting
                 .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                 // The last wrapper is always the TerminalScriptWrapper
-                new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptSyntax]),
+                new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptSyntax], variables),
                 (IScriptWrapper current, IScriptWrapper next) =>
                 {
                     // the next wrapper is pointed to the current one

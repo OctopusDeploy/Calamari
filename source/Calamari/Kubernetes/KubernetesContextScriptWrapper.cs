@@ -39,7 +39,6 @@ namespace Calamari.Kubernetes
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
@@ -51,7 +50,7 @@ namespace Calamari.Kubernetes
             
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
             {
-                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
             }
         }
 

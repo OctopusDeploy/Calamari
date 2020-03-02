@@ -40,7 +40,6 @@ namespace Calamari.Azure.ServiceFabric.Integration
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
@@ -87,7 +86,7 @@ namespace Calamari.Azure.ServiceFabric.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, variables, commandLineRunner, environmentVars);
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
             }
         }
 

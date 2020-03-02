@@ -17,10 +17,8 @@ namespace Calamari.Azure.ServiceFabric.Tests.Fixtures
         [TestCase("Endpoint", ScriptSyntax.FSharp, false)]
         public void ShouldBeEnabled(string connectionEndpoint, ScriptSyntax syntax, bool expected)
         {
-            var variables = new CalamariVariables
-            {
-                {SpecialVariables.Action.ServiceFabric.ConnectionEndpoint, connectionEndpoint}
-            };
+            var variables = new CalamariVariables();
+            variables.Add(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint, connectionEndpoint);
             var target = new AzureServiceFabricPowerShellContext(variables);
             var actual = target.IsEnabled(syntax);
             actual.Should().Be(expected);

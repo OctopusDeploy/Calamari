@@ -20,12 +20,11 @@ namespace Calamari.Tests.Hooks
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
-            IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
             WasCalled = true;
-            return NextWrapper.ExecuteScript(script, scriptSyntax, variables, commandLineRunner, environmentVars);
+            return NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
         }
     }
 }
