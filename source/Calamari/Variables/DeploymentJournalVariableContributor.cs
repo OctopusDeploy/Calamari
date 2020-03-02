@@ -32,7 +32,6 @@ namespace Calamari.Variables
             }
             else
             {
-                // This is assuming this convention is used only in steps with only one package
                 var previousPackage = previous.Packages.FirstOrDefault();
                 
                 variables.Set(SpecialVariables.Tentacle.PreviousInstallation.OriginalInstalledPath, previous.ExtractedTo);
@@ -55,7 +54,6 @@ namespace Calamari.Variables
             }
             else
             {
-                // This is assuming this convention is used only in steps with only one package
                 var previousPackage = previous.Packages.FirstOrDefault();
                 
                 variables.Set(SpecialVariables.Tentacle.PreviousSuccessfulInstallation.OriginalInstalledPath, previous.ExtractedTo);
