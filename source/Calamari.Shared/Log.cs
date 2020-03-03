@@ -2,13 +2,11 @@
 using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
-using Calamari.Util;
 using Octopus.Versioning;
 using Octostache;
 
 namespace Calamari
 {
-    [RegisterMe]
     public class LogWrapper : ILog
     {
         public void Verbose(string message)

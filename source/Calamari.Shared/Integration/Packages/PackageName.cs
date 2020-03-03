@@ -63,8 +63,6 @@ namespace Calamari.Integration.Packages
         /// <summary>
         ///  Old school parser for those file not yet sourced directly from the cache.
         /// Expects pattern {PackageId}.{Version}.{Extension}
-        /// Issue with extension parser if pre-release tag is present where two part extendsions are incorrectly split.
-        /// e.g. MyApp.1.0.0-beta.tar.gz  => .tar forms part of pre-release tag and not extension
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="packageId"></param>
@@ -80,13 +78,34 @@ namespace Calamari.Integration.Packages
             const string semanticVersionPattern = @"(?<semanticVersion>(\d+(\.\d+){0,3}" // Major Minor Patch
                                                   + @"(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)" // Pre-release identifiers
                                                   + @"(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)"; // Build Metadata
-            const string extensionPattern = @"(?<extension>(\.([a-zA-Z0-9])+)+)"; //Extension (wont catch two part extensions like .tar.gz if there is a pre-release tag)
 
-            var match = Regex.Match(fileName, $@"^{packageIdPattern}\.{semanticVersionPattern}{extensionPattern}$", RegexOptions.IgnoreCase);
+            var fileNamePattern = $@"{packageIdPattern}\.{semanticVersionPattern}";
+
+            // here we're getting opinionated about how we split up packages that have both
+            // pre-release identifiers and/or build metadata and also a two-part extension name.
+            // for example "foo.1.0.0-release.tar.gz" could mean:
+            // - release tag: "release.tar" and extension: "gz"
+            // - release tag: "release" and extension: "tar.gz"
+            // The thinking here is
+            // - "tar.gz" and friends are extensions we know about
+            // - this is a method specific to packages and archives
+            // - cases like the above "tar" are unlikely to be part of a release tag or build metadata
+            // so the below method strips out the extensions we know about before performing
+            // the match on the filename. If we don't find any extensions we know about
+            // we fall back to trying to pattern match one in the filename.
+            if (TryMatchKnownExtensions(fileName, out var strippedFileName, out var extensionMatch))
+            {
+                fileName = strippedFileName;
+            } else { 
+                const string extensionPattern = @"(?<extension>(\.([a-zA-Z0-9])+)+)"; //Extension (wont catch two part extensions like .tar.gz if there is a pre-release tag)
+                fileNamePattern += extensionPattern;
+            } 
+
+            var match = Regex.Match(fileName, $"^{fileNamePattern}$", RegexOptions.IgnoreCase);
 
             var packageIdMatch = match.Groups["packageId"];
             var versionMatch = match.Groups["semanticVersion"];
-            var extensionMatch = match.Groups["extension"];
+            extensionMatch = extensionMatch.Success ? extensionMatch : match.Groups["extension"];
 
             if (!packageIdMatch.Success || !versionMatch.Success || !extensionMatch.Success)
                 return false;
@@ -98,6 +117,19 @@ namespace Calamari.Integration.Packages
             extension = extensionMatch.Value;
 
             return true;
+        }
+
+        static bool TryMatchKnownExtensions(string fileName, out string strippedFileName, out Group extensionMatch)
+        {
+            // At the moment we only have one use case for this: files ending in ".tar.xyz" (see tests)
+            // But if in the future we have more, we can modify this method to accomodate more cases.
+            var knownExtensionPatterns = @"\.tar((\.[a-zA-Z0-9]+)?)";
+            var match = new Regex($"(?<fileName>.*)(?<extension>{knownExtensionPatterns})$").Match(fileName);
+
+            strippedFileName = match.Success ? match.Groups["fileName"].Value : fileName;
+            extensionMatch = match.Groups["extension"];
+
+            return match.Success;
         }
 
         static bool TryParseEncodedFileName(string fileName, out string packageId, out IVersion version,

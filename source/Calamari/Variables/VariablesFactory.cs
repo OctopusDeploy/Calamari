@@ -33,6 +33,7 @@ namespace Calamari.Variables
             AddEnvironmentVariables(variables);
             variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
             ReadAdditionalVariablesFromFile(variables);
+            DeploymentJournalVariableContributor.Contribute(fileSystem, variables);
             
             return variables;
         }

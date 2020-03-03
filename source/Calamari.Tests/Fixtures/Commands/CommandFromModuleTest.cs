@@ -1,8 +1,5 @@
 ﻿#if NETFX
-using Autofac;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Tests.Hooks;
 using NUnit.Framework;
 using System;
 using System.IO;

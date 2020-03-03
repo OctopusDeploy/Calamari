@@ -59,10 +59,7 @@ namespace Calamari.Integration.Scripting.Python
         {
             return variables.GetNames().Select(variable =>
             {
-                var variableValue = variables.IsSensitive(variable)
-                    ? DecryptValueCommand(variables.Get(variable))
-                    : $"decode(\"{EncodeValue(variables.Get(variable))}\")";
-
+                var variableValue = DecryptValueCommand(variables.Get(variable));
                 return $"decode(\"{EncodeValue(variable)}\") : {variableValue}";
             });
         }
@@ -70,10 +67,9 @@ namespace Calamari.Integration.Scripting.Python
         static string DecryptValueCommand(string value)
         {
             var encrypted = VariableEncryptor.Encrypt(value ?? "");
-            byte[] iv;
-            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
             
-            return $"decrypt(\"{Convert.ToBase64String(rawEncrypted)}\",\"{ToHex(iv)}\")";
+            return $@"decrypt(""{Convert.ToBase64String(rawEncrypted)}"",""{ToHex(iv)}"")";
         }
 
         static string ToHex(byte[] bytes)

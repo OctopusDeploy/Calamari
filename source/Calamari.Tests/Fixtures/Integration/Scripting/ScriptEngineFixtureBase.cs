@@ -7,11 +7,11 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 {
     public abstract class ScriptEngineFixtureBase
     {
-        protected IVariables GetDictionaryWithSecret()
+        protected CalamariVariables GetVariables()
         {
             var cd = new CalamariVariables();
             cd.Set("foo", "bar");
-            cd.SetSensitive("mysecrect", "KingKong");
+            cd.Set("mysecrect", "KingKong");
             return cd;
         }
 

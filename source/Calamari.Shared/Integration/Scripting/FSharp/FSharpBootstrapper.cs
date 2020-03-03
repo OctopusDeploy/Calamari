@@ -111,15 +111,10 @@ namespace Calamari.Integration.Scripting.FSharp
                 {
                     builder.AppendFormat("        | \"{0}\" -> Some null", EncodeValue(variableName));
                 }
-                else if (variables.IsSensitive(variableName))
+                else
                 {
                     builder.AppendFormat("        | \"{0}\" -> {1} |> Some", EncodeValue(variableName),
                                                                                         EncryptVariable(variableValue));                    
-                }
-                else
-                {
-                    builder.AppendFormat("        | \"{0}\" -> \"{1}\" |> decode |> Some", EncodeValue(variableName),
-                                                                                            EncodeValue(variableValue));
                 }
 
                 builder.Append(Environment.NewLine);
@@ -138,10 +133,9 @@ namespace Calamari.Integration.Scripting.FSharp
         static string EncryptVariable(string value)
         {
             var encrypted = VariableEncryptor.Encrypt(value);
-            byte[] iv;
-            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out iv);
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
 
-            return string.Format("decryptString \"{0}\" \"{1}\"", Convert.ToBase64String(rawEncrypted), Convert.ToBase64String(iv));
+            return $@"decryptString ""{Convert.ToBase64String(rawEncrypted)}"" ""{Convert.ToBase64String(iv)}""";
         }
     }
 }

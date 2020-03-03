@@ -30,7 +30,7 @@ namespace Calamari.Commands
             if (checker == null)
                 throw new Exception($"No health checker could be found for deployment target type {deploymentTargetTypeName}");
 
-            return checker.ExecuteHealthCheck(variables);
+            return checker.ExecuteHealthCheck();
         }
     }
 }

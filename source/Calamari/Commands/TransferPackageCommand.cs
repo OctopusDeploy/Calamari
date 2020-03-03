@@ -8,6 +8,7 @@ using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
+using Calamari.Variables;
 
 namespace Calamari.Commands
 {
@@ -40,8 +41,6 @@ namespace Calamari.Commands
             
             var conventions = new List<IConvention>
             {
-                new ContributePreviousInstallationConvention(journal),
-                new ContributePreviousSuccessfulInstallationConvention(journal),
                 new AlreadyInstalledConvention(journal),
                 new TransferPackageConvention(fileSystem),
             };

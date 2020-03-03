@@ -9,7 +9,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 
-namespace Calamari.Tests.Fixtures
+namespace Calamari.Tests.Fixtures.Commands
 {
     [TestFixture]
     public class RunScriptTest

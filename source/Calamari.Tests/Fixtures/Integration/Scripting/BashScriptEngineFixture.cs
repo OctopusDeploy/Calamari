@@ -11,12 +11,12 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     {
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
-        public void BashDecryptsSensitiveVariables()
+        public void BashDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))
             {
                 File.WriteAllText(scriptFile.FilePath, "#!/bin/bash\necho $(get_octopusvariable \"mysecrect\")");
-                var result = ExecuteScript(new BashScriptEngine(), scriptFile.FilePath, GetDictionaryWithSecret());
+                var result = ExecuteScript(new BashScriptEngine(), scriptFile.FilePath, GetVariables());
                 result.AssertOutput("KingKong");
             }
         }

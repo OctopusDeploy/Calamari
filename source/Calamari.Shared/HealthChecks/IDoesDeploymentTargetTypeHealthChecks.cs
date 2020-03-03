@@ -6,6 +6,6 @@ namespace Calamari.HealthChecks
     {
         bool HandlesDeploymentTargetTypeName(string deploymentTargetTypeName);
 
-        int ExecuteHealthCheck(IVariables variables);
+        int ExecuteHealthCheck();
     }
 }

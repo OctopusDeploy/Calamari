@@ -1,7 +1,7 @@
 #if AZURE
 
 using System;
-using Calamari.Azure.Deployment.Conventions;
+using Calamari.Azure.WebApps.Deployment.Conventions;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
