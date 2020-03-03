@@ -7,7 +7,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 using Calamari.Deployment;
-using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Integration.Certificates

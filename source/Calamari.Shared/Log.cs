@@ -2,7 +2,6 @@
 using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
-using Calamari.Util;
 using Octopus.Versioning;
 using Octostache;
 

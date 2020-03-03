@@ -3,7 +3,6 @@ using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Util;
 
 namespace Calamari.Integration.Scripting
 {

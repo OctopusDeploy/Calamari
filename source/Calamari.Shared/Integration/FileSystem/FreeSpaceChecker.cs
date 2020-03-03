@@ -3,7 +3,6 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
-using Calamari.Util;
 using Octostache;
 
 namespace Calamari.Integration.FileSystem
