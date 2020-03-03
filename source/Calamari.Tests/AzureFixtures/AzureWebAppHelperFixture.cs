@@ -1,6 +1,6 @@
 ﻿#if AZURE
 using System;
-using Calamari.Azure.Util;
+using Calamari.Azure.WebApps.Util;
 using FluentAssertions;
 using NUnit.Framework;
 

@@ -19,6 +19,7 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
+using Calamari.Variables;
 
 namespace Calamari.Commands
 {
@@ -74,8 +75,6 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new ContributeEnvironmentVariablesConvention(),
-                new ContributePreviousInstallationConvention(journal),
-                new ContributePreviousSuccessfulInstallationConvention(journal),
                 new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),

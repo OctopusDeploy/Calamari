@@ -1,4 +1,4 @@
-﻿#if AZURE
+﻿#if AZURE_CORE
 using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Util;

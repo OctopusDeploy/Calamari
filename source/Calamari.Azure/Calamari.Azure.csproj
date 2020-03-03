@@ -2,7 +2,7 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFramework>net452</TargetFramework>
+    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Azure</AssemblyName>
     <OutputType>Library</OutputType>
@@ -22,60 +22,30 @@
     <StartupObject />
     <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\AzureContext.ps1" />
-    <EmbeddedResource Include="Scripts\AzureServiceFabricContext.ps1" />
-    <EmbeddedResource Include="Scripts\DeployAzureCloudService.ps1" />
-    <EmbeddedResource Include="Scripts\DeployAzureServiceFabricApplication.ps1" />
-    <EmbeddedResource Include="Scripts\SwapAzureCloudServiceDeployment.ps1" />
+    <EmbeddedResource Include="Scripts\*" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.Azure.Accounts\Calamari.Azure.Accounts.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Hyak.Common" Version="1.1.3" />
-    <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
-    <PackageReference Include="Microsoft.Azure.Common" Version="2.1.4" />
-    <PackageReference Include="Microsoft.Azure.Common.Dependencies" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Compute" Version="16.0.0" />
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="1.6.0-preview" />
-    <PackageReference Include="Microsoft.Azure.Management.Storage" Version="6.5.0-preview" />
-    <PackageReference Include="Microsoft.Azure.Management.Websites" Version="1.7.1-preview" />
+    <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.3.0-preview" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.10" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.10" />
-    <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
-    <PackageReference Include="Microsoft.Web.Deployment" Version="3.6.0" />
-    <PackageReference Include="Microsoft.WindowsAzure.Common" Version="1.4.1" />
-    <PackageReference Include="Microsoft.WindowsAzure.Common.Dependencies" Version="1.1.1" />
-    <PackageReference Include="Microsoft.WindowsAzure.ConfigurationManager" Version="1.8.0" />
-    <PackageReference Include="Microsoft.WindowsAzure.Management.Compute" Version="14.0.0" />
-    <PackageReference Include="Microsoft.WindowsAzure.Management.Storage" Version="6.0.1" />
-    <PackageReference Include="Microsoft.WindowsAzure.Management.WebSites" Version="5.0.0-prerelease" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <PackageReference Include="Octopus.Dependencies.AzureBinaries" Version="2.9.0" />
     <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.11.0" />
-    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
-    <PackageReference Include="WindowsAzure.Storage" Version="4.3.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System.Configuration.Install" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Net" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Net.Http.WebRequest" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
-    <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Calamari.Azure.exe.manifest">
