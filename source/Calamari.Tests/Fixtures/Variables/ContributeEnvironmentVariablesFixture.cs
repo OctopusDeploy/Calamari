@@ -10,7 +10,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    public class ContributeEnvironmentVariablesConventionFixture
+    public class ContributeEnvironmentVariablesFixture
     {
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
