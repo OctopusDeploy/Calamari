@@ -9,26 +9,11 @@ namespace Calamari.Integration.Scripting
     public class CombinedScriptEngine : IScriptEngine
     {
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
-    
-        /// <summary>
-        /// The original default constructor.
-        /// </summary>
-        public CombinedScriptEngine()
-        {
-            this.scriptWrapperHooks = Enumerable.Empty<IScriptWrapper>();
-        }
 
-        /// <summary>
-        /// The Autofac enriched constructor. Autofac will pick this constructor
-        /// because it is the constructor with the most parameters that can be
-        /// fulfilled by injection.
-        /// </summary>
-        /// <param name="scriptWrapperHooks">The collection of IScriptWrapper objects available in autofac</param>
         public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
-
 
         public ScriptSyntax[] GetSupportedTypes()
         {

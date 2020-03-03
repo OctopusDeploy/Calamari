@@ -1,24 +1,23 @@
-﻿using Calamari.Commands.Support;
+﻿using System.IO;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using System.IO;
 
-namespace Calamari.Tests.Commands
+namespace Calamari.Tests.Fixtures.Commands
 {
     /// <summary>
     /// A cut down command that runs a script without any journaling, variable substitution or
     /// other optional steps.
     /// </summary>
     [Command("run-test-script", Description = "Invokes a PowerShell or ScriptCS script")]
-    public class RunTestScript : Command
+    public class RunTestScriptCommand : Command
     {
         private string scriptFile;
         private readonly IVariables variables;
         private readonly CombinedScriptEngine scriptEngine;
 
-        public RunTestScript(
+        public RunTestScriptCommand(
             IVariables variables,
             CombinedScriptEngine scriptEngine)
         {
@@ -45,6 +44,6 @@ namespace Calamari.Tests.Commands
             }
 
             return result.ExitCode;
-        }       
+        }
     }
 }

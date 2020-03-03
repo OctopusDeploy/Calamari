@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 
-namespace Calamari.Tests.Hooks
+namespace Calamari.Tests.Fixtures.Commands
 {
     /// <summary>
     /// A mock script wrapper that we can use to track if it has been executed or not
@@ -14,6 +14,7 @@ namespace Calamari.Tests.Hooks
         /// This is how we know if this wrapper was called or not
         /// </summary>
         public static bool WasCalled { get; set; } = false;
+
         public int Priority => 1;
         public bool IsEnabled(ScriptSyntax scriptSyntax) => true;
         public IScriptWrapper NextWrapper { get; set; }

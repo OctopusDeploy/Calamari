@@ -1,24 +1,22 @@
 ﻿using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
-using Calamari.Modules;
 using Calamari.Util;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using Calamari.Commands;
-using Calamari.Deployment;
-using Calamari.Extensions;
+using Calamari.Deployment.Journal;
+using Calamari.HealthChecks;
+using Calamari.Hooks;
+using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Plumbing;
+using Calamari.Integration.Scripting;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using Calamari.Plumbing;
 using NuGet;
-using Octostache;
 
 namespace Calamari
 {
@@ -61,15 +59,29 @@ namespace Calamari
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var variables = VariablesFactory.Create(fileSystem, options);
-            
+
             var builder = new ContainerBuilder();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
             builder.RegisterInstance(variables).As<IVariables>();
-
+            builder.RegisterType<CombinedScriptEngine>().AsSelf().As<IScriptEngine>();
+            builder.RegisterType<LogWrapper>().As<ILog>().SingleInstance();
+            builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
+            builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
+            builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
+            
+           
             var assemblies = GetAllAssembliesToRegister(options).ToArray();
-
-            foreach (var assembly in assemblies)
-                builder.RegisterAssemblyModules(assembly);
+                
+            builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<IScriptWrapper>()
+                .Except<TerminalScriptWrapper>()
+                .As<IScriptWrapper>()
+                .SingleInstance();
+            
+            builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
+                .As<IDoesDeploymentTargetTypeHealthChecks>()
+                .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommand>()

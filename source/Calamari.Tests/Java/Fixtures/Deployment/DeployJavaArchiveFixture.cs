@@ -120,7 +120,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         protected void DeployPackage(string packageName)
         {
             var command = new DeployJavaArchiveCommand(
-                new CombinedScriptEngine(), 
+                new CombinedScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
                 Variables,
                 CalamariPhysicalFileSystem.GetPhysicalFileSystem()
             );
