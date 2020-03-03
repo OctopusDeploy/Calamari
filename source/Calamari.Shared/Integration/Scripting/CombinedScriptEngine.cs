@@ -7,7 +7,6 @@ using Calamari.Util;
 
 namespace Calamari.Integration.Scripting
 {
-    [RegisterMe]
     public class CombinedScriptEngine : IScriptEngine
     {
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;

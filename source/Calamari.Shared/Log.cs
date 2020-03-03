@@ -8,7 +8,6 @@ using Octostache;
 
 namespace Calamari
 {
-    [RegisterMe]
     public class LogWrapper : ILog
     {
         public void Verbose(string message)

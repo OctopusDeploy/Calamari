@@ -13,7 +13,6 @@ namespace Calamari.Integration.FileSystem
         void EnsureDiskHasEnoughFreeSpace(string directoryPath);
     }
 
-    [RegisterMe]    
     public class FreeSpaceChecker : IFreeSpaceChecker
     {
         readonly ICalamariFileSystem fileSystem;

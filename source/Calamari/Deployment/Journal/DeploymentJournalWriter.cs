@@ -6,7 +6,6 @@ using Calamari.Util;
 
 namespace Calamari.Deployment.Journal
 {
-    [RegisterMe]
     public class DeploymentJournalWriter : IDeploymentJournalWriter
     {
         private readonly ICalamariFileSystem fileSystem;

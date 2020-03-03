@@ -222,6 +222,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Fixtures\Nginx\Approved" />
+    <Folder Include="Hooks" />
   </ItemGroup>
   <!--
     In netcore 2.1.3, the framework stopped calculating package definitions automatically "for perf"

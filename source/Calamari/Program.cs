@@ -4,24 +4,19 @@ using Calamari.Integration.Proxies;
 using Calamari.Util;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using Calamari.Commands;
-using Calamari.Deployment;
-using Calamari.Extensions;
+using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
 using Calamari.Hooks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using Calamari.Plumbing;
 using NuGet;
-using Octostache;
 
 namespace Calamari
 {
@@ -68,14 +63,14 @@ namespace Calamari
             var builder = new ContainerBuilder();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
             builder.RegisterInstance(variables).As<IVariables>();
-            builder.RegisterType<CombinedScriptEngine>().AsSelf();
+            builder.RegisterType<CombinedScriptEngine>().AsSelf().As<IScriptEngine>();
+            builder.RegisterType<LogWrapper>().As<ILog>().SingleInstance();
+            builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
+            builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
+            builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
+            
            
             var assemblies = GetAllAssembliesToRegister(options).ToArray();
-
-            builder.RegisterAssemblyTypes(assemblies)
-                .Where(a => a.GetCustomAttribute<RegisterMeAttribute>() != null)
-                .AsImplementedInterfaces()
-                .SingleInstance();
                 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IScriptWrapper>()

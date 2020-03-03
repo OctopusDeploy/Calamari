@@ -1,13 +1,6 @@
-﻿using Autofac;
-using Calamari.Integration.Processes;
-using NUnit.Framework;
-using Octopus.CoreUtilities.Extensions;
-using System;
-using System.IO;
-using System.Reflection;
-using Calamari.Integration.FileSystem;
+﻿using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures
+namespace Calamari.Tests.Fixtures.Commands
 {
     [TestFixture]
     public class RunScriptTest
