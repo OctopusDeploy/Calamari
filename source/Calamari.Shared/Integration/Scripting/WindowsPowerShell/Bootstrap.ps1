@@ -514,6 +514,7 @@ function Decrypt-Variables($iv, $Encrypted)
 }
 
 function Initialize-ProxySettings() {
+	$octopusProxyUri = $null
 	$proxyUsername = $env:TentacleProxyUsername
 	$proxyPassword = $env:TentacleProxyPassword
 	$proxyHost = $env:TentacleProxyHost
