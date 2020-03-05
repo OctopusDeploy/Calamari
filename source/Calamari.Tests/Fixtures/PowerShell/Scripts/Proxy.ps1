@@ -3,10 +3,10 @@ Write-Host "HTTPS_PROXY:$env:HTTPS_PROXY"
 Write-Host "NO_PROXY:$env:NO_PROXY"
 
 $testUri = New-Object Uri("http://octopustesturl.com")
-$proxyUri = [System.Net.WebRequest]::DefaultWebProxy.GetProxy($testUri)
-if ($proxyUri.Host -ne "octopustesturl.com")
+$octopusProxyUri = [System.Net.WebRequest]::DefaultWebProxy.GetProxy($testUri)
+if ($octopusProxyUri.Host -ne "octopustesturl.com")
 {
-    Write-Host "WebRequest.DefaultProxy:$proxyUri"
+    Write-Host "WebRequest.DefaultProxy:$octopusProxyUri"
 }
 else
 {
