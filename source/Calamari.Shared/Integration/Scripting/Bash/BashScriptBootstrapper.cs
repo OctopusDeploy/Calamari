@@ -14,6 +14,7 @@ namespace Calamari.Integration.Scripting.Bash
     public class BashScriptBootstrapper
     {
         public const string WindowsNewLine = "\r\n";
+        public const string LinuxNewLine = "\n";
 
         private static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
@@ -38,12 +39,12 @@ namespace Calamari.Integration.Scripting.Bash
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("#### VariableDeclarations ####", string.Join(Environment.NewLine, GetVariableSwitchConditions(variables)));
+            builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(variables)));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
             {
-                writer.Write(builder.Replace(WindowsNewLine, Environment.NewLine));
+                writer.Write(builder.Replace(WindowsNewLine, LinuxNewLine));
                 writer.Flush();
             }
 
@@ -91,7 +92,7 @@ namespace Calamari.Integration.Scripting.Bash
         static void EnsureValidUnixFile(string scriptFilePath)
         {
             var text = File.ReadAllText(scriptFilePath);
-            text = text.Replace(WindowsNewLine, Environment.NewLine);
+            text = text.Replace(WindowsNewLine, LinuxNewLine);
             File.WriteAllText(scriptFilePath, text);
         }
 
@@ -103,7 +104,7 @@ namespace Calamari.Integration.Scripting.Bash
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
             {
-                writer.NewLine = Environment.NewLine;
+                writer.NewLine = LinuxNewLine;
                 writer.WriteLine("#!/bin/bash");
                 writer.WriteLine("source \"" + configurationFile.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("source \"" + script.File.Replace("\\", "\\\\") + "\" " + script.Parameters);

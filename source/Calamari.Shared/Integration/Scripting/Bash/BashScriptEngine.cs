@@ -22,7 +22,7 @@ namespace Calamari.Integration.Scripting.Bash
             yield return new ScriptExecution(
                 new CommandLineInvocation(
                     BashScriptBootstrapper.FindBashExecutable(),
-                    BashScriptBootstrapper.FormatCommandArguments(bootstrapFile), workingDirectory, environmentVars),
+                    BashScriptBootstrapper.FormatCommandArguments(Path.GetFileName(bootstrapFile)), workingDirectory, environmentVars),
                     otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile})
             );
         }
