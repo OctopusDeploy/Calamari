@@ -80,8 +80,11 @@ namespace Calamari.Integration.Scripting.Bash
 
         public static string FindBashExecutable()
         {
-            //TODO: Get this working on Non mono (windows path on cygwin)
-            //return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac) ? "/bin/bash" : @"C:\cygwin64\bin\bash.exe";
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                var systemFolder = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                return Path.Combine(systemFolder, "bash.exe");
+            } 
             return "bash";
         }
 
