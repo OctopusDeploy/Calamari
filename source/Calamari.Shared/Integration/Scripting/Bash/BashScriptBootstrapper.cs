@@ -106,8 +106,8 @@ namespace Calamari.Integration.Scripting.Bash
             {
                 writer.NewLine = LinuxNewLine;
                 writer.WriteLine("#!/bin/bash");
-                writer.WriteLine("source \"" + configurationFile.Replace("\\", "\\\\") + "\"");
-                writer.WriteLine("source \"" + script.File.Replace("\\", "\\\\") + "\" " + script.Parameters);
+                writer.WriteLine("source \"$(pwd)" + Path.GetFileName(configurationFile) + "\"");
+                writer.WriteLine("source \"$(pwd)" + Path.GetFileName(script.File) + "\" " + script.Parameters);
                 writer.Flush();
             }
 
