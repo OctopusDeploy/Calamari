@@ -15,6 +15,13 @@ namespace Calamari.Integration.Scripting
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
         
+        public ScriptSyntax[] GetSupportedTypes()	
+        {	
+            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };	
+
+            return scriptSyntaxesSupportedOnAllPlatforms.ToArray();	
+        }
+        
         public CommandResult Execute(
             Script script,
             IVariables variables,
