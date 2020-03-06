@@ -87,7 +87,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, string.Empty);
         }
 
-        void AssertCustomProxy(ProxySettings proxySettings, bool hasCredentials)
+        void AssertCustomProxy(IProxySettings proxySettings, bool hasCredentials)
         {
             var proxy = proxySettings.Should().BeOfType<UseCustomProxySettings>()
                 .Subject;
@@ -107,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             }
         }
 
-        static void AssertSystemProxySettings(ProxySettings proxySettings, bool hasCredentials)
+        static void AssertSystemProxySettings(IProxySettings proxySettings, bool hasCredentials)
         {
             var proxy = proxySettings.Should().BeOfType<UseSystemProxySettings>()
                 .Subject;
@@ -124,7 +124,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             }
         }
 
-        void AssertBypassProxy(ProxySettings proxySettings)
+        void AssertBypassProxy(IProxySettings proxySettings)
         {
             proxySettings.Should().BeOfType<BypassProxySettings>();
         }
