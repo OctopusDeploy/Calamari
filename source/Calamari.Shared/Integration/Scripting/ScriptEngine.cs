@@ -51,10 +51,13 @@ namespace Calamari.Integration.Scripting
                 }
                 finally
                 {
-                    foreach (var temporaryFile in execution.TemporaryFiles)
+                    if (variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
                     {
-                        var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-                        fileSystem.DeleteFile(temporaryFile, FailureOptions.IgnoreFailure);
+                        foreach (var temporaryFile in execution.TemporaryFiles)
+                        {
+                            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+                            fileSystem.DeleteFile(temporaryFile, FailureOptions.IgnoreFailure);
+                        }
                     }
                 }
             }
