@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Calamari.Commands;
+using Calamari.Deployment;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
 using Calamari.Hooks;
