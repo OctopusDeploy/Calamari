@@ -32,7 +32,7 @@ namespace Calamari.Integration.Scripting
                 .FirstOrDefault();
         }
 
-        public static ScriptSyntax FileNameToScriptType(string filename)
+        public static ScriptSyntax ToScriptType(this string filename)
         {
             var extension = Path.GetExtension(filename)?.TrimStart('.');
             var scriptTypeField = typeof(ScriptSyntax).GetFields()
