@@ -17,7 +17,7 @@ namespace Calamari.Integration.Scripting
         
         public ScriptSyntax[] GetSupportedTypes()	
         {	
-            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };	
+            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python, ScriptSyntax.Bash };	
 
             return scriptSyntaxesSupportedOnAllPlatforms.ToArray();	
         }
