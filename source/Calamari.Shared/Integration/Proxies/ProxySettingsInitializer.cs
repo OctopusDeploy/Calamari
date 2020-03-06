@@ -4,7 +4,7 @@ namespace Calamari.Integration.Proxies
 {
     public static class ProxySettingsInitializer
     {
-        public static ProxySettings GetProxySettingsFromEnvironment()
+        public static IProxySettings GetProxySettingsFromEnvironment()
         {
             var proxyUsername = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername);
             var proxyPassword = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword);
