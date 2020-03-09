@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Calamari.Commands;
+using Calamari.Deployment;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
 using Calamari.Hooks;
@@ -47,6 +48,9 @@ namespace Calamari
 
             var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
             Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+
+            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
+            ProxyInitializer.InitializeDefaultProxy();
 
             using (var container = BuildContainer(options).Build())
             {

@@ -1,20 +1,32 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using Octopus.CoreUtilities;
+
 namespace Calamari.Integration.Proxies
 {
-    public abstract class ProxySettings
+    public interface IProxySettings
     {
-        public abstract T Accept<T>(IProxySettingsVisitor<T> visitor);
+        Maybe<IWebProxy> CreateProxy();
+        IEnumerable<EnvironmentVariable> GenerateEnvironmentVariables();
     }
-    
-    public class BypassProxySettings : ProxySettings
+
+    public class BypassProxySettings : IProxySettings
     {
-        public override T Accept<T>(IProxySettingsVisitor<T> visitor)
+        public Maybe<IWebProxy> CreateProxy()
+            => new WebProxy().AsSome<IWebProxy>();
+
+        public IEnumerable<EnvironmentVariable> GenerateEnvironmentVariables()
         {
-            return visitor.Visit(this);
+            yield return new EnvironmentVariable(ProxyEnvironmentVariablesGenerator.NoProxyVariableName, "*");
         }
     }
 
-    public class UseSystemProxySettings : ProxySettings
+    public class UseSystemProxySettings : IProxySettings
     {
+        static readonly Uri TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
+
         public string Username { get; }
         public string Password { get; }
 
@@ -24,13 +36,34 @@ namespace Calamari.Integration.Proxies
             Password = password;
         }
 
-        public override T Accept<T>(IProxySettingsVisitor<T> visitor)
-        {
-            return visitor.Visit(this);
-        }
+        public Maybe<IWebProxy> CreateProxy()
+            => SystemWebProxyRetriever.GetSystemWebProxy()
+                .Select(proxy =>
+                {
+                    proxy.Credentials = string.IsNullOrWhiteSpace(Username)
+                        ? CredentialCache.DefaultNetworkCredentials
+                        : new NetworkCredential(Username, Password);
+
+                    return proxy;
+                });
+
+        public IEnumerable<EnvironmentVariable> GenerateEnvironmentVariables()
+            => SystemWebProxyRetriever.GetSystemWebProxy().SelectValueOr(
+                proxy =>
+                {
+                    var proxyUri = proxy.GetProxy(TestUri);
+
+                    return ProxyEnvironmentVariablesGenerator.GetProxyEnvironmentVariables(
+                        proxyUri.Host,
+                        proxyUri.Port,
+                        Username,
+                        Password);
+                },
+                Enumerable.Empty<EnvironmentVariable>()
+            );
     }
 
-    public class UseCustomProxySettings : ProxySettings
+    public class UseCustomProxySettings : IProxySettings
     {
         public string Host { get; }
         public int Port { get; }
@@ -45,16 +78,24 @@ namespace Calamari.Integration.Proxies
             Password = password;
         }
 
-        public override T Accept<T>(IProxySettingsVisitor<T> visitor)
+        public Maybe<IWebProxy> CreateProxy()
         {
-            return visitor.Visit(this);
-        }
-    }
+            var proxy = new WebProxy(new UriBuilder("http", Host, Port).Uri)
+            {
+                Credentials = string.IsNullOrWhiteSpace(Username)
+                    ? new NetworkCredential()
+                    : new NetworkCredential(Username, Password)
+            };
 
-    public interface IProxySettingsVisitor<T>
-    {
-        T Visit(BypassProxySettings proxySettings);
-        T Visit(UseSystemProxySettings proxySettings);
-        T Visit(UseCustomProxySettings proxySettings);
+            return proxy.AsSome<IWebProxy>();
+        }
+
+        public IEnumerable<EnvironmentVariable> GenerateEnvironmentVariables()
+            => ProxyEnvironmentVariablesGenerator.GetProxyEnvironmentVariables(
+                Host,
+                Port,
+                Username,
+                Password
+            );
     }
 }

@@ -515,12 +515,13 @@ function Decrypt-Variables($iv, $Encrypted)
 }
 
 function Initialize-ProxySettings() {
+	$octopusProxyUri = $null
 	$proxyUsername = $env:TentacleProxyUsername
 	$proxyPassword = $env:TentacleProxyPassword
 	$proxyHost = $env:TentacleProxyHost
 	[int]$proxyPort = $env:TentacleProxyPort
 	if (![string]::IsNullOrEmpty($proxyHost)) {
-		$proxyUri = New-Object Uri("http://${proxyHost}:$proxyPort")
+		$octopusProxyUri = New-Object Uri("http://${proxyHost}:$proxyPort")
 	}
 
 	$useDefaultProxy = $true
@@ -537,14 +538,14 @@ function Initialize-ProxySettings() {
 	if ($useDefaultProxy -and [string]::IsNullOrEmpty($proxyHost)) {
 		# Calamari ensure both http_proxy and HTTP_PROXY are set, so we don't need to worry about casing
 		if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-			$proxyUri = New-Object System.Uri($env:HTTP_PROXY)
+			$octopusProxyUri = New-Object System.Uri($env:HTTP_PROXY)
             
 			# The HTTP_PROXY env variable may also contain credentials.
 			# This is a common enough pattern, but we need to extract the credentials in order to use them
             
 			# But if credentials were explicitly provided, use those ones instead
 			if (-not $hasCredentials) {
-				$credentialsArray = $proxyUri.UserInfo.Split(":")
+				$credentialsArray = $octopusProxyUri.UserInfo.Split(":")
 				$hasCredentials = $credentialsArray.length -gt 1;
 				if ($hasCredentials) {
 					$proxyUsername = $credentialsArray[0];
@@ -556,7 +557,7 @@ function Initialize-ProxySettings() {
 
 	#custom proxy		
 	if ($useCustomProxy) {
-		$proxy = New-Object System.Net.WebProxy($proxyUri)
+		$proxy = New-Object System.Net.WebProxy($octopusProxyUri)
 
 		if ($hasCredentials) {
 			$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)			
@@ -569,7 +570,7 @@ function Initialize-ProxySettings() {
 		#system proxy		
 		if ($useDefaultProxy) {
 			# The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
-			if ($proxyUri -ne $null) {
+			if ($octopusProxyUri -ne $null) {
 				# isWindows was introduced in PSCore and is not available for standard PowerShell
 				if (-not (Test-Path variable:IsWindows) -or $isWindows){
 					$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
@@ -613,9 +614,9 @@ function Initialize-ProxySettings() {
 			# We don't use default parameter values in Windows PowerShell because this simplifies things, 
 			# and means that users could change this value globally by modifying just a single property
 			if ($useDefaultProxy -or $useCustomProxy) {
-				if ($proxyUri -ne $null) {
-					$PSDefaultParameterValues.Add("Invoke-WebRequest:Proxy", $proxyUri.ToString())
-					$PSDefaultParameterValues.Add("Invoke-RestMethod:Proxy", $proxyUri.ToString())
+				if ($octopusProxyUri -ne $null) {
+					$PSDefaultParameterValues.Add("Invoke-WebRequest:Proxy", $octopusProxyUri.ToString())
+					$PSDefaultParameterValues.Add("Invoke-RestMethod:Proxy", $octopusProxyUri.ToString())
 					if ($hasCredentials) {
 						$securePassword = ConvertTo-SecureString $proxyPassword -AsPlainText -Force
 						$credentials = New-Object System.Management.Automation.PSCredential -ArgumentList $proxyUsername, $securePassword

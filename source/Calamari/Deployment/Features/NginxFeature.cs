@@ -36,9 +36,23 @@ namespace Calamari.Deployment.Features
             var enabledBindings = GetEnabledBindings(variables).ToList();
             var sslCertificates = GetSslCertificates(enabledBindings, variables);
             var customNginxSslRoot = variables.Get(SpecialVariables.Action.Nginx.SslRoot);
+            /*
+             * Previous versions of the NGINX step did not expose the ability to define the file names of the configuration
+             * files, and instead used the Package ID. This meant that multi-tenanted deployments that shared the same
+             * package would overwrite each other when deployed to the same machine.
+             *
+             * To retain compatibility with existing deployments, the Package ID is still used as a default file name.
+             * But if the config name setting has been defined, that is used instead.
+             *
+             * See https://github.com/OctopusDeploy/Issues/issues/6216
+             */
+            var virtualServerName =
+                string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName))
+                    ? variables.Get(SpecialVariables.Package.PackageId)
+                    : variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName);
             
             nginxServer
-                .WithVirtualServerName(variables.Get(SpecialVariables.Package.PackageId))
+                .WithVirtualServerName(virtualServerName)
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))
                 .WithServerBindings(enabledBindings, sslCertificates, customNginxSslRoot)
                 .WithRootLocation(rootLocation)

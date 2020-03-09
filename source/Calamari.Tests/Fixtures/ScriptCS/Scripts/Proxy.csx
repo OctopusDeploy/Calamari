@@ -7,10 +7,10 @@ Console.WriteLine("NO_PROXY:"+Environment.GetEnvironmentVariable("NO_PROXY"));
 if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 {
     var testUri = new Uri("http://octopustesturl.com");
-    var proxyUri = System.Net.WebRequest.DefaultWebProxy.GetProxy(testUri);
-    if (proxyUri.Host != "octopustesturl.com")
+    var octopusProxyUri = System.Net.WebRequest.DefaultWebProxy.GetProxy(testUri);
+    if (octopusProxyUri.Host != "octopustesturl.com")
     {
-        Console.WriteLine("WebRequest.DefaultProxy:" + proxyUri);
+        Console.WriteLine("WebRequest.DefaultProxy:" + octopusProxyUri);
     }
     else
     {
