@@ -48,9 +48,9 @@ namespace Calamari.Tests.Fixtures.Conventions
             Assert.That(variables.Evaluate("My paths are #{env:PATH}"), Does.Contain("/usr/local/bin"));
         }
 
-        private VariableDictionary AddEnvironmentVariables()
+        private IVariables AddEnvironmentVariables()
         {
-            var variables = (CalamariVariables) new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem()).Create(new CommonOptions("test"));
+            var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem()).Create(new CommonOptions("test"));
 
             Assert.That(variables.GetNames().Count, Is.GreaterThan(3));
             Assert.That(variables.GetRaw(SpecialVariables.Tentacle.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));

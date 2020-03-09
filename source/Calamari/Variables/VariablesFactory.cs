@@ -64,7 +64,7 @@ namespace Calamari.Variables
                 {
                     var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
                     foreach (var variable in sensitiveVariables)
-                        variables.SetSensitive(variable.Key, variable.Value);
+                        variables.Set(variable.Key, variable.Value);
                 }
                 catch (JsonReaderException)
                 {
