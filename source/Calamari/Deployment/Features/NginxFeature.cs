@@ -14,6 +14,7 @@ namespace Calamari.Deployment.Features
 {
     public class NginxFeature : IFeature
     {
+        static readonly string[] RootLocations = { "= /", "/" };
         public string Name => "Octopus.Features.Nginx";
         public string DeploymentStage => DeploymentStages.AfterDeploy;
 
@@ -101,9 +102,12 @@ namespace Calamari.Deployment.Features
             var locationsString = variables.Get(SpecialVariables.Action.Nginx.Server.Locations);
             if(string.IsNullOrWhiteSpace(locationsString)) return (null, new List<Location>());
 
-            return TryParseJson<Location>(locationsString, out var locations)
-                ? (locations.FirstOrDefault(l => string.Equals("/", l.Path)), locations.Where(l => !string.Equals("/", l.Path)))
-                : (null, new List<Location>());
+            if (!TryParseJson<Location>(locationsString, out var locations))
+                throw new NginxMissingRootLocationException();
+
+            var rootLocation = locations.FirstOrDefault(l => RootLocations.Contains(l.Path));
+            if (rootLocation == null) throw new NginxMissingRootLocationException();
+            return (rootLocation, locations.Where(l => !string.Equals(rootLocation.Path, l.Path)));
         }
 
         static bool TryParseJson<T>(string json, out IEnumerable<T> items)
