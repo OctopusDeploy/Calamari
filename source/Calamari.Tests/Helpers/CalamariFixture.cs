@@ -91,7 +91,7 @@ namespace Calamari.Tests.Helpers
             var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptName);
             variables.Set(SpecialVariables.Action.Script.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
-            variables.Set(SpecialVariables.Action.Script.Syntax, ScriptTypeExtensions.FileNameToScriptType(scriptName).ToString());
+            variables.Set(SpecialVariables.Action.Script.Syntax, scriptName.ToScriptType().ToString());
             
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 
