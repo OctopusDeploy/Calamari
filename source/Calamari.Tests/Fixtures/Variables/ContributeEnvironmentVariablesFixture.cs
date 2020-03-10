@@ -1,13 +1,10 @@
 ﻿using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using NUnit.Framework;
-using Octostache;
 
-namespace Calamari.Tests.Fixtures.Conventions
+namespace Calamari.Tests.Fixtures.Variables
 {
     [TestFixture]
     public class ContributeEnvironmentVariablesFixture

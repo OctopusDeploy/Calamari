@@ -7,7 +7,6 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
-using SetProxy;
 
 namespace Calamari.Tests.Fixtures.Integration.Proxies
 {

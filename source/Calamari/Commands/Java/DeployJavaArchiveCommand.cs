@@ -16,7 +16,6 @@ using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Integration.Substitutions;
-using Calamari.Java.Deployment.Conventions;
 using Calamari.Variables;
 
 namespace Calamari.Commands.Java

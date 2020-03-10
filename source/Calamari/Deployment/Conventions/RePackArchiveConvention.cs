@@ -1,12 +1,9 @@
 ﻿using System.IO;
-using System.Text;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Java;
 
-namespace Calamari.Java.Deployment.Conventions
+namespace Calamari.Deployment.Conventions
 {
     public class RePackArchiveConvention : IInstallConvention
     {

@@ -2,7 +2,6 @@ using System;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
-using SetProxy;
 
 namespace Calamari.Tests.Fixtures.Integration.Proxies
 {
