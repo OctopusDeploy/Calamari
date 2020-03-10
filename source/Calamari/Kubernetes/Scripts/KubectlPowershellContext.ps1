@@ -35,6 +35,9 @@ $OctopusAzureADTenantId = $OctopusParameters["Octopus.Action.Azure.TenantId"]
 $OctopusAzureADClientId = $OctopusParameters["Octopus.Action.Azure.ClientId"]
 $OctopusAzureADPassword = $OctopusParameters["Octopus.Action.Azure.Password"]
 $OctopusAzureEnvironment = $OctopusParameters["Octopus.Action.Azure.Environment"]
+if ($null -eq $OctopusAzureEnvironment) {
+	$OctopusAzureEnvironment = "AzureCloud"
+}
 $OctopusDisableAzureCLI = $OctopusParameters["OctopusDisableAzureCLI"]
 
 function EnsureDirectoryExists([string] $path)
