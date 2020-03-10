@@ -243,8 +243,10 @@ private void DoPackage(string project, string framework, string version, string 
 
 private void SignAndTimestampBinaries(string outputDirectory)
 {
+    // When building locally signing isn't really necessary and it could take up to 3-4 minutes to sign all the binaries 
+    // as we build for many, many different runtimes so disabling it locally means quicker turn around when doing local development.    
     if (BuildSystem.IsLocalBuild) return;
-    
+
     Information($"Signing binaries in {outputDirectory}");
 
     // check that any unsigned libraries, that Octopus Deploy authors, get signed to play nice with security scanning tools
