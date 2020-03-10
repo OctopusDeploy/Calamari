@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0-beta0012"
+#tool "nuget:?package=GitVersion.CommandLine&version=5.2.0"
 #addin "nuget:?package=Cake.Incubator&version=5.0.1"
 
 using Path = System.IO.Path;
