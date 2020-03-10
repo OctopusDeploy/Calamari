@@ -243,6 +243,8 @@ private void DoPackage(string project, string framework, string version, string 
 
 private void SignAndTimestampBinaries(string outputDirectory)
 {
+    if (BuildSystem.IsLocalBuild) return;
+    
     Information($"Signing binaries in {outputDirectory}");
 
     // check that any unsigned libraries, that Octopus Deploy authors, get signed to play nice with security scanning tools
