@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Commands.Support;
@@ -7,13 +8,13 @@ namespace Calamari
     public class CommonOptions
     {
 
-        CommonOptions(string command)
+        internal CommonOptions(string command)
         {
             Command = command;
         }
 
         public string Command { get; }
-        public List<string> RemainingArguments { get; private set; }
+        public List<string> RemainingArguments { get; private set; } = new List<string>();
         public List<string> Extensions { get; } = new List<string>();
         public Variables InputVariables { get; } = new Variables();
 

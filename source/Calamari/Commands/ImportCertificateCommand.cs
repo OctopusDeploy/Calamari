@@ -25,9 +25,6 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            variables.EnrichWithEnvironmentVariables();
-            variables.LogVariables();
-
             ImportCertificate();
 
             return 0;

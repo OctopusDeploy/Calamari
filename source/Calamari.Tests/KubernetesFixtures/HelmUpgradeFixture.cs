@@ -26,7 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures
         static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
 
         ICalamariFileSystem FileSystem { get; set; }
-        protected CalamariVariables Variables { get; set; }
+        protected IVariables Variables { get; set; }
         string StagingDirectory { get; set; }
         protected static readonly string ReleaseName = "calamaritest-" + Guid.NewGuid().ToString("N").Substring(0, 6);
 
@@ -84,8 +84,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
             Environment.SetEnvironmentVariable("TentacleJournal",
                 Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
-            Variables = new CalamariVariables();
-            Variables.EnrichWithEnvironmentVariables();
+
+            Variables = new VariablesFactory(FileSystem).Create(new CommonOptions("test"));
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
 
             //Chart Pckage

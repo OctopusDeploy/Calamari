@@ -73,8 +73,6 @@ namespace Calamari.Commands.Java
 
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention(),
                 new AlreadyInstalledConvention(journal),
                 // If we are deploying the package exploded then extract directly to the application directory.
                 // Else, if we are going to re-pack, then we extract initially to a temporary directory 

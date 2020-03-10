@@ -64,7 +64,7 @@ namespace Calamari.Deployment
         public static readonly string CopyWorkingDirectoryIncludingKeyTo = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
         public static readonly string CalamariWorkingDirectory = "OctopusCalamariWorkingDirectory";
 
-        public const string AdditionalVariablesPath = Environment.Prefix + "Octopus.AdditionalVariablesPath";
+        public const string AdditionalVariablesPath = "Octopus.AdditionalVariablesPath";
         
         public static class Bootstrapper
         {

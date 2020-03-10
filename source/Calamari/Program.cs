@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Journal;
@@ -30,28 +31,7 @@ namespace Calamari
                 SecurityProtocols.EnableAllSecurityProtocols();
 
                 var options = CommonOptions.Parse(args);
-
-                Log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
-
-                if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
-                    return 0;
-
-                var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
-                Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
-
-                EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
-                ProxyInitializer.InitializeDefaultProxy();
-
-                using (var container = BuildContainer(options))
-                {
-                    var command = container.Resolve<ICommand[]>();
-                    if (command.Length == 0)
-                        throw new CommandException($"Could not find the command {options.Command}");
-                    if (command.Length > 1)
-                        throw new CommandException($"Multiple commands found with the name {options.Command}");
-
-                    return command[0].Execute(options.RemainingArguments.ToArray());
-                }
+                return new Program().Run(options);
             }
             catch (Exception ex)
             {
@@ -59,21 +39,48 @@ namespace Calamari
             }
         }
 
-        static IContainer BuildContainer(CommonOptions options)
+        internal int Run(CommonOptions options)
+        {
+            Log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
+
+            if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
+                return 0;
+
+            var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
+            Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+
+            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
+            ProxyInitializer.InitializeDefaultProxy();
+
+            using (var container = BuildContainer(options).Build())
+            {
+                container.Resolve<VariableLogger>().LogVariables();
+
+                var command = container.Resolve<ICommand[]>();
+                if (command.Length == 0)
+                    throw new CommandException($"Could not find the command {options.Command}");
+                if (command.Length > 1)
+                    throw new CommandException($"Multiple commands found with the name {options.Command}");
+
+                return command[0].Execute(options.RemainingArguments.ToArray());
+            }
+        }
+
+        protected virtual ContainerBuilder BuildContainer(CommonOptions options)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var variables = VariablesFactory.Create(fileSystem, options);
-
             var builder = new ContainerBuilder();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterInstance(variables).As<IVariables>();
+            builder.RegisterType<VariablesFactory>().AsSelf();
+            builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
             builder.RegisterType<CombinedScriptEngine>().AsSelf().As<IScriptEngine>();
+            builder.RegisterType<VariableLogger>().AsSelf();
             builder.RegisterType<LogWrapper>().As<ILog>().SingleInstance();
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             
-           
+            
             var assemblies = GetAllAssembliesToRegister(options).ToArray();
                 
             builder.RegisterAssemblyTypes(assemblies)
@@ -92,7 +99,7 @@ namespace Calamari
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .As<ICommand>();
 
-            return builder.Build();
+            return builder;
         }
 
         static IEnumerable<Assembly> GetAllAssembliesToRegister(CommonOptions options)
@@ -102,5 +109,6 @@ namespace Calamari
             foreach (var extension in options.Extensions)
                 yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
         }
+        
     }
 }
