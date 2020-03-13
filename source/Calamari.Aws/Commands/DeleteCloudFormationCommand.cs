@@ -44,8 +44,6 @@ namespace Calamari.Aws.Commands
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention(),
                 new DeleteCloudFormationStackConvention(environment, stackEventLogger, ClientFactory, StackProvider, waitForComplete)
             };
             

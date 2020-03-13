@@ -48,8 +48,6 @@ namespace Calamari.Azure.Commands
             
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),

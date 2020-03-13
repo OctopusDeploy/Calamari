@@ -52,8 +52,6 @@ namespace Calamari.Terraform
 
             var conventions = new List<IConvention>
             {
-                new ContributeEnvironmentVariablesConvention(),
-                new LogVariablesConvention(),
                 new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => packageFile != null),
                 new SubstituteInFilesConvention(fileSystem, substituter,
                     _ => true,

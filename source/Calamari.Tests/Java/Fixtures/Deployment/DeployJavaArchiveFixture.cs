@@ -41,8 +41,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(ApplicationDirectory, "DeploymentJournal.xml"));
 
-            Variables = new CalamariVariables();
-            Variables.EnrichWithEnvironmentVariables();
+            Variables = new VariablesFactory(FileSystem).Create(new CommonOptions("test"));
             Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, ApplicationDirectory);
         }
 

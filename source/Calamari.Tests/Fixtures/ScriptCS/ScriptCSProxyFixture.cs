@@ -6,7 +6,6 @@ using Calamari.Tests.Helpers;
 using Calamari.Util.Environments;
 using FluentAssertions;
 using NUnit.Framework;
-using SetProxy;
 
 namespace Calamari.Tests.Fixtures.ScriptCS
 {

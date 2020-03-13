@@ -31,6 +31,7 @@ namespace Calamari.Tests.Fixtures
         [Test]
         public void ProxyIsInitialized()
         {
+            var existingProxy = WebRequest.DefaultWebProxy;
             try
             {
                 EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", "localhost");
@@ -41,6 +42,7 @@ namespace Calamari.Tests.Fixtures
             }
             finally
             {
+                WebRequest.DefaultWebProxy = existingProxy;
                 EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", null);
             }
         }

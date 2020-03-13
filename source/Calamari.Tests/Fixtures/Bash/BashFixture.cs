@@ -9,7 +9,7 @@ namespace Calamari.Tests.Fixtures.Bash
     public class BashFixture : CalamariFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldPrintEncodedVariable()
         {
             var (output, _) = RunScript("print-encoded-variable.sh");
@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldPrintSensitiveVariable()
         {
             var (output, _) = RunScript("print-sensitive-variable.sh");
@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldCreateArtifact()
         {
             var (output, _) = RunScript("create-artifact.sh");
@@ -39,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldUpdateProgress()
         {
             var (output, _) = RunScript("update-progress.sh");
@@ -49,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>()
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -78,7 +78,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -90,7 +90,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldCallHelloWithNullVariable()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -101,7 +101,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldCallHelloWithNullSensitiveVariable()
         {
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
@@ -112,7 +112,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldNotFailOnStdErr()
         {
             var (output, _) = RunScript("stderr.sh");
@@ -122,8 +122,8 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
-        public void ShoulFailOnStdErrWithTreatScriptWarningsAsErrors()
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.sh", new Dictionary<string, string>()
                 {[SpecialVariables.Action.FailScriptOnErrorOutput] = "True"});
@@ -133,16 +133,7 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void ThrowsExceptionOnWindows()
-        {
-            var (output, _) = RunScript("print-encoded-variable.sh");
-
-            output.AssertErrorOutput("Bash scripts are not supported on this platform");
-        }
-
-        [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldSupportStrictVariableUnset()
         {
             var (output, _) = RunScript("strict-mode.sh");

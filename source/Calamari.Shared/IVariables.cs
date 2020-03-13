@@ -2,9 +2,8 @@ using System.Collections.Generic;
 
 namespace Calamari
 {
-    public interface IVariables
+    public interface IVariables : IEnumerable<KeyValuePair<string, string>>
     {
-        bool IsSensitive(string name);
         string GetEnvironmentExpandedPath(string variableName, string defaultValue = null);
         bool IsSet(string name);
         void Set(string name, string value);

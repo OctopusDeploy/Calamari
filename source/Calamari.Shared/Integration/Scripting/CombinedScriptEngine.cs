@@ -14,13 +14,14 @@ namespace Calamari.Integration.Scripting
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
+        
+        public ScriptSyntax[] GetSupportedTypes()	
+        {	
+            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };	
+            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python, ScriptSyntax.Bash };	
 
-        public ScriptSyntax[] GetSupportedTypes()
-        {
-            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };
-            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python };
-
-            return preferredScriptSyntax.Concat(scriptSyntaxesSupportedOnAllPlatforms).Distinct().ToArray();
+            //order is important, as we want to try the preferred syntax first
+            return preferredScriptSyntax.Concat(scriptSyntaxesSupportedOnAllPlatforms.Except(preferredScriptSyntax)).ToArray();
         }
         
         public CommandResult Execute(
@@ -29,11 +30,10 @@ namespace Calamari.Integration.Scripting
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
-            var syntax = ValidateScriptType(script);
+            var syntax = script.File.ToScriptType();
             return BuildWrapperChain(syntax, variables)
                 .ExecuteScript(script, syntax, commandLineRunner, environmentVars);
         }
-
 
         /// <summary>
         /// Script wrappers form a chain, with one wrapper calling the next, much like
@@ -74,15 +74,5 @@ namespace Calamari.Integration.Scripting
                      */ 
                     return next;
                 });
-                 
-        
-        private ScriptSyntax ValidateScriptType(Script script)
-        {
-            var type = ScriptTypeExtensions.FileNameToScriptType(script.File);
-            if (!GetSupportedTypes().Contains(type))
-                throw new CommandException($"{type} scripts are not supported on this platform");
-
-            return type;
-        }
     }
 }
