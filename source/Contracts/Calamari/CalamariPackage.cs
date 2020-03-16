@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Octopus.Sashimi.Contracts.Calamari
+﻿namespace Sashimi.Server.Contracts.Calamari
 {
     /// <summary>
     /// A package that provides Calamari to be used in the execution of an action.

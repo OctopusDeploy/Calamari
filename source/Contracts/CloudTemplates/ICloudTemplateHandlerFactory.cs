@@ -1,6 +1,4 @@
-using System;
-
-namespace Octopus.Sashimi.Contracts.CloudTemplates
+namespace Sashimi.Server.Contracts.CloudTemplates
 {
     public interface ICloudTemplateHandlerFactory
     {

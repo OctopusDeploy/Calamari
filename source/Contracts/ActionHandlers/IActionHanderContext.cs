@@ -1,11 +1,10 @@
-﻿using System;
-using Octopus.CoreUtilities;
+﻿using Octopus.CoreUtilities;
 using Octopus.Diagnostics;
-using Octopus.Sashimi.Contracts.Calamari;
-using Octopus.Sashimi.Contracts.CommandBuilders;
-using Octopus.Sashimi.Contracts.Variables;
+using Sashimi.Server.Contracts.Calamari;
+using Sashimi.Server.Contracts.CommandBuilders;
+using Sashimi.Server.Contracts.Variables;
 
-namespace Octopus.Sashimi.Contracts.ActionHandlers
+namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public interface IActionHanderContext
     {

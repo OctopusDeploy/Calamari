@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Octopus.Sashimi.Contracts.DeploymentTools
+namespace Sashimi.Server.Contracts.DeploymentTools
 {
     public class DeploymentToolPackage
     {

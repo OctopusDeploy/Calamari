@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Octopus.Sashimi.Contracts</RootNamespace>
+    <RootNamespace>Sashimi.Server.Contracts</RootNamespace>
     <TargetFramework>netstandard2.1</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\</OutputPath>
+    <AssemblyName>Sashimi.Server.Contracts</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

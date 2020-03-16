@@ -1,7 +1,6 @@
-using System;
 using FluentValidation;
 
-namespace Octopus.Sashimi.Contracts.ActionHandlers.Validation
+namespace Sashimi.Server.Contracts.ActionHandlers.Validation
 {
     /// <summary>
     /// This interface is used to add validation rules for deployment steps

@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
 
-namespace Octopus.Sashimi.Contracts.ActionHandlers
+namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public class ScriptOutputAction
     {

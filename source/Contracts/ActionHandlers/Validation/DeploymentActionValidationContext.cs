@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using Octopus.Server.Extensibility.HostServices.Model;
 
-namespace Octopus.Sashimi.Contracts.ActionHandlers.Validation
+namespace Sashimi.Server.Contracts.ActionHandlers.Validation
 {
     public class DeploymentActionValidationContext
     {

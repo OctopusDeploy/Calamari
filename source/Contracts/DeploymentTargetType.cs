@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Octopus.Sashimi.Contracts
+namespace Sashimi.Server.Contracts
 {
     public class DeploymentTargetType : IEquatable<DeploymentTargetType>
     {

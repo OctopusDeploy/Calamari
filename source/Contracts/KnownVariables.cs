@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Octopus.Sashimi.Contracts
+﻿namespace Sashimi.Server.Contracts
 {
     public static class KnownVariables
     {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Octopus.Sashimi.Contracts.Variables
+﻿namespace Sashimi.Server.Contracts.Variables
 {
     public interface IActionAndTargetScopedVariables : IImmutableVariableDictionary
     {

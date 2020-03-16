@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using Octopus.Sashimi.Contracts.ActionHandlers;
-using Octopus.Sashimi.Contracts.DeploymentTools;
+using Sashimi.Server.Contracts.ActionHandlers;
+using Sashimi.Server.Contracts.DeploymentTools;
 
-namespace Octopus.Sashimi.Contracts.CommandBuilders
+namespace Sashimi.Server.Contracts.CommandBuilders
 {
     /// <summary>
     /// Builds a command and passes it to the IExecutor for execution

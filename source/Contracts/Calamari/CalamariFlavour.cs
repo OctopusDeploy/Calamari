@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Octopus.Sashimi.Contracts.Calamari
+﻿namespace Sashimi.Server.Contracts.Calamari
 {
     public class CalamariFlavour
     {

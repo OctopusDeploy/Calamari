@@ -1,7 +1,6 @@
-﻿using System;
-using Octopus.CoreUtilities;
+﻿using Octopus.CoreUtilities;
 
-namespace Octopus.Sashimi.Contracts.DeploymentTools
+namespace Sashimi.Server.Contracts.DeploymentTools
 {
     public interface IDeploymentTool
     {

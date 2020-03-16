@@ -1,7 +1,6 @@
-using System;
 using Octopus.Server.Extensibility.Metadata;
 
-namespace Octopus.Sashimi.Contracts.CloudTemplates
+namespace Sashimi.Server.Contracts.CloudTemplates
 {
     public interface ICloudTemplateHandler
     {

@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Octopus.Sashimi.Contracts.Variables
+namespace Sashimi.Server.Contracts.Variables
 {
     public interface IImmutableVariableDictionary
     {

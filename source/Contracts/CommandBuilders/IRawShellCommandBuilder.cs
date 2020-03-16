@@ -1,7 +1,6 @@
-﻿using System;
-using Octopus.Sashimi.Contracts.ActionHandlers;
+﻿using Sashimi.Server.Contracts.ActionHandlers;
 
-namespace Octopus.Sashimi.Contracts.CommandBuilders
+namespace Sashimi.Server.Contracts.CommandBuilders
 {
     /// <summary>
     /// Command that is invoked directly on the target through an open connection.

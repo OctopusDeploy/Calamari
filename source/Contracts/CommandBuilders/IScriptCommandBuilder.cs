@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using Octopus.Sashimi.Contracts.ActionHandlers;
+using Sashimi.Server.Contracts.ActionHandlers;
 
-namespace Octopus.Sashimi.Contracts.CommandBuilders
+namespace Sashimi.Server.Contracts.CommandBuilders
 {
     /// <summary>
     /// Command that is invoked using default shell for that endpoint.

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Octopus.Sashimi.Contracts.ActionHandlers
+namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public class ServiceMessage
     {

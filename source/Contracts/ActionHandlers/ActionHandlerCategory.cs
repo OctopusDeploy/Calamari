@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Octopus.Sashimi.Contracts.ActionHandlers
+namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public class ActionHandlerCategory : IEquatable<ActionHandlerCategory>
     {

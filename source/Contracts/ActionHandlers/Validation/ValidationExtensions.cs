@@ -5,7 +5,7 @@ using FluentValidation;
 using Octopus.Server.Extensibility.HostServices.Model;
 using PropertiesDictionary = System.Collections.Generic.IReadOnlyDictionary<string, string>;  
 
-namespace Octopus.Sashimi.Contracts.ActionHandlers.Validation
+namespace Sashimi.Server.Contracts.ActionHandlers.Validation
 {
     public static class ValidationExtensions
     {
