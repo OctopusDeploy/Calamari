@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Sashimi.Tests.Shared</AssemblyName>
+    <RootNamespace>Sashimi.Tests.Shared</RootNamespace>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <OutputPath>bin\</OutputPath>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="Octostache" Version="2.7.0" />
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.20" />
+    <PackageReference Include="FluentAssertions" Version="4.15.0" />
+  </ItemGroup>
+
+</Project>

@@ -2,6 +2,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Server.Contracts", "Server.Contracts\Sashimi.Server.Contracts.csproj", "{59B028A9-5DD5-477F-9845-B0927D02E3CF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Terraform", "Terraform", "{06CB7580-EC1B-44C3-93BC-0F58E6582EA1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Terraform", "Sashimi.Terraform\Sashimi.Terraform.csproj", "{44851CEC-89D0-4D76-8BBA-2206308974D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Terraform.Tests", "Sashimi.Terraform.Tests\Sashimi.Terraform.Tests.csproj", "{C25C8D0B-7203-4BC4-A86F-7558FF890089}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Tests.Shared", "Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj", "{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +20,21 @@ Global
 		{59B028A9-5DD5-477F-9845-B0927D02E3CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59B028A9-5DD5-477F-9845-B0927D02E3CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{59B028A9-5DD5-477F-9845-B0927D02E3CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{44851CEC-89D0-4D76-8BBA-2206308974D1} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
+		{C25C8D0B-7203-4BC4-A86F-7558FF890089} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
 	EndGlobalSection
 EndGlobal

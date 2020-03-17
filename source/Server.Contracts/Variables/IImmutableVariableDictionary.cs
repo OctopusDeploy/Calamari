@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Sashimi.Server.Contracts.Variables
 {
@@ -9,7 +10,7 @@ namespace Sashimi.Server.Contracts.Variables
         string Get(string variableName, string? defaultValueIfUnset = null); // TODO: should this be GetIgnoringParseErrors?
         string GetRaw(string variableName);
         (string value, string errors) TryGet(string variableName);
-        T GetEnum<T>(string variableName, T @default);
+        T GetEnum<T>(string variableName, T @default) where T : Enum;
         string SaveAsString();
         string EvaluateIgnoringErrors(string expression);
         IList<string> GetStrings(string variableName, params char[] separators);

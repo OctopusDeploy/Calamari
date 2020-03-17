@@ -8,7 +8,7 @@
         string Id { get; }
         string Name { get; }
         string Description { get; }
-        string Keywords { get; }
+        string? Keywords { get; }
         bool ShowInStepTemplatePickerUI { get; }
         bool WhenInAChildStepRunInTheContextOfTheTargetMachine { get; }
         bool CanRunOnDeploymentTarget { get; }
