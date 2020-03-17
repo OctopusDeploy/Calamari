@@ -13,10 +13,10 @@ namespace Sashimi.Server.Contracts.CommandBuilders
     public interface IScriptCommandBuilder
     {
         IScriptCommandBuilder WithScript(ScriptSyntax syntax, string body);
-        IScriptCommandBuilder WithDataFile(string fileContents, string fileName = null);
-        IScriptCommandBuilder WithDataFileNoBom(string fileContents, string fileName = null);
-        IScriptCommandBuilder WithDataFile(byte[] fileContents, string fileName = null);
-        IScriptCommandBuilder WithDataFile(Stream fileContents, string fileName = null);
+        IScriptCommandBuilder WithDataFile(string fileContents, string? fileName = null);
+        IScriptCommandBuilder WithDataFileNoBom(string fileContents, string? fileName = null);
+        IScriptCommandBuilder WithDataFile(byte[] fileContents, string? fileName = null);
+        IScriptCommandBuilder WithDataFile(Stream fileContents, string? fileName = null);
         IScriptCommandBuilder WithIsolation(ExecutionIsolation executionIsolation);
         IScriptCommandBuilder WithIsolationTimeout(TimeSpan mutexTimeout);
         IActionHandlerResult Execute();

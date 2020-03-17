@@ -5,7 +5,7 @@
     /// </summary>
     public class CalamariPackage
     {
-        public CalamariPackage(CalamariFlavour flavour, string id, string executable, string launcher = null)
+        public CalamariPackage(CalamariFlavour flavour, string id, string executable, string? launcher = null)
         {
             Flavour = flavour;
             Id = id;
@@ -32,6 +32,6 @@
         /// Name of the launcher required for the Executable (eg `dotnet`, `mono`, `java`, etc) or
         /// null if the Executable can be run natively
         /// </summary>
-        public string Launcher { get; }
+        public string? Launcher { get; }
     }
 }

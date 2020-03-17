@@ -8,7 +8,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
     {
         readonly Dictionary<string, string> properties;
 
-        public ServiceMessage(string name, Dictionary<string, string> properties = null)
+        public ServiceMessage(string name, Dictionary<string, string>? properties = null)
         {
             this.Name = name;
             this.properties = properties ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -21,7 +21,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 
         public IDictionary<string, string> Properties => properties;
 
-        public string GetValue(string key)
+        public string? GetValue(string key)
         {
             return properties.TryGetValue(key, out var s) ? s : null;
         }
@@ -31,8 +31,8 @@ namespace Sashimi.Server.Contracts.ActionHandlers
             var sb = new StringBuilder();
             sb.Append("##octopus[").Append(Name);
 
-            foreach (var prop in properties)
-                sb.Append(" ").Append(prop.Key).Append("=\"").Append(EncodeValue(prop.Value)).Append("\"");
+            foreach (var (key, value) in properties)
+                sb.Append(" ").Append(key).Append("=\"").Append(EncodeValue(value)).Append("\"");
 
             sb.Append("]");
 

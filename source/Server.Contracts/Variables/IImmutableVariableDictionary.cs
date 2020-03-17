@@ -6,7 +6,7 @@ namespace Sashimi.Server.Contracts.Variables
     {
         int? GetInt32(string variableName);
         bool GetFlag(string variableName, bool defaultValueIfUnset = false);
-        string Get(string variableName, string defaultValueIfUnset = null); // TODO: should this be GetIgnoringParseErrors?
+        string Get(string variableName, string? defaultValueIfUnset = null); // TODO: should this be GetIgnoringParseErrors?
         string GetRaw(string variableName);
         (string value, string errors) TryGet(string variableName);
         T GetEnum<T>(string variableName, T @default);

@@ -4,8 +4,14 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public class ScriptOutputAction
     {
-        public string Name { get; set; }
+        public ScriptOutputAction(string name, IDictionary<string, string> properties)
+        {
+            Name = name;
+            Properties = properties;
+        }
 
-        public IDictionary<string, string> Properties { get; set; }
+        public string Name { get; }
+
+        public IDictionary<string, string> Properties { get; }
     }
 }

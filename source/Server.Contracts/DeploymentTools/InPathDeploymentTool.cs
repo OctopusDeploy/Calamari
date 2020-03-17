@@ -4,7 +4,7 @@ namespace Sashimi.Server.Contracts.DeploymentTools
 {
     public class InPathDeploymentTool : IDeploymentTool
     {
-        public InPathDeploymentTool(string id, string subFolder = null, string toolPathVariableToSet = null, string[] supportedPlatforms = null)
+        public InPathDeploymentTool(string id, string? subFolder = null, string? toolPathVariableToSet = null, string[]? supportedPlatforms = null)
         {
             Id = id;
             SubFolder = subFolder == null ? Maybe<string>.None : Maybe<string>.Some(subFolder);
