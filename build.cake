@@ -2,11 +2,10 @@
 // TOOLS
 //////////////////////////////////////////////////////////////////////
 #tool "nuget:?package=GitVersion.CommandLine&version=4.0.0"
+#addin "Cake.FileHelpers&version=3.2.0"
 
 using Path = System.IO.Path;
 using IO = System.IO;
-using Cake.Common.Tools;
-
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -16,26 +15,29 @@ var configuration = Argument("configuration", "Release");
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////
-var publishDir = "./publish";
+var artifactsDir = "./artifacts/";
 var localPackagesDir = "../LocalPackages";
-var artifactsDir = "./artifacts";
 
-var extensionName = "IssueTracker.Jira";
+GitVersion gitVersionInfo;
+string nugetVersion;
 
-var gitVersionInfo = GitVersion(new GitVersionSettings {
-    OutputType = GitVersionOutput.Json
-});
-
-var nugetVersion = gitVersionInfo.NuGetVersion;
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
 Setup(context =>
 {
+    gitVersionInfo = GitVersion(new GitVersionSettings {
+        OutputType = GitVersionOutput.Json
+    });
+
     if(BuildSystem.IsRunningOnTeamCity)
         BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
-    Information($"Building {extensionName} v{nugetVersion}");
+
+    nugetVersion = gitVersionInfo.NuGetVersion;
+
+    Information("Building Sashimi v{0}", nugetVersion);
+    Information("Informational Version {0}", gitVersionInfo.InformationalVersion);
 });
 
 Teardown(context =>
@@ -47,44 +49,36 @@ Teardown(context =>
 //  PRIVATE TASKS
 //////////////////////////////////////////////////////////////////////
 
-Task("__Default")
-    .IsDependentOn("__Clean")
-    .IsDependentOn("__Restore")
-    .IsDependentOn("__Build")
-    .IsDependentOn("__Test")
-    .IsDependentOn("__Pack")
-    .IsDependentOn("__CopyToLocalPackages");
-
-Task("__Clean")
+Task("Clean")
     .Does(() =>
 {
     CleanDirectory(artifactsDir);
-    CleanDirectory(publishDir);
     CleanDirectories("./source/**/bin");
     CleanDirectories("./source/**/obj");
+    CleanDirectories("./source/**/TestResults");
 });
 
-Task("__Restore")
-    .Does(() => DotNetCoreRestore("source", new DotNetCoreRestoreSettings
-    {
-        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
-    })
-);
+Task("Restore")
+    .IsDependentOn("Clean")
+    .Does(() => {
+        DotNetCoreRestore("source");
+    });
 
 
-Task("__Build")
+Task("Build")
+    .IsDependentOn("Restore")
+    .IsDependentOn("Clean")
     .Does(() =>
 {
     DotNetCoreBuild("./source", new DotNetCoreBuildSettings
     {
         Configuration = configuration,
-        NoRestore = true,
         ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
     });
 });
 
-Task("__Test")
-    .IsDependentOn("__Build")
+Task("Test")
+    .IsDependentOn("Build")
     .Does(() => {
 		var projects = GetFiles("./source/**/*Tests.csproj");
 		foreach(var project in projects)
@@ -95,32 +89,47 @@ Task("__Test")
 			});
     });
 
-Task("__Pack")
-    .Does(() => {
+
+Task("Pack")
+    .IsDependentOn("Build")
+    .Does(() =>
+{
+
         DotNetCorePack("source", new DotNetCorePackSettings
-        {
-            Configuration = configuration,
-            OutputDirectory = artifactsDir,
-            NoBuild = true,
-            ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
-        });
+    {
+        Configuration = configuration,
+        OutputDirectory = artifactsDir,
+        NoBuild = true,
+        IncludeSource = true,
+        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+    });
+
+    DeleteFiles(artifactsDir + "*symbols*");
 });
 
-
-Task("__CopyToLocalPackages")
+Task("CopyToLocalPackages")
+    .IsDependentOn("Pack")
     .WithCriteria(BuildSystem.IsLocalBuild)
-    .IsDependentOn("__Pack")
     .Does(() =>
 {
     CreateDirectory(localPackagesDir);
-    CopyFiles(Path.Combine(artifactsDir, $"*.{extensionName}.{nugetVersion}.nupkg"), localPackagesDir);
+    CopyFiles(Path.Combine(artifactsDir, $"Sashimi.*.{nugetVersion}.nupkg"), localPackagesDir);
 });
 
-//////////////////////////////////////////////////////////////////////
-// TASKS
-//////////////////////////////////////////////////////////////////////
+Task("Publish")
+    .IsDependentOn("Pack")
+    .WithCriteria(BuildSystem.IsRunningOnTeamCity)
+    .Does(() =>
+{
+	NuGetPush($"{artifactsDir}Sashimi.*.{nugetVersion}.nupkg", new NuGetPushSettings {
+		Source = "https://f.feedz.io/octopus-deploy/dependencies/nuget",
+		ApiKey = EnvironmentVariable("FeedzIoApiKey")
+	});
+});
+
 Task("Default")
-    .IsDependentOn("__Default");
+    .IsDependentOn("CopyToLocalPackages")
+    .IsDependentOn("Publish");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
