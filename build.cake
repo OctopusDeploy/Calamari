@@ -95,7 +95,7 @@ Task("Pack")
     .Does(() =>
 {
 
-        DotNetCorePack("source", new DotNetCorePackSettings
+    DotNetCorePack("source", new DotNetCorePackSettings
     {
         Configuration = configuration,
         OutputDirectory = artifactsDir,
@@ -121,10 +121,14 @@ Task("Publish")
     .WithCriteria(BuildSystem.IsRunningOnTeamCity)
     .Does(() =>
 {
-	NuGetPush($"{artifactsDir}Sashimi.*.{nugetVersion}.nupkg", new NuGetPushSettings {
-		Source = "https://f.feedz.io/octopus-deploy/dependencies/nuget",
-		ApiKey = EnvironmentVariable("FeedzIoApiKey")
-	});
+    var packages = GetFiles($"{artifactsDir}Sashimi.*.{nugetVersion}.nupkg");
+    foreach (var package in packages)
+    {
+        NuGetPush(package, new NuGetPushSettings {
+            Source = "https://f.feedz.io/octopus-deploy/dependencies/nuget",
+            ApiKey = EnvironmentVariable("FeedzIoApiKey")
+        });
+    } 
 });
 
 Task("Default")
