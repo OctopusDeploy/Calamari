@@ -108,7 +108,7 @@ Task("Pack")
 });
 
 Task("CopyToLocalPackages")
-    .IsDependentOn("Pack")
+    .IsDependentOn("Test")
     .WithCriteria(BuildSystem.IsLocalBuild)
     .Does(() =>
 {
@@ -117,7 +117,7 @@ Task("CopyToLocalPackages")
 });
 
 Task("Publish")
-    .IsDependentOn("Pack")
+    .IsDependentOn("Test")
     .WithCriteria(BuildSystem.IsRunningOnTeamCity)
     .Does(() =>
 {
