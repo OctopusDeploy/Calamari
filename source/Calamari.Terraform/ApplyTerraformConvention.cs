@@ -15,7 +15,7 @@ namespace Calamari.Terraform
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
+            using (var cli = new TerraformCliExecutor(fileSystem, deployment, environmentVariables))
             {
                 cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);

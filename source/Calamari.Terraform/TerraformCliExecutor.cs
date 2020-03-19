@@ -12,46 +12,37 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Terraform
 {
-    class TerraformCLIExecutor : IDisposable
+    class TerraformCliExecutor : IDisposable
     {
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly RunningDeployment deployment;
+        readonly ICalamariFileSystem fileSystem;
+        readonly RunningDeployment deployment;
+        readonly IVariables variables;
         readonly Dictionary<string, string> environmentVariables;
-        private Dictionary<string, string> defaultEnvironmentVariables;
-        private readonly string logPath;
-        readonly string crashLogPath;
-        
-        public TerraformCLIExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment,
+        Dictionary<string, string> defaultEnvironmentVariables;
+        readonly string templateDirectory;
+        readonly string logPath;
+
+        public TerraformCliExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment,
             Dictionary<string, string> environmentVariables)
         {
             this.fileSystem = fileSystem;
             this.deployment = deployment;
+            this.variables = deployment.Variables;
             this.environmentVariables = environmentVariables;
+            this.logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
 
-            var variables = deployment.Variables;
-            TemplateDirectory = variables.Get(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, deployment.CurrentDirectory);
-            Workspace = variables.Get(TerraformSpecialVariables.Action.Terraform.Workspace);
-            InitParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
-            ActionParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams);
-            TerraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable) ??
-                                  $"terraform{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : String.Empty)}";
-            AllowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
-            AttachLogFile = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AttachLogFile);
-            TerraformVariableFiles = GenerateVarFiles();
-            
-            logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
-            crashLogPath = Path.Combine(deployment.CurrentDirectory, "crash.log");
+            templateDirectory = variables.Get(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, deployment.CurrentDirectory);
 
-            if (!String.IsNullOrEmpty(TemplateDirectory))
+            if (!String.IsNullOrEmpty(templateDirectory))
             {
-                var templateDirectoryTemp = Path.Combine(deployment.CurrentDirectory, TemplateDirectory);
+                var templateDirectoryTemp = Path.Combine(deployment.CurrentDirectory, templateDirectory);
 
                 if (!Directory.Exists(templateDirectoryTemp))
                 {
-                    throw new Exception($"Directory {TemplateDirectory} does not exist.");
+                    throw new Exception($"Directory {templateDirectory} does not exist.");
                 }
 
-                TemplateDirectory = templateDirectoryTemp;
+                templateDirectory = templateDirectoryTemp;
             }
 
             InitializeTerraformEnvironmentVariables();
@@ -62,6 +53,8 @@ namespace Calamari.Terraform
 
             InitializeWorkspace();
         }
+
+        public string ActionParams => variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams);
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
@@ -87,13 +80,17 @@ namespace Calamari.Terraform
 
         public void Dispose()
         {
-            if (AttachLogFile)
+            var attachLogFile = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AttachLogFile);
+            if (attachLogFile)
             {
+                
+                var crashLogPath = Path.Combine(deployment.CurrentDirectory, "crash.log");
+
                 if (fileSystem.FileExists(logPath))
                 {
                     Log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
                 }
-                
+
                 //When terraform crashes, the information would be contained in the crash.log file. We should attach this since
                 //we don't want to blow that information away in case it provides something relevant https://www.terraform.io/docs/internals/debugging.html#interpreting-a-crash-log
                 if (fileSystem.FileExists(crashLogPath))
@@ -116,16 +113,19 @@ namespace Calamari.Terraform
                 environmentVar.MergeDictionaries(environmentVariables);
             }
 
-            var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                arguments, TemplateDirectory, environmentVar);
-            
+            var terraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable) ??
+                                      $"terraform{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : String.Empty)}";
+
+            var commandLineInvocation = new CommandLineInvocation(terraformExecutable,
+                arguments, templateDirectory, environmentVar);
+
             var commandOutput = new CaptureOutput(output ?? new ConsoleCommandOutput());
             var cmd = new CommandLineRunner(commandOutput);
-            
+
             Log.Info(commandLineInvocation.ToString());
-            
+
             var commandResult = cmd.Execute(commandLineInvocation);
-            
+
             result = String.Join("\n", commandOutput.Infos);
 
             return commandResult;
@@ -133,10 +133,13 @@ namespace Calamari.Terraform
 
         void InitializePlugins()
         {
+            var initParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
+            var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
+
             ExecuteCommandInternal(
-                $"init -no-color -get-plugins={AllowPluginDownloads.ToString().ToLower()} {InitParams}", out _).VerifySuccess();
+                $"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}", out _).VerifySuccess();
         }
-        
+
         void LogVersion()
         {
             ExecuteCommandInternal($"--version", out _)
@@ -145,21 +148,23 @@ namespace Calamari.Terraform
 
         void InitializeWorkspace()
         {
-            if (!String.IsNullOrWhiteSpace(Workspace))
+            var workspace = variables.Get(TerraformSpecialVariables.Action.Terraform.Workspace);
+
+            if (!String.IsNullOrWhiteSpace(workspace))
             {
                 ExecuteCommandInternal("workspace list", out var results).VerifySuccess();
-                
+
                 foreach (var line in results.Split('\n'))
                 {
                     var workspaceName = line.Trim('*', ' ');
-                    if (workspaceName.Equals(Workspace))
+                    if (workspaceName.Equals(workspace))
                     {
-                        ExecuteCommandInternal($"workspace select \"{Workspace}\"", out _).VerifySuccess();
+                        ExecuteCommandInternal($"workspace select \"{workspace}\"", out _).VerifySuccess();
                         return;
                     }
                 }
 
-                ExecuteCommandInternal($"workspace new \"{Workspace}\"", out _).VerifySuccess();
+                ExecuteCommandInternal($"workspace new \"{workspace}\"", out _).VerifySuccess();
             }
         }
 
@@ -171,6 +176,7 @@ namespace Calamari.Terraform
             {
                 this.decorated = decorated;
             }
+
             public List<string> Infos { get; } = new List<string>();
 
             public void WriteInfo(string line)
@@ -185,26 +191,11 @@ namespace Calamari.Terraform
             }
         }
 
-        public string TemplateDirectory { get; }
-
-        public string Workspace { get; }
-
-        public string InitParams { get; }
-
-        public string ActionParams { get; }
-
-        public string TerraformExecutable { get; }
-
-        public string TerraformVariableFiles { get; }
-
-        public bool AllowPluginDownloads { get; }
-
-        public bool AttachLogFile { get; }
 
         /// <summary>
         /// Create a list of -var-file arguments from the newline separated list of variable files 
         /// </summary>
-        string GenerateVarFiles() => 
+        public string TerraformVariableFiles =>
             deployment.Variables
                 .Get(TerraformSpecialVariables.Action.Terraform.VarFiles)
                 ?.Map(var => Regex.Split(var, "\r?\n"))
@@ -226,7 +217,7 @@ namespace Calamari.Terraform
 
             fileSystem.EnsureDirectoryExists(pluginsPath);
 
-            if(!string.IsNullOrEmpty(customPluginDir))
+            if (!string.IsNullOrEmpty(customPluginDir))
             {
                 fileSystem.CopyDirectory(customPluginDir, pluginsPath);
             }
