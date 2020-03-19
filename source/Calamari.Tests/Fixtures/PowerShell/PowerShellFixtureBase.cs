@@ -344,7 +344,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 [SpecialVariables.Machine.Name] = "App01"
             });
 
-            Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
+            Assert.AreEqual("World!", output.CapturedOutput.OutputVariables.Get("Octopus.Action[run-script].Output[App01].TestA"));
             AssertPowerShellEdition(output);
         }
 
