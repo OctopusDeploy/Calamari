@@ -35,30 +35,20 @@ namespace Calamari.Integration.Packages.Java
 
         public void CreateJar(string contentsDirectory, string targetJarPath)
         {
-            try
-            {
-                var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
-                var args = File.Exists(manifestPath)
-                    ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
-                    : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
+            var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
+            var args = File.Exists(manifestPath)
+                ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
+                : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
 
-                var createJarCommand = new CommandLineInvocation(JavaRuntime.CmdPath, args)
-                {
-                    WorkingDirectory = contentsDirectory
-                };
-                Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
-
-                /*
-                     All extraction messages should be verbose
-                 */
-                log.Info("##octopus[stdout-verbose]");
-                var result = commandLineRunner.Execute(createJarCommand);
-                result.VerifySuccess();
-            }
-            finally
+            var createJarCommand = new CommandLineInvocation(JavaRuntime.CmdPath, args)
             {
-                log.Info("##octopus[stdout-default]");
-            }
+                WorkingDirectory = contentsDirectory,
+                OutputAsVerbose = true
+            };
+            log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
+
+            var result = commandLineRunner.Execute(createJarCommand);
+            result.VerifySuccess();
         }
 
         /// <summary>
@@ -94,7 +84,7 @@ namespace Calamari.Integration.Packages.Java
                     OutputAsVerbose = true
                 };
 
-                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
+                log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
 
                 var result = commandLineRunner.Execute(extractJarCommand);
                 result.VerifySuccess();
@@ -103,10 +93,6 @@ namespace Calamari.Integration.Packages.Java
             {
                 log.Error($"Exception thrown while extracting a Java archive. {ex}");
                 throw;
-            }
-            finally
-            {
-                log.Error("##octopus[stdout-default]");
             }
 
             var count = -1;
@@ -117,7 +103,7 @@ namespace Calamari.Integration.Packages.Java
             }
             catch (Exception ex)
             {
-                Log.Verbose(
+                log.Verbose(
                     $"Unable to return extracted file count. Error while enumerating '{targetDirectory}':\n{ex.Message}");
             }
 
