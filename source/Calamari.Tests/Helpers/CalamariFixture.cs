@@ -47,7 +47,7 @@ namespace Calamari.Tests.Helpers
                 var exitCode = Program.Main(args);
 
                 variables = variables ?? new CalamariVariables();
-                var capture = new CaptureCommandOutput(variables);
+                var capture = new CaptureCommandOutput();
                 var sco = new SplitCommandOutput(
                     new ConsoleCommandOutput(false), 
                     new ServiceMessageCommandOutput(variables),
