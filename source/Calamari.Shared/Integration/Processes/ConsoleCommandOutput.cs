@@ -2,9 +2,19 @@
 {
     public class ConsoleCommandOutput : ICommandOutput
     {
+        readonly bool outputAsVerbose;
+
+        public ConsoleCommandOutput(bool outputAsVerbose)
+        {
+            this.outputAsVerbose = outputAsVerbose;
+        }
+
         public void WriteInfo(string line)
         {
-            Log.Info(line);
+            if(outputAsVerbose)
+                Log.Verbose(line);
+            else
+                Log.Info(line);
         }
 
         public void WriteError(string line)

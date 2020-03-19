@@ -15,16 +15,22 @@ namespace Calamari.Terraform
     class TerraformCLIExecutor : IDisposable
     {
         private readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
         private readonly RunningDeployment deployment;
         readonly Dictionary<string, string> environmentVariables;
         private Dictionary<string, string> defaultEnvironmentVariables;
         private readonly string logPath;
         readonly string crashLogPath;
-        
-        public TerraformCLIExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment,
-            Dictionary<string, string> environmentVariables)
+
+        public TerraformCLIExecutor(
+            ICalamariFileSystem fileSystem,
+            ICommandLineRunner commandLineRunner,
+            RunningDeployment deployment,
+            Dictionary<string, string> environmentVariables
+        )
         {
             this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
             this.deployment = deployment;
             this.environmentVariables = environmentVariables;
 
@@ -65,7 +71,7 @@ namespace Calamari.Terraform
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out _);
+            var commandResult = ExecuteCommandInternal(arguments, out _, true);
 
             commandResult.VerifySuccess();
             return commandResult;
@@ -73,14 +79,14 @@ namespace Calamari.Terraform
 
         public CommandResult ExecuteCommand(out string result, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result);
+            var commandResult = ExecuteCommandInternal(arguments, out result, true);
 
             return commandResult;
         }
 
-        public CommandResult ExecuteCommand(out string result, ICommandOutput output, params string[] arguments)
+        public CommandResult ExecuteCommand(out string result, bool outputToCalamariConsole, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result, output);
+            var commandResult = ExecuteCommandInternal(arguments, out result, outputToCalamariConsole);
 
             return commandResult;
         }
@@ -103,12 +109,7 @@ namespace Calamari.Terraform
             }
         }
 
-        static string ToSpaceSeparated(IEnumerable<string> items)
-        {
-            return string.Join(" ", items.Where(_ => !String.IsNullOrEmpty(_)));
-        }
-
-        CommandResult ExecuteCommandInternal(string arguments, out string result, ICommandOutput output = null)
+        CommandResult ExecuteCommandInternal(string[] arguments, out string result, bool outputToCalamariConsole)
         {
             var environmentVar = defaultEnvironmentVariables;
             if (environmentVariables != null)
@@ -116,17 +117,20 @@ namespace Calamari.Terraform
                 environmentVar.MergeDictionaries(environmentVariables);
             }
 
-            var commandLineInvocation = new CommandLineInvocation(TerraformExecutable,
-                arguments, TemplateDirectory, environmentVar);
-            
-            var commandOutput = new CaptureOutput(output ?? new ConsoleCommandOutput());
-            var cmd = new CommandLineRunner(commandOutput);
-            
+            var captureOutput = new CaptureOutput();
+            var commandLineInvocation = new CommandLineInvocation(TerraformExecutable, arguments)
+            {
+                WorkingDirectory = TemplateDirectory,
+                EnvironmentVars = environmentVar,
+                OutputToCalamariConsole = outputToCalamariConsole,
+                AdditionalOutput = captureOutput
+            };
+
             Log.Info(commandLineInvocation.ToString());
             
-            var commandResult = cmd.Execute(commandLineInvocation);
+            var commandResult = commandLineRunner.Execute(commandLineInvocation);
             
-            result = String.Join("\n", commandOutput.Infos);
+            result = String.Join("\n", captureOutput.Infos);
 
             return commandResult;
         }
@@ -134,12 +138,12 @@ namespace Calamari.Terraform
         void InitializePlugins()
         {
             ExecuteCommandInternal(
-                $"init -no-color -get-plugins={AllowPluginDownloads.ToString().ToLower()} {InitParams}", out _).VerifySuccess();
+                new[] {$"init -no-color -get-plugins={AllowPluginDownloads.ToString().ToLower()} {InitParams}"}, out _, true).VerifySuccess();
         }
         
         void LogVersion()
         {
-            ExecuteCommandInternal($"--version", out _)
+            ExecuteCommandInternal(new[] {$"--version"}, out _, true)
                 .VerifySuccess();
         }
 
@@ -147,41 +151,33 @@ namespace Calamari.Terraform
         {
             if (!String.IsNullOrWhiteSpace(Workspace))
             {
-                ExecuteCommandInternal("workspace list", out var results).VerifySuccess();
+                ExecuteCommandInternal(new[] {"workspace list"}, out var results, true).VerifySuccess();
                 
                 foreach (var line in results.Split('\n'))
                 {
                     var workspaceName = line.Trim('*', ' ');
                     if (workspaceName.Equals(Workspace))
                     {
-                        ExecuteCommandInternal($"workspace select \"{Workspace}\"", out _).VerifySuccess();
+                        ExecuteCommandInternal(new[] {$"workspace select \"{Workspace}\""}, out _, true).VerifySuccess();
                         return;
                     }
                 }
 
-                ExecuteCommandInternal($"workspace new \"{Workspace}\"", out _).VerifySuccess();
+                ExecuteCommandInternal(new[] {$"workspace new \"{Workspace}\""}, out _, true).VerifySuccess();
             }
         }
 
         class CaptureOutput : ICommandOutput
         {
-            readonly ICommandOutput decorated;
-
-            public CaptureOutput(ICommandOutput decorated)
-            {
-                this.decorated = decorated;
-            }
             public List<string> Infos { get; } = new List<string>();
 
             public void WriteInfo(string line)
             {
                 Infos.Add(line);
-                decorated.WriteInfo(line);
             }
 
             public void WriteError(string line)
             {
-                decorated.WriteError(line);
             }
         }
 

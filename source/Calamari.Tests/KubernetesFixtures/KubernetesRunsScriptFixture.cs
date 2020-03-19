@@ -80,11 +80,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName, IVariables variables)
         {
-            var capture = new CaptureCommandOutput();
-            var runner = new CommandLineRunner(capture);
+            var runner = new TestCommandLineRunner(variables);
             wrapper.NextWrapper = new TerminalScriptWrapper(new PowerShellScriptEngine(), variables);
             var result = wrapper.ExecuteScript(new Script(scriptName), ScriptSyntax.PowerShell, runner, new Dictionary<string, string>());
-            return new CalamariResult(result.ExitCode, capture);
+            return new CalamariResult(result.ExitCode, runner.Output);
         }
     }
 }

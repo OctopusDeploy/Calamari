@@ -19,11 +19,18 @@ namespace Calamari.Integration.Scripting.Bash
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory, variables);
 
+            var invocation = new CommandLineInvocation(
+                BashScriptBootstrapper.FindBashExecutable(),
+                BashScriptBootstrapper.FormatCommandArguments(Path.GetFileName(bootstrapFile))
+            )
+            {
+                WorkingDirectory = workingDirectory,
+                EnvironmentVars = environmentVars
+            };
+
             yield return new ScriptExecution(
-                new CommandLineInvocation(
-                    BashScriptBootstrapper.FindBashExecutable(),
-                    BashScriptBootstrapper.FormatCommandArguments(Path.GetFileName(bootstrapFile)), workingDirectory, environmentVars),
-                    otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile})
+                invocation,
+                otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile})
             );
         }
     }

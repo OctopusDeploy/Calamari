@@ -30,14 +30,16 @@ namespace Calamari.Commands
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
 
-        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
+        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -68,7 +70,6 @@ namespace Calamari.Commands
                 featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem));
             }
 
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 

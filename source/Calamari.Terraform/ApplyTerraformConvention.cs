@@ -1,28 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Util;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Terraform
 {
     public class ApplyTerraformConvention : TerraformConvention
     {
-        public ApplyTerraformConvention(ICalamariFileSystem fileSystem) : base(fileSystem)
+        readonly ICommandLineRunner commandLineRunner;
+
+        public ApplyTerraformConvention(ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner) : base(fileSystem)
         {
+            this.commandLineRunner = commandLineRunner;
         }
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            using (var cli = new TerraformCLIExecutor(fileSystem, deployment, environmentVariables))
+            using (var cli = new TerraformCLIExecutor(fileSystem, commandLineRunner, deployment, environmentVariables))
             {
                 cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);
 
                 // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.8
                 // Please note that we really don't want to log the following command output as it can contain sensitive variables etc. hence the IgnoreCommandOutput()
-                if (cli.ExecuteCommand(out var result, new IgnoreCommandOutput(), "output", "-no-color", "-json").ExitCode != 0)
+                if (cli.ExecuteCommand(out var result, false, "output", "-no-color", "-json").ExitCode != 0)
                 {
                     return;
                 }
