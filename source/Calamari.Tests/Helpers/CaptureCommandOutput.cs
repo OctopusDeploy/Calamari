@@ -9,14 +9,16 @@ namespace Calamari.Tests.Helpers
     //Ideally sourced directly from Octopus.Worker repo
     public class CaptureCommandOutput : ICommandOutput
     {
+        readonly IVariables variables;
         readonly List<string> all = new List<string>();
         readonly List<string> infos = new List<string>();
         readonly List<string> errors = new List<string>();
         readonly ServiceMessageParser serviceMessageParser;
         readonly IVariables outputVariables = new CalamariVariables();
 
-        public CaptureCommandOutput()
+        public CaptureCommandOutput(IVariables variables)
         {
+            this.variables = variables;
             serviceMessageParser = new ServiceMessageParser(ParseServiceMessage);
         }
 
@@ -58,7 +60,10 @@ namespace Calamari.Tests.Helpers
                     var variableValue = message.GetValue(ServiceMessageNames.SetVariable.ValueAttribute);
 
                     if (!string.IsNullOrWhiteSpace(variableName))
+                    {
                         outputVariables.Set(variableName, variableValue);
+                        variables.Set(variableName, variableValue);
+                    }
                     break;
                 case ServiceMessageNames.CalamariFoundPackage.Name:
                     CalamariFoundPackage = true;

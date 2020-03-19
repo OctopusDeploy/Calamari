@@ -8,7 +8,7 @@ namespace Calamari.Tests.Helpers
     {
         public TestCommandLineRunner(IVariables variables) : base(variables)
         {
-            Output = new CaptureCommandOutput();
+            Output = new CaptureCommandOutput(variables);
         }
 
         public CaptureCommandOutput Output { get; }
