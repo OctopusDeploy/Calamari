@@ -27,14 +27,16 @@ namespace Calamari.Commands
     public class DeployPackageCommand : Command
     {
         private string packageFile;
+        readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
 
-        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
+        public DeployPackageCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.fileSystem = fileSystem;
@@ -74,7 +76,7 @@ namespace Calamari.Commands
 
             var conventions = new List<IConvention>
             {
-                new AlreadyInstalledConvention(journal),
+                new AlreadyInstalledConvention(log, journal),
                 new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),

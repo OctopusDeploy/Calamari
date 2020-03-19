@@ -24,13 +24,15 @@ namespace Calamari.Azure.CloudServices.Commands
     public class DeployAzureCloudServiceCommand : Command
     {
         private string packageFile;
+        readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
 
-        public DeployAzureCloudServiceCommand(CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployAzureCloudServiceCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
         }
@@ -51,7 +53,7 @@ namespace Calamari.Azure.CloudServices.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var azurePackageUploader = new AzurePackageUploader();
+            var azurePackageUploader = new AzurePackageUploader(log);
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
@@ -67,7 +69,7 @@ namespace Calamari.Azure.CloudServices.Commands
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
                 new FindCloudServicePackageConvention(fileSystem),
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
-                new ExtractAzureCloudServicePackageConvention(fileSystem),
+                new ExtractAzureCloudServicePackageConvention(log, fileSystem),
                 new ChooseCloudServiceConfigurationFileConvention(fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),

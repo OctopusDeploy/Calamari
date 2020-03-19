@@ -41,19 +41,24 @@ namespace Calamari.Tests.Helpers
 
         protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
         {
-            using (var logs = new ProxyLog())
-            {
-                var args = command.GetRawArgs();
-                var exitCode = Program.Main(args);
+            var args = command.GetRawArgs();
+            var log = new InMemoryLog();
+            var program = new TestProgram(log);
+            var exitCode = program.Run(args);
 
-                var capture = new CaptureCommandOutput();
-                var sco = new SplitCommandOutput(
-                    new ConsoleCommandOutput(), 
-                    new ServiceMessageCommandOutput(variables ?? new CalamariVariables()),
-                    capture);
-                logs.Flush(sco);
-                return new CalamariResult(exitCode, capture);
-            }
+            var capture = new CaptureCommandOutput();
+            var sco = new SplitCommandOutput(
+                new ConsoleCommandOutput(), 
+                new ServiceMessageCommandOutput(variables ?? new CalamariVariables()),
+                capture);
+            
+            foreach(var line in log.StandardOut)
+                sco.WriteInfo(line);
+           
+            foreach(var line in log.StandardError)
+                sco.WriteError(line);
+            
+            return new CalamariResult(exitCode, capture);
         }
 
         protected CalamariResult Invoke(CommandLine command, IVariables variables = null)

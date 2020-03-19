@@ -17,7 +17,7 @@ namespace Calamari.Integration.Processes.Semaphores
         }
 
         public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder)
-            : this(name, lockTimeout, lockIo, processFinder, new LogWrapper())
+            : this(name, lockTimeout, lockIo, processFinder, ConsoleLog.Instance)
         {
         }
         public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder, ILog log)

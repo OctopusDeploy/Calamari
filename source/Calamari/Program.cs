@@ -24,6 +24,13 @@ namespace Calamari
 {
     public class Program
     {
+        readonly ILog log;
+
+        protected Program(ILog log)
+        {
+            this.log = log;
+        }
+        
         public static int Main(string[] args)
         {
             try
@@ -31,23 +38,23 @@ namespace Calamari
                 SecurityProtocols.EnableAllSecurityProtocols();
 
                 var options = CommonOptions.Parse(args);
-                return new Program().Run(options);
+                return new Program(ConsoleLog.Instance).Run(options);
             }
             catch (Exception ex)
             {
-                return ConsoleFormatter.PrintError(ex);
+                return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
             }
         }
 
         internal int Run(CommonOptions options)
         {
-            Log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
+            log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
 
             if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
                 return 0;
 
             var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
-            Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+            log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
             EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
             ProxyInitializer.InitializeDefaultProxy();
@@ -75,7 +82,7 @@ namespace Calamari
             builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
             builder.RegisterType<CombinedScriptEngine>().AsSelf().As<IScriptEngine>();
             builder.RegisterType<VariableLogger>().AsSelf();
-            builder.RegisterType<LogWrapper>().As<ILog>().SingleInstance();
+            builder.RegisterInstance(log).As<ILog>().SingleInstance();
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();

@@ -24,14 +24,16 @@ namespace Calamari.Commands.Java
     public class DeployJavaArchiveCommand : Command
     {
         string archiveFile;
+        readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
 
-        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
+        public DeployJavaArchiveCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
 
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.fileSystem = fileSystem;
@@ -72,7 +74,7 @@ namespace Calamari.Commands.Java
 
             var conventions = new List<IConvention>
             {
-                new AlreadyInstalledConvention(journal),
+                new AlreadyInstalledConvention(log, journal),
                 // If we are deploying the package exploded then extract directly to the application directory.
                 // Else, if we are going to re-pack, then we extract initially to a temporary directory 
                 deployExploded

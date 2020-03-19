@@ -17,7 +17,7 @@ namespace Calamari.Integration.ConfigurationTransforms
         public TransformFileLocator(ICalamariFileSystem fileSystem, ILog log = null)
         {
             this.fileSystem = fileSystem;
-            this.log = log ?? new LogWrapper();
+            this.log = log ?? ConsoleLog.Instance;
         }
 
         public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, RunningDeployment deployment)

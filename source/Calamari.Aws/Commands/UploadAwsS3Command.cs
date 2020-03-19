@@ -18,14 +18,20 @@ namespace Calamari.Aws.Commands
     [Command("upload-aws-s3", Description = "Uploads a package or package file(s) to an AWS s3 bucket")]
     public class UploadAwsS3Command : Command
     {
+        readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         private string packageFile;
         private string bucket;
         private string targetMode;
 
-        public UploadAwsS3Command(IVariables variables, ICalamariFileSystem fileSystem)
+        public UploadAwsS3Command(
+            ILog log,
+            IVariables variables, 
+            ICalamariFileSystem fileSystem
+            )
         {
+            this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
@@ -45,7 +51,7 @@ namespace Calamari.Aws.Commands
             if (!fileSystem.FileExists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
 
-            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
+            var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
             var substituter = new FileSubstituter(fileSystem);
             var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
@@ -57,6 +63,7 @@ namespace Calamari.Aws.Commands
                 new LogAwsUserInfoConvention(environment),
                 new CreateS3BucketConvention(environment, _ => bucket),
                 new UploadAwsS3Convention(
+                    log,
                     fileSystem,
                     environment,
                     bucket,

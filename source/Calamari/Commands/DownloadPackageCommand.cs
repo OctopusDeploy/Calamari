@@ -19,6 +19,7 @@ namespace Calamari.Commands
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
         string packageId;
         string packageVersion;
@@ -32,12 +33,18 @@ namespace Calamari.Commands
         private FeedType feedType = FeedType.NuGet;
         private VersionFormat versionFormat = VersionFormat.Semver;
 
-        public DownloadPackageCommand(CombinedScriptEngine scriptEngine, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem)
+        public DownloadPackageCommand(
+            CombinedScriptEngine scriptEngine, 
+            IFreeSpaceChecker freeSpaceChecker, 
+            IVariables variables, 
+            ICalamariFileSystem fileSystem,
+            ILog log)
         {
             this.scriptEngine = scriptEngine;
             this.freeSpaceChecker = freeSpaceChecker;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.log = log;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
             Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
@@ -91,7 +98,7 @@ namespace Calamari.Commands
 
                 var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
 
-                var pkg = new PackageDownloaderStrategy(scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner, variables).DownloadPackage(
+                var pkg = new PackageDownloaderStrategy(log, scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner, variables).DownloadPackage(
                     packageId,
                     version,
                     feedId,
@@ -102,15 +109,15 @@ namespace Calamari.Commands
                     parsedMaxDownloadAttempts,
                     parsedAttemptBackoff);
 
-                Log.VerboseFormat("Package {0} v{1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
-                Log.SetOutputVariable("StagedPackage.Hash", pkg.Hash);
-                Log.SetOutputVariable("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
-                Log.SetOutputVariable("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
+                log.VerboseFormat("Package {0} v{1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
+                log.SetOutputVariableButDoAddToVariables("StagedPackage.Hash", pkg.Hash);
+                log.SetOutputVariableButDoAddToVariables("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
+                log.SetOutputVariableButDoAddToVariables("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
             }
             catch (Exception ex)
             {
-                Log.ErrorFormat("Failed to download package {0} v{1} from feed: '{2}'", packageId, packageVersion, feedUri);
-                return ConsoleFormatter.PrintError(ex);
+                log.ErrorFormat("Failed to download package {0} v{1} from feed: '{2}'", packageId, packageVersion, feedUri);
+                return ConsoleFormatter.PrintError(log, ex);
             }
 
             return 0;

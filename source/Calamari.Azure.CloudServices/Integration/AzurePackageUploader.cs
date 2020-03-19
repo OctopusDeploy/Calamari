@@ -16,8 +16,14 @@ namespace Calamari.Azure.CloudServices.Integration
 {
     public class AzurePackageUploader : IAzurePackageUploader
     {
+        readonly ILog log;
         const string OctopusPackagesContainerName = "octopuspackages";
 
+        public AzurePackageUploader(ILog log)
+        {
+            this.log = log;
+        }
+        
         public Uri Upload(SubscriptionCloudCredentials credentials, string storageAccountName, string packageFile, string uploadedFileName, string storageEndpointSuffix, string serviceManagementEndpoint)
         {
             var cloudStorage =
@@ -37,18 +43,18 @@ namespace Calamari.Azure.CloudServices.Integration
             var packageBlob = GetUniqueBlobName(uploadedFileName, fileInfo, container);
             if (packageBlob.Exists())
             {
-                Log.VerboseFormat("A blob named {0} already exists with the same length, so it will be used instead of uploading the new package.",
+                log.VerboseFormat("A blob named {0} already exists with the same length, so it will be used instead of uploading the new package.",
                     packageBlob.Name);
                 return packageBlob.Uri;
             }
 
             UploadBlobInChunks(fileInfo, packageBlob, blobClient);
 
-            Log.Info("Package upload complete");
+            log.Info("Package upload complete");
             return packageBlob.Uri;
         }
 
-        static CloudBlockBlob GetUniqueBlobName(string uploadedFileName, FileInfo fileInfo, CloudBlobContainer container)
+        CloudBlockBlob GetUniqueBlobName(string uploadedFileName, FileInfo fileInfo, CloudBlobContainer container)
         {
             var length = fileInfo.Length;
             var packageBlob = Uniquifier.UniquifyUntil(
@@ -58,7 +64,7 @@ namespace Calamari.Azure.CloudServices.Integration
                 {
                     if (blob.Exists() && blob.Properties.Length != length)
                     {
-                        Log.Verbose("A blob named " + blob.Name + " already exists but has a different length.");
+                        log.Verbose("A blob named " + blob.Name + " already exists but has a different length.");
                         return true;
                     }
 
@@ -68,25 +74,25 @@ namespace Calamari.Azure.CloudServices.Integration
             return packageBlob;
         }
 
-        static void UploadBlobInChunks(FileInfo fileInfo, CloudBlockBlob packageBlob, CloudBlobClient blobClient)
+        void UploadBlobInChunks(FileInfo fileInfo, CloudBlockBlob packageBlob, CloudBlobClient blobClient)
         {
             var operationContext = new OperationContext();
             operationContext.ResponseReceived += delegate(object sender, RequestEventArgs args)
             {
                 var statusCode = (int) args.Response.StatusCode;
                 var statusDescription = args.Response.StatusDescription;
-                Log.Verbose("Uploading, response received: " + statusCode + " " + statusDescription);
+                log.Verbose("Uploading, response received: " + statusCode + " " + statusDescription);
                 if (statusCode >= 400)
                 {
-                    Log.Error("Error when uploading the package. Azure returned a HTTP status code of: " +
+                    log.Error("Error when uploading the package. Azure returned a HTTP status code of: " +
                               statusCode + " " + statusDescription);
-                    Log.Verbose("The upload will be retried");
+                    log.Verbose("The upload will be retried");
                 }
             };
 
             blobClient.SetServiceProperties(blobClient.GetServiceProperties(), operationContext: operationContext); 
 
-            Log.VerboseFormat("Uploading the package to blob storage. The package file is {0}.", fileInfo.Length.ToFileSizeString());
+            log.VerboseFormat("Uploading the package to blob storage. The package file is {0}.", fileInfo.Length.ToFileSizeString());
             
             using (var fileReader = fileInfo.OpenRead())
             {
@@ -114,15 +120,15 @@ namespace Calamari.Azure.CloudServices.Integration
 
                     uploadedSoFar += read;
 
-                    Log.ServiceMessages.Progress((int) ((uploadedSoFar * 100)/fileInfo.Length), "Uploading package to blob storage");
-                    Log.VerboseFormat("Uploading package to blob storage: {0} of {1}", uploadedSoFar.ToFileSizeString(), fileInfo.Length.ToFileSizeString());
+                    log.Progress((int) ((uploadedSoFar * 100)/fileInfo.Length), "Uploading package to blob storage");
+                    log.VerboseFormat("Uploading package to blob storage: {0} of {1}", uploadedSoFar.ToFileSizeString(), fileInfo.Length.ToFileSizeString());
                 }
             }
 
-            Log.Verbose("Upload complete");
+            log.Verbose("Upload complete");
         }
 
-        static string GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
+        string GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
         {
             using (var cloudClient = new StorageManagementClient(credentials, new Uri(serviceManagementEndpoint)))
             {

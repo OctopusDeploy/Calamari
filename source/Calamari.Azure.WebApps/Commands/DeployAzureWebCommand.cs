@@ -20,13 +20,15 @@ namespace Calamari.Azure.WebApps.Commands
     public class DeployAzureWebCommand : Command
     {
         private string packageFile;
+        readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
 
-        public DeployAzureWebCommand(CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployAzureWebCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
         }
@@ -62,8 +64,8 @@ namespace Calamari.Azure.WebApps.Commands
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new AzureWebAppConvention(),
-                new LogAzureWebAppDetails(),
+                new AzureWebAppConvention(log),
+                new LogAzureWebAppDetails(log),
                 new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };

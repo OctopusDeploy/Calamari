@@ -12,12 +12,14 @@ namespace Calamari.Azure.CloudServices.Commands
     [Command("extract-cspkg", Description = "Extracts an Azure cloud-service package (.cspkg)")]
     public class ExtractAzureCloudServicePackageCommand : Command
     {
+        readonly ILog log;
         readonly IVariables variables;
         private string packageFile;
         private string destinationDirectory;
 
-        public ExtractAzureCloudServicePackageCommand(IVariables variables)
+        public ExtractAzureCloudServicePackageCommand(ILog log, IVariables variables)
         {
+            this.log = log;
             this.variables = variables;
             Options.Add("cspkg=", "Path to the cloud-service package", v => packageFile = Path.GetFullPath(v));
             Options.Add("destination=", "Destination directory for extracted files", v => destinationDirectory = Path.GetFullPath(v));
@@ -40,7 +42,7 @@ namespace Calamari.Azure.CloudServices.Commands
             var conventions = new List<IConvention>
             {
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
-                new ExtractAzureCloudServicePackageConvention(fileSystem),
+                new ExtractAzureCloudServicePackageConvention(log, fileSystem),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

@@ -12,7 +12,7 @@ namespace Calamari.Integration.Processes.Semaphores
 
         public SystemSemaphoreManager()
         {
-            this.log = new LogWrapper();
+            this.log = ConsoleLog.Instance;
             this.initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
         }
 

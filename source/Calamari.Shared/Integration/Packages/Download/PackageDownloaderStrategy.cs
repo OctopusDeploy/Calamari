@@ -20,9 +20,18 @@ namespace Calamari.Integration.Packages.Download
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
+        readonly ILog log;
 
-        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner, IVariables variables)
+        public PackageDownloaderStrategy(
+            ILog log,
+            IScriptEngine engine,
+            ICalamariFileSystem fileSystem, 
+            IFreeSpaceChecker freeSpaceChecker, 
+            ICommandLineRunner commandLineRunner,
+            IVariables variables
+            )
         {
+            this.log = log;
             this.engine = engine;
             this.fileSystem = fileSystem;
             this.freeSpaceChecker = freeSpaceChecker;
@@ -51,7 +60,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new NuGetPackageDownloader(fileSystem, freeSpaceChecker);
                     break;
                 case FeedType.GitHub:
-                    downloader = new GitHubPackageDownloader(fileSystem, freeSpaceChecker);
+                    downloader = new GitHubPackageDownloader(log, fileSystem, freeSpaceChecker);
                     break;
                 case FeedType.Helm:
                     downloader = new HelmChartPackageDownloader(fileSystem);

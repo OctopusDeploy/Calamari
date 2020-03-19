@@ -6,10 +6,12 @@ namespace Calamari.Deployment.Conventions
 {
     public class AlreadyInstalledConvention : IInstallConvention
     {
+        readonly ILog log;
         readonly IDeploymentJournal journal;
 
-        public AlreadyInstalledConvention(IDeploymentJournal journal)
+        public AlreadyInstalledConvention(ILog log, IDeploymentJournal journal)
         {
+            this.log = log;
             this.journal = journal;
         }
 
@@ -30,13 +32,13 @@ namespace Calamari.Deployment.Conventions
 
             if (!previous.WasSuccessful)
             {
-                Log.Info("The previous attempt to deploy this package was not successful; re-deploying.");
+                log.Info("The previous attempt to deploy this package was not successful; re-deploying.");
             }
             else
             {
-                Log.Info("The package has already been installed on this machine, so installation will be skipped.");
-                Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, previous.ExtractedTo);
-                Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
+                log.Info("The package has already been installed on this machine, so installation will be skipped.");
+                log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.InstallationDirectoryPath, previous.ExtractedTo);
+                log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
                 deployment.Variables.Set(SpecialVariables.Action.SkipRemainingConventions, "true");
                 deployment.Variables.Set(SpecialVariables.Action.SkipJournal, "true");
             }

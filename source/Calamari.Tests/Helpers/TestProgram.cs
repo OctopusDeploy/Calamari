@@ -8,11 +8,22 @@ namespace Calamari.Tests.Helpers
 {
     class TestProgram : Program
     {
-        public InMemoryLog Log { get; } = new InMemoryLog();
+        public TestProgram(InMemoryLog log) : base(log)
+        {
+            Log = log;
+        }
+
+        public InMemoryLog Log { get; }
         public ICommand CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
-
+        
+        public int Run(string[] args)
+        {
+            var options = CommonOptions.Parse(args);
+            return Run(options);
+        }
+        
         public int RunStubCommand()
         {
             CommandOverride  = new StubCommand(() => StubWasCalled = true);

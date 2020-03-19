@@ -2,14 +2,25 @@
 {
     public class ConsoleCommandOutput : ICommandOutput
     {
+        readonly ILog log;
+
+        public ConsoleCommandOutput() : this(ConsoleLog.Instance)
+        {
+        }
+
+        public ConsoleCommandOutput(ILog log)
+        {
+            this.log = log;
+        }
+        
         public void WriteInfo(string line)
         {
-            Log.Info(line);
+            log.Info(line);
         }
 
         public void WriteError(string line)
         {
-            Log.Error(line);
+            log.Error(line);
         }
     }
 }

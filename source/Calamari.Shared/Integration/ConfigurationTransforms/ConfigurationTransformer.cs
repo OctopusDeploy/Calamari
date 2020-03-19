@@ -22,7 +22,7 @@ namespace Calamari.Integration.ConfigurationTransforms
         public ConfigurationTransformer(TransformLoggingOptions transformLoggingOptions, ILog log = null)
         {
             this.transformLoggingOptions = transformLoggingOptions;
-            calamariLog = log ?? new LogWrapper();
+            calamariLog = log ?? ConsoleLog.Instance;
         }
 
         public void PerformTransform(string configFile, string transformFile, string destinationFile)

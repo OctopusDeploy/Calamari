@@ -9,13 +9,13 @@ namespace Calamari.Terraform
 {
     public class ApplyTerraformConvention : TerraformConvention
     {
-        public ApplyTerraformConvention(ICalamariFileSystem fileSystem) : base(fileSystem)
+        public ApplyTerraformConvention(ILog log, ICalamariFileSystem fileSystem) : base(log, fileSystem)
         {
         }
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            using (var cli = new TerraformCliExecutor(fileSystem, deployment, environmentVariables))
+            using (var cli = new TerraformCliExecutor(Log, fileSystem, deployment, environmentVariables))
             {
                 cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);

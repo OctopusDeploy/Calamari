@@ -231,6 +231,7 @@ namespace Calamari.Tests.AWS
             using (new TemporaryFile(variablesFile))
             {
                 var command = new UploadAwsS3Command(
+                    new InMemoryLog(),
                     new CalamariVariables(),
                     CalamariPhysicalFileSystem.GetPhysicalFileSystem()
                 );

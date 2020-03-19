@@ -13,10 +13,12 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {
     public class ExtractAzureCloudServicePackageConvention : IInstallConvention
     {
+        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
 
-        public ExtractAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem)
+        public ExtractAzureCloudServicePackageConvention(ILog log, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
         }
 
@@ -26,7 +28,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
                 return;
 
             var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
-            Log.VerboseFormat("Extracting Cloud Service package: '{0}'", packagePath);
+            log.VerboseFormat("Extracting Cloud Service package: '{0}'", packagePath);
             using (var package = Package.Open(packagePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var manifest = AzureCloudServiceConventions.ReadPackageManifest(package);
@@ -41,7 +43,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.LogExtractedCspkg))
                 LogExtractedPackage(deployment.CurrentDirectory);
 
-            Log.SetOutputVariable(SpecialVariables.Action.Azure.PackageExtractionPath, deployment.CurrentDirectory, deployment.Variables);
+            log.SetOutputVariable(SpecialVariables.Action.Azure.PackageExtractionPath, deployment.CurrentDirectory, deployment.Variables);
         }
 
         void ExtractContents(Package package, PackageDefinition manifest, string contentNamePrefix, string workingDirectory)
@@ -100,8 +102,8 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
 
         void LogExtractedPackage(string workingDirectory)
         {
-            Log.Verbose("CSPKG extracted. Working directory contents:");
-            DirectoryLoggingHelper.LogDirectoryContents(fileSystem, workingDirectory, "", 0);
+            log.Verbose("CSPKG extracted. Working directory contents:");
+            DirectoryLoggingHelper.LogDirectoryContents(log, fileSystem, workingDirectory, "", 0);
         }
     }
 }

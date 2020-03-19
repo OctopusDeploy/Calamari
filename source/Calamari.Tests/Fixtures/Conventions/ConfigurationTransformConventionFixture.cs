@@ -22,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         ITransformFileLocator transformFileLocator;
         RunningDeployment deployment;
         IVariables variables;
-        ProxyLog logs;
+        InMemoryLog logs;
 
         [SetUp]
         public void SetUp()
@@ -38,13 +38,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
-            logs = new ProxyLog();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            logs.Dispose();
+            logs = new InMemoryLog();
         }
 
         [Test]
@@ -149,7 +143,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transform);
 
             CreateConvention().Install(deployment);
-            logs.AssertContains($"The transform pattern \"{transform}\" was not performed as no matching files could be found.");
+            logs.StandardOut.Should().Contain($"The transform pattern \"{transform}\" was not performed as no matching files could be found.");
         }
 
         [Test]
@@ -161,7 +155,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformA + Environment.NewLine + transformB);
 
             CreateConvention().Install(deployment);
-            logs.AssertContains($"The transform pattern \"{transformB}\" was not performed as it overlapped with another transform.");
+            logs.StandardOut.Should().Contain($"The transform pattern \"{transformB}\" was not performed as it overlapped with another transform.");
         }
 
         [Test]

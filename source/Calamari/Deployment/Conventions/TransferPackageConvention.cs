@@ -6,10 +6,12 @@ namespace Calamari.Deployment.Conventions
 {
     public class TransferPackageConvention :IInstallConvention
     {
+        readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
 
-        public TransferPackageConvention(ICalamariFileSystem fileSystem)
+        public TransferPackageConvention(ILog log, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
         }
 
@@ -22,15 +24,15 @@ namespace Calamari.Deployment.Conventions
 
             if (fileSystem.FileExists(filePath))
             {
-                Log.Info($"File {filePath} already exists so it will be attempted to be overwritten");
+                log.Info($"File {filePath} already exists so it will be attempted to be overwritten");
             }
 
             fileSystem.CopyFile(deployment.PackageFilePath, filePath);
 
-            Log.Info($"Copied package '{fileName}' to directory '{transferPath}'");
-            Log.SetOutputVariable(SpecialVariables.Package.Output.DirectoryPath, transferPath);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.FileName, fileName);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.FilePath, filePath);
+           log.Info($"Copied package '{fileName}' to directory '{transferPath}'");
+           log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.DirectoryPath, transferPath);
+           log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.FileName, fileName);
+           log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.FilePath, filePath);
         }
     }
 }

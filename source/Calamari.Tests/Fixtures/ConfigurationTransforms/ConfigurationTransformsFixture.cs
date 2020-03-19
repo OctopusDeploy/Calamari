@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         {
             log = new InMemoryLog();
             var variables = new CalamariVariables();
-            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            configurationTransformer = ConfigurationTransformer.FromVariables(variables);
         }
 
         [Test]
