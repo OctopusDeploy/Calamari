@@ -77,7 +77,7 @@ namespace Calamari.Aws.Commands
                 return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
             }
 
-            var stackEventLogger = new StackEventLogger(ConsoleLog.Instance);
+            var stackEventLogger = new StackEventLogger(log);
             
             var conventions = new List<IConvention>
             {

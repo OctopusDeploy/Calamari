@@ -36,7 +36,7 @@ namespace Calamari.Aws.Commands
             Options.Parse(commandLineArguments);
 
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
-            var stackEventLogger = new StackEventLogger(ConsoleLog.Instance);
+            var stackEventLogger = new StackEventLogger(log);
 
             IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
             StackArn StackProvider (RunningDeployment x) => new StackArn(x.Variables.Get(AwsSpecialVariables.CloudFormation.StackName));
