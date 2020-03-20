@@ -45,7 +45,7 @@ namespace Calamari.Integration.Processes
         /// <summary>
         /// Add a non-standard output destination for the execution output 
         /// </summary>
-        public ICommandOutput AdditionalOutput { get; set; } 
+        public ICommandInvocationOutputSink AdditionalInvocationOutputSink { get; set; } 
 
         /// <summary>
         /// The initial working-directory for the invocation.

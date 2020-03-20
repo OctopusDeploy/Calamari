@@ -117,13 +117,13 @@ namespace Calamari.Terraform
                 environmentVar.MergeDictionaries(environmentVariables);
             }
 
-            var captureOutput = new CaptureOutput();
+            var captureOutput = new CaptureInvocationOutputSink();
             var commandLineInvocation = new CommandLineInvocation(TerraformExecutable, arguments)
             {
                 WorkingDirectory = TemplateDirectory,
                 EnvironmentVars = environmentVar,
                 OutputToCalamariConsole = outputToCalamariConsole,
-                AdditionalOutput = captureOutput
+                AdditionalInvocationOutputSink = captureOutput
             };
 
             Log.Info(commandLineInvocation.ToString());
@@ -167,7 +167,7 @@ namespace Calamari.Terraform
             }
         }
 
-        class CaptureOutput : ICommandOutput
+        class CaptureInvocationOutputSink : ICommandInvocationOutputSink
         {
             public List<string> Infos { get; } = new List<string>();
 

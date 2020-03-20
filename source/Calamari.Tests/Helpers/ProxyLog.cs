@@ -36,7 +36,7 @@ namespace Calamari.Tests.Helpers
             Log.StdErr = new IndentedTextWriter(new StringWriter(interceptedErrWriter));
         }
 
-        public void Flush(ICommandOutput output)
+        public void Flush(ICommandInvocationOutputSink output)
         {
             using (var strReader = new StringReader(StdOut))
             {

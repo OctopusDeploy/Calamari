@@ -12,16 +12,16 @@ namespace Calamari.Tests.Helpers
         public TestCommandLineRunner(IVariables variables) : base(variables)
         {
             this.variables = variables;
-            Output = new CaptureCommandOutput();
+            Output = new CaptureCommandInvocationOutputSink();
         }
 
-        public CaptureCommandOutput Output { get; }
+        public CaptureCommandInvocationOutputSink Output { get; }
 
-        protected override List<ICommandOutput> GetCommandOutputs(CommandLineInvocation invocation)
-            => new List<ICommandOutput>()
+        protected override List<ICommandInvocationOutputSink> GetCommandOutputs(CommandLineInvocation invocation)
+            => new List<ICommandInvocationOutputSink>()
             {
                 Output,
-                new ServiceMessageCommandOutput(variables)
+                new ServiceMessageCommandInvocationOutputSink(variables)
             };
     }
 }

@@ -2,15 +2,15 @@
 
 namespace Calamari.Integration.Processes
 {
-    public class SplitCommandOutput : ICommandOutput
+    public class SplitCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
-        private readonly List<ICommandOutput> outputs;
+        private readonly List<ICommandInvocationOutputSink> outputs;
 
-        public SplitCommandOutput(params ICommandOutput[] outputs) : this(new List<ICommandOutput>(outputs))
+        public SplitCommandInvocationOutputSink(params ICommandInvocationOutputSink[] outputs) : this(new List<ICommandInvocationOutputSink>(outputs))
         {
         }
 
-        public SplitCommandOutput(List<ICommandOutput> outputs)
+        public SplitCommandInvocationOutputSink(List<ICommandInvocationOutputSink> outputs)
         {
             this.outputs = outputs;
         }

@@ -1,10 +1,10 @@
 ﻿namespace Calamari.Integration.Processes
 {
-    public class ConsoleCommandOutput : ICommandOutput
+    public class LogCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
         readonly bool outputAsVerbose;
 
-        public ConsoleCommandOutput(bool outputAsVerbose)
+        public LogCommandInvocationOutputSink(bool outputAsVerbose)
         {
             this.outputAsVerbose = outputAsVerbose;
         }

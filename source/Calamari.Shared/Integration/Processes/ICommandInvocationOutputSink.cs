@@ -1,6 +1,6 @@
 ﻿namespace Calamari.Integration.Processes
 {
-    public interface ICommandOutput
+    public interface ICommandInvocationOutputSink
     {
         void WriteInfo(string line);
         void WriteError(string line);

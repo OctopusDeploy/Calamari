@@ -18,7 +18,7 @@ namespace Calamari.Integration.Processes
 
         public CommandResult Execute(CommandLineInvocation invocation)
         {
-            var commandOutput = new SplitCommandOutput(GetCommandOutputs(invocation));
+            var commandOutput = new SplitCommandInvocationOutputSink(GetCommandOutputs(invocation));
 
             try
             {
@@ -56,18 +56,18 @@ namespace Calamari.Integration.Processes
             }
         }
 
-        protected virtual List<ICommandOutput> GetCommandOutputs(CommandLineInvocation invocation)
+        protected virtual List<ICommandInvocationOutputSink> GetCommandOutputs(CommandLineInvocation invocation)
         {
-            var outputs = new List<ICommandOutput>
+            var outputs = new List<ICommandInvocationOutputSink>
             {
-                new ServiceMessageCommandOutput(variables)
+                new ServiceMessageCommandInvocationOutputSink(variables)
             };
 
             if (invocation.OutputToCalamariConsole)
-                outputs.Add(new ConsoleCommandOutput(invocation.OutputAsVerbose));
+                outputs.Add(new LogCommandInvocationOutputSink(invocation.OutputAsVerbose));
 
-            if (invocation.AdditionalOutput != null)
-                outputs.Add(invocation.AdditionalOutput);
+            if (invocation.AdditionalInvocationOutputSink != null)
+                outputs.Add(invocation.AdditionalInvocationOutputSink);
 
             return outputs;
         }
