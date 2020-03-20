@@ -7,9 +7,11 @@ namespace Calamari.Integration.Packages.Java
 {
     public class JavaPackageExtractor : GenericPackageExtractor
     {
-         JarTool JarTool { get; }
-        public JavaPackageExtractor(JarTool jarTool)
+        readonly ILog log;
+        JarTool JarTool { get; }
+        public JavaPackageExtractor(ILog log, JarTool jarTool) : base(log)
         {
+            this.log = log;
             JarTool = jarTool;
         }
 

@@ -11,8 +11,14 @@ namespace Calamari.Integration.Packages
 {
     public class TarPackageExtractor : SimplePackageExtractor
     {
+        readonly ILog log;
         public override string[] Extensions { get { return new[] { ".tar" }; } }
 
+        public TarPackageExtractor(ILog log)
+        {
+            this.log = log;
+        }
+        
         public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
             var files = 0;
@@ -41,7 +47,7 @@ namespace Calamari.Integration.Packages
             return files;
         }
 
-        static void ExtractEntry(string directory, TarReader reader)
+        void ExtractEntry(string directory, TarReader reader)
         {
 #if NET40
             reader.WriteEntryToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink});
@@ -50,7 +56,7 @@ namespace Calamari.Integration.Packages
             Policy.Handle<IOException>().WaitAndRetry(
                     retryCount: extractAttempts,
                     sleepDurationProvider: i => TimeSpan.FromMilliseconds(50),
-                    onRetry: (ex, retry) => { Log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
+                    onRetry: (ex, retry) => { log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
                 .Execute(() =>
                 {
                     reader.WriteEntryToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink});
@@ -58,9 +64,9 @@ namespace Calamari.Integration.Packages
 #endif
         }
 
-        static void WriteSymbolicLink(string sourcepath, string targetpath)
+        void WriteSymbolicLink(string sourcepath, string targetpath)
         {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
+            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(log, sourcepath);
         }
 
 

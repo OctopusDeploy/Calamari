@@ -5,6 +5,10 @@ namespace Calamari.Integration.Packages
 {
     public class TarGzipPackageExtractor : TarPackageExtractor
     {
+        public TarGzipPackageExtractor(ILog log) : base(log)
+        {
+        }
+
         public override string[] Extensions { get { return new[] { ".tgz", ".tar.gz", ".tar.Z" }; } }
 
         protected override Stream GetCompressionStream(Stream stream)

@@ -55,7 +55,7 @@ namespace Calamari.Aws.Commands
             var substituter = new FileSubstituter(fileSystem);
             var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
-            var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            var packageExtractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
 
             var conventions = new List<IConvention>
             {

@@ -66,7 +66,7 @@ namespace Calamari.Azure.CloudServices.Commands
             var conventions = new List<IConvention>
             {
                 new SwapAzureDeploymentConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor(), fileSystem),
                 new FindCloudServicePackageConvention(fileSystem),
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
                 new ExtractAzureCloudServicePackageConvention(log, fileSystem),

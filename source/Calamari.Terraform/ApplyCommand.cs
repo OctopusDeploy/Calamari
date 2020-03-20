@@ -9,7 +9,7 @@ namespace Calamari.Terraform
     public class ApplyCommand : TerraformCommand
     {
         public ApplyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
-            : base(variables, fileSystem, new ApplyTerraformConvention(log, fileSystem))
+            : base(log, variables, fileSystem, new ApplyTerraformConvention(log, fileSystem))
         {
         }
     }

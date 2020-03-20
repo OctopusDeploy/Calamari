@@ -26,14 +26,22 @@ namespace Calamari.Kubernetes.Commands
     public class HelmUpgradeCommand : Command
     {
         private string packageFile;
+        readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
 
-        public HelmUpgradeCommand(CombinedScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
+        public HelmUpgradeCommand(
+            ILog log, 
+            CombinedScriptEngine scriptEngine, 
+            IDeploymentJournalWriter deploymentJournalWriter, 
+            IVariables variables, 
+            ICalamariFileSystem fileSystem
+            )
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
@@ -48,7 +56,7 @@ namespace Calamari.Kubernetes.Commands
                 throw new CommandException("Could not find package file: " + packageFile);
             var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var substituter = new FileSubstituter(fileSystem);
-            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            var extractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
             ValidateRequiredVariables();
             
             var conventions = new List<IConvention>

@@ -127,7 +127,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var log = new InMemoryLog();
             var fileName = GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, "1.0.0.0-symlink", "tar.gz"));
 
-            var extractor = new TarGzipPackageExtractor();
+            var extractor = new TarGzipPackageExtractor(ConsoleLog.Instance);
             var targetDir = GetTargetDir(typeof(TarGzipPackageExtractor), fileName);
 
             extractor.Extract(fileName, targetDir, true);

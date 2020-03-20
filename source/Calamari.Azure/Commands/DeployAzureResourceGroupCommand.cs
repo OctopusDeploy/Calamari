@@ -20,14 +20,16 @@ namespace Calamari.Azure.Commands
     [Command("deploy-azure-resource-group", Description = "Creates a new Azure Resource Group deployment")]
     public class DeployAzureResourceGroupCommand : Command
     {
+        readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
         private string packageFile;
         private string templateFile;
         private string templateParameterFile;
 
-        public DeployAzureResourceGroupCommand(CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployAzureResourceGroupCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables)
         {
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
@@ -48,7 +50,7 @@ namespace Calamari.Azure.Commands
             
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor(), fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),

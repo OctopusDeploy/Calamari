@@ -12,11 +12,13 @@ namespace Calamari.Commands
     [Command("extract-package-to-staging", Description = "Extracts a package into the staging area")]
     public class ExtractToStagingCommand : Command
     {
+        readonly ILog log;
         readonly IVariables variables;
         string packageFile;
 
-        public ExtractToStagingCommand(IVariables variables)
+        public ExtractToStagingCommand(ILog log, IVariables variables)
         {
+            this.log = log;
             this.variables = variables;
             Options.Add(
                 "package=", 
@@ -33,8 +35,8 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new ExtractPackageToStagingDirectoryConvention(
-                    new GenericPackageExtractorFactory()
-                        .createStandardGenericPackageExtractor(),
+                    new GenericPackageExtractorFactory(log)
+                        .CreateStandardGenericPackageExtractor(),
                     fileSystem,
                     null)
             };

@@ -45,7 +45,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(rawPackageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
 
-            var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(null);
+            var extractor = new GenericPackageExtractorFactory(log).CreateJavaGenericPackageExtractor(null);
             var packageStore = new PackageStore(extractor, fileSystem);
 
             if (!VersionFactory.TryCreateVersion(rawPackageVersion, out IVersion version, versionFormat))

@@ -6,6 +6,10 @@ namespace Calamari.Integration.Packages
 {
     public class TarBzipPackageExtractor : TarPackageExtractor
     {
+        public TarBzipPackageExtractor(ILog log) : base(log)
+        {
+        }
+
         public override string[] Extensions { get { return new[] { ".tar.bz2", ".tar.bz", ".tbz" }; } }
 
         protected override Stream GetCompressionStream(Stream stream)

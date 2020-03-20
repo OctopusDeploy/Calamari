@@ -9,13 +9,16 @@ namespace Calamari.Integration.Packages
 {
     public class GenericPackageExtractor : IGenericPackageExtractor
     {
+        readonly ILog log;
+
         private readonly List<IPackageExtractor> additionalExtractors =
             new List<IPackageExtractor>();
 
         private readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
 
-        public GenericPackageExtractor()
+        public GenericPackageExtractor(ILog log)
         {
+            this.log = log;
         }
 
         /// <summary>
@@ -23,8 +26,9 @@ namespace Calamari.Integration.Packages
         /// that should be considered after the generic list has been exhausted.
         /// </summary>
         /// <param name="additionalExtractors">A list of additional extractors that are to be considered when dealing with packages</param>
-        public GenericPackageExtractor(List<IPackageExtractor> additionalExtractors)
+        public GenericPackageExtractor(ILog log, List<IPackageExtractor> additionalExtractors)
         {
+            this.log = log;
             this.additionalExtractors.AddRange(additionalExtractors);
         }
 
@@ -62,9 +66,9 @@ namespace Calamari.Integration.Packages
                 "JAVA-DEPLOY-ERROR-0001"));
         }
 
-        internal static void WarnUnsupportedSymlinkExtraction(string path)
+        internal static void WarnUnsupportedSymlinkExtraction(ILog log, string path)
         {
-            Log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", path);
+            log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", path);
         }
 
         internal static void WarnIfScriptInSubFolder(string path)
@@ -89,12 +93,12 @@ namespace Calamari.Integration.Packages
         /// Order is important here since .tar.gz should be checked for before .gz
         protected virtual IList<IPackageExtractor> Extractors => new List<IPackageExtractor>
         {
-            new NupkgExtractor(),
-            new TarGzipPackageExtractor(),
-            new TarBzipPackageExtractor(),
+            new NupkgExtractor(log),
+            new TarGzipPackageExtractor(log),
+            new TarBzipPackageExtractor(log),
             //new TarLzwPackageExtractor(), // For some reason this doesnt currently work...
-            new ZipPackageExtractor(),
-            new TarPackageExtractor()
+            new ZipPackageExtractor(log),
+            new TarPackageExtractor(log)
         }.Concat(additionalExtractors).ToList();
 
         private IPackageExtractor FindByExtension(PackageFileNameMetadata packageFile)

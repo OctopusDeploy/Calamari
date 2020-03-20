@@ -8,7 +8,7 @@ namespace Calamari.Terraform
     public class DestroyCommand : TerraformCommand
     {
         public DestroyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
-            : base(variables, fileSystem, new DestroyTerraformConvention(log, fileSystem))
+            : base(log, variables, fileSystem, new DestroyTerraformConvention(log, fileSystem))
         {
         }
     }

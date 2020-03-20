@@ -77,7 +77,7 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new AlreadyInstalledConvention(log, journal),
-                new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToApplicationDirectoryConvention(new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor(), fileSystem),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
