@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock();
             lockIo.LockExists(Arg.Any<string>()).Returns(false);
             var result = semaphore.ShouldAquireLock(fileLock);
@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new OtherProcessHasExclusiveLockOnFileLock();
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             var result = semaphore.ShouldAquireLock(fileLock);
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new UnableToDeserialiseLockFile(DateTime.Now);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             var result = semaphore.ShouldAquireLock(fileLock);
@@ -67,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new MissingFileLock();
             //when we check for the lock file, it exists
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
@@ -81,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
@@ -121,7 +121,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var name = Guid.NewGuid().ToString();
             var processFinder = Substitute.For<IProcessFinder>();
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder);
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, new InMemoryLog());
             var fileLock = new FileLock { Timestamp = DateTime.Now.Ticks };
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             var result = semaphore.ShouldAquireLock(fileLock);
@@ -151,7 +151,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var name = Guid.NewGuid().ToString();
             var processFinder = Substitute.For<IProcessFinder>();
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder);
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, new InMemoryLog());
             //not setting processid/threadid, therefore its someone elses
             var fileLock = new FileLock { Timestamp = (DateTime.Now.Subtract(TimeSpan.FromMinutes(5))).Ticks };
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
@@ -170,7 +170,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var name = Guid.NewGuid().ToString();
             var processFinder = Substitute.For<IProcessFinder>();
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder);
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
@@ -190,7 +190,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
@@ -208,7 +208,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
@@ -227,7 +227,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
@@ -251,7 +251,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
@@ -274,7 +274,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
@@ -297,7 +297,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
-            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>());
+            var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new FileLock
             {
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
