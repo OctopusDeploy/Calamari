@@ -7,13 +7,16 @@ namespace Calamari.Deployment.Conventions
 {
     public class RePackArchiveConvention : IInstallConvention
     {
+        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly JarTool jarTool;
 
         public RePackArchiveConvention(
+            ILog log,
             ICalamariFileSystem fileSystem,
             JarTool jarTool)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
             this.jarTool = jarTool;
         }
@@ -62,7 +65,7 @@ namespace Calamari.Deployment.Conventions
             var stagingDirectory = deployment.CurrentDirectory;
 
             jarTool.CreateJar(stagingDirectory, targetFilePath);
-            Log.Info($"Re-packaging archive: '{targetFilePath}'");
+            log.Info($"Re-packaging archive: '{targetFilePath}'");
 
             return targetFilePath;
         }

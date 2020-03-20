@@ -52,7 +52,7 @@ namespace Calamari.Aws.Commands
                 throw new CommandException("Could not find package file: " + packageFile);
 
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
-            var substituter = new FileSubstituter(fileSystem);
+            var substituter = new FileSubstituter(log, fileSystem);
             var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
             var packageExtractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
