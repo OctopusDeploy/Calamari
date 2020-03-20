@@ -323,7 +323,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private ConfigurationTransformsConvention CreateConvention()
         {
-            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator);
+            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator, logs);
         }
 
         private void AssertTransformRun(string configFile, string transformFile)

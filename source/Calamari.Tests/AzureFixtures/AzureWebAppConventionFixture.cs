@@ -34,7 +34,7 @@ namespace Calamari.Tests.AzureFixtures
             {
             }
 
-            log.StandardOut.Should().Contain("Use of Management Certificates to deploy Azure Web App services has been deprecated");
+            log.StandardOut.Should().ContainMatch("Use of Management Certificates to deploy Azure Web App services has been deprecated*");
         }
 
         [Test]
