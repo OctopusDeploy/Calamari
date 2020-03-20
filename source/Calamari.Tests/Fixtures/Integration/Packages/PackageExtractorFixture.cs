@@ -26,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var fileName = GetFileName(extension);
             var timeBeforeExtraction = DateTime.Now.AddSeconds(-1);
 
-            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType);
+            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractorType, fileName);
 
             var filesExtracted = extractor.Extract(fileName, targetDir, true);
@@ -54,7 +54,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var fileName = GetFileName(extension);
 
-            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType);
+            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractorType, fileName);
 
             extractor.Extract(fileName, targetDir, true);
@@ -75,7 +75,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var fileName = GetFileName(extension);
 
-            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType);
+            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractorType, fileName);
 
             extractor.Extract(fileName, targetDir, true);
@@ -93,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var fileName = GetFileName(extension);
 
-            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType);
+            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractorType, fileName);
 
             extractor.Extract(fileName, targetDir, true);
@@ -112,7 +112,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var fileName = GetFileName(extension);
 
-            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType);
+            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractorType, fileName);
 
             extractor.Extract(fileName, targetDir, true);
@@ -127,7 +127,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var log = new InMemoryLog();
             var fileName = GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, "1.0.0.0-symlink", "tar.gz"));
 
-            var extractor = new TarGzipPackageExtractor(ConsoleLog.Instance);
+            var extractor = new TarGzipPackageExtractor(log);
             var targetDir = GetTargetDir(typeof(TarGzipPackageExtractor), fileName);
 
             extractor.Extract(fileName, targetDir, true);
@@ -138,7 +138,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var symlink = Path.Combine(targetDir, "octopus-sample", "link-to-sample");
             Assert.That(File.Exists(symlink), Is.False, $"Symbolic link exists, please update this test.");
 
-            log.StandardOut.Should().Contain("Cannot create symbolic link");
+            log.StandardOut.Should().ContainMatch("Cannot create symbolic link*");
         }
 
         private string GetFileName(string extension)
