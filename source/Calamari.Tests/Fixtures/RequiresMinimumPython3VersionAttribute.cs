@@ -47,7 +47,7 @@ namespace Calamari.Tests.Fixtures
         {
             var executable = PythonBootstrapper.FindPythonExecutable();
             var command = new CommandLine(executable).Argument("--version");
-            var runner = new TestCommandLineRunner(new CalamariVariables());
+            var runner = new TestCommandLineRunner(new InMemoryLog(), new CalamariVariables());
             var result = runner.Execute(command.Build());
             if (result.ExitCode != 0)
                 return Maybe<Version>.None;

@@ -9,10 +9,12 @@ namespace Calamari.Integration.Processes
 {
     public class CommandLineRunner : ICommandLineRunner
     {
+        readonly ILog log;
         readonly IVariables variables;
 
-        public CommandLineRunner(IVariables variables)
+        public CommandLineRunner(ILog log, IVariables variables)
         {
+            this.log = log;
             this.variables = variables;
         }
 
@@ -63,8 +65,8 @@ namespace Calamari.Integration.Processes
                 new ServiceMessageCommandInvocationOutputSink(variables)
             };
 
-                outputs.Add(new LogCommandInvocationOutputSink(invocation.OutputAsVerbose));
             if (invocation.OutputToLog)
+                outputs.Add(new LogCommandInvocationOutputSink(log, invocation.OutputAsVerbose));
 
             if (invocation.AdditionalInvocationOutputSink != null)
                 outputs.Add(invocation.AdditionalInvocationOutputSink);

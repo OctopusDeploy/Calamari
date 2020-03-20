@@ -107,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         DockerImagePackageDownloader GetDownloader()
         {
-            var runner = new CommandLineRunner(new CalamariVariables());
+            var runner = new CommandLineRunner(new LogWrapper(), new CalamariVariables());
             return new DockerImagePackageDownloader(new CombinedScriptEngine(Enumerable.Empty<IScriptWrapper>()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables());
         }
         

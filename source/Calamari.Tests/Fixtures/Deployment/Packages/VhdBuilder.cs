@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
         private static CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariables variables)
         {
-            var runner = new TestCommandLineRunner(variables);
+            var runner = new TestCommandLineRunner(new LogWrapper(), variables);
             var result = psse.Execute(new Script(scriptName), variables, runner);
             return new CalamariResult(result.ExitCode, runner.Output);
         }

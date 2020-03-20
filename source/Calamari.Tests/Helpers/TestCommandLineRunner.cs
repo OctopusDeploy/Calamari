@@ -9,7 +9,7 @@ namespace Calamari.Tests.Helpers
     {
         readonly IVariables variables;
 
-        public TestCommandLineRunner(IVariables variables) : base(variables)
+        public TestCommandLineRunner(ILog log, IVariables variables) : base(log, variables)
         {
             this.variables = variables;
             Output = new CaptureCommandInvocationOutputSink();

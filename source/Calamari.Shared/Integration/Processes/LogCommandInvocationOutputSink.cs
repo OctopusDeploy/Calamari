@@ -2,24 +2,26 @@
 {
     public class LogCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
+        readonly ILog log;
         readonly bool outputAsVerbose;
 
-        public LogCommandInvocationOutputSink(bool outputAsVerbose)
+        public LogCommandInvocationOutputSink(ILog log, bool outputAsVerbose)
         {
+            this.log = log;
             this.outputAsVerbose = outputAsVerbose;
         }
 
         public void WriteInfo(string line)
         {
             if(outputAsVerbose)
-                Log.Verbose(line);
+                log.Verbose(line);
             else
-                Log.Info(line);
+                log.Info(line);
         }
 
         public void WriteError(string line)
         {
-            Log.Error(line);
+            log.Error(line);
         }
     }
 }

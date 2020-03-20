@@ -102,12 +102,13 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
 
         protected void DeployPackage(string packageName)
         {
+            var log = new InMemoryLog();
             var command = new DeployJavaArchiveCommand(
                 new CombinedScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
                 Variables,
                 CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
-                new CommandLineRunner(Variables),
-                new InMemoryLog()
+                new CommandLineRunner(log, Variables),
+                log
             );
             ReturnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }

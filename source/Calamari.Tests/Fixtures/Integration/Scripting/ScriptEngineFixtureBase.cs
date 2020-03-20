@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
         protected CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariables variables)
         {
-            var runner = new TestCommandLineRunner(variables);
+            var runner = new TestCommandLineRunner(new InMemoryLog(), variables);
             var result = psse.Execute(new Script(scriptName), variables, runner);
             return new CalamariResult(result.ExitCode, runner.Output);
         }
