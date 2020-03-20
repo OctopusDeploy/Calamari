@@ -26,12 +26,25 @@ namespace Calamari.Integration.Processes
         
         public Dictionary<string, string> EnvironmentVars { get; set; }
         
+        /// <summary>
+        /// Prevent this execution from starting if another execution is running that also has this set to true.
+        /// It does not isolate from executions that have this set to false. 
+        /// </summary>
         public bool Isolate { get; set; }
 
+        /// <summary>
+        /// Whether to log the execution output to the Calamari Standard out (i.e. it will be send back to Octopus)
+        /// </summary>
         public bool OutputToCalamariConsole { get; set; } = true;
         
+        /// <summary>
+        /// Start the logging as verbose. The executed command may change logging level itself via service messages.
+        /// </summary>
         public bool OutputAsVerbose { get; set; }
         
+        /// <summary>
+        /// Add a non-standard output destination for the execution output 
+        /// </summary>
         public ICommandOutput AdditionalOutput { get; set; } 
 
         /// <summary>
