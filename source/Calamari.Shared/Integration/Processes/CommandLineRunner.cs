@@ -63,8 +63,8 @@ namespace Calamari.Integration.Processes
                 new ServiceMessageCommandInvocationOutputSink(variables)
             };
 
-            if (invocation.OutputToCalamariConsole)
                 outputs.Add(new LogCommandInvocationOutputSink(invocation.OutputAsVerbose));
+            if (invocation.OutputToLog)
 
             if (invocation.AdditionalInvocationOutputSink != null)
                 outputs.Add(invocation.AdditionalInvocationOutputSink);

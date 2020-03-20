@@ -23,7 +23,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             if (!File.Exists(path))
             {
                 CommandLineRunner clr = new CommandLineRunner(new CalamariVariables());
-                var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version") { OutputToCalamariConsole = false });
+                var result = clr.Execute(new CommandLineInvocation("pwsh.exe", "--version") { OutputToLog = false });
                 if (result.HasErrors)
                     Assert.Inconclusive("PowerShell Core is not installed on this machine");
             }

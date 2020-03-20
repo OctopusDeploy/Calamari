@@ -122,7 +122,7 @@ namespace Calamari.Terraform
             {
                 WorkingDirectory = TemplateDirectory,
                 EnvironmentVars = environmentVar,
-                OutputToCalamariConsole = outputToCalamariConsole,
+                OutputToLog = outputToCalamariConsole,
                 AdditionalInvocationOutputSink = captureOutput
             };
 

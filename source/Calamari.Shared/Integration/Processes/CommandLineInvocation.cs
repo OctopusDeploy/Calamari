@@ -33,9 +33,9 @@ namespace Calamari.Integration.Processes
         public bool Isolate { get; set; }
 
         /// <summary>
-        /// Whether to log the execution output to the Calamari Standard out (i.e. it will be send back to Octopus)
+        /// Whether to output the execution output to the Calamari Log (i.e. it will be send back to Octopus)
         /// </summary>
-        public bool OutputToCalamariConsole { get; set; } = true;
+        public bool OutputToLog { get; set; } = true;
         
         /// <summary>
         /// Start the logging as verbose. The executed command may change logging level itself via service messages.
