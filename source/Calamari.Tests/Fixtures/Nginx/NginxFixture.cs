@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         readonly string httpAndHttpsBindings = "[{\"protocol\":\"http\",\"port\":\"80\",\"ipAddress\":\"*\",\"certificateLocation\":null,\"certificateKeyLocation\":null,\"securityProtocols\":null,\"enabled\":true},{\"protocol\":\"https\",\"port\":\"443\",\"ipAddress\":\"*\",\"certificateLocation\":\"/etc/ssl/nginxsample/certificate.crt\",\"certificateKeyLocation\":\"/etc/ssl/nginxsample/certificate.key\",\"securityProtocols\":null,\"enabled\":true}]";
         readonly string httpAndHttpsBindingWithCertificateVariable = "[{\"protocol\":\"http\",\"port\":\"80\",\"ipAddress\":\"*\",\"certificateLocation\":null,\"certificateKeyLocation\":null,\"securityProtocols\":null,\"enabled\":true},{\"protocol\":\"https\",\"port\":\"443\",\"ipAddress\":\"*\",\"certificateLocation\":null,\"certificateKeyLocation\":null,\"securityProtocols\":null,\"enabled\":true,\"thumbprint\":null,\"certificateVariable\":\"NginxSampleWebAppCertificate\"}]";
 
-        readonly string staticContentAndReverseProxyLocations = "[{\"path\":\"/\",\"directives\":\"[{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\"},{\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}]\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"},{\"path\":\"/api/\",\"directives\":\"\",\"headers\":\"\",\"reverseProxy\":\"True\",\"reverseProxyUrl\":\"http://localhost:5000\",\"reverseProxyHeaders\":\"{\\\"Upgrade\\\":\\\"$http_upgrade\\\",\\\"Connection\\\":\\\"keep-alive\\\",\\\"Host\\\":\\\"$host\\\",\\\"X-Forwarded-For\\\":\\\"$proxy_add_x_forwarded_for\\\",\\\"X-Forwarded-Proto\\\":\\\"$scheme\\\"}\",\"reverseProxyDirectives\":\"{\\\"proxy_http_version\\\":\\\"1.1\\\",\\\"proxy_cache_bypass\\\":\\\"$http_upgrade\\\"}\"}]";
+        readonly string staticContentAndReverseProxyLocations = "[{\"path\":\"= /\",\"directives\":\"[{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\"},{\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}]\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"},{\"path\":\"/\",\"directives\":\"[{\\\"root\\\":\\\"#{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot\\\"},{\\\"try_files\\\":\\\"$uri $uri/ /index.html\\\"}]\",\"headers\":\"\",\"reverseProxy\":false,\"reverseProxyUrl\":\"\",\"reverseProxyHeaders\":\"\",\"reverseProxyDirectives\":\"\"},{\"path\":\"/api/\",\"directives\":\"\",\"headers\":\"\",\"reverseProxy\":\"True\",\"reverseProxyUrl\":\"http://localhost:5000\",\"reverseProxyHeaders\":\"{\\\"Upgrade\\\":\\\"$http_upgrade\\\",\\\"Connection\\\":\\\"keep-alive\\\",\\\"Host\\\":\\\"$host\\\",\\\"X-Forwarded-For\\\":\\\"$proxy_add_x_forwarded_for\\\",\\\"X-Forwarded-Proto\\\":\\\"$scheme\\\"}\",\"reverseProxyDirectives\":\"{\\\"proxy_http_version\\\":\\\"1.1\\\",\\\"proxy_cache_bypass\\\":\\\"$http_upgrade\\\"}\"}]";
 
         [SetUp]
         public void SetUp()
@@ -231,13 +231,17 @@ namespace Calamari.Tests.Fixtures.Nginx
             var tempConfPath = Path.Combine(nginxTempDirectory, confDirectory);
             Assert.IsTrue(Directory.Exists(tempConfPath));
             
-            var rootConf = Path.Combine(tempConfPath, $"{packageId}.conf");
+            var exactRootConf = Path.Combine(tempConfPath, $"{packageId}.conf");
+            Assert.IsTrue(File.Exists(exactRootConf));
+
+            var rootConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", $"location.0.conf");
             Assert.IsTrue(File.Exists(rootConf));
-            
+
             var apiConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", $"location.api.conf");
             Assert.IsTrue(File.Exists(apiConf));
             
-            this.Assent(File.ReadAllText(rootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
+            this.Assent(File.ReadAllText(exactRootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
+            this.Assent(File.ReadAllText(rootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.0");
             this.Assent(File.ReadAllText(apiConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.apiLocation");
         }
         

@@ -13,7 +13,7 @@ namespace Calamari.Integration.Processes.Semaphores
         {
             this.log = ConsoleLog.Instance;
             this.initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
-            this.semaphoreCreator = new LockFileBasedSemaphoreCreator();
+            this.semaphoreCreator = new LockFileBasedSemaphoreCreator(log);
         }
 
         public FileBasedSempahoreManager(ILog log, TimeSpan initialWaitBeforeShowingLogMessage, ICreateSemaphores semaphoreCreator)

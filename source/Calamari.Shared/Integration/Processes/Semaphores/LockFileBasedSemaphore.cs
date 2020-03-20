@@ -11,15 +11,11 @@ namespace Calamari.Integration.Processes.Semaphores
         private readonly IProcessFinder processFinder;
         private readonly ILog log;
 
-        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout) 
-            : this(name, lockTimeout, new LockIo(CalamariPhysicalFileSystem.GetPhysicalFileSystem()), new ProcessFinder())
+        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILog log) 
+            : this(name, lockTimeout, new LockIo(CalamariPhysicalFileSystem.GetPhysicalFileSystem()), new ProcessFinder(), log)
         {
         }
 
-        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder)
-            : this(name, lockTimeout, lockIo, processFinder, ConsoleLog.Instance)
-        {
-        }
         public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder, ILog log)
         {
             if (string.IsNullOrEmpty(name))

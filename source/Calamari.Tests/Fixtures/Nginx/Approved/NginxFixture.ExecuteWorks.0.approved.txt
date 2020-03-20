@@ -1,0 +1,4 @@
+﻿    location / {
+        root /var/www/NginxSampleWebApp/wwwroot;
+        try_files $uri $uri/ /index.html;
+    }
