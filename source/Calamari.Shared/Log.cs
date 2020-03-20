@@ -17,7 +17,7 @@ namespace Calamari
         void WarnFormat(string messageFormat, params object[] args);
         void Error(string message);
         void ErrorFormat(string messageFormat, params object[] args);
-        void SetOutputVariableButDoAddToVariables(string name, string value, bool isSensitive = false);
+        void SetOutputVariableButDoNotAddToVariables(string name, string value, bool isSensitive = false);
         void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false);
         void NewOctopusArtifact(string fullPath, string name, long fileLength);
 
@@ -147,7 +147,7 @@ namespace Calamari
             => Error(string.Format(messageFormat, args));
         
         
-        public void SetOutputVariableButDoAddToVariables(string name, string value, bool isSensitive = false)
+        public void SetOutputVariableButDoNotAddToVariables(string name, string value, bool isSensitive = false)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             if (value == null) throw new ArgumentNullException(nameof(value));
@@ -159,7 +159,7 @@ namespace Calamari
 
         public void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
         {
-            SetOutputVariableButDoAddToVariables(name, value, isSensitive);
+            SetOutputVariableButDoNotAddToVariables(name, value, isSensitive);
             variables?.SetOutputVariable(name, value);
         }
 

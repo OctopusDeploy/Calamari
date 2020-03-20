@@ -22,7 +22,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 deployment.Variables.Set(AwsSpecialVariables.CloudFormation.Changesets.Name, name);
             }
 
-            log.SetOutputVariableButDoAddToVariables("ChangesetName", name);
+            log.SetOutputVariableButDoNotAddToVariables("ChangesetName", name);
         }
     }
 }

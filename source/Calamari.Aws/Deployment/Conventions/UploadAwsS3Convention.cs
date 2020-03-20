@@ -131,13 +131,13 @@ namespace Calamari.Aws.Deployment.Conventions
 
         private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results) 
         {
-            log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
-            log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.FilePath, deployment.PackageFilePath);
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FilePath, deployment.PackageFilePath);
             foreach (var result in results)
             {
                 if (!result.IsSuccess()) continue;
                 log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{result.BucketKey}]\"");
-                log.SetOutputVariableButDoAddToVariables($"Files[{result.BucketKey}]", result.Version);
+                log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
             }
         }
 

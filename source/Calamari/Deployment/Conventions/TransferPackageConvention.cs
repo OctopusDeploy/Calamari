@@ -30,9 +30,9 @@ namespace Calamari.Deployment.Conventions
             fileSystem.CopyFile(deployment.PackageFilePath, filePath);
 
            log.Info($"Copied package '{fileName}' to directory '{transferPath}'");
-           log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.DirectoryPath, transferPath);
-           log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.FileName, fileName);
-           log.SetOutputVariableButDoAddToVariables(SpecialVariables.Package.Output.FilePath, filePath);
+           log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.DirectoryPath, transferPath);
+           log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FileName, fileName);
+           log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FilePath, filePath);
         }
     }
 }

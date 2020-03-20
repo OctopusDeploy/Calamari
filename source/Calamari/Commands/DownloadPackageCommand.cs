@@ -110,9 +110,9 @@ namespace Calamari.Commands
                     parsedAttemptBackoff);
 
                 log.VerboseFormat("Package {0} v{1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
-                log.SetOutputVariableButDoAddToVariables("StagedPackage.Hash", pkg.Hash);
-                log.SetOutputVariableButDoAddToVariables("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
-                log.SetOutputVariableButDoAddToVariables("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
+                log.SetOutputVariableButDoNotAddToVariables("StagedPackage.Hash", pkg.Hash);
+                log.SetOutputVariableButDoNotAddToVariables("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
+                log.SetOutputVariableButDoNotAddToVariables("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
             }
             catch (Exception ex)
             {
