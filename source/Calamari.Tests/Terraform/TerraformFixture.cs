@@ -392,7 +392,7 @@ namespace Calamari.Tests.Terraform
                 foreach (var commandType in commandTypes)
                 {
                     var log = new InMemoryLog();
-                    var command = (ICommand) Activator.CreateInstance(commandType, log, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+                    var command = (ICommand) Activator.CreateInstance(commandType, log, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CommandLineRunner(ConsoleLog.Instance, variables));
                     var result = command.Execute(new string[0]);
 
                     result.Should().Be(0);

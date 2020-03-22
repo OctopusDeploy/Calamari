@@ -22,8 +22,12 @@ namespace Calamari.Integration.Scripting.ScriptCS
             var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             yield return new ScriptExecution(
-                new CommandLineInvocation(executable, arguments, workingDirectory, environmentVars),
-                    otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile})
+                new CommandLineInvocation(executable, arguments)
+                {
+                    WorkingDirectory = workingDirectory,
+                    EnvironmentVars = environmentVars
+                },
+                otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile})
             );
         }
     }

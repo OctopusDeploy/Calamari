@@ -31,7 +31,7 @@
 
         public bool HasErrors => !string.IsNullOrWhiteSpace(additionalErrors);
 
-        public CommandResult VerifySuccess()
+        public void VerifySuccess()
         {
             if (exitCode != 0)
             {
@@ -41,8 +41,6 @@
                     additionalErrors, 
                     workingDirectory);
             }
-
-            return this;
         }
     }
 }

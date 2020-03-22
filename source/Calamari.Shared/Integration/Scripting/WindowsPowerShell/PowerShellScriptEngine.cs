@@ -23,23 +23,22 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         {
             var powerShellBootstrapper = GetPowerShellBootstrapper(variables);
             
-            var workingDirectory = Path.GetDirectoryName(script.File);
-            var executable = powerShellBootstrapper.PathToPowerShellExecutable(variables);
             var (bootstrapFile, otherTemporaryFiles) = powerShellBootstrapper.PrepareBootstrapFile(script, variables);
             var debuggingBootstrapFile = powerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
+            
+            var executable = powerShellBootstrapper.PathToPowerShellExecutable(variables);
             var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
 
-            var userName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(SpecialVariables.Action.PowerShell.UserName) : null;
-            var password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password)) : null;
+            var invocation = new CommandLineInvocation(executable, arguments)
+            {
+                EnvironmentVars = environmentVars, 
+                WorkingDirectory = Path.GetDirectoryName(script.File), 
+                UserName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(SpecialVariables.Action.PowerShell.UserName) : null,
+                Password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password)) : null
+            };
 
             yield return new ScriptExecution(
-                new CommandLineInvocation(
-                    executable,
-                    arguments,
-                    workingDirectory,
-                    environmentVars,
-                    userName,
-                    password),
+                invocation,
                 otherTemporaryFiles.Concat(new[] {bootstrapFile, debuggingBootstrapFile})
             );
         }

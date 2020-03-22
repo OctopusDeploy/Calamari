@@ -7,8 +7,8 @@ namespace Calamari.Terraform
     [Command("destroy-terraform", Description = "Destroys Terraform resources")]
     public class DestroyCommand : TerraformCommand
     {
-        public DestroyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
-            : base(log, variables, fileSystem, new DestroyTerraformConvention(log, fileSystem))
+        public DestroyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+            : base(log, variables, fileSystem, new DestroyTerraformConvention(log, fileSystem, commandLineRunner))
         {
         }
     }

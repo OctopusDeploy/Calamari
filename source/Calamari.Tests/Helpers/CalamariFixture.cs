@@ -46,10 +46,11 @@ namespace Calamari.Tests.Helpers
             var program = new TestProgram(log);
             var exitCode = program.Run(args);
 
-            var capture = new CaptureCommandOutput();
-            var sco = new SplitCommandOutput(
-                new ConsoleCommandOutput(), 
-                new ServiceMessageCommandOutput(variables ?? new CalamariVariables()),
+                variables = variables ?? new CalamariVariables();
+                var capture = new CaptureCommandInvocationOutputSink();
+                var sco = new SplitCommandInvocationOutputSink(
+                    new LogCommandInvocationOutputSink(ConsoleLog.Instance, false), 
+                    new ServiceMessageCommandInvocationOutputSink(variables),
                 capture);
             
             foreach(var line in log.StandardOut)
@@ -63,14 +64,9 @@ namespace Calamari.Tests.Helpers
 
         protected CalamariResult Invoke(CommandLine command, IVariables variables = null)
         {
-            var capture = new CaptureCommandOutput();
-            var runner = new CommandLineRunner(
-                new SplitCommandOutput(
-                    new ConsoleCommandOutput(),
-                    new ServiceMessageCommandOutput(variables ?? new CalamariVariables()),
-                    capture));
+            var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables ?? new CalamariVariables());
             var result = runner.Execute(command.Build());
-            return new CalamariResult(result.ExitCode, capture);
+            return new CalamariResult(result.ExitCode, runner.Output);
         }
 
 

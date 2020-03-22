@@ -23,14 +23,14 @@ namespace Calamari.Commands
         
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICalamariFileSystem fileSystem;
-        readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
 
-        public ApplyDeltaCommand(IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, IVariables variables, ILog log)
+        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.freeSpaceChecker = freeSpaceChecker;
             this.fileSystem = fileSystem;
-            this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
             this.log = log;
             Options.Add("basisFileName=", "The file that the delta was created for.", v => basisFileName = v);
             Options.Add("fileHash=", "", v => fileHash = v);
@@ -56,7 +56,7 @@ namespace Calamari.Commands
 
                 var tempNewFilePath = newFilePath + ".partial";
 #if USE_OCTODIFF_EXE
-                var factory = new OctoDiffCommandLineRunner(variables);
+                var factory = new OctoDiffCommandLineRunner(commandLineRunner);
 #else
                 var factory = new OctoDiffLibraryCallRunner();
 #endif

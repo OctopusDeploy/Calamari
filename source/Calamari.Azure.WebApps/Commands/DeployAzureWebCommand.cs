@@ -23,14 +23,16 @@ namespace Calamari.Azure.WebApps.Commands
         readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureWebCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployAzureWebCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -49,7 +51,6 @@ namespace Calamari.Azure.WebApps.Commands
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
             var substituter = new FileSubstituter(log, fileSystem);
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 

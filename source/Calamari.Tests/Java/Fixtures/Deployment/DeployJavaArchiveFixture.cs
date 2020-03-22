@@ -104,7 +104,8 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 log,
                 new CombinedScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
                 variables,
-                CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
+                new CommandLineRunner(log, variables)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }

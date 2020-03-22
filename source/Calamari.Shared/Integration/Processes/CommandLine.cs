@@ -75,7 +75,7 @@ namespace Calamari.Integration.Processes
 
             argLine.AddRange(args);
 
-            return new CommandLineInvocation(actualExe, string.Join(" ", argLine.Select(b => b.Build(true))));
+            return new CommandLineInvocation(actualExe, argLine.Select(b => b.Build(true)).ToArray());
         }
         
         public LibraryCallInvocation BuildLibraryCall()

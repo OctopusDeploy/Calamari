@@ -6,12 +6,12 @@ namespace Calamari.Integration.ServiceMessages
     /// <summary>
     /// Parses command-output for service-messages
     /// </summary>
-    public class ServiceMessageCommandOutput : ICommandOutput
+    public class ServiceMessageCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
         private readonly IVariables variables;
         readonly ServiceMessageParser serviceMessageParser;
 
-        public ServiceMessageCommandOutput(IVariables variables)
+        public ServiceMessageCommandInvocationOutputSink(IVariables variables)
         {
             this.variables = variables;
             this.serviceMessageParser = new ServiceMessageParser(ProcessServiceMessage);

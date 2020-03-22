@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,16 +26,6 @@ namespace Calamari.Util
             return Encoding.UTF8.GetBytes(source);
         }
 
-        public static string EnsureSuffix(this string source, string suffix)
-        {
-            return !source.EndsWith(suffix) ? $"{source}{suffix}" : source;
-        }
-
-        public static string EnsurePrefix(this string source, string prefix)
-        {
-            return !source.StartsWith(prefix) ? $"{prefix}{source}" : source;
-        }
-
         public static string AsRelativePathFrom(this string source, string baseDirectory)
         {
             // Adapted from https://stackoverflow.com/a/340454
@@ -58,5 +49,8 @@ namespace Calamari.Util
 
             return Uri.TryCreate(value, UriKind.Absolute, out var _);
         }
+
+        public static string Join(this IEnumerable<string> values, string separator)
+            => string.Join(separator, values);
     }
 }

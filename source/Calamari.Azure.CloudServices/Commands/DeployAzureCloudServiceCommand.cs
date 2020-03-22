@@ -27,14 +27,16 @@ namespace Calamari.Azure.CloudServices.Commands
         readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureCloudServiceCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployAzureCloudServiceCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -52,7 +54,6 @@ namespace Calamari.Azure.CloudServices.Commands
             
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var azurePackageUploader = new AzurePackageUploader(log);
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);

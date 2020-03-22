@@ -20,7 +20,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
         [TestCase(typeof(ZipPackageExtractor), "zip", true)]
         [TestCase(typeof(NupkgExtractor), "nupkg", false)]
-        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
         public void ExtractPumpsFilesToFilesystem(Type extractorType, string extension, bool preservesTimestamp)
         {
             var fileName = GetFileName(extension);
@@ -49,7 +48,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
         [TestCase(typeof(ZipPackageExtractor), "zip", true)]
         [TestCase(typeof(NupkgExtractor), "nupkg", false)]
-        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
         public void ExtractCanHandleNestedPackage(Type extractorType, string extension, bool preservesTimestamp)
         {
             var fileName = GetFileName(extension);
@@ -70,7 +68,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
         [TestCase(typeof(ZipPackageExtractor), "zip", true)]
         [TestCase(typeof(NupkgExtractor), "nupkg", false)]
-        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
         public void ExtractCanHandleNestedFolders(Type extractorType, string extension, bool preservesTimestamp)
         {
             var fileName = GetFileName(extension);
@@ -107,7 +104,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", true)]
         [TestCase(typeof(ZipPackageExtractor), "zip", true)]
         [TestCase(typeof(NupkgExtractor), "nupkg", false)]
-        //[TestCase(typeof(TarLzwPackageExtractor), "tar.xz")]
         public void ExtractCanHandleEmptyFolders(Type extractorType, string extension, bool preservesTimestamp)
         {
             var fileName = GetFileName(extension);

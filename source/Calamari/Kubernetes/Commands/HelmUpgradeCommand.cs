@@ -31,12 +31,14 @@ namespace Calamari.Kubernetes.Commands
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
 
         public HelmUpgradeCommand(
             ILog log, 
             CombinedScriptEngine scriptEngine, 
             IDeploymentJournalWriter deploymentJournalWriter, 
-            IVariables variables, 
+            IVariables variables,
+			ICommandLineRunner commandLineRunner,
             ICalamariFileSystem fileSystem
             )
         {
@@ -46,6 +48,7 @@ namespace Calamari.Kubernetes.Commands
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
         }
         
         public override int Execute(string[] commandLineArguments)
@@ -54,7 +57,6 @@ namespace Calamari.Kubernetes.Commands
 
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var substituter = new FileSubstituter(log, fileSystem);
             var extractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
             ValidateRequiredVariables();

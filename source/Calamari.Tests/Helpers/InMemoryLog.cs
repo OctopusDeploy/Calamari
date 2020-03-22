@@ -90,10 +90,5 @@ namespace Calamari.Tests.Helpers
             Warn,
             Error
         }
-
-        public void Flush(ICommandOutput output)
-        {
-           
-        }
     }
 }

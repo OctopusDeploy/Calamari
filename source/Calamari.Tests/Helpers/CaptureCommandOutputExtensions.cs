@@ -7,7 +7,7 @@ namespace Calamari.Tests.Helpers
 {
     public static class CaptureCommandOutputExtensions
     {
-        public static string ToApprovalString(this CaptureCommandOutput output)
+        public static string ToApprovalString(this CaptureCommandInvocationOutputSink output)
         {
             return output
                 .AllMessages

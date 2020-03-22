@@ -27,8 +27,9 @@ namespace Calamari.Azure.ServiceFabric.Commands
         private readonly CombinedScriptEngine scriptEngine;
         private readonly ICertificateStore certificateStore;
         readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureServiceFabricAppCommand(ILog log, CombinedScriptEngine scriptEngine, ICertificateStore certificateStore, IVariables variables)
+        public DeployAzureServiceFabricAppCommand(ILog log, CombinedScriptEngine scriptEngine, ICertificateStore certificateStore, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 
@@ -36,6 +37,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
             this.scriptEngine = scriptEngine;
             this.certificateStore = certificateStore;
             this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -58,7 +60,6 @@ namespace Calamari.Azure.ServiceFabric.Commands
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
             var substituter = new FileSubstituter(log, fileSystem);
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 

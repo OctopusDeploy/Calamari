@@ -2,21 +2,27 @@
 using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
 
 namespace Calamari.Terraform
 {
     public class DestroyTerraformConvention : TerraformConvention
     {
-        public DestroyTerraformConvention(ILog log, ICalamariFileSystem fileSystem) : base(log, fileSystem)
+        readonly ILog log;
+        readonly ICommandLineRunner commandLineRunner;
+
+        public DestroyTerraformConvention(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner) : base(log, fileSystem)
         {
+            this.log = log;
+            this.commandLineRunner = commandLineRunner;
         }
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            using (var cli = new TerraformCliExecutor(Log, fileSystem, deployment, environmentVariables))
+            using (var cli = new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, environmentVariables))
             {
-                cli.ExecuteCommand("destroy", "-force", "-no-color", cli.TerraformVariableFiles,
-                    cli.ActionParams);
+                cli.ExecuteCommand("destroy", "-force", "-no-color", cli.TerraformVariableFiles, cli.ActionParams)
+                    .VerifySuccess();
             }
         }
     }

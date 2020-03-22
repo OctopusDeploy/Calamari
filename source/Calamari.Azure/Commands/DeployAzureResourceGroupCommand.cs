@@ -23,15 +23,17 @@ namespace Calamari.Azure.Commands
         readonly ILog log;
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
         private string packageFile;
         private string templateFile;
         private string templateParameterFile;
 
-        public DeployAzureResourceGroupCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployAzureResourceGroupCommand(ILog log, CombinedScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
@@ -42,7 +44,6 @@ namespace Calamari.Azure.Commands
             Options.Parse(commandLineArguments);
 
             variables.Set(SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
             var fileSystem = new WindowsPhysicalFileSystem();
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
             var templateResolver = new TemplateResolver(fileSystem);

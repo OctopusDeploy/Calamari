@@ -16,6 +16,7 @@ namespace Calamari.Terraform
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
         readonly RunningDeployment deployment;
         readonly IVariables variables;
         readonly Dictionary<string, string> environmentVariables;
@@ -26,12 +27,14 @@ namespace Calamari.Terraform
         public TerraformCliExecutor(
             ILog log,
             ICalamariFileSystem fileSystem, 
+            ICommandLineRunner commandLineRunner,
             RunningDeployment deployment,
             Dictionary<string, string> environmentVariables
             )
         {
             this.log = log;
             this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
             this.deployment = deployment;
             this.variables = deployment.Variables;
             this.environmentVariables = environmentVariables;
@@ -64,7 +67,7 @@ namespace Calamari.Terraform
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out _);
+            var commandResult = ExecuteCommandInternal(arguments, out _, true);
 
             commandResult.VerifySuccess();
             return commandResult;
@@ -72,14 +75,14 @@ namespace Calamari.Terraform
 
         public CommandResult ExecuteCommand(out string result, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result);
+            var commandResult = ExecuteCommandInternal(arguments, out result, true);
 
             return commandResult;
         }
 
-        public CommandResult ExecuteCommand(out string result, ICommandOutput output, params string[] arguments)
+        public CommandResult ExecuteCommand(out string result, bool outputToCalamariConsole, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(ToSpaceSeparated(arguments), out result, output);
+            var commandResult = ExecuteCommandInternal(arguments, out result, outputToCalamariConsole);
 
             return commandResult;
         }
@@ -89,7 +92,6 @@ namespace Calamari.Terraform
             var attachLogFile = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AttachLogFile);
             if (attachLogFile)
             {
-                
                 var crashLogPath = Path.Combine(deployment.CurrentDirectory, "crash.log");
 
                 if (fileSystem.FileExists(logPath))
@@ -106,12 +108,7 @@ namespace Calamari.Terraform
             }
         }
 
-        static string ToSpaceSeparated(IEnumerable<string> items)
-        {
-            return string.Join(" ", items.Where(_ => !String.IsNullOrEmpty(_)));
-        }
-
-        CommandResult ExecuteCommandInternal(string arguments, out string result, ICommandOutput output = null)
+        CommandResult ExecuteCommandInternal(string[] arguments, out string result, bool outputToCalamariConsole)
         {
             var environmentVar = defaultEnvironmentVariables;
             if (environmentVariables != null)
@@ -121,18 +118,20 @@ namespace Calamari.Terraform
 
             var terraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable) ??
                                       $"terraform{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : String.Empty)}";
-
-            var commandLineInvocation = new CommandLineInvocation(terraformExecutable,
-                arguments, templateDirectory, environmentVar);
-
-            var commandOutput = new CaptureOutput(output ?? new ConsoleCommandOutput(log));
-            var cmd = new CommandLineRunner(commandOutput);
+            var captureOutput = new CaptureInvocationOutputSink();
+            var commandLineInvocation = new CommandLineInvocation(terraformExecutable, arguments)
+            {
+                WorkingDirectory = templateDirectory,
+                EnvironmentVars = environmentVar,
+                OutputToLog = outputToCalamariConsole,
+                AdditionalInvocationOutputSink = captureOutput
+            };
 
             log.Info(commandLineInvocation.ToString());
 
-            var commandResult = cmd.Execute(commandLineInvocation);
+            var commandResult = commandLineRunner.Execute(commandLineInvocation);
 
-            result = String.Join("\n", commandOutput.Infos);
+            result = String.Join("\n", captureOutput.Infos);
 
             return commandResult;
         }
@@ -143,12 +142,12 @@ namespace Calamari.Terraform
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
 
             ExecuteCommandInternal(
-                $"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}", out _).VerifySuccess();
+                new[] {$"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}"}, out _, true).VerifySuccess();
         }
 
         void LogVersion()
         {
-            ExecuteCommandInternal($"--version", out _)
+            ExecuteCommandInternal(new[] {$"--version"}, out _, true)
                 .VerifySuccess();
         }
 
@@ -158,42 +157,33 @@ namespace Calamari.Terraform
 
             if (!String.IsNullOrWhiteSpace(workspace))
             {
-                ExecuteCommandInternal("workspace list", out var results).VerifySuccess();
+                ExecuteCommandInternal(new[] {"workspace list"}, out var results, true).VerifySuccess();
 
                 foreach (var line in results.Split('\n'))
                 {
                     var workspaceName = line.Trim('*', ' ');
                     if (workspaceName.Equals(workspace))
                     {
-                        ExecuteCommandInternal($"workspace select \"{workspace}\"", out _).VerifySuccess();
+                        ExecuteCommandInternal(new[] {$"workspace select \"{workspace}\""}, out _, true).VerifySuccess();
                         return;
                     }
                 }
 
-                ExecuteCommandInternal($"workspace new \"{workspace}\"", out _).VerifySuccess();
+                ExecuteCommandInternal(new[] {$"workspace new \"{workspace}\""}, out _, true).VerifySuccess();
             }
         }
 
-        class CaptureOutput : ICommandOutput
+        class CaptureInvocationOutputSink : ICommandInvocationOutputSink
         {
-            readonly ICommandOutput decorated;
-
-            public CaptureOutput(ICommandOutput decorated)
-            {
-                this.decorated = decorated;
-            }
-
             public List<string> Infos { get; } = new List<string>();
 
             public void WriteInfo(string line)
             {
                 Infos.Add(line);
-                decorated.WriteInfo(line);
             }
 
             public void WriteError(string line)
             {
-                decorated.WriteError(line);
             }
         }
 

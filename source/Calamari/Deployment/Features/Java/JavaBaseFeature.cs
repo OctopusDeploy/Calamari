@@ -22,21 +22,25 @@ namespace Calamari.Deployment.Features.Java
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
         }
-        
+
         /// <summary>
         /// Execute java running the Octopus Deploy Java library
         /// </summary>
-        public void Run(string mainClass, Dictionary<string,string> environmentVariables)
-        {           
+        public void Run(string mainClass, Dictionary<string, string> environmentVariables)
+        {
             var javaLib = variables.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar, "");
-            var result = commandLineRunner.Execute(new CommandLineInvocation(
-                JavaRuntime.CmdPath, 
-                $"-Djdk.logger.finder.error=QUIET -cp calamari.jar {mainClass}",
-                Path.Combine(javaLib, "contentFiles", "any", "any"),
-                environmentVariables));
-            
+            var result = commandLineRunner.Execute(
+                new CommandLineInvocation(
+                    JavaRuntime.CmdPath,
+                    $"-Djdk.logger.finder.error=QUIET -cp calamari.jar {mainClass}"
+                )
+                {
+                    WorkingDirectory = Path.Combine(javaLib, "contentFiles", "any", "any"),
+                    EnvironmentVars = environmentVariables
+                }
+            );
+
             result.VerifySuccess();
         }
     }
-    
 }

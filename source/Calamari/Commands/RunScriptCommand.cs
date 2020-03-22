@@ -30,6 +30,7 @@ namespace Calamari.Commands
         readonly IVariables variables;
         readonly CombinedScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
         IFileSubstituter fileSubstituter; 
 
         public RunScriptCommand(
@@ -37,7 +38,8 @@ namespace Calamari.Commands
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
             CombinedScriptEngine scriptEngine, 
-            ICalamariFileSystem fileSystem)
+            ICalamariFileSystem fileSystem,
+            ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
@@ -47,15 +49,13 @@ namespace Calamari.Commands
             this.variables = variables;
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
             
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(),
-                new ServiceMessageCommandOutput(variables)));
-          
             fileSubstituter = new FileSubstituter(log, fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);

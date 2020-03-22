@@ -96,7 +96,6 @@ namespace Calamari.Integration.Packages
             new NupkgExtractor(log),
             new TarGzipPackageExtractor(log),
             new TarBzipPackageExtractor(log),
-            //new TarLzwPackageExtractor(), // For some reason this doesnt currently work...
             new ZipPackageExtractor(log),
             new TarPackageExtractor(log)
         }.Concat(additionalExtractors).ToList();
