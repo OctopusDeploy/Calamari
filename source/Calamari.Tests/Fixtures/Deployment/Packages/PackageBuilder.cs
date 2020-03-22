@@ -4,6 +4,7 @@ using System.IO.Compression;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
+using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages
@@ -33,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
                 File.Delete(path);
 
 
-            var runner = new CommandLineRunner(new ConsoleCommandOutput());
+            var runner = new CommandLineRunner(new LogWrapper(), new CalamariVariables());
 #if NETCORE
             var restoreResult = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("restore")

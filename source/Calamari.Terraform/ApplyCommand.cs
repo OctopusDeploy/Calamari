@@ -8,8 +8,8 @@ namespace Calamari.Terraform
     [Command("apply-terraform", Description = "Applies a Terraform template")]
     public class ApplyCommand : TerraformCommand
     {
-        public ApplyCommand(IVariables variables, ICalamariFileSystem fileSystem)
-            : base(variables, fileSystem, new ApplyTerraformConvention(fileSystem))
+        public ApplyCommand(IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+            : base(variables, fileSystem, new ApplyTerraformConvention(fileSystem, commandLineRunner))
         {
         }
     }

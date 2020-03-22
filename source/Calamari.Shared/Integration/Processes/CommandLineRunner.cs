@@ -1,19 +1,27 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using Calamari.Integration.ServiceMessages;
+using Calamari.Util;
 
 namespace Calamari.Integration.Processes
 {
     public class CommandLineRunner : ICommandLineRunner
     {
-        private readonly ICommandOutput commandOutput;
+        readonly ILog log;
+        readonly IVariables variables;
 
-        public CommandLineRunner(ICommandOutput commandOutput)
+        public CommandLineRunner(ILog log, IVariables variables)
         {
-            this.commandOutput = commandOutput;
+            this.log = log;
+            this.variables = variables;
         }
 
         public CommandResult Execute(CommandLineInvocation invocation)
         {
+            var commandOutput = new SplitCommandInvocationOutputSink(GetCommandOutputs(invocation));
+
             try
             {
                 var exitCode = SilentProcessRunner.ExecuteCommand(
@@ -48,6 +56,22 @@ namespace Calamari.Integration.Processes
                     ex.ToString(),
                     invocation.WorkingDirectory);
             }
+        }
+
+        protected virtual List<ICommandInvocationOutputSink> GetCommandOutputs(CommandLineInvocation invocation)
+        {
+            var outputs = new List<ICommandInvocationOutputSink>
+            {
+                new ServiceMessageCommandInvocationOutputSink(variables)
+            };
+
+            if (invocation.OutputToLog)
+                outputs.Add(new LogCommandInvocationOutputSink(log, invocation.OutputAsVerbose));
+
+            if (invocation.AdditionalInvocationOutputSink != null)
+                outputs.Add(invocation.AdditionalInvocationOutputSink);
+
+            return outputs;
         }
 
         public static string ConstructWin32ExceptionMessage(string executable)

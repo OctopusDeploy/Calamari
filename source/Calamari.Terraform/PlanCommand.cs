@@ -7,7 +7,8 @@ namespace Calamari.Terraform
     [Command("plan-terraform", Description = "Plans the creation of a Terraform deployment")]
     public class PlanCommand : TerraformCommand
     {
-        public PlanCommand(IVariables variables, ICalamariFileSystem fileSystem): base(variables, fileSystem, new PlanTerraformConvention(fileSystem))
+        public PlanCommand(IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+            : base(variables, fileSystem, new PlanTerraformConvention(fileSystem, commandLineRunner))
         {
         }
     }

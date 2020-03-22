@@ -27,14 +27,18 @@ namespace Calamari.Commands.Java
         private readonly CombinedScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly ILog log;
 
-        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem)
+        public DeployJavaArchiveCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ILog log)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
 
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
+            this.log = log;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -52,11 +56,9 @@ namespace Calamari.Commands.Java
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var substituter = new FileSubstituter(fileSystem);
-            var commandOutput =
-                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));
-            var commandLineRunner = new CommandLineRunner(commandOutput);
+
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var jarTools = new JarTool(commandLineRunner, commandOutput,  variables);
+            var jarTools = new JarTool(commandLineRunner, log,  variables);
             var packageExtractor = new JavaPackageExtractor(jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();
             var javaRunner = new JavaRunner(commandLineRunner, variables);

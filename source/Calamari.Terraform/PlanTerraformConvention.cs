@@ -1,23 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Processes;
+using Calamari.Util;
 
 namespace Calamari.Terraform
 {
     public class PlanTerraformConvention : TerraformConvention
     {
+        readonly ICommandLineRunner commandLineRunner;
         private readonly string extraParameter;
 
-        public PlanTerraformConvention(ICalamariFileSystem fileSystem, string extraParameter = "") : base(fileSystem)
+        public PlanTerraformConvention(ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, string extraParameter = "") : base(fileSystem)
         {
+            this.commandLineRunner = commandLineRunner;
             this.extraParameter = extraParameter;
         }
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             string results;
-            using (var cli = new TerraformCliExecutor(fileSystem, deployment, environmentVariables))
+            using (var cli = new TerraformCliExecutor(fileSystem, commandLineRunner, deployment, environmentVariables))
             {
                 var commandResult = cli.ExecuteCommand(out results, "plan", "-no-color", "-detailed-exitcode", extraParameter, cli.TerraformVariableFiles, cli.ActionParams);
                 var resultCode = commandResult.ExitCode;

@@ -100,28 +100,15 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             ProxyLog.AssertContains($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
         }
 
-//        [Test]
-//        public void CanDeployToTomcat()
-//        {
-//            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Action.Java.Tomcat.Feature);
-//            Variables.Set(SpecialVariables.Action.Java.Tomcat.DeployName, "foo");
-//            Variables.Set(SpecialVariables.Action.Java.Tomcat.Controller, "http://localhost:8080/manager");
-//            Variables.Set(SpecialVariables.Action.Java.Tomcat.User, "tomcat");
-//            Variables.Set(SpecialVariables.Action.Java.Tomcat.Password, "xxx");
-//            Variables.Set(SpecialVariables.Action.Java.Tomcat.Enabled, "true");
-//
-//            Variables.Set(SpecialVariables.Action.Java.JavaLibraryEnvVar,
-//                @"C:\Octopus\LocalTentacle\Tools\Octopus.Dependencies.Java\1.0.101");
-//            
-//            DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
-//        }
-
         protected void DeployPackage(string packageName)
         {
+            var log = new InMemoryLog();
             var command = new DeployJavaArchiveCommand(
                 new CombinedScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
                 Variables,
-                CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
+                new CommandLineRunner(log, Variables),
+                log
             );
             ReturnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }

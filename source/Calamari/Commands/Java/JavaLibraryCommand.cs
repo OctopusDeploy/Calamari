@@ -20,13 +20,15 @@ namespace Calamari.Commands.Java
         readonly CombinedScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
 
-        public JavaLibraryCommand(CombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, IVariables variables)
+        public JavaLibraryCommand(CombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("actionType=", "The step type being invoked.", v => actionType = v);
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -34,9 +36,6 @@ namespace Calamari.Commands.Java
             Options.Parse(commandLineArguments);
             JavaRuntime.VerifyExists();
 
-            var commandOutput =
-                new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables));
-            var commandLineRunner = new CommandLineRunner(commandOutput);
             var embeddedResources = new AssemblyEmbeddedResources();
             
             var conventions = new List<IConvention>

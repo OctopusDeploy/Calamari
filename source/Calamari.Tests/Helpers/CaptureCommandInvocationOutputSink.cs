@@ -7,7 +7,7 @@ using Octostache;
 namespace Calamari.Tests.Helpers
 {
     //Ideally sourced directly from Octopus.Worker repo
-    public class CaptureCommandOutput : ICommandOutput
+    public class CaptureCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
         readonly List<string> all = new List<string>();
         readonly List<string> infos = new List<string>();
@@ -15,7 +15,7 @@ namespace Calamari.Tests.Helpers
         readonly ServiceMessageParser serviceMessageParser;
         readonly IVariables outputVariables = new CalamariVariables();
 
-        public CaptureCommandOutput()
+        public CaptureCommandInvocationOutputSink()
         {
             serviceMessageParser = new ServiceMessageParser(ParseServiceMessage);
         }

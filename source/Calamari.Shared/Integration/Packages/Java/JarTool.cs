@@ -13,20 +13,20 @@ namespace Calamari.Integration.Packages.Java
     public class JarTool
     {
         readonly ICommandLineRunner commandLineRunner;
-        readonly ICommandOutput commandOutput;
+        readonly ILog log;
         readonly string toolsPath;
 
-        public JarTool(ICommandLineRunner commandLineRunner, ICommandOutput commandOutput, IVariables variables)
+        public JarTool(ICommandLineRunner commandLineRunner, ILog log, IVariables variables)
         {
             this.commandLineRunner = commandLineRunner;
-            this.commandOutput = commandOutput;
+            this.log = log;
 
             /*
                 The precondition script will also set the location of the java libray files
             */
-            
+
             toolsPath = Path.Combine(
-                variables?.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar,"") ?? "",
+                variables?.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar, "") ?? "",
                 "contentFiles",
                 "any",
                 "any",
@@ -35,27 +35,20 @@ namespace Calamari.Integration.Packages.Java
 
         public void CreateJar(string contentsDirectory, string targetJarPath)
         {
-            try
-            {
-                var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
-                var args = File.Exists(manifestPath)
-                    ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
-                    : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
+            var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
+            var args = File.Exists(manifestPath)
+                ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
+                : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
 
-                var createJarCommand = new CommandLineInvocation(JavaRuntime.CmdPath, args, contentsDirectory);
-                Log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
-
-                /*
-                     All extraction messages should be verbose
-                 */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]");
-                var result = commandLineRunner.Execute(createJarCommand);
-                result.VerifySuccess();
-            }
-            finally
+            var createJarCommand = new CommandLineInvocation(JavaRuntime.CmdPath, args)
             {
-                commandOutput.WriteInfo("##octopus[stdout-default]");
-            }
+                WorkingDirectory = contentsDirectory,
+                OutputAsVerbose = true
+            };
+            log.Verbose($"Invoking '{createJarCommand}' to create '{targetJarPath}'");
+
+            var result = commandLineRunner.Execute(createJarCommand);
+            result.VerifySuccess();
         }
 
         /// <summary>
@@ -64,48 +57,42 @@ namespace Calamari.Integration.Packages.Java
         /// <returns>Count of files extracted</returns>
         public int ExtractJar(string jarPath, string targetDirectory)
         {
-
             try
             {
                 /*
-                     All extraction messages should be verbose
-                 */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]");
-
-                /*
                     Start by verifying the archive is valid.
                 */
-                commandLineRunner.Execute(new CommandLineInvocation(
+                var tfCommand = new CommandLineInvocation(
                     JavaRuntime.CmdPath,
-                    $"-cp \"{toolsPath}\" sun.tools.jar.Main tf \"{jarPath}\"",
-                    targetDirectory)).VerifySuccess();
+                    $"-cp \"{toolsPath}\" sun.tools.jar.Main tf \"{jarPath}\""
+                )
+                {
+                    WorkingDirectory = targetDirectory,
+                    OutputAsVerbose = true
+                };
+                commandLineRunner.Execute(tfCommand).VerifySuccess();
 
                 /*
                     If it is valid, go ahead an extract it
                 */
                 var extractJarCommand = new CommandLineInvocation(
                     JavaRuntime.CmdPath,
-                    $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\"",
-                    targetDirectory);
+                    $"-cp \"{toolsPath}\" sun.tools.jar.Main xf \"{jarPath}\""
+                )
+                {
+                    WorkingDirectory = targetDirectory,
+                    OutputAsVerbose = true
+                };
 
-                Log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
-
-                /*
-                     All extraction messages should be verbose
-                 */
-                commandOutput.WriteInfo("##octopus[stdout-verbose]");
+                log.Verbose($"Invoking '{extractJarCommand}' to extract '{jarPath}'");
 
                 var result = commandLineRunner.Execute(extractJarCommand);
                 result.VerifySuccess();
             }
             catch (Exception ex)
             {
-                commandOutput.WriteError($"Exception thrown while extracting a Java archive. {ex}");
-                throw ex;
-            }
-            finally
-            {
-                commandOutput.WriteInfo("##octopus[stdout-default]");
+                log.Error($"Exception thrown while extracting a Java archive. {ex}");
+                throw;
             }
 
             var count = -1;
@@ -116,7 +103,7 @@ namespace Calamari.Integration.Packages.Java
             }
             catch (Exception ex)
             {
-                Log.Verbose(
+                log.Verbose(
                     $"Unable to return extracted file count. Error while enumerating '{targetDirectory}':\n{ex.Message}");
             }
 

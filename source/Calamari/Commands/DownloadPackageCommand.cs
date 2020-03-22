@@ -19,6 +19,7 @@ namespace Calamari.Commands
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
 
         string packageId;
         string packageVersion;
@@ -32,12 +33,13 @@ namespace Calamari.Commands
         private FeedType feedType = FeedType.NuGet;
         private VersionFormat versionFormat = VersionFormat.Semver;
 
-        public DownloadPackageCommand(CombinedScriptEngine scriptEngine, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem)
+        public DownloadPackageCommand(CombinedScriptEngine scriptEngine, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.scriptEngine = scriptEngine;
             this.freeSpaceChecker = freeSpaceChecker;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.commandLineRunner = commandLineRunner;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
             Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
@@ -88,8 +90,6 @@ namespace Calamari.Commands
                     out var uri, 
                     out var parsedMaxDownloadAttempts, 
                     out var parsedAttemptBackoff);
-
-                var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
 
                 var pkg = new PackageDownloaderStrategy(scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner, variables).DownloadPackage(
                     packageId,

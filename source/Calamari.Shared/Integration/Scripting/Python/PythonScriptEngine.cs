@@ -23,8 +23,13 @@ namespace Calamari.Integration.Scripting.Python
             var dependencyInstallerArguments = PythonBootstrapper.FormatCommandArguments(dependencyInstallerFile, string.Empty);
 
             yield return new ScriptExecution(
-                new CommandLineInvocation(executable, dependencyInstallerArguments, workingDirectory, environmentVars, isolate: true),
-                new [] { dependencyInstallerFile});
+                new CommandLineInvocation(executable, dependencyInstallerArguments)
+                {
+                    WorkingDirectory = workingDirectory,
+                    EnvironmentVars = environmentVars,
+                    Isolate = true
+                },
+                new[] {dependencyInstallerFile});
 
             var configurationFile = PythonBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
 
@@ -32,8 +37,12 @@ namespace Calamari.Integration.Scripting.Python
             var arguments = PythonBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             yield return new ScriptExecution(
-                new CommandLineInvocation(executable, arguments, workingDirectory, environmentVars),
-                    otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile}));
+                new CommandLineInvocation(executable, arguments)
+                {
+                    WorkingDirectory = workingDirectory,
+                    EnvironmentVars = environmentVars
+                },
+                otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile}));
         }
     }
 }
