@@ -7,15 +7,25 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.ServiceMessages;
 using Octostache;
 using Autofac;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using Calamari.Variables;
+using NUnit.Framework;
 
 namespace Calamari.Tests.Helpers
 {
     public abstract class CalamariFixture
     {
+        protected InMemoryLog Log;
+
+        [SetUp]
+        public void SetUpCalamariFixture()
+        {
+            Log = new InMemoryLog();
+        }
+        
         protected CommandLine Calamari()
         {
 #if NETFX
@@ -42,21 +52,25 @@ namespace Calamari.Tests.Helpers
         protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
         {
             var args = command.GetRawArgs();
-            var log = new InMemoryLog();
-            var program = new TestProgram(log);
-            var exitCode = program.Run(args);
+            var program = new TestProgram(Log);
+            int exitCode;
+            try
+            {
+                exitCode = program.Run(args);
+            }
+            catch (Exception ex)
+            {
+                exitCode = ConsoleFormatter.PrintError(Log, ex);
+            }
 
-                variables = variables ?? new CalamariVariables();
-                var capture = new CaptureCommandInvocationOutputSink();
-                var sco = new SplitCommandInvocationOutputSink(
-                    new LogCommandInvocationOutputSink(ConsoleLog.Instance, false), 
-                    new ServiceMessageCommandInvocationOutputSink(variables),
-                capture);
-            
-            foreach(var line in log.StandardOut)
+            variables = variables ?? new CalamariVariables();
+            var capture = new CaptureCommandInvocationOutputSink();
+            var sco = new SplitCommandInvocationOutputSink(new ServiceMessageCommandInvocationOutputSink(variables), capture);
+
+            foreach(var line in Log.StandardOut)
                 sco.WriteInfo(line);
            
-            foreach(var line in log.StandardError)
+            foreach(var line in Log.StandardError)
                 sco.WriteError(line);
             
             return new CalamariResult(exitCode, capture);

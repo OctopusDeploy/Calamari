@@ -13,10 +13,16 @@ namespace Calamari.Tests.Helpers
         public List<string> StandardError  { get; }= new List<string>();
 
         protected override void StdOut(string message)
-            => StandardOut.Add(message);
+        {
+            Console.WriteLine(message); // Write to console for the test output
+            StandardOut.Add(message);
+        }
 
         protected override void StdErr(string message)
-            => StandardError.Add(message);
+        {
+            Console.Error.WriteLine(message);
+            StandardError.Add(message);
+        }
 
         public override void Verbose(string message)
         {

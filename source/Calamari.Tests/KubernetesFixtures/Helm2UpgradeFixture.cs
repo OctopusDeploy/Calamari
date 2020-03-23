@@ -1,5 +1,6 @@
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Fixtures;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -39,7 +40,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             
             result.AssertFailure();
-            result.AssertErrorOutput("Error: could not find tiller");
+            Log.StandardError.Should().Contain("Error: could not find tiller");
         }
 
         [Test]
