@@ -42,7 +42,7 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new AlreadyInstalledConvention(journal),
-                new TransferPackageConvention(fileSystem),
+                new DelegateInstallConvention(Install),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
@@ -60,6 +60,26 @@ namespace Calamari.Commands
             }
 
             return 0;
+        }
+        
+        void Install(RunningDeployment deployment)
+        {
+            var transferPath = deployment.Variables.GetEnvironmentExpandedPath(SpecialVariables.Package.TransferPath);
+            fileSystem.EnsureDirectoryExists(transferPath);
+            var fileName = deployment.Variables.Get(SpecialVariables.Package.OriginalFileName) ?? Path.GetFileName(deployment.PackageFilePath);
+            var filePath = Path.Combine(transferPath, fileName);
+
+            if (fileSystem.FileExists(filePath))
+            {
+                Log.Info($"File {filePath} already exists so it will be attempted to be overwritten");
+            }
+
+            fileSystem.CopyFile(deployment.PackageFilePath, filePath);
+
+            Log.Info($"Copied package '{fileName}' to directory '{transferPath}'");
+            Log.SetOutputVariable(SpecialVariables.Package.Output.DirectoryPath, transferPath);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.FileName, fileName);
+            Log.SetOutputVariable(SpecialVariables.Package.Output.FilePath, filePath);
         }
     }
 }
