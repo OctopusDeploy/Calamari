@@ -15,7 +15,7 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var transferPath = deployment.Variables.GetEnvironmentExpandedPath(SpecialVariables.Package.TransferPath);
+            var transferPath = CrossPlatform.ExpandPathEnvironmentVariables(deployment.Variables.Get(SpecialVariables.Package.TransferPath));
             fileSystem.EnsureDirectoryExists(transferPath);
             var fileName = deployment.Variables.Get(SpecialVariables.Package.OriginalFileName) ?? Path.GetFileName(deployment.PackageFilePath);
             var filePath = Path.Combine(transferPath, fileName);

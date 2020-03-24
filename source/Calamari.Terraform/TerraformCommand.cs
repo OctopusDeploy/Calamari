@@ -4,6 +4,7 @@ using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -11,14 +12,13 @@ using Calamari.Integration.Substitutions;
 
 namespace Calamari.Terraform
 {
-    public abstract class TerraformCommand : Command
+    public abstract class TerraformCommand : ICommand
     {
         const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
 
         private readonly IConvention step;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
-        private string packageFile;
 
 
         protected TerraformCommand(IVariables variables, ICalamariFileSystem fileSystem, IConvention step)
@@ -26,20 +26,11 @@ namespace Calamari.Terraform
             this.step = step;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
         }
 
-        public override int Execute(string[] commandLineArguments)
+        public int Execute()
         {
-            Options.Parse(commandLineArguments);
-
-            if (!string.IsNullOrEmpty(packageFile))
-            {
-                if (!fileSystem.FileExists(packageFile))
-                {
-                    throw new CommandException("Could not find package file: " + packageFile);
-                }
-            }
+            var packageFile = variables.GetPrimaryPackagePath(fileSystem, false);
 
             var substituter = new FileSubstituter(fileSystem);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();

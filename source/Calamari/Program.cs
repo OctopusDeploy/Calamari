@@ -57,7 +57,7 @@ namespace Calamari
             {
                 container.Resolve<VariableLogger>().LogVariables();
 
-                var command = container.Resolve<ICommand[]>();
+                var command = container.Resolve<ICommandWithArguments[]>();
                 if (command.Length == 0)
                     throw new CommandException($"Could not find the command {options.Command}");
                 if (command.Length > 1)
@@ -81,25 +81,32 @@ namespace Calamari
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
-            
-            
+
+
             var assemblies = GetAllAssembliesToRegister(options).ToArray();
-                
+
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IScriptWrapper>()
                 .Except<TerminalScriptWrapper>()
                 .As<IScriptWrapper>()
                 .SingleInstance();
-            
+
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
                 .As<IDoesDeploymentTargetTypeHealthChecks>()
                 .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<ICommand>()
+                .AssignableTo<ICommandWithArguments>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .As<ICommand>();
+                .As<ICommandWithArguments>();
+
+            var iCommandTypes = assemblies
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(t => !t.IsAbstract && t.IsAssignableTo<ICommand>())
+                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase));
+            foreach (var iCommandType in iCommandTypes)
+                builder.RegisterType(typeof(CommandAdapter<>).MakeGenericType(iCommandType)).As<ICommandWithArguments>();
 
             return builder;
         }
@@ -111,6 +118,5 @@ namespace Calamari
             foreach (var extension in options.Extensions)
                 yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
         }
-        
     }
 }

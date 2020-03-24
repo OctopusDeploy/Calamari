@@ -2,7 +2,7 @@
 
 namespace Calamari.Commands.Support
 {
-    public abstract class Command : ICommand
+    public abstract class Command : ICommandWithArguments
     {
         protected Command()
         {

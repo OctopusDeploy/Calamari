@@ -7,11 +7,6 @@ namespace Calamari.Variables
 {
     public class CalamariVariables : VariableDictionary, IVariables
     {
-        public string GetEnvironmentExpandedPath(string variableName, string defaultValue = null)
-        {
-            return CrossPlatform.ExpandPathEnvironmentVariables(Get(variableName, defaultValue));
-        }
-
         public bool IsSet(string name)
         {
             return this[name] != null;

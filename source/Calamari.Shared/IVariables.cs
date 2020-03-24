@@ -4,7 +4,6 @@ namespace Calamari
 {
     public interface IVariables : IEnumerable<KeyValuePair<string, string>>
     {
-        string GetEnvironmentExpandedPath(string variableName, string defaultValue = null);
         bool IsSet(string name);
         void Set(string name, string value);
         void SetStrings(string variableName, IEnumerable<string> values, string separator);
