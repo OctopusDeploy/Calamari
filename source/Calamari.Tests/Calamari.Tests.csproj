@@ -100,6 +100,9 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Package\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.PackageBilingual\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
