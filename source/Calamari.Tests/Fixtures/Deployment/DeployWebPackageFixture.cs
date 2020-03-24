@@ -53,18 +53,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
             result.AssertOutput("Extracted 11 files");
-
-            // PreDeploy scripts
-            result.AssertOutput("Bonjour from PreDeploy.ps1");
-            result.AssertNoOutput("Bonjour from PreDeploy.sh");
-
-            // Deploy scripts
             result.AssertOutput("Hello from Deploy.ps1");
-            result.AssertNoOutput("Hello from Deploy.sh");
-
-            // PostDeploy scripts
-            result.AssertOutput("Hello from PostDeploy.ps1");
-            result.AssertNoOutput("Hello from PostDeploy.sh");
         }
 
         [Test]
@@ -77,17 +66,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage();
             result.AssertSuccess();
 
-            // PreDeploy scripts
-            result.AssertOutput("Bonjour from PreDeploy.sh");
-            result.AssertNoOutput("Bonjour from PreDeploy.ps1");
-
-            // Deploy scripts
             result.AssertOutput("Hello from Deploy.sh");
-            result.AssertNoOutput("Hello from Deploy.ps1");
-
-            // PostDeploy scripts
-            result.AssertOutput("Hello from PostDeploy.sh");
-            result.AssertNoOutput("Hello from PostDeploy.ps1");
         }
 
         [Test]

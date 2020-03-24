@@ -10,7 +10,7 @@ namespace Calamari.Tests.Helpers
 {
     public static class TarGzBuilder
     {
-        public static string BuildSamplePackage(string name, string version)
+        public static string BuildSamplePackage(string name, string version, bool excludeNonNativePlatformScripts = true)
         {
             var sourceDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
 
@@ -31,6 +31,10 @@ namespace Calamari.Tests.Helpers
                     .Where(f => isRunningOnWindows
                         ? !IsNixNuspecFile(f)
                         : !IsNotANuspecFile(f) || IsNixNuspecFile(f));
+
+                if (excludeNonNativePlatformScripts)
+                    files = files.Where(f => isRunningOnWindows ? f.Extension != ".sh" : f.Extension != ".ps1");
+
                 foreach(var file in files)
                     writer.Write(GetFilePathRelativeToRoot(sourceDirectory, file), file);
             }
