@@ -1,8 +1,14 @@
+using System;
 using Calamari.Commands.Support;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Integration.Scripting.Bash;
+using Calamari.Integration.Scripting.FSharp;
+using Calamari.Integration.Scripting.Python;
+using Calamari.Integration.Scripting.ScriptCS;
+using Calamari.Integration.Scripting.WindowsPowerShell;
 
 namespace Calamari.Integration.Scripting
 {
@@ -73,7 +79,7 @@ namespace Calamari.Integration.Scripting
                 .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                 // The last wrapper is always the TerminalScriptWrapper
-                new TerminalScriptWrapper(ScriptEngineRegistry.Instance.ScriptEngines[scriptSyntax], variables),
+                new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax), variables),
                 (IScriptWrapper current, IScriptWrapper next) =>
                 {
                     // the next wrapper is pointed to the current one
@@ -85,5 +91,24 @@ namespace Calamari.Integration.Scripting
                      */ 
                     return next;
                 });
+
+        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax)
+        {
+            switch (scriptSyntax)
+            {
+                case ScriptSyntax.PowerShell:
+                    return new PowerShellScriptExecutor();
+                case ScriptSyntax.CSharp:
+                    return new ScriptCSScriptExecutor();
+                case ScriptSyntax.Bash:
+                    return new BashScriptExecutor();
+                case ScriptSyntax.FSharp:
+                    return new FSharpExecutor();
+                case ScriptSyntax.Python:
+                    return new PythonScriptExecutor();
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(scriptSyntax), scriptSyntax, null);
+            }
+        }
     }
 }
