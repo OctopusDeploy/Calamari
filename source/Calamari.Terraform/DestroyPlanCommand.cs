@@ -5,11 +5,13 @@ using Calamari.Integration.Processes;
 namespace Calamari.Terraform
 {
     [Command("destroyplan-terraform", Description = "Plans the destruction of Terraform resources")]
-    public class DestroyPlanCommand : TerraformCommand
+    public class DestroyPlanCommand : PlanCommand
     {
         public DestroyPlanCommand(IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner) 
-            : base(variables, fileSystem, new DestroyPlanTerraformConvention(fileSystem, commandLineRunner))
+            : base(variables, fileSystem, commandLineRunner)
         {
         }
+
+        protected override string ExtraParameter => "-destroy";
     }
 }
