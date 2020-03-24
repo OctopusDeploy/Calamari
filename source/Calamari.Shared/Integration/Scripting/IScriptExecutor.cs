@@ -3,9 +3,8 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting
 {
-    public interface IScriptEngine  
+    public interface IScriptExecutor  
     {
-        ScriptSyntax[] GetSupportedTypes();
         CommandResult Execute(
             Script script, 
             IVariables variables, 

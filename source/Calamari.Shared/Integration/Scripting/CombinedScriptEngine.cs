@@ -6,7 +6,18 @@ using System.Linq;
 
 namespace Calamari.Integration.Scripting
 {
-    public class CombinedScriptEngine : IScriptEngine
+    public interface ICombinedScriptEngine
+    {
+        ScriptSyntax[] GetSupportedTypes();
+
+        CommandResult Execute(
+            Script script,
+            IVariables variables,
+            ICommandLineRunner commandLineRunner,
+            Dictionary<string, string> environmentVars = null);
+    }
+
+    public class CombinedScriptEngine : ICombinedScriptEngine
     {
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
 

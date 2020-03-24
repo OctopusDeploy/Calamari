@@ -5,13 +5,8 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.Bash
 {
-    public class BashScriptEngine : ScriptEngine
+    public class BashScriptExecutor : ScriptExecutor
     {
-        public override ScriptSyntax[] GetSupportedTypes()
-        {
-            return new[] {ScriptSyntax.Bash};
-        }
-
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {

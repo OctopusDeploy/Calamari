@@ -5,13 +5,8 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.FSharp
 {
-    public class FSharpEngine : ScriptEngine
+    public class FSharpExecutor : ScriptExecutor
     {
-        public override ScriptSyntax[] GetSupportedTypes()
-        {
-            return new[] {ScriptSyntax.FSharp};
-        }
-
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {

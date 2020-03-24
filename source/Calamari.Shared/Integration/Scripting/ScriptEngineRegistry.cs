@@ -9,18 +9,18 @@ namespace Calamari.Integration.Scripting
 {
     public class ScriptEngineRegistry
     {
-        private readonly Dictionary<ScriptSyntax, IScriptEngine> scriptEngines = new Dictionary<ScriptSyntax, IScriptEngine>
+        private readonly Dictionary<ScriptSyntax, IScriptExecutor> scriptEngines = new Dictionary<ScriptSyntax, IScriptExecutor>
         {
-            {ScriptSyntax.PowerShell, new PowerShellScriptEngine() },
-            {ScriptSyntax.CSharp, new ScriptCSScriptEngine() },
-            {ScriptSyntax.Bash, new BashScriptEngine()},
-            {ScriptSyntax.FSharp, new FSharpEngine()},
-            {ScriptSyntax.Python, new PythonScriptEngine()}
+            {ScriptSyntax.PowerShell, new PowerShellScriptExecutor() },
+            {ScriptSyntax.CSharp, new ScriptCSScriptExecutor() },
+            {ScriptSyntax.Bash, new BashScriptExecutor()},
+            {ScriptSyntax.FSharp, new FSharpExecutor()},
+            {ScriptSyntax.Python, new PythonScriptExecutor()}
         }; 
 
         public static readonly ScriptEngineRegistry Instance = new ScriptEngineRegistry();
 
-        public IDictionary<ScriptSyntax, IScriptEngine> ScriptEngines { get { return scriptEngines; } }
+        public IDictionary<ScriptSyntax, IScriptExecutor> ScriptEngines { get { return scriptEngines; } }
     }
 
 }

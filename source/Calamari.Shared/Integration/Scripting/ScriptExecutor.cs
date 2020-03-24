@@ -9,10 +9,8 @@ using Calamari.Integration.Proxies;
 
 namespace Calamari.Integration.Scripting
 {
-    public abstract class ScriptEngine : IScriptEngine
+    public abstract class ScriptExecutor : IScriptExecutor
     {
-        public abstract ScriptSyntax[] GetSupportedTypes();
-
         public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
