@@ -30,8 +30,7 @@ namespace Calamari.Tests.Helpers
                     .Select(f => new FileInfo(f))
                     .Where(f => isRunningOnWindows
                         ? !IsNixNuspecFile(f)
-                        : !IsNotANuspecFile(f) || IsNixNuspecFile(f))
-                    .Where(f => isRunningOnWindows ? f.Extension != ".sh" : f.Extension != ".ps1");
+                        : !IsNotANuspecFile(f) || IsNixNuspecFile(f));
                 foreach(var file in files)
                     writer.Write(GetFilePathRelativeToRoot(sourceDirectory, file), file);
             }
