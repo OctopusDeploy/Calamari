@@ -15,13 +15,13 @@ namespace Calamari.Integration.Packages.Download
     /// </summary>
     public class PackageDownloaderStrategy
     {
-        readonly IScriptEngine engine;
+        readonly ICombinedScriptEngine engine;
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
 
-        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner, IVariables variables)
+        public PackageDownloaderStrategy(ICombinedScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner, IVariables variables)
         {
             this.engine = engine;
             this.fileSystem = fileSystem;

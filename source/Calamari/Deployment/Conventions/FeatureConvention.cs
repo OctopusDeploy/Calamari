@@ -14,7 +14,7 @@ namespace Calamari.Deployment.Conventions
 {
     public class FeatureConvention : FeatureConventionBase, IInstallConvention
     {
-        public FeatureConvention(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) 
+        public FeatureConvention(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) 
             : base(deploymentStage, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
         {
         }
@@ -27,7 +27,7 @@ namespace Calamari.Deployment.Conventions
 
     public class FeatureRollbackConvention : FeatureConventionBase, IRollbackConvention
     {
-        public FeatureRollbackConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) : base(deploymentStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+        public FeatureRollbackConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) : base(deploymentStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
         {
         }
 
@@ -47,14 +47,14 @@ namespace Calamari.Deployment.Conventions
         readonly string deploymentStage;
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly IScriptEngine scriptEngine;
+        readonly ICombinedScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
         readonly ICollection<IFeature> featureClasses;
         static readonly Assembly Assembly = typeof(FeatureConventionBase).Assembly; 
 
         protected FeatureConventionBase(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, 
-            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
+            ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
         {
             this.deploymentStage = deploymentStage;
             this.fileSystem = fileSystem;

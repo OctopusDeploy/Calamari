@@ -14,10 +14,10 @@ namespace Calamari.Integration.Scripting
     {
         readonly string scriptFilePrefix;
         readonly ICalamariFileSystem fileSystem;
-        readonly IScriptEngine scriptEngine;
+        readonly ICombinedScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PackagedScriptRunner(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public PackagedScriptRunner(string scriptFilePrefix, ICalamariFileSystem fileSystem, ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.scriptFilePrefix = scriptFilePrefix;
             this.fileSystem = fileSystem;

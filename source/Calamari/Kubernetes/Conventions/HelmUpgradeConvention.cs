@@ -18,11 +18,11 @@ namespace Calamari.Kubernetes.Conventions
 {
     public class HelmUpgradeConvention : IInstallConvention
     {
-        readonly IScriptEngine scriptEngine;
+        readonly ICombinedScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
 
-        public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
         {
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;

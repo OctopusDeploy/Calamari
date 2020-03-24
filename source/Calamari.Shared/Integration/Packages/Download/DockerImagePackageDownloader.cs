@@ -15,7 +15,7 @@ namespace Calamari.Integration.Packages.Download
 {
     public class DockerImagePackageDownloader : IPackageDownloader
     {
-        readonly IScriptEngine scriptEngine;
+        readonly ICombinedScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
@@ -29,7 +29,7 @@ namespace Calamari.Integration.Packages.Download
             }
         };
 
-        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables)
+        public DockerImagePackageDownloader(ICombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
@@ -74,7 +74,7 @@ namespace Calamari.Integration.Packages.Download
 
         void PerformPull(string username, string password, string fullImageName, string feed)
         {
-            var file = GetFetchScript(scriptEngine);
+            var file = GetFetchScript();
             using (new TemporaryFile(file))
             {
                 var clone = variables.Clone();
@@ -128,7 +128,7 @@ namespace Calamari.Integration.Packages.Download
         }
 
 
-        string GetFetchScript(IScriptEngine scriptEngine)
+        string GetFetchScript()
         {
             var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
 
