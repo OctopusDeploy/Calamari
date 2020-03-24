@@ -40,7 +40,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             
             result.AssertFailure();
-            Log.StandardError.Should().Contain("Error: could not find tiller");
+            Log.StandardError.Should().ContainMatch("*Error: could not find tiller*");
         }
 
         [Test]
