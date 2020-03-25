@@ -12,18 +12,18 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         private static readonly ScriptSyntax[] ScriptPreferencesNonWindows = new[]
         {
             ScriptSyntax.Bash,
-            ScriptSyntax.PowerShell,
+            ScriptSyntax.Python,
             ScriptSyntax.CSharp,
             ScriptSyntax.FSharp,
-            ScriptSyntax.Python
+            ScriptSyntax.PowerShell
         };
 
         private static readonly ScriptSyntax[] ScriptPreferencesWindows = new[]
         {
             ScriptSyntax.PowerShell,
+            ScriptSyntax.Python,
             ScriptSyntax.CSharp,
             ScriptSyntax.FSharp,
-            ScriptSyntax.Python,
             ScriptSyntax.Bash
         };
 
