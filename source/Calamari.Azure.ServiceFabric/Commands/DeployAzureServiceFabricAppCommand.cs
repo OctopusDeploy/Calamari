@@ -23,12 +23,12 @@ namespace Calamari.Azure.ServiceFabric.Commands
     public class DeployAzureServiceFabricAppCommand : Command
     {
         private string packageFile;
-        private readonly CombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         private readonly ICertificateStore certificateStore;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureServiceFabricAppCommand(CombinedScriptEngine scriptEngine, ICertificateStore certificateStore, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureServiceFabricAppCommand(IScriptEngine scriptEngine, ICertificateStore certificateStore, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 

@@ -20,14 +20,14 @@ namespace Calamari.Azure.Commands
     [Command("deploy-azure-resource-group", Description = "Creates a new Azure Resource Group deployment")]
     public class DeployAzureResourceGroupCommand : Command
     {
-        private readonly CombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
         private string packageFile;
         private string templateFile;
         private string templateParameterFile;
 
-        public DeployAzureResourceGroupCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureResourceGroupCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             this.scriptEngine = scriptEngine;
             this.variables = variables;

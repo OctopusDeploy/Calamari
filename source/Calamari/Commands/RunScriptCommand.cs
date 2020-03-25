@@ -27,7 +27,7 @@ namespace Calamari.Commands
         string scriptParametersArg;
         readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
-        readonly CombinedScriptEngine scriptEngine;
+        readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         IFileSubstituter fileSubstituter; 
@@ -35,7 +35,7 @@ namespace Calamari.Commands
         public RunScriptCommand(
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
-            CombinedScriptEngine scriptEngine, 
+            IScriptEngine scriptEngine, 
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner)
         {

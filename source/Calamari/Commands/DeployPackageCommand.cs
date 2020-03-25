@@ -27,12 +27,12 @@ namespace Calamari.Commands
     public class DeployPackageCommand : Command
     {
         private string packageFile;
-        private readonly CombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployPackageCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public DeployPackageCommand(IScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 

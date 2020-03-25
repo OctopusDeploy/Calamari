@@ -74,7 +74,7 @@ namespace Calamari.Integration.Packages.Download
 
         void PerformPull(string username, string password, string fullImageName, string feed)
         {
-            var file = GetFetchScript(scriptEngine);
+            var file = GetFetchScript();
             using (new TemporaryFile(file))
             {
                 var clone = variables.Clone();
@@ -128,7 +128,7 @@ namespace Calamari.Integration.Packages.Download
         }
 
 
-        string GetFetchScript(IScriptEngine scriptEngine)
+        string GetFetchScript()
         {
             var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
 

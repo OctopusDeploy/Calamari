@@ -10,7 +10,7 @@ namespace Calamari.Hooks
     /// </summary>
     public class TerminalScriptWrapper : IScriptWrapper
     {
-        readonly IScriptEngine scriptEngine;
+        readonly IScriptExecutor scriptExecutor;
         readonly IVariables variables;
 
         public bool IsEnabled(ScriptSyntax syntax) => true;
@@ -23,9 +23,9 @@ namespace Calamari.Hooks
             set => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
         }
 
-        public TerminalScriptWrapper(IScriptEngine scriptEngine, IVariables variables)
+        public TerminalScriptWrapper(IScriptExecutor scriptExecutor, IVariables variables)
         {
-            this.scriptEngine = scriptEngine;
+            this.scriptExecutor = scriptExecutor;
             this.variables = variables;
         }
 
@@ -33,6 +33,6 @@ namespace Calamari.Hooks
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars) => 
-            scriptEngine.Execute(script, variables, commandLineRunner, environmentVars);
+            scriptExecutor.Execute(script, variables, commandLineRunner, environmentVars);
     }
 }

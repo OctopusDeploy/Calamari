@@ -15,11 +15,11 @@ namespace Calamari.Tests.Fixtures.Commands
     {
         private string scriptFile;
         private readonly IVariables variables;
-        private readonly CombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
 
         public RunTestScriptCommand(
             IVariables variables,
-            CombinedScriptEngine scriptEngine)
+            IScriptEngine scriptEngine)
         {
             Options.Add("script=", "Path to the script to execute.", v => scriptFile = Path.GetFullPath(v));
 

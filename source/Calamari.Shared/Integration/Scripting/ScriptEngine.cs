@@ -1,104 +1,114 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
+using System;
+using Calamari.Commands.Support;
+using Calamari.Hooks;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Calamari.Integration.Proxies;
+using System.Collections.Generic;
+using System.Linq;
+using Calamari.Integration.Scripting.Bash;
+using Calamari.Integration.Scripting.FSharp;
+using Calamari.Integration.Scripting.Python;
+using Calamari.Integration.Scripting.ScriptCS;
+using Calamari.Integration.Scripting.WindowsPowerShell;
 
 namespace Calamari.Integration.Scripting
 {
-    public abstract class ScriptEngine : IScriptEngine
+    public interface IScriptEngine
     {
-        public abstract ScriptSyntax[] GetSupportedTypes();
+        ScriptSyntax[] GetSupportedTypes();
 
-        public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner,
+        CommandResult Execute(
+            Script script,
+            IVariables variables,
+            ICommandLineRunner commandLineRunner,
+            Dictionary<string, string> environmentVars = null);
+    }
+
+    public class ScriptEngine : IScriptEngine
+    {
+        private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
+
+        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
+        {
+            this.scriptWrapperHooks = scriptWrapperHooks;
+        }
+        
+        public ScriptSyntax[] GetSupportedTypes()	
+        {	
+            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };	
+            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python, ScriptSyntax.Bash };	
+
+            //order is important, as we want to try the preferred syntax first
+            return preferredScriptSyntax.Concat(scriptSyntaxesSupportedOnAllPlatforms.Except(preferredScriptSyntax)).ToArray();
+        }
+        
+        public CommandResult Execute(
+            Script script,
+            IVariables variables,
+            ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
-            var environmentVariablesIncludingProxy = environmentVars ?? new Dictionary<string, string>();
-            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables()) 
-                environmentVariablesIncludingProxy[proxyVariable.Key] = proxyVariable.Value;
-
-            var prepared = PrepareExecution(script, variables, environmentVariablesIncludingProxy);
-
-            CommandResult result = null;
-            foreach (var execution in prepared)
-            {
-                if (variables.IsSet(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo))
-                {
-                    CopyWorkingDirectory(variables, execution.CommandLineInvocation.WorkingDirectory,
-                        execution.CommandLineInvocation.Arguments);
-                }
-
-                try
-                {
-                    if (execution.CommandLineInvocation.Isolate)
-                    {
-                        using (SemaphoreFactory.Get().Acquire("CalamariSynchronizeProcess",
-                            "Waiting for other process to finish executing script"))
-                        { 
-                            result = commandLineRunner.Execute(execution.CommandLineInvocation);
-                        }
-                    }
-                    else
-                    {
-                        result = commandLineRunner.Execute(execution.CommandLineInvocation);
-                    }
-
-                    if (result.ExitCode != 0)
-                        return result;
-                }
-                finally
-                {
-                    foreach (var temporaryFile in execution.TemporaryFiles)
-                    {
-                        var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-                        fileSystem.DeleteFile(temporaryFile, FailureOptions.IgnoreFailure);
-                    }
-                }
-            }
-
-            return result;
+            var syntax = script.File.ToScriptType();
+            return BuildWrapperChain(syntax, variables)
+                .ExecuteScript(script, syntax, commandLineRunner, environmentVars);
         }
 
-        protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
-            Dictionary<string, string> environmentVars = null);
-        
-        static void CopyWorkingDirectory(IVariables variables, string workingDirectory, string arguments)
+        /// <summary>
+        /// Script wrappers form a chain, with one wrapper calling the next, much like
+        /// a linked list. The last wrapper to be called is the TerminalScriptWrapper,
+        /// which simply executes a ScriptEngine without any additional processing.
+        /// In this way TerminalScriptWrapper is what actually executes the script
+        /// that is to be run, with all other wrappers contributing to the script
+        /// context.
+        /// </summary>
+        /// <param name="scriptSyntax">The type of the script being run</param>
+        /// <param name="variables"></param>
+        /// <returns>
+        /// The start of the wrapper chain. Because each IScriptWrapper is expected to call its NextWrapper,
+        /// calling ExecuteScript() on the start of the chain will result in every part of the chain being
+        /// executed, down to the final TerminalScriptWrapper.
+        /// </returns>
+        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables) =>
+            // get the type of script
+            scriptWrapperHooks
+                .Where(hook => hook.IsEnabled(scriptSyntax))
+                /*
+                 * Sort the list in descending order of priority to ensure that
+                 * authentication script wrappers are called before any tool
+                 * script wrapper that might rely on the auth having being performed
+                 */
+                .OrderByDescending(hook => hook.Priority)
+                .Aggregate(
+                // The last wrapper is always the TerminalScriptWrapper
+                new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax), variables),
+                (IScriptWrapper current, IScriptWrapper next) =>
+                {
+                    // the next wrapper is pointed to the current one
+                    next.NextWrapper = current;
+                    /*
+                     * The next wrapper is carried across to the next aggregate call,
+                     * or is returned as the result of the aggregate call. This means
+                     * the last item in the list is the return value.
+                     */ 
+                    return next;
+                });
+
+        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax)
         {
-            var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
-            var copyToParent = Path.Combine(
-                variables.Get(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Project.Name, "Non-Project")),
-                variables.Get(SpecialVariables.Deployment.Id, "Non-Deployment"),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Action.Name, "Non-Action"))
-            );
-
-            string copyTo;
-            var n = 1;
-            do
+            switch (scriptSyntax)
             {
-                copyTo = Path.Combine(copyToParent, $"{n++}");
-            } while (Directory.Exists(copyTo));
-
-            Log.Verbose($"Copying working directory '{workingDirectory}' to '{copyTo}'");
-            fs.CopyDirectory(workingDirectory, copyTo);
-            File.WriteAllText(Path.Combine(copyTo, "Arguments.txt"), arguments);
-            File.WriteAllText(Path.Combine(copyTo, "CopiedFromDirectory.txt"), workingDirectory);
-        }
-
-        protected class ScriptExecution
-        {
-            public ScriptExecution(CommandLineInvocation commandLineInvocation, IEnumerable<string> temporaryFiles)
-            {
-                CommandLineInvocation = commandLineInvocation;
-                TemporaryFiles = temporaryFiles;
+                case ScriptSyntax.PowerShell:
+                    return new PowerShellScriptExecutor();
+                case ScriptSyntax.CSharp:
+                    return new ScriptCSScriptExecutor();
+                case ScriptSyntax.Bash:
+                    return new BashScriptExecutor();
+                case ScriptSyntax.FSharp:
+                    return new FSharpExecutor();
+                case ScriptSyntax.Python:
+                    return new PythonScriptExecutor();
+                default:
+                    throw new NotSupportedException($"{scriptSyntax} script are not supported for execution");
             }
-            
-            public CommandLineInvocation CommandLineInvocation { get; }
-            public IEnumerable<string> TemporaryFiles { get; }
         }
     }
 }

@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, InitializeAndCopyFilesScript(vhdPath, packageDirectory, twoPartitions));
-                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, new CalamariVariables());
+                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath, new CalamariVariables());
                 result.AssertSuccess();
             }
 
@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             return tempDirectory;
         }
 
-        private static CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariables variables)
+        private static CalamariResult ExecuteScript(IScriptExecutor psse, string scriptName, IVariables variables)
         {
             var runner = new TestCommandLineRunner(new LogWrapper(), variables);
             var result = psse.Execute(new Script(scriptName), variables, runner);

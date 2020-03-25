@@ -6,13 +6,8 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.Python
 {
-    public class PythonScriptEngine : ScriptEngine
+    public class PythonScriptExecutor : ScriptExecutor
     {
-        public override ScriptSyntax[] GetSupportedTypes()
-        {
-            return new[] {ScriptSyntax.Python};
-        }
-
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {

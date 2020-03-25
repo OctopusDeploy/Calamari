@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))
             {
                 File.WriteAllText(scriptFile.FilePath, "#!/bin/bash\necho $(get_octopusvariable \"mysecrect\")");
-                var result = ExecuteScript(new BashScriptEngine(), scriptFile.FilePath, GetVariables());
+                var result = ExecuteScript(new BashScriptExecutor(), scriptFile.FilePath, GetVariables());
                 result.AssertOutput("KingKong");
             }
         }

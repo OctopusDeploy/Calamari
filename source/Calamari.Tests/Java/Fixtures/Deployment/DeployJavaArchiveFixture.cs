@@ -104,7 +104,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         {
             var log = new InMemoryLog();
             var command = new DeployJavaArchiveCommand(
-                new CombinedScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
                 Variables,
                 CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
                 new CommandLineRunner(log, Variables),

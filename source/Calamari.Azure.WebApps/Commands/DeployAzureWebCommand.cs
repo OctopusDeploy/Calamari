@@ -20,11 +20,11 @@ namespace Calamari.Azure.WebApps.Commands
     public class DeployAzureWebCommand : Command
     {
         private string packageFile;
-        private readonly CombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureWebCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureWebCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 

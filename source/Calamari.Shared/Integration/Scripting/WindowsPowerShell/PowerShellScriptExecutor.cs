@@ -10,13 +10,8 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
-    public class PowerShellScriptEngine : ScriptEngine
+    public class PowerShellScriptExecutor : ScriptExecutor
     {
-        public override ScriptSyntax[] GetSupportedTypes()
-        {
-            return new[] {ScriptSyntax.PowerShell};
-        }
-
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
             Dictionary<string, string> environmentVars = null)
