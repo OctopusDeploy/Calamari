@@ -214,6 +214,8 @@ server {{
             }
 
             var virtualServerConfPath = Path.Combine(tempDirectory, TempConfigRootDirectory, $"{VirtualServerName}.conf");
+            // Remove any existing location config files to ensure only those defined in the UI are present. 
+            fileSystem.DeleteDirectory(virtualServerConfPath, FailureOptions.IgnoreFailure);
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(virtualServerConfPath));
             fileSystem.OverwriteFile(virtualServerConfPath, RemoveEmptyLines(virtualServerConfig));
         }
