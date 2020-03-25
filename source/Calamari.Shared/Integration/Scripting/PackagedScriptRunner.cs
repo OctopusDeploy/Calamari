@@ -45,11 +45,11 @@ namespace Calamari.Integration.Scripting
             }
         }
 
-        protected void DeletePreferredScript(RunningDeployment deployment)
+        protected void DeleteScripts(RunningDeployment deployment)
         {
-            var script = FindPreferredScript(deployment);
+            var scripts = FindScripts(deployment);
 
-            if (!string.IsNullOrEmpty(script))
+            foreach (var script in scripts)
             {
                 fileSystem.DeleteFile(script, FailureOptions.IgnoreFailure);
             }
@@ -58,12 +58,9 @@ namespace Calamari.Integration.Scripting
         string FindPreferredScript(RunningDeployment deployment)
         {
             var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
-            var searchPatterns = supportedScriptExtensions.Select(e => "*." + e.FileExtension()).ToArray();
 
-            var files = from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)
-                        let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)
+            var files = from file in FindScripts(deployment)
                         let preferenceOrdinal = Array.IndexOf(supportedScriptExtensions, file.ToScriptType())
-                        where nameWithoutExtension.Equals(scriptFilePrefix, StringComparison.OrdinalIgnoreCase)
                         orderby preferenceOrdinal
                         select file;
 
@@ -77,6 +74,17 @@ namespace Calamari.Integration.Scripting
             }
 
             return selectedFile;
+        }
+
+        IEnumerable<string> FindScripts(RunningDeployment deployment)
+        {
+            var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
+            var searchPatterns = supportedScriptExtensions.Select(e => "*." + e.FileExtension()).ToArray();
+
+            return from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)
+                   let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)
+                   where nameWithoutExtension.Equals(scriptFilePrefix, StringComparison.OrdinalIgnoreCase)
+                   select file;
         }
     }
 }

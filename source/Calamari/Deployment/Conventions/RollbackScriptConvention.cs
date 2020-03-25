@@ -20,7 +20,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
             {
-                DeletePreferredScript(deployment);
+                DeleteScripts(deployment);
             }
         }
     }
