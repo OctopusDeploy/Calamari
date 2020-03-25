@@ -1,4 +1,3 @@
-using Calamari.Commands.Support;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
 using System.Collections.Generic;
@@ -14,16 +13,16 @@ namespace Calamari.Integration.Scripting
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
-        
-        public ScriptSyntax[] GetSupportedTypes()	
-        {	
-            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };	
-            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python, ScriptSyntax.Bash };	
+
+        public ScriptSyntax[] GetSupportedTypes()
+        {
+            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };
+            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.PowerShell, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.Python, ScriptSyntax.Bash };
 
             //order is important, as we want to try the preferred syntax first
             return preferredScriptSyntax.Concat(scriptSyntaxesSupportedOnAllPlatforms.Except(preferredScriptSyntax)).ToArray();
         }
-        
+
         public CommandResult Execute(
             Script script,
             IVariables variables,
