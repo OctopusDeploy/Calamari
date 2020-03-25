@@ -4,9 +4,8 @@ using Octostache;
 
 namespace Calamari.Integration.Packages.Java
 {
-    public class JarExtractor : SimplePackageExtractor
+    public class JarExtractor : IPackageExtractor
     {
-        public static readonly string[] EXTENSIONS = {".jar", ".war", ".ear", ".rar", ".zip"};
         readonly JarTool jarTool;
 
         public JarExtractor(JarTool jarTool)
@@ -14,9 +13,9 @@ namespace Calamari.Integration.Packages.Java
             this.jarTool = jarTool;
         }
 
-        public override string[] Extensions => EXTENSIONS;
+        public string[] Extensions => new[] {".jar", ".war", ".ear", ".rar", ".zip"};
 
-        public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
             return jarTool.ExtractJar(packageFile, directory);
         }

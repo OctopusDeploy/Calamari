@@ -10,11 +10,11 @@ using Polly;
 
 namespace Calamari.Integration.Packages
 {
-    public class ZipPackageExtractor : SimplePackageExtractor
+    public class ZipPackageExtractor : IPackageExtractor
     {
-        public override string[] Extensions { get { return new [] { ".zip"}; } }
+        public string[] Extensions { get { return new [] { ".zip"}; } }
 
-        public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
             var filesExtracted = 0;
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
