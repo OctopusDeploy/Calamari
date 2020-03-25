@@ -9,7 +9,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         IReadOnlyList<ServiceMessage> ServiceMessages { get; }
         ExecutionOutcome Outcome { get; }
         bool WasSuccessful { get; }
-        string ResultMessage { get; }
+        string? ResultMessage { get; }
         int ExitCode { get; }
     }
 }
