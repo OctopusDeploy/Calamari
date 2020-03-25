@@ -3,50 +3,47 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Java;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.FileSystem
 {
-    public class PackageStore
+    public interface IPackageStore
     {
-        private readonly IPackageExtractor packageExtractorFactory;
+        PackagePhysicalFileMetadata GetPackage(string packageId, IVersion version, string hash);
+        IEnumerable<PackagePhysicalFileMetadata> GetNearestPackages(string packageId, IVersion version, int take = 5);
+    }
+
+    public class PackageStore : IPackageStore
+    {
         readonly ICalamariFileSystem fileSystem;
-        static readonly string RootDirectory = Path.Combine(TentacleHome, "Files");
+        readonly string[] supportedExtensions;
 
-        static string TentacleHome
+        public PackageStore(IGenericPackageExtractor packageExtractor, ICalamariFileSystem fileSystem)
         {
-            get
-            {
-                var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
-                if (tentacleHome == null)
-                {
-                    Log.Error("Environment variable 'TentacleHome' has not been set.");
-                }
-                return tentacleHome;
-            }
-        }
-
-        public PackageStore(IPackageExtractor packageExtractorFactory, ICalamariFileSystem fileSystem)
-        {
-            this.packageExtractorFactory = packageExtractorFactory;
+            this.supportedExtensions = packageExtractor.Extensions.Concat(JarExtractor.SupportedExtensions).Distinct().ToArray();
             this.fileSystem = fileSystem;
         }
 
         public static string GetPackagesDirectory()
         {
-            return RootDirectory;
+            var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
+            if (tentacleHome == null)
+                throw new Exception("Environment variable 'TentacleHome' has not been set.");
+            
+            return Path.Combine(tentacleHome, "Files");
         }
 
         public PackagePhysicalFileMetadata GetPackage(string packageId, IVersion version, string hash)
         {
-            fileSystem.EnsureDirectoryExists(RootDirectory);
+            fileSystem.EnsureDirectoryExists(GetPackagesDirectory());
             foreach (var file in PackageFiles(packageId, version))
             {
                 var packageNameMetadata = PackageMetadata(file);
                 if (packageNameMetadata == null)
                     continue;
-                
-                if (!string.Equals(packageNameMetadata.PackageId, packageId, StringComparison.OrdinalIgnoreCase) || 
+
+                if (!string.Equals(packageNameMetadata.PackageId, packageId, StringComparison.OrdinalIgnoreCase) ||
                     !packageNameMetadata.Version.Equals(version))
                     continue;
 
@@ -59,15 +56,15 @@ namespace Calamari.Integration.FileSystem
             return null;
         }
 
-        private IEnumerable<string> PackageFiles(string packageId, IVersion version = null)
+        IEnumerable<string> PackageFiles(string packageId, IVersion version = null)
         {
-            return fileSystem.EnumerateFilesRecursively(RootDirectory, 
-                PackageName.ToSearchPatterns(packageId, version, packageExtractorFactory.Extensions));
+            return fileSystem.EnumerateFilesRecursively(GetPackagesDirectory(),
+                PackageName.ToSearchPatterns(packageId, version, supportedExtensions));
         }
 
         public IEnumerable<PackagePhysicalFileMetadata> GetNearestPackages(string packageId, IVersion version, int take = 5)
         {
-            fileSystem.EnsureDirectoryExists(RootDirectory);
+            fileSystem.EnsureDirectoryExists(GetPackagesDirectory());
 
             var zipPackages =
                 from filePath in PackageFiles(packageId)

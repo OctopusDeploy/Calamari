@@ -12,7 +12,7 @@ namespace Calamari.Integration.Packages
 {
     public class ZipPackageExtractor : IPackageExtractor
     {
-        public string[] Extensions { get { return new [] { ".zip"}; } }
+        public string[] Extensions => new [] { ".zip"};
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
@@ -48,7 +48,7 @@ namespace Calamari.Integration.Packages
 
         static void WriteSymbolicLink(string sourcepath, string targetpath)
         {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
+            CombinedPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
         }
 
         protected void ProcessEvent(ref int filesExtracted, IEntry entry, bool suppressNestedScriptWarning)
@@ -59,7 +59,7 @@ namespace Calamari.Integration.Packages
 
             if (!suppressNestedScriptWarning)
             {
-                GenericPackageExtractor.WarnIfScriptInSubFolder(entry.Key);
+                CombinedPackageExtractor.WarnIfScriptInSubFolder(entry.Key);
             }
         }
     }

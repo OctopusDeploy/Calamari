@@ -13,13 +13,5 @@ namespace Calamari.Integration.Packages
         {
             return new GenericPackageExtractor();
         }
-
-        public GenericPackageExtractor createJavaGenericPackageExtractor(JarTool jarTool)
-        {
-            return new GenericPackageExtractor(new List<IPackageExtractor>
-            {                            
-                new JarExtractor(jarTool)
-            });
-        }
     }
 }

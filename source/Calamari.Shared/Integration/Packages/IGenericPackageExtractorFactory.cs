@@ -20,10 +20,5 @@ namespace Calamari.Integration.Packages
     {
         /// <returns>A GenericPackageExtractor that processes the "standard" package types</returns>
         GenericPackageExtractor createStandardGenericPackageExtractor();
-        /// <returns>
-        /// A GenericPackageExtractor that processes the "standard" package types, along with
-        /// Java packages.
-        /// </returns>
-        GenericPackageExtractor createJavaGenericPackageExtractor(JarTool jarTool);
     }
 }

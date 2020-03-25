@@ -14,6 +14,7 @@ using Calamari.HealthChecks;
 using Calamari.Hooks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util.Environments;
@@ -81,6 +82,8 @@ namespace Calamari
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
+            builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
+            builder.RegisterType<GenericPackageExtractor>().As<IGenericPackageExtractor>();
             
             
             var assemblies = GetAllAssembliesToRegister(options).ToArray();

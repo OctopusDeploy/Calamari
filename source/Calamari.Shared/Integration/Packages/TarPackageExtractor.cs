@@ -11,7 +11,7 @@ namespace Calamari.Integration.Packages
 {
     public class TarPackageExtractor : IPackageExtractor
     {
-        public string[] Extensions { get { return new[] { ".tar" }; } }
+        public virtual string[] Extensions => new[] { ".tar" };
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
@@ -60,7 +60,7 @@ namespace Calamari.Integration.Packages
 
         static void WriteSymbolicLink(string sourcepath, string targetpath)
         {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
+            CombinedPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
         }
 
 
@@ -77,7 +77,7 @@ namespace Calamari.Integration.Packages
 
             if (!suppressNestedScriptWarning)
             {
-                GenericPackageExtractor.WarnIfScriptInSubFolder(entry.Key);
+                CombinedPackageExtractor.WarnIfScriptInSubFolder(entry.Key);
             }
         }
     }

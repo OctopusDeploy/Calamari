@@ -9,24 +9,7 @@ namespace Calamari.Integration.Packages
 {
     public class GenericPackageExtractor : IGenericPackageExtractor
     {
-        private readonly List<IPackageExtractor> additionalExtractors =
-            new List<IPackageExtractor>();
-
-        private readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
-
-        public GenericPackageExtractor()
-        {
-        }
-
-        /// <summary>
-        /// Construct a generic extractor supplying a list of additional extractors
-        /// that should be considered after the generic list has been exhausted.
-        /// </summary>
-        /// <param name="additionalExtractors">A list of additional extractors that are to be considered when dealing with packages</param>
-        public GenericPackageExtractor(List<IPackageExtractor> additionalExtractors)
-        {
-            this.additionalExtractors.AddRange(additionalExtractors);
-        }
+        readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
 
         public string[] Extensions
         {
@@ -94,9 +77,9 @@ namespace Calamari.Integration.Packages
             new TarBzipPackageExtractor(),
             new ZipPackageExtractor(),
             new TarPackageExtractor()
-        }.Concat(additionalExtractors).ToList();
+        };
 
-        private IPackageExtractor FindByExtension(PackageFileNameMetadata packageFile)
+        IPackageExtractor FindByExtension(PackageFileNameMetadata packageFile)
         {
             return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => packageFile.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase)));
         }
