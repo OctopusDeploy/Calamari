@@ -59,10 +59,10 @@ namespace Calamari.Integration.Scripting
         {
             var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
 
-            var files = from file in FindScripts(deployment)
-                        let preferenceOrdinal = Array.IndexOf(supportedScriptExtensions, file.ToScriptType())
-                        orderby preferenceOrdinal
-                        select file;
+            var files = (from file in FindScripts(deployment)
+                         let preferenceOrdinal = Array.IndexOf(supportedScriptExtensions, file.ToScriptType())
+                         orderby preferenceOrdinal
+                         select file).ToArray();
 
             var numFiles = files.Count();
             var selectedFile = files.FirstOrDefault();
