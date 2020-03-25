@@ -17,12 +17,12 @@ namespace Calamari.Commands.Java
     public class JavaLibraryCommand : Command
     {
         string actionType;
-        readonly CombinedScriptEngine scriptEngine;
+        readonly ScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
 
-        public JavaLibraryCommand(CombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, IVariables variables, ICommandLineRunner commandLineRunner)
+        public JavaLibraryCommand(ScriptEngine scriptEngine, ICalamariFileSystem fileSystem, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("actionType=", "The step type being invoked.", v => actionType = v);
             this.scriptEngine = scriptEngine;

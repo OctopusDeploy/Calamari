@@ -74,7 +74,7 @@ namespace Calamari
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
             builder.RegisterType<VariablesFactory>().AsSelf();
             builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
-            builder.RegisterType<CombinedScriptEngine>().AsSelf().As<ICombinedScriptEngine>();
+            builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
             builder.RegisterType<VariableLogger>().AsSelf();
             builder.RegisterType<LogWrapper>().As<ILog>().SingleInstance();
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();

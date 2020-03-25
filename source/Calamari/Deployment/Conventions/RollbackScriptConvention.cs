@@ -6,7 +6,7 @@ namespace Calamari.Deployment.Conventions
 {
     public class RollbackScriptConvention : PackagedScriptRunner, IRollbackConvention
     {
-        public RollbackScriptConvention(string scriptFilePrefix, ICalamariFileSystem fileSystem, ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+        public RollbackScriptConvention(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
             base(scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)
         {            
         }

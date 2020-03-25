@@ -12,7 +12,7 @@ using Calamari.Integration.Scripting.WindowsPowerShell;
 
 namespace Calamari.Integration.Scripting
 {
-    public interface ICombinedScriptEngine
+    public interface IScriptEngine
     {
         ScriptSyntax[] GetSupportedTypes();
 
@@ -23,11 +23,11 @@ namespace Calamari.Integration.Scripting
             Dictionary<string, string> environmentVars = null);
     }
 
-    public class CombinedScriptEngine : ICombinedScriptEngine
+    public class ScriptEngine : IScriptEngine
     {
         private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
 
-        public CombinedScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
+        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
         }
@@ -107,7 +107,7 @@ namespace Calamari.Integration.Scripting
                 case ScriptSyntax.Python:
                     return new PythonScriptExecutor();
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(scriptSyntax), scriptSyntax, null);
+                    throw new NotSupportedException($"{scriptSyntax} script are not supported for execution");
             }
         }
     }

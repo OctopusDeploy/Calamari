@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class ConfiguredScriptConventionFixture
     {
         ICalamariFileSystem fileSystem;
-        ICombinedScriptEngine scriptEngine;
+        IScriptEngine scriptEngine;
         ICommandLineRunner commandLineRunner;
         RunningDeployment deployment;
         IVariables variables;
@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            scriptEngine = Substitute.For<ICombinedScriptEngine>();
+            scriptEngine = Substitute.For<IScriptEngine>();
             commandLineRunner = Substitute.For<ICommandLineRunner>();
 
             scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.PowerShell });

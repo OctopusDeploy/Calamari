@@ -18,7 +18,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     {
         ICalamariFileSystem fileSystem;
         ICalamariEmbeddedResources embeddedResources;
-        ICombinedScriptEngine scriptEngine;
+        IScriptEngine scriptEngine;
         ICommandLineRunner commandLineRunner;
         RunningDeployment deployment;
         IVariables variables;
@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
             embeddedResources = Substitute.For<ICalamariEmbeddedResources>();
-            scriptEngine = Substitute.For<ICombinedScriptEngine>();
+            scriptEngine = Substitute.For<IScriptEngine>();
             commandLineRunner = Substitute.For<ICommandLineRunner>();
 
             scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.PowerShell });

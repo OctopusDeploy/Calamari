@@ -15,7 +15,7 @@ namespace Calamari.Integration.Packages.Download
 {
     public class DockerImagePackageDownloader : IPackageDownloader
     {
-        readonly ICombinedScriptEngine scriptEngine;
+        readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
@@ -29,7 +29,7 @@ namespace Calamari.Integration.Packages.Download
             }
         };
 
-        public DockerImagePackageDownloader(ICombinedScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables)
+        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;

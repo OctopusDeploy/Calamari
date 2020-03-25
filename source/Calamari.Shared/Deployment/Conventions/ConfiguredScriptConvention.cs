@@ -13,11 +13,11 @@ namespace Calamari.Deployment.Conventions
     public class ConfiguredScriptConvention : IInstallConvention
     {
         readonly string deploymentStage;
-        readonly ICombinedScriptEngine scriptEngine;
+        readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public ConfiguredScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public ConfiguredScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.deploymentStage = deploymentStage;
             this.scriptEngine = scriptEngine;

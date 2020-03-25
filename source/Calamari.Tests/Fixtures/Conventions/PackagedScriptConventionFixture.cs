@@ -14,7 +14,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class PackagedScriptConventionFixture
     {
         ICalamariFileSystem fileSystem;
-        ICombinedScriptEngine scriptEngine;
+        IScriptEngine scriptEngine;
         ICommandLineRunner runner;
         RunningDeployment deployment;
         CommandResult commandResult;
@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             });
 
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
-            scriptEngine = Substitute.For<ICombinedScriptEngine>();
+            scriptEngine = Substitute.For<IScriptEngine>();
             scriptEngine.Execute(Arg.Any<Script>(), Arg.Any<IVariables>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
             scriptEngine.GetSupportedTypes().Returns(new[] {ScriptSyntax.CSharp, ScriptSyntax.PowerShell});
             runner = Substitute.For<ICommandLineRunner>();

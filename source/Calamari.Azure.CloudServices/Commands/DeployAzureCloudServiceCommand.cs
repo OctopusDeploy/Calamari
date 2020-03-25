@@ -24,11 +24,11 @@ namespace Calamari.Azure.CloudServices.Commands
     public class DeployAzureCloudServiceCommand : Command
     {
         private string packageFile;
-        private readonly CombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureCloudServiceCommand(CombinedScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureCloudServiceCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 

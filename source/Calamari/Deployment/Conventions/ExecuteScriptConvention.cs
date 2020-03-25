@@ -6,10 +6,10 @@ namespace Calamari.Deployment.Conventions
 {
     public class ExecuteScriptConvention : IInstallConvention
     {
-        private readonly ICombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         private readonly ICommandLineRunner commandLineRunner;
 
-        public ExecuteScriptConvention(ICombinedScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public ExecuteScriptConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
