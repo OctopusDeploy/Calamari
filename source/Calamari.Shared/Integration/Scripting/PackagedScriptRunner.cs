@@ -69,7 +69,7 @@ namespace Calamari.Integration.Scripting
 
             if (numFiles > 1)
             {
-                var preferenceOrderDisplay = string.Join(" -> ", supportedScriptExtensions);
+                var preferenceOrderDisplay = string.Join(", ", supportedScriptExtensions);
                 Log.Verbose($"Found {numFiles} {scriptFilePrefix} scripts. Selected {selectedFile} based on OS preferential ordering: {preferenceOrderDisplay}");
             }
 
