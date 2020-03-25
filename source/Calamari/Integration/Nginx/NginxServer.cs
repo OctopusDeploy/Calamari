@@ -152,7 +152,7 @@ namespace Calamari.Integration.Nginx
         private string SanitizeLocationName(string locationPath, int index)
         {
             /*
-             * The names of the files holding locations are significant as Nginx will process regular express
+             * The names of the files holding locations are significant as Nginx will process regular expression
              * locations in the order they are defined or imported. This is from the documentation at
              * http://nginx.org/en/docs/http/request_processing.html:
              *
@@ -171,10 +171,15 @@ namespace Calamari.Integration.Nginx
              * in the UI. This ensures location file names are unique and processed in the order they were defined.
              */
             
-            var match = Regex.Match(index + locationPath, "[a-zA-Z0-9/]+");
-            // match must be a success, if only for the prefixed index
-            // Remove slashes, as these are not valid for a file name
-            return match.Value.Replace("/", "_").Trim('_');
+            var match = Regex.Match(locationPath, "[a-zA-Z0-9/]+");
+            if (match.Success)
+            {
+                // Remove slashes, as these are not valid for a file name
+                return index + match.Value.Replace("/", "_").Trim('_');
+            }
+
+            // Fall back to the index as a file name
+            return index.ToString();
         }
 
         public NginxServer WithRootLocation(Location location)

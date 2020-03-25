@@ -147,7 +147,7 @@ namespace Calamari.Tests.Fixtures.Nginx
                 tempDirectory, 
                 "conf", 
                 $"{virtualServerName}.conf.d",
-                $"location.{apiLocation.Path.Trim('/')}.conf"
+                $"location.0{apiLocation.Path.Trim('/')}.conf"
             );
             
             this.Assent(
