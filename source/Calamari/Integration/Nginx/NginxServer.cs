@@ -136,13 +136,8 @@ namespace Calamari.Integration.Nginx
                 var sanitizedLocationName = SanitizeLocationName(location.Path, locationIndex);
                 var locationConfFile = Path.Combine(TempConfigRootDirectory, $"{VirtualServerName}.conf.d",
                     $"location.{sanitizedLocationName}.conf");
-                var defaultLocationConfFile = Path.Combine(TempConfigRootDirectory, $"{VirtualServerName}.conf.d",
-                    $"location.{locationIndex}.conf");
 
-                AdditionalLocations.Add(
-                    // Don't assume sanitized means unique. If the filename is already used, fall back to the indexed filename.
-                    AdditionalLocations.ContainsKey(locationConfFile) ? defaultLocationConfFile : locationConfFile, 
-                    locationConfig);
+                AdditionalLocations.Add(locationConfFile, locationConfig);
                 locationIndex++;
             }
 
