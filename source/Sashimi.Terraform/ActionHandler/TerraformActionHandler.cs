@@ -66,8 +66,6 @@ namespace Sashimi.Terraform.ActionHandler
     /// </summary>
     public abstract class TerraformActionHandler : IActionHandler
     {
-        static readonly ActionHandlerCategory TerraformActionHandlerCategory = new ActionHandlerCategory("Terraform", "Terraform", 1100);
-
         readonly ICloudTemplateHandlerFactory cloudTemplateHandlerFactory;
         
         public TerraformActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
@@ -83,7 +81,7 @@ namespace Sashimi.Terraform.ActionHandler
         public bool ShowInStepTemplatePickerUI => true;
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
         public bool CanRunOnDeploymentTarget => false;
-        public ActionHandlerCategory[] Categories => new[] {ActionHandlerCategory.BuiltInStep, TerraformActionHandlerCategory};
+        public ActionHandlerCategory[] Categories => new[] {ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Terraform};
 
         public IActionHandlerResult Execute(IActionHanderContext context)
         {
