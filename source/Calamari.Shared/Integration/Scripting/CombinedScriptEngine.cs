@@ -16,11 +16,7 @@ namespace Calamari.Integration.Scripting
 
         public ScriptSyntax[] GetSupportedTypes()
         {
-            var preferredScriptSyntax = new [] { ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment() };
-            var scriptSyntaxesSupportedOnAllPlatforms =  new[] { ScriptSyntax.Python, ScriptSyntax.CSharp, ScriptSyntax.FSharp, ScriptSyntax.PowerShell, ScriptSyntax.Bash };
-
-            //order is important, as we want to try the preferred syntax first
-            return preferredScriptSyntax.Concat(scriptSyntaxesSupportedOnAllPlatforms.Except(preferredScriptSyntax)).ToArray();
+            return ScriptSyntaxHelper.GetPreferenceOrderedScriptSyntaxesForEnvironment();
         }
 
         public CommandResult Execute(
