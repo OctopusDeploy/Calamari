@@ -25,11 +25,11 @@ namespace Calamari.Integration.Scripting
             this.commandLineRunner = commandLineRunner;
         }
 
-        protected void RunScripts(RunningDeployment deployment)
+        protected void RunPreferredScript(RunningDeployment deployment)
         {
-            var scripts = FindScripts(deployment);
+            var script = FindPreferredScript(deployment);
 
-            foreach (var script in scripts)
+            if (!string.IsNullOrEmpty(script))
             {
                 Log.VerboseFormat("Executing '{0}'", script);
                 var result = scriptEngine.Execute(new Script(script), deployment.Variables, commandLineRunner);
@@ -55,15 +55,36 @@ namespace Calamari.Integration.Scripting
             }
         }
 
+        string FindPreferredScript(RunningDeployment deployment)
+        {
+            var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
+
+            var files = (from file in FindScripts(deployment)
+                         let preferenceOrdinal = Array.IndexOf(supportedScriptExtensions, file.ToScriptType())
+                         orderby preferenceOrdinal
+                         select file).ToArray();
+
+            var numFiles = files.Count();
+            var selectedFile = files.FirstOrDefault();
+
+            if (numFiles > 1)
+            {
+                var preferenceOrderDisplay = string.Join(", ", supportedScriptExtensions);
+                Log.Verbose($"Found {numFiles} {scriptFilePrefix} scripts. Selected {selectedFile} based on OS preferential ordering: {preferenceOrderDisplay}");
+            }
+
+            return selectedFile;
+        }
+
         IEnumerable<string> FindScripts(RunningDeployment deployment)
         {
             var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
             var searchPatterns = supportedScriptExtensions.Select(e => "*." + e.FileExtension()).ToArray();
-            return
-                from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)
-                let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)
-                where nameWithoutExtension.Equals(scriptFilePrefix, StringComparison.OrdinalIgnoreCase)
-                select file;
+
+            return from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)
+                   let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)
+                   where nameWithoutExtension.Equals(scriptFilePrefix, StringComparison.OrdinalIgnoreCase)
+                   select file;
         }
     }
 }
