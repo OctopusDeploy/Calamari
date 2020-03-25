@@ -6,8 +6,8 @@
     <VersionPrefix>1.0.0.0</VersionPrefix>
     <Authors>ACME Corporation</Authors>
     <TargetFramework>netstandard1.0</TargetFramework>
-    <AssemblyName>Acme.Package</AssemblyName>
-    <PackageId>Acme.Package</PackageId>
+    <AssemblyName>Acme.PackageBilingual</AssemblyName>
+    <PackageId>Acme.PackageBilingual</PackageId>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
   </PropertyGroup>
