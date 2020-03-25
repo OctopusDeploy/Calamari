@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             var engine = new CombinedScriptEngine(null);
             var supportedTypes = engine.GetSupportedTypes();
 
-            supportedTypes.Should().BeEquivalentTo(expected);
+            supportedTypes.Should().Equal(expected);
         }
     }
 }
