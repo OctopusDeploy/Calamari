@@ -106,7 +106,10 @@ namespace Calamari
                 .Where(t => !t.IsAbstract && t.IsAssignableTo<ICommand>())
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase));
             foreach (var iCommandType in iCommandTypes)
-                builder.RegisterType(typeof(CommandAdapter<>).MakeGenericType(iCommandType)).As<ICommandWithArguments>();
+            {
+                builder.RegisterType(iCommandType).AsSelf();
+                builder.Register<ICommandWithArguments>(c => new CommandAdapter((ICommand) c.Resolve(iCommandType), c.Resolve<IVariables>()));
+            }
 
             return builder;
         }

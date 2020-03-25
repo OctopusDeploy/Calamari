@@ -28,10 +28,10 @@ namespace Calamari.Terraform
             this.fileSystem = fileSystem;
         }
 
-        public int Execute()
-        {
-            var packageFile = variables.GetPrimaryPackagePath(fileSystem, false);
+        public string PrimaryPackagePath => variables.GetPrimaryPackagePath(fileSystem, false);
 
+        public IEnumerable<IConvention> GetConventions()
+        {
             var substituter = new FileSubstituter(fileSystem);
             var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
@@ -41,29 +41,20 @@ namespace Calamari.Terraform
             variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
                 !String.IsNullOrEmpty(enableNoMatchWarning) ? enableNoMatchWarning : (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
 
-            var conventions = new List<IConvention>
-            {
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => packageFile != null),
-                new SubstituteInFilesConvention(fileSystem, substituter,
-                    _ => true,
-                    _ => FileTargetFactory(runAutomaticFileSubstitution ? DefaultTerraformFileSubstitution : string.Empty, additionalFileSubstitution)),
-                step
-            };
-
-            var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
-
-            conventionRunner.RunConventions();
-            return 0;
+            yield return new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => PrimaryPackagePath != null);
+            yield return new SubstituteInFilesConvention(fileSystem, substituter,
+                _ => true,
+                _ => FileTargetFactory(runAutomaticFileSubstitution ? DefaultTerraformFileSubstitution : string.Empty, additionalFileSubstitution));
+            yield return step;
         }
 
 
         static string[] FileTargetFactory(string defaultFileSubstitution, string additionalFileSubstitution)
         {
             return (defaultFileSubstitution +
-                                        (string.IsNullOrWhiteSpace(additionalFileSubstitution)
-                                            ? string.Empty
-                                            : "\n" + additionalFileSubstitution))
+                    (string.IsNullOrWhiteSpace(additionalFileSubstitution)
+                        ? string.Empty
+                        : "\n" + additionalFileSubstitution))
                 .Split(new[] {"\r", "\n"}, StringSplitOptions.RemoveEmptyEntries);
         }
     }
