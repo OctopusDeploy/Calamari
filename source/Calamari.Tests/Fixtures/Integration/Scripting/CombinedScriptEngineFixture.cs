@@ -27,6 +27,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             ScriptSyntax.Bash
         };
 
+        [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void DeterminesCorrectScriptTypePreferenceOrderWindows()
             => DeterminesCorrectScriptTypePreferenceOrder(ScriptPreferencesWindows);
