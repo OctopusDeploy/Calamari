@@ -56,7 +56,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 convention.Install(deployment);
                 scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployPs1), deployment.Variables, runner);
                 scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployCsx), deployment.Variables, runner);
-                log.AssertContains($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
+                log.AssertContains($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp, PowerShell, Bash");
             }
         }
 
@@ -72,7 +72,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 convention.Install(deployment);
                 scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
                 scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == preDeploySh), deployment.Variables, runner);
-                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
+                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
             }
         }
 
@@ -89,7 +89,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
                 fileSystem.Received().DeleteFile(preDeployPs1, Arg.Any<FailureOptions>());
                 fileSystem.Received().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
+                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
             }
         }
 
@@ -114,7 +114,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 convention.Rollback(deployment);
                 scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployFailedPs1), deployment.Variables, runner);
                 scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployFailedSh), deployment.Variables, runner);
-                log.AssertContains($"Found 2 DeployFailed scripts. Selected {deployFailedPs1} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
+                log.AssertContains($"Found 2 DeployFailed scripts. Selected {deployFailedPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
             }
         }
 
@@ -143,7 +143,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == preDeploySh), deployment.Variables, runner);
                 fileSystem.DidNotReceive().DeleteFile(preDeployPs1, Arg.Any<FailureOptions>());
                 fileSystem.DidNotReceive().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
+                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
             }
         }
 
@@ -162,7 +162,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployPs1), deployment.Variables, runner);
                 fileSystem.DidNotReceive().DeleteFile(deployPs1, Arg.Any<FailureOptions>());
                 fileSystem.DidNotReceive().DeleteFile(deployCsx, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
+                log.AssertContains($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp, PowerShell, Bash");
             }
         }
 
@@ -181,7 +181,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                 scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == postDeploySh), deployment.Variables, runner);
                 fileSystem.DidNotReceive().DeleteFile(postDeployPs1, Arg.Any<FailureOptions>());
                 fileSystem.DidNotReceive().DeleteFile(postDeploySh, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 PostDeploy scripts. Selected {postDeployPs1} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
+                log.AssertContains($"Found 2 PostDeploy scripts. Selected {postDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
             }
         }
 
