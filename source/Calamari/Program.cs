@@ -98,6 +98,7 @@ namespace Calamari
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommandWithArguments>()
+                .Except<CommandAdapter>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .As<ICommandWithArguments>();
 
