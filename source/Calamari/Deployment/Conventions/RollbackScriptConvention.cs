@@ -13,14 +13,14 @@ namespace Calamari.Deployment.Conventions
 
         public void Rollback(RunningDeployment deployment)
         {
-            RunScripts(deployment);
+            RunPreferredScript(deployment);
         }
 
         public void Cleanup(RunningDeployment deployment)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
             {
-                DeleteScripts(deployment);
+                DeletePreferredScript(deployment);
             }
         }
     }
