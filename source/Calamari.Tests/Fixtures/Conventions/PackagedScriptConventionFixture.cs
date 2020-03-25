@@ -77,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
-        public void ShouldDeletePreferredScriptAfterExecution()
+        public void ShouldDeleteScriptsAfterExecution()
         {
             using (var log = new ProxyLog())
             {
@@ -88,18 +88,18 @@ namespace Calamari.Tests.Fixtures.Conventions
                 convention.Install(deployment);
                 scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
                 fileSystem.Received().DeleteFile(preDeployPs1, Arg.Any<FailureOptions>());
-                fileSystem.DidNotReceive().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
+                fileSystem.Received().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
                 log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp -> PowerShell -> Bash");
             }
         }
 
         [Test]
-        public void ShouldDeletePreferredScriptAfterCleanupExecution()
+        public void ShouldDeleteScriptsAfterCleanupExecution()
         {
             var convention = CreateRollbackConvention("DeployFailed");
             convention.Cleanup(deployment);
             fileSystem.Received().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1"), Arg.Any<FailureOptions>());
-            fileSystem.DidNotReceive().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.sh"), Arg.Any<FailureOptions>());
+            fileSystem.Received().DeleteFile(TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.sh"), Arg.Any<FailureOptions>());
         }
 
         [Test]
