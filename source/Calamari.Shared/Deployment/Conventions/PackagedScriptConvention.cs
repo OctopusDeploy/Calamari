@@ -23,7 +23,7 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
-            RunScripts(deployment);
+            RunPreferredScript(deployment);
             if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
             {
                 DeleteScripts(deployment);

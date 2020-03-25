@@ -146,8 +146,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutput("I have failed! DeployFailed.sh");
             else
                 result.AssertOutput("I have failed! DeployFailed.ps1");
-            result.AssertOutput("I have failed! DeployFailed.fsx");
-            result.AssertOutput("I have failed! DeployFailed.csx");
+            result.AssertNoOutput("I have failed! DeployFailed.fsx");
+            result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
