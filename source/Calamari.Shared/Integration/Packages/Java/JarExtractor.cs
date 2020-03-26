@@ -16,7 +16,7 @@ namespace Calamari.Integration.Packages.Java
 
         public override string[] Extensions => EXTENSIONS;
 
-        public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        public override int Extract(string packageFile, string directory)
         {
             return jarTool.ExtractJar(packageFile, directory);
         }

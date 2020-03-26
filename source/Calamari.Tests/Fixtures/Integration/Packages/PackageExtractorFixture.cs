@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
             var targetDir = GetTargetDir(extractorType, fileName);
 
-            var filesExtracted = extractor.Extract(fileName, targetDir, true);
+            var filesExtracted = extractor.Extract(fileName, targetDir);
             var textFileName = Path.Combine(targetDir, "my resource.txt");
             var text = File.ReadAllText(textFileName);
             var fileInfo = new FileInfo(textFileName);
@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
             var targetDir = GetTargetDir(extractorType, fileName);
 
-            extractor.Extract(fileName, targetDir, true);
+            extractor.Extract(fileName, targetDir);
             var textFileName = Path.Combine(targetDir, "file-from-child-archive.txt");
             Assert.That(File.Exists(textFileName), Is.False, $"The file '{Path.GetFileName(textFileName)}' should not have been extracted.");
             var childArchiveName = Path.Combine(targetDir, "child-archive." + extension);
@@ -73,7 +73,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
             var targetDir = GetTargetDir(extractorType, fileName);
 
-            extractor.Extract(fileName, targetDir, true);
+            extractor.Extract(fileName, targetDir);
             var textFileName = Path.Combine(targetDir, "ChildFolder", "file-in-child-folder.txt");
             Assert.That(File.Exists(textFileName), Is.True, $"The file '{Path.GetFileName(textFileName)}' should have been extracted.");
 
@@ -91,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
             var targetDir = GetTargetDir(extractorType, fileName);
 
-            extractor.Extract(fileName, targetDir, true);
+            extractor.Extract(fileName, targetDir);
             var textFileName = Path.Combine(targetDir, "package", "services", "metadata", "core-properties", "8e89f0a759d94c1aaab0626891f7b81f.psmdcp");
             Assert.That(File.Exists(textFileName), Is.False, $"The file '{Path.GetFileName(textFileName)}' should not have been extracted.");
         }
@@ -109,7 +109,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType);
             var targetDir = GetTargetDir(extractorType, fileName);
 
-            extractor.Extract(fileName, targetDir, true);
+            extractor.Extract(fileName, targetDir);
             var folderName = Path.Combine(targetDir, "EmptyFolder");
             Assert.That(Directory.Exists(folderName), Is.True, $"The empty folder '{Path.GetFileName(folderName)}' should have been extracted.");
         }
@@ -125,7 +125,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 var extractor = new TarGzipPackageExtractor();
                 var targetDir = GetTargetDir(typeof(TarGzipPackageExtractor), fileName);
 
-                extractor.Extract(fileName, targetDir, true);
+                extractor.Extract(fileName, targetDir);
 
                 //If we get this far and an exception hasn't been thrown, the test has served it's purpose'
 

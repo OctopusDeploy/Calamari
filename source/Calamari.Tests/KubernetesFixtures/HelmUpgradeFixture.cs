@@ -61,7 +61,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     DownloadHelmPackage(ExplicitExeVersion, fileName);
 
-                    new TarGzipPackageExtractor().Extract(fileName, explicitVersionTempDirectory.DirectoryPath, false);
+                    new TarGzipPackageExtractor().Extract(fileName, explicitVersionTempDirectory.DirectoryPath);
                 }
             }
         }

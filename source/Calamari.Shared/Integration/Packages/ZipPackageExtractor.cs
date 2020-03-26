@@ -14,7 +14,7 @@ namespace Calamari.Integration.Packages
     {
         public override string[] Extensions { get { return new [] { ".zip"}; } }
 
-        public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        public override int Extract(string packageFile, string directory)
         {
             var filesExtracted = 0;
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
@@ -22,7 +22,7 @@ namespace Calamari.Integration.Packages
             {
                 foreach (var entry in archive.Entries)
                 {
-                    ProcessEvent(ref filesExtracted, entry, suppressNestedScriptWarning);
+                    ProcessEvent(ref filesExtracted, entry);
                     ExtractEntry(directory, entry);
                 }
             }
@@ -32,7 +32,7 @@ namespace Calamari.Integration.Packages
         static void ExtractEntry(string directory, ZipArchiveEntry entry)
         {
 #if NET40
-            entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink });
+            entry.WriteToDirectory(directory, new PackageExtractionOptions());
 #else
             var extractAttempts = 10;
             Policy.Handle<IOException>().WaitAndRetry(
@@ -41,26 +41,16 @@ namespace Calamari.Integration.Packages
                     onRetry: (ex, retry) => { Log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
                 .Execute(() =>
                 {
-                    entry.WriteToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink });
+                    entry.WriteToDirectory(directory, new PackageExtractionOptions());
                 });
 #endif
         }
 
-        static void WriteSymbolicLink(string sourcepath, string targetpath)
-        {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
-        }
-
-        protected void ProcessEvent(ref int filesExtracted, IEntry entry, bool suppressNestedScriptWarning)
+        protected void ProcessEvent(ref int filesExtracted, IEntry entry)
         {
             if (entry.IsDirectory) return;
 
             filesExtracted++;
-
-            if (!suppressNestedScriptWarning)
-            {
-                GenericPackageExtractor.WarnIfScriptInSubFolder(entry.Key);
-            }
         }
     }
 }
