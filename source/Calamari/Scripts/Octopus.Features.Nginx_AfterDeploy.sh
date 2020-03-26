@@ -11,6 +11,10 @@ nginxConfDir=$(get_octopusvariable "Octopus.Action.Nginx.ConfigurationsDirectory
 trap 'echo "Removing temporary folder ${nginxTempDir}..." && sudo rm -rf $nginxTempDir' exit
 
 nginxConfRoot=${nginxConfDir:-/etc/nginx/conf.d}
+
+echo "Clearing the existing locations dir"
+for dir in $nginxTempDir/conf/*; do if [[ -d "$dir" && ! -L "$dir" ]]; then fixedDir=${dir##*/}; rm -rf $nginxConfRoot/$fixedDir; fi; done
+
 echo "Copying $nginxTempDir/conf/* to $nginxConfRoot..."
 sudo cp -R $nginxTempDir/conf/* $nginxConfRoot -f
 
