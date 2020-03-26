@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Fixtures.Util;
@@ -16,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCaseSource(nameof(PackageNameTestCases))]
         public void GettingFileByExtension(string filename, Type expectedType)
         {
-            var extractor = new CombinedPackageExtractor().GetExtractor(filename);
+            var extractor = CombinedPackageExtractor.GetExtractor(filename);
 
             Assert.AreEqual(expectedType, extractor.GetType());
         }
@@ -51,17 +52,17 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Package is missing file extension. This is needed to select the correct extraction algorithm.")]
+        [ExpectedException(typeof(CommandException), ExpectedMessage = "Package is missing file extension. This is needed to select the correct extraction algorithm.")]
         public void FileWithNoExtensionThrowsError()
         {
-            new CombinedPackageExtractor().GetExtractor("blah");
+            CombinedPackageExtractor.GetExtractor("blah");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Unsupported file extension `.7z`")]
+        [ExpectedException(typeof(CommandException), ExpectedMessage = "Unsupported file extension `.7z`")]
         public void FileWithUnsupportedExtensionThrowsError()
         {
-            new CombinedPackageExtractor().GetExtractor("blah.1.0.0.7z");
+            CombinedPackageExtractor.GetExtractor("blah.1.0.0.7z");
         }
     }
 }

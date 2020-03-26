@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Commands.Support;
 using Calamari.Integration.Packages.NuGet;
-using Calamari.Support;
 
 namespace Calamari.Integration.Packages
 {
@@ -13,37 +13,33 @@ namespace Calamari.Integration.Packages
 
     public class CombinedPackageExtractor : ICombinedPackageExtractor
     {
-        readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
-
+        /// Order is important here since .tar.gz should be checked for before .gz
+        static IList<IPackageExtractor> Extractors => new List<IPackageExtractor>
+        {
+            new NupkgExtractor(),
+            new TarGzipPackageExtractor(),
+            new TarBzipPackageExtractor(),
+            new ZipPackageExtractor(),
+            new TarPackageExtractor()
+        };
+        
         public string[] Extensions => Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray();
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
-        {
-            return GetExtractor(packageFile).Extract(packageFile, directory, suppressNestedScriptWarning);
-        }
+            => GetExtractor(packageFile).Extract(packageFile, directory, suppressNestedScriptWarning);
 
-        public IPackageExtractor GetExtractor(string packageFile)
+        public static IPackageExtractor GetExtractor(string packageFile)
         {
             var extension = Path.GetExtension(packageFile);
             if (string.IsNullOrEmpty(extension))
-            {
-                throw new FileFormatException("Package is missing file extension. This is needed to select the correct extraction algorithm.");
-            }
+                throw new CommandException("Package is missing file extension. This is needed to select the correct extraction algorithm.");
 
             var file = PackageName.FromFile(packageFile);
-            if (!Extensions.Contains(file.Extension))
-            {
-                throw new FileFormatException($"Unsupported file extension `{extension}`");
-            }
-
-            var extractor = FindByExtension(file);
-            if (extractor != null)
-                return extractor;
+            var extractor = Extractors.FirstOrDefault(p => p.Extensions.Any(ext => file.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase)));
+            if (extractor == null)
+                throw new CommandException($"Unsupported file extension `{extension}`");
             
-            throw new FileFormatException(supportLinkGenerator.GenerateSupportMessage(
-                $"This step supports packages with the following extensions: {Extractors.SelectMany(e => e.Extensions).Distinct().Aggregate((result, e) => result + ", " + e)}.\n" +
-                $"The supplied package has the extension \"{file.Extension}\" which is not supported.",
-                "JAVA-DEPLOY-ERROR-0001"));
+            return extractor;
         }
 
         internal static void WarnUnsupportedSymlinkExtraction(string path)
@@ -68,21 +64,6 @@ namespace Calamari.Integration.Packages
                         path);
                 }
             }
-        }
-
-        /// Order is important here since .tar.gz should be checked for before .gz
-        protected virtual IList<IPackageExtractor> Extractors => new List<IPackageExtractor>
-        {
-            new NupkgExtractor(),
-            new TarGzipPackageExtractor(),
-            new TarBzipPackageExtractor(),
-            new ZipPackageExtractor(),
-            new TarPackageExtractor()
-        };
-
-        IPackageExtractor FindByExtension(PackageFileNameMetadata packageFile)
-        {
-            return Extractors.FirstOrDefault(p => p.Extensions.Any(ext => packageFile.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase)));
         }
     }
 }
