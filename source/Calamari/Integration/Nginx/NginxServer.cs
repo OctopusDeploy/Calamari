@@ -133,35 +133,48 @@ namespace Calamari.Integration.Nginx
             foreach (var location in locations)
             {
                 var locationConfig = GetLocationConfig(location);
-                var sanitizedLocationName = SanitizeLocationName(location.Path, locationIndex.ToString());
+                var sanitizedLocationName = SanitizeLocationName(location.Path, locationIndex);
                 var locationConfFile = Path.Combine(TempConfigRootDirectory, $"{VirtualServerName}.conf.d",
                     $"location.{sanitizedLocationName}.conf");
-                var defaultLocationConfFile = Path.Combine(TempConfigRootDirectory, $"{VirtualServerName}.conf.d",
-                    $"location.{locationIndex}.conf");
 
-                AdditionalLocations.Add(
-                    // Don't assume sanitized means unique. If the filename is already used, fall back to the indexed filename.
-                    AdditionalLocations.ContainsKey(locationConfFile) ? defaultLocationConfFile : locationConfFile, 
-                    locationConfig);
+                AdditionalLocations.Add(locationConfFile, locationConfig);
                 locationIndex++;
             }
 
             return this;
         }
 
-        private string SanitizeLocationName(string locationPath, string defaultValue)
+        private string SanitizeLocationName(string locationPath, int index)
         {
+            /*
+             * The names of the files holding locations are significant as Nginx will process regular expression
+             * locations in the order they are defined or imported. This is from the documentation at
+             * http://nginx.org/en/docs/http/request_processing.html:
+             *
+             * nginx first searches for the most specific prefix location given by literal strings regardless of the
+             * listed order. In the configuration above the only prefix location is “/” and since it matches any request
+             * it will be used as a last resort.
+             *
+             * [THIS IS THE IMPORTANT BIT]
+             * Then nginx checks locations given by regular expression in the order listed in the configuration file.
+             * The first matching expression stops the search and nginx will use this location.
+             *
+             * If no regular expression matches a request, then nginx uses the most specific prefix location
+             * found earlier.
+             *
+             * To accomodate this ordering, we prefix all location paths with the index of the location as it appeared
+             * in the UI. This ensures location file names are unique and processed in the order they were defined.
+             */
+            
             var match = Regex.Match(locationPath, "[a-zA-Z0-9/]+");
             if (match.Success)
             {
-                // Watch out for cases where multiple locations both match a string like "/". Both
-                // of these will be sanitized down to an empty string.
-                var sanitizedResult = match.Value.Replace("/", "_").Trim('_');
-                // If we did not get an empty string, use the result. Otherwise fall back to the default.
-                if (!string.IsNullOrWhiteSpace(sanitizedResult)) return sanitizedResult;
+                // Remove slashes, as these are not valid for a file name
+                return index + match.Value.Replace("/", "_").Trim('_');
             }
 
-            return defaultValue;
+            // Fall back to the index as a file name
+            return index.ToString();
         }
 
         public NginxServer WithRootLocation(Location location)
