@@ -24,13 +24,13 @@ namespace Calamari.Commands.Java
     public class DeployJavaArchiveCommand : Command
     {
         string archiveFile;
-        private readonly ScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
 
-        public DeployJavaArchiveCommand(ScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ILog log)
+        public DeployJavaArchiveCommand(IScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ILog log)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
 
