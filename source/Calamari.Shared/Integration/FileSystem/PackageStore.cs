@@ -19,9 +19,9 @@ namespace Calamari.Integration.FileSystem
         readonly ICalamariFileSystem fileSystem;
         readonly string[] supportedExtensions;
 
-        public PackageStore(IGenericPackageExtractor packageExtractor, ICalamariFileSystem fileSystem)
+        public PackageStore(ICombinedPackageExtractor packageExtractor, ICalamariFileSystem fileSystem)
         {
-            this.supportedExtensions = packageExtractor.Extensions.Concat(JarExtractor.SupportedExtensions).Distinct().ToArray();
+            this.supportedExtensions = packageExtractor.Extensions.Concat(JarPackageExtractor.SupportedExtensions).Distinct().ToArray();
             this.fileSystem = fileSystem;
         }
 

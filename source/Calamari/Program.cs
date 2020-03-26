@@ -83,7 +83,7 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-            builder.RegisterType<GenericPackageExtractor>().As<IGenericPackageExtractor>();
+            builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             
             
             var assemblies = GetAllAssembliesToRegister(options).ToArray();

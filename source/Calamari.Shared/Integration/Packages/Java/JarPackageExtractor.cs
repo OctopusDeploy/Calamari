@@ -4,13 +4,13 @@ using Octostache;
 
 namespace Calamari.Integration.Packages.Java
 {
-    public class JarExtractor : IPackageExtractor
+    public class JarPackageExtractor : IPackageExtractor
     {
         public static readonly string[] SupportedExtensions = {".jar", ".war", ".ear", ".rar", ".zip"};
         
         readonly JarTool jarTool;
 
-        public JarExtractor(JarTool jarTool)
+        public JarPackageExtractor(JarTool jarTool)
         {
             this.jarTool = jarTool;
         }

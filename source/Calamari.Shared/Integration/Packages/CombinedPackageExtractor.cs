@@ -7,14 +7,15 @@ using Calamari.Support;
 
 namespace Calamari.Integration.Packages
 {
-    public class GenericPackageExtractor : IGenericPackageExtractor
+    public interface ICombinedPackageExtractor : IPackageExtractor
+    {
+    }
+
+    public class CombinedPackageExtractor : ICombinedPackageExtractor
     {
         readonly ISupportLinkGenerator supportLinkGenerator = new SupportLinkGenerator();
 
-        public string[] Extensions
-        {
-            get { return Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
-        }
+        public string[] Extensions => Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray();
 
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {

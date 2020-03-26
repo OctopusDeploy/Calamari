@@ -49,11 +49,10 @@ namespace Calamari.Aws.Commands
             var substituter = new FileSubstituter(fileSystem);
             var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
-            var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
-
+            
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => targetType == S3TargetMode.FileSelections),
+                new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(), fileSystem).When(_ => targetType == S3TargetMode.FileSelections),
                 new LogAwsUserInfoConvention(environment),
                 new CreateS3BucketConvention(environment, _ => bucket),
                 new UploadAwsS3Convention(

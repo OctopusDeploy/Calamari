@@ -63,7 +63,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
 
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(), fileSystem),
 
                 // PreDeploy stage
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),

@@ -48,7 +48,7 @@ namespace Calamari.Integration.Packages.NuGet
                     filesExtracted++;
 
                     if (!suppressNestedScriptWarning)
-                        GenericPackageExtractor.WarnIfScriptInSubFolder(unescapedKey);
+                        CombinedPackageExtractor.WarnIfScriptInSubFolder(unescapedKey);
                 }
 
                 return filesExtracted;
@@ -57,7 +57,7 @@ namespace Calamari.Integration.Packages.NuGet
 
         static void WriteSymbolicLink(string sourcepath, string targetpath)
         {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
+            CombinedPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
         }
 
         static void SetFileLastModifiedTime(IEntry entry, string targetFile)
