@@ -7,8 +7,9 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         public static readonly ActionHandlerCategory BuiltInStep = new ActionHandlerCategory("BuiltInStep", "Built-in Steps", 9000);
         public static readonly ActionHandlerCategory Script = new ActionHandlerCategory("Script", "Script", 200);
         public static readonly ActionHandlerCategory Package = new ActionHandlerCategory("Package", "Package", 300);
-        
-        
+        public static readonly ActionHandlerCategory Terraform = new ActionHandlerCategory("Terraform", "Terraform", 1100);
+        public static readonly ActionHandlerCategory Atlassian = new ActionHandlerCategory("Atlassian", "Atlassian", 1300);
+
         public ActionHandlerCategory(string id, string name, int displayOrder)
         {
             Id = id;
