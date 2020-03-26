@@ -18,7 +18,7 @@ do
     fixedDir=${dir##*/}
     if [[ -d "$dir" && ! -L "$dir" && -d "$nginxConfRoot/$fixedDir" ]]
     then         
-        rm -rf $nginxConfRoot/$fixedDir
+        sudo rm -rf $nginxConfRoot/$fixedDir
     fi
 done
 
