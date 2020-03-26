@@ -234,10 +234,10 @@ namespace Calamari.Tests.Fixtures.Nginx
             var exactRootConf = Path.Combine(tempConfPath, $"{packageId}.conf");
             Assert.IsTrue(File.Exists(exactRootConf));
 
-            var rootConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", $"location.0.conf");
+            var rootConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", "location.0.conf");
             Assert.IsTrue(File.Exists(rootConf));
 
-            var apiConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", $"location.api.conf");
+            var apiConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", "location.1api.conf");
             Assert.IsTrue(File.Exists(apiConf));
             
             this.Assent(File.ReadAllText(exactRootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
