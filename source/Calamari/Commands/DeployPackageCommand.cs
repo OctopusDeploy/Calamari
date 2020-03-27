@@ -31,8 +31,14 @@ namespace Calamari.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IConventionFactory conventionFactory;
 
-        public DeployPackageCommand(IScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public DeployPackageCommand(
+            IScriptEngine scriptEngine, 
+            IVariables variables, 
+            ICalamariFileSystem fileSystem, 
+            ICommandLineRunner commandLineRunner,
+            IConventionFactory conventionFactory)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
@@ -40,6 +46,7 @@ namespace Calamari.Commands
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.conventionFactory = conventionFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -81,7 +88,7 @@ namespace Calamari.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new SubstituteInFilesConvention(fileSystem, substituter),
+                conventionFactory.SubstituteInFilesBasedOnVariableValues(),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(generator, fileSystem),

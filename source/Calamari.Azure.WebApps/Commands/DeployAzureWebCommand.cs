@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Calamari.Azure.WebApps.Deployment.Conventions;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -23,14 +24,16 @@ namespace Calamari.Azure.WebApps.Commands
         private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IConventionFactory conventionFactory;
 
-        public DeployAzureWebCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureWebCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner, IConventionFactory conventionFactory)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
+            this.conventionFactory = conventionFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -48,7 +51,6 @@ namespace Calamari.Azure.WebApps.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 
@@ -57,7 +59,7 @@ namespace Calamari.Azure.WebApps.Commands
                 new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new SubstituteInFilesConvention(fileSystem, substituter),
+                conventionFactory.SubstituteInFilesBasedOnVariableValues(),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),

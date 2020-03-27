@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -18,14 +19,20 @@ namespace Calamari.Terraform
         private readonly IConvention step;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly IConventionFactory conventionFactory;
         private string packageFile;
 
 
-        protected TerraformCommand(IVariables variables, ICalamariFileSystem fileSystem, IConvention step)
+        protected TerraformCommand(
+            IVariables variables, 
+            ICalamariFileSystem fileSystem,
+            IConventionFactory conventionFactory,
+            IConvention step)
         {
             this.step = step;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.conventionFactory = conventionFactory;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
         }
 
@@ -53,8 +60,7 @@ namespace Calamari.Terraform
             var conventions = new List<IConvention>
             {
                 new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => packageFile != null),
-                new SubstituteInFilesConvention(fileSystem, substituter,
-                    _ => true,
+                conventionFactory.SubstituteInFiles(
                     _ => FileTargetFactory(runAutomaticFileSubstitution ? DefaultTerraformFileSubstitution : string.Empty, additionalFileSubstitution)),
                 step
             };

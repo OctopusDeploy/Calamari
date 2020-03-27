@@ -44,36 +44,13 @@ namespace Calamari.Tests.Fixtures.Conventions
             string glob = "**\\*config.json";
             string actualMatch = "config.json";
 
-            fileSystem.EnumerateFilesWithGlob(StagingDirectory, glob).Returns(new[] { Path.Combine(StagingDirectory, actualMatch) });
+            fileSystem.EnumerateFilesWithGlob(StagingDirectory, glob).Returns(new[] {Path.Combine(StagingDirectory, actualMatch)});
 
             variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, glob);
-            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
 
-            CreateConvention().Install(deployment);
+            new SubstituteInFilesConvention(fileSystem, substituter, _ => new[] {glob}).Install(deployment);
 
             substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch), variables);
         }
-
-        [Test]
-        public void ShouldNotSubstituteWhenFlagUnset()
-        {
-            const string substitutionTarget = "web.config";
-
-            fileSystem.EnumerateFiles(StagingDirectory, substitutionTarget)
-                .Returns(new[] {Path.Combine(StagingDirectory, substitutionTarget)});
-
-            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, substitutionTarget);
-            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, false.ToString());
-
-            CreateConvention().Install(deployment);
-
-            substituter.DidNotReceive().PerformSubstitution(Arg.Any<string>(), Arg.Any<IVariables>());
-        }
-
-        private SubstituteInFilesConvention CreateConvention()
-        {
-            return new SubstituteInFilesConvention(fileSystem, substituter);
-        }
-
     }
 }

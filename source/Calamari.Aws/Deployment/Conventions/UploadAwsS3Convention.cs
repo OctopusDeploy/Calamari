@@ -13,6 +13,7 @@ using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
+using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -32,6 +33,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly IProvideS3TargetOptions optionsProvider;
         private readonly IFileSubstituter fileSubstituter;
         readonly IBucketKeyProvider bucketKeyProvider;
+        readonly IConventionFactory conventionFactory;
         private readonly bool md5HashSupported;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
@@ -42,7 +44,8 @@ namespace Calamari.Aws.Deployment.Conventions
             S3TargetMode targetMode,
             IProvideS3TargetOptions optionsProvider,
             IFileSubstituter fileSubstituter,
-            IBucketKeyProvider bucketKeyProvider
+            IBucketKeyProvider bucketKeyProvider,
+            IConventionFactory conventionFactory
         )
         {
             this.fileSystem = fileSystem;
@@ -52,6 +55,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.optionsProvider = optionsProvider;
             this.fileSubstituter = fileSubstituter;
             this.bucketKeyProvider = bucketKeyProvider;
+            this.conventionFactory = conventionFactory;
             this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
         }
 
@@ -193,10 +197,9 @@ namespace Calamari.Aws.Deployment.Conventions
             Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
             var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
             
-            new SubstituteInFilesConvention(fileSystem, fileSubstituter,
-                    _ => substitutionPatterns.Any(),
-                    _ => substitutionPatterns)
-                .Install(deployment);
+            if(substitutionPatterns.Any())
+                conventionFactory.SubstituteInFiles(_ => substitutionPatterns)
+                    .Install(deployment);
             
             foreach (var matchedFile in files)
             {
@@ -227,11 +230,10 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 throw new FileNotFoundException($"The file {selection.Path} could not be found in the package.");
             }
-
-            new SubstituteInFilesConvention(fileSystem, fileSubstituter, 
-                _ => selection.PerformVariableSubstitution, 
-                _ => new List<string>{ filePath })
-                .Install(deployment);
+             
+            if(selection.PerformVariableSubstitution)
+                conventionFactory.SubstituteInFiles(_ => new[]{ filePath })
+                    .Install(deployment);
     
             return CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(deployment.StagingDirectory), selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))

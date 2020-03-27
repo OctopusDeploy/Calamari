@@ -10,33 +10,26 @@ namespace Calamari.Deployment.Conventions
 {
     public class SubstituteInFilesConvention : IInstallConvention
     {
-        private readonly Func<RunningDeployment, bool> predicate;
-        private readonly Func<RunningDeployment, IEnumerable<string>> fileTargets;
-        private readonly ICalamariFileSystem fileSystem;
+        readonly Func<RunningDeployment, IEnumerable<string>> targetedFileTargets;
+        readonly ICalamariFileSystem fileSystem;
         readonly IFileSubstituter substituter;
 
-        public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter)
+        public delegate SubstituteInFilesConvention Factory(Func<RunningDeployment, IEnumerable<string>> getTargetedFiles);
+
+        public SubstituteInFilesConvention(
+            ICalamariFileSystem fileSystem, 
+            IFileSubstituter substituter,
+            Func<RunningDeployment, IEnumerable<string>> getTargetedFiles
+        )
         {
             this.fileSystem = fileSystem;
             this.substituter = substituter;
-            predicate = (deployment) => deployment.Variables.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled);
-            fileTargets = (deployment) => deployment.Variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets);
+            this.targetedFileTargets = getTargetedFiles;
         }
 
-        public SubstituteInFilesConvention(ICalamariFileSystem fileSystem, IFileSubstituter substituter,
-            Func<RunningDeployment, bool> predicate,
-            Func<RunningDeployment, IEnumerable<string>> fileTargetFactory):this(fileSystem, substituter)
-        {
-            this.predicate = predicate;
-            this.fileTargets = fileTargetFactory;
-        }
-        
         public void Install(RunningDeployment deployment)
         {
-            if (!predicate(deployment))
-                return;
-
-            foreach (var target in fileTargets(deployment))
+            foreach (var target in targetedFileTargets(deployment))
             {
                 var matchingFiles = MatchingFiles(deployment, target);
 

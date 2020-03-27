@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -31,8 +32,15 @@ namespace Calamari.Kubernetes.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IConventionFactory conventionFactory;
 
-        public HelmUpgradeCommand(IScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public HelmUpgradeCommand(
+            IScriptEngine scriptEngine, 
+            IDeploymentJournalWriter deploymentJournalWriter, 
+            IVariables variables, 
+            ICalamariFileSystem fileSystem, 
+            ICommandLineRunner commandLineRunner,
+            IConventionFactory conventionFactory)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             this.scriptEngine = scriptEngine;
@@ -40,6 +48,7 @@ namespace Calamari.Kubernetes.Commands
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.conventionFactory = conventionFactory;
         }
         
         public override int Execute(string[] commandLineArguments)
@@ -48,7 +57,6 @@ namespace Calamari.Kubernetes.Commands
 
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
-            var substituter = new FileSubstituter(fileSystem);
             var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
             ValidateRequiredVariables();
             
@@ -57,7 +65,7 @@ namespace Calamari.Kubernetes.Commands
                 new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
                 new StageScriptPackagesConvention(null, fileSystem, extractor, true),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
+                conventionFactory.SubstituteInFiles(FileTargetFactory),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),

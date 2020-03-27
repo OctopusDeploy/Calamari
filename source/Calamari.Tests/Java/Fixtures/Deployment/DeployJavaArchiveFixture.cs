@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using Calamari.Commands;
 using Calamari.Commands.Java;
 using Calamari.Deployment;
 using Calamari.Hooks;
@@ -11,6 +12,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
+using NSubstitute;
 using NUnit.Framework;
 using Octostache;
 
@@ -108,7 +110,8 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 Variables,
                 CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
                 new CommandLineRunner(log, Variables),
-                log
+                log,
+                // TODO: What goes here? Needs a convention factory
             );
             ReturnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }

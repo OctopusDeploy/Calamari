@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Azure.CloudServices.Accounts;
 using Calamari.Azure.CloudServices.Deployment.Conventions;
 using Calamari.Azure.CloudServices.Integration;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -27,14 +28,16 @@ namespace Calamari.Azure.CloudServices.Commands
         private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IConventionFactory conventionFactory;
 
-        public DeployAzureCloudServiceCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureCloudServiceCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner, IConventionFactory conventionFactory)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
+            this.conventionFactory = conventionFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -56,7 +59,6 @@ namespace Calamari.Azure.CloudServices.Commands
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
-            var substituter = new FileSubstituter(fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
@@ -73,7 +75,7 @@ namespace Calamari.Azure.CloudServices.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfigureAzureCloudServiceConvention(account, fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever, certificateStore),
-                new SubstituteInFilesConvention(fileSystem, substituter),
+                conventionFactory.SubstituteInFilesBasedOnVariableValues(),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonVariablesReplacer, fileSystem),

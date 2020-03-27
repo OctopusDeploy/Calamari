@@ -29,8 +29,15 @@ namespace Calamari.Commands.Java
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
+        readonly IConventionFactory conventionFactory;
 
-        public DeployJavaArchiveCommand(IScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ILog log)
+        public DeployJavaArchiveCommand(
+            IScriptEngine scriptEngine, 
+            IVariables variables, 
+            ICalamariFileSystem fileSystem, 
+            ICommandLineRunner commandLineRunner, 
+            ILog log,
+            IConventionFactory conventionFactory)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
 
@@ -39,6 +46,7 @@ namespace Calamari.Commands.Java
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.log = log;
+            this.conventionFactory = conventionFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -55,7 +63,6 @@ namespace Calamari.Commands.Java
 
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-            var substituter = new FileSubstituter(fileSystem);
 
             var jsonReplacer = new JsonConfigurationVariableReplacer();
             var jarTools = new JarTool(commandLineRunner, log,  variables);
@@ -84,7 +91,7 @@ namespace Calamari.Commands.Java
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new SubstituteInFilesConvention(fileSystem, substituter),
+                conventionFactory.SubstituteInFilesBasedOnVariableValues(),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
                 new RePackArchiveConvention(fileSystem, jarTools),                
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),

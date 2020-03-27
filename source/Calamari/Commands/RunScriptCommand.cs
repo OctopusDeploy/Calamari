@@ -30,14 +30,15 @@ namespace Calamari.Commands
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        IFileSubstituter fileSubstituter; 
+        readonly IConventionFactory conventionFactory;
 
         public RunScriptCommand(
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
             IScriptEngine scriptEngine, 
             ICalamariFileSystem fileSystem,
-            ICommandLineRunner commandLineRunner)
+            ICommandLineRunner commandLineRunner,
+            IConventionFactory conventionFactory)
         {
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
@@ -47,13 +48,13 @@ namespace Calamari.Commands
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.conventionFactory = conventionFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
             
-            fileSubstituter = new FileSubstituter(fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
@@ -67,9 +68,9 @@ namespace Calamari.Commands
             {
                 new StageScriptPackagesConvention(packageFile, fileSystem, extractor),
                 // Substitute the script source file
-                new SubstituteInFilesConvention(fileSystem, fileSubstituter, _ => true, ScriptFileTargetFactory),
+                conventionFactory.SubstituteInFiles(ScriptFileTargetFactory),
                 // Substitute any user-specified files
-                new SubstituteInFilesConvention(fileSystem, fileSubstituter),
+                conventionFactory.SubstituteInFilesBasedOnVariableValues(),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonVariableReplacer, fileSystem),

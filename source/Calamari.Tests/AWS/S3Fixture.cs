@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Calamari.Commands;
 using Calamari.Integration.Processes;
 using Calamari.Variables;
 #if AWS
@@ -20,6 +21,7 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
@@ -232,7 +234,8 @@ namespace Calamari.Tests.AWS
             {
                 var command = new UploadAwsS3Command(
                     new CalamariVariables(),
-                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                    CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
+                    Substitute.For<IConventionFactory>()
                 );
                 var result = command.Execute(new[] { 
                     "--package", $"{package.FilePath}", 

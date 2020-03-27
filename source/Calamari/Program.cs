@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using Calamari.Commands;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
 using Calamari.Hooks;
@@ -16,6 +17,7 @@ using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Substitutions;
 using Calamari.Util.Environments;
 using Calamari.Variables;
 using Calamari.Plumbing;
@@ -81,10 +83,16 @@ namespace Calamari
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
+            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>().SingleInstance();
             
             
             var assemblies = GetAllAssembliesToRegister(options).ToArray();
-                
+
+            builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<IConvention>()
+                .AsSelf()
+                .InstancePerDependency();
+
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IScriptWrapper>()
                 .Except<TerminalScriptWrapper>()

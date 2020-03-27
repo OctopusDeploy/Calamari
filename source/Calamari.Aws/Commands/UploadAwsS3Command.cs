@@ -5,6 +5,7 @@ using System.IO;
 using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.S3;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -20,14 +21,16 @@ namespace Calamari.Aws.Commands
     {
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly IConventionFactory conventionFactory;
         private string packageFile;
         private string bucket;
         private string targetMode;
 
-        public UploadAwsS3Command(IVariables variables, ICalamariFileSystem fileSystem)
+        public UploadAwsS3Command(IVariables variables, ICalamariFileSystem fileSystem, IConventionFactory conventionFactory)
         {
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.conventionFactory = conventionFactory;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
             Options.Add("targetMode=", "Whether the entire package or files within the package should be uploaded to the s3 bucket", v => targetMode = v);
@@ -63,7 +66,8 @@ namespace Calamari.Aws.Commands
                     targetType,
                     new VariableS3TargetOptionsProvider(variables),
                     substituter,
-                    bucketKeyProvider
+                    bucketKeyProvider,
+                    conventionFactory
                 )
             };
 

@@ -1,4 +1,5 @@
-﻿using Calamari.Commands.Support;
+﻿using Calamari.Commands;
+using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Octopus.Versioning.Maven;
@@ -8,8 +9,8 @@ namespace Calamari.Terraform
     [Command("apply-terraform", Description = "Applies a Terraform template")]
     public class ApplyCommand : TerraformCommand
     {
-        public ApplyCommand(IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
-            : base(variables, fileSystem, new ApplyTerraformConvention(fileSystem, commandLineRunner))
+        public ApplyCommand(IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IConventionFactory conventionFactory)
+            : base(variables, fileSystem, conventionFactory, new ApplyTerraformConvention(fileSystem, commandLineRunner))
         {
         }
     }
