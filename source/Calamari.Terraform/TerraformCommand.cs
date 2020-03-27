@@ -14,8 +14,6 @@ namespace Calamari.Terraform
 {
     public abstract class TerraformCommand : ICommand
     {
-        const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
-
         readonly ILog log;
         private readonly IConvention step;
         readonly IVariables variables;
@@ -35,28 +33,35 @@ namespace Calamari.Terraform
         public IEnumerable<IConvention> GetConventions()
         {
             var substituter = new FileSubstituter(log, fileSystem);
-            var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
-            var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution, true);
-            var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
-
-            variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
-                !String.IsNullOrEmpty(enableNoMatchWarning) ? enableNoMatchWarning : (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
+            var isEnableNoMatchWarningSet = variables.IsSet(SpecialVariables.Package.EnableNoMatchWarning);
+            if (!isEnableNoMatchWarningSet && !string.IsNullOrEmpty(GetAdditionalFileSubstitutions()))
+                variables.Add(SpecialVariables.Package.EnableNoMatchWarning, "true");
 
             yield return new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem).When(_ => PrimaryPackagePath != null);
             yield return new SubstituteInFilesConvention(fileSystem, substituter,
                 _ => true,
-                _ => FileTargetFactory(runAutomaticFileSubstitution ? DefaultTerraformFileSubstitution : string.Empty, additionalFileSubstitution));
+                _ => GetFilesToSubstitute()
+            );
             yield return step;
         }
 
 
-        static string[] FileTargetFactory(string defaultFileSubstitution, string additionalFileSubstitution)
+        string[] GetFilesToSubstitute()
         {
-            return (defaultFileSubstitution +
-                    (string.IsNullOrWhiteSpace(additionalFileSubstitution)
-                        ? string.Empty
-                        : "\n" + additionalFileSubstitution))
-                .Split(new[] {"\r", "\n"}, StringSplitOptions.RemoveEmptyEntries);
+            var result = new List<string>();
+
+            var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution, true);
+            if (runAutomaticFileSubstitution)
+                result.AddRange(new[] {"**/*.tf", "**/*.tf.json", "**/*.tfvars", "**/*.tfvars.json"});
+
+            var additionalFileSubstitution = GetAdditionalFileSubstitutions();
+            if (!string.IsNullOrWhiteSpace(additionalFileSubstitution))
+                result.AddRange(additionalFileSubstitution.Split(new[] {"\r", "\n"}, StringSplitOptions.RemoveEmptyEntries));
+
+            return result.ToArray();
         }
+
+        string GetAdditionalFileSubstitutions()
+            => variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
     }
 }
