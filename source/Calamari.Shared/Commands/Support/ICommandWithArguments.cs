@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using Calamari.Deployment.Conventions;
+﻿using System.IO;
 
 namespace Calamari.Commands.Support
 {
@@ -10,11 +8,5 @@ namespace Calamari.Commands.Support
     public interface ICommandWithArguments
     {
         int Execute(string[] commandLineArguments);
-    }
-
-    public interface ICommand
-    {
-        string PrimaryPackagePath { get; }
-        IEnumerable<IConvention> GetConventions();
     }
 }

@@ -28,7 +28,7 @@ namespace Calamari.Terraform
             this.fileSystem = fileSystem;
         }
 
-        public string PrimaryPackagePath => variables.GetPrimaryPackagePath(fileSystem, false);
+        public string PrimaryPackagePath => variables.GetPathToPrimaryPackage(fileSystem, false);
 
         public IEnumerable<IConvention> GetConventions()
         {
