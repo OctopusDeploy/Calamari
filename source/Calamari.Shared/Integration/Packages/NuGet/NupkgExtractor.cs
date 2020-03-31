@@ -47,7 +47,7 @@ namespace Calamari.Integration.Packages.NuGet
                         continue;
 
                     var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
-                    entry.WriteToFile(targetFile, new PackageExtractionOptions { ExtractFullPath = false, PreserveFileTime = false });
+                    entry.WriteToFile(targetFile, new PackageExtractionOptions(log) { ExtractFullPath = false, PreserveFileTime = false });
 
                     SetFileLastModifiedTime(entry, targetFile);
 

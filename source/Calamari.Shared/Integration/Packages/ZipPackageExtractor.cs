@@ -38,7 +38,7 @@ namespace Calamari.Integration.Packages
         void ExtractEntry(string directory, ZipArchiveEntry entry)
         {
 #if NET40
-            entry.WriteToDirectory(directory, new PackageExtractionOptions());
+            entry.WriteToDirectory(directory, new PackageExtractionOptions(log));
 #else
             var extractAttempts = 10;
             Policy.Handle<IOException>().WaitAndRetry(
@@ -47,7 +47,7 @@ namespace Calamari.Integration.Packages
                     onRetry: (ex, retry) => { log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
                 .Execute(() =>
                 {
-                    entry.WriteToDirectory(directory, new PackageExtractionOptions());
+                    entry.WriteToDirectory(directory, new PackageExtractionOptions(log));
                 });
 #endif
         }

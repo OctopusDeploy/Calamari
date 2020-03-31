@@ -50,7 +50,7 @@ namespace Calamari.Integration.Packages
         void ExtractEntry(string directory, TarReader reader)
         {
 #if NET40
-            reader.WriteEntryToDirectory(directory, new PackageExtractionOptions());
+            reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log));
 #else
             var extractAttempts = 10;
             Policy.Handle<IOException>().WaitAndRetry(
@@ -59,7 +59,7 @@ namespace Calamari.Integration.Packages
                     onRetry: (ex, retry) => { log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
                 .Execute(() =>
                 {
-                    reader.WriteEntryToDirectory(directory, new PackageExtractionOptions());
+                    reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log));
                 });
 #endif
         }
