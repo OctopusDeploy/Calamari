@@ -10,6 +10,7 @@ namespace Calamari.Commands
     [Command("find-package", Description = "Finds the package that matches the specified ID and version. If no exact match is found, it returns a list of the nearest packages that matches the ID")]
     public class FindPackageCommand : Command
     {
+        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         string packageId;
         string rawPackageVersion;
@@ -17,8 +18,9 @@ namespace Calamari.Commands
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
 
-        public FindPackageCommand(ICalamariFileSystem fileSystem)
+        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
@@ -43,7 +45,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(rawPackageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
 
-            var extractor = new GenericPackageExtractorFactory().createJavaGenericPackageExtractor(null);
+            var extractor = new GenericPackageExtractorFactory(log).CreateJavaGenericPackageExtractor(null);
             var packageStore = new PackageStore(extractor, fileSystem);
 
             if (!VersionFactory.TryCreateVersion(rawPackageVersion, out IVersion version, versionFormat))
@@ -55,7 +57,7 @@ namespace Calamari.Commands
 
             if (package == null)
             {
-                Log.Verbose($"Package {packageId} version {version} hash {packageHash} has not been uploaded.");
+                log.Verbose($"Package {packageId} version {version} hash {packageHash} has not been uploaded.");
 
                 if (exactMatchOnly)
                     return 0;
@@ -65,8 +67,8 @@ namespace Calamari.Commands
                 return 0;
             }
 
-            Log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
-            Log.ServiceMessages.PackageFound(
+            log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
+            log.PackageFound(
                 package.PackageId, 
                 package.Version,
                 package.Hash, 
@@ -78,19 +80,19 @@ namespace Calamari.Commands
 
         void FindEarlierPackages(PackageStore packageStore, IVersion version)
         {
-            Log.VerboseFormat("Finding earlier packages that have been uploaded to this Tentacle.");
+            log.VerboseFormat("Finding earlier packages that have been uploaded to this Tentacle.");
             var nearestPackages = packageStore.GetNearestPackages(packageId, version).ToList();
             if (!nearestPackages.Any())
             {
-                Log.VerboseFormat("No earlier packages for {0} has been uploaded", packageId);
+                log.VerboseFormat("No earlier packages for {0} has been uploaded", packageId);
             }
 
-            Log.VerboseFormat("Found {0} earlier {1} of {2} on this Tentacle", 
+            log.VerboseFormat("Found {0} earlier {1} of {2} on this Tentacle", 
                 nearestPackages.Count, nearestPackages.Count == 1 ? "version" : "versions", packageId);
             foreach(var nearestPackage in nearestPackages)
             {
-                Log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
-                Log.ServiceMessages.PackageFound(
+                log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
+                log.PackageFound(
                     nearestPackage.PackageId,
                     nearestPackage.Version,
                     nearestPackage.Hash,

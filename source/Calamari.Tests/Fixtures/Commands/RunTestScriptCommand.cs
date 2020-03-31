@@ -31,7 +31,7 @@ namespace Calamari.Tests.Fixtures.Commands
         {
             Options.Parse(commandLineArguments);
             
-            var runner = new CommandLineRunner(new LogWrapper(), variables);
+            var runner = new CommandLineRunner(ConsoleLog.Instance, variables);
             Log.VerboseFormat("Executing '{0}'", scriptFile);
             var result = scriptEngine.Execute(new Script(scriptFile, ""), variables, runner);
 

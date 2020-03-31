@@ -11,6 +11,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
+using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
 
@@ -19,47 +20,44 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
     [TestFixture]
     public class DeployJavaArchiveFixture : CalamariFixture
     {
-        protected IVariables Variables { get; private set; }
-        protected ICalamariFileSystem FileSystem { get; private set; }
-        protected string ApplicationDirectory { get; private set; }
-
-        protected int ReturnCode { get; set; }
-
-        protected ProxyLog ProxyLog { get; set; }
+        IVariables variables;
+        ICalamariFileSystem fileSystem;
+        string applicationDirectory;
+        int returnCode;
+        InMemoryLog log;
 
 
         [SetUp]
         public virtual void SetUp()
         {
-            FileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            ProxyLog = new ProxyLog();
+            fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            log = new InMemoryLog();
 
             // Ensure staging directory exists and is empty
-            ApplicationDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
-            FileSystem.EnsureDirectoryExists(ApplicationDirectory);
-            FileSystem.PurgeDirectory(ApplicationDirectory, FailureOptions.ThrowOnFailure);
+            applicationDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
+            fileSystem.EnsureDirectoryExists(applicationDirectory);
+            fileSystem.PurgeDirectory(applicationDirectory, FailureOptions.ThrowOnFailure);
 
-            Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(ApplicationDirectory, "DeploymentJournal.xml"));
+            Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(applicationDirectory, "DeploymentJournal.xml"));
 
-            Variables = new VariablesFactory(FileSystem).Create(new CommonOptions("test"));
-            Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, ApplicationDirectory);
+            variables = new VariablesFactory(fileSystem).Create(new CommonOptions("test"));
+            variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, applicationDirectory);
         }
 
         [TearDown]
         public virtual void CleanUp()
         {
-            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(ApplicationDirectory, FailureOptions.IgnoreFailure);
-            ProxyLog.Dispose();
+            CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(applicationDirectory, FailureOptions.IgnoreFailure);
         }
 
         [Test]
         public void CanDeployJavaArchive()
         {
             DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
-            Assert.AreEqual(0, ReturnCode);
+            Assert.AreEqual(0, returnCode);
 
             //Archive is re-packed
-            ProxyLog.AssertContains($"Re-packaging archive: '{Path.Combine(ApplicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar")}'");
+            log.StandardOut.Should().Contain($"Re-packaging archive: '{Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar")}'");
         }
 
         // https://github.com/OctopusDeploy/Issues/issues/4733
@@ -67,12 +65,12 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void EnsureMetafileDataRepacked()
         {
             DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
-            Assert.AreEqual(0, ReturnCode);
+            Assert.AreEqual(0, returnCode);
 
-            var targetFile = Path.Combine(ApplicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");
+            var targetFile = Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");
 
             //Archive is re-packed
-            ProxyLog.AssertContains($"Re-packaging archive: '{targetFile}'");
+            log.StandardOut.Should().Contain($"Re-packaging archive: '{targetFile}'");
 
             //Check the manifest is copied from the original
             using (var stream = new FileStream(targetFile, FileMode.Open))
@@ -92,25 +90,24 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void CanTransformConfigInJar()
         {
             const string configFile = "config.properties";
-            Variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
-            Variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, configFile);
+            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, configFile);
 
             DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
-            Assert.AreEqual(0, ReturnCode);
-            ProxyLog.AssertContains($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
+            Assert.AreEqual(0, returnCode);
+            log.StandardOut.Should().Contain($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
         }
 
         protected void DeployPackage(string packageName)
         {
-            var log = new InMemoryLog();
             var command = new DeployJavaArchiveCommand(
+                log,
                 new ScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
-                Variables,
+                variables,
                 CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
-                new CommandLineRunner(log, Variables),
-                log
+                new CommandLineRunner(log, variables)
             );
-            ReturnCode = command.Execute(new[] { "--archive", $"{packageName}" });
+            returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
     }
 }

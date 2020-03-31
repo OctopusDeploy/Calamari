@@ -5,7 +5,7 @@ namespace Calamari.Terraform
 {
     public class DestroyPlanTerraformConvention : PlanTerraformConvention
     {
-        public DestroyPlanTerraformConvention(ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner) : base(fileSystem, commandLineRunner, "-destroy")
+        public DestroyPlanTerraformConvention(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner) : base(log, fileSystem, commandLineRunner, "-destroy")
         {
         }
     }

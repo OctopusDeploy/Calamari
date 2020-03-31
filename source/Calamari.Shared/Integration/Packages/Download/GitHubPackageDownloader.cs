@@ -21,12 +21,14 @@ namespace Calamari.Integration.Packages.Download
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
+        readonly ILog log;
         private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
 
         public static readonly string DownloadingExtension = ".downloading";
 
-        public GitHubPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
+        public GitHubPackageDownloader(ILog log, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
             this.freeSpaceChecker = freeSpaceChecker;
         }
@@ -185,7 +187,7 @@ namespace Calamari.Integration.Packages.Download
                         client.CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable);
                         client.Headers.Set(HttpRequestHeader.UserAgent, GetUserAgent());
                         client.Credentials = feedCredentials;
-                        client.DownloadFileWithProgress(uri, tempPath, (progress, total) => Log.ServiceMessages.Progress(progress, $"Downloading {packageId} v{version}"));
+                        client.DownloadFileWithProgress(uri, tempPath, (progress, total) => log.Progress(progress, $"Downloading {packageId} v{version}"));
 
                         DeNestContents(tempPath, localDownloadName);
                         return PackagePhysicalFileMetadata.Build(localDownloadName);

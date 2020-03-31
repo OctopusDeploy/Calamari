@@ -19,11 +19,11 @@ namespace Calamari.Integration.Packages
     public interface IGenericPackageExtractorFactory
     {
         /// <returns>A GenericPackageExtractor that processes the "standard" package types</returns>
-        GenericPackageExtractor createStandardGenericPackageExtractor();
+        GenericPackageExtractor CreateStandardGenericPackageExtractor();
         /// <returns>
         /// A GenericPackageExtractor that processes the "standard" package types, along with
         /// Java packages.
         /// </returns>
-        GenericPackageExtractor createJavaGenericPackageExtractor(JarTool jarTool);
+        GenericPackageExtractor CreateJavaGenericPackageExtractor(JarTool jarTool);
     }
 }

@@ -16,13 +16,15 @@ namespace Calamari.Terraform
     {
         const string DefaultTerraformFileSubstitution = "**/*.tf\n**/*.tf.json\n**/*.tfvars\n**/*.tfvars.json";
 
+        readonly ILog log;
         private readonly IConvention step;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
 
 
-        protected TerraformCommand(IVariables variables, ICalamariFileSystem fileSystem, IConvention step)
+        protected TerraformCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IConvention step)
         {
+            this.log = log;
             this.step = step;
             this.variables = variables;
             this.fileSystem = fileSystem;
@@ -32,8 +34,8 @@ namespace Calamari.Terraform
 
         public IEnumerable<IConvention> GetConventions()
         {
-            var substituter = new FileSubstituter(fileSystem);
-            var packageExtractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            var substituter = new FileSubstituter(log, fileSystem);
+            var packageExtractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
             var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution, true);
             var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);

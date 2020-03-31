@@ -18,13 +18,20 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
 {
     public class AzureWebAppConvention : IInstallConvention
     {
+        readonly ILog log;
+
+        public AzureWebAppConvention(ILog log)
+        {
+            this.log = log;
+        }
+        
         public void Install(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
             
             if (variables.Get(SpecialVariables.Account.AccountType) == "AzureSubscription")
             {
-                Log.Warn("Use of Management Certificates to deploy Azure Web App services has been deprecated by Microsoft and they are progressively disabling them, please update to using a Service Principal. If you receive an error about the app not being found in the subscription then this account type is the most likely cause. See [our documentation](https://g.octopushq.com/AzureTargets#azure-management-certificate) for more details.");
+                log.Warn("Use of Management Certificates to deploy Azure Web App services has been deprecated by Microsoft and they are progressively disabling them, please update to using a Service Principal. If you receive an error about the app not being found in the subscription then this account type is the most likely cause. See [our documentation](https://g.octopushq.com/AzureTargets#azure-management-certificate) for more details.");
             }
 
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
@@ -40,7 +47,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             var slotText = targetSite.HasSlot
                 ? $", deployment slot '{targetSite.Slot}'" 
                 : string.Empty;
-            Log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
+            log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
             var publishSettings = GetPublishProfile(variables);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
@@ -56,7 +63,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             }
         }
 
-        private static void DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite,
+        void DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite,
             IVariables variables,
             WebDeployPublishSettings publishSettings)
         {
@@ -65,8 +72,8 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             {
                 try
                 {
-                    Log.Verbose($"Using site '{targetSite.Site}'");
-                    Log.Verbose($"Using slot '{targetSite.Slot}'");
+                    log.Verbose($"Using site '{targetSite.Site}'");
+                    log.Verbose($"Using slot '{targetSite.Slot}'");
                     var changeSummary = DeploymentManager
                         .CreateObject("contentPath", deployment.CurrentDirectory)
                         .SyncTo(
@@ -76,7 +83,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
                             DeploymentSyncOptions(variables)
                         );
 
-                    Log.Info(
+                    log.InfoFormat(
                         "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                         changeSummary.ObjectsAdded, changeSummary.ObjectsUpdated, changeSummary.ObjectsDeleted);
                     break;
@@ -101,7 +108,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             }
         }
 
-        private static bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate,
+        bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate,
             X509Chain chain, SslPolicyErrors sslpolicyerrors)
         {
             switch (sslpolicyerrors)
@@ -109,8 +116,8 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
                 case SslPolicyErrors.None:
                     return true;
                 case SslPolicyErrors.RemoteCertificateNameMismatch:
-                    Log.Error(
-                        $"A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in {Log.Link("https://g.octopushq.com/CertificateMismatch")}.");
+                    log.Error(
+                        $"A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in {log.FormatLink("https://g.octopushq.com/CertificateMismatch")}.");
                     break;
             }
 

@@ -26,15 +26,24 @@ namespace Calamari.Kubernetes.Commands
     public class HelmUpgradeCommand : Command
     {
         private string packageFile;
+        readonly ILog log;
         private readonly IScriptEngine scriptEngine;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public HelmUpgradeCommand(IScriptEngine scriptEngine, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public HelmUpgradeCommand(
+            ILog log, 
+            IScriptEngine scriptEngine, 
+            IDeploymentJournalWriter deploymentJournalWriter, 
+            IVariables variables,
+			ICommandLineRunner commandLineRunner,
+            ICalamariFileSystem fileSystem
+            )
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
@@ -48,8 +57,8 @@ namespace Calamari.Kubernetes.Commands
 
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
-            var substituter = new FileSubstituter(fileSystem);
-            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            var substituter = new FileSubstituter(log, fileSystem);
+            var extractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
             ValidateRequiredVariables();
             
             var conventions = new List<IConvention>
@@ -59,7 +68,7 @@ namespace Calamari.Kubernetes.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new HelmUpgradeConvention(scriptEngine, commandLineRunner, fileSystem),
+                new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
             var deployment = new RunningDeployment(packageFile, variables);

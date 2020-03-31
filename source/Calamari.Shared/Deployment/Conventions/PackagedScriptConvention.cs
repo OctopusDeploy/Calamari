@@ -9,9 +9,12 @@ namespace Calamari.Deployment.Conventions
     /// </summary>
     public class PackagedScriptConvention : PackagedScriptRunner, IInstallConvention
     {
-        public PackagedScriptConvention(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) : 
-            base(scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)
+        readonly ILog log;
+
+        public PackagedScriptConvention(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) : 
+            base(log, scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)
         {
+            this.log = log;
         }
 
         public void Install(RunningDeployment deployment)
@@ -19,7 +22,7 @@ namespace Calamari.Deployment.Conventions
             var runScripts = deployment.Variables.GetFlag(SpecialVariables.Package.RunPackageScripts, true);
             if (!runScripts)
             {
-                Log.Verbose($"Skipping the running of packaged scripts as {SpecialVariables.Package.RunPackageScripts} is set to false");
+                log.Verbose($"Skipping the running of packaged scripts as {SpecialVariables.Package.RunPackageScripts} is set to false");
                 return;
             }
 

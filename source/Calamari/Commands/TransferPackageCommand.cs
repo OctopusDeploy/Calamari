@@ -16,12 +16,14 @@ namespace Calamari.Commands
     [Command("transfer-package", Description = "Copies a deployment package to a specific directory")]
     public class TransferPackageCommand : Command
     {
+        readonly ILog log;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
 
-        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
+        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
@@ -35,8 +37,8 @@ namespace Calamari.Commands
             
             var conventions = new List<IConvention>
             {
-                new AlreadyInstalledConvention(journal),
-                new TransferPackageConvention(fileSystem),
+                new AlreadyInstalledConvention(log, journal),
+                new TransferPackageConvention(log, fileSystem),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);

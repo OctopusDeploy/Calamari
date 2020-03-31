@@ -25,6 +25,7 @@ namespace Calamari.Commands
         string scriptFileArg;
         string packageFile;
         string scriptParametersArg;
+        readonly ILog log;
         readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly IScriptEngine scriptEngine;
@@ -33,6 +34,7 @@ namespace Calamari.Commands
         IFileSubstituter fileSubstituter; 
 
         public RunScriptCommand(
+            ILog log,
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
             IScriptEngine scriptEngine, 
@@ -42,6 +44,7 @@ namespace Calamari.Commands
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
             Options.Add("scriptParameters=", $"Parameters to pass to the script.", v => scriptParametersArg = v);
+            this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.scriptEngine = scriptEngine;
@@ -53,12 +56,12 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
             
-            fileSubstituter = new FileSubstituter(fileSystem);
+            fileSubstituter = new FileSubstituter(log, fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonVariableReplacer = new JsonConfigurationVariableReplacer();
-            var extractor = new GenericPackageExtractorFactory().createStandardGenericPackageExtractor();
+            var extractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
 
             ValidateArguments();
             WriteVariableScriptToFile();

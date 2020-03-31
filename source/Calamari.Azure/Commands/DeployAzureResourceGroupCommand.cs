@@ -20,6 +20,7 @@ namespace Calamari.Azure.Commands
     [Command("deploy-azure-resource-group", Description = "Creates a new Azure Resource Group deployment")]
     public class DeployAzureResourceGroupCommand : Command
     {
+        readonly ILog log;
         private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
@@ -27,8 +28,9 @@ namespace Calamari.Azure.Commands
         private string templateFile;
         private string templateParameterFile;
 
-        public DeployAzureResourceGroupCommand(IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureResourceGroupCommand(ILog log, IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
         {
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
@@ -49,13 +51,13 @@ namespace Calamari.Azure.Commands
             
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor(), fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, templateService, new ResourceGroupTemplateNormalizer()),
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
 

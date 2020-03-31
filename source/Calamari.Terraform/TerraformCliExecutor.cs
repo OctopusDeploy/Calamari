@@ -14,6 +14,7 @@ namespace Calamari.Terraform
 {
     class TerraformCliExecutor : IDisposable
     {
+        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly RunningDeployment deployment;
@@ -24,12 +25,14 @@ namespace Calamari.Terraform
         readonly string logPath;
 
         public TerraformCliExecutor(
-            ICalamariFileSystem fileSystem,
+            ILog log,
+            ICalamariFileSystem fileSystem, 
             ICommandLineRunner commandLineRunner,
             RunningDeployment deployment,
             Dictionary<string, string> environmentVariables
-        )
+            )
         {
+            this.log = log;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.deployment = deployment;
@@ -93,14 +96,14 @@ namespace Calamari.Terraform
 
                 if (fileSystem.FileExists(logPath))
                 {
-                    Log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
+                    log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
                 }
 
                 //When terraform crashes, the information would be contained in the crash.log file. We should attach this since
                 //we don't want to blow that information away in case it provides something relevant https://www.terraform.io/docs/internals/debugging.html#interpreting-a-crash-log
                 if (fileSystem.FileExists(crashLogPath))
                 {
-                    Log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
+                    log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
                 }
             }
         }
@@ -124,7 +127,7 @@ namespace Calamari.Terraform
                 AdditionalInvocationOutputSink = captureOutput
             };
 
-            Log.Info(commandLineInvocation.ToString());
+            log.Info(commandLineInvocation.ToString());
 
             var commandResult = commandLineRunner.Execute(commandLineInvocation);
 

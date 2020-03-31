@@ -19,7 +19,7 @@ namespace Calamari.Deployment.Conventions
             this.fileSystem = fileSystem;
             this.configurationTransformer = configurationTransformer;
             this.transformFileLocator = transformFileLocator;
-            this.log = log ?? new LogWrapper();
+            this.log = log ?? ConsoleLog.Instance;
         }
 
         public void Install(RunningDeployment deployment)

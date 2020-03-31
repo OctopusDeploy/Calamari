@@ -21,6 +21,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
 using Newtonsoft.Json.Linq;
+using NSubstitute.Core;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Tests.Terraform
@@ -391,15 +392,13 @@ namespace Calamari.Tests.Terraform
 
                 foreach (var commandType in commandTypes)
                 {
-                    var sb = new StringBuilder();
-                    Log.StdOut = new IndentedTextWriter(new StringWriter(sb));
-
-                    var command = (ICommand) Activator.CreateInstance(commandType, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CommandLineRunner(new LogWrapper(), variables));
+                    var log = new InMemoryLog();
+                    var command = (ICommand) Activator.CreateInstance(commandType, log, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CommandLineRunner(ConsoleLog.Instance, variables));
                     var result = new CommandAdapter(command, variables).Execute(new string[0]);
 
                     result.Should().Be(0);
 
-                    var output = sb.ToString();
+                    var output = log.StandardOut.Join(Environment.NewLine);
 
                     Console.WriteLine(output);
 

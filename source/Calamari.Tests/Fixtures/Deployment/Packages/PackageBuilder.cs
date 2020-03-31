@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
                 File.Delete(path);
 
 
-            var runner = new CommandLineRunner(new LogWrapper(), new CalamariVariables());
+            var runner = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
 #if NETCORE
             var restoreResult = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("restore")

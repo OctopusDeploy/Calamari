@@ -7,225 +7,206 @@ using Octostache;
 
 namespace Calamari
 {
-    public class LogWrapper : ILog
-    {
-        public void Verbose(string message)
-        {
-            Log.Verbose(message);
-        }
-
-        public void VerboseFormat(string message, params object[] args)
-        {
-            Log.VerboseFormat(message, args);
-        }
-
-        public void Info(string message)
-        {
-            Log.Info(message);
-        }
-
-        public void InfoFormat(string message, params object[] args)
-        {
-            Log.Info(message, args);
-        }
-
-        public void Warn(string message)
-        {
-            Log.Warn(message);
-        }
-
-        public void WarnFormat(string message, params object[] args)
-        {
-            Log.WarnFormat(message, args);
-        }
-
-        public void Error(string message)
-        {
-            Log.Error(message);
-        }
-
-        public void ErrorFormat(string message, params object[] args)
-        {
-            Log.ErrorFormat(message, args);
-        }
-
-    }
-
     public interface ILog
     {
         void Verbose(string message);
-        void VerboseFormat(string message, params object[] args);
+        void VerboseFormat(string messageFormat, params object[] args);
         void Info(string message);
-        void InfoFormat(string message, params object[] args);
+        void InfoFormat(string messageFormat, params object[] args);
         void Warn(string message);
-        void WarnFormat(string message, params object[] args);
+        void WarnFormat(string messageFormat, params object[] args);
         void Error(string message);
-        void ErrorFormat(string message, params object[] args);
+        void ErrorFormat(string messageFormat, params object[] args);
+        void SetOutputVariableButDoNotAddToVariables(string name, string value, bool isSensitive = false);
+        void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false);
+        void NewOctopusArtifact(string fullPath, string name, long fileLength);
+
+        void PackageFound(string packageId, IVersion packageVersion, string packageHash,
+            string packageFileExtension, string packageFullPath, bool exactMatchExists = false);
+
+        void Progress(int percentage, string message);
+        void DeltaVerification(string remotePath, string hash, long size);
+        void DeltaVerificationError(string error);
+        string FormatLink(string uri, string description = null);
+    }
+    
+    public static class Log
+    {
+        public static void Verbose(string message)
+            => ConsoleLog.Instance.Verbose(message);
+
+        public static void VerboseFormat(string message, params object[] args)
+            => ConsoleLog.Instance.VerboseFormat(message, args);
+
+        public static void Info(string message)
+            => ConsoleLog.Instance.Info(message);
+
+        public static void Info(string message, params object[] args)
+            => ConsoleLog.Instance.InfoFormat(message, args);
+
+        public static void Warn(string message)
+            => ConsoleLog.Instance.Warn(message);
+
+        public static void WarnFormat(string message, params object[] args)
+            => ConsoleLog.Instance.WarnFormat(message, args);
+
+        public static void Error(string message)
+            => ConsoleLog.Instance.Error(message);
+
+        public static void ErrorFormat(string message, params object[] args)
+            => ConsoleLog.Instance.ErrorFormat(message, args);
+        
+        public static void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
+            => ConsoleLog.Instance.SetOutputVariable(name, value, variables, isSensitive);
+
+    }
+    
+    public class ConsoleLog : AbstractLog
+    {
+        readonly IndentedTextWriter stdOut;
+        readonly IndentedTextWriter stdErr;
+        
+        public static ConsoleLog Instance = new ConsoleLog();
+
+        ConsoleLog()
+        {
+            stdOut = new IndentedTextWriter(Console.Out, "  ");
+            stdErr = new IndentedTextWriter(Console.Error, "  ");
+        }
+
+        protected override void StdOut(string message)
+            => stdOut.WriteLine(message);
+
+        protected override void StdErr(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            stdErr.WriteLine(message);
+            Console.ResetColor();
+        }
     }
 
-    public class Log
+    public abstract class AbstractLog : ILog
     {
-        static string stdOutMode;
+        string stdOutMode;
 
-        static readonly object Sync = new object();
+        readonly object sync = new object();
 
-        public static IndentedTextWriter StdOut;
-        public static IndentedTextWriter StdErr;
+        protected abstract void StdOut(string message);
+        protected abstract void StdErr(string message);
 
-        static Log()
-        {
-            SetWriters();
-        }
-
-        public static void SetWriters()
-        {
-            StdOut = new IndentedTextWriter(Console.Out, "  ");
-            StdErr = new IndentedTextWriter(Console.Error, "  ");
-        }
-
-
-        static void SetMode(string mode)
+        void SetMode(string mode)
         {
             if (stdOutMode == mode) return;
-            StdOut.WriteLine("##octopus[stdout-" + mode + "]");
+            StdOut("##octopus[stdout-" + mode + "]");
             stdOutMode = mode;
         }
 
-        public static void Verbose(string message)
+        public virtual void Verbose(string message)
         {
-            lock (Sync)
+            lock (sync)
             {
                 SetMode("verbose");
-                StdOut.WriteLine(message);
+                StdOut(message);
             }
         }
 
-        public static void SetOutputVariable(string name, string value, bool isSensitive = false)
+        public virtual void VerboseFormat(string messageFormat, params object[] args)
+            => Verbose(string.Format(messageFormat, args));
+
+        public virtual void Info(string message)
         {
-            SetOutputVariable(name, value, null, isSensitive);
+            lock (sync)
+            {
+                SetMode("default");
+                StdOut(message);
+            }
         }
 
-        public static void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
+        public virtual void InfoFormat(string messageFormat, params object[] args)
+            => Info(String.Format(messageFormat, args));
+
+        public virtual void Warn(string message)
         {
-            Guard.NotNull(name, "name can not be null");
-            Guard.NotNull(value, "value can not be null");
+            lock (sync)
+            {
+                SetMode("warning");
+                StdOut(message);
+            }
+        }
+
+        public virtual void WarnFormat(string messageFormat, params object[] args)
+            => Warn(String.Format(messageFormat, args));
+
+        public virtual void Error(string message)
+        {
+            lock (sync)
+                StdErr(message);
+        }
+
+        public virtual void ErrorFormat(string messageFormat, params object[] args)
+            => Error(string.Format(messageFormat, args));
+        
+        
+        public void SetOutputVariableButDoNotAddToVariables(string name, string value, bool isSensitive = false)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             Info(isSensitive
                 ? $"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\" sensitive=\"{ConvertServiceMessageValue(Boolean.TrueString)}\"]"
                 : $"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
+        }
 
+        public void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
+        {
+            SetOutputVariableButDoNotAddToVariables(name, value, isSensitive);
             variables?.SetOutputVariable(name, value);
         }
 
-        public static void NewOctopusArtifact(string fullPath, string name, long fileLength)
+        public void NewOctopusArtifact(string fullPath, string name, long fileLength)
         {
             Info($"##octopus[createArtifact path=\"{ConvertServiceMessageValue(fullPath)}\" name=\"{ConvertServiceMessageValue(name)}\" length=\"{ConvertServiceMessageValue(fileLength.ToString())}\"]");
         }
 
+        public void PackageFound(string packageId, IVersion packageVersion, string packageHash,
+            string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
+        {
+            if (exactMatchExists)
+                Verbose("##octopus[calamari-found-package]");
+
+            VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" versionFormat=\"{2}\" hash=\"{3}\" remotePath=\"{4}\" fileExtension=\"{5}\"]",
+                ConvertServiceMessageValue(packageId),
+                ConvertServiceMessageValue(packageVersion.ToString()),
+                ConvertServiceMessageValue(packageVersion.Format.ToString()),
+                ConvertServiceMessageValue(packageHash),
+                ConvertServiceMessageValue(packageFullPath),
+                ConvertServiceMessageValue(packageFileExtension));
+        }
+
+        public void Progress(int percentage, string message)
+        {
+            VerboseFormat("##octopus[progress percentage=\"{0}\" message=\"{1}\"]",
+                ConvertServiceMessageValue(percentage.ToString(CultureInfo.InvariantCulture)),
+                ConvertServiceMessageValue(message));
+        }
+
+        public void DeltaVerification(string remotePath, string hash, long size)
+        {
+            VerboseFormat("##octopus[deltaVerification remotePath=\"{0}\" hash=\"{1}\" size=\"{2}\"]",
+                ConvertServiceMessageValue(remotePath),
+                ConvertServiceMessageValue(hash),
+                ConvertServiceMessageValue(size.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        public void DeltaVerificationError(string error)
+        {
+            VerboseFormat("##octopus[deltaVerification error=\"{0}\"]", ConvertServiceMessageValue(error));
+        }
+
+        public string FormatLink(string uri, string description = null)
+            => $"[{description ?? uri}]({uri})";
+        
         static string ConvertServiceMessageValue(string value)
-        {
-            return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
-        }
-
-        public static void VerboseFormat(string messageFormat, params object[] args)
-        {
-            Verbose(string.Format(messageFormat, args));
-        }
-
-        public static void Info(string message)
-        {
-            lock (Sync)
-            {
-                SetMode("default");
-                StdOut.WriteLine(message);
-            }
-        }
-
-        public static void Info(string messageFormat, params object[] args)
-        {
-            Info(String.Format(messageFormat, args));
-        }
-
-        public static void Warn(string message)
-        {
-            lock (Sync)
-            {
-                SetMode("warning");
-                StdOut.WriteLine(message);
-            }
-        }
-
-        public static void WarnFormat(string messageFormat, params object[] args)
-        {
-            Warn(String.Format(messageFormat, args));
-        }
-
-        public static void Error(string message)
-        {
-            lock (Sync)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                StdErr.WriteLine(message);
-                Console.ResetColor();
-            }
-        }
-
-        public static void LogLink(string uri, string description = null)
-        {
-            Info(Link(uri, description));
-        }
-
-        public static string Link(string uri, string description = null)
-        {
-            return $"[{description ?? uri}]({uri})";
-        }
-
-        public static void ErrorFormat(string messageFormat, params object[] args)
-        {
-            Error(string.Format(messageFormat, args));
-        }
-
-        public static class ServiceMessages
-        {
-            public static string ConvertServiceMessageValue(string value)
-            {
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
-            }
-
-            public static void PackageFound(string packageId, IVersion packageVersion, string packageHash,
-                string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
-            {
-                if (exactMatchExists)
-                    Verbose("##octopus[calamari-found-package]");
-
-                VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" versionFormat=\"{2}\" hash=\"{3}\" remotePath=\"{4}\" fileExtension=\"{5}\"]",
-                    ConvertServiceMessageValue(packageId),
-                    ConvertServiceMessageValue(packageVersion.ToString()),
-                    ConvertServiceMessageValue(packageVersion.Format.ToString()),
-                    ConvertServiceMessageValue(packageHash),
-                    ConvertServiceMessageValue(packageFullPath),
-                    ConvertServiceMessageValue(packageFileExtension));
-            }
-
-            public static void Progress(int percentage, string message)
-            {
-                VerboseFormat("##octopus[progress percentage=\"{0}\" message=\"{1}\"]",
-                    ConvertServiceMessageValue(percentage.ToString(CultureInfo.InvariantCulture)),
-                    ConvertServiceMessageValue(message));
-            }
-
-            public static void DeltaVerification(string remotePath, string hash, long size)
-            {
-                VerboseFormat("##octopus[deltaVerification remotePath=\"{0}\" hash=\"{1}\" size=\"{2}\"]",
-                    ConvertServiceMessageValue(remotePath),
-                    ConvertServiceMessageValue(hash),
-                    ConvertServiceMessageValue(size.ToString(CultureInfo.InvariantCulture)));
-            }
-
-            public static void DeltaVerificationError(string error)
-            {
-                VerboseFormat("##octopus[deltaVerification error=\"{0}\"]", ConvertServiceMessageValue(error));
-            }
-        }
+            => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
     }
 }

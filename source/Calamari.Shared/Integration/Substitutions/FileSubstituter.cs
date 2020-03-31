@@ -8,10 +8,12 @@ namespace Calamari.Integration.Substitutions
 {
     public class FileSubstituter : IFileSubstituter
     {
+        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
 
-        public FileSubstituter(ICalamariFileSystem fileSystem)
+        public FileSubstituter(ILog log, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
         }
 
@@ -22,7 +24,7 @@ namespace Calamari.Integration.Substitutions
 
         public void PerformSubstitution(string sourceFile, IVariables variables, string targetFile)
         {
-            Log.Verbose($"Performing variable substitution on '{sourceFile}'");
+            log.Verbose($"Performing variable substitution on '{sourceFile}'");
 
             var source = fileSystem.ReadFile(sourceFile, out var sourceFileEncoding);
             var encoding = GetEncoding(variables, sourceFileEncoding);
@@ -30,7 +32,7 @@ namespace Calamari.Integration.Substitutions
             var result = variables.Evaluate(source, out var error, haltOnError: false);
 
             if (!string.IsNullOrEmpty(error))
-                Log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+                log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
 
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }

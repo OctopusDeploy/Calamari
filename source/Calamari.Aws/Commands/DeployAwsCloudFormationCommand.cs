@@ -26,6 +26,7 @@ namespace Calamari.Aws.Commands
     [Command("deploy-aws-cloudformation", Description = "Creates a new AWS CloudFormation deployment")]
     public class DeployCloudFormationCommand : Command
     {
+        readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         private string packageFile;
@@ -35,8 +36,9 @@ namespace Calamari.Aws.Commands
         private string stackName;
         private bool disableRollback;
 
-        public DeployCloudFormationCommand(IVariables variables, ICalamariFileSystem fileSystem)
+        public DeployCloudFormationCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
@@ -54,7 +56,7 @@ namespace Calamari.Aws.Commands
             Options.Parse(commandLineArguments);
 
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
-            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
+            var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
             var templateResolver = new TemplateResolver(fileSystem);
 
             IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
@@ -75,16 +77,16 @@ namespace Calamari.Aws.Commands
                 return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
             }
 
-            var stackEventLogger = new StackEventLogger(new LogWrapper());
+            var stackEventLogger = new StackEventLogger(log);
             
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor(), fileSystem),
                 
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(
-                    new GenerateCloudFormationChangesetNameConvention(),
+                    new GenerateCloudFormationChangesetNameConvention(log),
                     new CreateCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, RoleArnProvider, TemplateFactory, iamCapabilities),
                     new DescribeCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
                     new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete)

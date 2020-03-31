@@ -5,6 +5,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -18,23 +19,13 @@ namespace Calamari.Tests.Fixtures.Conventions
         ICommandLineRunner runner;
         RunningDeployment deployment;
         CommandResult commandResult;
+        InMemoryLog log;
 
         [SetUp]
         public void SetUp()
         {
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            fileSystem.EnumerateFiles(Arg.Any<string>(), Arg.Any<string[]>()).Returns(new[]
-            {
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "Hello.ps1"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.sh"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1"),
-                TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.sh")
-            });
+            fileSystem.EnumerateFiles(Arg.Any<string>(), Arg.Any<string[]>()).Returns(new[] {TestEnvironment.ConstructRootedPath("App", "MyApp", "Hello.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.sh"), TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.sh")});
 
             commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
             scriptEngine = Substitute.For<IScriptEngine>();
@@ -42,55 +33,47 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine.GetSupportedTypes().Returns(new[] {ScriptSyntax.CSharp, ScriptSyntax.PowerShell, ScriptSyntax.Bash});
             runner = Substitute.For<ICommandLineRunner>();
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariables());
+            log = new InMemoryLog();
         }
 
         [Test]
         public void ShouldFindAndCallPreferredPackageScript()
         {
-            using (var log = new ProxyLog())
-            {
-                var deployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1");
-                var deployCsx = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx");
+            var deployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1");
+            var deployCsx = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx");
 
-                var convention = CreateConvention("Deploy");
-                convention.Install(deployment);
-                scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployPs1), deployment.Variables, runner);
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployCsx), deployment.Variables, runner);
-                log.AssertContains($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp, PowerShell, Bash");
-            }
+            var convention = CreateConvention("Deploy");
+            convention.Install(deployment);
+            scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployPs1), deployment.Variables, runner);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployCsx), deployment.Variables, runner);
+            log.StandardOut.Should().ContainMatch($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp, PowerShell, Bash");
         }
 
         [Test]
         public void ShouldFindAndCallPreferredPreDeployScript()
         {
-            using (var log = new ProxyLog())
-            {
-                var preDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1");
-                var preDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh");
+            var preDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1");
+            var preDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh");
 
-                var convention = CreateConvention("PreDeploy");
-                convention.Install(deployment);
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
-                scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == preDeploySh), deployment.Variables, runner);
-                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
-            }
+            var convention = CreateConvention("PreDeploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
+            scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == preDeploySh), deployment.Variables, runner);
+            log.StandardOut.Should().ContainMatch($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
         }
 
         [Test]
         public void ShouldDeleteScriptsAfterExecution()
         {
-            using (var log = new ProxyLog())
-            {
-                var preDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1");
-                var preDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh");
+            var preDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1");
+            var preDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh");
 
-                var convention = CreateConvention("PreDeploy");
-                convention.Install(deployment);
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
-                fileSystem.Received().DeleteFile(preDeployPs1, Arg.Any<FailureOptions>());
-                fileSystem.Received().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
-            }
+            var convention = CreateConvention("PreDeploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
+            fileSystem.Received().DeleteFile(preDeployPs1, Arg.Any<FailureOptions>());
+            fileSystem.Received().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
+            log.StandardOut.Should().ContainMatch($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
         }
 
         [Test]
@@ -105,17 +88,14 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldRunPreferredScriptOnRollbackExecution()
         {
-            using (var log = new ProxyLog())
-            {
-                var deployFailedPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1");
-                var deployFailedSh = TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.sh");
+            var deployFailedPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1");
+            var deployFailedSh = TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.sh");
 
-                var convention = CreateRollbackConvention("DeployFailed");
-                convention.Rollback(deployment);
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployFailedPs1), deployment.Variables, runner);
-                scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployFailedSh), deployment.Variables, runner);
-                log.AssertContains($"Found 2 DeployFailed scripts. Selected {deployFailedPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
-            }
+            var convention = CreateRollbackConvention("DeployFailed");
+            convention.Rollback(deployment);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployFailedPs1), deployment.Variables, runner);
+            scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployFailedSh), deployment.Variables, runner);
+            log.StandardOut.Should().ContainMatch($"Found 2 DeployFailed scripts. Selected {deployFailedPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
         }
 
         [Test]
@@ -131,68 +111,59 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotDeletePreDeployScriptAfterExecutionIfSpecialVariableIsSet()
         {
-            using (var log = new ProxyLog())
-            {
-                var preDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1");
-                var preDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh");
+            var preDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1");
+            var preDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh");
 
-                deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
-                var convention = CreateConvention("PreDeploy");
-                convention.Install(deployment);
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
-                scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == preDeploySh), deployment.Variables, runner);
-                fileSystem.DidNotReceive().DeleteFile(preDeployPs1, Arg.Any<FailureOptions>());
-                fileSystem.DidNotReceive().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
-            }
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            var convention = CreateConvention("PreDeploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == preDeployPs1), deployment.Variables, runner);
+            scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == preDeploySh), deployment.Variables, runner);
+            fileSystem.DidNotReceive().DeleteFile(preDeployPs1, Arg.Any<FailureOptions>());
+            fileSystem.DidNotReceive().DeleteFile(preDeploySh, Arg.Any<FailureOptions>());
+            log.StandardOut.Should().ContainMatch($"Found 2 PreDeploy scripts. Selected {preDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
         }
 
         [Test]
         public void ShouldNotDeleteDeployScriptAfterExecutionIfSpecialVariableIsSet()
         {
-            using (var log = new ProxyLog())
-            {
-                var deployCsx = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx");
-                var deployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1");
+            var deployCsx = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx");
+            var deployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1");
 
-                deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
-                var convention = CreateConvention("Deploy");
-                convention.Install(deployment);
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployCsx), deployment.Variables, runner);
-                scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployPs1), deployment.Variables, runner);
-                fileSystem.DidNotReceive().DeleteFile(deployPs1, Arg.Any<FailureOptions>());
-                fileSystem.DidNotReceive().DeleteFile(deployCsx, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp, PowerShell, Bash");
-            }
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            var convention = CreateConvention("Deploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == deployCsx), deployment.Variables, runner);
+            scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == deployPs1), deployment.Variables, runner);
+            fileSystem.DidNotReceive().DeleteFile(deployPs1, Arg.Any<FailureOptions>());
+            fileSystem.DidNotReceive().DeleteFile(deployCsx, Arg.Any<FailureOptions>());
+            log.StandardOut.Should().ContainMatch($"Found 2 Deploy scripts. Selected {deployCsx} based on OS preferential ordering: CSharp, PowerShell, Bash");
         }
 
         [Test]
         public void ShouldNotDeletePostDeployScriptAfterExecutionIfSpecialVariableIsSet()
         {
-            using (var log = new ProxyLog())
-            {
-                var postDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1");
-                var postDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.sh");
+            var postDeployPs1 = TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1");
+            var postDeploySh = TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.sh");
 
-                deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
-                var convention = CreateConvention("PostDeploy");
-                convention.Install(deployment);
-                scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == postDeployPs1), deployment.Variables, runner);
-                scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == postDeploySh), deployment.Variables, runner);
-                fileSystem.DidNotReceive().DeleteFile(postDeployPs1, Arg.Any<FailureOptions>());
-                fileSystem.DidNotReceive().DeleteFile(postDeploySh, Arg.Any<FailureOptions>());
-                log.AssertContains($"Found 2 PostDeploy scripts. Selected {postDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
-            }
+            deployment.Variables.Set(SpecialVariables.DeleteScriptsOnCleanup, false.ToString());
+            var convention = CreateConvention("PostDeploy");
+            convention.Install(deployment);
+            scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == postDeployPs1), deployment.Variables, runner);
+            scriptEngine.DidNotReceive().Execute(Arg.Is<Script>(s => s.File == postDeploySh), deployment.Variables, runner);
+            fileSystem.DidNotReceive().DeleteFile(postDeployPs1, Arg.Any<FailureOptions>());
+            fileSystem.DidNotReceive().DeleteFile(postDeploySh, Arg.Any<FailureOptions>());
+            log.StandardOut.Should().ContainMatch($"Found 2 PostDeploy scripts. Selected {postDeployPs1} based on OS preferential ordering: CSharp, PowerShell, Bash");
         }
 
         PackagedScriptConvention CreateConvention(string scriptName)
         {
-            return new PackagedScriptConvention(scriptName, fileSystem, scriptEngine, runner);
+            return new PackagedScriptConvention(log, scriptName, fileSystem, scriptEngine, runner);
         }
 
         RollbackScriptConvention CreateRollbackConvention(string scriptName)
         {
-            return new RollbackScriptConvention(scriptName, fileSystem, scriptEngine, runner);
+            return new RollbackScriptConvention(log, scriptName, fileSystem, scriptEngine, runner);
         }
     }
 }

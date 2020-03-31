@@ -14,8 +14,14 @@ namespace Calamari.Integration.Packages.NuGet
 {
     public class NupkgExtractor : IPackageExtractor
     {
+        readonly ILog log;
         public string[] Extensions => new[] {".nupkg"};
 
+        public NupkgExtractor(ILog log)
+        {
+            this.log = log;
+        }
+        
         public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
         {
             var filesExtracted = 0;
@@ -55,12 +61,12 @@ namespace Calamari.Integration.Packages.NuGet
             }
         }
 
-        static void WriteSymbolicLink(string sourcepath, string targetpath)
+        void WriteSymbolicLink(string sourcepath, string targetpath)
         {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(sourcepath);
+            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(log, sourcepath);
         }
 
-        static void SetFileLastModifiedTime(IEntry entry, string targetFile)
+        void SetFileLastModifiedTime(IEntry entry, string targetFile)
         {
             // Using the SharpCompress PreserveFileTime option caused an exception when unpacking
             // NuGet packages on Linux. So we set the LastModifiedTime ourselves.
@@ -74,7 +80,7 @@ namespace Calamari.Integration.Packages.NuGet
                 }
                 catch (Exception ex)
                 {
-                    Log.Verbose($"Unable to set LastWriteTime attribute on file '{targetFile}':  {ex.Message}");
+                    log.Verbose($"Unable to set LastWriteTime attribute on file '{targetFile}':  {ex.Message}");
                 }
             }
         }

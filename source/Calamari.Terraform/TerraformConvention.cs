@@ -12,10 +12,12 @@ namespace Calamari.Terraform
 {
     public abstract class TerraformConvention : IInstallConvention
     {
+        protected readonly ILog Log;
         protected readonly ICalamariFileSystem fileSystem;
 
-        public TerraformConvention(ICalamariFileSystem fileSystem)
+        public TerraformConvention(ILog log, ICalamariFileSystem fileSystem)
         {
+            this.Log = log;
             this.fileSystem = fileSystem;
         }
 
@@ -35,7 +37,7 @@ namespace Calamari.Terraform
 
             if (useAWSAccount)
             {
-                var awsEnvironmentGeneration = await AwsEnvironmentGeneration.Create(variables).ConfigureAwait(false);
+                var awsEnvironmentGeneration = await AwsEnvironmentGeneration.Create(Log, variables).ConfigureAwait(false);
                 environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
             }
 

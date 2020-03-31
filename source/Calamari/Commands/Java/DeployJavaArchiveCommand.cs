@@ -24,21 +24,21 @@ namespace Calamari.Commands.Java
     public class DeployJavaArchiveCommand : Command
     {
         string archiveFile;
-        private readonly IScriptEngine scriptEngine;
+        readonly ILog log;
+        readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        readonly ILog log;
 
-        public DeployJavaArchiveCommand(IScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ILog log)
+        public DeployJavaArchiveCommand(ILog log, IScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
 
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
-            this.log = log;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -55,11 +55,11 @@ namespace Calamari.Commands.Java
 
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-            var substituter = new FileSubstituter(fileSystem);
+            var substituter = new FileSubstituter(log, fileSystem);
 
             var jsonReplacer = new JsonConfigurationVariableReplacer();
             var jarTools = new JarTool(commandLineRunner, log,  variables);
-            var packageExtractor = new JavaPackageExtractor(jarTools);
+            var packageExtractor = new JavaPackageExtractor(log, jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();
             var javaRunner = new JavaRunner(commandLineRunner, variables);
             
@@ -74,7 +74,7 @@ namespace Calamari.Commands.Java
 
             var conventions = new List<IConvention>
             {
-                new AlreadyInstalledConvention(journal),
+                new AlreadyInstalledConvention(log, journal),
                 // If we are deploying the package exploded then extract directly to the application directory.
                 // Else, if we are going to re-pack, then we extract initially to a temporary directory 
                 deployExploded
@@ -82,21 +82,21 @@ namespace Calamari.Commands.Java
                     : new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new SubstituteInFilesConvention(fileSystem, substituter),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
-                new RePackArchiveConvention(fileSystem, jarTools),                
+                new RePackArchiveConvention(log, fileSystem, jarTools),                
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new RollbackScriptConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
+                new RollbackScriptConvention(log, DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
             };
 

@@ -9,14 +9,21 @@ namespace Calamari.Integration.Packages
 {
     public class GenericPackageExtractorFactory : IGenericPackageExtractorFactory
     {
-        public GenericPackageExtractor createStandardGenericPackageExtractor()
+        readonly ILog log;
+
+        public GenericPackageExtractorFactory(ILog log)
         {
-            return new GenericPackageExtractor();
+            this.log = log;
+        }
+        
+        public GenericPackageExtractor CreateStandardGenericPackageExtractor()
+        {
+            return new GenericPackageExtractor(log);
         }
 
-        public GenericPackageExtractor createJavaGenericPackageExtractor(JarTool jarTool)
+        public GenericPackageExtractor CreateJavaGenericPackageExtractor(JarTool jarTool)
         {
-            return new GenericPackageExtractor(new List<IPackageExtractor>
+            return new GenericPackageExtractor(log,new List<IPackageExtractor>
             {                            
                 new JarExtractor(jarTool)
             });

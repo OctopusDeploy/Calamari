@@ -24,13 +24,14 @@ namespace Calamari.Commands
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        readonly ILog log;
 
-        public ApplyDeltaCommand(IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.freeSpaceChecker = freeSpaceChecker;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
-            
+            this.log = log;
             Options.Add("basisFileName=", "The file that the delta was created for.", v => basisFileName = v);
             Options.Add("fileHash=", "", v => fileHash = v);
             Options.Add("deltaFileName=", "The delta to apply to the basis file", v => deltaFileName = v);
@@ -71,7 +72,7 @@ namespace Calamari.Commands
                 if(showProgress)
                     octoDiff.Flag("progress");
 
-                Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
+                log.InfoFormat("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
 
                 var result = factory.Execute();
                 if (result.ExitCode != 0)
@@ -87,7 +88,7 @@ namespace Calamari.Commands
             }
             catch (Exception e) when (e is CommandLineException || e is CommandException)
             {
-                Log.ServiceMessages.DeltaVerificationError(e.Message);
+                log.DeltaVerificationError(e.Message);
                 return 0;
             }
 
@@ -95,7 +96,7 @@ namespace Calamari.Commands
             if (package == null)
                 return 0;
 
-            Log.ServiceMessages.DeltaVerification(newFilePath, package.Hash, package.Size);
+            log.DeltaVerification(newFilePath, package.Hash, package.Size);
             return 0;
         }
 

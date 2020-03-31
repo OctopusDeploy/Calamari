@@ -13,14 +13,14 @@ namespace Calamari.Terraform
     {
         readonly ICommandLineRunner commandLineRunner;
 
-        public ApplyTerraformConvention(ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner) : base(fileSystem)
+        public ApplyTerraformConvention(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner) : base(log, fileSystem)
         {
             this.commandLineRunner = commandLineRunner;
         }
 
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            using (var cli = new TerraformCliExecutor(fileSystem, commandLineRunner, deployment, environmentVariables))
+            using (var cli = new TerraformCliExecutor(Log, fileSystem, commandLineRunner, deployment, environmentVariables))
             {
                 cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);

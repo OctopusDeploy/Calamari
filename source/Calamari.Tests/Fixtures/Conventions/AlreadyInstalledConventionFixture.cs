@@ -4,6 +4,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.Processes;
+using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
@@ -62,7 +63,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         void RunConvention()
         {
-            var convention = new AlreadyInstalledConvention(journal);
+            var convention = new AlreadyInstalledConvention(new InMemoryLog(), journal);
             convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
         }
     }

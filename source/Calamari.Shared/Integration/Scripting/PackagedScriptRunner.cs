@@ -12,13 +12,15 @@ namespace Calamari.Integration.Scripting
 {
     public class PackagedScriptRunner
     {
+        readonly ILog log;
         readonly string scriptFilePrefix;
         readonly ICalamariFileSystem fileSystem;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PackagedScriptRunner(string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public PackagedScriptRunner(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
+            this.log = log;
             this.scriptFilePrefix = scriptFilePrefix;
             this.fileSystem = fileSystem;
             this.scriptEngine = scriptEngine;
@@ -31,7 +33,7 @@ namespace Calamari.Integration.Scripting
 
             if (!string.IsNullOrEmpty(script))
             {
-                Log.VerboseFormat("Executing '{0}'", script);
+                log.VerboseFormat("Executing '{0}'", script);
                 var result = scriptEngine.Execute(new Script(script), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
@@ -70,7 +72,7 @@ namespace Calamari.Integration.Scripting
             if (numFiles > 1)
             {
                 var preferenceOrderDisplay = string.Join(", ", supportedScriptExtensions);
-                Log.Verbose($"Found {numFiles} {scriptFilePrefix} scripts. Selected {selectedFile} based on OS preferential ordering: {preferenceOrderDisplay}");
+                log.Verbose($"Found {numFiles} {scriptFilePrefix} scripts. Selected {selectedFile} based on OS preferential ordering: {preferenceOrderDisplay}");
             }
 
             return selectedFile;

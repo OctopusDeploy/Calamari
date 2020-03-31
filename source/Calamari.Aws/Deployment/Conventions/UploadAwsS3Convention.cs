@@ -25,6 +25,7 @@ namespace Calamari.Aws.Deployment.Conventions
 {
      public class UploadAwsS3Convention : IInstallConvention
     {
+        readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
         private readonly string bucket;
@@ -36,7 +37,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
         
-        public UploadAwsS3Convention(ICalamariFileSystem fileSystem,
+        public UploadAwsS3Convention(
+            ILog log,
+            ICalamariFileSystem fileSystem,
             AwsEnvironmentGeneration awsEnvironmentGeneration,
             string bucket,
             S3TargetMode targetMode,
@@ -45,6 +48,7 @@ namespace Calamari.Aws.Deployment.Conventions
             IBucketKeyProvider bucketKeyProvider
         )
         {
+            this.log = log;
             this.fileSystem = fileSystem;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
             this.bucket = bucket;
@@ -127,13 +131,13 @@ namespace Calamari.Aws.Deployment.Conventions
 
         private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results) 
         {
-            Log.SetOutputVariable(SpecialVariables.Package.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
-            Log.SetOutputVariable(SpecialVariables.Package.Output.FilePath, deployment.PackageFilePath);
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FilePath, deployment.PackageFilePath);
             foreach (var result in results)
             {
                 if (!result.IsSuccess()) continue;
-                Log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{result.BucketKey}]\"");
-                Log.SetOutputVariable($"Files[{result.BucketKey}]", result.Version);
+                log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{result.BucketKey}]\"");
+                log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
             }
         }
 
@@ -351,7 +355,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 throw new AmazonFileUploadException($"An error occurred uploading file with bucket key {request.Key} possibly due to metadata. Metadata keys must be valid HTTP header values. \n" +
                                                     "Metadata:\n" + request.Metadata.Keys.Aggregate(string.Empty, (values, key) => $"{values}'{key}' = '{request.Metadata[key]}'\n") + "\n" +
-                                                    $"Please see the {Log.Link("https://g.octopushq.com/AwsS3UsingMetadata", "AWS documentation")} for more information."
+                                                    $"Please see the {log.FormatLink("https://g.octopushq.com/AwsS3UsingMetadata", "AWS documentation")} for more information."
                     , exception);
             }
         }
