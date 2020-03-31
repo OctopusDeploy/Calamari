@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Commands.Support;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Fixtures.Util;
@@ -10,21 +11,13 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
-    public class GenericPackageExtractorFixture : CalamariFixture
+    public class CombinedPackageExtractorFixture : CalamariFixture
     {
-        GenericPackageExtractor extractor;
-
-        [SetUp]
-        public void SetUp()
-        {
-            extractor = new GenericPackageExtractorFactory(ConsoleLog.Instance).CreateStandardGenericPackageExtractor();
-        }
-
         [Test]
         [TestCaseSource(nameof(PackageNameTestCases))]
         public void GettingFileByExtension(string filename, Type expectedType)
         {
-            var extractor = this.extractor.GetExtractor(filename);
+            var extractor = new CombinedPackageExtractor(new InMemoryLog()).GetExtractor(filename);
 
             Assert.AreEqual(expectedType, extractor.GetType());
         }
@@ -59,17 +52,17 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Package is missing file extension. This is needed to select the correct extraction algorithm.")]
+        [ExpectedException(typeof(CommandException), ExpectedMessage = "Package is missing file extension. This is needed to select the correct extraction algorithm.")]
         public void FileWithNoExtensionThrowsError()
         {
-            extractor.GetExtractor("blah");
+            new CombinedPackageExtractor(new InMemoryLog()).GetExtractor("blah");
         }
 
         [Test]
-        [ExpectedException(typeof(FileFormatException), ExpectedMessage = "Unsupported file extension `.7z`")]
+        [ExpectedException(typeof(CommandException), ExpectedMessage = "Unsupported file extension `.7z`")]
         public void FileWithUnsupportedExtensionThrowsError()
         {
-            extractor.GetExtractor("blah.1.0.0.7z");
+            new CombinedPackageExtractor(new InMemoryLog()).GetExtractor("blah.1.0.0.7z");
         }
     }
 }

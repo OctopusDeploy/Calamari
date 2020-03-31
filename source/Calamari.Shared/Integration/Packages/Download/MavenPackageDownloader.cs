@@ -76,7 +76,7 @@ namespace Calamari.Integration.Packages.Download
         {
             Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
-            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, JarExtractor.EXTENSIONS));
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, JarPackageExtractor.SupportedExtensions));
 
             foreach (var file in files)
             {
@@ -215,7 +215,7 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(feedUri, "feedUri can not be null");
 
             var errors = new ConcurrentBag<string>();
-            var fileChecks = JarExtractor.EXTENSIONS
+            var fileChecks = JarPackageExtractor.SupportedExtensions
                 .Union(AdditionalExtensions)
                 .AsParallel()
                 .Select(extension =>

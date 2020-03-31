@@ -59,7 +59,7 @@ namespace Calamari.Commands.Java
 
             var jsonReplacer = new JsonConfigurationVariableReplacer();
             var jarTools = new JarTool(commandLineRunner, log,  variables);
-            var packageExtractor = new JavaPackageExtractor(log, jarTools);
+            var packageExtractor = new JarPackageExtractor(jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();
             var javaRunner = new JavaRunner(commandLineRunner, variables);
             

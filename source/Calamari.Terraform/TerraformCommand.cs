@@ -35,7 +35,6 @@ namespace Calamari.Terraform
         public IEnumerable<IConvention> GetConventions()
         {
             var substituter = new FileSubstituter(log, fileSystem);
-            var packageExtractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
             var additionalFileSubstitution = variables.Get(TerraformSpecialVariables.Action.Terraform.FileSubstitution);
             var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution, true);
             var enableNoMatchWarning = variables.Get(SpecialVariables.Package.EnableNoMatchWarning);
@@ -43,7 +42,7 @@ namespace Calamari.Terraform
             variables.Add(SpecialVariables.Package.EnableNoMatchWarning,
                 !String.IsNullOrEmpty(enableNoMatchWarning) ? enableNoMatchWarning : (!String.IsNullOrEmpty(additionalFileSubstitution)).ToString());
 
-            yield return new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem).When(_ => PrimaryPackagePath != null);
+            yield return new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem).When(_ => PrimaryPackagePath != null);
             yield return new SubstituteInFilesConvention(fileSystem, substituter,
                 _ => true,
                 _ => FileTargetFactory(runAutomaticFileSubstitution ? DefaultTerraformFileSubstitution : string.Empty, additionalFileSubstitution));

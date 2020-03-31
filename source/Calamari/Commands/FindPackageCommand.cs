@@ -12,16 +12,18 @@ namespace Calamari.Commands
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
+        readonly IPackageStore packageStore;
         string packageId;
         string rawPackageVersion;
         string packageHash;
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
 
-        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem)
+        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore)
         {
             this.log = log;
             this.fileSystem = fileSystem;
+            this.packageStore = packageStore;
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
             Options.Add("packageHash=", "Package hash to compare against", v => packageHash = v);
@@ -45,9 +47,6 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(rawPackageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
 
-            var extractor = new GenericPackageExtractorFactory(log).CreateJavaGenericPackageExtractor(null);
-            var packageStore = new PackageStore(extractor, fileSystem);
-
             if (!VersionFactory.TryCreateVersion(rawPackageVersion, out IVersion version, versionFormat))
             {
                 throw new CommandException($"Package version '{rawPackageVersion}' is not a valid {versionFormat} version string. Please pass --packageVersionFormat with a different version type.");
@@ -62,7 +61,7 @@ namespace Calamari.Commands
                 if (exactMatchOnly)
                     return 0;
 
-                FindEarlierPackages(packageStore, version);
+                FindEarlierPackages(version);
 
                 return 0;
             }
@@ -78,7 +77,7 @@ namespace Calamari.Commands
             return 0;
         }
 
-        void FindEarlierPackages(PackageStore packageStore, IVersion version)
+        void FindEarlierPackages(IVersion version)
         {
             log.VerboseFormat("Finding earlier packages that have been uploaded to this Tentacle.");
             var nearestPackages = packageStore.GetNearestPackages(packageId, version).ToList();

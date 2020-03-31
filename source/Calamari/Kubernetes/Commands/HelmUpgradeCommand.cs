@@ -58,7 +58,7 @@ namespace Calamari.Kubernetes.Commands
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
             var substituter = new FileSubstituter(log, fileSystem);
-            var extractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
+            var extractor = new CombinedPackageExtractor(log);
             ValidateRequiredVariables();
             
             var conventions = new List<IConvention>

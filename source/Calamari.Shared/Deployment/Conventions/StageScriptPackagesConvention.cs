@@ -10,10 +10,10 @@ namespace Calamari.Deployment.Conventions
     {
         private readonly string packagePathContainingScript;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly IGenericPackageExtractor extractor;
+        private readonly IPackageExtractor extractor;
         private readonly bool forceExtract;
 
-        public StageScriptPackagesConvention(string packagePathContainingScript, ICalamariFileSystem fileSystem, IGenericPackageExtractor extractor, bool forceExtract = false)
+        public StageScriptPackagesConvention(string packagePathContainingScript, ICalamariFileSystem fileSystem, IPackageExtractor extractor, bool forceExtract = false)
         {
             this.packagePathContainingScript = packagePathContainingScript;
             this.fileSystem = fileSystem;
@@ -92,7 +92,7 @@ namespace Calamari.Deployment.Conventions
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
             
-            extractor.GetExtractor(packageFile).Extract(packageFile, extractionDirectory);
+            extractor.Extract(packageFile, extractionDirectory);
         }
     }
 }

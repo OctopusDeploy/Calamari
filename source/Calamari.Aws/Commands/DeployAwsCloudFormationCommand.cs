@@ -82,7 +82,7 @@ namespace Calamari.Aws.Commands
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor(), fileSystem),
+                new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem),
                 
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(

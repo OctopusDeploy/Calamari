@@ -61,14 +61,13 @@ namespace Calamari.Commands
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonVariableReplacer = new JsonConfigurationVariableReplacer();
-            var extractor = new GenericPackageExtractorFactory(log).CreateStandardGenericPackageExtractor();
 
             ValidateArguments();
             WriteVariableScriptToFile();
 
             var conventions = new List<IConvention>
             {
-                new StageScriptPackagesConvention(packageFile, fileSystem, extractor),
+                new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log)),
                 // Substitute the script source file
                 new SubstituteInFilesConvention(fileSystem, fileSubstituter, _ => true, ScriptFileTargetFactory),
                 // Substitute any user-specified files

@@ -9,17 +9,17 @@ using Polly;
 
 namespace Calamari.Integration.Packages
 {
-    public class TarPackageExtractor : SimplePackageExtractor
+    public class TarPackageExtractor : IPackageExtractor
     {
         readonly ILog log;
-        public override string[] Extensions { get { return new[] { ".tar" }; } }
+        public virtual string[] Extensions => new[] { ".tar" };
 
         public TarPackageExtractor(ILog log)
         {
             this.log = log;
         }
         
-        public override int Extract(string packageFile, string directory)
+        public int Extract(string packageFile, string directory)
         {
             var files = 0;
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))

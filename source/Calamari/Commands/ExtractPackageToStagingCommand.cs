@@ -35,8 +35,7 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new ExtractPackageToStagingDirectoryConvention(
-                    new GenericPackageExtractorFactory(log)
-                        .CreateStandardGenericPackageExtractor(),
+                    new CombinedPackageExtractor(log),
                     fileSystem,
                     null)
             };
