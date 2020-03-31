@@ -9,7 +9,7 @@ namespace Calamari.Tests.Helpers
     class TestProgram : Program
     {
         public InMemoryLog Log { get; } = new InMemoryLog();
-        public ICommand CommandOverride { get; set; }
+        public ICommandWithArguments CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
 
@@ -25,7 +25,7 @@ namespace Calamari.Tests.Helpers
             var builder = base.BuildContainer(options);
             builder.RegisterInstance(Log).As<ILog>();
             if (CommandOverride != null)
-                builder.RegisterInstance(CommandOverride).As<ICommand>();
+                builder.RegisterInstance(CommandOverride).As<ICommandWithArguments>();
             if (VariablesOverride != null)
                 builder.RegisterInstance(VariablesOverride).As<IVariables>();
             return builder;
@@ -33,7 +33,7 @@ namespace Calamari.Tests.Helpers
     }
 
     [Command("stub")]
-    class StubCommand : ICommand
+    class StubCommand : ICommandWithArguments
     {
         readonly Action callback;
 

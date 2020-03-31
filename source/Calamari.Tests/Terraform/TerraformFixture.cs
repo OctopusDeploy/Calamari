@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -394,7 +395,7 @@ namespace Calamari.Tests.Terraform
                     Log.StdOut = new IndentedTextWriter(new StringWriter(sb));
 
                     var command = (ICommand) Activator.CreateInstance(commandType, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CommandLineRunner(new LogWrapper(), variables));
-                    var result = command.Execute(new string[0]);
+                    var result = new CommandAdapter(command, variables).Execute(new string[0]);
 
                     result.Should().Be(0);
 
