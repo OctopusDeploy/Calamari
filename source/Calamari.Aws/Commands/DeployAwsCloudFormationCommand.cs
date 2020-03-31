@@ -15,6 +15,7 @@ using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
+using Calamari.Commands;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -29,19 +30,21 @@ namespace Calamari.Aws.Commands
         readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
-        private string packageFile;
+        readonly IExtractPackage extractPackage;
+        private PathToPackage pathToPackage;
         private string templateFile;
         private string templateParameterFile;
         private bool waitForComplete;
         private string stackName;
         private bool disableRollback;
 
-        public DeployCloudFormationCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
+        public DeployCloudFormationCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IExtractPackage extractPackage)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            this.extractPackage = extractPackage;
+            Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", 
@@ -55,7 +58,7 @@ namespace Calamari.Aws.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
+            var filesInPackage = !string.IsNullOrWhiteSpace(pathToPackage);
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
             var templateResolver = new TemplateResolver(fileSystem);
 
@@ -82,7 +85,7 @@ namespace Calamari.Aws.Commands
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
-                new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem),
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(
@@ -113,7 +116,7 @@ namespace Calamari.Aws.Commands
                .When(ChangesetsDisabled)
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
+            var deployment = new RunningDeployment(pathToPackage, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
 
             conventionRunner.RunConventions();

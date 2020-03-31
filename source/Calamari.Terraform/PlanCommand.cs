@@ -14,8 +14,13 @@ namespace Calamari.Terraform
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PlanCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ISubstituteInFiles substituteInFiles)
-            : base(log, variables, fileSystem, substituteInFiles)
+        public PlanCommand(ILog log, 
+            IVariables variables, 
+            ICalamariFileSystem fileSystem, 
+            ICommandLineRunner commandLineRunner, 
+            ISubstituteInFiles substituteInFiles,
+            IExtractPackage extractPackage)
+            : base(log, variables, fileSystem, substituteInFiles, extractPackage)
         {
             this.log = log;
             this.fileSystem = fileSystem;
@@ -23,7 +28,7 @@ namespace Calamari.Terraform
         }
 
         protected virtual string ExtraParameter => "";
-        
+
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             string results;
@@ -31,7 +36,7 @@ namespace Calamari.Terraform
             {
                 var commandResult = cli.ExecuteCommand(out results, "plan", "-no-color", "-detailed-exitcode", ExtraParameter, cli.TerraformVariableFiles, cli.ActionParams);
                 var resultCode = commandResult.ExitCode;
-                
+
                 if (resultCode == 1)
                 {
                     commandResult.VerifySuccess();

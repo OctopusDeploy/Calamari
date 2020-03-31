@@ -95,6 +95,7 @@ namespace Calamari
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
+            builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
 
 
             var assemblies = GetAllAssembliesToRegister(options).ToArray();

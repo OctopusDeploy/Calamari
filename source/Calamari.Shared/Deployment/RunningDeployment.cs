@@ -5,16 +5,16 @@ namespace Calamari.Deployment
 {
     public class RunningDeployment
     {
-        private readonly string packageFilePath;
+        private readonly PathToPackage packageFilePath;
         private readonly IVariables variables;
 
         public RunningDeployment(string packageFilePath, IVariables variables)
         {
-            this.packageFilePath = packageFilePath;
+            this.packageFilePath = new PathToPackage(packageFilePath);
             this.variables = variables;
         }
 
-        public string PackageFilePath
+        public PathToPackage PackageFilePath
         {
             get { return packageFilePath; }
         }

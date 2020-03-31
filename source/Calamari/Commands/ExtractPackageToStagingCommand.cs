@@ -12,38 +12,24 @@ namespace Calamari.Commands
     [Command("extract-package-to-staging", Description = "Extracts a package into the staging area")]
     public class ExtractToStagingCommand : Command
     {
-        readonly ILog log;
-        readonly IVariables variables;
-        string packageFile;
+        readonly IExtractPackage extractPackage;
+        PathToPackage pathToPackage;
 
-        public ExtractToStagingCommand(ILog log, IVariables variables)
+        public ExtractToStagingCommand(IExtractPackage extractPackage)
         {
-            this.log = log;
-            this.variables = variables;
+            this.extractPackage = extractPackage;
             Options.Add(
                 "package=", 
                 "Path to the package to extract.",
-                v => packageFile = Path.GetFullPath(v));
+                v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
 
-            var fileSystem = new WindowsPhysicalFileSystem();
+            extractPackage.ExtractToEnvironmentCurrentDirectory(pathToPackage);
 
-            var conventions = new List<IConvention>
-            {
-                new ExtractPackageToStagingDirectoryConvention(
-                    new CombinedPackageExtractor(log),
-                    fileSystem,
-                    null)
-            };
-
-            var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
-
-            conventionRunner.RunConventions();
             return 0;
         }
     }

@@ -23,7 +23,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
     [Command("deploy-azure-service-fabric-app", Description = "Extracts and installs an Azure Service Fabric Application")]
     public class DeployAzureServiceFabricAppCommand : Command
     {
-        private string packageFile;
+        private PathToPackage pathToPackage;
         readonly ILog log;
         private readonly IScriptEngine scriptEngine;
         private readonly ICertificateStore certificateStore;
@@ -31,6 +31,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
         readonly IFileSubstituter fileSubstituter;
+        readonly IExtractPackage extractPackage;
 
         public DeployAzureServiceFabricAppCommand(
             ILog log, 
@@ -39,10 +40,11 @@ namespace Calamari.Azure.ServiceFabric.Commands
             IVariables variables, 
             ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
-            IFileSubstituter fileSubstituter
+            IFileSubstituter fileSubstituter,
+            IExtractPackage extractPackage
             )
         {
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
 
             this.log = log;
             this.scriptEngine = scriptEngine;
@@ -51,6 +53,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
             this.fileSubstituter = fileSubstituter;
+            this.extractPackage = extractPackage;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -60,13 +63,13 @@ namespace Calamari.Azure.ServiceFabric.Commands
             if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
                 throw new CommandException("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
-            Guard.NotNullOrWhiteSpace(packageFile,
+            Guard.NotNullOrWhiteSpace(pathToPackage,
                 "No package file was specified. Please pass --package YourPackage.nupkg");
 
-            if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);
+            if (!File.Exists(pathToPackage))
+                throw new CommandException("Could not find package file: " + pathToPackage);
 
-            Log.Info("Deploying package:    " + packageFile);
+            Log.Info("Deploying package:    " + pathToPackage);
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
@@ -77,7 +80,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
 
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem),
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
 
                 // PreDeploy stage
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
@@ -105,7 +108,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
+            var deployment = new RunningDeployment(pathToPackage, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
             conventionRunner.RunConventions();
 

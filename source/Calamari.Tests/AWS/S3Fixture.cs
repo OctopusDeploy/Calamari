@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Substitutions;
 using Calamari.Variables;
@@ -238,7 +239,8 @@ namespace Calamari.Tests.AWS
                     log,
                     variables,
                     fileSystem,
-                    new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables)
+                    new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables),
+                    new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
                 );
                 var result = command.Execute(new[] { 
                     "--package", $"{package.FilePath}", 

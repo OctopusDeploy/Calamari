@@ -14,8 +14,8 @@ namespace Calamari.Terraform
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DestroyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ISubstituteInFiles substituteInFiles)
-            : base(log, variables, fileSystem, substituteInFiles)
+        public DestroyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ISubstituteInFiles substituteInFiles, IExtractPackage extractPackage)
+            : base(log, variables, fileSystem, substituteInFiles, extractPackage)
         {
             this.log = log;
             this.fileSystem = fileSystem;

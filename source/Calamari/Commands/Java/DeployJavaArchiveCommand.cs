@@ -23,13 +23,14 @@ namespace Calamari.Commands.Java
     [Command("deploy-java-archive", Description = "Deploys a Java archive (.jar, .war, .ear)")]
     public class DeployJavaArchiveCommand : Command
     {
-        string archiveFile;
+        PathToPackage archiveFile;
         readonly ILog log;
         readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
+        readonly IExtractPackage extractPackage;
 
         public DeployJavaArchiveCommand(
             ILog log,
@@ -37,10 +38,11 @@ namespace Calamari.Commands.Java
             IVariables variables,
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
-            ISubstituteInFiles substituteInFiles
+            ISubstituteInFiles substituteInFiles,
+            IExtractPackage extractPackage
         )
         {
-            Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = Path.GetFullPath(v));
+            Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = new PathToPackage(Path.GetFullPath(v)));
 
             this.log = log;
             this.scriptEngine = scriptEngine;
@@ -48,6 +50,7 @@ namespace Calamari.Commands.Java
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
+            this.extractPackage = extractPackage;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -86,8 +89,8 @@ namespace Calamari.Commands.Java
                 // If we are deploying the package exploded then extract directly to the application directory.
                 // Else, if we are going to re-pack, then we extract initially to a temporary directory 
                 deployExploded
-                    ? (IInstallConvention) new ExtractPackageToApplicationDirectoryConvention(packageExtractor, fileSystem)
-                    : new ExtractPackageToStagingDirectoryConvention(packageExtractor, fileSystem),
+                    ? (IInstallConvention)new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(archiveFile, packageExtractor))
+                    : new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(archiveFile, packageExtractor)),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),

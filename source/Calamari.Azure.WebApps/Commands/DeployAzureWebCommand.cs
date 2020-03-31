@@ -20,41 +20,44 @@ namespace Calamari.Azure.WebApps.Commands
     [Command("deploy-azure-web", Description = "Extracts and installs a deployment package to an Azure Web Application")]
     public class DeployAzureWebCommand : Command
     {
-        private string packageFile;
+        private PathToPackage pathToPackage;
         readonly ILog log;
         private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
+        readonly IExtractPackage extractPackage;
 
         public DeployAzureWebCommand(
             ILog log,
             IScriptEngine scriptEngine,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            ISubstituteInFiles substituteInFiles
+            ISubstituteInFiles substituteInFiles,
+            IExtractPackage extractPackage
         )
         {
-            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the deployment package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
 
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
+            this.extractPackage = extractPackage;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
 
-            Guard.NotNullOrWhiteSpace(packageFile,
+            Guard.NotNullOrWhiteSpace(pathToPackage,
                 "No package file was specified. Please pass --package YourPackage.nupkg");
 
-            if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);
+            if (!File.Exists(pathToPackage))
+                throw new CommandException("Could not find package file: " + pathToPackage);
 
-            Log.Info("Deploying package:    " + packageFile);
+            Log.Info("Deploying package:    " + pathToPackage);
 
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
@@ -64,7 +67,7 @@ namespace Calamari.Azure.WebApps.Commands
 
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem),
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
@@ -79,7 +82,7 @@ namespace Calamari.Azure.WebApps.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
+            var deployment = new RunningDeployment(pathToPackage, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
 
             conventionRunner.RunConventions();

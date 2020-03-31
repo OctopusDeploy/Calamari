@@ -7,7 +7,7 @@ namespace Calamari.Extensions
 {
     public static class VariableExtensions
     {
-        public static string GetPathToPrimaryPackage(this IVariables variables, ICalamariFileSystem fileSystem, bool required)
+        public static PathToPackage GetPathToPrimaryPackage(this IVariables variables, ICalamariFileSystem fileSystem, bool required)
         {
             var path = variables.Get(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
 
@@ -21,7 +21,7 @@ namespace Calamari.Extensions
             if (!fileSystem.FileExists(path))
                 throw new CommandException("Could not find package file: " + path);
 
-            return path;
+            return new PathToPackage(path);
         }
     }
 }

@@ -26,13 +26,14 @@ namespace Calamari.Commands
     [Command("deploy-package", Description = "Extracts and installs a deployment package")]
     public class DeployPackageCommand : Command
     {
-        private string packageFile;
         readonly ILog log;
-        private readonly IScriptEngine scriptEngine;
+        readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
+        readonly IExtractPackage extractPackage;
+        PathToPackage pathToPackage;
 
         public DeployPackageCommand(
             ILog log,
@@ -40,10 +41,11 @@ namespace Calamari.Commands
             IVariables variables,
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
-            ISubstituteInFiles substituteInFiles
+            ISubstituteInFiles substituteInFiles,
+            IExtractPackage extractPackage
         )
         {
-            Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the deployment package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
 
             this.log = log;
             this.scriptEngine = scriptEngine;
@@ -51,18 +53,19 @@ namespace Calamari.Commands
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
+            this.extractPackage = extractPackage;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
 
-            Guard.NotNullOrWhiteSpace(packageFile, "No package file was specified. Please pass --package YourPackage.nupkg");
+            Guard.NotNullOrWhiteSpace(pathToPackage, "No package file was specified. Please pass --package YourPackage.nupkg");
 
-            if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);
+            if (!File.Exists(pathToPackage))
+                throw new CommandException("Could not find package file: " + pathToPackage);
 
-            Log.Info("Deploying package:    " + packageFile);
+            Log.Info("Deploying package:    " + pathToPackage);
 
             var featureClasses = new List<IFeature>();
 
@@ -86,7 +89,7 @@ namespace Calamari.Commands
             var conventions = new List<IConvention>
             {
                 new AlreadyInstalledConvention(log, journal),
-                new ExtractPackageToApplicationDirectoryConvention(new CombinedPackageExtractor(log), fileSystem),
+                new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(pathToPackage)),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
@@ -111,7 +114,7 @@ namespace Calamari.Commands
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
+            var deployment = new RunningDeployment(pathToPackage, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
 
             try
