@@ -18,7 +18,7 @@ namespace Sashimi.Server.Contracts.DeploymentTools
         public Maybe<string> ToolPathVariableToSet { get; }
         public string[] SupportedPlatforms { get; }
 
-        public Maybe<DeploymentToolPackage> GetCompatiblePackage(string platform)
-            => platform == null ? new DeploymentToolPackage(this, Id).AsSome() : Maybe<DeploymentToolPackage>.None;
+        public virtual Maybe<DeploymentToolPackage> GetCompatiblePackage(string platform)
+            => new DeploymentToolPackage(this, Id).AsSome();
     }
 }
