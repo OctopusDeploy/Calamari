@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using Calamari.Commands;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
 using Calamari.Hooks;
@@ -17,6 +18,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Substitutions;
 using Calamari.Util.Environments;
 using Calamari.Variables;
 using Calamari.Plumbing;
@@ -91,6 +93,8 @@ namespace Calamari
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
+            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
+            builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
 
 
             var assemblies = GetAllAssembliesToRegister(options).ToArray();

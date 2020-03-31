@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Azure.CloudServices.Accounts;
 using Calamari.Azure.CloudServices.Deployment.Conventions;
 using Calamari.Azure.CloudServices.Integration;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -28,8 +29,15 @@ namespace Calamari.Azure.CloudServices.Commands
         private readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
+        readonly ISubstituteInFiles substituteInFiles;
 
-        public DeployAzureCloudServiceCommand(ILog log, IScriptEngine scriptEngine, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureCloudServiceCommand(
+            ILog log,
+            IScriptEngine scriptEngine,
+            IVariables variables,
+            ICommandLineRunner commandLineRunner,
+            ISubstituteInFiles substituteInFiles
+        )
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 
@@ -37,6 +45,7 @@ namespace Calamari.Azure.CloudServices.Commands
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
+            this.substituteInFiles = substituteInFiles;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -46,19 +55,18 @@ namespace Calamari.Azure.CloudServices.Commands
             Guard.NotNullOrWhiteSpace(packageFile, "No package file was specified. Please pass --package YourPackage.nupkg");
 
             if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);    
+                throw new CommandException("Could not find package file: " + packageFile);
 
             Log.Info("Deploying package:    " + packageFile);
 
             var account = new AzureAccount(variables);
-            
+
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var azurePackageUploader = new AzurePackageUploader(log);
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
-            var substituter = new FileSubstituter(log, fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
@@ -75,7 +83,7 @@ namespace Calamari.Azure.CloudServices.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfigureAzureCloudServiceConvention(account, fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever, certificateStore),
-                new SubstituteInFilesConvention(fileSystem, substituter),
+                new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonVariablesReplacer, fileSystem),

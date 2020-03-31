@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Azure.ServiceFabric.Deployment.Conventions;
 using Calamari.Azure.ServiceFabric.Util;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -28,8 +29,18 @@ namespace Calamari.Azure.ServiceFabric.Commands
         private readonly ICertificateStore certificateStore;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
+        readonly ISubstituteInFiles substituteInFiles;
+        readonly IFileSubstituter fileSubstituter;
 
-        public DeployAzureServiceFabricAppCommand(ILog log, IScriptEngine scriptEngine, ICertificateStore certificateStore, IVariables variables, ICommandLineRunner commandLineRunner)
+        public DeployAzureServiceFabricAppCommand(
+            ILog log, 
+            IScriptEngine scriptEngine, 
+            ICertificateStore certificateStore, 
+            IVariables variables, 
+            ICommandLineRunner commandLineRunner,
+            ISubstituteInFiles substituteInFiles,
+            IFileSubstituter fileSubstituter
+            )
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
 
@@ -38,6 +49,8 @@ namespace Calamari.Azure.ServiceFabric.Commands
             this.certificateStore = certificateStore;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
+            this.substituteInFiles = substituteInFiles;
+            this.fileSubstituter = fileSubstituter;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -59,7 +72,6 @@ namespace Calamari.Azure.ServiceFabric.Commands
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonReplacer = new JsonConfigurationVariableReplacer();
-            var substituter = new FileSubstituter(log, fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 
@@ -72,7 +84,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
                 new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
 
                 // Standard variable and transform replacements
-                new SubstituteInFilesConvention(fileSystem, substituter),
+                new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
@@ -82,7 +94,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
 
                 // Variable replacement
-                new SubstituteVariablesInAzureServiceFabricPackageConvention(fileSystem, substituter),
+                new SubstituteVariablesInAzureServiceFabricPackageConvention(fileSystem, fileSubstituter),
 
                 // Main Service Fabric deployment script execution
                 new EnsureCertificateInstalledInStoreConvention(certificateStore, SpecialVariables.Action.ServiceFabric.ClientCertVariable, SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, SpecialVariables.Action.ServiceFabric.CertificateStoreName),

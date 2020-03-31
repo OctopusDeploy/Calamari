@@ -21,6 +21,7 @@ namespace Calamari.Aws.Commands
         readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ISubstituteInFiles substituteInFiles;
         private string packageFile;
         private string bucket;
         private string targetMode;
@@ -28,12 +29,14 @@ namespace Calamari.Aws.Commands
         public UploadAwsS3Command(
             ILog log,
             IVariables variables, 
-            ICalamariFileSystem fileSystem
+            ICalamariFileSystem fileSystem,
+            ISubstituteInFiles substituteInFiles
             )
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.substituteInFiles = substituteInFiles;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => packageFile = Path.GetFullPath(v));
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
             Options.Add("targetMode=", "Whether the entire package or files within the package should be uploaded to the s3 bucket", v => targetMode = v);
@@ -52,7 +55,6 @@ namespace Calamari.Aws.Commands
                 throw new CommandException("Could not find package file: " + packageFile);
 
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
-            var substituter = new FileSubstituter(log, fileSystem);
             var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
             
@@ -68,8 +70,8 @@ namespace Calamari.Aws.Commands
                     bucket,
                     targetType,
                     new VariableS3TargetOptionsProvider(variables),
-                    substituter,
-                    bucketKeyProvider
+                    bucketKeyProvider,
+                    substituteInFiles
                 )
             };
 

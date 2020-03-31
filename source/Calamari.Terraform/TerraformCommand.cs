@@ -20,12 +20,14 @@ namespace Calamari.Terraform
         readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ISubstituteInFiles substituteInFiles;
 
-        protected TerraformCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
+        protected TerraformCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ISubstituteInFiles substituteInFiles)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.substituteInFiles = substituteInFiles;
         }
 
         public int Execute(string[] args)
@@ -41,11 +43,8 @@ namespace Calamari.Terraform
             if(!string.IsNullOrWhiteSpace(pathToPrimaryPackage))
                 new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem).Install(runningDeployment);
 
-            new SubstituteInFilesConvention(fileSystem, new FileSubstituter(log, fileSystem),
-                _ => true,
-                _ => GetFilesToSubstitute()
-            )
-                .Install(runningDeployment);
+            var filesToSubstitute = GetFilesToSubstitute();
+            substituteInFiles.Substitute(runningDeployment, filesToSubstitute);
             
             InstallAsync(runningDeployment).GetAwaiter().GetResult();
             

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Newtonsoft.Json.Linq;
@@ -16,8 +17,8 @@ namespace Calamari.Terraform
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public ApplyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
-            : base(log, variables, fileSystem)
+        public ApplyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ISubstituteInFiles substituteInFiles)
+            : base(log, variables, fileSystem, substituteInFiles)
         {
             this.log = log;
             this.fileSystem = fileSystem;

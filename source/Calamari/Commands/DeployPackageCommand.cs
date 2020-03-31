@@ -32,8 +32,16 @@ namespace Calamari.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        readonly ISubstituteInFiles substituteInFiles;
 
-        public DeployPackageCommand(ILog log, IScriptEngine scriptEngine, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public DeployPackageCommand(
+            ILog log,
+            IScriptEngine scriptEngine,
+            IVariables variables,
+            ICalamariFileSystem fileSystem,
+            ICommandLineRunner commandLineRunner,
+            ISubstituteInFiles substituteInFiles
+        )
         {
             Options.Add("package=", "Path to the deployment package to install.", v => packageFile = Path.GetFullPath(v));
 
@@ -42,6 +50,7 @@ namespace Calamari.Commands
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.substituteInFiles = substituteInFiles;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -51,7 +60,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageFile, "No package file was specified. Please pass --package YourPackage.nupkg");
 
             if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);    
+                throw new CommandException("Could not find package file: " + packageFile);
 
             Log.Info("Deploying package:    " + packageFile);
 
@@ -59,7 +68,6 @@ namespace Calamari.Commands
 
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var generator = new JsonConfigurationVariableReplacer();
-            var substituter = new FileSubstituter(log, fileSystem);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var embeddedResources = new AssemblyEmbeddedResources();
@@ -83,7 +91,7 @@ namespace Calamari.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new SubstituteInFilesConvention(fileSystem, substituter),
+                new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(generator, fileSystem),
@@ -109,12 +117,12 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                if (!deployment.SkipJournal) 
+                if (!deployment.SkipJournal)
                     journal.AddJournalEntry(new JournalEntry(deployment, true));
             }
             catch (Exception)
             {
-                if (!deployment.SkipJournal) 
+                if (!deployment.SkipJournal)
                     journal.AddJournalEntry(new JournalEntry(deployment, false));
                 throw;
             }
