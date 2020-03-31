@@ -1,11 +1,12 @@
-using System.Collections.Generic;
-using Calamari.Deployment.Conventions;
+﻿using System.IO;
 
 namespace Calamari.Commands.Support
 {
+    /// <summary>
+    /// A command that requires the command line arguments passed to it. We are transitioning away from this interface  
+    /// </summary>
     public interface ICommand
     {
-        string PrimaryPackagePath { get; }
-        IEnumerable<IConvention> GetConventions();
+        int Execute(string[] commandLineArguments);
     }
 }

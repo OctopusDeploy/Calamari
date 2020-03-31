@@ -65,7 +65,7 @@ namespace Calamari
             {
                 container.Resolve<VariableLogger>().LogVariables();
 
-                var command = container.Resolve<ICommandWithArguments[]>();
+                var command = container.Resolve<ICommand[]>();
                 if (command.Length == 0)
                     throw new CommandException($"Could not find the command {options.Command}");
                 if (command.Length > 1)
@@ -107,20 +107,9 @@ namespace Calamari
                 .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<ICommandWithArguments>()
-                .Except<CommandAdapter>()
+                .AssignableTo<ICommand>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .As<ICommandWithArguments>();
-
-            var iCommandTypes = assemblies
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => !t.IsAbstract && t.IsAssignableTo<ICommand>())
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase));
-            foreach (var iCommandType in iCommandTypes)
-            {
-                builder.RegisterType(iCommandType).AsSelf();
-                builder.Register<ICommandWithArguments>(c => new CommandAdapter((ICommand) c.Resolve(iCommandType), c.Resolve<IVariables>()));
-            }
+                .As<ICommand>();
 
             return builder;
         }

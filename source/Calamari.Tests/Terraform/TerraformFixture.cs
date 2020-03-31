@@ -394,7 +394,7 @@ namespace Calamari.Tests.Terraform
                 {
                     var log = new InMemoryLog();
                     var command = (ICommand) Activator.CreateInstance(commandType, log, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CommandLineRunner(ConsoleLog.Instance, variables));
-                    var result = new CommandAdapter(command, variables).Execute(new string[0]);
+                    var result = command.Execute(new string[0]);
 
                     result.Should().Be(0);
 

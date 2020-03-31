@@ -28,21 +28,28 @@ namespace Calamari.Terraform
             this.fileSystem = fileSystem;
         }
 
-        public string PrimaryPackagePath => variables.GetPathToPrimaryPackage(fileSystem, false);
-
-        public IEnumerable<IConvention> GetConventions()
+        public int Execute(string[] args)
         {
-            var substituter = new FileSubstituter(log, fileSystem);
+            var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, false);
+            
             var isEnableNoMatchWarningSet = variables.IsSet(SpecialVariables.Package.EnableNoMatchWarning);
             if (!isEnableNoMatchWarningSet && !string.IsNullOrEmpty(GetAdditionalFileSubstitutions()))
                 variables.Add(SpecialVariables.Package.EnableNoMatchWarning, "true");
+            
+            var runningDeployment = new RunningDeployment(pathToPrimaryPackage, variables);
+            
+            if(!string.IsNullOrWhiteSpace(pathToPrimaryPackage))
+                new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem).Install(runningDeployment);
 
-            yield return new ExtractPackageToStagingDirectoryConvention(new CombinedPackageExtractor(log), fileSystem).When(_ => PrimaryPackagePath != null);
-            yield return new SubstituteInFilesConvention(fileSystem, substituter,
+            new SubstituteInFilesConvention(fileSystem, new FileSubstituter(log, fileSystem),
                 _ => true,
                 _ => GetFilesToSubstitute()
-            );
-            yield return new DelegateInstallConvention(d => InstallAsync(d).GetAwaiter().GetResult());
+            )
+                .Install(runningDeployment);
+            
+            InstallAsync(runningDeployment).GetAwaiter().GetResult();
+            
+            return 0;
         }
 
         string[] GetFilesToSubstitute()
