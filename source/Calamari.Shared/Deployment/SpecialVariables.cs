@@ -145,7 +145,6 @@ namespace Calamari.Deployment
             public static readonly string SubstituteInFilesOutputEncoding = "Octopus.Action.SubstituteInFiles.OutputEncoding";
             public static readonly string SkipIfAlreadyInstalled = "Octopus.Action.Package.SkipIfAlreadyInstalled";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
-            public static readonly string SuppressNestedScriptWarning = "OctopusSuppressNestedScriptWarning";
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
 
             public class Output

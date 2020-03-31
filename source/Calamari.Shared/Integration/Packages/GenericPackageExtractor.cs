@@ -37,9 +37,9 @@ namespace Calamari.Integration.Packages
             get { return Extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray(); }
         }
 
-        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        public int Extract(string packageFile, string directory)
         {
-            return GetExtractor(packageFile).Extract(packageFile, directory, suppressNestedScriptWarning);
+            return GetExtractor(packageFile).Extract(packageFile, directory);
         }
 
         public IPackageExtractor GetExtractor(string packageFile)
@@ -65,31 +65,7 @@ namespace Calamari.Integration.Packages
                 $"The supplied package has the extension \"{file.Extension}\" which is not supported.",
                 "JAVA-DEPLOY-ERROR-0001"));
         }
-
-        internal static void WarnUnsupportedSymlinkExtraction(ILog log, string path)
-        {
-            log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", path);
-        }
-
-        internal static void WarnIfScriptInSubFolder(string path)
-        {
-            var fileName = Path.GetFileName(path);
-
-            if (string.Equals(fileName, "Deploy.ps1", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileName, "PreDeploy.ps1", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileName, "PostDeploy.ps1", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileName, "DeployFailed.ps1", StringComparison.OrdinalIgnoreCase))
-            {
-                var directoryName = Path.GetDirectoryName(path);
-                if (!string.IsNullOrWhiteSpace(directoryName))
-                {
-                    Log.WarnFormat(
-                        "The script file \"{0}\" contained within the package will not be executed because it is contained within a child folder. As of Octopus Deploy 2.4, scripts in sub folders will not be executed.",
-                        path);
-                }
-            }
-        }
-
+        
         /// Order is important here since .tar.gz should be checked for before .gz
         protected virtual IList<IPackageExtractor> Extractors => new List<IPackageExtractor>
         {

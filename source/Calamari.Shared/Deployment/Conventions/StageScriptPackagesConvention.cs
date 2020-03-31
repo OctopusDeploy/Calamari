@@ -92,7 +92,7 @@ namespace Calamari.Deployment.Conventions
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
             
-            extractor.GetExtractor(packageFile).Extract(packageFile, extractionDirectory, true);
+            extractor.GetExtractor(packageFile).Extract(packageFile, extractionDirectory);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Calamari.Integration.Packages
             this.log = log;
         }
         
-        public override int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        public override int Extract(string packageFile, string directory)
         {
             var files = 0;
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
@@ -31,7 +31,7 @@ namespace Calamari.Integration.Packages
                     {
                         while (reader.MoveToNextEntry())
                         {
-                            ProcessEvent(ref files, reader.Entry, suppressNestedScriptWarning);
+                            ProcessEvent(ref files, reader.Entry);
                             ExtractEntry(directory, reader);
                         }
                     }
@@ -50,7 +50,7 @@ namespace Calamari.Integration.Packages
         void ExtractEntry(string directory, TarReader reader)
         {
 #if NET40
-            reader.WriteEntryToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink});
+            reader.WriteEntryToDirectory(directory, new PackageExtractionOptions());
 #else
             var extractAttempts = 10;
             Policy.Handle<IOException>().WaitAndRetry(
@@ -59,32 +59,21 @@ namespace Calamari.Integration.Packages
                     onRetry: (ex, retry) => { log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
                 .Execute(() =>
                 {
-                    reader.WriteEntryToDirectory(directory, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, PreserveFileTime = true, WriteSymbolicLink = WriteSymbolicLink});
+                    reader.WriteEntryToDirectory(directory, new PackageExtractionOptions());
                 });
 #endif
         }
-
-        void WriteSymbolicLink(string sourcepath, string targetpath)
-        {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(log, sourcepath);
-        }
-
 
         protected virtual Stream GetCompressionStream(Stream stream)
         {
             return stream;
         }
 
-        protected void ProcessEvent(ref int filesExtracted, IEntry entry, bool suppressNestedScriptWarning)
+        protected void ProcessEvent(ref int filesExtracted, IEntry entry)
         {
             if (entry.IsDirectory) return;
 
             filesExtracted++;
-
-            if (!suppressNestedScriptWarning)
-            {
-                GenericPackageExtractor.WarnIfScriptInSubFolder(entry.Key);
-            }
         }
     }
 }

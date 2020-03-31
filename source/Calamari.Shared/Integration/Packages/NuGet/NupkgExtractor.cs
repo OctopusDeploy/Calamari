@@ -22,7 +22,7 @@ namespace Calamari.Integration.Packages.NuGet
             this.log = log;
         }
         
-        public int Extract(string packageFile, string directory, bool suppressNestedScriptWarning)
+        public int Extract(string packageFile, string directory)
         {
             var filesExtracted = 0;
 
@@ -47,23 +47,15 @@ namespace Calamari.Integration.Packages.NuGet
                         continue;
 
                     var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
-                    entry.WriteToFile(targetFile, new ExtractionOptions { Overwrite = true, WriteSymbolicLink = WriteSymbolicLink });
+                    entry.WriteToFile(targetFile, new PackageExtractionOptions { ExtractFullPath = false, PreserveFileTime = false });
 
                     SetFileLastModifiedTime(entry, targetFile);
 
                     filesExtracted++;
-
-                    if (!suppressNestedScriptWarning)
-                        GenericPackageExtractor.WarnIfScriptInSubFolder(unescapedKey);
                 }
 
                 return filesExtracted;
             }
-        }
-
-        void WriteSymbolicLink(string sourcepath, string targetpath)
-        {
-            GenericPackageExtractor.WarnUnsupportedSymlinkExtraction(log, sourcepath);
         }
 
         void SetFileLastModifiedTime(IEntry entry, string targetFile)
