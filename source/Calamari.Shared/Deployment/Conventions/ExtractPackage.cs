@@ -44,6 +44,12 @@ namespace Calamari.Deployment.Conventions
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(pathToPackage))	
+                {	
+                    log.Verbose("No package path defined. Skipping package extraction.");	
+                    return;	
+                }
+                
                 log.Verbose("Extracting package to: " + targetPath);
 
                 var extractorToUse = customPackageExtractor ?? combinedPackageExtractor;
