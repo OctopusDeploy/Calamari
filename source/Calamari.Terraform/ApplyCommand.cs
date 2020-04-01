@@ -1,7 +1,6 @@
 ﻿using Calamari.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Octopus.Versioning.Maven;
 
 namespace Calamari.Terraform
 {

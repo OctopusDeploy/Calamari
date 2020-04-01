@@ -7,9 +7,7 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
-using Calamari.Integration.Processes;
 using Newtonsoft.Json;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Integration
 {
@@ -27,9 +25,11 @@ namespace Calamari.Aws.Integration
         private readonly string assumeRoleArn;
         private readonly string assumeRoleSession;
 
-        public static async Task<AwsEnvironmentGeneration> Create(IVariables variables)
+        readonly ILog log;
+
+        public static async Task<AwsEnvironmentGeneration> Create(IVariables variables, ILog log)
         {
-            var environmentGeneration = new AwsEnvironmentGeneration(variables);
+            var environmentGeneration = new AwsEnvironmentGeneration(variables, log);
 
             await environmentGeneration.Initialise();
 
@@ -46,8 +46,9 @@ namespace Calamari.Aws.Integration
 
         public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
-        private AwsEnvironmentGeneration(IVariables variables)
+        private AwsEnvironmentGeneration(IVariables variables, ILog log)
         {
+            this.log = log;
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
             // When building the context for an AWS step, there will be a variable expanded with the keys
@@ -100,9 +101,9 @@ namespace Calamari.Aws.Integration
             }
             catch (AmazonServiceException ex)
             {
-                Log.Error("Error occured while verifying login");
-                Log.Error(ex.Message);
-                Log.Error(ex.StackTrace);
+                log.Error("Error occured while verifying login");
+                log.Error(ex.Message);
+                log.Error(ex.StackTrace);
                 // Any exception is considered to be a failed login
                 return false;
             }
@@ -131,7 +132,7 @@ namespace Calamari.Aws.Integration
                 {
                     throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
                                              "Please check the keys assigned to the Amazon Web Services Account associated with this step. " +
-                                             $"For more information visit {Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005")}");
+                                             $"For more information visit {log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005")}");
                 }
             }
         }
@@ -169,7 +170,7 @@ namespace Calamari.Aws.Integration
                         $"AWS-LOGIN-ERROR-0003: Failed to access the role information under {RoleUri}, " +
                         "or failed to parse the response. This may be because the instance does not have " +
                         "a role assigned to it. " +
-                        $"For more information visit {Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003")}", ex);
+                        $"For more information visit {log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003")}", ex);
                 }
             }
         }

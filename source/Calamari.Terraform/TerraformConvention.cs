@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.Aws.Integration;
 using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
-using Octostache;
 
 namespace Calamari.Terraform
 {

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
 
@@ -21,7 +21,7 @@ namespace Calamari.Integration.Scripting
         [FileExtension("py")]
         Python
     }
-
+    
     public static class ScriptTypeExtensions
     {
         public static string FileExtension(this ScriptSyntax scriptSyntax)

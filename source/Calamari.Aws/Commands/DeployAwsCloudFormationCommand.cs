@@ -28,6 +28,7 @@ namespace Calamari.Aws.Commands
     {
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
         private string packageFile;
         private string templateFile;
         private string templateParameterFile;
@@ -35,10 +36,11 @@ namespace Calamari.Aws.Commands
         private string stackName;
         private bool disableRollback;
 
-        public DeployCloudFormationCommand(IVariables variables, ICalamariFileSystem fileSystem)
+        public DeployCloudFormationCommand(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
         {
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.log = log;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
@@ -54,7 +56,7 @@ namespace Calamari.Aws.Commands
             Options.Parse(commandLineArguments);
 
             var filesInPackage = !string.IsNullOrWhiteSpace(packageFile);
-            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
+            var environment = AwsEnvironmentGeneration.Create(variables, log).GetAwaiter().GetResult();
             var templateResolver = new TemplateResolver(fileSystem);
 
             IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);

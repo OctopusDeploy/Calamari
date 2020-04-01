@@ -8,6 +8,9 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Integration.Proxies
 {
+
+    
+    
     public static class ProxyEnvironmentVariablesGenerator
     {
         const string HttpProxyVariableName = "HTTP_PROXY";

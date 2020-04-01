@@ -48,19 +48,27 @@ namespace Calamari
         {
             Log.ErrorFormat(message, args);
         }
+        
+        public string Link(string uri, string description = null)
+        {
+            return Log.Link(uri, description);
+        }
+        
+        public void SetOutputVariable(string name, string value, bool isSensitive = false)
+        {
+            Log.SetOutputVariable(name, value, null, isSensitive);
+        }
 
-    }
+        public void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
+        {
+            Log.SetOutputVariable(name, value, variables, isSensitive);
+        }
 
-    public interface ILog
-    {
-        void Verbose(string message);
-        void VerboseFormat(string message, params object[] args);
-        void Info(string message);
-        void InfoFormat(string message, params object[] args);
-        void Warn(string message);
-        void WarnFormat(string message, params object[] args);
-        void Error(string message);
-        void ErrorFormat(string message, params object[] args);
+        public void NewOctopusArtifact(string fullPath, string name, long fileLength)
+        {
+            Log.NewOctopusArtifact(fullPath, name, fileLength);
+        }
+
     }
 
     public class Log

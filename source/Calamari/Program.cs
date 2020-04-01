@@ -65,6 +65,8 @@ namespace Calamari
             builder.RegisterInstance(variables).As<IVariables>();
             builder.RegisterType<CombinedScriptEngine>().AsSelf().As<IScriptEngine>();
             builder.RegisterType<LogWrapper>().As<ILog>().SingleInstance();
+            builder.RegisterType<ProxyEnvironmentVariablesGeneratorWrapper>().As<IProxyEnvironmentVariablesGenerator>()
+                .SingleInstance();
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();

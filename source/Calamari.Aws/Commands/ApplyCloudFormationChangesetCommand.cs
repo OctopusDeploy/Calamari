@@ -18,12 +18,14 @@ namespace Calamari.Aws.Commands
     public class ApplyCloudFormationChangesetCommand: Command
     {
         readonly IVariables variables;
+        readonly ILog log;
         private string packageFile;
         private bool waitForComplete;
         
-        public ApplyCloudFormationChangesetCommand(IVariables variables)
+        public ApplyCloudFormationChangesetCommand(IVariables variables, ILog log)
         {
             this.variables = variables;
+            this.log = log;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete =  
                 !bool.FalseString.Equals(v, StringComparison.OrdinalIgnoreCase)); //True by default
@@ -33,7 +35,7 @@ namespace Calamari.Aws.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
+            var environment = AwsEnvironmentGeneration.Create(variables, log).GetAwaiter().GetResult();
             var stackEventLogger = new StackEventLogger(new LogWrapper());
 
             IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);

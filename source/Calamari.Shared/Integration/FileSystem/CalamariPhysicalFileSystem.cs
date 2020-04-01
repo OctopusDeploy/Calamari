@@ -69,7 +69,6 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
-
         public virtual void DeleteFile(string path, FailureOptions options = FailureOptions.ThrowOnFailure, RetryTracker retry = null, CancellationToken? cancel = null)
         {
             if (string.IsNullOrWhiteSpace(path))

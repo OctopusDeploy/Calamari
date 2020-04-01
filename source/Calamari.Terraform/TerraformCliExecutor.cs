@@ -15,16 +15,20 @@ namespace Calamari.Terraform
     class TerraformCLIExecutor : IDisposable
     {
         private readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
+        readonly IProxyEnvironmentVariablesGenerator proxyEnvironmentVariablesGenerator;
         private readonly RunningDeployment deployment;
         readonly Dictionary<string, string> environmentVariables;
         private Dictionary<string, string> defaultEnvironmentVariables;
         private readonly string logPath;
         readonly string crashLogPath;
         
-        public TerraformCLIExecutor(ICalamariFileSystem fileSystem, RunningDeployment deployment,
-            Dictionary<string, string> environmentVariables)
+        public TerraformCLIExecutor(ICalamariFileSystem fileSystem, ILog log,
+            IProxyEnvironmentVariablesGenerator proxyEnvironmentVariablesGenerator, RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
+            this.proxyEnvironmentVariablesGenerator = proxyEnvironmentVariablesGenerator;
             this.deployment = deployment;
             this.environmentVariables = environmentVariables;
 
@@ -91,14 +95,14 @@ namespace Calamari.Terraform
             {
                 if (fileSystem.FileExists(logPath))
                 {
-                    Log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
+                    log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
                 }
                 
                 //When terraform crashes, the information would be contained in the crash.log file. We should attach this since
                 //we don't want to blow that information away in case it provides something relevant https://www.terraform.io/docs/internals/debugging.html#interpreting-a-crash-log
                 if (fileSystem.FileExists(crashLogPath))
                 {
-                    Log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
+                    log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
                 }
             }
         }
@@ -122,7 +126,7 @@ namespace Calamari.Terraform
             var commandOutput = new CaptureOutput(output ?? new ConsoleCommandOutput());
             var cmd = new CommandLineRunner(commandOutput);
             
-            Log.Info(commandLineInvocation.ToString());
+            log.Info(commandLineInvocation.ToString());
             
             var commandResult = cmd.Execute(commandLineInvocation);
             
@@ -214,7 +218,7 @@ namespace Calamari.Terraform
 
         void InitializeTerraformEnvironmentVariables()
         {
-            defaultEnvironmentVariables = ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
+            defaultEnvironmentVariables = proxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
 
             defaultEnvironmentVariables.Add("TF_IN_AUTOMATION", "1");
             defaultEnvironmentVariables.Add("TF_LOG", "TRACE");

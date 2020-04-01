@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace Calamari.Commands.Support
+﻿namespace Calamari.Commands.Support
 {
     public interface ICommand
     {

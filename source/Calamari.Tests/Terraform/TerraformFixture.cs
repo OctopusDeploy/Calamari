@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Extensibility.Commands.Support;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Retry;

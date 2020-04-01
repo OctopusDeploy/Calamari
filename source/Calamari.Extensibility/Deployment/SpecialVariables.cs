@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Linq;
 using Calamari.Integration.Scripting;
-using Octostache;
 
 namespace Calamari.Deployment
 {
