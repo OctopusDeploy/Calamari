@@ -10,6 +10,6 @@ namespace Calamari.Deployment
         }
 
         public static implicit operator string(PathToPackage pathToPackage)
-            => pathToPackage.path;
+            => pathToPackage?.path;
     }
 }
