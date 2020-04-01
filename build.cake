@@ -23,7 +23,6 @@ var sourceFolder = "./source/";
 var artifactsDir = "./artifacts";
 var publishDir = "./publish";
 
-GitVersion gitVersionInfo;
 string nugetVersion;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,11 +30,7 @@ string nugetVersion;
 ///////////////////////////////////////////////////////////////////////////////
 Setup(context =>
 {
-	gitVersionInfo = GitVersion(new GitVersionSettings {
-        OutputType = GitVersionOutput.Json
-    });
-
-    nugetVersion = gitVersionInfo.NuGetVersion;
+    nugetVersion = "4.2.3-custombuild";
 
     Information("Building Calamari v{0}", nugetVersion);
 });
@@ -52,7 +47,7 @@ Teardown(context =>
 Task("SetTeamCityVersion")
     .Does(() => {
         if(BuildSystem.IsRunningOnTeamCity)
-            BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
+            BuildSystem.TeamCity.SetBuildNumber(nugetVersion);
     });
 
 Task("Clean")
