@@ -1,5 +1,8 @@
 ﻿using System.Linq;
+using Calamari.Deployment.Conventions;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Substitutions;
 using Calamari.Variables;
 #if AWS
 using System;
@@ -230,10 +233,14 @@ namespace Calamari.Tests.AWS
                 new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
+                var log = new InMemoryLog();
+                var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
                 var command = new UploadAwsS3Command(
-                    new InMemoryLog(),
-                    new CalamariVariables(),
-                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                    log,
+                    variables,
+                    fileSystem,
+                    new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables),
+                    new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
                 );
                 var result = command.Execute(new[] { 
                     "--package", $"{package.FilePath}", 

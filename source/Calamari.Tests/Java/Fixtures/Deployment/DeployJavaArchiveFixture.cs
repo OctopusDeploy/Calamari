@@ -5,10 +5,13 @@ using System.IO.Compression;
 using System.Linq;
 using Calamari.Commands.Java;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using FluentAssertions;
@@ -104,8 +107,10 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 log,
                 new ScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
                 variables,
-                CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
-                new CommandLineRunner(log, variables)
+                fileSystem,
+                new CommandLineRunner(log, variables),
+                new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables),
+                new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }

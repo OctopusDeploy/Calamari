@@ -31,15 +31,17 @@ namespace Calamari.Commands
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        IFileSubstituter fileSubstituter; 
+        readonly ISubstituteInFiles substituteInFiles;
 
         public RunScriptCommand(
             ILog log,
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
-            IScriptEngine scriptEngine, 
+            IScriptEngine scriptEngine,
             ICalamariFileSystem fileSystem,
-            ICommandLineRunner commandLineRunner)
+            ICommandLineRunner commandLineRunner,
+            ISubstituteInFiles substituteInFiles
+        )
         {
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
@@ -50,13 +52,13 @@ namespace Calamari.Commands
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.substituteInFiles = substituteInFiles;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            
-            fileSubstituter = new FileSubstituter(log, fileSystem);
+
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
@@ -69,18 +71,18 @@ namespace Calamari.Commands
             {
                 new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log)),
                 // Substitute the script source file
-                new SubstituteInFilesConvention(fileSystem, fileSubstituter, _ => true, ScriptFileTargetFactory),
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files
-                new SubstituteInFilesConvention(fileSystem, fileSubstituter),
+                new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
                 new JsonConfigurationVariablesConvention(jsonVariableReplacer, fileSystem),
-                new ExecuteScriptConvention(scriptEngine, commandLineRunner) 
+                new ExecuteScriptConvention(scriptEngine, commandLineRunner)
             };
-            
+
             var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
-            
+
             conventionRunner.RunConventions();
             var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
             deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, packageFile);
@@ -92,17 +94,17 @@ namespace Calamari.Commands
             if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
                 !WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
             {
-                throw new CommandException($"Could not determine script to run.  Please provide either a `{SpecialVariables.Action.Script.ScriptBody}` variable, " + 
-                                           $"or a `{SpecialVariables.Action.Script.ScriptFileName}` variable."); 
+                throw new CommandException($"Could not determine script to run.  Please provide either a `{SpecialVariables.Action.Script.ScriptBody}` variable, " +
+                                           $"or a `{SpecialVariables.Action.Script.ScriptFileName}` variable.");
             }
 
             if (WasProvided(scriptBody))
             {
                 var scriptFile = Path.GetFullPath(relativeScriptFile);
-                
+
                 //Set the name of the script we are about to create to the variables collection for replacement later on
                 variables.Set(SpecialVariables.Action.Script.ScriptFileName, relativeScriptFile);
-                
+
                 // If the script body was supplied via a variable, then we write it out to a file.
                 // This will be deleted with the working directory.
                 // Bash files need SheBang as first few characters. This does not play well with BOM characters
@@ -190,10 +192,10 @@ namespace Calamari.Commands
                 else
                 {
                     variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
-                }    
+                }
             }
         }
-        
+
         IEnumerable<string> ScriptFileTargetFactory(RunningDeployment deployment)
         {
             // We should not perform variable-replacement if a file arg is passed in since this deprecated property
@@ -203,6 +205,7 @@ namespace Calamari.Commands
             {
                 yield break;
             }
+
             var scriptFile = deployment.Variables.Get(SpecialVariables.Action.Script.ScriptFileName);
             yield return Path.Combine(deployment.CurrentDirectory, scriptFile);
         }

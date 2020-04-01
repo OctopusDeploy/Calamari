@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -25,12 +26,14 @@ namespace Calamari.Kubernetes.Commands
     [Command("helm-upgrade", Description = "Performs Helm Upgrade with Chart while performing variable replacement")]
     public class HelmUpgradeCommand : Command
     {
-        private string packageFile;
+        PathToPackage pathToPackage;
         readonly ILog log;
-        private readonly IScriptEngine scriptEngine;
-        private readonly IDeploymentJournalWriter deploymentJournalWriter;
+        readonly IScriptEngine scriptEngine;
+        readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ISubstituteInFiles substituteInFiles;
+        readonly IExtractPackage extractPackage;
         readonly ICommandLineRunner commandLineRunner;
 
         public HelmUpgradeCommand(
@@ -39,15 +42,19 @@ namespace Calamari.Kubernetes.Commands
             IDeploymentJournalWriter deploymentJournalWriter, 
             IVariables variables,
 			ICommandLineRunner commandLineRunner,
-            ICalamariFileSystem fileSystem
+            ICalamariFileSystem fileSystem,
+            ISubstituteInFiles substituteInFiles,
+            IExtractPackage extractPackage
             )
         {
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.substituteInFiles = substituteInFiles;
+            this.extractPackage = extractPackage;
             this.commandLineRunner = commandLineRunner;
         }
         
@@ -55,33 +62,32 @@ namespace Calamari.Kubernetes.Commands
         {
               Options.Parse(commandLineArguments);
 
-            if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);
-            var substituter = new FileSubstituter(log, fileSystem);
-            var extractor = new CombinedPackageExtractor(log);
+            if (!File.Exists(pathToPackage))
+                throw new CommandException("Could not find package file: " + pathToPackage);
+            
             ValidateRequiredVariables();
             
             var conventions = new List<IConvention>
             {
-                new ExtractPackageToStagingDirectoryConvention(extractor, fileSystem),
-                new StageScriptPackagesConvention(null, fileSystem, extractor, true),
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
+                new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log), true),
                 new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new SubstituteInFilesConvention(fileSystem, substituter, _ => true, FileTargetFactory),
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, FileTargetFactory().ToList())),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
-            var deployment = new RunningDeployment(packageFile, variables);
+            var deployment = new RunningDeployment(pathToPackage, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
             
             try
             {
                 conventionRunner.RunConventions();
-                deploymentJournalWriter.AddJournalEntry(deployment, true, packageFile);
+                deploymentJournalWriter.AddJournalEntry(deployment, true, pathToPackage);
             }
             catch (Exception)
             {
-                deploymentJournalWriter.AddJournalEntry(deployment, false, packageFile);
+                deploymentJournalWriter.AddJournalEntry(deployment, false, pathToPackage);
                 throw;
             }
 
@@ -96,9 +102,8 @@ namespace Calamari.Kubernetes.Commands
             }
         }
         
-        private IEnumerable<string> FileTargetFactory(RunningDeployment deployment)
+        private IEnumerable<string> FileTargetFactory()
         {
-            var variables = deployment.Variables;
             var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {

@@ -10,9 +10,13 @@ using System.Threading.Tasks;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Retry;
+using Calamari.Integration.Scripting;
+using Calamari.Integration.Substitutions;
 using Calamari.Terraform;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
@@ -64,7 +68,7 @@ namespace Calamari.Tests.Terraform
                                 currentVersion = "0.12.19";
                                 fileName = GetTerraformFileName(currentVersion);
                             }
-                            
+
                             await DownloadTerraform(fileName, client, downloadBaseUrl, destination);
                         }
 
@@ -100,14 +104,14 @@ namespace Calamari.Tests.Terraform
 
             await DownloadCli(destinationDirectoryName);
         }
-        
+
         static string GetTerraformFileName(string currentVersion)
         {
             return CalamariEnvironment.IsRunningOnNix
                 ? $"terraform_{currentVersion}_linux_amd64.zip"
                 : $"terraform_{currentVersion}_windows_amd64.zip";
         }
-        
+
         static bool TerraformFileAvailable(string downloadBaseUrl, RetryTracker retry, string fileName)
         {
             try
@@ -176,10 +180,7 @@ namespace Calamari.Tests.Terraform
         [TestCase(typeof(DestroyCommand), "destroy -force -no-color -var my_var=\"Hello world\"")]
         public void AdditionalActionParams(Type commandType, string expected)
         {
-            ExecuteAndReturnLogOutput(commandType, _ =>
-                {
-                    _.Set(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams, "-var my_var=\"Hello world\"");
-                }, "AdditionalParams")
+            ExecuteAndReturnLogOutput(commandType, _ => { _.Set(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams, "-var my_var=\"Hello world\""); }, "AdditionalParams")
                 .Should().Contain(expected);
         }
 
@@ -190,10 +191,7 @@ namespace Calamari.Tests.Terraform
         [TestCase(typeof(DestroyCommand), "destroy -force -no-color -var-file=\"example.tfvars\"")]
         public void VarFiles(Type commandType, string actual)
         {
-            ExecuteAndReturnLogOutput(commandType, _ =>
-                {
-                    _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
-                }, "WithVariables")
+            ExecuteAndReturnLogOutput(commandType, _ => { _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); }, "WithVariables")
                 .Should().Contain(actual);
         }
 
@@ -226,30 +224,21 @@ namespace Calamari.Tests.Terraform
         [TestCase(typeof(DestroyPlanCommand))]
         public void TerraformPlanOutput(Type commandType)
         {
-            ExecuteAndReturnLogOutput(commandType, _ =>
-                {
-                    _.Set("Octopus.Action.StepName", "Step Name");
-                }, "Simple")
+            ExecuteAndReturnLogOutput(commandType, _ => { _.Set("Octopus.Action.StepName", "Step Name"); }, "Simple")
                 .Should().Contain("Octopus.Action[\"Step Name\"].Output.TerraformPlanOutput");
         }
 
         [Test]
         public void UsesWorkSpace()
         {
-            ExecuteAndReturnLogOutput<ApplyCommand>(_ =>
-                {
-                    _.Set(TerraformSpecialVariables.Action.Terraform.Workspace, "myspace");
-                }, "Simple")
+            ExecuteAndReturnLogOutput<ApplyCommand>(_ => { _.Set(TerraformSpecialVariables.Action.Terraform.Workspace, "myspace"); }, "Simple")
                 .Should().Contain("workspace new \"myspace\"");
         }
 
         [Test]
         public void UsesTemplateDirectory()
         {
-            ExecuteAndReturnLogOutput<ApplyCommand>(_ =>
-                {
-                    _.Set(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, "SubFolder");
-                }, "TemplateDirectory")
+            ExecuteAndReturnLogOutput<ApplyCommand>(_ => { _.Set(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, "SubFolder"); }, "TemplateDirectory")
                 .Should().Contain($"SubFolder{Path.DirectorySeparatorChar}example.tf");
         }
 
@@ -393,8 +382,8 @@ namespace Calamari.Tests.Terraform
                 foreach (var commandType in commandTypes)
                 {
                     var log = new InMemoryLog();
-                    var command = (ICommand) Activator.CreateInstance(commandType, log, variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CommandLineRunner(ConsoleLog.Instance, variables));
-                    var result = new CommandAdapter(command, variables).Execute(new string[0]);
+                    var command = CreateInstance(commandType, variables, log);
+                    var result = command.Execute(new string[0]);
 
                     result.Should().Be(0);
 
@@ -405,6 +394,28 @@ namespace Calamari.Tests.Terraform
                     yield return output;
                 }
             }
+        }
+
+        ICommand CreateInstance(Type type, IVariables variables, ILog log)
+        {
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var commandLineRunner = new CommandLineRunner(ConsoleLog.Instance, variables);
+            var substituteInFiles = new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables);
+            var extractPackages = new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log);
+
+            if (type == typeof(PlanCommand))
+                return new PlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+            
+            if (type == typeof(ApplyCommand))
+                return new ApplyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+
+            if (type == typeof(DestroyCommand))
+                return new DestroyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+
+            if (type == typeof(DestroyPlanCommand))
+                return new DestroyPlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+            
+            throw new ArgumentException();
         }
 
         string ExecuteAndReturnLogOutput<T>(Action<VariableDictionary> populateVariables, string folderName) where T : ICommand

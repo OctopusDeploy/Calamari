@@ -13,24 +13,21 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    public class ExtractPackageToApplicationDirectoryConventionFixture
+    public class ExtractPackageFixture
     {
-        IPackageExtractor extractor;
         IVariables variables;
-        ExtractPackageToApplicationDirectoryConvention convention;
+        ExtractPackage extractPackage;
         ICalamariFileSystem fileSystem;
-        static readonly string PackageLocation = TestEnvironment.ConstructRootedPath("Acme.Web.1.0.0.zip");
+        static readonly PathToPackage PathToPackage = new PathToPackage(TestEnvironment.ConstructRootedPath("Acme.Web.1.0.0.zip"));
 
         [SetUp]
         public void SetUp()
         {
-            extractor = Substitute.For<IPackageExtractor>();
-
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(c => c.Arg<string>().Replace("!", ""));
 
             variables = new CalamariVariables();
-            convention = new ExtractPackageToApplicationDirectoryConvention(extractor, fileSystem);
+            extractPackage = new ExtractPackage(Substitute.For<ICombinedPackageExtractor>(), fileSystem, variables, new InMemoryLog());
         }
 
         [Test]
@@ -39,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var rootPath = TestEnvironment.ConstructRootedPath("MyApp");
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", rootPath);
 
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo(Path.Combine(rootPath, "Acme.Web", "1.0.0")));
         }
@@ -51,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set("env:SystemDrive", "X:");
             variables.Set("env:HOME", "SomethingElse");
             
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo(Path.Combine(expectedRoot, "Acme.Web", "1.0.0")));
         }
@@ -63,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var expectedRoot = string.Format("{0}{1}Applications", variable, Path.DirectorySeparatorChar);
             variables.Set("env:HOME", variable);
             
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Is.EqualTo(Path.Combine(expectedRoot, "Acme.Web", "1.0.0")));
         }
@@ -72,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [ExpectedException]
         public void ShouldThrowExceptionIfNoPathUnresolved()
         {
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
         }
 
 
@@ -81,7 +78,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
             
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Acme.Web", "1.0.0")));
         }
@@ -97,7 +94,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.DirectoryExists(Arg.Is<string>(path => path.EndsWith(Path.Combine("Acme.Web", "1.0.0_2")))).Returns(true);
 
 
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Acme.Web", "1.0.0_3")));
             
@@ -110,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
             variables.Set("Octopus.Environment.Name", "Production");
 
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Production","Acme.Web","1.0.0")));
         }
@@ -122,7 +119,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set("Octopus.Environment.Name", "Production");
             variables.Set("Octopus.Deployment.Tenant.Name", "MegaCorp");
 
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("MegaCorp", "Production", "Acme.Web", "1.0.0")));
         }
@@ -134,7 +131,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             variables.Set("Octopus.Tentacle.Agent.ApplicationDirectoryPath", TestEnvironment.ConstructRootedPath());
             variables.Set("Octopus.Environment.Name", "Production! Tokyo");
 
-            convention.Install(new RunningDeployment(PackageLocation, variables));
+            extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Production Tokyo","Acme.Web","1.0.0")));
         }
