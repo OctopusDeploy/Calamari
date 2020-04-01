@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Calamari.Aws.Integration;
-using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Terraform
 {
@@ -48,7 +43,7 @@ namespace Calamari.Terraform
             
             var runningDeployment = new RunningDeployment(pathToPrimaryPackage, variables);
             
-            if(!string.IsNullOrWhiteSpace(pathToPrimaryPackage))
+            if(pathToPrimaryPackage != null)
                 extractPackage.ExtractToStagingDirectory(pathToPrimaryPackage);
 
             var filesToSubstitute = GetFilesToSubstitute();

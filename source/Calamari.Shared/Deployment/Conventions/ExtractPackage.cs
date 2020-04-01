@@ -24,6 +24,7 @@ namespace Calamari.Deployment.Conventions
         public void ExtractToStagingDirectory(PathToPackage pathToPackage, IPackageExtractor customPackageExtractor = null)
         {
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
+            fileSystem.EnsureDirectoryExists(targetPath);
             Extract(pathToPackage, targetPath, customPackageExtractor);
         }
 
