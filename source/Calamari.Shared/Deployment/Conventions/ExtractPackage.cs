@@ -24,13 +24,13 @@ namespace Calamari.Deployment.Conventions
         public void ExtractToStagingDirectory(PathToPackage pathToPackage, IPackageExtractor customPackageExtractor = null)
         {
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
-            Extract(pathToPackage, targetPath);
+            Extract(pathToPackage, targetPath, customPackageExtractor);
         }
 
         public void ExtractToEnvironmentCurrentDirectory(PathToPackage pathToPackage)
         {
             var targetPath = Environment.CurrentDirectory;
-            Extract(pathToPackage, targetPath);
+            Extract(pathToPackage, targetPath, null);
         }
 
         public void ExtractToApplicationDirectory(PathToPackage pathToPackage, IPackageExtractor customPackageExtractor = null)
@@ -40,7 +40,7 @@ namespace Calamari.Deployment.Conventions
             Extract(pathToPackage, targetPath, customPackageExtractor);
         }
 
-        void Extract(PathToPackage pathToPackage, string targetPath, IPackageExtractor customPackageExtractor = null)
+        void Extract(PathToPackage pathToPackage, string targetPath, IPackageExtractor customPackageExtractor)
         {
             try
             {
