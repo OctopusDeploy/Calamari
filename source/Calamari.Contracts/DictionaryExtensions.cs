@@ -5,11 +5,11 @@ namespace Calamari.Extensions
 {
     public static class DictionaryExtensions
     {
-        public static void MergeDictionaries(this IDictionary<string, string> collection, IDictionary<string, string> items)
+        public static void Add(this IDictionary<string, string> collection, IDictionary<string, string> items)
         {
             if (items == null)
             {
-                return;
+                return; 
             }
 
             foreach (var obj in items)

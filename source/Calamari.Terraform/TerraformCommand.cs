@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
+using Calamari.Contracts;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
@@ -82,13 +82,14 @@ namespace Calamari.Terraform
 
             if (useAWSAccount)
             {
-                var awsEnvironmentGeneration = await AwsEnvironmentGeneration.Create(log, variables).ConfigureAwait(false);
-                environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
+                // TODO
+                //var awsEnvironmentGeneration = await AwsEnvironmentGeneration.Create(log, variables).ConfigureAwait(false);
+                //environmentVariables.Add(awsEnvironmentGeneration.EnvironmentVars);
             }
 
             if (useAzureAccount)
             {
-                environmentVariables.MergeDictionaries(AzureEnvironmentVariables(variables));
+                environmentVariables.Add(AzureEnvironmentVariables(variables));
             }
 
             Execute(deployment, environmentVariables);
@@ -113,7 +114,8 @@ namespace Calamari.Terraform
                         return "public";
                 }
             }
-
+            // TODO
+/*
             var environmentName = AzureEnvironment(variables.Get(SpecialVariables.Action.Azure.Environment));
 
             var account = variables.Get(SpecialVariables.Action.Azure.AccountVariable)?.Trim();
@@ -132,6 +134,8 @@ namespace Calamari.Terraform
             };
 
             return env;
+            */
+            throw new NotImplementedException();
         }
     }
 }

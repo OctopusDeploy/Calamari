@@ -1,5 +1,5 @@
 ﻿using System;
-using Calamari.Integration.Processes;
+using Calamari.Contracts;
 
 namespace Calamari.Deployment
 {
@@ -45,23 +45,30 @@ namespace Calamari.Deployment
 
         public string CurrentDirectory
         {
-            get { return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ?
-                string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory
-                : CustomDirectory; }
+            get
+            {
+                return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory
+                    ? string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory
+                    : CustomDirectory;
+            }
         }
 
         public IVariables Variables
         {
-            get {  return variables; }
+            get { return variables; }
         }
 
-        public bool SkipJournal { get { return variables.GetFlag(SpecialVariables.Action.SkipJournal); } }
+        public bool SkipJournal
+        {
+            get => variables.GetFlag(SpecialVariables.Action.SkipJournal);
+            set => variables.Set(SpecialVariables.Action.SkipJournal, "true");
+        }
 
         public void Error(Exception ex)
         {
             ex = ex.GetBaseException();
-            variables.Set(SpecialVariables.LastError, ex.ToString());
-            variables.Set(SpecialVariables.LastErrorMessage, ex.Message);
+            variables.Set("OctopusLastError", ex.ToString());
+            variables.Set("OctopusLastErrorMessage", ex.Message);
         }
     }
 }

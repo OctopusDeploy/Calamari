@@ -1,5 +1,4 @@
 using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Java;
 
 namespace Calamari.Deployment.Conventions
 {

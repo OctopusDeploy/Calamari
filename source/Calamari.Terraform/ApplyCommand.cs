@@ -6,7 +6,6 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Newtonsoft.Json.Linq;
-using Octopus.Versioning.Maven;
 
 namespace Calamari.Terraform
 {

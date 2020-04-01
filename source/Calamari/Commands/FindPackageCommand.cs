@@ -67,7 +67,7 @@ namespace Calamari.Commands
             }
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
-            log.PackageFound(
+            LogPackageFound(
                 package.PackageId, 
                 package.Version,
                 package.Hash, 
@@ -91,13 +91,29 @@ namespace Calamari.Commands
             foreach(var nearestPackage in nearestPackages)
             {
                 log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
-                log.PackageFound(
+                LogPackageFound(
                     nearestPackage.PackageId,
                     nearestPackage.Version,
                     nearestPackage.Hash,
                     nearestPackage.Extension,
                     nearestPackage.FullFilePath);
             }
+        }
+        
+        
+        public void LogPackageFound(string packageId, IVersion packageVersion, string packageHash,
+            string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
+        {
+            if (exactMatchExists)
+                log.Verbose("##octopus[calamari-found-package]");
+
+            log.VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" versionFormat=\"{2}\" hash=\"{3}\" remotePath=\"{4}\" fileExtension=\"{5}\"]",
+                AbstractLog.ConvertServiceMessageValue(packageId),
+                AbstractLog.ConvertServiceMessageValue(packageVersion.ToString()),
+                AbstractLog.ConvertServiceMessageValue(packageVersion.Format.ToString()),
+                AbstractLog.ConvertServiceMessageValue(packageHash),
+                AbstractLog.ConvertServiceMessageValue(packageFullPath),
+                AbstractLog.ConvertServiceMessageValue(packageFileExtension));
         }
     }
 }

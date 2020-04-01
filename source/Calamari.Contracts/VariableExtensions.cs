@@ -1,4 +1,5 @@
 using Calamari.Commands.Support;
+using Calamari.Contracts;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;

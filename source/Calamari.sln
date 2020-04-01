@@ -36,6 +36,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure.ServiceFabric", "Calamari.Azure.ServiceFabric\Calamari.Azure.ServiceFabric.csproj", "{5BA6C423-C410-491F-8542-9B53A39ABB86}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure.ServiceFabric.Tests", "Calamari.Azure.ServiceFabric.Tests\Calamari.Azure.ServiceFabric.Tests.csproj", "{B91EF36F-8ED1-45D9-92F4-21668C300D55}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Contracts", "Calamari.Contracts\Calamari.Contracts.csproj", "{214145D8-F436-42D6-9A4C-12EB545E4A4A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +84,10 @@ Global
 		{B91EF36F-8ED1-45D9-92F4-21668C300D55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B91EF36F-8ED1-45D9-92F4-21668C300D55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B91EF36F-8ED1-45D9-92F4-21668C300D55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{214145D8-F436-42D6-9A4C-12EB545E4A4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{214145D8-F436-42D6-9A4C-12EB545E4A4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{214145D8-F436-42D6-9A4C-12EB545E4A4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{214145D8-F436-42D6-9A4C-12EB545E4A4A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -40,7 +40,7 @@ namespace Calamari.Deployment.Conventions
                 log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.InstallationDirectoryPath, previous.ExtractedTo);
                 log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
                 deployment.Variables.Set(SpecialVariables.Action.SkipRemainingConventions, "true");
-                deployment.Variables.Set(SpecialVariables.Action.SkipJournal, "true");
+                deployment.SkipJournal = true;
             }
         }
     }
