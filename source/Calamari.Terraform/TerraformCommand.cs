@@ -114,15 +114,14 @@ namespace Calamari.Terraform
                         return "public";
                 }
             }
-            // TODO
 
-            var environmentName = AzureEnvironment(variables.Get(SpecialVariables.Action.Azure.Environment));
+            var environmentName = AzureEnvironment(variables.Get(KnownVariables.Azure.Environment));
 
-            var account = variables.Get(SpecialVariables.Action.Azure.AccountVariable)?.Trim();
-            var subscriptionId = variables.Get($"{account}.SubscriptionNumber")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.SubscriptionId)?.Trim();
-            var clientId = variables.Get($"{account}.Client")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.ClientId)?.Trim();
-            var clientSecret = variables.Get($"{account}.Password")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.Password)?.Trim();
-            var tenantId = variables.Get($"{account}.TenantId")?.Trim() ?? variables.Get(SpecialVariables.Action.Azure.TenantId)?.Trim();
+            var account = variables.Get(KnownVariables.Azure.AccountVariable)?.Trim();
+            var subscriptionId = variables.Get($"{account}.SubscriptionNumber")?.Trim() ?? variables.Get(KnownVariables.Azure.SubscriptionId)?.Trim();
+            var clientId = variables.Get($"{account}.Client")?.Trim() ?? variables.Get(KnownVariables.Azure.ClientId)?.Trim();
+            var clientSecret = variables.Get($"{account}.Password")?.Trim() ?? variables.Get(KnownVariables.Azure.Password)?.Trim();
+            var tenantId = variables.Get($"{account}.TenantId")?.Trim() ?? variables.Get(KnownVariables.Azure.TenantId)?.Trim();
             
             var env = new Dictionary<string, string>
             {
@@ -134,8 +133,6 @@ namespace Calamari.Terraform
             };
 
             return env;
-            
-            throw new NotImplementedException();
         }
     }
 }
