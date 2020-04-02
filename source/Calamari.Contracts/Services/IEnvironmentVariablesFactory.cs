@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Calamari.Contracts.Services
 {
-    public interface IProxyEnvironmentVariablesGenerator
+    public interface IEnvironmentVariablesFactory
     {
         IEnumerable<EnvironmentVariable> GenerateProxyEnvironmentVariables();
     }

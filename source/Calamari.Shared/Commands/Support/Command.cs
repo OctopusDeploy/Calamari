@@ -9,7 +9,7 @@ namespace Calamari.Commands.Support
             Options = new OptionSet();
         }
 
-        protected OptionSet Options { get; private set; }
+        protected IOptionSet Options { get; private set; }
 
         public abstract int Execute(string[] commandLineArguments);
     }

@@ -17,7 +17,7 @@ namespace Calamari.Terraform
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly RunningDeployment deployment;
-        readonly IProxyEnvironmentVariablesGenerator proxyEnvironmentVariablesGenerator;
+        readonly IEnvironmentVariablesFactory environmentVariablesFactory;
         readonly IVariables variables;
         readonly Dictionary<string, string> environmentVariables;
         Dictionary<string, string> defaultEnvironmentVariables;
@@ -32,7 +32,7 @@ namespace Calamari.Terraform
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             RunningDeployment deployment,
-            IProxyEnvironmentVariablesGenerator proxyEnvironmentVariablesGenerator,
+            IEnvironmentVariablesFactory environmentVariablesFactory,
             Dictionary<string, string> environmentVariables
         )
         {
@@ -40,7 +40,7 @@ namespace Calamari.Terraform
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.deployment = deployment;
-            this.proxyEnvironmentVariablesGenerator = proxyEnvironmentVariablesGenerator;
+            this.environmentVariablesFactory = environmentVariablesFactory;
             this.variables = deployment.Variables;
             this.environmentVariables = environmentVariables;
             this.logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
@@ -206,7 +206,7 @@ namespace Calamari.Terraform
 
         void InitializeTerraformEnvironmentVariables()
         {
-            defaultEnvironmentVariables = proxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
+            defaultEnvironmentVariables = environmentVariablesFactory.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
 
             defaultEnvironmentVariables.Add("TF_IN_AUTOMATION", "1");
             defaultEnvironmentVariables.Add("TF_LOG", "TRACE");

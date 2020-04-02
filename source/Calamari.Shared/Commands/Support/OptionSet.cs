@@ -136,7 +136,7 @@ namespace Calamari.Commands.Support
 {
     public delegate TOutput Converter<in TInput, out TOutput>(TInput input);
 
-    public class OptionSet : KeyedCollection<string, Option>
+    public class OptionSet : KeyedCollection<string, Option>, IOptionSet
     {
         Action<string[]> leftovers;
 

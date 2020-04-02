@@ -4,7 +4,7 @@ using Calamari.Integration.Proxies;
 
 namespace Calamari.Contracts
 {
-    public class ProxyEnvironmentVariablesGeneratorWrapper : IProxyEnvironmentVariablesGenerator
+    public class EnvironmentVariablesFactory : IEnvironmentVariablesFactory
     {
         public IEnumerable<EnvironmentVariable> GenerateProxyEnvironmentVariables()
         {
