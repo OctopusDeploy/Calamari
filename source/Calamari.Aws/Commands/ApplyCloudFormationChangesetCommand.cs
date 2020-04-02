@@ -10,12 +10,10 @@ using Calamari.Aws.Util;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 
 namespace Calamari.Aws.Commands
 {
-    [Command("apply-aws-cloudformation-changeset", Description = "Apply an existing AWS CloudFormation changeset")]
-    public class ApplyCloudFormationChangesetCommand: Command
+    class ApplyCloudFormationChangesetCommand: Command
     {
         readonly ILog log;
         readonly IVariables variables;

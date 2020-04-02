@@ -7,8 +7,7 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Terraform
 {
-    [Command("destroy-terraform", Description = "Destroys Terraform resources")]
-    public class DestroyCommand : TerraformCommand
+    class DestroyCommand : TerraformCommand
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;

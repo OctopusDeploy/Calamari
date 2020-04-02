@@ -5,8 +5,6 @@ using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,8 +17,7 @@ using Calamari.Util;
 
 namespace Calamari.Commands
 {
-    [Command("run-script", Description = "Invokes a script")]
-    public class RunScriptCommand : Command
+    class RunScriptCommand : Command
     {
         string scriptFileArg;
         string packageFile;

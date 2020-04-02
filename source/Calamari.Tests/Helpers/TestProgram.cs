@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Autofac;
 using Calamari.Commands.Support;
-using Octostache;
 
 namespace Calamari.Tests.Helpers
 {
@@ -14,7 +13,7 @@ namespace Calamari.Tests.Helpers
         }
 
         public InMemoryLog Log { get; }
-        public ICommand CommandOverride { get; set; }
+        ICommand CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
         
@@ -36,14 +35,13 @@ namespace Calamari.Tests.Helpers
             var builder = base.BuildContainer(options);
             builder.RegisterInstance(Log).As<ILog>();
             if (CommandOverride != null)
-                builder.RegisterInstance(CommandOverride).As<ICommand>();
+                builder.RegisterInstance(CommandOverride).Named<ICommand>("stub");
             if (VariablesOverride != null)
                 builder.RegisterInstance(VariablesOverride).As<IVariables>();
             return builder;
         }
     }
 
-    [Command("stub")]
     class StubCommand : ICommand
     {
         readonly Action callback;

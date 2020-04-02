@@ -12,8 +12,7 @@ using Octopus.Versioning;
 
 namespace Calamari.Commands
 {
-    [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
-    public class DownloadPackageCommand : Command
+    class DownloadPackageCommand : Command
     {
         private readonly IScriptEngine scriptEngine;
         readonly IFreeSpaceChecker freeSpaceChecker;

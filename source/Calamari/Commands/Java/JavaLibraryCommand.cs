@@ -13,8 +13,7 @@ using Calamari.Integration.ServiceMessages;
 
 namespace Calamari.Commands.Java
 {
-    [Command("java-library", Description = "Invokes the Octopus java library")]
-    public class JavaLibraryCommand : Command
+    class JavaLibraryCommand : Command
     {
         string actionType;
         readonly IScriptEngine scriptEngine;

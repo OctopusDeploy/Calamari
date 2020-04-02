@@ -24,8 +24,7 @@ using Octostache;
 
 namespace Calamari.Aws.Commands
 {
-    [Command("deploy-aws-cloudformation", Description = "Creates a new AWS CloudFormation deployment")]
-    public class DeployCloudFormationCommand : Command
+    class DeployCloudFormationCommand : Command
     {
         readonly ILog log;
         readonly IVariables variables;

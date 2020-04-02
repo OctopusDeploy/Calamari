@@ -7,8 +7,7 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Terraform
 {
-    [Command("plan-terraform", Description = "Plans the creation of a Terraform deployment")]
-    public class PlanCommand : TerraformCommand
+    class PlanCommand : TerraformCommand
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;

@@ -23,8 +23,7 @@ using Octostache;
 
 namespace Calamari.Kubernetes.Commands
 {
-    [Command("helm-upgrade", Description = "Performs Helm Upgrade with Chart while performing variable replacement")]
-    public class HelmUpgradeCommand : Command
+    class HelmUpgradeCommand : Command
     {
         PathToPackage pathToPackage;
         readonly ILog log;

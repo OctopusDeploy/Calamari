@@ -10,7 +10,7 @@ using Calamari.Integration.FileSystem;
 
 namespace Calamari.Terraform
 {
-    public abstract class TerraformCommand : ICommand
+    abstract class TerraformCommand : ICommand
     {
         readonly ILog log;
         readonly IVariables variables;

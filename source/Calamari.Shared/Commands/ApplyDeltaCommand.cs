@@ -11,7 +11,6 @@ using Calamari.Util;
 
 namespace Calamari.Commands
 {
-    [Command("apply-delta", Description = "Applies a delta file to a package to create a new version of the package")]
     public class ApplyDeltaCommand : Command
     {
         string basisFileName;

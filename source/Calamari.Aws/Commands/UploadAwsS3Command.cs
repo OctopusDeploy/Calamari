@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration;
@@ -10,13 +9,9 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Aws.Commands
 {
-    [Command("upload-aws-s3", Description = "Uploads a package or package file(s) to an AWS s3 bucket")]
     public class UploadAwsS3Command : Command
     {
         readonly ILog log;

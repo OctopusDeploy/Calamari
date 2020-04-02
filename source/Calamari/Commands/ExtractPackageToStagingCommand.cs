@@ -9,8 +9,7 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Commands
 {
-    [Command("extract-package-to-staging", Description = "Extracts a package into the staging area")]
-    public class ExtractToStagingCommand : Command
+    class ExtractToStagingCommand : Command
     {
         readonly IExtractPackage extractPackage;
         PathToPackage pathToPackage;

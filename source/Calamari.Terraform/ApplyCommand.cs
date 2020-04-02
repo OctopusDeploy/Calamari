@@ -10,8 +10,7 @@ using Octopus.Versioning.Maven;
 
 namespace Calamari.Terraform
 {
-    [Command("apply-terraform", Description = "Applies a Terraform template")]
-    public class ApplyCommand : TerraformCommand
+    class ApplyCommand : TerraformCommand
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;

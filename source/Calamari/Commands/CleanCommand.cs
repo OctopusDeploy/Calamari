@@ -8,8 +8,7 @@ using Calamari.Integration.Time;
 
 namespace Calamari.Commands
 {
-    [Command("clean", Description = "Removes packages and files according to the configured retention policy")]
-    public class CleanCommand : Command
+    class CleanCommand : Command
     {
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;

@@ -23,8 +23,7 @@ using Calamari.Variables;
 
 namespace Calamari.Commands
 {
-    [Command("deploy-package", Description = "Extracts and installs a deployment package")]
-    public class DeployPackageCommand : Command
+    class DeployPackageCommand : Command
     {
         readonly ILog log;
         readonly IScriptEngine scriptEngine;

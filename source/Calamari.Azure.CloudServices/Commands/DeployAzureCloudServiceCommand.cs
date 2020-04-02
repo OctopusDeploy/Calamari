@@ -21,8 +21,7 @@ using Calamari.Integration.Substitutions;
 
 namespace Calamari.Azure.CloudServices.Commands
 {
-    [Command("deploy-azure-cloud-service", Description = "Extracts and installs an Azure Cloud-Service")]
-    public class DeployAzureCloudServiceCommand : Command
+    class DeployAzureCloudServiceCommand : Command
     {
         private PathToPackage pathToPackage;
         readonly ILog log;

@@ -13,8 +13,7 @@ using Octostache;
 
 namespace Calamari.Commands
 {
-    [Command("import-certificate", Description = "Imports a X.509 certificate into a Windows certificate store")]
-    public class ImportCertificateCommand : Command
+    class ImportCertificateCommand : Command
     {
         readonly IVariables variables;
         

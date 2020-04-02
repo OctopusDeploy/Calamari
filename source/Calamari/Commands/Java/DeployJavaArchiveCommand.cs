@@ -14,14 +14,10 @@ using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
-using Calamari.Variables;
 
 namespace Calamari.Commands.Java
 {
-    [Command("deploy-java-archive", Description = "Deploys a Java archive (.jar, .war, .ear)")]
-    public class DeployJavaArchiveCommand : Command
+    class DeployJavaArchiveCommand : Command
     {
         PathToPackage archiveFile;
         readonly ILog log;

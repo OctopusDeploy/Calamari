@@ -9,8 +9,7 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Commands
 {
-    [Command("health-check", Description = "Run a health check on a DeploymentTargetType")]
-    public class HealthCheckCommand : Command
+    class HealthCheckCommand : Command
     {
         private readonly IEnumerable<IDoesDeploymentTargetTypeHealthChecks> deploymentTargetTypeHealthCheckers;
         readonly IVariables variables;

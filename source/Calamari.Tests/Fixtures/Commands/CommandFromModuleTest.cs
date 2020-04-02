@@ -2,7 +2,9 @@
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using Autofac;
 using Calamari.Integration.FileSystem;
 using Calamari.Variables;
 
@@ -84,6 +86,21 @@ namespace Calamari.Tests.Fixtures.Commands
                 // it is enabled they must have been called.
                 Assert.IsTrue(ScriptHookMock.WasCalled);
             }
+        }
+    }
+
+    public class CommandFromModuleTestTestExtension : ICalamariExtension
+    {
+        public Dictionary<string, Type> RegisterCommands()
+        {
+            return new Dictionary<string, Type>
+            {
+                {"run-test-script", typeof(RunTestScriptCommand)}
+            };
+        }
+
+        public void Load(ContainerBuilder builder)
+        {
         }
     }
 }

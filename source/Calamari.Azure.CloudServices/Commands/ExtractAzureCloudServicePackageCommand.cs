@@ -5,12 +5,10 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 
 namespace Calamari.Azure.CloudServices.Commands
 {
-    [Command("extract-cspkg", Description = "Extracts an Azure cloud-service package (.cspkg)")]
-    public class ExtractAzureCloudServicePackageCommand : Command
+    class ExtractAzureCloudServicePackageCommand : Command
     {
         readonly ILog log;
         readonly IVariables variables;

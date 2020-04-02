@@ -1,13 +1,14 @@
 ﻿using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
-using Calamari.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using Autofac.Core;
+using Autofac.Core.Registration;
 using Calamari.Commands;
+using Calamari.Commands.Java;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -19,10 +20,10 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
+using Calamari.Kubernetes.Commands;
 using Calamari.Util.Environments;
 using Calamari.Variables;
 using Calamari.Plumbing;
-using NuGet;
 
 namespace Calamari
 {
@@ -67,13 +68,17 @@ namespace Calamari
             {
                 container.Resolve<VariableLogger>().LogVariables();
 
-                var command = container.Resolve<ICommand[]>();
-                if (command.Length == 0)
+                ICommand command;
+                try
+                {
+                    command = container.ResolveNamed<ICommand>(options.Command);
+                }
+                catch (Exception e) when (e is ComponentNotRegisteredException || e is DependencyResolutionException)
+                {
                     throw new CommandException($"Could not find the command {options.Command}");
-                if (command.Length > 1)
-                    throw new CommandException($"Multiple commands found with the name {options.Command}");
+                }
 
-                return command[0].Execute(options.RemainingArguments.ToArray());
+                return command.Execute(options.RemainingArguments.ToArray());
             }
         }
 
@@ -97,7 +102,6 @@ namespace Calamari
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
 
-
             var assemblies = GetAllAssembliesToRegister(options).ToArray();
 
             builder.RegisterAssemblyTypes(assemblies)
@@ -111,12 +115,59 @@ namespace Calamari
                 .As<IDoesDeploymentTargetTypeHealthChecks>()
                 .SingleInstance();
 
-            builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<ICommand>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .As<ICommand>();
-
+            RegisterExtensions(builder, assemblies);
+            
+            // known commands are registered last, as last one wins so the extensions can't override the known commands
+            RegisterKnownCommands(builder);
+            
             return builder;
+        }
+
+        static void RegisterExtensions(ContainerBuilder builder, Assembly[] assemblies)
+        {
+            foreach (var assembly in assemblies)
+            {
+                var extensionTypes = assembly.GetExportedTypes()
+                    .Where(t => typeof(ICalamariExtension).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
+                foreach (var extensionType in extensionTypes)
+                {
+                    var extensionInstance = (ICalamariExtension) Activator.CreateInstance(extensionType);
+                    
+                    extensionInstance.Load(builder);
+
+                    // use named registrations for the commands
+                    var commands = extensionInstance.RegisterCommands();
+                    foreach (var command in commands)
+                    {
+                        builder.RegisterType(command.Value).Named<ICommand>(command.Key);
+                    }
+                }
+            }
+        }
+
+        static void RegisterKnownCommands(ContainerBuilder builder)
+        {
+            builder.RegisterType(typeof(ApplyDeltaCommand)).Named<ICommand>("apply-delta");
+            
+            builder.RegisterType(typeof(CleanCommand)).Named<ICommand>("clean");
+            builder.RegisterType(typeof(DeployPackageCommand)).Named<ICommand>("deploy-package");
+            builder.RegisterType(typeof(DownloadPackageCommand)).Named<ICommand>("download-package");
+            builder.RegisterType(typeof(ExtractToStagingCommand)).Named<ICommand>("extract-package-to-staging");
+            builder.RegisterType(typeof(FindPackageCommand)).Named<ICommand>("find-package");
+            builder.RegisterType(typeof(HealthCheckCommand)).Named<ICommand>("health-check");
+            
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+            builder.RegisterType(typeof(ImportCertificateCommand)).Named<ICommand>("import-certificate");
+#endif
+
+            builder.RegisterType(typeof(RunScriptCommand)).Named<ICommand>("run-script");
+
+            builder.RegisterType(typeof(DeployJavaArchiveCommand)).Named<ICommand>("deploy-java-archive");
+            builder.RegisterType(typeof(JavaLibraryCommand)).Named<ICommand>("java-library");
+            
+            builder.RegisterType(typeof(TransferPackageCommand)).Named<ICommand>("transfer-package");
+            
+            builder.RegisterType(typeof(HelmUpgradeCommand)).Named<ICommand>("helm-upgrade");
         }
 
         static IEnumerable<Assembly> GetAllAssembliesToRegister(CommonOptions options)

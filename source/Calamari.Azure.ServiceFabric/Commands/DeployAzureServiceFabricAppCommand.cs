@@ -20,8 +20,7 @@ using Calamari.Integration.Substitutions;
 
 namespace Calamari.Azure.ServiceFabric.Commands
 {
-    [Command("deploy-azure-service-fabric-app", Description = "Extracts and installs an Azure Service Fabric Application")]
-    public class DeployAzureServiceFabricAppCommand : Command
+    class DeployAzureServiceFabricAppCommand : Command
     {
         private PathToPackage pathToPackage;
         readonly ILog log;

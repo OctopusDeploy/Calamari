@@ -6,8 +6,7 @@ using Calamari.Integration.Processes;
 
 namespace Calamari.Terraform
 {
-    [Command("destroyplan-terraform", Description = "Plans the destruction of Terraform resources")]
-    public class DestroyPlanCommand : PlanCommand
+    class DestroyPlanCommand : PlanCommand
     {
         public DestroyPlanCommand(
             ILog log, 

@@ -18,8 +18,7 @@ using Calamari.Util;
 
 namespace Calamari.Azure.Commands
 {
-    [Command("deploy-azure-resource-group", Description = "Creates a new Azure Resource Group deployment")]
-    public class DeployAzureResourceGroupCommand : Command
+    class DeployAzureResourceGroupCommand : Command
     {
         readonly ILog log;
         private readonly IScriptEngine scriptEngine;

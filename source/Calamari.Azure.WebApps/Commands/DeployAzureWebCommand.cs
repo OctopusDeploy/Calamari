@@ -17,8 +17,7 @@ using Calamari.Integration.Substitutions;
 
 namespace Calamari.Azure.WebApps.Commands
 {
-    [Command("deploy-azure-web", Description = "Extracts and installs a deployment package to an Azure Web Application")]
-    public class DeployAzureWebCommand : Command
+    class DeployAzureWebCommand : Command
     {
         private PathToPackage pathToPackage;
         readonly ILog log;
