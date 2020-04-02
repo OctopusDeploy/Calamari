@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
@@ -19,6 +19,8 @@ namespace Calamari.Terraform
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
 
+        public IOptionSet Options { get; set; }
+        
         protected TerraformCommand(
             ILog log, 
             IVariables variables, 

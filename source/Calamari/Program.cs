@@ -98,7 +98,7 @@ namespace Calamari
             builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
-            builder.RegisterType<ProxyEnvironmentVariablesGeneratorWrapper>().As<IProxyEnvironmentVariablesGenerator>()
+            builder.RegisterType<EnvironmentVariablesFactory>().As<IEnvironmentVariablesFactory>()
                 .SingleInstance();
 
 

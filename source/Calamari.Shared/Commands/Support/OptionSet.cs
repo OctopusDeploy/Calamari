@@ -240,12 +240,12 @@ namespace Calamari.Commands.Support
             }
         }
 
-        public OptionSet Add(string prototype, Action<string> action)
+        public IOptionSet Add(string prototype, Action<string> action)
         {
             return Add(prototype, null, action);
         }
 
-        public OptionSet Add(string prototype, string description, Action<string> action)
+        public IOptionSet Add(string prototype, string description, Action<string> action)
         {
             if (action == null)
                 throw new ArgumentNullException("action");
@@ -308,12 +308,12 @@ namespace Calamari.Commands.Support
             }
         }
 
-        public OptionSet Add<T>(string prototype, Action<T> action)
+        public IOptionSet Add<T>(string prototype, Action<T> action)
         {
             return Add(prototype, null, action);
         }
 
-        public OptionSet Add<T>(string prototype, string description, Action<T> action)
+        public IOptionSet Add<T>(string prototype, string description, Action<T> action)
         {
             return Add(new ActionOption<T>(prototype, description, action));
         }
