@@ -15,6 +15,7 @@ using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
+using Calamari.CloudAccounts;
 using Calamari.Commands;
 using Calamari.Util;
 using Newtonsoft.Json;

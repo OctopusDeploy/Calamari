@@ -8,6 +8,7 @@ using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Util;
+using Calamari.CloudAccounts;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Octopus.CoreUtilities.Extensions;
