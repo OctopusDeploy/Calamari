@@ -69,19 +69,18 @@ namespace Calamari.Integration.FileSystem
             }
         }
 
+        public virtual void DeleteFile(string path, FailureOptions options = FailureOptions.ThrowOnFailure)
+            => DeleteFile(path, options, GetFileOperationRetryTracker(), CancellationToken.None);
 
-        public virtual void DeleteFile(string path, FailureOptions options = FailureOptions.ThrowOnFailure, RetryTracker retry = null, CancellationToken? cancel = null)
+        void DeleteFile(string path, FailureOptions options, RetryTracker retry, CancellationToken cancel)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
             
-            retry = retry ?? GetFileOperationRetryTracker();
-            cancel = cancel ?? CancellationToken.None;
-
             retry.Reset();
             while (retry.Try())
             {
-                cancel.Value.ThrowIfCancellationRequested();
+                cancel.ThrowIfCancellationRequested();
                 try
                 {
                     if (File.Exists(path))
