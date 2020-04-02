@@ -83,12 +83,12 @@ namespace Calamari.Terraform
             if (useAWSAccount)
             {
                 var awsEnvironmentGeneration = await AwsEnvironmentGeneration.Create(log, variables).ConfigureAwait(false);
-                environmentVariables.MergeDictionaries(awsEnvironmentGeneration.EnvironmentVars);
+                environmentVariables.AddRange(awsEnvironmentGeneration.EnvironmentVars);
             }
 
             if (useAzureAccount)
             {
-                environmentVariables.MergeDictionaries(AzureEnvironmentVariables(variables));
+                environmentVariables.AddRange(AzureEnvironmentVariables(variables));
             }
 
             Execute(deployment, environmentVariables);

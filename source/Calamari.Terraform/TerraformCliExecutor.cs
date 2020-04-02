@@ -113,7 +113,7 @@ namespace Calamari.Terraform
             var environmentVar = defaultEnvironmentVariables;
             if (environmentVariables != null)
             {
-                environmentVar.MergeDictionaries(environmentVariables);
+                environmentVar.AddRange(environmentVariables);
             }
 
             var terraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable) ??

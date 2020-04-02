@@ -5,7 +5,7 @@ namespace Calamari.Extensions
 {
     public static class DictionaryExtensions
     {
-        public static void MergeDictionaries(this IDictionary<string, string> collection, IDictionary<string, string> items)
+        public static void AddRange(this IDictionary<string, string> collection, IDictionary<string, string> items)
         {
             if (items == null)
             {
