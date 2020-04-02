@@ -145,21 +145,6 @@ namespace Calamari
             Info($"##octopus[createArtifact path=\"{ConvertServiceMessageValue(fullPath)}\" name=\"{ConvertServiceMessageValue(name)}\" length=\"{ConvertServiceMessageValue(fileLength.ToString())}\"]");
         }
 
-        public void PackageFound(string packageId, IVersion packageVersion, string packageHash,
-            string packageFileExtension, string packageFullPath, bool exactMatchExists = false)
-        {
-            if (exactMatchExists)
-                Verbose("##octopus[calamari-found-package]");
-
-            VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" versionFormat=\"{2}\" hash=\"{3}\" remotePath=\"{4}\" fileExtension=\"{5}\"]",
-                ConvertServiceMessageValue(packageId),
-                ConvertServiceMessageValue(packageVersion.ToString()),
-                ConvertServiceMessageValue(packageVersion.Format.ToString()),
-                ConvertServiceMessageValue(packageHash),
-                ConvertServiceMessageValue(packageFullPath),
-                ConvertServiceMessageValue(packageFileExtension));
-        }
-
         public void Progress(int percentage, string message)
         {
             VerboseFormat("##octopus[progress percentage=\"{0}\" message=\"{1}\"]",
@@ -182,8 +167,8 @@ namespace Calamari
 
         public string FormatLink(string uri, string description = null)
             => $"[{description ?? uri}]({uri})";
-        
-        static string ConvertServiceMessageValue(string value)
+
+        public static string ConvertServiceMessageValue(string value)
             => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
     }
 }

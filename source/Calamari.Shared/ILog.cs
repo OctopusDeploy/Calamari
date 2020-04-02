@@ -15,10 +15,6 @@ namespace Calamari
         void SetOutputVariableButDoNotAddToVariables(string name, string value, bool isSensitive = false);
         void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false);
         void NewOctopusArtifact(string fullPath, string name, long fileLength);
-
-        void PackageFound(string packageId, IVersion packageVersion, string packageHash,
-            string packageFileExtension, string packageFullPath, bool exactMatchExists = false);
-
         void Progress(int percentage, string message);
         void DeltaVerification(string remotePath, string hash, long size);
         void DeltaVerificationError(string error);
