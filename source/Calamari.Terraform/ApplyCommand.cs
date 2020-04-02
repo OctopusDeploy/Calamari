@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Newtonsoft.Json.Linq;
@@ -16,18 +17,28 @@ namespace Calamari.Terraform
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IEnvironmentVariablesFactory environmentVariablesFactory;
 
-        public ApplyCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, ISubstituteInFiles substituteInFiles, IExtractPackage extractPackage)
+        public ApplyCommand(
+            ILog log,
+            IVariables variables,
+            ICalamariFileSystem fileSystem,
+            ICommandLineRunner commandLineRunner,
+            ISubstituteInFiles substituteInFiles,
+            IExtractPackage extractPackage,
+            IEnvironmentVariablesFactory environmentVariablesFactory
+        )
             : base(log, variables, fileSystem, substituteInFiles, extractPackage)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.environmentVariablesFactory = environmentVariablesFactory;
         }
-        
+
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
-            using (var cli = new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, environmentVariables))
+            using (var cli = new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, environmentVariables, environmentVariablesFactory))
             {
                 cli.ExecuteCommand("apply", "-no-color", "-auto-approve",
                     cli.TerraformVariableFiles, cli.ActionParams);
@@ -45,7 +56,7 @@ namespace Calamari.Terraform
 
                     var json = token.ToString();
                     var value = token.SelectToken("value")?.ToString();
-                    
+
                     log.SetOutputVariable($"TerraformJsonOutputs[{name}]", json, deployment.Variables, isSensitive);
                     if (value != null)
                     {

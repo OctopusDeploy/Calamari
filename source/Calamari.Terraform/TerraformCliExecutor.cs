@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Deployment;
 using Calamari.Extensions;
+using Calamari.Integration;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
@@ -20,6 +21,7 @@ namespace Calamari.Terraform
         readonly RunningDeployment deployment;
         readonly IVariables variables;
         readonly Dictionary<string, string> environmentVariables;
+        readonly IEnvironmentVariablesFactory environmentVariablesFactory;
         Dictionary<string, string> defaultEnvironmentVariables;
         readonly string templateDirectory;
         readonly string logPath;
@@ -29,7 +31,8 @@ namespace Calamari.Terraform
             ICalamariFileSystem fileSystem, 
             ICommandLineRunner commandLineRunner,
             RunningDeployment deployment,
-            Dictionary<string, string> environmentVariables
+            Dictionary<string, string> environmentVariables,
+            IEnvironmentVariablesFactory environmentVariablesFactory
             )
         {
             this.log = log;
@@ -38,6 +41,7 @@ namespace Calamari.Terraform
             this.deployment = deployment;
             this.variables = deployment.Variables;
             this.environmentVariables = environmentVariables;
+            this.environmentVariablesFactory = environmentVariablesFactory;
             this.logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
 
             templateDirectory = variables.Get(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, deployment.CurrentDirectory);
@@ -201,7 +205,7 @@ namespace Calamari.Terraform
 
         void InitializeTerraformEnvironmentVariables()
         {
-            defaultEnvironmentVariables = ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
+            defaultEnvironmentVariables = environmentVariablesFactory.GetDefaultEnvironmentVariables();
 
             defaultEnvironmentVariables.Add("TF_IN_AUTOMATION", "1");
             defaultEnvironmentVariables.Add("TF_LOG", "TRACE");

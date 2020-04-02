@@ -6,6 +6,7 @@ using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
+using Calamari.Integration;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Terraform
@@ -18,10 +19,9 @@ namespace Calamari.Terraform
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
 
-        protected TerraformCommand(
-            ILog log, 
-            IVariables variables, 
-            ICalamariFileSystem fileSystem, 
+        protected TerraformCommand(ILog log,
+            IVariables variables,
+            ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage
             )

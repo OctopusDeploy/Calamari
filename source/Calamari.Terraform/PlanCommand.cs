@@ -2,6 +2,7 @@
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
@@ -13,18 +14,22 @@ namespace Calamari.Terraform
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IEnvironmentVariablesFactory environmentVariablesFactory;
 
-        public PlanCommand(ILog log, 
-            IVariables variables, 
-            ICalamariFileSystem fileSystem, 
-            ICommandLineRunner commandLineRunner, 
+        public PlanCommand(ILog log,
+            IVariables variables,
+            ICalamariFileSystem fileSystem,
+            ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage)
+            IExtractPackage extractPackage,
+            IEnvironmentVariablesFactory environmentVariablesFactory
+        )
             : base(log, variables, fileSystem, substituteInFiles, extractPackage)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.environmentVariablesFactory = environmentVariablesFactory;
         }
 
         protected virtual string ExtraParameter => "";
@@ -32,7 +37,7 @@ namespace Calamari.Terraform
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             string results;
-            using (var cli = new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, environmentVariables))
+            using (var cli = new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, environmentVariables, environmentVariablesFactory))
             {
                 var commandResult = cli.ExecuteCommand(out results, "plan", "-no-color", "-detailed-exitcode", ExtraParameter, cli.TerraformVariableFiles, cli.ActionParams);
                 var resultCode = commandResult.ExitCode;

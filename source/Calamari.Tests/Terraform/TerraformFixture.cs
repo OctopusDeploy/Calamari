@@ -11,6 +11,7 @@ using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -402,18 +403,18 @@ namespace Calamari.Tests.Terraform
             var commandLineRunner = new CommandLineRunner(ConsoleLog.Instance, variables);
             var substituteInFiles = new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables);
             var extractPackages = new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log);
-
+            var environmentVariablesFactory = new EnvironmentVariablesFactory();
             if (type == typeof(PlanCommand))
-                return new PlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new PlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages, environmentVariablesFactory);
             
             if (type == typeof(ApplyCommand))
-                return new ApplyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new ApplyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages, environmentVariablesFactory);
 
             if (type == typeof(DestroyCommand))
-                return new DestroyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new DestroyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages, environmentVariablesFactory);
 
             if (type == typeof(DestroyPlanCommand))
-                return new DestroyPlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new DestroyPlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages, environmentVariablesFactory);
             
             throw new ArgumentException();
         }

@@ -1,5 +1,6 @@
 ﻿using Calamari.Commands.Support;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -10,13 +11,15 @@ namespace Calamari.Terraform
     public class DestroyPlanCommand : PlanCommand
     {
         public DestroyPlanCommand(
-            ILog log, 
-            IVariables variables, 
-            ICalamariFileSystem fileSystem, 
-            ICommandLineRunner commandLineRunner, 
+            ILog log,
+            IVariables variables,
+            ICalamariFileSystem fileSystem,
+            ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage) 
-            : base(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackage)
+            IExtractPackage extractPackage,
+            IEnvironmentVariablesFactory environmentVariablesFactory
+        )
+            : base(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackage, environmentVariablesFactory)
         {
         }
 
