@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Contracts.Services;
 using Calamari.Deployment;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
@@ -10,23 +11,28 @@ using Calamari.Util;
 
 namespace Calamari.Terraform
 {
-    class TerraformCliExecutor : IDisposable
+    public class TerraformCliExecutor : IDisposable
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly RunningDeployment deployment;
+        readonly IProxyEnvironmentVariablesGenerator proxyEnvironmentVariablesGenerator;
         readonly IVariables variables;
         readonly Dictionary<string, string> environmentVariables;
         Dictionary<string, string> defaultEnvironmentVariables;
         readonly string templateDirectory;
         readonly string logPath;
 
+        public delegate TerraformCliExecutor Factory(RunningDeployment deployment,
+            Dictionary<string, string> environmentVariables);
+        
         public TerraformCliExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             RunningDeployment deployment,
+            IProxyEnvironmentVariablesGenerator proxyEnvironmentVariablesGenerator,
             Dictionary<string, string> environmentVariables
         )
         {
@@ -34,6 +40,7 @@ namespace Calamari.Terraform
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.deployment = deployment;
+            this.proxyEnvironmentVariablesGenerator = proxyEnvironmentVariablesGenerator;
             this.variables = deployment.Variables;
             this.environmentVariables = environmentVariables;
             this.logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
@@ -199,7 +206,7 @@ namespace Calamari.Terraform
 
         void InitializeTerraformEnvironmentVariables()
         {
-            defaultEnvironmentVariables = new Dictionary<string, string>(); // TODO: ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
+            defaultEnvironmentVariables = proxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value);
 
             defaultEnvironmentVariables.Add("TF_IN_AUTOMATION", "1");
             defaultEnvironmentVariables.Add("TF_LOG", "TRACE");

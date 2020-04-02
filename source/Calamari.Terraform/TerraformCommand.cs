@@ -24,8 +24,7 @@ namespace Calamari.Terraform
             IVariables variables, 
             ICalamariFileSystem fileSystem, 
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage
-            )
+            IExtractPackage extractPackage)
         {
             this.log = log;
             this.variables = variables;

@@ -8,7 +8,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Calamari.Commands;
-using Calamari.Deployment;
+using Calamari.Contracts;
+using Calamari.Contracts.Services;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
@@ -23,6 +24,7 @@ using Calamari.Util.Environments;
 using Calamari.Variables;
 using Calamari.Plumbing;
 using NuGet;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari
 {
@@ -96,6 +98,8 @@ namespace Calamari
             builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
+            builder.RegisterType<ProxyEnvironmentVariablesGeneratorWrapper>().As<IProxyEnvironmentVariablesGenerator>()
+                .SingleInstance();
 
 
             var assemblies = GetAllAssembliesToRegister(options).ToArray();
@@ -115,6 +119,8 @@ namespace Calamari
                 .AssignableTo<ICommand>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .As<ICommand>();
+
+            builder.RegisterAssemblyModules(assemblies);
 
             return builder;
         }

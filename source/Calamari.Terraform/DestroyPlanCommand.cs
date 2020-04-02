@@ -12,11 +12,11 @@ namespace Calamari.Terraform
         public DestroyPlanCommand(
             ILog log, 
             IVariables variables, 
-            ICalamariFileSystem fileSystem, 
-            ICommandLineRunner commandLineRunner, 
+            ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage) 
-            : base(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackage)
+            IExtractPackage extractPackage,
+            TerraformCliExecutor.Factory terraformCliExecutorFactory) 
+            : base(log, variables, fileSystem, substituteInFiles, extractPackage, terraformCliExecutorFactory)
         {
         }
 
