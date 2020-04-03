@@ -17,6 +17,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
+      <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
