@@ -8,6 +8,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
+using SpecialVariables = Calamari.Contracts.SpecialVariables;
 
 namespace Calamari.Terraform
 {

@@ -9,7 +9,6 @@ namespace Calamari.Commands.Support
     /// </summary>
     public interface ICommand
     {
-        IOptionSet Options { get; set; }
         int Execute(string[] commandLineArguments);
     }
     

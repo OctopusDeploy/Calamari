@@ -10,7 +10,7 @@
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
     <PackageReference Include="Autofac" Version="4.8.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>

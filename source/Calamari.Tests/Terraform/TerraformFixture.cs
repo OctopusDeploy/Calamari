@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Calamari.Commands;
 using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Contracts;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -27,6 +27,7 @@ using Octostache;
 using Newtonsoft.Json.Linq;
 using NSubstitute.Core;
 using Octopus.CoreUtilities.Extensions;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Terraform
 {
@@ -399,21 +400,33 @@ namespace Calamari.Tests.Terraform
         ICommand CreateInstance(Type type, IVariables variables, ILog log)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var commandLineRunner = new CommandLineRunner(ConsoleLog.Instance, variables);
             var substituteInFiles = new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables);
+            var commandLineRunner = new CommandLineRunner(ConsoleLog.Instance, variables);
             var extractPackages = new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log);
-
+            
             if (type == typeof(PlanCommand))
-                return new PlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new PlanCommand(log, variables, fileSystem, substituteInFiles, extractPackages,
+                    (deployment, environmentVariables) => 
+                        new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, 
+                            new EnvironmentVariablesFactory(),  environmentVariables));
             
             if (type == typeof(ApplyCommand))
-                return new ApplyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new ApplyCommand(log, variables, fileSystem, substituteInFiles, extractPackages,
+                    (deployment, environmentVariables) => 
+                        new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, 
+                            new EnvironmentVariablesFactory(),  environmentVariables));
 
             if (type == typeof(DestroyCommand))
-                return new DestroyCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new DestroyCommand(log, variables, fileSystem, substituteInFiles, extractPackages,
+                    (deployment, environmentVariables) => 
+                        new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, 
+                            new EnvironmentVariablesFactory(),  environmentVariables));
 
             if (type == typeof(DestroyPlanCommand))
-                return new DestroyPlanCommand(log, variables, fileSystem, commandLineRunner, substituteInFiles, extractPackages);
+                return new DestroyPlanCommand(log, variables, fileSystem, substituteInFiles, extractPackages,
+                    (deployment, environmentVariables) => 
+                        new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, 
+                            new EnvironmentVariablesFactory(),  environmentVariables));
             
             throw new ArgumentException();
         }
