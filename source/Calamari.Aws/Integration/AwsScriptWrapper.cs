@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Calamari.CloudAccounts;
 using Calamari.Extensions;
 using Calamari.Hooks;
 using Calamari.Integration.Processes;
@@ -26,7 +27,7 @@ namespace Calamari.Aws.Integration
             Dictionary<string, string> environmentVars)
         {
             var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult().EnvironmentVars;
-            awsEnvironmentVars.AddRange(environmentVars);
+            awsEnvironmentVars.Add(environmentVars);
 
             return NextWrapper.ExecuteScript(
                 script, scriptSyntax, 

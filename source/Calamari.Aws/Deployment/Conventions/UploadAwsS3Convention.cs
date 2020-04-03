@@ -13,6 +13,7 @@ using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
+using Calamari.CloudAccounts;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;

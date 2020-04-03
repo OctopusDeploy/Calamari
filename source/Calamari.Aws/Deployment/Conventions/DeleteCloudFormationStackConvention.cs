@@ -6,6 +6,7 @@ using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
+using Calamari.CloudAccounts;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Octopus.CoreUtilities;

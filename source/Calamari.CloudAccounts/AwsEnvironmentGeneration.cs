@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
-using Calamari.Integration.Processes;
 using Newtonsoft.Json;
-using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Aws.Integration
+namespace Calamari.CloudAccounts
 {
     /// <summary>
     /// This service is used to generate the appropriate environment variables required to authentication
@@ -102,9 +99,9 @@ namespace Calamari.Aws.Integration
             }
             catch (AmazonServiceException ex)
             {
-                Log.Error("Error occured while verifying login");
-                Log.Error(ex.Message);
-                Log.Error(ex.StackTrace);
+                log.Error("Error occured while verifying login");
+                log.Error(ex.Message);
+                log.Error(ex.StackTrace);
                 // Any exception is considered to be a failed login
                 return false;
             }
