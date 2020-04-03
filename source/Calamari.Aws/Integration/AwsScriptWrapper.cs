@@ -27,7 +27,7 @@ namespace Calamari.Aws.Integration
             Dictionary<string, string> environmentVars)
         {
             var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult().EnvironmentVars;
-            awsEnvironmentVars.Add(environmentVars);
+            awsEnvironmentVars.AddRange(environmentVars);
 
             return NextWrapper.ExecuteScript(
                 script, scriptSyntax, 
