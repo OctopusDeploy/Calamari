@@ -11,6 +11,7 @@ using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
+using Calamari.CloudAccounts;
 using Calamari.Deployment;
 using Calamari.Util;
 using Octopus.CoreUtilities;

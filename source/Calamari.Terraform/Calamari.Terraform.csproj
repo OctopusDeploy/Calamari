@@ -6,9 +6,6 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Calamari.Aws\Integration\AwsEnvironmentGeneration.cs" Link="AwsEnvironmentGeneration.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
@@ -16,6 +13,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
   </ItemGroup>
 </Project>
