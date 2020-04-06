@@ -4,6 +4,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Commands.Support;
+using Calamari.Common;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -31,7 +33,7 @@ namespace Calamari.Variables
             ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
 
             AddEnvironmentVariables(variables);
-            variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
+            variables.Set(TentacleVariables.Agent.InstanceName, "#{env:TentacleInstanceName}");
             ReadAdditionalVariablesFromFile(variables);
             DeploymentJournalVariableContributor.Contribute(fileSystem, variables);
             
@@ -102,7 +104,7 @@ namespace Calamari.Variables
         void ReadAdditionalVariablesFromFile(CalamariVariables variables)
         {
             var path = variables.Get(SpecialVariables.AdditionalVariablesPath)
-                       ?? variables.Get(SpecialVariables.Environment.Prefix + SpecialVariables.AdditionalVariablesPath);
+                       ?? variables.Get(Common.Variables.EnvironmentVariables.Prefix + SpecialVariables.AdditionalVariablesPath);
 
             string BuildExceptionMessage(string reason)
                 => $"Could not read additional variables from JSON file at '{path}'. " +

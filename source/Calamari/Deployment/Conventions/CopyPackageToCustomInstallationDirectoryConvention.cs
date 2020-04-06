@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Deployment.Conventions
@@ -18,15 +19,15 @@ namespace Calamari.Deployment.Conventions
         public void Install(RunningDeployment deployment)
         {
             string errorString;
-            var customInstallationDirectory = deployment.Variables.Get(SpecialVariables.Package.CustomInstallationDirectory, out errorString);
-            var sourceDirectory = deployment.Variables.Get(SpecialVariables.OriginalPackageDirectoryPath);
+            var customInstallationDirectory = deployment.Variables.Get(PackageVariables.CustomInstallationDirectory, out errorString);
+            var sourceDirectory = deployment.Variables.Get(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath);
 
             if (string.IsNullOrWhiteSpace(customInstallationDirectory))
             {
                 Log.Verbose("The package has been installed to: " + sourceDirectory);
                 Log.Verbose("If you would like the package to be installed to an alternative location, please use the 'Custom installation directory' feature");
                 // If the variable was not set then we set it, as it makes it simpler for anything to depend on it from this point on
-                deployment.Variables.Set(SpecialVariables.Package.CustomInstallationDirectory,
+                deployment.Variables.Set(PackageVariables.CustomInstallationDirectory,
                     sourceDirectory);
 
                 return;
@@ -56,10 +57,10 @@ namespace Calamari.Deployment.Conventions
             {
                 // Purge if requested
                 if (deployment.Variables.GetFlag(
-                    SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
+                    PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
                 {
                     Log.Info("Purging the directory '{0}'", customInstallationDirectory);
-                    var purgeExlusions = deployment.Variables.GetPaths(SpecialVariables.Package.CustomInstallationDirectoryPurgeExclusions).ToArray();
+                    var purgeExlusions = deployment.Variables.GetPaths(PackageVariables.CustomInstallationDirectoryPurgeExclusions).ToArray();
                     if (purgeExlusions.Any())
                     {
                         Log.Info("Leaving files and directories that match any of: '{0}'", string.Join(", ", purgeExlusions));
@@ -75,9 +76,9 @@ namespace Calamari.Deployment.Conventions
                 // From this point on, the current directory will be the custom-directory
                 deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
 
-                Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
-                Log.SetOutputVariable(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
-                Log.SetOutputVariable(SpecialVariables.Package.Output.CopiedFileCount, count.ToString(), deployment.Variables);
+                Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
+                Log.SetOutputVariable(PackageVariables.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
+                Log.SetOutputVariable(PackageVariables.Output.CopiedFileCount, count.ToString(), deployment.Variables);
             }
             catch (UnauthorizedAccessException uae) when (uae.Message.StartsWith("Access to the path"))
             {

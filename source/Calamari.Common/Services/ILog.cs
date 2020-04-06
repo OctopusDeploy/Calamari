@@ -1,5 +1,3 @@
-using Octopus.Versioning;
-
 namespace Calamari
 {
     public interface ILog
