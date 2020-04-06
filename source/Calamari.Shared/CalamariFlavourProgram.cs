@@ -1,11 +1,10 @@
-﻿using Autofac;
-using Calamari.Commands.Support;
-using Calamari.Integration.Proxies;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Autofac;
 using Calamari.Commands;
+using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -15,39 +14,25 @@ using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Proxies;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
-using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using Octodiff;
 
 namespace Calamari
 {
-    public class Program
+    public abstract class CalamariFlavourProgram
     {
         readonly ILog log;
 
-        protected Program(ILog log)
+        protected CalamariFlavourProgram(ILog log)
         {
             this.log = log;
         }
         
-        public static int Main(string[] args)
-        {
-            try
-            {
-                SecurityProtocols.EnableAllSecurityProtocols();
-
-                var options = CommonOptions.Parse(args);
-                return new Program(ConsoleLog.Instance).Run(options);
-            }
-            catch (Exception ex)
-            {
-                return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
-            }
-        }
-
-        internal int Run(CommonOptions options)
+        protected int Run(CommonOptions options)
         {
             log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
 
