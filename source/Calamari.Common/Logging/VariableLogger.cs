@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 
 namespace Calamari.Variables
