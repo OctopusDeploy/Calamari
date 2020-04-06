@@ -20,7 +20,6 @@ using Calamari.Integration.Substitutions;
 using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
-using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari
 {
@@ -65,7 +64,7 @@ namespace Calamari
             {
                 container.Resolve<VariableLogger>().LogVariables();
 
-                var command = container.Resolve<Calamari.Commands.Support.ICommand[]>();
+                var command = container.Resolve<ICommand[]>();
                 if (command.Length == 0)
                     throw new CommandException($"Could not find the command {options.Command}");
                 if (command.Length > 1)

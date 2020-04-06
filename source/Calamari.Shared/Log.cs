@@ -2,6 +2,8 @@
 using System.Globalization;
 using System.Text;
 using Calamari.Integration.Processes;
+using Octopus.Versioning;
+using Octostache;
 
 namespace Calamari
 {

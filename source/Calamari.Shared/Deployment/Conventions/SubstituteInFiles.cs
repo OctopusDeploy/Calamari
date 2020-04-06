@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 
@@ -40,7 +39,7 @@ namespace Calamari.Deployment.Conventions
 
                 if (!matchingFiles.Any())
                 {
-                    if (deployment.Variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
+                    if (deployment.Variables.GetFlag(SpecialVariables.Package.EnableNoMatchWarning, true))
                     {
                         Log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
                     }

@@ -1,6 +1,5 @@
 using System;
 using Calamari.Commands.Support;
-using Calamari.Common;
 using Calamari.Plumbing;
 
 namespace Calamari.Terraform

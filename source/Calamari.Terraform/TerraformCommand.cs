@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
-using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
@@ -38,9 +37,9 @@ namespace Calamari.Terraform
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, false);
             
-            var isEnableNoMatchWarningSet = variables.IsSet(PackageVariables.EnableNoMatchWarning);
+            var isEnableNoMatchWarningSet = variables.IsSet(SpecialVariables.Package.EnableNoMatchWarning);
             if (!isEnableNoMatchWarningSet && !string.IsNullOrEmpty(GetAdditionalFileSubstitutions()))
-                variables.Add(PackageVariables.EnableNoMatchWarning, "true");
+                variables.Add(SpecialVariables.Package.EnableNoMatchWarning, "true");
             
             var runningDeployment = new RunningDeployment(pathToPrimaryPackage, variables);
             
@@ -116,8 +115,8 @@ namespace Calamari.Terraform
             }
 
             var environmentName = AzureEnvironment(variables.Get(AzureVariables.Environment));
-            
-            var account = variables.Get(AzureVariables.AccountVariable)?.Trim();
+
+            var account = variables.Get(SpecialVariables.Action.Azure.AccountVariable)?.Trim();
             var subscriptionId = variables.Get($"{account}.SubscriptionNumber")?.Trim() ?? variables.Get(AzureVariables.SubscriptionId)?.Trim();
             var clientId = variables.Get($"{account}.Client")?.Trim() ?? variables.Get(AzureVariables.ClientId)?.Trim();
             var clientSecret = variables.Get($"{account}.Password")?.Trim() ?? variables.Get(AzureVariables.Password)?.Trim();

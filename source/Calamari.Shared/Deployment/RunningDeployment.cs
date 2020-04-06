@@ -1,5 +1,4 @@
 ﻿using System;
-using Calamari.Common.Variables;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment
@@ -37,7 +36,7 @@ namespace Calamari.Deployment
         {
             get
             {
-                var custom = Variables.Get(PackageVariables.CustomInstallationDirectory);
+                var custom = Variables.Get(SpecialVariables.Package.CustomInstallationDirectory);
                 return string.IsNullOrWhiteSpace(custom) ? StagingDirectory : custom;
             }
         }

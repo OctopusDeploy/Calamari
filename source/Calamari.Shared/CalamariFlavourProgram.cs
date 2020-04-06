@@ -3,13 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Autofac;
-using Autofac.Core;
-using Autofac.Core.Registration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
-using Calamari.Common;
-using Calamari.Common.Extensions;
-using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -39,7 +34,7 @@ namespace Calamari
         
         protected int Run(CommonOptions options)
         {
-            log.Verbose($"Calamari Version: {typeof(CalamariFlavourProgram).Assembly.GetInformationalVersion()}");
+            log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
 
             if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
                 return 0;
@@ -54,15 +49,13 @@ namespace Calamari
             {
                 container.Resolve<VariableLogger>().LogVariables();
 
-                try
-                {
-                    var command = container.ResolveNamed<ICommand>(options.Command);
-                    return command.Execute();
-                }
-                catch (Exception e) when (e is ComponentNotRegisteredException || e is DependencyResolutionException) 
-                {
+                var command = container.Resolve<ICommand[]>();
+                if (command.Length == 0)
                     throw new CommandException($"Could not find the command {options.Command}");
-                }
+                if (command.Length > 1)
+                    throw new CommandException($"Multiple commands found with the name {options.Command}");
+
+                return command[0].Execute(options.RemainingArguments.ToArray());
             }
         }
 

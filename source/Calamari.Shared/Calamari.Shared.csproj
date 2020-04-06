@@ -122,12 +122,4 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Integration\Proxies" />
-    <Folder Include="Util\Environments" />
-    <Folder Include="Variables" />
-  </ItemGroup>
 </Project>

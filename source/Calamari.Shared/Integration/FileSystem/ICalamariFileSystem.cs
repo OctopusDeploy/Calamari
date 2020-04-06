@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using Calamari.Integration.Retry;
 
 namespace Calamari.Integration.FileSystem
 {
