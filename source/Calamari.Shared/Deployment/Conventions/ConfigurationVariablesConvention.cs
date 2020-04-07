@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.FileSystem;
 
@@ -46,7 +47,7 @@ namespace Calamari.Deployment.Conventions
         {
             var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
 
-            var additional = deployment.Variables.GetStrings(SpecialVariables.Action.AdditionalPaths)
+            var additional = deployment.Variables.GetStrings(ActionVariables.AdditionalPaths)
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .SelectMany(p => fileSystem.EnumerateFilesRecursively(p, "*.config"));
 

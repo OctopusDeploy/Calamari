@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 
@@ -27,7 +28,7 @@ namespace Calamari.Deployment.Conventions
             if (!string.IsNullOrWhiteSpace(packagePathContainingScript))
             {
                 ExtractPackage(packagePathContainingScript, deployment.CurrentDirectory);
-                deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
+                deployment.Variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
             }
             
             // Stage any referenced packages (i.e. packages that don't contain the script) 
@@ -40,7 +41,7 @@ namespace Calamari.Deployment.Conventions
             var variables = deployment.Variables;
             
             // No need to check for "default" package since it gets extracted in the current directory in previous step.
-            var packageReferenceNames = variables.GetIndexes(SpecialVariables.Packages.PackageCollection)
+            var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection)
                 .Where(i => !string.IsNullOrEmpty(i));
 
             foreach (var packageReferenceName in packageReferenceNames)
@@ -48,7 +49,7 @@ namespace Calamari.Deployment.Conventions
                 Log.Verbose($"Considering '{packageReferenceName}' for extraction");
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 
-                var packageOriginalPath = variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName));
+                var packageOriginalPath = variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName));
                 
                 if (string.IsNullOrWhiteSpace(packageOriginalPath))
                 {
@@ -56,7 +57,7 @@ namespace Calamari.Deployment.Conventions
                     continue;
                 }
                 
-                packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName)));
+                packageOriginalPath = Path.GetFullPath(variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName)));
 
                 // In the case of container images, the original path is not a file-path.  We won't try and extract or move it.
                 if (!fileSystem.FileExists(packageOriginalPath))

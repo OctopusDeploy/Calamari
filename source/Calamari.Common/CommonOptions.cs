@@ -53,17 +53,6 @@ namespace Calamari.Common
             return GetArgumentValue(argumentName, args, index);
         }
 
-        static string GetArgumentValue(string argumentName, string[] args, int index)
-        {
-            if (args.Length - 1 == index || args[index + 1].StartsWith("-"))
-            {
-                throw new ApplicationException(
-                    $"Argument {argumentName} value not provided. Please use two double quotes to denote an empty string");
-            }
-            
-            return args[index + 1];
-        }
-
         static IEnumerable<string> ParseArguments(string argumentName, string[] args)
         {
             var arguments = new List<string>();
@@ -79,6 +68,17 @@ namespace Calamari.Common
             }
 
             return arguments;
+        }
+        
+        static string GetArgumentValue(string argumentName, string[] args, int index)
+        {
+            if (args.Length - 1 == index || args[index + 1].StartsWith("-"))
+            {
+                throw new ApplicationException(
+                    $"Argument {argumentName} value not provided. Please use two double quotes to denote an empty string");
+            }
+            
+            return args[index + 1];
         }
 
         public class Variables

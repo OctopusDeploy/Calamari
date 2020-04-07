@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Util;
@@ -28,7 +29,7 @@ namespace Calamari.Deployment.Features.Java
         /// </summary>
         public void Run(string mainClass, Dictionary<string, string> environmentVariables)
         {
-            var javaLib = variables.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar, "");
+            var javaLib = variables.Get(JavaVariables.JavaLibraryEnvVar, "");
             var result = commandLineRunner.Execute(
                 new CommandLineInvocation(
                     JavaRuntime.CmdPath,

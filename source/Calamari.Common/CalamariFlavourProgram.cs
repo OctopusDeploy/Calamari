@@ -24,7 +24,6 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Util.Environments;
 using Calamari.Variables;
-using Octodiff;
 
 namespace Calamari
 {
@@ -110,10 +109,8 @@ namespace Calamari
 
         static IEnumerable<Assembly> GetAllAssembliesToRegister(CommonOptions options)
         {
-            yield return typeof(Program).Assembly; // Calamari
+            yield return typeof(CalamariFlavourProgram).Assembly; // Calamari
             yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
-            foreach (var extension in options.Extensions)
-                yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
         }
     }
 }

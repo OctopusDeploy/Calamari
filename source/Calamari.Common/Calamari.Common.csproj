@@ -7,13 +7,45 @@
         <TargetFramework>netstandard2.0</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
+        <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS</DefineConstants>
+        <PlatformTarget>anycpu</PlatformTarget>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
+        <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS</DefineConstants>
+        <PlatformTarget>anycpu</PlatformTarget>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+        <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
         <Reference Include="System.Security" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="5.1.2" />
+      <PackageReference Include="NuGet.DependencyResolver" Version="3.5.0" />
+      <PackageReference Include="NuGet.Packaging" Version="3.5.0" />
+      <PackageReference Include="NuGet.Protocol.Core.Types" Version="3.5.0" />
       <PackageReference Include="Octopus.CoreUtilities" Version="1.1.2" />
+      <PackageReference Include="Octopus.Versioning" Version="4.1.3" />
       <PackageReference Include="Octostache" Version="2.7.0" />
+      <PackageReference Include="Polly" Version="5.4.0" />
+      <PackageReference Include="SharpCompress" Version="0.24.0" />
+      <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
+      <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
+      <PackageReference Include="System.Threading.AccessControl" Version="4.3.0" />
+      <PackageReference Include="YamlDotNet" Version="8.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
+      <EmbeddedResource Include="Integration\Scripting\FSharp\Bootstrap.fsx" />
+      <EmbeddedResource Include="Integration\Scripting\Python\Configuration.py" />
+      <EmbeddedResource Include="Integration\Scripting\Python\InstallDependencies.py" />
+      <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
+      <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
+      <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     </ItemGroup>
 </Project>

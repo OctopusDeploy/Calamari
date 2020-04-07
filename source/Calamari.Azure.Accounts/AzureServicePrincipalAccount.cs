@@ -1,6 +1,4 @@
 ﻿using Calamari.Azure.Accounts.Integration;
-using Calamari.Deployment;
-using Octostache;
 
 namespace Calamari.Azure.Accounts
 {
@@ -18,6 +16,7 @@ namespace Calamari.Azure.Accounts
             ActiveDirectoryEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
         }
 
+        public string WhereHasMyStringGone { get; set; }
         public string SubscriptionNumber { get; set; }
 
         public string ClientId { get; set; }

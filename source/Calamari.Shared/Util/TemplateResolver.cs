@@ -5,6 +5,7 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Octopus.CoreUtilities;
 using Octostache;
+using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari.Util
 {

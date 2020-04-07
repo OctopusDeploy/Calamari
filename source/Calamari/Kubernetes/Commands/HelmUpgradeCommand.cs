@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -104,7 +105,7 @@ namespace Calamari.Kubernetes.Commands
         
         private IEnumerable<string> FileTargetFactory()
         {
-            var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
+            var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);

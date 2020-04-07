@@ -26,5 +26,10 @@ namespace Calamari.Common.Variables
             return variableName.StartsWith("Octopus.Script.Module[");
         }
         
+        public static bool IsExcludedFromLocalVariables(string name)
+        {
+            return name.Contains("[");
+        }
+        
     }
 }

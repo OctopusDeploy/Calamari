@@ -16,6 +16,7 @@ using Calamari.Variables;
 using NSubstitute;
 using NSubstitute.Core;
 using NUnit.Framework;
+using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {

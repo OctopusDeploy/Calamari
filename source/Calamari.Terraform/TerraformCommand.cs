@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
+using Calamari.Common.Extensions;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -34,7 +35,7 @@ namespace Calamari.Terraform
             this.extractPackage = extractPackage;
         }
 
-        public int Execute(string[] args)
+        public int Execute()
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, false);
             
