@@ -58,7 +58,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
         static string BuildEnvironmentSpecificFallbackFileName(RunningDeployment deployment)
         {
             return string.Format(EnvironmentFallbackFileName,
-                deployment.Variables.Get(SpecialVariables.Environment.Name));
+                deployment.Variables.Get(Common.Variables.EnvironmentVariables.Name));
         }
     }
 }

@@ -86,7 +86,7 @@ namespace Calamari
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
 
 
-            var assemblies = GetAllAssembliesToRegister(options).ToArray();
+            var assemblies = GetAllAssembliesToRegister().ToArray();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IScriptWrapper>()
@@ -106,11 +106,11 @@ namespace Calamari
 
             return builder;
         }
-
-        static IEnumerable<Assembly> GetAllAssembliesToRegister(CommonOptions options)
+        
+        IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
-            yield return typeof(CalamariFlavourProgram).Assembly; // Calamari
-            yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
+            yield return GetType().Assembly; // Calamari Flavour
+            yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
         }
     }
 }

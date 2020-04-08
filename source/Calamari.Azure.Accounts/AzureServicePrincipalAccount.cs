@@ -1,4 +1,6 @@
 ﻿using Calamari.Azure.Accounts.Integration;
+using Calamari.CloudAccounts;
+using Calamari.Common.Variables;
 
 namespace Calamari.Azure.Accounts
 {
@@ -6,14 +8,14 @@ namespace Calamari.Azure.Accounts
     {
         public AzureServicePrincipalAccount(IVariables variables)
         {
-            SubscriptionNumber = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
-            ClientId = variables.Get(SpecialVariables.Action.Azure.ClientId);
-            TenantId = variables.Get(SpecialVariables.Action.Azure.TenantId);
-            Password = variables.Get(SpecialVariables.Action.Azure.Password);
+            SubscriptionNumber = variables.Get(AzureAccountVariables.SubscriptionId);
+            ClientId = variables.Get(AzureAccountVariables.ClientId);
+            TenantId = variables.Get(AzureAccountVariables.TenantId);
+            Password = variables.Get(AzureAccountVariables.Password);
 
-            AzureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+            AzureEnvironment = variables.Get(AzureAccountVariables.Environment);
+            ResourceManagementEndpointBaseUri = variables.Get(AzureVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+            ActiveDirectoryEndpointBaseUri = variables.Get(AzureVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
         }
 
         public string WhereHasMyStringGone { get; set; }

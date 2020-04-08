@@ -116,13 +116,13 @@ namespace Calamari.Terraform
                 }
             }
 
-            var environmentName = AzureEnvironment(variables.Get(AzureVariables.Environment));
+            var environmentName = AzureEnvironment(variables.Get(AzureAccountVariables.Environment));
             
-            var account = variables.Get(AzureVariables.AccountVariable)?.Trim();
-            var subscriptionId = variables.Get($"{account}.SubscriptionNumber")?.Trim() ?? variables.Get(AzureVariables.SubscriptionId)?.Trim();
-            var clientId = variables.Get($"{account}.Client")?.Trim() ?? variables.Get(AzureVariables.ClientId)?.Trim();
-            var clientSecret = variables.Get($"{account}.Password")?.Trim() ?? variables.Get(AzureVariables.Password)?.Trim();
-            var tenantId = variables.Get($"{account}.TenantId")?.Trim() ?? variables.Get(AzureVariables.TenantId)?.Trim();
+            var account = variables.Get(AzureAccountVariables.AccountVariable)?.Trim();
+            var subscriptionId = variables.Get($"{account}.SubscriptionNumber")?.Trim() ?? variables.Get(AzureAccountVariables.SubscriptionId)?.Trim();
+            var clientId = variables.Get($"{account}.Client")?.Trim() ?? variables.Get(AzureAccountVariables.ClientId)?.Trim();
+            var clientSecret = variables.Get($"{account}.Password")?.Trim() ?? variables.Get(AzureAccountVariables.Password)?.Trim();
+            var tenantId = variables.Get($"{account}.TenantId")?.Trim() ?? variables.Get(AzureAccountVariables.TenantId)?.Trim();
             
             var env = new Dictionary<string, string>
             {

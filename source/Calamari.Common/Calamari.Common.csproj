@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
         <TargetFrameworks>net452;netstandard2.0;net40</TargetFrameworks>
@@ -21,10 +21,15 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
         <Reference Include="System.Security" />
+        <Reference Include="System.Net" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+        <Reference Include="System.Web" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Autofac" Version="5.1.2" />
+      <PackageReference Include="Autofac" Version="4.8.0" />
       <PackageReference Include="NuGet.DependencyResolver" Version="3.5.0" />
       <PackageReference Include="NuGet.Packaging" Version="3.5.0" />
       <PackageReference Include="NuGet.Protocol.Core.Types" Version="3.5.0" />

@@ -15,6 +15,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Util;
+using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari.Azure.Commands
 {
