@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -28,8 +29,8 @@ namespace Calamari.Tests.Fixtures.Conventions
 
 
             var variables = new CalamariVariables();
-            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, glob);
-            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(PackageVariables.SubstituteInFilesTargets, glob);
+            variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
 
             var deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
             {

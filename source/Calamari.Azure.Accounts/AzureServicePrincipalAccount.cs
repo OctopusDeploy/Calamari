@@ -14,8 +14,8 @@ namespace Calamari.Azure.Accounts
             Password = variables.Get(AzureAccountVariables.Password);
 
             AzureEnvironment = variables.Get(AzureAccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AzureVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(AzureVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+            ResourceManagementEndpointBaseUri = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+            ActiveDirectoryEndpointBaseUri = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
         }
 
         public string WhereHasMyStringGone { get; set; }

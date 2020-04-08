@@ -16,9 +16,9 @@ namespace Calamari.Tests.Fixtures.Variables
         public void ShouldLogVariables()
         {
             var variables = new CalamariVariables();
-            variables.Set(SpecialVariables.PrintVariables, true.ToString());
-            variables.Set(SpecialVariables.PrintEvaluatedVariables, true.ToString());
-            variables.Set(SpecialVariables.Environment.Name, "Production");
+            variables.Set(Common.Variables.SpecialVariables.PrintVariables, true.ToString());
+            variables.Set(Common.Variables.SpecialVariables.PrintEvaluatedVariables, true.ToString());
+            variables.Set(Common.Variables.EnvironmentVariables.Name, "Production");
             const string variableName = "foo";
             const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
             variables.Set(variableName, rawVariableValue);
@@ -31,12 +31,12 @@ namespace Calamari.Tests.Fixtures.Variables
             var messagesAsString = string.Join(Environment.NewLine, program.Log.Messages.Select(m => m.FormattedMessage));
 
             //Assert raw variables were output
-            messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == $"{SpecialVariables.PrintVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
+            messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == $"{Common.Variables.SpecialVariables.PrintVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
             messagesAsString.Should().Contain("The following variables are available:");
             messagesAsString.Should().Contain($"[{variableName}] = '{rawVariableValue}'");
  
             //Assert evaluated variables were output
-            messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == $"{SpecialVariables.PrintEvaluatedVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
+            messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == $"{Common.Variables.SpecialVariables.PrintEvaluatedVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
             messagesAsString.Should().Contain("The following evaluated variables are available:");
             messagesAsString.Should().Contain($"[{variableName}] = 'The environment is Production'");
         }

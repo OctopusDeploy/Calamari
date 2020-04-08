@@ -5,12 +5,10 @@ using System.Reflection;
 using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
-using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common;
 using Calamari.Common.Extensions;
 using Calamari.Common.Variables;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
@@ -24,6 +22,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using NuGet;
 
 namespace Calamari
 {
@@ -35,7 +34,7 @@ namespace Calamari
         {
             this.log = log;
         }
-        
+
         protected int Run(CommonOptions options)
         {
             log.Verbose($"Calamari Version: {typeof(CalamariFlavourProgram).Assembly.GetInformationalVersion()}");
@@ -46,7 +45,8 @@ namespace Calamari
             var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
             log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
-            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
+            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory,
+                Environment.CurrentDirectory);
             ProxyInitializer.InitializeDefaultProxy();
 
             using (var container = BuildContainer(options).Build())
@@ -58,7 +58,7 @@ namespace Calamari
                     var command = container.ResolveNamed<ICommand>(options.Command);
                     return command.Execute();
                 }
-                catch (Exception e) when (e is ComponentNotRegisteredException || e is DependencyResolutionException) 
+                catch (Exception e) when (e is ComponentNotRegisteredException || e is DependencyResolutionException)
                 {
                     throw new CommandException($"Could not find the command {options.Command}");
                 }
@@ -101,12 +101,13 @@ namespace Calamari
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommand>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
+                    .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .As<ICommand>();
 
             return builder;
         }
-        
+
         IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
             yield return GetType().Assembly; // Calamari Flavour

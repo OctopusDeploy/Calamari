@@ -1,11 +1,13 @@
 using System;
 using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using Octostache;
+using VariablesFactory = Calamari.Variables.VariablesFactory;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -29,7 +31,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
 
             Variables = new VariablesFactory(FileSystem).Create(new CommonOptions("test"));
-            Variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, StagingDirectory);
+            Variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, StagingDirectory);
             Variables.Set("PreDeployGreeting", "Bonjour");
         }
 

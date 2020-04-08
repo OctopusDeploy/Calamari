@@ -7,7 +7,7 @@ using Calamari.Integration.Processes.Semaphores;
 
 namespace Calamari.Variables
 {
-    static class DeploymentJournalVariableContributor
+    public static class DeploymentJournalVariableContributor
     {
         public static void Contribute(ICalamariFileSystem fileSystem, IVariables variables)
         {

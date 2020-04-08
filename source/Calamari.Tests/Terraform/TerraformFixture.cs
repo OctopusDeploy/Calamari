@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.Commands;
-using Calamari.Commands.Support;
+using Calamari.Common.Extensions;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -370,7 +370,7 @@ namespace Calamari.Tests.Terraform
             {
                 var variables = new CalamariVariables();
                 variables.Set(TerraformSpecialVariables.Calamari.TerraformCliPath, Path.GetDirectoryName(customTerraformExecutable));
-                variables.Set(SpecialVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
+                variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
                 variables.Set(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable, customTerraformExecutable);
 
                 populateVariables(variables);
@@ -383,7 +383,7 @@ namespace Calamari.Tests.Terraform
                 {
                     var log = new InMemoryLog();
                     var command = CreateInstance(commandType, variables, log);
-                    var result = command.Execute(new string[0]);
+                    var result = command.Execute();
 
                     result.Should().Be(0);
 

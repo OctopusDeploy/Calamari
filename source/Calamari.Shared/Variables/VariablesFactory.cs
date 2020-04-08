@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Calamari;
 using Calamari.Commands.Support;
-using Calamari.Common;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -13,8 +13,11 @@ using Calamari.Util;
 using Calamari.Variables;
 using Newtonsoft.Json;
 using Octostache;
+using CommonOptions = Calamari.Common.CommonOptions;
+using EnvironmentVariables = Calamari.Common.Variables.EnvironmentVariables;
+using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
-namespace Calamari.Common.Variables
+namespace Calamari.Variables
 {
     public class VariablesFactory
     {

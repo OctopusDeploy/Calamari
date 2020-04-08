@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -73,9 +74,9 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var outputResult = Path.Combine(CustomDirectory, Path.GetFileName(nupkgFile.FilePath));
 
-            result.AssertOutputVariable(SpecialVariables.Package.Output.DirectoryPath, Is.EqualTo(CustomDirectory));
-            result.AssertOutputVariable(SpecialVariables.Package.Output.FileName,Is.EqualTo(Path.GetFileName(nupkgFile.FilePath)));
-            result.AssertOutputVariable(SpecialVariables.Package.Output.FilePath, Is.EqualTo(outputResult));
+            result.AssertOutputVariable(PackageVariables.Output.FileName,Is.EqualTo(Path.GetFileName(nupkgFile.FilePath)));
+            result.AssertOutputVariable(PackageVariables.Output.DirectoryPath, Is.EqualTo(CustomDirectory));
+            result.AssertOutputVariable(PackageVariables.Output.FilePath, Is.EqualTo(outputResult));
         }
 
         [Test]
@@ -92,11 +93,11 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             var variables = new VariableDictionary
             {
-                [SpecialVariables.Package.TransferPath] = CustomDirectory,
-                [SpecialVariables.Package.OriginalFileName] = Path.GetFileName(nupkgFile.FilePath),
-                [SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath] = nupkgFile.FilePath,
-                [SpecialVariables.Action.Name] = "MyAction",
-                [SpecialVariables.Machine.Name] = "MyMachine"
+                [PackageVariables.TransferPath] = CustomDirectory,
+                [PackageVariables.OriginalFileName] = Path.GetFileName(nupkgFile.FilePath),
+                [TentacleVariables.CurrentDeployment.PackageFilePath] = nupkgFile.FilePath,
+                [ActionVariables.Name] = "MyAction",
+                [MachineVariables.Name] = "MyMachine"
             };
 
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))

@@ -1,8 +1,9 @@
 using System.IO;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -23,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.CustomDirectory,Octopus.Features.WindowsService";
             var installDir = Path.Combine(CustomDirectory, "A Directory With A Space In It");
-            Variables[SpecialVariables.Package.CustomInstallationDirectory] = installDir;
+            Variables[PackageVariables.CustomInstallationDirectory] = installDir;
 
             RunDeployment();
 
@@ -35,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.CustomDirectory,Octopus.Features.WindowsService";
             var installDir = Path.Combine(CustomDirectory, "A Directory With A Space In It");
-            Variables[SpecialVariables.Package.CustomInstallationDirectory] = installDir;
+            Variables[PackageVariables.CustomInstallationDirectory] = installDir;
             Variables[SpecialVariables.Action.WindowsService.Arguments] = "\"Argument with Space\" ArgumentWithoutSpace";
 
             RunDeployment();

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Calamari.Commands;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
@@ -20,6 +19,7 @@ using Calamari.Integration.Substitutions;
 using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using NuGet;
 using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari
