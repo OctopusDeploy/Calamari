@@ -155,7 +155,7 @@ namespace Calamari.Terraform
         {
             var workspace = variables.Get(TerraformSpecialVariables.Action.Terraform.Workspace);
 
-            if (!String.IsNullOrWhiteSpace(workspace))
+            if (!string.IsNullOrWhiteSpace(workspace))
             {
                 ExecuteCommandInternal(new[] {"workspace list"}, out var results, true).VerifySuccess();
 

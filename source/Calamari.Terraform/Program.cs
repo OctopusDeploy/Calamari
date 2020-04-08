@@ -8,7 +8,7 @@ namespace Calamari.Terraform
     public class Program : CalamariFlavourProgram
     {
 
-        public Program(ILog log) : base(log)
+        Program(ILog log) : base(log)
         {
         }
         
