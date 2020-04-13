@@ -47,7 +47,7 @@ namespace Calamari.Integration.Packages.Download
             var feedHost = GetFeedHost(feedUri);
             PerformPull(username, password, fullImageName, feedHost);
             var (hash, size) = GetImageDetails(fullImageName);
-            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), fullImageName, hash, size);
+            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), string.Empty, hash, size);
         }
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
