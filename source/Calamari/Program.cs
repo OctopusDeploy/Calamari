@@ -1,10 +1,12 @@
 ﻿using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Integration.Proxies;
+using Calamari.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Calamari.Commands;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -17,9 +19,10 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
-using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using Calamari.Plumbing;
+using NuGet;
 
 namespace Calamari
 {
