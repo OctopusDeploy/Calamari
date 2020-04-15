@@ -6,7 +6,11 @@ namespace Calamari.Common.Variables
 {
     public static class ScriptVariables
     {
- 
+        public static readonly string Syntax = "Octopus.Action.Script.Syntax";
+        public static readonly string ScriptBody = "Octopus.Action.Script.ScriptBody";
+        public static readonly string ScriptFileName = "Octopus.Action.Script.ScriptFileName";
+
+        
         public static string GetLibraryScriptModuleName(string variableName)
         {
             return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');

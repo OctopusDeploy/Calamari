@@ -479,7 +479,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variables = new CalamariVariables();
             variables.Set("Octopus.Environment.Name", "Production");
-            variables.Set(SpecialVariables.Action.Script.ScriptFileName, "Deploy.ps1");
+            variables.Set(ScriptVariables.ScriptFileName, "Deploy.ps1");
 
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")

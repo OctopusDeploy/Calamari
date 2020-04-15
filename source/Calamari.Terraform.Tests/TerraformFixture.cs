@@ -5,28 +5,24 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Calamari.Commands;
+using Calamari.CloudAccounts;
 using Calamari.Common.Extensions;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Retry;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Terraform;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
+using Calamari.Util;
 using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
 using Newtonsoft.Json.Linq;
-using NSubstitute.Core;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Tests.Terraform
 {
@@ -250,10 +246,10 @@ namespace Calamari.Tests.Terraform
 
             void PopulateVariables(VariableDictionary _)
             {
-                _.Set(SpecialVariables.Action.Azure.SubscriptionId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
-                _.Set(SpecialVariables.Action.Azure.TenantId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
-                _.Set(SpecialVariables.Action.Azure.ClientId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-                _.Set(SpecialVariables.Action.Azure.Password, ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
+                _.Set(AzureAccountVariables.SubscriptionId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
+                _.Set(AzureAccountVariables.TenantId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
+                _.Set(AzureAccountVariables.ClientId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
+                _.Set(AzureAccountVariables.Password, ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
                 _.Set("app_name", appName);
                 _.Set("random", random);
                 _.Set(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
@@ -375,7 +371,7 @@ namespace Calamari.Tests.Terraform
 
                 populateVariables(variables);
 
-                var terraformFiles = TestEnvironment.GetTestPath("Terraform", folderName);
+                var terraformFiles = TestEnvironment.GetTestPath(folderName);
 
                 Copy(terraformFiles, currentDirectory.DirectoryPath);
 
