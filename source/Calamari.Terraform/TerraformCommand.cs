@@ -34,7 +34,7 @@ namespace Calamari.Terraform
             this.extractPackage = extractPackage;
         }
 
-        public int Execute()
+        public override int Execute()
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, false);
             
