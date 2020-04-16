@@ -166,7 +166,7 @@ Task("Pack")
 		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }
 
-    DotNetCorePack("./source/**/*.Common.csproj", new DotNetCorePackSettings
+    DotNetCorePack("./source/**/*Common.csproj", new DotNetCorePackSettings
     {
         Configuration = configuration,
         OutputDirectory = artifactsDir,
