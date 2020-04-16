@@ -7,7 +7,6 @@ namespace Calamari.Commands.Support
     /// </summary>
     public interface ICommand
     {
-        int Execute(string[] commandLineArguments);
         int Execute();
     }
 }

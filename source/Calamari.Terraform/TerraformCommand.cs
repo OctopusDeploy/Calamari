@@ -11,7 +11,7 @@ using Calamari.Integration.FileSystem;
 
 namespace Calamari.Terraform
 {
-    public abstract class TerraformCommand : Command
+    public abstract class TerraformCommand : ICommand
     {
         readonly ILog log;
         readonly IVariables variables;
@@ -34,7 +34,7 @@ namespace Calamari.Terraform
             this.extractPackage = extractPackage;
         }
 
-        public override int Execute()
+        public int Execute()
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, false);
             

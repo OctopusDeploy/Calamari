@@ -65,7 +65,7 @@ namespace Calamari
             {
                 container.Resolve<VariableLogger>().LogVariables();
 
-                var command = container.Resolve<Calamari.Commands.Support.ICommand[]>();
+                var command = container.Resolve<Calamari.Commands.Support.ICommandWithArgs[]>();
                 if (command.Length == 0)
                     throw new CommandException($"Could not find the command {options.Command}");
                 if (command.Length > 1)
@@ -110,9 +110,9 @@ namespace Calamari
                 .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<ICommand>()
+                .AssignableTo<ICommandWithArgs>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .As<ICommand>();
+                .As<ICommandWithArgs>();
 
             return builder;
         }
