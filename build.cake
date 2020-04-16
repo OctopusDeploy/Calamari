@@ -145,7 +145,7 @@ Task("Pack")
     .Does(() =>
 {
     DoPackage("Calamari", "net40", nugetVersion);
-	//DoPackage("Calamari", "net452", nugetVersion, "Cloud");
+	DoPackage("Calamari", "net452", nugetVersion, "Cloud");
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
@@ -164,6 +164,16 @@ Task("Pack")
 		var zipName = $"Calamari.Tests.netcoreapp3.{rid}.{nugetVersion}.zip";
 		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }
+
+    DotNetCorePack("source/*.Common", new DotNetCorePackSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = artifactsDir,
+        NoBuild = true,
+        IncludeSource = true,
+        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+    });
+
 });
 
 Task("CopyToLocalPackages")
