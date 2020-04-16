@@ -66,6 +66,8 @@ namespace Sashimi.Terraform.ActionHandler
     /// </summary>
     public abstract class TerraformActionHandler : IActionHandler
     {
+        public static readonly CalamariFlavour CalamariTerraform = new CalamariFlavour("Calamari.Terraform");
+
         readonly ICloudTemplateHandlerFactory cloudTemplateHandlerFactory;
         
         public TerraformActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
@@ -85,8 +87,7 @@ namespace Sashimi.Terraform.ActionHandler
 
         public IActionHandlerResult Execute(IActionHanderContext context)
         {
-            var builder = context.CalamariCommand(CalamariFlavour.CalamariTerraform, ToolCommand)
-                .WithArgument("extensions", "Calamari.Terraform");
+            var builder = context.CalamariCommand(CalamariTerraform, ToolCommand);
 
             if (context.DeploymentTargetType.SelectValueOr(targetType => targetType != DeploymentTargetType.Ssh, true))
             {

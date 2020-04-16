@@ -10,6 +10,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="..\..\artifacts\Calamari.Terraform.zip" LinkBase="tools" Pack="true" PackagePath="tools/" />
     <EmbeddedResource Include="**\*.ps1" />
     <EmbeddedResource Include="**\*.sh" />
   </ItemGroup>
