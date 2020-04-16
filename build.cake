@@ -166,14 +166,19 @@ Task("Pack")
 		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }
 
-    DotNetCorePack("./source/**/*Common.csproj", new DotNetCorePackSettings
+    var dotNetCorePackSettings = new DotNetCorePackSettings
     {
         Configuration = configuration,
         OutputDirectory = artifactsDir,
         NoBuild = true,
         IncludeSource = true,
         ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
-    });
+    };
+    var commonProjects = GetFiles("./source/**/*.Common.csproj");
+    foreach(var project in commonProjects)
+    {
+        DotNetCorePack(project.ToString(), dotNetCorePackSettings);
+    }
 
 });
 
