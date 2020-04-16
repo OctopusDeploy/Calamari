@@ -42,6 +42,13 @@ namespace Calamari.Tests.Helpers
 #endif
         }
 
+        protected CommandLine OctoDiff()
+        {
+            var octoDiffExe = OctoDiffCommandLineRunner.FindOctoDiffExecutable();
+            
+            return new CommandLine(octoDiffExe);
+        }
+
         protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
         {
             var args = command.GetRawArgs();
