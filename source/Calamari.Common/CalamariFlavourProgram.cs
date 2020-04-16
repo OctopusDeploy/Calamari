@@ -6,8 +6,6 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Commands.Support;
-using Calamari.Common;
-using Calamari.Common.Extensions;
 using Calamari.Common.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -22,7 +20,6 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Util.Environments;
 using Calamari.Variables;
-using NuGet;
 
 namespace Calamari
 {

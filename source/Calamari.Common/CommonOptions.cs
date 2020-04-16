@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Commands.Support;
 
-namespace Calamari.Common
+namespace Calamari
 {
     public class CommonOptions
     {
@@ -14,6 +14,8 @@ namespace Calamari.Common
         }
 
         public string Command { get; }
+        public List<string> RemainingArguments { get; private set; } = new List<string>();
+        public List<string> Extensions { get; } = new List<string>();
         public Variables InputVariables { get; } = new Variables();
 
         public static CommonOptions Parse(string[] args)
@@ -27,58 +29,17 @@ namespace Calamari.Common
 
             var options = new CommonOptions(command);
 
-            var parameters = new string[args.Length - 1];
-            args.CopyTo(parameters, 1);
+            var set = new OptionSet()
+                .Add("variables=", "Path to a JSON file containing variables.", v => options.InputVariables.VariablesFile = v)
+                .Add("outputVariables=", "Base64 encoded encrypted JSON file containing output variables.", v => options.InputVariables.OutputVariablesFile = v)
+                .Add("outputVariablesPassword=", "Password used to decrypt output-variables", v => options.InputVariables.OutputVariablesPassword = v)
+                .Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => options.InputVariables.SensitiveVariablesFiles.Add(v))
+                .Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => options.InputVariables.SensitiveVariablesPassword = v)
+                .Add("extensions=", "List of Calamari extensions to load.", v => options.Extensions.AddRange(v.Split(',').Where(e => !string.IsNullOrWhiteSpace(e)).Select(e => e.Trim())));
 
-            options.InputVariables.VariablesFile = ParseArgument("variables", parameters);
-            options.InputVariables.OutputVariablesFile = ParseArgument("outputVariables", parameters);
-            options.InputVariables.OutputVariablesPassword = ParseArgument("outputVariablesPassword", parameters);
-            options.InputVariables.SensitiveVariablesFiles.AddRange(ParseArguments("sensitiveVariables", parameters));
-            options.InputVariables.SensitiveVariablesPassword = ParseArgument("sensitiveVariablesPassword", parameters);
+            options.RemainingArguments = set.Parse(args.Skip(1));
 
             return options;
-        }
-
-        static string ParseArgument(string argumentName, string[] args)
-        {
-            var formattedArgumentName = $"-${argumentName}";
-            var argument = args.FirstOrDefault(x => x.StartsWith(formattedArgumentName));
-            if(argument == null)
-            {
-                return string.Empty;
-            }
-
-            var index = Array.IndexOf(args, formattedArgumentName);
-
-            return GetArgumentValue(argumentName, args, index);
-        }
-
-        static IEnumerable<string> ParseArguments(string argumentName, string[] args)
-        {
-            var arguments = new List<string>();
-            var formattedArgumentName = $"-${argumentName}";
-            
-            for (var i = 0; i < args.Length; i += 2)
-            {
-                if (args[i].StartsWith(formattedArgumentName))
-                {
-                    var value = GetArgumentValue(argumentName, args, i);
-                    arguments.Add(value);
-                }
-            }
-
-            return arguments;
-        }
-        
-        static string GetArgumentValue(string argumentName, string[] args, int index)
-        {
-            if (args.Length - 1 == index || args[index + 1].StartsWith("-"))
-            {
-                throw new ApplicationException(
-                    $"Argument {argumentName} value not provided. Please use two double quotes to denote an empty string");
-            }
-            
-            return args[index + 1];
         }
 
         public class Variables

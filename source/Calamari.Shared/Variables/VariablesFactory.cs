@@ -13,7 +13,6 @@ using Calamari.Util;
 using Calamari.Variables;
 using Newtonsoft.Json;
 using Octostache;
-using CommonOptions = Calamari.Common.CommonOptions;
 using EnvironmentVariables = Calamari.Common.Variables.EnvironmentVariables;
 using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 

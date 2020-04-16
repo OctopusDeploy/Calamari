@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
-using Calamari.Common.Extensions;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -12,7 +11,7 @@ using Calamari.Integration.FileSystem;
 
 namespace Calamari.Terraform
 {
-    public abstract class TerraformCommand : ICommand
+    public abstract class TerraformCommand : Command
     {
         readonly ILog log;
         readonly IVariables variables;

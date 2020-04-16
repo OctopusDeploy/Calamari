@@ -1,9 +1,13 @@
 ﻿using System.IO;
 
-namespace Calamari.Common.Extensions
+namespace Calamari.Commands.Support
 {
+    /// <summary>
+    /// A command that requires the command line arguments passed to it. We are transitioning away from this interface  
+    /// </summary>
     public interface ICommand
     {
+        int Execute(string[] commandLineArguments);
         int Execute();
     }
 }

@@ -7,7 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
-using Calamari.Common.Extensions;
+using Calamari.Commands.Support;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;

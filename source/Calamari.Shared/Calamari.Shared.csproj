@@ -118,6 +118,7 @@
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Commands\Support" />
     <Folder Include="Integration\FileSystem" />
     <Folder Include="Integration\Packages\NuGet" />
     <Folder Include="Integration\Retry" />

@@ -63,5 +63,11 @@ namespace Calamari.Tests.Helpers
             callback();
             return 0;
         }
+
+        public int Execute()
+        {
+            callback();
+            return 0;
+        }
     }
 }
