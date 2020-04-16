@@ -20,6 +20,7 @@ using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Util.Environments;
 using Calamari.Variables;
+using NuGet;
 
 namespace Calamari
 {
