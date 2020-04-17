@@ -10,7 +10,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 
-namespace Calamari.Common.Integration.Scripting.FSharp
+namespace Calamari.Common.Features.Scripting.FSharp
 {
     public static class FSharpBootstrapper
     {

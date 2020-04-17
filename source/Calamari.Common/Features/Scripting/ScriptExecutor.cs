@@ -7,7 +7,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Proxies;
 
-namespace Calamari.Common.Integration.Scripting
+namespace Calamari.Common.Features.Scripting
 {
     public abstract class ScriptExecutor : IScriptExecutor
     {

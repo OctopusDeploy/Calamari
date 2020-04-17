@@ -8,7 +8,7 @@ using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Common.Integration.Scripting.WindowsPowerShell
+namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 {
     public class PowerShellScriptExecutor : ScriptExecutor
     {

@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Common.Integration.Scripting;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Common.Integration.Scripting
+namespace Calamari.Common.Features.Scripting
 {
     public interface IScriptExecutor  
     {

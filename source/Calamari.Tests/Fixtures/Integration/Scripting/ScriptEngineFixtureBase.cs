@@ -1,4 +1,4 @@
-using Calamari.Common.Integration.Scripting;
+using Calamari.Common.Features.Scripting;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;

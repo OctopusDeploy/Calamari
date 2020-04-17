@@ -60,17 +60,16 @@
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
-      <EmbeddedResource Include="Integration\Scripting\FSharp\Bootstrap.fsx" />
-      <EmbeddedResource Include="Integration\Scripting\Python\Configuration.py" />
-      <EmbeddedResource Include="Integration\Scripting\Python\InstallDependencies.py" />
-      <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
-      <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
-      <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
+      <Folder Include="Features" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Features" />
-      <Folder Include="Helpers" />
+      <EmbeddedResource Include="Features\Scripting\Bash\Bootstrap.sh" />
+      <EmbeddedResource Include="Features\Scripting\FSharp\Bootstrap.fsx" />
+      <EmbeddedResource Include="Features\Scripting\Python\Configuration.py" />
+      <EmbeddedResource Include="Features\Scripting\Python\InstallDependencies.py" />
+      <EmbeddedResource Include="Features\Scripting\ScriptCS\Bootstrap.csx" />
+      <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\Bootstrap.ps1" />
+      <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     </ItemGroup>
 </Project>

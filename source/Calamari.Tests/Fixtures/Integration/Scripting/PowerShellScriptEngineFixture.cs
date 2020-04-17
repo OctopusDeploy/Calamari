@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using Calamari.Common.Integration.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
 using NUnit.Framework;

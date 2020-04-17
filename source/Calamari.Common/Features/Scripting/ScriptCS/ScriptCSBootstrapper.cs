@@ -10,7 +10,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 
-namespace Calamari.Common.Integration.Scripting.ScriptCS
+namespace Calamari.Common.Features.Scripting.ScriptCS
 {
     public static class ScriptCSBootstrapper
     {

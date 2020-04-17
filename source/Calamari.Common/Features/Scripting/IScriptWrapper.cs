@@ -2,7 +2,7 @@
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 
-namespace Calamari.Common.Integration.Scripting
+namespace Calamari.Common.Features.Scripting
 {
     /// <summary>
     /// This hook is used to wrap the execution of a script with another script.

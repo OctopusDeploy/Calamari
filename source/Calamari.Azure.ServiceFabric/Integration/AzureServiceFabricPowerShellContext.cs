@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Commands.Support;
-using Calamari.Common.Integration.Scripting;
+using Calamari.Common.Features.Scripting;
 using Calamari.Deployment;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;

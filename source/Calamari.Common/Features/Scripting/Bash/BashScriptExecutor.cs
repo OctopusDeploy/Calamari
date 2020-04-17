@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Common.Integration.Scripting.Bash
+namespace Calamari.Common.Features.Scripting.Bash
 {
     public class BashScriptExecutor : ScriptExecutor
     {

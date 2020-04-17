@@ -9,7 +9,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 
-namespace Calamari.Common.Integration.Scripting.Python
+namespace Calamari.Common.Features.Scripting.Python
 {
     public class PythonBootstrapper
     {

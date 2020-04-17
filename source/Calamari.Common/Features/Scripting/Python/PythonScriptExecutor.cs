@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Common.Integration.Scripting.Python
+namespace Calamari.Common.Features.Scripting.Python
 {
     public class PythonScriptExecutor : ScriptExecutor
     {

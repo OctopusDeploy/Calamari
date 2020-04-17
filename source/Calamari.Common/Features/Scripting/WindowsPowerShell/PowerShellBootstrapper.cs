@@ -10,7 +10,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 
-namespace Calamari.Common.Integration.Scripting.WindowsPowerShell
+namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 {
     public class WindowsPowerShellBootstrapper : PowerShellBootstrapper
     {

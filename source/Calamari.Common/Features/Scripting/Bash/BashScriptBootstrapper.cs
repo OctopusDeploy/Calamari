@@ -9,7 +9,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Util;
 
-namespace Calamari.Common.Integration.Scripting.Bash
+namespace Calamari.Common.Features.Scripting.Bash
 {
     public class BashScriptBootstrapper
     {

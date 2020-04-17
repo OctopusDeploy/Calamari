@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Integration.Scripting;
-using Calamari.Common.Integration.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

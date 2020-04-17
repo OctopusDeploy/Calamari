@@ -1,4 +1,4 @@
-namespace Calamari.Common.Integration.Scripting
+namespace Calamari.Common.Features.Scripting
 {
     public class Script
     {

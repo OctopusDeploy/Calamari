@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
-using Calamari.Common.Integration.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;

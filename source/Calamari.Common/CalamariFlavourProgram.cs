@@ -6,7 +6,7 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Commands.Support;
-using Calamari.Common.Integration.Scripting;
+using Calamari.Common.Features.Scripting;
 using Calamari.Common.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;

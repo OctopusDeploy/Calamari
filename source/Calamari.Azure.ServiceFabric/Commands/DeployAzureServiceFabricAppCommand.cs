@@ -4,7 +4,7 @@ using Calamari.Azure.ServiceFabric.Deployment.Conventions;
 using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Commands;
 using Calamari.Commands.Support;
-using Calamari.Common.Integration.Scripting;
+using Calamari.Common.Features.Scripting;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Certificates;
