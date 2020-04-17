@@ -18,6 +18,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
 using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
+using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
 using NuGet;
@@ -33,33 +34,45 @@ namespace Calamari
             this.log = log;
         }
 
-        protected int Run(CommonOptions options)
+        protected int Run(string[] args)
         {
-            log.Verbose($"Calamari Version: {typeof(CalamariFlavourProgram).Assembly.GetInformationalVersion()}");
-
-            if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
-                return 0;
-
-            var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
-            log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
-
-            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory,
-                Environment.CurrentDirectory);
-            ProxyInitializer.InitializeDefaultProxy();
-
-            using (var container = BuildContainer(options).Build())
+            try
             {
-                container.Resolve<VariableLogger>().LogVariables();
+                SecurityProtocols.EnableAllSecurityProtocols();
+                var options = CommonOptions.Parse(args);
 
-                try
+                log.Verbose($"Calamari Version: {typeof(CalamariFlavourProgram).Assembly.GetInformationalVersion()}");
+
+                if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
+                    return 0;
+
+                var envInfo = string.Join($"{Environment.NewLine}  ",
+                    EnvironmentHelper.SafelyGetEnvironmentInformation());
+                log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+
+                EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory,
+                    Environment.CurrentDirectory);
+                ProxyInitializer.InitializeDefaultProxy();
+
+                using (var container = BuildContainer(options).Build())
                 {
-                    var command = container.ResolveNamed<ICommand>(options.Command);
-                    return command.Execute();
+                    container.Resolve<VariableLogger>().LogVariables();
+
+                    try
+                    {
+                        var command = container.ResolveNamed<ICommand>(options.Command);
+                        return command.Execute();
+                    }
+                    catch (Exception e) when (e is ComponentNotRegisteredException ||
+                                              e is DependencyResolutionException)
+                    {
+                        throw new CommandException($"Could not find the command {options.Command}");
+                    }
                 }
-                catch (Exception e) when (e is ComponentNotRegisteredException || e is DependencyResolutionException)
-                {
-                    throw new CommandException($"Could not find the command {options.Command}");
-                }
+            }
+            catch (Exception ex)
+            {
+                return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
             }
         }
 

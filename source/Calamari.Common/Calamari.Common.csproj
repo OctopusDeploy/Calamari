@@ -64,6 +64,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <EmbeddedResource Include="Features\Packages\Download\Scripts\DockerPull.ps1" />
+      <EmbeddedResource Include="Features\Packages\Download\Scripts\DockerPull.sh" />
       <EmbeddedResource Include="Features\Scripting\Bash\Bootstrap.sh" />
       <EmbeddedResource Include="Features\Scripting\FSharp\Bootstrap.fsx" />
       <EmbeddedResource Include="Features\Scripting\Python\Configuration.py" />

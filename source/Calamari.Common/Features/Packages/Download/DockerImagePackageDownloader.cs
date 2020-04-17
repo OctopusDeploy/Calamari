@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Common.Features.Scripting;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
+using Calamari.Integration.Packages;
+using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octopus.Versioning;
 
-namespace Calamari.Integration.Packages.Download
+namespace Calamari.Common.Features.Packages.Download
 {
     public class DockerImagePackageDownloader : IPackageDownloader
     {
@@ -147,7 +148,7 @@ namespace Calamari.Integration.Packages.Download
             }
 
             var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
-            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Integration.Packages.Download.Scripts.{contextFile}");
+            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof (DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
             fileSystem.OverwriteFile(scriptFile, contextScript);
             return scriptFile;
         }
