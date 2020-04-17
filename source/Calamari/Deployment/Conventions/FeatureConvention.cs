@@ -8,6 +8,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using System.Reflection;
+using Calamari.Common.Features.Scripting;
 using Calamari.Deployment.Features;
 
 namespace Calamari.Deployment.Conventions

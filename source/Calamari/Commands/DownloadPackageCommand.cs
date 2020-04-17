@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Common.Features.Scripting;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;

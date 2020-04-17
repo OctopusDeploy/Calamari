@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using Calamari.Commands.Java;
+using Calamari.Common.Features.Scripting;
 using Calamari.Common.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;

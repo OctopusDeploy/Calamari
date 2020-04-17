@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Common.Integration.Scripting;
+using Calamari.Common.Features.Scripting;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting

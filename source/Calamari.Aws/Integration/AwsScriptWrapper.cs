@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Calamari.CloudAccounts;
+using Calamari.Common.Features.Scripting;
 using Calamari.Extensions;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

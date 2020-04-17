@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Features.Scripting;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
