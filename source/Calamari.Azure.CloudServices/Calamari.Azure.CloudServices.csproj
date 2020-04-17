@@ -18,7 +18,7 @@
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure Cloud Services integration.</Description>
     <ApplicationIcon />
     <StartupObject />
-    <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>

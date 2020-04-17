@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Calamari.Hooks;
+using Calamari.Common.Integration.Scripting;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 

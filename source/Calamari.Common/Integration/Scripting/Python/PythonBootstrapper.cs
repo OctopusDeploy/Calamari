@@ -3,16 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Commands.Support;
 using Calamari.Common.Variables;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting.Bash;
+using Calamari.Integration.Scripting;
 using Calamari.Util;
-using Octostache;
 
-namespace Calamari.Integration.Scripting.Python
+namespace Calamari.Common.Integration.Scripting.Python
 {
     public class PythonBootstrapper
     {

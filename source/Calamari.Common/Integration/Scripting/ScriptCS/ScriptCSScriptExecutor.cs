@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Integration.Scripting.ScriptCS
+namespace Calamari.Common.Integration.Scripting.ScriptCS
 {
     public class ScriptCSScriptExecutor : ScriptExecutor
     {

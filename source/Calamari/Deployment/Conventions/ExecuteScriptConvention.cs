@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Common.Integration.Scripting;
 using Calamari.Common.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

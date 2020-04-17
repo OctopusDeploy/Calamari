@@ -1,16 +1,15 @@
 using System;
-using Calamari.Commands.Support;
-using Calamari.Hooks;
-using Calamari.Integration.Processes;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Integration.Scripting.Bash;
-using Calamari.Integration.Scripting.FSharp;
-using Calamari.Integration.Scripting.Python;
-using Calamari.Integration.Scripting.ScriptCS;
-using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Common.Integration.Scripting.Bash;
+using Calamari.Common.Integration.Scripting.FSharp;
+using Calamari.Common.Integration.Scripting.Python;
+using Calamari.Common.Integration.Scripting.ScriptCS;
+using Calamari.Common.Integration.Scripting.WindowsPowerShell;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 
-namespace Calamari.Integration.Scripting
+namespace Calamari.Common.Integration.Scripting
 {
     public interface IScriptEngine
     {

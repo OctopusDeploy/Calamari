@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using Calamari.Commands.Support;
+using Calamari.Common.Integration.Scripting;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;

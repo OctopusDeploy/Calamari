@@ -5,14 +5,18 @@ using System.Linq;
 using System.Security;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Integration.Scripting.WindowsPowerShell
+namespace Calamari.Common.Integration.Scripting.WindowsPowerShell
 {
     public class PowerShellScriptExecutor : ScriptExecutor
     {
+        public PowerShellScriptExecutor() : base()
+        {
+            Log.Info("Constructor for PowershellScriptExecutor");
+        }
+        
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
             Dictionary<string, string> environmentVars = null)
@@ -33,10 +37,13 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 Password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(PowershellVariables.Action.Password)) : null
             };
 
-            yield return new ScriptExecution(
-                invocation,
-                otherTemporaryFiles.Concat(new[] {bootstrapFile, debuggingBootstrapFile})
-            );
+            return new[]
+            {
+                new ScriptExecution(
+                    invocation,
+                    otherTemporaryFiles.Concat(new[] {bootstrapFile, debuggingBootstrapFile})
+                )
+            };
         }
 
         PowerShellBootstrapper GetPowerShellBootstrapper(IVariables variables)

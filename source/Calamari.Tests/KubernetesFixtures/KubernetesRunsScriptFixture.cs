@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Hooks;
+using Calamari.Common.Integration.Scripting;
+using Calamari.Common.Integration.Scripting.WindowsPowerShell;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.WindowsPowerShell;
 using Calamari.Kubernetes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;

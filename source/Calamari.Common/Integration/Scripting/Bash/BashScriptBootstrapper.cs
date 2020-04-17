@@ -4,13 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Common.Variables;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Calamari.Util;
-using Octostache;
 
-namespace Calamari.Integration.Scripting.Bash
+namespace Calamari.Common.Integration.Scripting.Bash
 {
     public class BashScriptBootstrapper
     {

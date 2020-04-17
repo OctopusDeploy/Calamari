@@ -4,15 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
-using Calamari.Integration.Processes;
-using Calamari.Util;
-using System.Reflection;
 using Calamari.Common.Variables;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Octostache;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
+using Calamari.Util;
 
-namespace Calamari.Integration.Scripting.FSharp
+namespace Calamari.Common.Integration.Scripting.FSharp
 {
     public static class FSharpBootstrapper
     {

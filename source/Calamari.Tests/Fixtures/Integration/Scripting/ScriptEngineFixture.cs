@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Calamari.Common.Integration.Scripting;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

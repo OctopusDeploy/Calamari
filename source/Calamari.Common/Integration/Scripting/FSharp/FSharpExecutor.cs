@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Integration.Processes;
 
-namespace Calamari.Integration.Scripting.FSharp
+namespace Calamari.Common.Integration.Scripting.FSharp
 {
     public class FSharpExecutor : ScriptExecutor
     {

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Commands.Support;
+using Calamari.Common.Integration.Scripting;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;

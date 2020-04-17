@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 
-namespace Calamari.Hooks
+namespace Calamari.Common.Integration.Scripting
 {
     /// <summary>
     /// The last wrapper in any chain. It calls the script engine directly.

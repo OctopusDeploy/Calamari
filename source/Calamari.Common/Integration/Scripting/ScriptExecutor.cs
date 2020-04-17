@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
@@ -8,7 +7,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Proxies;
 
-namespace Calamari.Integration.Scripting
+namespace Calamari.Common.Integration.Scripting
 {
     public abstract class ScriptExecutor : IScriptExecutor
     {

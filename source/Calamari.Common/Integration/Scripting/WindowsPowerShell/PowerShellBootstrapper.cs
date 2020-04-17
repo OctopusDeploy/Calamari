@@ -5,13 +5,12 @@ using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
 using Calamari.Util;
-using Octostache;
 
-namespace Calamari.Integration.Scripting.WindowsPowerShell
+namespace Calamari.Common.Integration.Scripting.WindowsPowerShell
 {
     public class WindowsPowerShellBootstrapper : PowerShellBootstrapper
     {

@@ -26,11 +26,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
+    <DefineConstants>$(DefineConstants);IIS_SUPPORT;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
   </PropertyGroup>
   <!--
 	The net452 build is the one that pulls in the AWS and Azure extensions. We treat

@@ -5,13 +5,12 @@ using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
-using Calamari.Integration.Processes;
-using Calamari.Util;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
-using Octostache;
+using Calamari.Integration.Processes;
+using Calamari.Integration.Scripting;
+using Calamari.Util;
 
-namespace Calamari.Integration.Scripting.ScriptCS
+namespace Calamari.Common.Integration.Scripting.ScriptCS
 {
     public static class ScriptCSBootstrapper
     {

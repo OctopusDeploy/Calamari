@@ -7,6 +7,7 @@ using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Integration.Scripting;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
