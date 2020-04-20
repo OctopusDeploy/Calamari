@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
         {
             var variables = new CalamariVariables();
-            variables.Set(PowershellVariables.Action.CustomPowerShellVersion, customPowerShellVersion);
+            variables.Set(PowerShellVariables.CustomPowerShellVersion, customPowerShellVersion);
 
             // Let's just use the Hello.ps1 script for something simples
             var output = InvokeCalamariForPowerShell(calamari => calamari
@@ -63,7 +63,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var nonExistentEdition = "WindowsPowerShell";
             var output = RunScript("Hello.ps1",
-                new Dictionary<string, string>() {{PowershellVariables.Action.Edition, nonExistentEdition}});
+                new Dictionary<string, string>() {{PowerShellVariables.Edition, nonExistentEdition}});
             
             output.result.AssertFailure();
             output.result.AssertErrorOutput("Attempted to use 'WindowsPowerShell' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");

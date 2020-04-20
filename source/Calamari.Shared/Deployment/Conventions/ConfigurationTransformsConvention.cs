@@ -61,7 +61,8 @@ namespace Calamari.Deployment.Conventions
             {
                 result.Add(new XmlConfigTransformDefinition("Release"));
 
-                var environment = deployment.Variables.Get(Common.Variables.EnvironmentVariables.Name);
+                var environment = deployment.Variables.Get(
+                    EnvironmentVariables.Name);
                 if (!string.IsNullOrWhiteSpace(environment))
                 {
                     result.Add(new XmlConfigTransformDefinition(environment));

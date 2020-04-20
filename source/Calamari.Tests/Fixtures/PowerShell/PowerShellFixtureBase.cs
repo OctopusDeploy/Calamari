@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variables = new CalamariVariables();
             if (executeWithoutProfile != null)
-                variables.Set(PowershellVariables.Action.ExecuteWithoutProfile, executeWithoutProfile);
+                variables.Set(PowerShellVariables.ExecuteWithoutProfile, executeWithoutProfile);
             
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
@@ -72,7 +72,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
             var (output, _) = RunPowerShellScript(ProfileScript, new Dictionary<string, string>()
-            { [PowershellVariables.Action.ExecuteWithoutProfile] = "true" });
+            { [PowerShellVariables.ExecuteWithoutProfile] = "true" });
 
             output.AssertSuccess();
             output.AssertOutput("-NoProfile");
@@ -591,7 +591,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, CalamariVariables variables = null)
         {
             var variableDictionary = variables ?? new CalamariVariables();
-            variableDictionary.Add(PowershellVariables.Action.Edition, GetPowerShellEditionVariable());
+            variableDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
             
             using (var variablesFile = CreateVariablesFile(variableDictionary))
             {
@@ -631,7 +631,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             string sensitiveVariablesPassword = null)
         {
             var variablesDictionary = additionalVariables ?? new Dictionary<string, string>();
-            variablesDictionary.Add(PowershellVariables.Action.Edition, GetPowerShellEditionVariable());
+            variablesDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
             return RunScript(scriptName, variablesDictionary, additionalParameters, sensitiveVariablesPassword);
         }
         

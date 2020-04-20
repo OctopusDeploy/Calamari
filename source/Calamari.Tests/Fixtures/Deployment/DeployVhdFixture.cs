@@ -39,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[Common.Variables.EnvironmentVariables.Name] = Environment;
+            Variables[EnvironmentVariables.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 
@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[Common.Variables.EnvironmentVariables.Name] = Environment;
+            Variables[EnvironmentVariables.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 
@@ -135,7 +135,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[Common.Variables.EnvironmentVariables.Name] = Environment;
+            Variables[EnvironmentVariables.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 

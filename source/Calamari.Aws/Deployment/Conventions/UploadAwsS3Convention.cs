@@ -263,9 +263,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public string GetNormalizedPackageFilename(RunningDeployment deployment)
         {
-            var id = deployment.Variables.Get(PackageVariables.PackageIdWithKey(null));
-            var version = deployment.Variables.Get(PackageVariables.PackageVersionWithKey(null));
-            var extension = Path.GetExtension(deployment.Variables.Get(PackageVariables.OriginalPathWithKey(null)));
+            var id = deployment.Variables.Get(PackageVariables.PackageIdForPackageReferenceName(null));
+            var version = deployment.Variables.Get(PackageVariables.PackageVersionForPackageReferenceName(null));
+            var extension = Path.GetExtension(deployment.Variables.Get(PackageVariables.OriginalPathForPackageReferenceName(null)));
             return $"{id}.{version}{extension}";
         }
 

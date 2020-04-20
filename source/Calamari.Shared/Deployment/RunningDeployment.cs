@@ -61,8 +61,8 @@ namespace Calamari.Deployment
         public void Error(Exception ex)
         {
             ex = ex.GetBaseException();
-            variables.Set(Common.Variables.SpecialVariables.LastError, ex.ToString());
-            variables.Set(Common.Variables.SpecialVariables.LastErrorMessage, ex.Message);
+            variables.Set("OctopusLastError", ex.ToString());
+            variables.Set("OctopusLastErrorMessage", ex.Message);
         }
     }
 }

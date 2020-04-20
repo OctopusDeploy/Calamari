@@ -1,8 +1,10 @@
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {
@@ -58,7 +60,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
         static string BuildEnvironmentSpecificFallbackFileName(RunningDeployment deployment)
         {
             return string.Format(EnvironmentFallbackFileName,
-                deployment.Variables.Get(Common.Variables.EnvironmentVariables.Name));
+                deployment.Variables.Get(EnvironmentVariables.Name));
         }
     }
 }

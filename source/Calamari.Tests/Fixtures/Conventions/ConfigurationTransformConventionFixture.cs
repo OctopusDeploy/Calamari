@@ -69,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string environment = "Production";
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            variables.Set(Common.Variables.EnvironmentVariables.Name, environment);
+            variables.Set(EnvironmentVariables.Name, environment);
 
             CreateConvention().Install(deployment);
 
@@ -84,7 +84,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string tenant = "Tenant-1";
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            variables.Set(Common.Variables.EnvironmentVariables.Name, environment);
+            variables.Set(EnvironmentVariables.Name, environment);
             variables.Set(DeploymentVariables.Tenant.Name, tenant);
 
             CreateConvention().Install(deployment);
@@ -101,7 +101,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string tenant = "Tenant-1";
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            variables.Set(Common.Variables.EnvironmentVariables.Name, environment);
+            variables.Set(EnvironmentVariables.Name, environment);
             variables.Set(DeploymentVariables.Tenant.Name, tenant);
 
             CreateConvention().Install(deployment);
@@ -241,7 +241,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deploymentVariables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, @"MyPackage.1.0.0.nupkg");
             deploymentVariables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, @"MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config => MyApplication.ProcessingServer.WorkerRole.dll.config");
             deploymentVariables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, "True");
-            deploymentVariables.Set(Common.Variables.EnvironmentVariables.Name, "my-test-env");
+            deploymentVariables.Set(EnvironmentVariables.Name, "my-test-env");
             deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
             deploymentVariables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);

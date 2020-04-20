@@ -49,7 +49,7 @@ namespace Calamari.Deployment.Conventions
                 Log.Verbose($"Considering '{packageReferenceName}' for extraction");
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 
-                var packageOriginalPath = variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName));
+                var packageOriginalPath = variables.Get(PackageVariables.OriginalPathForPackageReferenceName(packageReferenceName));
                 
                 if (string.IsNullOrWhiteSpace(packageOriginalPath))
                 {
@@ -57,7 +57,7 @@ namespace Calamari.Deployment.Conventions
                     continue;
                 }
                 
-                packageOriginalPath = Path.GetFullPath(variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName)));
+                packageOriginalPath = Path.GetFullPath(variables.Get(PackageVariables.OriginalPathForPackageReferenceName(packageReferenceName)));
 
                 // In the case of container images, the original path is not a file-path.  We won't try and extract or move it.
                 if (!fileSystem.FileExists(packageOriginalPath))
@@ -66,7 +66,7 @@ namespace Calamari.Deployment.Conventions
                     continue;
                 }
 
-                var shouldExtract = variables.GetFlag(PackageVariables.ExtractWithKey(packageReferenceName));
+                var shouldExtract = variables.GetFlag(PackageVariables.ExtractForPackageReferenceName(packageReferenceName));
 
                 if (forceExtract || shouldExtract)
                 {

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
@@ -18,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Variables
             var variables = new CalamariVariables();
             variables.Set(Common.Variables.SpecialVariables.PrintVariables, true.ToString());
             variables.Set(Common.Variables.SpecialVariables.PrintEvaluatedVariables, true.ToString());
-            variables.Set(Common.Variables.EnvironmentVariables.Name, "Production");
+            variables.Set(EnvironmentVariables.Name, "Production");
             const string variableName = "foo";
             const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
             variables.Set(variableName, rawVariableValue);

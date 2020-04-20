@@ -103,7 +103,7 @@ namespace Calamari.Variables
         void ReadAdditionalVariablesFromFile(CalamariVariables variables)
         {
             var path = variables.Get(Common.Variables.SpecialVariables.AdditionalVariablesPath)
-                       ?? variables.Get(Common.Variables.EnvironmentVariables.Prefix + Common.Variables.SpecialVariables.AdditionalVariablesPath);
+                       ?? variables.Get($"env:{Common.Variables.SpecialVariables.AdditionalVariablesPath}");
 
             string BuildExceptionMessage(string reason)
                 => $"Could not read additional variables from JSON file at '{path}'. " +

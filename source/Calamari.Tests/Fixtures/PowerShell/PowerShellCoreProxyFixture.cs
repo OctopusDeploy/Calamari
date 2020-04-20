@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variables = new Dictionary<string,string>()
             {
-                {PowershellVariables.Action.Edition, "Core"}
+                {PowerShellVariables.Edition, "Core"}
             };
 
             return RunScript("Proxy.ps1", variables).result;

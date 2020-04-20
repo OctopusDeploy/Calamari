@@ -226,7 +226,7 @@ namespace Calamari.Kubernetes.Conventions
             var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
             if (string.IsNullOrWhiteSpace(releaseName))
             {
-                releaseName = $"{variables.Get(ActionVariables.Name)}-{variables.Get(Common.Variables.EnvironmentVariables.Name)}";
+                releaseName = $"{variables.Get(ActionVariables.Name)}-{variables.Get(EnvironmentVariables.Name)}";
                 releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
             }
 
@@ -246,8 +246,8 @@ namespace Calamari.Kubernetes.Conventions
                 
                 foreach (var providedPath in paths)
                 {
-                    var packageId = variables.Get(PackageVariables.PackageIdWithKey(packageReferenceName));
-                    var version = variables.Get(PackageVariables.PackageVersionWithKey(packageReferenceName));
+                    var packageId = variables.Get(PackageVariables.PackageIdForPackageReferenceName(packageReferenceName));
+                    var version = variables.Get(PackageVariables.PackageVersionForPackageReferenceName(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
                     var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 

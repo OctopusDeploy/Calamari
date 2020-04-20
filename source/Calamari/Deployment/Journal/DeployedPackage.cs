@@ -61,9 +61,9 @@ namespace Calamari.Deployment.Journal
                 }
                 
                 yield return new DeployedPackage(
-                    variables.Get(PackageVariables.PackageIdWithKey(packageReferenceName)),
-                    variables.Get(PackageVariables.PackageVersionWithKey(packageReferenceName)),
-                    variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName))
+                    variables.Get(PackageVariables.PackageIdForPackageReferenceName(packageReferenceName)),
+                    variables.Get(PackageVariables.PackageVersionForPackageReferenceName(packageReferenceName)),
+                    variables.Get(PackageVariables.OriginalPathForPackageReferenceName(packageReferenceName))
                 );
             }
         }
