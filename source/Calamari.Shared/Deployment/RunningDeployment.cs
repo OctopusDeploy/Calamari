@@ -25,8 +25,8 @@ namespace Calamari.Deployment
         /// </summary>
         public string StagingDirectory
         {
-            get { return Variables.Get(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath); }
-            set { Variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, value); }
+            get { return Variables.Get(Common.Variables.KnownVariables.OriginalPackageDirectoryPath); }
+            set { Variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, value); }
         }
 
         /// <summary>
@@ -55,8 +55,12 @@ namespace Calamari.Deployment
         {
             get {  return variables; }
         }
-
-        public bool SkipJournal { get { return variables.GetFlag(Common.Variables.SpecialVariables.Action.SkipJournal); } }
+        
+        public bool SkipJournal
+        {
+            get => variables.GetFlag(Common.Variables.KnownVariables.Action.SkipJournal);
+            set => variables.Set(Common.Variables.KnownVariables.Action.SkipJournal, value.ToString().ToLower());
+        }
 
         public void Error(Exception ex)
         {

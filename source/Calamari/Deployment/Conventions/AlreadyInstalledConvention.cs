@@ -25,7 +25,7 @@ namespace Calamari.Deployment.Conventions
 
             var id = deployment.Variables.Get(PackageVariables.PackageId);
             var version = deployment.Variables.Get(PackageVariables.PackageVersion);
-            var policySet = deployment.Variables.Get(Common.Variables.SpecialVariables.RetentionPolicySet);
+            var policySet = deployment.Variables.Get(Common.Variables.KnownVariables.RetentionPolicySet);
 
             var previous = journal.GetLatestInstallation(policySet, id, version);
             if (previous == null) 
@@ -41,7 +41,8 @@ namespace Calamari.Deployment.Conventions
                 log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.InstallationDirectoryPath, previous.ExtractedTo);
                 log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
                 deployment.Variables.Set(SpecialVariables.Action.SkipRemainingConventions, "true");
-                deployment.Variables.Set(Common.Variables.SpecialVariables.Action.SkipJournal, "true");
+                //deployment.Variables.Set(Common.Variables.SpecialVariables.Action.SkipJournal, "true");
+                deployment.SkipJournal = true;
             }
         }
     }

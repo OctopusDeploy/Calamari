@@ -52,7 +52,7 @@ namespace Calamari.Azure.Commands
         {
             Options.Parse(commandLineArguments);
 
-            variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
+            variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
             var fileSystem = new WindowsPhysicalFileSystem();
             var filesInPackage = !string.IsNullOrWhiteSpace(pathToPackage);
             var templateResolver = new TemplateResolver(fileSystem);

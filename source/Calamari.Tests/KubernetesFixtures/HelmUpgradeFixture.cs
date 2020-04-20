@@ -93,8 +93,8 @@ namespace Calamari.Tests.KubernetesFixtures
             //Chart Pckage
             Variables.Set(PackageVariables.PackageId, "mychart");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
-            Variables.Set(PackageVariables.PackageIdForPackageReferenceName(""), $"#{{{PackageVariables.PackageId}}}");
-            Variables.Set(PackageVariables.PackageVersionForPackageReferenceName(""), $"#{{{PackageVariables.PackageVersion}}}");
+            Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
+            Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
             
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
@@ -150,9 +150,9 @@ namespace Calamari.Tests.KubernetesFixtures
         public void ValuesFromPackage_NewValuesUsed()
         {
             //Additional Package
-            Variables.Set(PackageVariables.PackageIdForPackageReferenceName("Pack-1"), "CustomValues");
-            Variables.Set(PackageVariables.PackageVersionForPackageReferenceName("Pack-1"), "2.0.0");
-            Variables.Set(PackageVariables.OriginalPathForPackageReferenceName("Pack-1"), GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
+            Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
+            Variables.Set(PackageVariables.IndexedPackageVersion("Pack-1"), "2.0.0");
+            Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"), GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
 
             //Variable that will replace packaged value in package
@@ -205,9 +205,9 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
 
             //Additional Package
-            Variables.Set(PackageVariables.PackageIdForPackageReferenceName("Pack-1"), "CustomValues");
-            Variables.Set(PackageVariables.PackageVersionForPackageReferenceName("Pack-1"), "2.0.0");
-            Variables.Set(PackageVariables.OriginalPathForPackageReferenceName("Pack-1"),
+            Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
+            Variables.Set(PackageVariables.IndexedPackageVersion("Pack-1"), "2.0.0");
+            Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"),
                 GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
 
@@ -242,10 +242,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 DownloadHelmPackage(version, fileName);
 
                 var customHelmExePackageId = Kubernetes.SpecialVariables.Helm.Packages.CustomHelmExePackageKey;
-                Variables.Set(PackageVariables.OriginalPathForPackageReferenceName(customHelmExePackageId), fileName);
-                Variables.Set(PackageVariables.ExtractForPackageReferenceName(customHelmExePackageId), "True");
-                Variables.Set(PackageVariables.PackageIdForPackageReferenceName(customHelmExePackageId), "helmexe");
-                Variables.Set(PackageVariables.PackageVersionForPackageReferenceName(customHelmExePackageId), version);
+                Variables.Set(PackageVariables.IndexedOriginalPath(customHelmExePackageId), fileName);
+                Variables.Set(PackageVariables.IndexedExtract(customHelmExePackageId), "True");
+                Variables.Set(PackageVariables.IndexedPackageId(customHelmExePackageId), "helmexe");
+                Variables.Set(PackageVariables.IndexedPackageVersion(customHelmExePackageId), version);
 
                 // If package is provided then it should be treated as a relative path
                 var customLocation = HelmOsPlatform + Path.DirectorySeparatorChar + "helm";

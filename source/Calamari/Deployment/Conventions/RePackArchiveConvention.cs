@@ -41,7 +41,7 @@ namespace Calamari.Deployment.Conventions
 
             var repackedArchiveDirectory = Path.GetDirectoryName(repackedArchivePath);
 
-            deployment.Variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, repackedArchiveDirectory);
+            deployment.Variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, repackedArchiveDirectory);
             Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, repackedArchiveDirectory, deployment.Variables);
             Log.SetOutputVariable(PackageVariables.Output.InstallationPackagePath, repackedArchivePath, deployment.Variables);
         }

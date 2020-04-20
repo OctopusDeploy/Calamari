@@ -1,6 +1,6 @@
 namespace Calamari
 {
-    public static class DeploymentEnvironmentVariables
+    public static class EnvironmentVariables
     {
         public const string TentacleProxyUsername = "TentacleProxyUsername";
         public const string TentacleProxyPassword = "TentacleProxyPassword";

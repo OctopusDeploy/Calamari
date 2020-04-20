@@ -126,7 +126,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
-            Variables.Set(EnvironmentVariables.Name, "Production");
+            Variables.Set(DeploymentEnvironment.Name, "Production");
             Variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
 
@@ -252,7 +252,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSkipIfAlreadyInstalled(DeploymentType deploymentType)
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            Variables.Set(Common.Variables.SpecialVariables.RetentionPolicySet, "a/b/c/d");
+            Variables.Set(Common.Variables.KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");
 
@@ -269,7 +269,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSkipIfAlreadyInstalledWithDifferentPackageType()
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            Variables.Set(Common.Variables.SpecialVariables.RetentionPolicySet, "a/b/c/d");
+            Variables.Set(Common.Variables.KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");
 

@@ -40,6 +40,7 @@
     <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG;SUPPORTS_POLLY</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
@@ -120,8 +121,5 @@
     <None Update="javatest.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
 </Project>

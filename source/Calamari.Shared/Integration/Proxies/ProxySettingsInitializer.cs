@@ -6,10 +6,10 @@ namespace Calamari.Integration.Proxies
     {
         public static IProxySettings GetProxySettingsFromEnvironment()
         {
-            var proxyUsername = Environment.GetEnvironmentVariable(DeploymentEnvironmentVariables.TentacleProxyUsername);
-            var proxyPassword = Environment.GetEnvironmentVariable(DeploymentEnvironmentVariables.TentacleProxyPassword);
-            var proxyHost = Environment.GetEnvironmentVariable(DeploymentEnvironmentVariables.TentacleProxyHost);
-            var proxyPortText = Environment.GetEnvironmentVariable(DeploymentEnvironmentVariables.TentacleProxyPort);
+            var proxyUsername = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername);
+            var proxyPassword = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword);
+            var proxyHost = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost);
+            var proxyPortText = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
             int.TryParse(proxyPortText, out var proxyPort);
             var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
 
@@ -24,7 +24,7 @@ namespace Calamari.Integration.Proxies
             }
 
             bool useDefaultProxy;
-            if (!bool.TryParse(Environment.GetEnvironmentVariable(DeploymentEnvironmentVariables.TentacleUseDefaultProxy),
+            if (!bool.TryParse(Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy),
                 out useDefaultProxy))
                 useDefaultProxy = true;
 

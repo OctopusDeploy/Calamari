@@ -13,6 +13,8 @@ namespace Calamari.Integration.Scripting
 {
     public abstract class ScriptExecutor : IScriptExecutor
     {
+        static readonly string CopyWorkingDirectoryVariable = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
+        
         public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
@@ -25,7 +27,7 @@ namespace Calamari.Integration.Scripting
             CommandResult result = null;
             foreach (var execution in prepared)
             {
-                if (variables.IsSet("Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo"))
+                if (variables.IsSet(CopyWorkingDirectoryVariable))
                 {
                     CopyWorkingDirectory(variables, execution.CommandLineInvocation.WorkingDirectory,
                         execution.CommandLineInvocation.Arguments);
@@ -70,7 +72,7 @@ namespace Calamari.Integration.Scripting
             var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var copyToParent = Path.Combine(
-                variables.Get("Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo"),
+                variables.Get(CopyWorkingDirectoryVariable),
                 fs.RemoveInvalidFileNameChars(variables.Get(ProjectVariables.Name, "Non-Project")),
                 variables.Get(DeploymentVariables.Id, "Non-Deployment"),
                 fs.RemoveInvalidFileNameChars(variables.Get(ActionVariables.Name, "Non-Action"))

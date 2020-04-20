@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var deployment = new RunningDeployment("C:\\Package.nupkg", new CalamariVariables());
 
             // When no custom installation directory is chosen, custom points to staging
-            deployment.Variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, "C:\\Apps\\MyPackage\\1.0.0_1");
+            deployment.Variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, "C:\\Apps\\MyPackage\\1.0.0_1");
             Assert.That(deployment.StagingDirectory, Is.EqualTo("C:\\Apps\\MyPackage\\1.0.0_1"));
             Assert.That(deployment.CustomDirectory, Is.EqualTo("C:\\Apps\\MyPackage\\1.0.0_1"));
             Assert.That(deployment.CurrentDirectory, Is.EqualTo("C:\\Apps\\MyPackage\\1.0.0_1"));

@@ -5,6 +5,7 @@ using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Octostache;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Integration.Packages.Java
 {
@@ -27,7 +28,7 @@ namespace Calamari.Integration.Packages.Java
             */
 
             toolsPath = Path.Combine(
-                variables?.Get(JavaVariables.JavaLibraryEnvVar, "") ?? "",
+                variables?.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar, "") ?? "",
                 "contentFiles",
                 "any",
                 "any",

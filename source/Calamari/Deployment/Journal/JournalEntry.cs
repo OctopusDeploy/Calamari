@@ -11,12 +11,12 @@ namespace Calamari.Deployment.Journal
     {
         public JournalEntry(RunningDeployment deployment, bool wasSuccessful)
             : this(Guid.NewGuid().ToString(),
-                deployment.Variables.Get(EnvironmentVariables.Id),
+                deployment.Variables.Get(DeploymentEnvironment.Id),
                 deployment.Variables.Get(DeploymentVariables.Tenant.Id),
                 deployment.Variables.Get(ProjectVariables.Id),
-                deployment.Variables.Get(Common.Variables.SpecialVariables.RetentionPolicySet),
+                deployment.Variables.Get(Common.Variables.KnownVariables.RetentionPolicySet),
                 DateTime.UtcNow,
-                deployment.Variables.Get(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath),
+                deployment.Variables.Get(Common.Variables.KnownVariables.OriginalPackageDirectoryPath),
                 deployment.Variables.Get(PackageVariables.CustomInstallationDirectory),
                 wasSuccessful,
                 DeployedPackage.GetDeployedPackages(deployment)

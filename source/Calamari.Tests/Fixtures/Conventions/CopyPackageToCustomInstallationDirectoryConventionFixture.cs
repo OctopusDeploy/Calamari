@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             variables = new CalamariVariables();
-            variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
+            variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, stagingDirectory);
             fileSystem = Substitute.For<ICalamariFileSystem>();
             deployment = new RunningDeployment(packageFilePath, variables);
         }
